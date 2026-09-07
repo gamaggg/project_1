@@ -71,6 +71,8 @@ Supabase Auth, email+пароль (см. DECISIONS.md почему не magic li
 ### Карта
 `LeafletMap.tsx` — прямой перенос `initMap()`/`drawTerritories()` из прототипа: `preferCanvas:true`, `labelsLayer` (id-подписи секторов) показывается только при `zoom >= 14`, перерисовка полигонов (при смене статуса владения) намеренно не связана с перерисовкой карусели/зумом — те же причины, что в прототипе (см. DECISIONS.md, баг `flyTo`↔`zoomend`↔сброс карусели). Геометрия (`public/data/sectors.json`) фетчится один раз и кешируется навсегда (`staleTime: Infinity` в `useTerritories`/`useSectorsGeometry`), статус владения — через `territories_with_stats`, объединяются по `id` на клиенте.
 
+`import 'leaflet/dist/leaflet.css'` — в начале `LeafletMap.tsx` (единственное место монтирования карты). Без этого импорта у canvas-слоя нет `position:absolute` (это правило только из leaflet.css) — сектора рендерятся, но улетают за пределы видимой области. Забыли при переносе из прототипа (там подключался через `<link>`), поймали только когда посмотрели живой прод в настоящем браузере — см. CHANGELOG.md. Помимо этого — `ResizeObserver` на контейнер карты, вызывает `map.invalidateSize()` при изменении размера (шрифт `next/font` может дозагрузиться и сдвинуть вёрстку уже после инициализации Leaflet).
+
 ### Поток данных / react-query
 `lib/supabase/queries.ts` — все хуки читают напрямую из Supabase JS SDK на клиенте (`'use client'`), кешируются `@tanstack/react-query` с `refetchOnWindowFocus`. Realtime-подписок нет (см. DECISIONS.md) — карта/лента обновляются на фокусе вкладки и после `useConfirmCatch` (инвалидирует `territories`/`catches`/`activity`).
 

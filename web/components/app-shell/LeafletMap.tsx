@@ -1,5 +1,6 @@
 'use client'
 
+import 'leaflet/dist/leaflet.css'
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import type L from 'leaflet'
 import type { Territory } from '@/lib/data/types'
@@ -100,8 +101,24 @@ export const LeafletMap = forwardRef<LeafletMapHandle, { territories: Territory[
         updateLabelVisibility()
       })
 
+      // The container's real size can still change after Leaflet reads it once —
+      // e.g. next/font finishes loading Manrope and the header text reflows,
+      // shifting .map-wrap's height. Without this, the canvas/tile grid stays
+      // sized for the stale layout and renders offset from the visible box
+      // (confirmed in production: canvas painted correctly, just not where the
+      // container ended up). ResizeObserver catches that and any future case
+      // (orientation change, etc.), not just the font-load race.
+      let resizeObserver: ResizeObserver | null = null
+      if (containerRef.current) {
+        resizeObserver = new ResizeObserver(() => {
+          mapRef.current?.invalidateSize()
+        })
+        resizeObserver.observe(containerRef.current)
+      }
+
       return () => {
         cancelled = true
+        resizeObserver?.disconnect()
         mapRef.current?.remove()
         mapRef.current = null
       }
