@@ -11,8 +11,8 @@ const manrope = Manrope({
 })
 
 export const metadata: Metadata = {
-  title: 'FishZone — Аджария',
-  description: 'Береговая рыбалка в Аджарии: карта территорий, уловы, активность.',
+  title: 'FishZone — Батуми',
+  description: 'Береговая рыбалка в Батуми: карта территорий, уловы, активность.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

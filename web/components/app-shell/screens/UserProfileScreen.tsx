@@ -1,6 +1,6 @@
 'use client'
 
-import { useProfile, useCatchesByUser, useIsFollowing, useSetFollowing } from '@/lib/supabase/queries'
+import { useProfile, useCatchesByUser, useIsFollowing, useSetFollowing, useIsAdmin, useIsSuperAdmin, useSetBlocked, useSetAdmin } from '@/lib/supabase/queries'
 import { computeAchievements, personalRecord } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta } from '@/lib/format'
@@ -29,6 +29,10 @@ export function UserProfileScreen({
   const { data: catches = [] } = useCatchesByUser(userId)
   const { data: isFollowing, isLoading: followLoading } = useIsFollowing(userId)
   const setFollowing = useSetFollowing()
+  const isAdmin = useIsAdmin()
+  const isSuperAdmin = useIsSuperAdmin()
+  const setBlocked = useSetBlocked()
+  const setAdmin = useSetAdmin()
 
   const speciesCount = new Set(catches.map((c) => c.species)).size
   const record = personalRecord(catches)
@@ -56,19 +60,51 @@ export function UserProfileScreen({
           )}
         </div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 19, fontWeight: 800 }}>{profile?.displayName ?? '…'}</div>
-          <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 2 }}>{profile?.location ?? 'Аджария, Грузия'}</div>
+          <div style={{ fontSize: 19, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            {profile?.displayName ?? '…'}
+            {profile?.isBlocked && <span className="badge" style={{ background: '#FDE2E2', color: '#D33' }}>Заблокирован</span>}
+          </div>
+          <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 2 }}>{profile?.location ?? 'Батуми, Грузия'}</div>
+          {profile?.publicId && (
+            <div style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 4, fontWeight: 700, letterSpacing: 0.4 }}>ID: {profile.publicId}</div>
+          )}
+          {profile?.bio && (
+            <div style={{ fontSize: 13.5, color: 'var(--ink)', marginTop: 8, lineHeight: 1.4 }}>{profile.bio}</div>
+          )}
         </div>
 
-        <div style={{ marginTop: 16 }}>
+        <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
           <button
             className={isFollowing ? 'btn-secondary' : 'btn-primary'}
+            style={{ flex: 1 }}
             disabled={followLoading || setFollowing.isPending}
             onClick={() => setFollowing.mutate({ followeeId: userId, following: !isFollowing })}
           >
             {isFollowing ? 'Отписаться' : 'Подписаться'}
           </button>
+          {isAdmin && !profile?.isSuperAdmin && (
+            <button
+              className="btn-secondary"
+              style={{ flex: 1, color: profile?.isBlocked ? undefined : '#D33' }}
+              disabled={setBlocked.isPending}
+              onClick={() => setBlocked.mutate({ userId, blocked: !profile?.isBlocked })}
+            >
+              {profile?.isBlocked ? 'Разблокировать' : 'Заблокировать'}
+            </button>
+          )}
         </div>
+
+        {isSuperAdmin && !profile?.isSuperAdmin && (
+          <div style={{ marginTop: 8 }}>
+            <button
+              className="btn-secondary"
+              disabled={setAdmin.isPending}
+              onClick={() => setAdmin.mutate({ userId, isAdmin: !profile?.isAdmin })}
+            >
+              {profile?.isAdmin ? 'Забрать права админа' : 'Выдать права админа'}
+            </button>
+          </div>
+        )}
 
         <div className="card stat-grid4" style={{ marginTop: 20, padding: '16px 8px' }}>
           <div>

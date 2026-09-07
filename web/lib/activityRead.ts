@@ -35,7 +35,7 @@ export function useActivityReadState() {
   }, [user?.id])
 
   const unreadIds = useMemo(() => {
-    if (!lastReadAt) return new Set<number>()
+    if (!lastReadAt) return new Set<string>()
     return new Set(activity.filter((a) => a.createdAt > lastReadAt).map((a) => a.id))
   }, [activity, lastReadAt])
 

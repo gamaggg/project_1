@@ -94,6 +94,125 @@ export type Database = {
           },
         ]
       }
+      admin_actions: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          details: string
+          id: number
+          target_user_id: string | null
+          territory_id: string | null
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          details: string
+          id?: number
+          target_user_id?: string | null
+          territory_id?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          details?: string
+          id?: number
+          target_user_id?: string | null
+          territory_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_actions_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_actions_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_actions_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_actions_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_actions_territory_id_fkey"
+            columns: ["territory_id"]
+            isOneToOne: false
+            referencedRelation: "territories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_actions_territory_id_fkey"
+            columns: ["territory_id"]
+            isOneToOne: false
+            referencedRelation: "territories_with_stats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catch_reports: {
+        Row: {
+          catch_id: number
+          created_at: string
+          id: number
+          reason: string
+          reporter_id: string
+        }
+        Insert: {
+          catch_id: number
+          created_at?: string
+          id?: number
+          reason: string
+          reporter_id: string
+        }
+        Update: {
+          catch_id?: number
+          created_at?: string
+          id?: number
+          reason?: string
+          reporter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catch_reports_catch_id_fkey"
+            columns: ["catch_id"]
+            isOneToOne: false
+            referencedRelation: "catches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catch_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catch_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catches: {
         Row: {
           bait: string | null
@@ -219,24 +338,39 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string
           display_name: string
           id: string
+          is_admin: boolean
+          is_blocked: boolean
+          is_super_admin: boolean
           location: string | null
+          public_id: string
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string
           id: string
+          is_admin?: boolean
+          is_blocked?: boolean
+          is_super_admin?: boolean
           location?: string | null
+          public_id: string
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string
           id?: string
+          is_admin?: boolean
+          is_blocked?: boolean
+          is_super_admin?: boolean
           location?: string | null
+          public_id?: string
         }
         Relationships: []
       }
@@ -308,12 +442,45 @@ export type Database = {
       profiles_with_stats: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string | null
           display_name: string | null
           followers_count: number | null
           following_count: number | null
           id: string | null
+          is_admin: boolean | null
+          is_blocked: boolean | null
+          is_super_admin: boolean | null
           location: string | null
+          public_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          followers_count?: never
+          following_count?: never
+          id?: string | null
+          is_admin?: boolean | null
+          is_blocked?: boolean | null
+          is_super_admin?: boolean | null
+          location?: string | null
+          public_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          followers_count?: never
+          following_count?: never
+          id?: string | null
+          is_admin?: boolean | null
+          is_blocked?: boolean | null
+          is_super_admin?: boolean | null
+          location?: string | null
+          public_id?: string | null
         }
         Relationships: []
       }
@@ -348,6 +515,19 @@ export type Database = {
       }
     }
     Functions: {
+      admin_delete_catch: { Args: { p_catch_id: number }; Returns: undefined }
+      admin_dismiss_report: {
+        Args: { p_report_id: number }
+        Returns: undefined
+      }
+      admin_set_admin: {
+        Args: { p_is_admin: boolean; p_user_id: string }
+        Returns: undefined
+      }
+      admin_set_blocked: {
+        Args: { p_blocked: boolean; p_user_id: string }
+        Returns: undefined
+      }
       confirm_catch: {
         Args: {
           p_bait?: string

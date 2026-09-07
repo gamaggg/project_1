@@ -16,7 +16,7 @@ export function ActivityScreen({
 }: {
   onOpenUser: (id: string) => void
   onOpenPhoto: (src: string) => void
-  unreadIds: Set<number>
+  unreadIds: Set<string>
   onMarkAllRead: () => void
 }) {
   const { data: activity = [], isLoading } = useActivity()
@@ -45,8 +45,32 @@ export function ActivityScreen({
           <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Загрузка…</div>
         ) : list.length ? (
           list.map((a) => {
+            if (a.kind === 'moderation') {
+              return (
+                <div className="activity-item" key={a.id}>
+                  <div className="avatar" style={{ background: '#D33' }}>!</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>
+                      Улов на территории {a.territoryId} удалён модератором
+                    </div>
+                    <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
+                      Нарушены правила площадки. При повторных нарушениях аккаунт будет заблокирован.
+                    </div>
+                    <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {unreadIds.has(a.id) && <span className="unread-dot" />}
+                      {formatWhen(a.createdAt)}
+                    </div>
+                  </div>
+                </div>
+              )
+            }
             const meta = formatCatchMeta(a.lengthCm, a.weightKg)
-            const text = a.kind === 'claim' ? `занял территорию ${a.territoryId}` : `поймал ${a.speciesName?.toLowerCase() ?? 'рыбу'}`
+            const text =
+              a.kind === 'claim'
+                ? `занял территорию ${a.territoryId}`
+                : a.kind === 'follow'
+                  ? 'подписался на тебя'
+                  : `поймал ${a.speciesName?.toLowerCase() ?? 'рыбу'}`
             return (
               <div className="activity-item" key={a.id}>
                 <div className="avatar" style={a.mine ? {} : { background: 'var(--blue)' }}>
@@ -63,9 +87,11 @@ export function ActivityScreen({
                     )}{' '}
                     {text}
                   </div>
-                  <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
-                    Территория {a.territoryId} · {KIND_LABEL[a.territoryKind]}
-                  </div>
+                  {a.territoryId && a.territoryKind && (
+                    <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
+                      Территория {a.territoryId} · {KIND_LABEL[a.territoryKind]}
+                    </div>
+                  )}
                   {meta && (
                     <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2, fontWeight: 600 }}>{meta}</div>
                   )}

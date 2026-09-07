@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useProfile, useMyCatches, useUpdateProfile } from '@/lib/supabase/queries'
+import { useProfile, useMyCatches, useUpdateProfile, useIsAdmin, useIsSuperAdmin, useReports } from '@/lib/supabase/queries'
 import { uploadAvatar } from '@/lib/supabase/storage'
 import { computeAchievements, personalRecord } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
@@ -48,6 +48,7 @@ export function EditProfileModal({ onClose }: { onClose: () => void }) {
   const { data: profile } = useProfile(user?.id ?? null)
   const updateProfile = useUpdateProfile()
   const [displayName, setDisplayName] = useState(profile?.displayName ?? '')
+  const [bio, setBio] = useState(profile?.bio ?? '')
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatarUrl ?? null)
   const [avatarStatus, setAvatarStatus] = useState<'idle' | 'uploading' | 'error'>('idle')
 
@@ -70,7 +71,7 @@ export function EditProfileModal({ onClose }: { onClose: () => void }) {
   async function handleSave() {
     const trimmed = displayName.trim()
     if (!trimmed) return
-    await updateProfile.mutateAsync({ displayName: trimmed })
+    await updateProfile.mutateAsync({ displayName: trimmed, bio: bio.trim() || null })
     onClose()
   }
 
@@ -117,6 +118,19 @@ export function EditProfileModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="auth-field">
+          <label htmlFor="edit-bio">О себе</label>
+          <textarea
+            id="edit-bio"
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            maxLength={280}
+            rows={3}
+            placeholder="Необязательно"
+            style={{ resize: 'vertical', fontFamily: 'inherit' }}
+          />
+        </div>
+
+        <div className="auth-field">
           <label>Email</label>
           <input value={user?.email ?? ''} disabled />
           <div style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 4 }}>Email нельзя изменить</div>
@@ -136,16 +150,25 @@ export function ProfileScreen({
   onSignOut,
   onEditProfile,
   onOpenPhoto,
+  onOpenReports,
+  onOpenAdminAccess,
+  onOpenAdminLog,
 }: {
   myTerritories: Territory[]
   onOpenTerritory: (id: string) => void
   onSignOut: () => void
   onEditProfile: () => void
   onOpenPhoto: (src: string) => void
+  onOpenReports: () => void
+  onOpenAdminAccess: () => void
+  onOpenAdminLog: () => void
 }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   const { data: myCatches = [] } = useMyCatches()
+  const isAdmin = useIsAdmin()
+  const isSuperAdmin = useIsSuperAdmin()
+  const { data: reports = [] } = useReports()
 
   // Signed out: the profile tab IS the sign-in/sign-up entry point (see
   // DECISIONS.md — replaced the standalone /auth redirect from the "+" button).
@@ -187,7 +210,13 @@ export function ProfileScreen({
       </div>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 19, fontWeight: 800 }}>{profile?.displayName ?? '…'}</div>
-        <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 2 }}>{profile?.location ?? 'Аджария, Грузия'}</div>
+        <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 2 }}>{profile?.location ?? 'Батуми, Грузия'}</div>
+        {profile?.publicId && (
+          <div style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 4, fontWeight: 700, letterSpacing: 0.4 }}>ID: {profile.publicId}</div>
+        )}
+        {profile?.bio && (
+          <div style={{ fontSize: 13.5, color: 'var(--ink)', marginTop: 8, lineHeight: 1.4 }}>{profile.bio}</div>
+        )}
       </div>
       <div className="card stat-grid4" style={{ marginTop: 20, padding: '16px 8px' }}>
         <div>
@@ -295,7 +324,30 @@ export function ProfileScreen({
         </>
       )}
 
-      <div style={{ marginTop: 24 }}>
+      {isAdmin && (
+        <div className="btn-wrap" style={{ marginTop: 24 }}>
+          <button className="btn-secondary" onClick={onOpenReports}>
+            Жалобы на фото
+          </button>
+          {reports.length > 0 && <span className="btn-badge">{reports.length}</span>}
+        </div>
+      )}
+      {isSuperAdmin && (
+        <>
+          <div style={{ marginTop: 12 }}>
+            <button className="btn-secondary" onClick={onOpenAdminAccess}>
+              Доступы
+            </button>
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <button className="btn-secondary" onClick={onOpenAdminLog}>
+              Последние действия
+            </button>
+          </div>
+        </>
+      )}
+
+      <div style={{ marginTop: isAdmin ? 12 : 24 }}>
         <button className="btn-secondary" onClick={onSignOut}>
           Выйти
         </button>

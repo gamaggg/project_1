@@ -136,6 +136,21 @@ body{
   font-size:10px; font-weight:800; line-height:16px; text-align:center;
   box-shadow:0 0 0 2px var(--surface);
 }
+.btn-wrap{position:relative; display:block;}
+.search-row{display:flex; gap:8px; margin:14px 0;}
+.search-input{
+  flex:1; font-family:inherit; font-size:15px; padding:13px 14px;
+  border-radius:12px; border:1.5px solid var(--line); background:var(--surface);
+  outline:none; color:var(--ink);
+}
+.search-input:focus{border-color:var(--accent);}
+.btn-badge{
+  position:absolute; top:-8px; right:-8px;
+  min-width:20px; height:20px; padding:0 5px;
+  border-radius:10px; background:var(--accent); color:#fff;
+  font-size:11px; font-weight:800; line-height:20px; text-align:center;
+  box-shadow:0 0 0 2px var(--bg);
+}
 .navplus-badge{
   width:38px; height:38px;
   border-radius:50%;
@@ -230,6 +245,11 @@ body{
 .modal-title{font-size:17px; font-weight:800; letter-spacing:-0.2px;}
 .modal-body{font-size:14px; color:var(--ink-soft); line-height:1.5; margin:8px 0 20px;}
 .modal-card-wide{max-width:360px; text-align:left;}
+.modal-icon{
+  width:64px; height:64px; border-radius:50%; margin:0 auto 14px;
+  background:linear-gradient(160deg,#6FA8FF,var(--blue) 70%);
+  display:flex; align-items:center; justify-content:center;
+}
 .modal-close{
   position:absolute; top:14px; right:14px;
   width:32px; height:32px; border-radius:50%;
@@ -277,6 +297,13 @@ body{
   background:none; border:none; padding:0; font:inherit; color:inherit;
   cursor:pointer; font-weight:700; text-decoration:underline; text-underline-offset:2px;
 }
+.report-flag-btn{
+  display:flex; align-items:center; gap:3px;
+  background:none; border:none; padding:0; font-family:inherit;
+  font-size:10.5px; font-weight:700; color:var(--ink-faint);
+  cursor:pointer; white-space:nowrap;
+}
+.report-flag-btn:active{color:#D33;}
 
 /* ---------- Map screen ---------- */
 #screen-map .screen-inner{padding:0;}
@@ -519,7 +546,7 @@ body{
 .auth-card{width:100%; max-width:360px; margin:0 auto;}
 .auth-field{display:flex; flex-direction:column; gap:6px; margin-bottom:14px;}
 .auth-field label{font-size:12.5px; font-weight:700; color:var(--ink-soft);}
-.auth-field input, .auth-field select{
+.auth-field input, .auth-field select, .auth-field textarea{
   font-family:inherit; font-size:15px; padding:13px 14px;
   border-radius:12px; border:1.5px solid var(--line); background:var(--surface);
   outline:none; width:100%; color:var(--ink);
@@ -529,7 +556,7 @@ body{
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B6D76' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat:no-repeat; background-position:right 12px center; padding-right:38px;
 }
-.auth-field input:focus, .auth-field select:focus{border-color:var(--accent);}
+.auth-field input:focus, .auth-field select:focus, .auth-field textarea:focus{border-color:var(--accent);}
 .auth-field input:disabled{color:var(--ink-faint); background:var(--bg); cursor:not-allowed;}
 .auth-error{color:#D33; font-size:13px; font-weight:600; margin:-4px 0 14px;}
 .auth-switch{text-align:center; margin-top:16px; font-size:13.5px; color:var(--ink-soft);}

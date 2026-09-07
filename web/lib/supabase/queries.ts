@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/AuthProvider'
-import type { Territory, Catch, ActivityEntry, TerritoryKind, Species, Profile } from '@/lib/data/types'
+import type { Territory, Catch, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction } from '@/lib/data/types'
 
 type SectorGeometry = {
   id: string
@@ -206,13 +206,13 @@ export function useActivity() {
         return !!since && row.created_at > since
       })
 
-      return relevant.map((row): ActivityEntry => {
+      const catchEntries = relevant.map((row): ActivityEntry => {
         const territory = Array.isArray(row.territories) ? row.territories[0] : row.territories
         const c = Array.isArray(row.catches) ? row.catches[0] : row.catches
         const speciesInfo = c ? (Array.isArray(c.species_info) ? c.species_info[0] : c.species_info) : null
         const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
         return {
-          id: row.id,
+          id: `log:${row.id}`,
           who: row.user_id === user?.id ? 'Ты' : (profile?.display_name ?? 'Рыбак'),
           userId: row.user_id,
           mine: row.user_id === user?.id,
@@ -227,6 +227,38 @@ export function useActivity() {
           createdAt: row.created_at,
         }
       })
+
+      // "Someone followed you" isn't stored in activity_log (would need a
+      // nullable territory_id and a trigger on follows) — synthesized here
+      // from the follows table instead, merged and re-sorted with the rest.
+      let followEntries: ActivityEntry[] = []
+      if (user) {
+        const { data: followedByRows, error: followedByError } = await supabase
+          .from('follows')
+          .select('follower_id, created_at, profiles!follows_follower_id_fkey(display_name)')
+          .eq('followee_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(50)
+        if (followedByError) throw followedByError
+        followEntries = (followedByRows ?? []).map((f): ActivityEntry => {
+          const p = Array.isArray(f.profiles) ? f.profiles[0] : f.profiles
+          return {
+            id: `follow:${f.follower_id}`,
+            who: p?.display_name ?? 'Рыбак',
+            userId: f.follower_id,
+            mine: false,
+            kind: 'follow',
+            speciesName: null,
+            speciesCategory: null,
+            lengthCm: null,
+            weightKg: null,
+            photoUrl: null,
+            createdAt: f.created_at,
+          }
+        })
+      }
+
+      return [...catchEntries, ...followEntries].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
     },
   })
 }
@@ -243,6 +275,11 @@ export function useProfile(userId: string | null) {
         displayName: data.display_name ?? 'Рыбак',
         location: data.location,
         avatarUrl: data.avatar_url,
+        bio: data.bio,
+        isAdmin: data.is_admin ?? false,
+        isSuperAdmin: data.is_super_admin ?? false,
+        isBlocked: data.is_blocked ?? false,
+        publicId: data.public_id ?? '?????',
         followersCount: data.followers_count ?? 0,
         followingCount: data.following_count ?? 0,
       }
@@ -251,11 +288,102 @@ export function useProfile(userId: string | null) {
   })
 }
 
+// Thin wrapper over the viewer's own (already-cached) profile query — no
+// extra request, just reads the is_admin flag off it. See DECISIONS.md for
+// why admin status lives on profiles instead of a client-side email check.
+export function useIsAdmin() {
+  const { user } = useAuth()
+  const { data: profile } = useProfile(user?.id ?? null)
+  return profile?.isAdmin ?? false
+}
+
+// An imperative "search on submit" action, not a reactive cached lookup — a
+// useMutation fits better here than useQuery (same reasoning as the other
+// on-demand admin actions in this file).
+export function useFindUserByPublicId() {
+  return useMutation({
+    mutationFn: async (publicId: string): Promise<string | null> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.from('profiles').select('id').eq('public_id', publicId).maybeSingle()
+      if (error) throw error
+      return data?.id ?? null
+    },
+  })
+}
+
+export function useSetBlocked() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ userId, blocked }: { userId: string; blocked: boolean }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_set_blocked', { p_user_id: userId, p_blocked: blocked })
+      if (error) throw error
+    },
+    onSuccess: (_data, { userId }) => {
+      queryClient.invalidateQueries({ queryKey: ['profile', userId] })
+    },
+  })
+}
+
+export function useIsSuperAdmin() {
+  const { user } = useAuth()
+  const { data: profile } = useProfile(user?.id ?? null)
+  return profile?.isSuperAdmin ?? false
+}
+
+// Only a super admin may call this (admin_set_admin checks is_super_admin,
+// not just is_admin, on the caller) — granting/revoking admin rights is not
+// itself an admin capability, see DECISIONS.md.
+export function useSetAdmin() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ userId, isAdmin }: { userId: string; isAdmin: boolean }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_set_admin', { p_user_id: userId, p_is_admin: isAdmin })
+      if (error) throw error
+    },
+    onSuccess: (_data, { userId }) => {
+      queryClient.invalidateQueries({ queryKey: ['profile', userId] })
+      queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
+    },
+  })
+}
+
+// Shared by both "Доступы" (actionTypes: ['grant_admin','revoke_admin']) and
+// "Последние действия" (no filter, every action type) — same table, same
+// shape, only the filter differs.
+export function useAdminActions(actionTypes?: string[]) {
+  const isSuperAdmin = useIsSuperAdmin()
+  return useQuery({
+    queryKey: ['admin-actions', actionTypes?.join(',') ?? 'all'],
+    enabled: isSuperAdmin,
+    queryFn: async (): Promise<AdminAction[]> => {
+      const supabase = createClient()
+      let query = supabase
+        .from('admin_actions')
+        .select('id, details, created_at, profiles!admin_actions_admin_id_fkey(display_name)')
+        .order('created_at', { ascending: false })
+      if (actionTypes) query = query.in('action', actionTypes)
+      const { data, error } = await query
+      if (error) throw error
+      return data.map((row): AdminAction => {
+        const admin = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
+        return {
+          id: row.id,
+          adminName: admin?.display_name ?? 'Админ',
+          details: row.details,
+          createdAt: row.created_at,
+        }
+      })
+    },
+  })
+}
+
 export function useUpdateProfile() {
   const queryClient = useQueryClient()
   const { user } = useAuth()
   return useMutation({
-    mutationFn: async (patch: { displayName?: string; avatarUrl?: string }) => {
+    mutationFn: async (patch: { displayName?: string; avatarUrl?: string; bio?: string | null }) => {
       if (!user) throw new Error('not authenticated')
       const supabase = createClient()
       const { error } = await supabase
@@ -263,6 +391,7 @@ export function useUpdateProfile() {
         .update({
           ...(patch.displayName !== undefined ? { display_name: patch.displayName } : {}),
           ...(patch.avatarUrl !== undefined ? { avatar_url: patch.avatarUrl } : {}),
+          ...(patch.bio !== undefined ? { bio: patch.bio } : {}),
         })
         .eq('id', user.id)
       if (error) throw error
@@ -317,6 +446,88 @@ export function useSetFollowing() {
       queryClient.invalidateQueries({ queryKey: ['profile', followeeId] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
+  })
+}
+
+export function useReportCatch() {
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ catchId, reason }: { catchId: number; reason: string }) => {
+      if (!user) throw new Error('not authenticated')
+      const supabase = createClient()
+      const { error } = await supabase.from('catch_reports').insert({ catch_id: catchId, reporter_id: user.id, reason })
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reports'] }),
+  })
+}
+
+// RLS only lets is_admin profiles select rows here anyway (everyone else gets
+// an empty list, not an error) — `enabled` just avoids firing the request at
+// all for the common case (AdminReportsScreen stays mounted for every
+// visitor, admin or not, same as every other screen in this app-shell).
+export function useReports() {
+  const isAdmin = useIsAdmin()
+  return useQuery({
+    queryKey: ['reports'],
+    enabled: isAdmin,
+    queryFn: async (): Promise<CatchReport[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('catch_reports')
+        .select(
+          'id, reason, created_at, profiles!catch_reports_reporter_id_fkey(display_name), catches(id, territory_id, photo_url, species_info:species(name))'
+        )
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data
+        .filter((r) => r.catches)
+        .map((r): CatchReport => {
+          const c = Array.isArray(r.catches) ? r.catches[0] : r.catches!
+          const reporter = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
+          const speciesInfo = Array.isArray(c.species_info) ? c.species_info[0] : c.species_info
+          return {
+            id: r.id,
+            catchId: c.id,
+            reason: r.reason,
+            createdAt: r.created_at,
+            reporterName: reporter?.display_name ?? 'Рыбак',
+            territoryId: c.territory_id,
+            photoUrl: c.photo_url,
+            speciesName: speciesInfo?.name ?? null,
+          }
+        })
+    },
+  })
+}
+
+export function useAdminDeleteCatch() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (catchId: number) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_delete_catch', { p_catch_id: catchId })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
+      queryClient.invalidateQueries({ queryKey: ['territories'] })
+      queryClient.invalidateQueries({ queryKey: ['catches'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useDismissReport() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (reportId: number) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_dismiss_report', { p_report_id: reportId })
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reports'] }),
   })
 }
 

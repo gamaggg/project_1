@@ -18,6 +18,9 @@ import { ConfirmScreen, type CatchFormData, type PhotoStatus } from '@/component
 import { ActivityScreen } from '@/components/app-shell/screens/ActivityScreen'
 import { ProfileScreen, EditProfileModal } from '@/components/app-shell/screens/ProfileScreen'
 import { UserProfileScreen } from '@/components/app-shell/screens/UserProfileScreen'
+import { ReportPhotoModal } from '@/components/app-shell/screens/ReportPhotoModal'
+import { AdminReportsScreen } from '@/components/app-shell/screens/AdminReportsScreen'
+import { AdminActionsScreen } from '@/components/app-shell/screens/AdminActionsScreen'
 
 export type ScreenId =
   | 'screen-map'
@@ -28,6 +31,9 @@ export type ScreenId =
   | 'screen-activity'
   | 'screen-profile'
   | 'screen-user-profile'
+  | 'screen-admin-reports'
+  | 'screen-admin-access'
+  | 'screen-admin-log'
 
 export type TabScreenId = 'screen-map' | 'screen-territories' | 'screen-activity' | 'screen-profile'
 const NAV_SCREENS: ScreenId[] = ['screen-map', 'screen-territories', 'screen-activity', 'screen-profile']
@@ -47,6 +53,9 @@ type StackEntry =
   | { screen: 'screen-activity' }
   | { screen: 'screen-profile' }
   | { screen: 'screen-user-profile'; userId: string }
+  | { screen: 'screen-admin-reports' }
+  | { screen: 'screen-admin-access' }
+  | { screen: 'screen-admin-log' }
 
 export function FishZoneApp() {
   const { user, loading: authLoading, signOut } = useAuth()
@@ -66,6 +75,7 @@ export function FishZoneApp() {
   const [catchTerritoryId, setCatchTerritoryId] = useState<string | null>(null)
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
   const [editingProfile, setEditingProfile] = useState(false)
+  const [reportingCatchId, setReportingCatchId] = useState<number | null>(null)
   const [pendingCatch, setPendingCatch] = useState<PendingCatch | null>(null)
   const [confirmStep, setConfirmStep] = useState<'form' | 'success'>('form')
   const [wasFree, setWasFree] = useState(false)
@@ -132,6 +142,21 @@ export function FishZoneApp() {
     }
     setViewingUserId(id)
     push({ screen: 'screen-user-profile', userId: id })
+  }
+  function openReportModal(catchId: number) {
+    if (!user) {
+      navClick('screen-profile')
+      return
+    }
+    setReportingCatchId(catchId)
+  }
+  // Admin-only escape hatch from TerritoryScreen: same tail end as handlePlus()
+  // after a successful nearestTerritory() match, minus the geolocation call —
+  // see DECISIONS.md, confirm_catch never checked location server-side anyway.
+  function startAdminCatch(territoryId: string) {
+    setCatchTerritoryId(territoryId)
+    setCameraSessionId((n) => n + 1)
+    push({ screen: 'screen-camera' })
   }
   // "+" in the bottom nav is the ONLY way into the camera/catch flow — picking a
   // sector by hand (map/list) only ever opens the read-only TerritoryScreen, see
@@ -236,11 +261,18 @@ export function FishZoneApp() {
         </Screen>
         <Screen id="screen-territory" current={currentScreen}>
           {viewingTerritory && (
-            <TerritoryScreen territory={viewingTerritory} onBack={pop} onOpenUser={openUserProfile} onOpenPhoto={setLightboxSrc} />
+            <TerritoryScreen
+              territory={viewingTerritory}
+              onBack={pop}
+              onOpenUser={openUserProfile}
+              onOpenPhoto={setLightboxSrc}
+              onReportPhoto={openReportModal}
+              onAdminCatch={startAdminCatch}
+            />
           )}
         </Screen>
         <Screen id="screen-territories" current={currentScreen}>
-          <TerritoriesListScreen territories={territories} onOpenTerritory={openTerritory} />
+          <TerritoriesListScreen territories={territories} onOpenTerritory={openTerritory} onOpenUser={openUserProfile} />
         </Screen>
         <Screen id="screen-camera" current={currentScreen}>
           <CameraScreen key={cameraSessionId} onBack={pop} onCapture={handleCapture} />
@@ -273,6 +305,9 @@ export function FishZoneApp() {
             onSignOut={signOut}
             onEditProfile={() => setEditingProfile(true)}
             onOpenPhoto={setLightboxSrc}
+            onOpenReports={() => push({ screen: 'screen-admin-reports' })}
+            onOpenAdminAccess={() => push({ screen: 'screen-admin-access' })}
+            onOpenAdminLog={() => push({ screen: 'screen-admin-log' })}
           />
         </Screen>
         <Screen id="screen-user-profile" current={currentScreen}>
@@ -286,6 +321,15 @@ export function FishZoneApp() {
             />
           )}
         </Screen>
+        <Screen id="screen-admin-reports" current={currentScreen}>
+          <AdminReportsScreen onBack={pop} onOpenPhoto={setLightboxSrc} />
+        </Screen>
+        <Screen id="screen-admin-access" current={currentScreen}>
+          <AdminActionsScreen title="Доступы" actionTypes={['grant_admin', 'revoke_admin']} onBack={pop} />
+        </Screen>
+        <Screen id="screen-admin-log" current={currentScreen}>
+          <AdminActionsScreen title="Последние действия" onBack={pop} />
+        </Screen>
       </div>
 
       <div className={`toast${toast ? ' show' : ''}`}>{toast}</div>
@@ -293,10 +337,15 @@ export function FishZoneApp() {
       {outOfZone && (
         <div className="modal-overlay" onClick={() => setOutOfZone(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-title">Ты не на территории</div>
-            <div className="modal-body">
-              Похоже, сейчас ты не находишься ни на одном из секторов лова — зафиксировать улов не получится. Подойди ближе к воде и попробуй ещё раз.
+            <div className="modal-icon">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 21c-4-4.5-7-8-7-11a7 7 0 0 1 14 0c0 3-3 6.5-7 11z" />
+                <circle cx="12" cy="10" r="2.3" />
+                <path d="M4 4l16 16" />
+              </svg>
             </div>
+            <div className="modal-title">Ты не на территории</div>
+            <div className="modal-body">Подойди ближе к воде, чтобы зафиксировать улов.</div>
             <button className="btn-primary" onClick={() => setOutOfZone(false)}>
               Понятно
             </button>
@@ -306,6 +355,13 @@ export function FishZoneApp() {
 
       {editingProfile && <EditProfileModal onClose={() => setEditingProfile(false)} />}
       {lightboxSrc && <PhotoLightbox src={lightboxSrc} alt="Улов" onClose={() => setLightboxSrc(null)} />}
+      {reportingCatchId !== null && (
+        <ReportPhotoModal
+          catchId={reportingCatchId}
+          onClose={() => setReportingCatchId(null)}
+          onSubmitted={() => showToast('Жалоба отправлена, спасибо')}
+        />
+      )}
 
       {currentScreen !== 'screen-camera' && (
         <BottomNav

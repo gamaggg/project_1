@@ -1,6 +1,7 @@
 'use client'
 
-import { useCatchesByTerritory, useProfile } from '@/lib/supabase/queries'
+import { useCatchesByTerritory, useProfile, useIsAdmin } from '@/lib/supabase/queries'
+import { useAuth } from '@/components/providers/AuthProvider'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import type { Territory } from '@/lib/data/types'
@@ -22,19 +23,27 @@ function OwnerRow({ ownerId, isMine, onOpenUser }: { ownerId: string; isMine: bo
   )
 }
 
-// View-only — a catch can only be recorded through "+" (geolocation), never by
-// picking a sector by hand (see DECISIONS.md). No CTA here starts the camera.
+// View-only for regular users — a catch can only be recorded through "+"
+// (geolocation), never by picking a sector by hand (see DECISIONS.md). The
+// one exception is the admin-only "Добавить улов" button below, which skips
+// the geolocation gate entirely (see DECISIONS.md, admin bypass).
 export function TerritoryScreen({
   territory,
   onBack,
   onOpenUser,
   onOpenPhoto,
+  onReportPhoto,
+  onAdminCatch,
 }: {
   territory: Territory
   onBack: () => void
   onOpenUser: (id: string) => void
   onOpenPhoto: (src: string) => void
+  onReportPhoto: (catchId: number) => void
+  onAdminCatch: (territoryId: string) => void
 }) {
+  const { user } = useAuth()
+  const isAdmin = useIsAdmin()
   const { data: catches = [] } = useCatchesByTerritory(territory.id)
   const recent = catches.slice(0, 3)
 
@@ -69,6 +78,11 @@ export function TerritoryScreen({
         </div>
         {territory.ownerId && (
           <OwnerRow ownerId={territory.ownerId} isMine={territory.status === 'mine'} onOpenUser={onOpenUser} />
+        )}
+        {isAdmin && (
+          <button className="btn-secondary" style={{ marginTop: 12 }} onClick={() => onAdminCatch(territory.id)}>
+            Добавить улов (админ)
+          </button>
         )}
         <div className="card" style={{ marginTop: 16, padding: 16 }}>
           <div className="info-grid">
@@ -109,7 +123,17 @@ export function TerritoryScreen({
                     <div style={{ fontWeight: 700, fontSize: 14.5 }}>{c.speciesName}</div>
                     {meta && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 1 }}>{meta}</div>}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--ink-faint)', fontWeight: 600 }}>{formatWhen(c.caughtAt).split('·')[0].trim()}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                    <div style={{ fontSize: 12, color: 'var(--ink-faint)', fontWeight: 600 }}>{formatWhen(c.caughtAt).split('·')[0].trim()}</div>
+                    {user && !c.mine && (
+                      <button className="report-flag-btn tap-scale" onClick={() => onReportPhoto(c.id)} title="Пожаловаться на фото">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M5 3v18M5 4h12l-2.5 4L17 12H5" />
+                        </svg>
+                        Пожаловаться
+                      </button>
+                    )}
+                  </div>
                 </div>
               )
             })
