@@ -73,39 +73,46 @@ export type Database = {
       }
       catches: {
         Row: {
-          bait: string
+          bait: string | null
           caught_at: string
           id: number
-          length_cm: number
-          method: string
-          species: Database["public"]["Enums"]["catch_species"]
+          length_cm: number | null
+          method: string | null
+          species: string
           territory_id: string
           user_id: string
-          weight_kg: number
+          weight_kg: number | null
         }
         Insert: {
-          bait: string
+          bait?: string | null
           caught_at?: string
           id?: never
-          length_cm: number
-          method: string
-          species: Database["public"]["Enums"]["catch_species"]
+          length_cm?: number | null
+          method?: string | null
+          species: string
           territory_id: string
           user_id: string
-          weight_kg: number
+          weight_kg?: number | null
         }
         Update: {
-          bait?: string
+          bait?: string | null
           caught_at?: string
           id?: never
-          length_cm?: number
-          method?: string
-          species?: Database["public"]["Enums"]["catch_species"]
+          length_cm?: number | null
+          method?: string | null
+          species?: string
           territory_id?: string
           user_id?: string
-          weight_kg?: number
+          weight_kg?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "catches_species_fkey"
+            columns: ["species"]
+            isOneToOne: false
+            referencedRelation: "species"
+            referencedColumns: ["key"]
+          },
           {
             foreignKeyName: "catches_territory_id_fkey"
             columns: ["territory_id"]
@@ -150,6 +157,24 @@ export type Database = {
           followers_count?: number
           id?: string
           location?: string | null
+        }
+        Relationships: []
+      }
+      species: {
+        Row: {
+          category: string
+          key: string
+          name: string
+        }
+        Insert: {
+          category: string
+          key: string
+          name: string
+        }
+        Update: {
+          category?: string
+          key?: string
+          name?: string
         }
         Relationships: []
       }
@@ -219,28 +244,27 @@ export type Database = {
     Functions: {
       confirm_catch: {
         Args: {
-          p_bait: string
-          p_length_cm: number
-          p_method: string
-          p_species: Database["public"]["Enums"]["catch_species"]
+          p_bait?: string
+          p_length_cm?: number
+          p_method?: string
+          p_species: string
           p_territory_id: string
-          p_weight_kg: number
+          p_weight_kg?: number
         }
         Returns: {
-          bait: string
+          bait: string | null
           caught_at: string
           id: number
-          length_cm: number
-          method: string
-          species: Database["public"]["Enums"]["catch_species"]
+          length_cm: number | null
+          method: string | null
+          species: string
           territory_id: string
           user_id: string
-          weight_kg: number
+          weight_kg: number | null
         }
       }
     }
     Enums: {
-      catch_species: "stavrida" | "skorpena" | "laskir"
       territory_kind: "sea" | "river" | "stream" | "lake"
     }
     CompositeTypes: {
@@ -252,7 +276,6 @@ export type Database = {
 export const Constants = {
   public: {
     Enums: {
-      catch_species: ["stavrida", "skorpena", "laskir"],
       territory_kind: ["sea", "river", "stream", "lake"],
     },
   },

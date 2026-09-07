@@ -3,8 +3,8 @@
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useProfile, useMyCatches } from '@/lib/supabase/queries'
 import { computeAchievements, personalRecord } from '@/lib/data/achievements'
-import { speciesInfo, SPECIES_GRADIENT, KIND_LABEL } from '@/lib/data/species'
-import { formatWeight } from '@/lib/format'
+import { CATEGORY_GRADIENT, KIND_LABEL } from '@/lib/data/species'
+import { formatCatchMeta } from '@/lib/format'
 import { FishIcon, ACH_ICONS } from '@/components/app-shell/icons'
 import { AuthForm } from '@/components/app-shell/AuthForm'
 import type { Territory } from '@/lib/data/types'
@@ -83,20 +83,18 @@ export function ProfileScreen({ myTerritories, onOpenTerritory, onSignOut }: { m
       <div className="card" style={{ overflow: 'hidden' }}>
         {recentMine.length ? (
           recentMine.map((c, i) => {
-            const sp = speciesInfo(c.species)
+            const meta = formatCatchMeta(c.lengthCm, c.weightKg)
             return (
               <div
                 key={c.id}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recentMine.length - 1 ? '1px solid var(--line)' : 'none' }}
               >
-                <div className="fish-thumb" style={{ width: 46, height: 46, background: SPECIES_GRADIENT[c.species] }}>
+                <div className="fish-thumb" style={{ width: 46, height: 46, background: CATEGORY_GRADIENT[c.speciesCategory] }}>
                   <FishIcon size={20} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14.5 }}>{sp.name}</div>
-                  <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 1 }}>
-                    {c.lengthCm} см · {formatWeight(c.weightKg)} кг
-                  </div>
+                  <div style={{ fontWeight: 700, fontSize: 14.5 }}>{c.speciesName}</div>
+                  {meta && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 1 }}>{meta}</div>}
                 </div>
               </div>
             )
@@ -139,11 +137,11 @@ export function ProfileScreen({ myTerritories, onOpenTerritory, onSignOut }: { m
             Личный рекорд
           </div>
           <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div className="fish-thumb" style={{ width: 52, height: 52, background: SPECIES_GRADIENT[record.species] }}>
+            <div className="fish-thumb" style={{ width: 52, height: 52, background: CATEGORY_GRADIENT[record.speciesCategory] }}>
               <FishIcon size={24} />
             </div>
             <div>
-              <div style={{ fontWeight: 800, fontSize: 16 }}>{speciesInfo(record.species).name}</div>
+              <div style={{ fontWeight: 800, fontSize: 16 }}>{record.speciesName}</div>
               <div style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 700, marginTop: 2 }}>{record.lengthCm} см</div>
             </div>
           </div>

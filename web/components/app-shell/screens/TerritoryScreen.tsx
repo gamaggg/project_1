@@ -1,8 +1,8 @@
 'use client'
 
 import { useCatchesByTerritory } from '@/lib/supabase/queries'
-import { KIND_LABEL, speciesInfo, SPECIES_GRADIENT } from '@/lib/data/species'
-import { formatWeight, formatWhen } from '@/lib/format'
+import { KIND_LABEL, CATEGORY_GRADIENT } from '@/lib/data/species'
+import { formatCatchMeta, formatWhen } from '@/lib/format'
 import { FishIcon } from '@/components/app-shell/icons'
 import type { Territory } from '@/lib/data/types'
 
@@ -79,20 +79,18 @@ export function TerritoryScreen({
         <div className="card" style={{ overflow: 'hidden' }}>
           {recent.length ? (
             recent.map((c, i) => {
-              const sp = speciesInfo(c.species)
+              const meta = formatCatchMeta(c.lengthCm, c.weightKg)
               return (
                 <div
                   key={c.id}
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recent.length - 1 ? '1px solid var(--line)' : 'none' }}
                 >
-                  <div className="fish-thumb" style={{ width: 46, height: 46, background: SPECIES_GRADIENT[c.species] }}>
+                  <div className="fish-thumb" style={{ width: 46, height: 46, background: CATEGORY_GRADIENT[c.speciesCategory] }}>
                     <FishIcon size={20} />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, fontSize: 14.5 }}>{sp.name}</div>
-                    <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 1 }}>
-                      {c.lengthCm} см · {formatWeight(c.weightKg)} кг
-                    </div>
+                    <div style={{ fontWeight: 700, fontSize: 14.5 }}>{c.speciesName}</div>
+                    {meta && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 1 }}>{meta}</div>}
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--ink-faint)', fontWeight: 600 }}>{formatWhen(c.caughtAt).split('·')[0].trim()}</div>
                 </div>

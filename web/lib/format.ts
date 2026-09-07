@@ -16,3 +16,9 @@ export function formatWhen(iso: string): string {
 export function formatWeight(kg: number): string {
   return kg.toFixed(2).replace('.', ',')
 }
+
+// Size/weight are optional now (see DECISIONS.md — only species is required
+// when logging a catch) — joins whichever of the two were given, or ''.
+export function formatCatchMeta(lengthCm: number | null, weightKg: number | null): string {
+  return [lengthCm ? `${lengthCm} см` : null, weightKg ? `${formatWeight(weightKg)} кг` : null].filter(Boolean).join(' · ')
+}

@@ -13,10 +13,12 @@ export function BottomNav({
   active,
   onNavigate,
   onPlus,
+  plusPending,
 }: {
   active: ScreenId
   onNavigate: (id: ScreenId) => void
   onPlus: () => void
+  plusPending?: boolean
 }) {
   return (
     <div className="bottomnav">
@@ -36,7 +38,7 @@ export function BottomNav({
         </svg>
         <span>Территории</span>
       </NavItem>
-      <div className="navitem tap-scale" onClick={onPlus}>
+      <div className="navitem tap-scale" onClick={plusPending ? undefined : onPlus} style={plusPending ? { pointerEvents: 'none', opacity: 0.6 } : undefined}>
         <div className="navplus-badge">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.8" strokeLinecap="round">
             <path d="M12 5v14M5 12h14" />

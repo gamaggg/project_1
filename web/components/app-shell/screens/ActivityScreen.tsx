@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useActivity } from '@/lib/supabase/queries'
-import { speciesInfo, SPECIES_GRADIENT, KIND_LABEL } from '@/lib/data/species'
-import { formatWeight, formatWhen } from '@/lib/format'
+import { CATEGORY_GRADIENT, KIND_LABEL } from '@/lib/data/species'
+import { formatCatchMeta, formatWhen } from '@/lib/format'
 import { FishIcon } from '@/components/app-shell/icons'
 
 type Filter = 'all' | 'mine'
@@ -30,11 +30,8 @@ export function ActivityScreen() {
           <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Загрузка…</div>
         ) : list.length ? (
           list.map((a) => {
-            const sp = a.species ? speciesInfo(a.species) : null
-            const text =
-              a.kind === 'claim'
-                ? `занял${a.mine ? '' : 'а'} территорию ${a.territoryId}`
-                : `поймал${sp?.key === 'laskir' ? 'а' : ''} ${sp?.name.toLowerCase()}`
+            const meta = formatCatchMeta(a.lengthCm, a.weightKg)
+            const text = a.kind === 'claim' ? `занял территорию ${a.territoryId}` : `поймал ${a.speciesName?.toLowerCase() ?? 'рыбу'}`
             return (
               <div className="activity-item" key={a.id}>
                 <div className="avatar" style={a.mine ? {} : { background: 'var(--blue)' }}>
@@ -47,15 +44,13 @@ export function ActivityScreen() {
                   <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
                     Территория {a.territoryId} · {KIND_LABEL[a.territoryKind]}
                   </div>
-                  {a.lengthCm != null && a.weightKg != null && (
-                    <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2, fontWeight: 600 }}>
-                      {a.lengthCm} см · {formatWeight(a.weightKg)} кг
-                    </div>
+                  {meta && (
+                    <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2, fontWeight: 600 }}>{meta}</div>
                   )}
                   <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6 }}>{formatWhen(a.createdAt)}</div>
                 </div>
-                {sp && (
-                  <div className="fish-thumb" style={{ width: 44, height: 44, background: SPECIES_GRADIENT[sp.key] }}>
+                {a.speciesName && (
+                  <div className="fish-thumb" style={{ width: 44, height: 44, background: CATEGORY_GRADIENT[a.speciesCategory ?? 'marine'] }}>
                     <FishIcon size={18} />
                   </div>
                 )}

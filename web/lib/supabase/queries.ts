@@ -3,8 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/AuthProvider'
-import type { Territory, Catch, ActivityEntry, TerritoryKind } from '@/lib/data/types'
-import type { SpeciesKey } from '@/lib/data/species'
+import type { Territory, Catch, ActivityEntry, TerritoryKind, Species } from '@/lib/data/types'
 
 type SectorGeometry = {
   id: string
@@ -64,6 +63,56 @@ export function useTerritories() {
   })
 }
 
+// Reference data (36 species, sea/river/stream/lake) — read-only, cached like
+// the sector geometry. See DECISIONS.md for why this is a DB table, not a
+// hardcoded list like METHODS/BAITS.
+export function useSpecies() {
+  return useQuery({
+    queryKey: ['species'],
+    queryFn: async (): Promise<Species[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.from('species').select('key, name, category').order('name')
+      if (error) throw error
+      return data as Species[]
+    },
+    staleTime: Infinity,
+    gcTime: Infinity,
+  })
+}
+
+const CATCH_SELECT = '*, species_info:species(name, category)'
+
+type CatchRow = {
+  id: number
+  territory_id: string
+  user_id: string
+  species: string
+  species_info: { name: string; category: string } | { name: string; category: string }[] | null
+  length_cm: number | null
+  weight_kg: number | null
+  method: string | null
+  bait: string | null
+  caught_at: string
+}
+
+function rowToCatch(c: CatchRow, currentUserId?: string): Catch {
+  const info = Array.isArray(c.species_info) ? c.species_info[0] : c.species_info
+  return {
+    id: c.id,
+    territoryId: c.territory_id,
+    userId: c.user_id,
+    species: c.species,
+    speciesName: info?.name ?? c.species,
+    speciesCategory: (info?.category as 'marine' | 'freshwater') ?? 'marine',
+    lengthCm: c.length_cm,
+    weightKg: c.weight_kg,
+    method: c.method,
+    bait: c.bait,
+    caughtAt: c.caught_at,
+    mine: c.user_id === currentUserId,
+  }
+}
+
 export function useCatchesByTerritory(territoryId: string | null) {
   const { user } = useAuth()
   return useQuery({
@@ -72,11 +121,11 @@ export function useCatchesByTerritory(territoryId: string | null) {
       const supabase = createClient()
       const { data, error } = await supabase
         .from('catches')
-        .select('*')
+        .select(CATCH_SELECT)
         .eq('territory_id', territoryId!)
         .order('caught_at', { ascending: false })
       if (error) throw error
-      return data!.map((c) => rowToCatch(c, user?.id))
+      return (data as CatchRow[]).map((c) => rowToCatch(c, user?.id))
     },
     enabled: !!territoryId,
   })
@@ -91,32 +140,14 @@ export function useMyCatches() {
       const supabase = createClient()
       const { data, error } = await supabase
         .from('catches')
-        .select('*')
+        .select(CATCH_SELECT)
         .eq('user_id', user.id)
         .order('caught_at', { ascending: false })
       if (error) throw error
-      return data!.map((c) => rowToCatch(c, user.id))
+      return (data as CatchRow[]).map((c) => rowToCatch(c, user.id))
     },
     enabled: !!user,
   })
-}
-
-function rowToCatch(
-  c: { id: number; territory_id: string; user_id: string; species: SpeciesKey; length_cm: number; weight_kg: number; method: string; bait: string; caught_at: string },
-  currentUserId?: string
-): Catch {
-  return {
-    id: c.id,
-    territoryId: c.territory_id,
-    userId: c.user_id,
-    species: c.species,
-    lengthCm: c.length_cm,
-    weightKg: c.weight_kg,
-    method: c.method,
-    bait: c.bait,
-    caughtAt: c.caught_at,
-    mine: c.user_id === currentUserId,
-  }
 }
 
 export function useActivity() {
@@ -128,7 +159,7 @@ export function useActivity() {
       const { data, error } = await supabase
         .from('activity_log')
         .select(
-          'id, kind, created_at, user_id, territory_id, territories(kind), catches(species, length_cm, weight_kg), profiles(display_name)'
+          'id, kind, created_at, user_id, territory_id, territories(kind), catches(length_cm, weight_kg, species_info:species(name, category)), profiles(display_name)'
         )
         .order('created_at', { ascending: false })
         .limit(100)
@@ -137,15 +168,17 @@ export function useActivity() {
       return data!.map((row): ActivityEntry => {
         const territory = Array.isArray(row.territories) ? row.territories[0] : row.territories
         const c = Array.isArray(row.catches) ? row.catches[0] : row.catches
+        const speciesInfo = c ? (Array.isArray(c.species_info) ? c.species_info[0] : c.species_info) : null
         const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
         return {
           id: row.id,
-          who: row.user_id === user?.id ? 'Ты' : profile?.display_name ?? 'Рыбак',
+          who: row.user_id === user?.id ? 'Ты' : (profile?.display_name ?? 'Рыбак'),
           mine: row.user_id === user?.id,
           kind: row.kind as 'catch' | 'claim',
           territoryId: row.territory_id,
           territoryKind: territory?.kind ?? 'sea',
-          species: c?.species ?? null,
+          speciesName: speciesInfo?.name ?? null,
+          speciesCategory: (speciesInfo?.category as 'marine' | 'freshwater' | undefined) ?? null,
           lengthCm: c?.length_cm ?? null,
           weightKg: c?.weight_kg ?? null,
           createdAt: row.created_at,
@@ -173,20 +206,20 @@ export function useConfirmCatch() {
   return useMutation({
     mutationFn: async (args: {
       territoryId: string
-      species: SpeciesKey
-      lengthCm: number
-      weightKg: number
-      method: string
-      bait: string
+      species: string
+      lengthCm: number | null
+      weightKg: number | null
+      method: string | null
+      bait: string | null
     }) => {
       const supabase = createClient()
       const { data, error } = await supabase.rpc('confirm_catch', {
         p_territory_id: args.territoryId,
         p_species: args.species,
-        p_length_cm: args.lengthCm,
-        p_weight_kg: args.weightKg,
-        p_method: args.method,
-        p_bait: args.bait,
+        p_length_cm: args.lengthCm ?? undefined,
+        p_weight_kg: args.weightKg ?? undefined,
+        p_method: args.method ?? undefined,
+        p_bait: args.bait ?? undefined,
       })
       if (error) throw error
       return data

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { forwardRef, useImperativeHandle, useRef } from 'react'
 import { MapView } from '@/components/app-shell/MapView'
 import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import type { Territory } from '@/lib/data/types'
@@ -13,14 +13,15 @@ function statusBadge(status: Territory['status']) {
   return <span className="badge badge-neutral">Свободна</span>
 }
 
-export function MapScreen({
-  territories,
-  onOpenTerritory,
-}: {
-  territories: Territory[]
-  onOpenTerritory: (id: string) => void
-}) {
+// forwardRef so FishZoneApp can fly the map to a geolocated sector (from the
+// "+" handler) even while the camera screen is showing — the map stays
+// mounted the whole time, it's just visually hidden (see .screen CSS).
+export const MapScreen = forwardRef<LeafletMapHandle, { territories: Territory[]; onOpenTerritory: (id: string) => void }>(
+  function MapScreen({ territories, onOpenTerritory }, forwardedRef) {
   const mapRef = useRef<LeafletMapHandle>(null)
+  useImperativeHandle(forwardedRef, () => ({
+    flyToTerritory: (id: string) => mapRef.current?.flyToTerritory(id),
+  }))
   const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function handleScroll(e: React.UIEvent<HTMLDivElement>) {
@@ -97,4 +98,5 @@ export function MapScreen({
       </div>
     </div>
   )
-}
+  }
+)

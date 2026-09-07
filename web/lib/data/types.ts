@@ -1,5 +1,5 @@
 import type { Database } from '@/lib/types'
-import type { SpeciesKey } from '@/lib/data/species'
+import type { SpeciesCategory } from '@/lib/data/species'
 
 export type TerritoryKind = Database['public']['Enums']['territory_kind']
 export type TerritoryStatus = 'mine' | 'other' | 'free'
@@ -19,26 +19,34 @@ export type Territory = {
   lastCatchAt: string | null
 }
 
+export type Species = {
+  key: string
+  name: string
+  category: SpeciesCategory
+}
+
 export type Catch = {
   id: number
   territoryId: string
   userId: string
-  species: SpeciesKey
-  lengthCm: number
-  weightKg: number
-  method: string
-  bait: string
+  species: string
+  speciesName: string
+  speciesCategory: SpeciesCategory
+  lengthCm: number | null
+  weightKg: number | null
+  method: string | null
+  bait: string | null
   caughtAt: string
   mine: boolean
 }
 
 export type PendingCatch = {
   territoryId: string
-  species: SpeciesKey
-  lengthCm: number
-  weightKg: number
-  method: string
-  bait: string
+  species: string
+  lengthCm: number | null
+  weightKg: number | null
+  method: string | null
+  bait: string | null
 }
 
 export type ActivityEntry = {
@@ -48,7 +56,8 @@ export type ActivityEntry = {
   kind: 'catch' | 'claim'
   territoryId: string
   territoryKind: TerritoryKind
-  species: SpeciesKey | null
+  speciesName: string | null
+  speciesCategory: SpeciesCategory | null
   lengthCm: number | null
   weightKg: number | null
   createdAt: string

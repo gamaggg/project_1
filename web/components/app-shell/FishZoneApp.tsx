@@ -3,14 +3,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useTerritories, useConfirmCatch } from '@/lib/supabase/queries'
-import { SPECIES, METHODS, BAITS } from '@/lib/data/species'
+import { findMyTerritory } from '@/lib/geolocation'
 import type { PendingCatch } from '@/lib/data/types'
 import { BottomNav } from '@/components/app-shell/BottomNav'
 import { MapScreen } from '@/components/app-shell/screens/MapScreen'
+import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import { TerritoryScreen } from '@/components/app-shell/screens/TerritoryScreen'
 import { TerritoriesListScreen } from '@/components/app-shell/screens/TerritoriesListScreen'
 import { CameraScreen } from '@/components/app-shell/screens/CameraScreen'
-import { ConfirmScreen } from '@/components/app-shell/screens/ConfirmScreen'
+import { ConfirmScreen, type CatchFormData } from '@/components/app-shell/screens/ConfirmScreen'
 import { ActivityScreen } from '@/components/app-shell/screens/ActivityScreen'
 import { ProfileScreen } from '@/components/app-shell/screens/ProfileScreen'
 
@@ -29,13 +30,15 @@ export function FishZoneApp() {
   const { user, loading: authLoading, signOut } = useAuth()
   const { data: territories = [], isLoading: territoriesLoading } = useTerritories()
   const confirmCatchMutation = useConfirmCatch()
+  const mapHandleRef = useRef<LeafletMapHandle>(null)
 
   const [currentScreen, setCurrentScreen] = useState<ScreenId>('screen-map')
   const [navScreen, setNavScreen] = useState<ScreenId>('screen-map')
   const [activeTerritoryId, setActiveTerritoryId] = useState<string | null>(null)
   const [pendingCatch, setPendingCatch] = useState<PendingCatch | null>(null)
-  const [confirmStep, setConfirmStep] = useState<'review' | 'success'>('review')
+  const [confirmStep, setConfirmStep] = useState<'form' | 'success'>('form')
   const [wasFree, setWasFree] = useState(false)
+  const [locating, setLocating] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -57,41 +60,54 @@ export function FishZoneApp() {
     setActiveTerritoryId(id)
     goTo('screen-territory')
   }
-  function startCatchFlow(territoryId: string | null) {
+  // Explicit territory (e.g. the CTA on TerritoryScreen) — no geolocation needed,
+  // the user already picked a sector.
+  function startCatchFlow(territoryId: string) {
     if (!user) {
       navClick('screen-profile')
       return
     }
-    const id = territoryId ?? activeTerritoryId
-    if (!id) {
-      showToast('Сначала выбери территорию на карте')
+    setActiveTerritoryId(territoryId)
+    goTo('screen-camera')
+  }
+  // "+" in the bottom nav — no territory picked yet. Finds the nearest sector to
+  // the visitor's current position (see DECISIONS.md: asked on-demand here, not
+  // eagerly on the map screen) and jumps straight to the camera for it.
+  async function handlePlus() {
+    if (!user) {
+      navClick('screen-profile')
       return
     }
-    setActiveTerritoryId(id)
-    goTo('screen-camera')
+    setLocating(true)
+    showToast('Определяем твоё местоположение…')
+    const found = await findMyTerritory(territories)
+    setLocating(false)
+    if (found) {
+      mapHandleRef.current?.flyToTerritory(found.id)
+      setActiveTerritoryId(found.id)
+      setToast(null)
+      goTo('screen-camera')
+      return
+    }
+    if (activeTerritoryId) {
+      goTo('screen-camera')
+      return
+    }
+    showToast('Не получилось определить локацию — выбери территорию на карте')
   }
   function takePhoto() {
     if (!activeTerritoryId) return
-    const sp = SPECIES[Math.floor(Math.random() * SPECIES.length)]
-    const lengthCm = Math.round(20 + Math.random() * 22)
-    const weightKg = +(0.18 + (lengthCm / 32) * 0.28).toFixed(2)
-    setPendingCatch({
-      territoryId: activeTerritoryId,
-      species: sp.key,
-      lengthCm,
-      weightKg,
-      method: METHODS[Math.floor(Math.random() * METHODS.length)],
-      bait: BAITS[Math.floor(Math.random() * BAITS.length)],
-    })
-    const t = territories.find((x) => x.id === activeTerritoryId)
-    setWasFree(t?.status !== 'mine')
-    setConfirmStep('review')
+    setConfirmStep('form')
     goTo('screen-confirm')
   }
-  async function confirmCatch() {
-    if (!pendingCatch) return
+  async function submitCatch(form: CatchFormData) {
+    if (!activeTerritoryId) return
+    const t = territories.find((x) => x.id === activeTerritoryId)
+    const payload: PendingCatch = { territoryId: activeTerritoryId, ...form }
     try {
-      await confirmCatchMutation.mutateAsync(pendingCatch)
+      await confirmCatchMutation.mutateAsync(payload)
+      setWasFree(t?.status !== 'mine')
+      setPendingCatch(payload)
       setConfirmStep('success')
     } catch {
       showToast('Не удалось сохранить улов, попробуй ещё раз')
@@ -104,7 +120,6 @@ export function FishZoneApp() {
 
   const activeTerritory = territories.find((t) => t.id === activeTerritoryId) ?? null
   const myTerritories = territories.filter((t) => t.status === 'mine')
-  const confirmTerritory = pendingCatch ? territories.find((t) => t.id === pendingCatch.territoryId) : null
 
   if (authLoading || territoriesLoading) {
     return (
@@ -118,7 +133,7 @@ export function FishZoneApp() {
     <div className="app-shell">
       <div className="screens">
         <Screen id="screen-map" current={currentScreen}>
-          <MapScreen territories={territories} onOpenTerritory={openTerritory} />
+          <MapScreen ref={mapHandleRef} territories={territories} onOpenTerritory={openTerritory} />
         </Screen>
         <Screen id="screen-territory" current={currentScreen}>
           {activeTerritory && (
@@ -132,14 +147,14 @@ export function FishZoneApp() {
           <CameraScreen territory={activeTerritory} onBack={() => goTo('screen-map')} onShutter={takePhoto} />
         </Screen>
         <Screen id="screen-confirm" current={currentScreen}>
-          {pendingCatch && confirmTerritory && (
+          {activeTerritory && (confirmStep === 'form' || pendingCatch) && (
             <ConfirmScreen
+              territory={activeTerritory}
               pendingCatch={pendingCatch}
-              territory={confirmTerritory}
               wasFree={wasFree}
               step={confirmStep}
               pending={confirmCatchMutation.isPending}
-              onConfirm={confirmCatch}
+              onSubmit={submitCatch}
               onFinish={finishCatchFlow}
               onBack={() => goTo('screen-camera')}
               onShare={() => showToast('Ссылка на улов скопирована')}
@@ -160,7 +175,8 @@ export function FishZoneApp() {
         <BottomNav
           active={NAV_SCREENS.includes(currentScreen) ? currentScreen : navScreen}
           onNavigate={navClick}
-          onPlus={() => startCatchFlow(null)}
+          onPlus={handlePlus}
+          plusPending={locating}
         />
       )}
     </div>
