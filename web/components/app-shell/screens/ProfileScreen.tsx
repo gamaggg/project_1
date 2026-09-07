@@ -3,9 +3,9 @@
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useProfile, useMyCatches } from '@/lib/supabase/queries'
 import { computeAchievements, personalRecord } from '@/lib/data/achievements'
-import { CATEGORY_GRADIENT, KIND_LABEL } from '@/lib/data/species'
+import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta } from '@/lib/format'
-import { FishIcon, ACH_ICONS } from '@/components/app-shell/icons'
+import { ACH_ICONS } from '@/components/app-shell/icons'
 import { AuthForm } from '@/components/app-shell/AuthForm'
 import type { Territory } from '@/lib/data/types'
 
@@ -89,8 +89,8 @@ export function ProfileScreen({ myTerritories, onOpenTerritory, onSignOut }: { m
                 key={c.id}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recentMine.length - 1 ? '1px solid var(--line)' : 'none' }}
               >
-                <div className="fish-thumb" style={{ width: 46, height: 46, background: CATEGORY_GRADIENT[c.speciesCategory] }}>
-                  <FishIcon size={20} />
+                <div className="fish-thumb" style={{ width: 46, height: 46 }}>
+                  <img src={c.photoUrl} alt={c.speciesName} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, fontSize: 14.5 }}>{c.speciesName}</div>
@@ -137,8 +137,8 @@ export function ProfileScreen({ myTerritories, onOpenTerritory, onSignOut }: { m
             Личный рекорд
           </div>
           <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div className="fish-thumb" style={{ width: 52, height: 52, background: CATEGORY_GRADIENT[record.speciesCategory] }}>
-              <FishIcon size={24} />
+            <div className="fish-thumb" style={{ width: 52, height: 52 }}>
+              <img src={record.photoUrl} alt={record.speciesName} />
             </div>
             <div>
               <div style={{ fontWeight: 800, fontSize: 16 }}>{record.speciesName}</div>

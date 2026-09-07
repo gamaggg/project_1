@@ -92,6 +92,7 @@ type CatchRow = {
   weight_kg: number | null
   method: string | null
   bait: string | null
+  photo_url: string
   caught_at: string
 }
 
@@ -108,6 +109,7 @@ function rowToCatch(c: CatchRow, currentUserId?: string): Catch {
     weightKg: c.weight_kg,
     method: c.method,
     bait: c.bait,
+    photoUrl: c.photo_url,
     caughtAt: c.caught_at,
     mine: c.user_id === currentUserId,
   }
@@ -159,7 +161,7 @@ export function useActivity() {
       const { data, error } = await supabase
         .from('activity_log')
         .select(
-          'id, kind, created_at, user_id, territory_id, territories(kind), catches(length_cm, weight_kg, species_info:species(name, category)), profiles(display_name)'
+          'id, kind, created_at, user_id, territory_id, territories(kind), catches(length_cm, weight_kg, photo_url, species_info:species(name, category)), profiles(display_name)'
         )
         .order('created_at', { ascending: false })
         .limit(100)
@@ -181,6 +183,7 @@ export function useActivity() {
           speciesCategory: (speciesInfo?.category as 'marine' | 'freshwater' | undefined) ?? null,
           lengthCm: c?.length_cm ?? null,
           weightKg: c?.weight_kg ?? null,
+          photoUrl: c?.photo_url ?? null,
           createdAt: row.created_at,
         }
       })
@@ -207,6 +210,7 @@ export function useConfirmCatch() {
     mutationFn: async (args: {
       territoryId: string
       species: string
+      photoUrl: string
       lengthCm: number | null
       weightKg: number | null
       method: string | null
@@ -216,6 +220,7 @@ export function useConfirmCatch() {
       const { data, error } = await supabase.rpc('confirm_catch', {
         p_territory_id: args.territoryId,
         p_species: args.species,
+        p_photo_url: args.photoUrl,
         p_length_cm: args.lengthCm ?? undefined,
         p_weight_kg: args.weightKg ?? undefined,
         p_method: args.method ?? undefined,

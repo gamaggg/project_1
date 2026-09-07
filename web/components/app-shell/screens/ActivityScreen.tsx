@@ -50,8 +50,8 @@ export function ActivityScreen() {
                   <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6 }}>{formatWhen(a.createdAt)}</div>
                 </div>
                 {a.speciesName && (
-                  <div className="fish-thumb" style={{ width: 44, height: 44, background: CATEGORY_GRADIENT[a.speciesCategory ?? 'marine'] }}>
-                    <FishIcon size={18} />
+                  <div className="fish-thumb" style={{ width: 44, height: 44, background: a.photoUrl ? undefined : CATEGORY_GRADIENT[a.speciesCategory ?? 'marine'] }}>
+                    {a.photoUrl ? <img src={a.photoUrl} alt={a.speciesName} /> : <FishIcon size={18} />}
                   </div>
                 )}
               </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useCatchesByTerritory } from '@/lib/supabase/queries'
-import { KIND_LABEL, CATEGORY_GRADIENT } from '@/lib/data/species'
+import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import { FishIcon } from '@/components/app-shell/icons'
 import type { Territory } from '@/lib/data/types'
@@ -85,8 +85,8 @@ export function TerritoryScreen({
                   key={c.id}
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recent.length - 1 ? '1px solid var(--line)' : 'none' }}
                 >
-                  <div className="fish-thumb" style={{ width: 46, height: 46, background: CATEGORY_GRADIENT[c.speciesCategory] }}>
-                    <FishIcon size={20} />
+                  <div className="fish-thumb" style={{ width: 46, height: 46 }}>
+                    <img src={c.photoUrl} alt={c.speciesName} />
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, fontSize: 14.5 }}>{c.speciesName}</div>

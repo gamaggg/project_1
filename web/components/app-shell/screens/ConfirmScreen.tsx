@@ -1,10 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSpecies } from '@/lib/supabase/queries'
-import { CATEGORY_GRADIENT, CATEGORY_LABEL, KIND_LABEL, METHODS, BAITS, categoryForKind, type SpeciesCategory } from '@/lib/data/species'
+import { CATEGORY_LABEL, KIND_LABEL, METHODS, BAITS, categoryForKind, type SpeciesCategory } from '@/lib/data/species'
 import { formatWeight } from '@/lib/format'
-import { FishIcon } from '@/components/app-shell/icons'
 import type { PendingCatch, Territory } from '@/lib/data/types'
 
 export type CatchFormData = {
@@ -15,12 +14,17 @@ export type CatchFormData = {
   bait: string | null
 }
 
+export type PhotoStatus = 'uploading' | 'success' | 'error'
+
 export function ConfirmScreen({
   territory,
   pendingCatch,
   wasFree,
   step,
   pending,
+  capturedPhoto,
+  photoStatus,
+  onRetryUpload,
   onSubmit,
   onFinish,
   onBack,
@@ -31,6 +35,9 @@ export function ConfirmScreen({
   wasFree: boolean
   step: 'form' | 'success'
   pending: boolean
+  capturedPhoto: Blob
+  photoStatus: PhotoStatus
+  onRetryUpload: () => void
   onSubmit: (form: CatchFormData) => void
   onFinish: () => void
   onBack: () => void
@@ -43,12 +50,19 @@ export function ConfirmScreen({
   const [weightKg, setWeightKg] = useState('')
   const [method, setMethod] = useState('')
   const [bait, setBait] = useState('')
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    const url = URL.createObjectURL(capturedPhoto)
+    setPreviewUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [capturedPhoto])
 
   const speciesOptions = species.filter((s) => s.category === category)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!speciesKey) return
+    if (!speciesKey || photoStatus !== 'success') return
     onSubmit({
       species: speciesKey,
       lengthCm: lengthCm.trim() ? Number(lengthCm) : null,
@@ -72,8 +86,22 @@ export function ConfirmScreen({
       <div className="screen-inner">
         {step === 'form' ? (
           <form onSubmit={handleSubmit}>
-            <div className="confirm-photo" style={{ background: CATEGORY_GRADIENT[category] }}>
-              <FishIcon size={96} />
+            <div className="confirm-photo">
+              {previewUrl && <img src={previewUrl} alt="Улов" className="confirm-photo-img" />}
+              {photoStatus === 'uploading' && (
+                <div className="confirm-photo-status">
+                  <div className="spinner" />
+                  <div className="msg">Загружаем фото…</div>
+                </div>
+              )}
+              {photoStatus === 'error' && (
+                <div className="confirm-photo-status">
+                  <div className="msg">Не удалось загрузить фото. Без фото улов сохранить нельзя.</div>
+                  <button type="button" className="confirm-photo-retry tap-scale" onClick={onRetryUpload}>
+                    Повторить попытку
+                  </button>
+                </div>
+              )}
             </div>
             <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 12 }}>
               Территория {territory.id} · {KIND_LABEL[territory.kind]}
@@ -144,7 +172,7 @@ export function ConfirmScreen({
             </div>
 
             <div style={{ marginTop: 10 }}>
-              <button className="btn-primary" type="submit" disabled={!speciesKey || pending}>
+              <button className="btn-primary" type="submit" disabled={!speciesKey || photoStatus !== 'success' || pending}>
                 {pending ? 'Сохраняем…' : 'Подтвердить улов'}
               </button>
             </div>

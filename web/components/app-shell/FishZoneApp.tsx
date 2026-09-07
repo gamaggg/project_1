@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useTerritories, useConfirmCatch } from '@/lib/supabase/queries'
 import { findMyTerritory } from '@/lib/geolocation'
+import { uploadCatchPhoto } from '@/lib/supabase/storage'
 import type { PendingCatch } from '@/lib/data/types'
 import { BottomNav } from '@/components/app-shell/BottomNav'
 import { MapScreen } from '@/components/app-shell/screens/MapScreen'
@@ -11,7 +12,7 @@ import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import { TerritoryScreen } from '@/components/app-shell/screens/TerritoryScreen'
 import { TerritoriesListScreen } from '@/components/app-shell/screens/TerritoriesListScreen'
 import { CameraScreen } from '@/components/app-shell/screens/CameraScreen'
-import { ConfirmScreen, type CatchFormData } from '@/components/app-shell/screens/ConfirmScreen'
+import { ConfirmScreen, type CatchFormData, type PhotoStatus } from '@/components/app-shell/screens/ConfirmScreen'
 import { ActivityScreen } from '@/components/app-shell/screens/ActivityScreen'
 import { ProfileScreen } from '@/components/app-shell/screens/ProfileScreen'
 
@@ -38,6 +39,14 @@ export function FishZoneApp() {
   const [pendingCatch, setPendingCatch] = useState<PendingCatch | null>(null)
   const [confirmStep, setConfirmStep] = useState<'form' | 'success'>('form')
   const [wasFree, setWasFree] = useState(false)
+  const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [photoStatus, setPhotoStatus] = useState<PhotoStatus>('uploading')
+  // CameraScreen never unmounts on its own (screens stay mounted, only their CSS
+  // 'active' class toggles) — bump this on every fresh entry into screen-camera
+  // and pass it as `key` so getUserMedia state resets instead of reusing a
+  // stopped stream from a previous catch.
+  const [cameraSessionId, setCameraSessionId] = useState(0)
   const [locating, setLocating] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -68,6 +77,7 @@ export function FishZoneApp() {
       return
     }
     setActiveTerritoryId(territoryId)
+    setCameraSessionId((n) => n + 1)
     goTo('screen-camera')
   }
   // "+" in the bottom nav — no territory picked yet. Finds the nearest sector to
@@ -85,25 +95,54 @@ export function FishZoneApp() {
     if (found) {
       mapHandleRef.current?.flyToTerritory(found.id)
       setActiveTerritoryId(found.id)
+      setCameraSessionId((n) => n + 1)
       setToast(null)
       goTo('screen-camera')
       return
     }
     if (activeTerritoryId) {
+      setCameraSessionId((n) => n + 1)
       goTo('screen-camera')
       return
     }
     showToast('Не получилось определить локацию — выбери территорию на карте')
   }
-  function takePhoto() {
+  async function startUpload(blob: Blob) {
+    if (!user) return
+    try {
+      const url = await uploadCatchPhoto(user.id, blob)
+      setPhotoUrl(url)
+      setPhotoStatus('success')
+    } catch {
+      setPhotoStatus('error')
+    }
+  }
+  // Upload starts right after the shutter fires, not at form submit — the user
+  // fills in species/length/etc. on screen-confirm while it runs in the background.
+  function handleCapture(blob: Blob) {
     if (!activeTerritoryId) return
+    setCapturedPhoto(blob)
+    setPhotoUrl(null)
+    setPhotoStatus('uploading')
     setConfirmStep('form')
     goTo('screen-confirm')
+    void startUpload(blob)
+  }
+  function retryUpload() {
+    if (!capturedPhoto) return
+    setPhotoStatus('uploading')
+    void startUpload(capturedPhoto)
+  }
+  function backToCamera() {
+    setCapturedPhoto(null)
+    setPhotoUrl(null)
+    setCameraSessionId((n) => n + 1)
+    goTo('screen-camera')
   }
   async function submitCatch(form: CatchFormData) {
-    if (!activeTerritoryId) return
+    if (!activeTerritoryId || !photoUrl) return
     const t = territories.find((x) => x.id === activeTerritoryId)
-    const payload: PendingCatch = { territoryId: activeTerritoryId, ...form }
+    const payload: PendingCatch = { territoryId: activeTerritoryId, photoUrl, ...form }
     try {
       await confirmCatchMutation.mutateAsync(payload)
       setWasFree(t?.status !== 'mine')
@@ -115,6 +154,8 @@ export function FishZoneApp() {
   }
   function finishCatchFlow() {
     setPendingCatch(null)
+    setCapturedPhoto(null)
+    setPhotoUrl(null)
     navClick('screen-map')
   }
 
@@ -144,19 +185,22 @@ export function FishZoneApp() {
           <TerritoriesListScreen territories={territories} onOpenTerritory={openTerritory} />
         </Screen>
         <Screen id="screen-camera" current={currentScreen}>
-          <CameraScreen territory={activeTerritory} onBack={() => goTo('screen-map')} onShutter={takePhoto} />
+          <CameraScreen key={cameraSessionId} onBack={() => goTo('screen-map')} onCapture={handleCapture} />
         </Screen>
         <Screen id="screen-confirm" current={currentScreen}>
-          {activeTerritory && (confirmStep === 'form' || pendingCatch) && (
+          {activeTerritory && capturedPhoto && (confirmStep === 'form' || pendingCatch) && (
             <ConfirmScreen
               territory={activeTerritory}
               pendingCatch={pendingCatch}
               wasFree={wasFree}
               step={confirmStep}
               pending={confirmCatchMutation.isPending}
+              capturedPhoto={capturedPhoto}
+              photoStatus={photoStatus}
+              onRetryUpload={retryUpload}
               onSubmit={submitCatch}
               onFinish={finishCatchFlow}
-              onBack={() => goTo('screen-camera')}
+              onBack={backToCamera}
               onShare={() => showToast('Ссылка на улов скопирована')}
             />
           )}

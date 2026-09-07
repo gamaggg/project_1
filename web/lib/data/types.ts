@@ -36,6 +36,7 @@ export type Catch = {
   weightKg: number | null
   method: string | null
   bait: string | null
+  photoUrl: string
   caughtAt: string
   mine: boolean
 }
@@ -47,6 +48,7 @@ export type PendingCatch = {
   weightKg: number | null
   method: string | null
   bait: string | null
+  photoUrl: string
 }
 
 export type ActivityEntry = {
@@ -60,5 +62,6 @@ export type ActivityEntry = {
   speciesCategory: SpeciesCategory | null
   lengthCm: number | null
   weightKg: number | null
+  photoUrl: string | null
   createdAt: string
 }
