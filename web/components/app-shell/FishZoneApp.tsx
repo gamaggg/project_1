@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useTerritories, useConfirmCatch } from '@/lib/supabase/queries'
-import { findMyTerritory } from '@/lib/geolocation'
+import { getCurrentCoords, nearestTerritory } from '@/lib/geolocation'
 import { uploadCatchPhoto } from '@/lib/supabase/storage'
 import type { PendingCatch } from '@/lib/data/types'
 import { BottomNav } from '@/components/app-shell/BottomNav'
@@ -48,6 +48,7 @@ export function FishZoneApp() {
   // stopped stream from a previous catch.
   const [cameraSessionId, setCameraSessionId] = useState(0)
   const [locating, setLocating] = useState(false)
+  const [outOfZone, setOutOfZone] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -69,20 +70,11 @@ export function FishZoneApp() {
     setActiveTerritoryId(id)
     goTo('screen-territory')
   }
-  // Explicit territory (e.g. the CTA on TerritoryScreen) — no geolocation needed,
-  // the user already picked a sector.
-  function startCatchFlow(territoryId: string) {
-    if (!user) {
-      navClick('screen-profile')
-      return
-    }
-    setActiveTerritoryId(territoryId)
-    setCameraSessionId((n) => n + 1)
-    goTo('screen-camera')
-  }
-  // "+" in the bottom nav — no territory picked yet. Finds the nearest sector to
-  // the visitor's current position (see DECISIONS.md: asked on-demand here, not
-  // eagerly on the map screen) and jumps straight to the camera for it.
+  // "+" in the bottom nav is the ONLY way into the camera/catch flow — picking a
+  // sector by hand (map/list) only ever opens the read-only TerritoryScreen, see
+  // DECISIONS.md. Finds the visitor's current position (asked on-demand here, not
+  // eagerly on the map screen), always drops a marker for it on the map, and only
+  // proceeds to the camera if that position actually lands on a sector.
   async function handlePlus() {
     if (!user) {
       navClick('screen-profile')
@@ -90,22 +82,23 @@ export function FishZoneApp() {
     }
     setLocating(true)
     showToast('Определяем твоё местоположение…')
-    const found = await findMyTerritory(territories)
+    const coords = await getCurrentCoords()
     setLocating(false)
+    if (!coords) {
+      showToast('Не получилось определить твоё местоположение. Попробуй ещё раз')
+      return
+    }
+    mapHandleRef.current?.showUserLocation(coords.lat, coords.lng)
+    const found = nearestTerritory(coords.lat, coords.lng, territories)
+    setToast(null)
     if (found) {
       mapHandleRef.current?.flyToTerritory(found.id)
       setActiveTerritoryId(found.id)
       setCameraSessionId((n) => n + 1)
-      setToast(null)
       goTo('screen-camera')
       return
     }
-    if (activeTerritoryId) {
-      setCameraSessionId((n) => n + 1)
-      goTo('screen-camera')
-      return
-    }
-    showToast('Не получилось определить локацию — выбери территорию на карте')
+    setOutOfZone(true)
   }
   async function startUpload(blob: Blob) {
     if (!user) return
@@ -177,9 +170,7 @@ export function FishZoneApp() {
           <MapScreen ref={mapHandleRef} territories={territories} onOpenTerritory={openTerritory} />
         </Screen>
         <Screen id="screen-territory" current={currentScreen}>
-          {activeTerritory && (
-            <TerritoryScreen territory={activeTerritory} onBack={() => goTo('screen-map')} onStartCatchFlow={startCatchFlow} />
-          )}
+          {activeTerritory && <TerritoryScreen territory={activeTerritory} onBack={() => goTo('screen-map')} />}
         </Screen>
         <Screen id="screen-territories" current={currentScreen}>
           <TerritoriesListScreen territories={territories} onOpenTerritory={openTerritory} />
@@ -214,6 +205,20 @@ export function FishZoneApp() {
       </div>
 
       <div className={`toast${toast ? ' show' : ''}`}>{toast}</div>
+
+      {outOfZone && (
+        <div className="modal-overlay" onClick={() => setOutOfZone(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-title">Ты не на территории</div>
+            <div className="modal-body">
+              Похоже, сейчас ты не находишься ни на одном из секторов лова — зафиксировать улов не получится. Подойди ближе к воде и попробуй ещё раз.
+            </div>
+            <button className="btn-primary" onClick={() => setOutOfZone(false)}>
+              Понятно
+            </button>
+          </div>
+        </div>
+      )}
 
       {currentScreen !== 'screen-camera' && (
         <BottomNav

@@ -3,7 +3,6 @@
 import { useCatchesByTerritory } from '@/lib/supabase/queries'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
-import { FishIcon } from '@/components/app-shell/icons'
 import type { Territory } from '@/lib/data/types'
 
 function statusBadge(status: Territory['status']) {
@@ -12,14 +11,14 @@ function statusBadge(status: Territory['status']) {
   return <span className="badge badge-neutral">Свободна</span>
 }
 
+// View-only — a catch can only be recorded through "+" (geolocation), never by
+// picking a sector by hand (see DECISIONS.md). No CTA here starts the camera.
 export function TerritoryScreen({
   territory,
   onBack,
-  onStartCatchFlow,
 }: {
   territory: Territory
   onBack: () => void
-  onStartCatchFlow: (territoryId: string) => void
 }) {
   const { data: catches = [] } = useCatchesByTerritory(territory.id)
   const recent = catches.slice(0, 3)
@@ -99,19 +98,6 @@ export function TerritoryScreen({
           ) : (
             <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет уловов на этой территории</div>
           )}
-        </div>
-        <div style={{ marginTop: 22 }}>
-          <button className="btn-primary" onClick={() => onStartCatchFlow(territory.id)}>
-            {territory.status === 'mine' ? (
-              <>
-                <FishIcon size={18} /> <span style={{ marginLeft: 4 }}>Отметить новый улов</span>
-              </>
-            ) : territory.status === 'other' ? (
-              'Поймать и переоформить территорию'
-            ) : (
-              'Поймать и занять территорию'
-            )}
-          </button>
         </div>
       </div>
     </>

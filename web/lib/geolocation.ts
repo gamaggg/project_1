@@ -12,11 +12,12 @@ function haversineMeters(aLat: number, aLng: number, bLat: number, bLng: number)
   return 2 * R * Math.asin(Math.sqrt(a))
 }
 
-// Resolves the territory the visitor is currently standing near, or null if
-// geolocation is unavailable/denied/times out/too far from any sector — never
-// rejects, so callers don't need a try/catch for the "no location" case (see
-// DECISIONS.md — this is asked for on-demand from the "+" button, not eagerly).
-export async function findMyTerritory(territories: Territory[]): Promise<Territory | null> {
+export type Coords = { lat: number; lng: number }
+
+// Wraps getCurrentPosition in a promise; never rejects — null on denial/timeout/
+// unavailable API, so callers don't need a try/catch for the "no location" case
+// (see DECISIONS.md — asked for on-demand from the "+" button, not eagerly).
+export async function getCurrentCoords(): Promise<Coords | null> {
   if (typeof navigator === 'undefined' || !navigator.geolocation) return null
 
   const position = await new Promise<GeolocationPosition | null>((resolve) => {
@@ -26,13 +27,17 @@ export async function findMyTerritory(territories: Territory[]): Promise<Territo
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 30_000 }
     )
   })
-  if (!position) return null
+  return position ? { lat: position.coords.latitude, lng: position.coords.longitude } : null
+}
 
-  const { latitude, longitude } = position.coords
+// Territory whose center is within MAX_DISTANCE_M of the given point, or null if
+// the visitor isn't standing on any sector — separate from getCurrentCoords so the
+// caller can show the raw position (map marker) even when it matches no sector.
+export function nearestTerritory(lat: number, lng: number, territories: Territory[]): Territory | null {
   let closest: Territory | null = null
   let closestDist = Infinity
   for (const t of territories) {
-    const d = haversineMeters(latitude, longitude, t.lat, t.lng)
+    const d = haversineMeters(lat, lng, t.lat, t.lng)
     if (d < closestDist) {
       closestDist = d
       closest = t

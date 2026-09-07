@@ -7,6 +7,7 @@ import type { Territory } from '@/lib/data/types'
 
 export type LeafletMapHandle = {
   flyToTerritory: (id: string) => void
+  showUserLocation: (lat: number, lng: number) => void
 }
 
 const STATUS_COLOR: Record<Territory['status'], string> = {
@@ -27,6 +28,7 @@ export const LeafletMap = forwardRef<LeafletMapHandle, { territories: Territory[
     const leafletRef = useRef<typeof import('leaflet') | null>(null)
     const markersLayerRef = useRef<L.LayerGroup | null>(null)
     const labelsLayerRef = useRef<L.LayerGroup | null>(null)
+    const userMarkerRef = useRef<L.Marker | null>(null)
     const onSelectRef = useRef(onSelect)
     onSelectRef.current = onSelect
 
@@ -61,6 +63,29 @@ export const LeafletMap = forwardRef<LeafletMapHandle, { territories: Territory[
         if (!map || !t) return
         const targetZoom = Math.max(map.getZoom(), 16.5)
         map.flyTo([t.lat, t.lng], targetZoom, { duration: 0.5 })
+      },
+      // Places (or moves) a marker at the visitor's real GPS position — shown
+      // once geolocation succeeds, regardless of whether it lands on a sector
+      // (see DECISIONS.md, "+" flow). Kept outside markersLayer so redrawing
+      // sector polygons on ownership changes doesn't clear it.
+      showUserLocation(lat: number, lng: number) {
+        const L = leafletRef.current
+        const map = mapRef.current
+        if (!L || !map) return
+        if (userMarkerRef.current) {
+          userMarkerRef.current.setLatLng([lat, lng])
+          return
+        }
+        userMarkerRef.current = L.marker([lat, lng], {
+          icon: L.divIcon({
+            className: 'user-location-icon',
+            html: '<div class="user-location-pulse"></div><div class="user-location-dot"></div>',
+            iconSize: [16, 16],
+            iconAnchor: [8, 8],
+          }),
+          interactive: false,
+          zIndexOffset: 1000,
+        }).addTo(map)
       },
     }))
 

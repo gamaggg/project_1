@@ -21,6 +21,7 @@ export const MapScreen = forwardRef<LeafletMapHandle, { territories: Territory[]
   const mapRef = useRef<LeafletMapHandle>(null)
   useImperativeHandle(forwardedRef, () => ({
     flyToTerritory: (id: string) => mapRef.current?.flyToTerritory(id),
+    showUserLocation: (lat: number, lng: number) => mapRef.current?.showUserLocation(lat, lng),
   }))
   const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -89,7 +90,7 @@ export const MapScreen = forwardRef<LeafletMapHandle, { territories: Territory[]
                   <span>{t.lastCatchAt ? 'Последний улов: ' + formatWhen(t.lastCatchAt) : 'Пока нет уловов'}</span>
                 </div>
                 <button className="btn-primary" onClick={() => onOpenTerritory(t.id)}>
-                  {t.status === 'mine' ? 'Перейти к рыбалке' : t.status === 'other' ? 'Посмотреть территорию' : 'Занять территорию'}
+                  Подробнее о секторе
                 </button>
               </div>
             ))}
