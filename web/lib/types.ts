@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           id: number
           kind: string
+          previous_owner_id: string | null
           territory_id: string
           user_id: string
         }
@@ -28,6 +29,7 @@ export type Database = {
           created_at?: string
           id?: never
           kind: string
+          previous_owner_id?: string | null
           territory_id: string
           user_id: string
         }
@@ -36,6 +38,7 @@ export type Database = {
           created_at?: string
           id?: never
           kind?: string
+          previous_owner_id?: string | null
           territory_id?: string
           user_id?: string
         }
@@ -45,6 +48,20 @@ export type Database = {
             columns: ["catch_id"]
             isOneToOne: false
             referencedRelation: "catches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_log_previous_owner_id_fkey"
+            columns: ["previous_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_log_previous_owner_id_fkey"
+            columns: ["previous_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
             referencedColumns: ["id"]
           },
           {
@@ -66,6 +83,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
             referencedColumns: ["id"]
           },
         ]
@@ -136,27 +160,81 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "catches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      follows: {
+        Row: {
+          created_at: string
+          followee_id: string
+          follower_id: string
+        }
+        Insert: {
+          created_at?: string
+          followee_id: string
+          follower_id: string
+        }
+        Update: {
+          created_at?: string
+          followee_id?: string
+          follower_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follows_followee_id_fkey"
+            columns: ["followee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_followee_id_fkey"
+            columns: ["followee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
           display_name: string
-          followers_count: number
           id: string
           location: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           display_name?: string
-          followers_count?: number
           id: string
           location?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           display_name?: string
-          followers_count?: number
           id?: string
           location?: string | null
         }
@@ -216,10 +294,29 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "territories_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
+      profiles_with_stats: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          display_name: string | null
+          followers_count: number | null
+          following_count: number | null
+          id: string | null
+          location: string | null
+        }
+        Relationships: []
+      }
       territories_with_stats: {
         Row: {
           catch_count: number | null
@@ -238,6 +335,13 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "territories_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
             referencedColumns: ["id"]
           },
         ]

@@ -13,3 +13,16 @@ export async function uploadCatchPhoto(userId: string, blob: Blob): Promise<stri
   const { data } = supabase.storage.from('catch-photos').getPublicUrl(path)
   return data.publicUrl
 }
+
+// Same shape as uploadCatchPhoto, separate bucket. Caller downscales the blob
+// before calling this (see ProfileScreen) — avatars don't need 1280px source photos.
+export async function uploadAvatar(userId: string, blob: Blob): Promise<string> {
+  const supabase = createClient()
+  const path = `${userId}/${Date.now()}.jpg`
+  const { error } = await supabase.storage.from('avatars').upload(path, blob, {
+    contentType: 'image/jpeg',
+  })
+  if (error) throw error
+  const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+  return data.publicUrl
+}

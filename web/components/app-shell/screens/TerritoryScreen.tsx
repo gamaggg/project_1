@@ -1,8 +1,10 @@
 'use client'
 
-import { useCatchesByTerritory } from '@/lib/supabase/queries'
+import { useState } from 'react'
+import { useCatchesByTerritory, useProfile } from '@/lib/supabase/queries'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
+import { PhotoLightbox } from '@/components/app-shell/PhotoLightbox'
 import type { Territory } from '@/lib/data/types'
 
 function statusBadge(status: Territory['status']) {
@@ -11,17 +13,31 @@ function statusBadge(status: Territory['status']) {
   return <span className="badge badge-neutral">Свободна</span>
 }
 
+function OwnerRow({ ownerId, isMine, onOpenUser }: { ownerId: string; isMine: boolean; onOpenUser: (id: string) => void }) {
+  const { data: profile } = useProfile(ownerId)
+  const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
+  return (
+    <button className="owner-row tap-scale" onClick={() => onOpenUser(ownerId)} disabled={isMine}>
+      <div className="owner-avatar">{profile?.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : initials}</div>
+      <div style={{ fontSize: 13.5, fontWeight: 700 }}>{isMine ? 'Твоя территория' : profile?.displayName ?? '…'}</div>
+    </button>
+  )
+}
+
 // View-only — a catch can only be recorded through "+" (geolocation), never by
 // picking a sector by hand (see DECISIONS.md). No CTA here starts the camera.
 export function TerritoryScreen({
   territory,
   onBack,
+  onOpenUser,
 }: {
   territory: Territory
   onBack: () => void
+  onOpenUser: (id: string) => void
 }) {
   const { data: catches = [] } = useCatchesByTerritory(territory.id)
   const recent = catches.slice(0, 3)
+  const [lightbox, setLightbox] = useState<string | null>(null)
 
   return (
     <>
@@ -52,6 +68,9 @@ export function TerritoryScreen({
           </div>
           {statusBadge(territory.status)}
         </div>
+        {territory.ownerId && (
+          <OwnerRow ownerId={territory.ownerId} isMine={territory.status === 'mine'} onOpenUser={onOpenUser} />
+        )}
         <div className="card" style={{ marginTop: 16, padding: 16 }}>
           <div className="info-grid">
             <div>
@@ -84,7 +103,7 @@ export function TerritoryScreen({
                   key={c.id}
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recent.length - 1 ? '1px solid var(--line)' : 'none' }}
                 >
-                  <div className="fish-thumb" style={{ width: 46, height: 46 }}>
+                  <div className="fish-thumb" style={{ width: 46, height: 46, cursor: 'pointer' }} onClick={() => setLightbox(c.photoUrl)}>
                     <img src={c.photoUrl} alt={c.speciesName} />
                   </div>
                   <div style={{ flex: 1 }}>
@@ -100,6 +119,7 @@ export function TerritoryScreen({
           )}
         </div>
       </div>
+      {lightbox && <PhotoLightbox src={lightbox} alt="Улов" onClose={() => setLightbox(null)} />}
     </>
   )
 }

@@ -15,6 +15,7 @@ import { CameraScreen } from '@/components/app-shell/screens/CameraScreen'
 import { ConfirmScreen, type CatchFormData, type PhotoStatus } from '@/components/app-shell/screens/ConfirmScreen'
 import { ActivityScreen } from '@/components/app-shell/screens/ActivityScreen'
 import { ProfileScreen } from '@/components/app-shell/screens/ProfileScreen'
+import { UserProfileScreen } from '@/components/app-shell/screens/UserProfileScreen'
 
 export type ScreenId =
   | 'screen-map'
@@ -24,6 +25,7 @@ export type ScreenId =
   | 'screen-confirm'
   | 'screen-activity'
   | 'screen-profile'
+  | 'screen-user-profile'
 
 const NAV_SCREENS: ScreenId[] = ['screen-map', 'screen-territories', 'screen-activity', 'screen-profile']
 
@@ -36,6 +38,7 @@ export function FishZoneApp() {
   const [currentScreen, setCurrentScreen] = useState<ScreenId>('screen-map')
   const [navScreen, setNavScreen] = useState<ScreenId>('screen-map')
   const [activeTerritoryId, setActiveTerritoryId] = useState<string | null>(null)
+  const [viewedUserId, setViewedUserId] = useState<string | null>(null)
   const [pendingCatch, setPendingCatch] = useState<PendingCatch | null>(null)
   const [confirmStep, setConfirmStep] = useState<'form' | 'success'>('form')
   const [wasFree, setWasFree] = useState(false)
@@ -69,6 +72,17 @@ export function FishZoneApp() {
   function openTerritory(id: string) {
     setActiveTerritoryId(id)
     goTo('screen-territory')
+  }
+  // Viewing yourself through this path (e.g. tapping your own name somewhere)
+  // just goes to the real (editable) profile tab instead of a second read-only
+  // copy of it.
+  function openUserProfile(id: string) {
+    if (id === user?.id) {
+      navClick('screen-profile')
+      return
+    }
+    setViewedUserId(id)
+    goTo('screen-user-profile')
   }
   // "+" in the bottom nav is the ONLY way into the camera/catch flow — picking a
   // sector by hand (map/list) only ever opens the read-only TerritoryScreen, see
@@ -170,7 +184,7 @@ export function FishZoneApp() {
           <MapScreen ref={mapHandleRef} territories={territories} onOpenTerritory={openTerritory} />
         </Screen>
         <Screen id="screen-territory" current={currentScreen}>
-          {activeTerritory && <TerritoryScreen territory={activeTerritory} onBack={() => goTo('screen-map')} />}
+          {activeTerritory && <TerritoryScreen territory={activeTerritory} onBack={() => goTo('screen-map')} onOpenUser={openUserProfile} />}
         </Screen>
         <Screen id="screen-territories" current={currentScreen}>
           <TerritoriesListScreen territories={territories} onOpenTerritory={openTerritory} />
@@ -197,10 +211,20 @@ export function FishZoneApp() {
           )}
         </Screen>
         <Screen id="screen-activity" current={currentScreen}>
-          <ActivityScreen />
+          <ActivityScreen onOpenUser={openUserProfile} />
         </Screen>
         <Screen id="screen-profile" current={currentScreen}>
           <ProfileScreen myTerritories={myTerritories} onOpenTerritory={openTerritory} onSignOut={signOut} />
+        </Screen>
+        <Screen id="screen-user-profile" current={currentScreen}>
+          {viewedUserId && (
+            <UserProfileScreen
+              userId={viewedUserId}
+              territories={territories.filter((t) => t.ownerId === viewedUserId)}
+              onBack={() => goTo('screen-activity')}
+              onOpenTerritory={openTerritory}
+            />
+          )}
         </Screen>
       </div>
 

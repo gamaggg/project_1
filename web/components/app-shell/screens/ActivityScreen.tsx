@@ -5,12 +5,14 @@ import { useActivity } from '@/lib/supabase/queries'
 import { CATEGORY_GRADIENT, KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import { FishIcon } from '@/components/app-shell/icons'
+import { PhotoLightbox } from '@/components/app-shell/PhotoLightbox'
 
 type Filter = 'all' | 'mine'
 
-export function ActivityScreen() {
+export function ActivityScreen({ onOpenUser }: { onOpenUser: (id: string) => void }) {
   const { data: activity = [], isLoading } = useActivity()
   const [filter, setFilter] = useState<Filter>('all')
+  const [lightbox, setLightbox] = useState<string | null>(null)
   const list = activity.filter((a) => (filter === 'mine' ? a.mine : true))
 
   return (
@@ -39,7 +41,14 @@ export function ActivityScreen() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>
-                    {a.who} {text}
+                    {a.mine ? (
+                      a.who
+                    ) : (
+                      <button className="activity-who-btn" onClick={() => onOpenUser(a.userId)}>
+                        {a.who}
+                      </button>
+                    )}{' '}
+                    {text}
                   </div>
                   <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
                     Территория {a.territoryId} · {KIND_LABEL[a.territoryKind]}
@@ -50,7 +59,11 @@ export function ActivityScreen() {
                   <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6 }}>{formatWhen(a.createdAt)}</div>
                 </div>
                 {a.speciesName && (
-                  <div className="fish-thumb" style={{ width: 44, height: 44, background: a.photoUrl ? undefined : CATEGORY_GRADIENT[a.speciesCategory ?? 'marine'] }}>
+                  <div
+                    className="fish-thumb"
+                    style={{ width: 44, height: 44, cursor: a.photoUrl ? 'pointer' : undefined, background: a.photoUrl ? undefined : CATEGORY_GRADIENT[a.speciesCategory ?? 'marine'] }}
+                    onClick={() => a.photoUrl && setLightbox(a.photoUrl)}
+                  >
                     {a.photoUrl ? <img src={a.photoUrl} alt={a.speciesName} /> : <FishIcon size={18} />}
                   </div>
                 )}
@@ -61,6 +74,7 @@ export function ActivityScreen() {
           <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет активности</div>
         )}
       </div>
+      {lightbox && <PhotoLightbox src={lightbox} alt="Улов" onClose={() => setLightbox(null)} />}
     </div>
   )
 }

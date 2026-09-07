@@ -25,6 +25,17 @@ export type Species = {
   category: SpeciesCategory
 }
 
+// From profiles_with_stats (view) — followers/following are real aggregates,
+// not the old static placeholder column. See DECISIONS.md.
+export type Profile = {
+  id: string
+  displayName: string
+  location: string | null
+  avatarUrl: string | null
+  followersCount: number
+  followingCount: number
+}
+
 export type Catch = {
   id: number
   territoryId: string
@@ -54,6 +65,7 @@ export type PendingCatch = {
 export type ActivityEntry = {
   id: number
   who: string
+  userId: string
   mine: boolean
   kind: 'catch' | 'claim'
   territoryId: string
