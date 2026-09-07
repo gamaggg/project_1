@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FishZone — Батуми</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<style>
+  :root{
+    --bg:#F7F7F4;
+    --surface:#FFFFFF;
+    --ink:#17181B;
+    --ink-soft:#6B6D76;
+    --ink-faint:#A8A9AE;
+    --accent:#FC5200;
+    --accent-soft:#FFE4D6;
+    --green:#2FA84F;
+    --green-soft:#E3F4E8;
+    --blue:#3E7BFA;
+    --blue-soft:#E7EEFF;
+    --line:#E7E5E0;
+    --radius-s:10px;
+    --radius-m:16px;
+    --radius-l:22px;
+    --shadow-sm: 0 1px 2px rgba(23,24,27,0.04), 0 6px 14px rgba(23,24,27,0.05);
+    --shadow: 0 1px 2px rgba(23,24,27,0.04), 0 8px 24px rgba(23,24,27,0.06);
+    --shadow-lg: 0 6px 16px rgba(23,24,27,0.08), 0 24px 48px rgba(23,24,27,0.14);
+    --ease: cubic-bezier(.4,0,.2,1);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:#DCDAD3;
+    font-family:'Manrope',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:28px 12px;
+  }
+  [onclick]{ transition: transform .15s var(--ease); }
+  [onclick]:active{ transform: scale(0.96); }
+  .device{
+    width:390px;
+    height:844px;
+    background:var(--bg);
+    border-radius:44px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.28), 0 2px 0 rgba(255,255,255,0.4) inset;
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    border: 8px solid #111214;
+  }
+  .statusbar{
+    height:46px;
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 26px 0 28px;
+    font-size:14px;
+    font-weight:600;
+    letter-spacing:0.2px;
+    background:transparent;
+    position:relative;
+    z-index:20;
+  }
+  .statusbar .icons{display:flex; align-items:center; gap:5px;}
+  .notch{
+    position:absolute;
+    top:0; left:50%; transform:translateX(-50%);
+    width:120px; height:26px;
+    background:#111214;
+    border-radius:0 0 16px 16px;
+    z-index:30;
+  }
+  .screens{
+    flex:1 1 auto;
+    position:relative;
+    overflow:hidden;
+  }
+  .screen{
+    position:absolute;
+    inset:0;
+    overflow-y:auto;
+    -ms-overflow-style:none;
+    scrollbar-width:none;
+    display:flex;
+    flex-direction:column;
+    background:var(--bg);
+    opacity:0;
+    pointer-events:none;
+    transform:translateY(10px);
+    transition:opacity .3s var(--ease), transform .3s var(--ease);
+    z-index:1;
+  }
+  .screen::-webkit-scrollbar{display:none;}
+  .screen.active{opacity:1; pointer-events:auto; transform:none; z-index:2;}
+  .screen-inner{padding:6px 20px 100px;}
+  .brandmark{
+    display:flex; align-items:center; gap:7px;
+    margin-bottom:10px;
+  }
+  .brandmark span{font-size:13px; font-weight:700; color:var(--ink-soft); letter-spacing:0.1px;}
+  .page-title{
+    font-size:30px;
+    font-weight:800;
+    letter-spacing:-0.6px;
+    margin:2px 0 2px;
+  }
+  .page-sub{
+    font-size:14px;
+    color:var(--ink-soft);
+    margin:0 0 16px;
+    font-weight:600;
+  }
+  .header-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:6px 20px 4px;
+  }
+  .icon-btn{
+    width:37px; height:37px;
+    border-radius:50%;
+    background:var(--surface);
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    flex:0 0 auto;
+    box-shadow:var(--shadow-sm);
+  }
+  .icon-btn:active{transform:scale(0.94);}
+
+  /* ---------- Bottom Nav ---------- */
+  .bottomnav{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    height:82px;
+    background:rgba(247,247,244,0.94);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top:1px solid var(--line);
+    box-shadow: 0 -10px 26px rgba(23,24,27,0.06);
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-around;
+    padding-top:10px;
+    z-index:40;
+  }
+  .navitem{
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    width:56px;
+    cursor:pointer;
+    color:var(--ink-faint);
+  }
+  .navitem span{font-size:10.5px; font-weight:700; letter-spacing:0.1px;}
+  .navitem.active{color:var(--ink);}
+  .navitem.active svg{stroke:var(--ink);}
+  .navitem svg{stroke:var(--ink-faint); transition:stroke .15s var(--ease);}
+  .navplus-badge{
+    width:38px; height:38px;
+    border-radius:50%;
+    background:linear-gradient(160deg,#FF6A1F,var(--accent) 65%);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 10px rgba(252,82,0,0.35);
+  }
+  .navplus-badge svg{stroke:#fff !important;}
+
+  /* ---------- Cards ---------- */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius-m);
+    box-shadow:var(--shadow-sm);
+    transition:box-shadow .2s var(--ease);
+  }
+  .badge{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:11px; font-weight:700; letter-spacing:0.6px;
+    text-transform:uppercase;
+    padding:6px 11px;
+    border-radius:20px;
+  }
+  .badge-green{background:var(--green-soft); color:var(--green);}
+  .badge-blue{background:var(--blue-soft); color:var(--blue);}
+  .badge-accent{background:var(--accent-soft); color:var(--accent);}
+  .badge-neutral{background:#EFEEEA; color:var(--ink-soft);}
+  .btn-primary{
+    background:linear-gradient(160deg,#FF6A1F,var(--accent) 65%);
+    color:#fff; border:none;
+    font-size:15.5px; font-weight:700; font-family:inherit;
+    padding:16px 18px; border-radius:15px;
+    width:100%;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    cursor:pointer;
+    box-shadow:0 10px 22px rgba(252,82,0,0.28);
+    letter-spacing:-0.1px;
+  }
+  .btn-primary:active{transform:scale(0.97);}
+  .btn-secondary{
+    background:var(--surface); color:var(--ink); border:1.5px solid var(--line);
+    font-size:15px; font-weight:700; font-family:inherit;
+    padding:14.5px 18px; border-radius:15px;
+    width:100%;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    cursor:pointer;
+  }
+  .btn-secondary:active{transform:scale(0.97); background:#F1F0EC;}
+  .stat-num{font-size:23px; font-weight:800; letter-spacing:-0.4px;}
+  .stat-label{font-size:11.5px; color:var(--ink-soft); font-weight:600; margin-top:2px;}
+  .fish-thumb{
+    border-radius:13px;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff;
+    flex:0 0 auto;
+    position:relative;
+    overflow:hidden;
+    box-shadow: 0 6px 14px rgba(9,25,32,0.22), inset 0 0 0 1px rgba(255,255,255,0.08);
+  }
+  .fish-thumb svg{position:relative; z-index:2;}
+  .fish-thumb::after{
+    content:"";
+    position:absolute; inset:0;
+    background:radial-gradient(120% 100% at 20% 15%, rgba(255,255,255,0.18), transparent 55%);
+  }
+  .divider{height:1px; background:var(--line); margin:20px 0;}
+  .section-title{font-size:17.5px; font-weight:800; margin:0 0 12px; letter-spacing:-0.3px;}
+  .row-link{display:flex; align-items:center; gap:12px; cursor:pointer;}
+  .toast{
+    position:absolute; left:20px; right:20px; bottom:100px;
+    background:#17181B; color:#fff; font-size:13.5px; font-weight:600;
+    padding:12px 16px; border-radius:12px; text-align:center;
+    z-index:60; opacity:0; pointer-events:none; transition:opacity .25s, transform .25s;
+    transform:translateY(6px);
+  }
+  .toast.show{opacity:1; transform:translateY(0);}
+
+  /* ---------- Map screen ---------- */
+  #screen-map .screen-inner{padding:0;}
+  .map-header{padding:16px 20px 10px;}
+  #leafletMap{
+    width:100%; height:100%;
+    background:#DCE7E9;
+  }
+  #leafletMap .leaflet-tile-pane{
+    filter: grayscale(0.55) brightness(1.1) contrast(0.92) saturate(0.7);
+  }
+  .map-wrap{position:relative; flex:1 1 auto; min-height:0;}
+  .map-legend{
+    position:absolute; top:12px; right:12px;
+    background:rgba(255,255,255,0.95);
+    border:1px solid var(--line);
+    border-radius:13px;
+    padding:9px 11px;
+    font-size:11px; font-weight:700; color:var(--ink-soft);
+    display:flex; flex-direction:column; gap:6px;
+    z-index:500;
+    box-shadow:var(--shadow);
+    backdrop-filter: blur(6px);
+  }
+  .legend-dot{width:8px; height:8px; border-radius:2px; display:inline-block; margin-right:6px;}
+  .map-sheet-container{
+    position:absolute; left:0; right:0; bottom:94px; z-index:700;
+    display:flex; flex-direction:column; gap:9px;
+  }
+  .map-sheet-row{
+    display:flex; gap:12px;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+    padding:0 12px;
+  }
+  .map-sheet-row::-webkit-scrollbar{display:none;}
+  .map-sheet-card{
+    scroll-snap-align:center;
+    flex:0 0 84%;
+    background:var(--surface);
+    border-radius:var(--radius-l);
+    padding:16px 16px 15px;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .leaflet-territory-label{
+    background:transparent; border:none; box-shadow:none;
+    font-weight:800; font-size:11px; color:#fff;
+    text-shadow:0 1px 2px rgba(0,0,0,0.85), 0 0 3px rgba(0,0,0,0.6);
+    pointer-events:none;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* Camera screen */
+  .camera-screen{background:#0E1013; height:100%; display:flex; flex-direction:column;}
+  .camera-view{
+    flex:1; position:relative;
+    background:
+      radial-gradient(120% 90% at 30% 0%, rgba(255,255,255,0.06), transparent 55%),
+      linear-gradient(180deg,#123044 0%, #0B4C63 42%, #0A6B7C 68%, #063A48 100%);
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+  .camera-top{
+    position:absolute; top:14px; left:0; right:0;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 18px; z-index:5;
+  }
+  .gps-chip{
+    font-size:11.5px; font-weight:700; color:#fff; background:rgba(0,0,0,0.4);
+    padding:6px 11px; border-radius:20px; letter-spacing:0.3px;
+    backdrop-filter: blur(6px);
+  }
+  .cam-round-btn{
+    width:36px; height:36px; border-radius:50%;
+    background:rgba(0,0,0,0.34);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; cursor:pointer;
+  }
+  .camera-hint{
+    position:absolute; bottom:150px; left:0; right:0;
+    text-align:center; color:#fff; z-index:5;
+  }
+  .camera-hint .h1{font-size:17px; font-weight:800;}
+  .camera-hint .h2{font-size:13px; color:rgba(255,255,255,0.75); margin-top:4px; font-weight:500;}
+  .camera-controls{
+    height:132px; background:#0E1013;
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+  }
+  .shutter{
+    width:72px; height:72px; border-radius:50%;
+    border:4px solid #fff; background:transparent;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .shutter::after{content:""; width:58px; height:58px; border-radius:50%; background:#fff;}
+  .shutter:active::after{width:50px; height:50px;}
+
+  /* Confirm / success */
+  .confirm-photo{
+    width:100%; height:230px; border-radius:var(--radius-l);
+    background:linear-gradient(160deg,#123044,#0B4C63 45%,#0A6B7C 75%,#063A48);
+    display:flex; align-items:center; justify-content:center;
+    position:relative; overflow:hidden;
+    box-shadow: var(--shadow-lg);
+  }
+  .confirm-photo::before{
+    content:"";
+    position:absolute; inset:0;
+    background:radial-gradient(120% 90% at 22% 12%, rgba(255,255,255,0.22), transparent 55%);
+  }
+  .info-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px 16px; margin-top:4px;}
+  .info-grid .label{font-size:11.5px; color:var(--ink-soft); font-weight:700; margin-bottom:4px; letter-spacing:0.1px;}
+  .info-grid .value{font-size:15.5px; font-weight:800; letter-spacing:-0.1px;}
+  .success-wrap{
+    display:flex; flex-direction:column; align-items:center; text-align:center;
+    padding:56px 24px 24px;
+  }
+  .success-icon{
+    width:80px; height:80px; border-radius:50%;
+    background:linear-gradient(160deg,#E3F4E8,#CFEED9);
+    color:var(--green);
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:24px;
+    box-shadow:0 12px 26px rgba(47,168,79,0.22);
+  }
+  .activity-item{display:flex; gap:13px; padding:16px 0; border-bottom:1px solid var(--line);}
+  .filter-row{display:flex; gap:8px; margin-bottom:16px;}
+  .filter-chip{
+    padding:8px 15px; border-radius:20px; font-size:13px; font-weight:700; font-family:inherit;
+    border:1.5px solid var(--line); color:var(--ink-soft); background:var(--surface); cursor:pointer;
+    transition:background .15s var(--ease), color .15s var(--ease), border-color .15s var(--ease);
+  }
+  .filter-chip.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .avatar{
+    width:44px; height:44px; border-radius:50%;
+    background:var(--ink); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:14px; flex:0 0 auto;
+    box-shadow:0 4px 10px rgba(23,24,27,0.18);
+  }
+  .profile-avatar{
+    width:88px; height:88px; border-radius:50%;
+    background:linear-gradient(160deg,#FF7A38,var(--accent) 70%);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:29px; margin:0 auto 16px;
+    box-shadow:0 14px 28px rgba(252,82,0,0.3);
+    letter-spacing:0.5px;
+  }
+  .stat-grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; text-align:center;}
+  .terr-list-item{display:flex; align-items:center; gap:12px; padding:15px 14px; cursor:pointer;}
+  .ach-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .ach-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m);
+    padding:14px; display:flex; flex-direction:column; gap:9px;
+    box-shadow:var(--shadow-sm); transition:opacity .2s var(--ease);
+  }
+  .ach-card.locked{opacity:0.5;}
+  .ach-icon{
+    width:38px; height:38px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    flex:0 0 auto;
+  }
+  .ach-icon.on{background:var(--accent-soft); color:var(--accent);}
+  .ach-icon.off{background:#EFEEEA; color:var(--ink-faint);}
+  .ach-title{font-size:13.5px; font-weight:800; letter-spacing:-0.1px;}
+  .ach-desc{font-size:11.5px; color:var(--ink-soft); line-height:1.4; font-weight:500;}
+  .ach-progress{font-size:11px; color:var(--ink-faint); font-weight:700; margin-top:-2px;}
+</style>
+</head>
+<body>
+
+<div class="device">
+  <div class="notch"></div>
+  <div class="statusbar">
+    <span id="clock">9:41</span>
+    <div class="icons">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="none"><rect x="0" y="7" width="3" height="5" rx="0.5" fill="#17181B"/><rect x="5" y="5" width="3" height="7" rx="0.5" fill="#17181B"/><rect x="10" y="3" width="3" height="9" rx="0.5" fill="#17181B"/><rect x="15" y="0" width="3" height="12" rx="0.5" fill="#17181B"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M8 9.6c.7 0 1.2.5 1.2 1.2S8.7 12 8 12s-1.2-.5-1.2-1.2.5-1.2 1.2-1.2Zm0-3.6c1.4 0 2.6.5 3.6 1.4l-1.1 1.1c-.6-.6-1.5-1-2.5-1s-1.9.4-2.5 1L4.4 7.4C5.4 6.5 6.6 6 8 6Zm0-3.8c2.5 0 4.7 1 6.4 2.6l-1.1 1.1c-1.4-1.3-3.2-2.1-5.3-2.1s-3.9.8-5.3 2.1L1.6 4.8C3.3 3.2 5.5 2.2 8 2.2Z" fill="#17181B"/></svg>
+      <svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x="0.5" y="0.5" width="20" height="11" rx="2.5" stroke="#17181B"/><rect x="2" y="2" width="16" height="8" rx="1.2" fill="#17181B"/><rect x="21.5" y="4" width="1.6" height="4" rx="0.8" fill="#17181B"/></svg>
+    </div>
+  </div>
+
+  <div class="screens">
+
+    <!-- ============ MAP ============ -->
+    <div class="screen active" id="screen-map">
+      <div class="screen-inner" style="display:flex; flex-direction:column; height:100%; padding:0;">
+        <div class="map-header">
+          <div class="brandmark">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 17c3-5 6-7.5 9-7.5s6 2.5 9 7.5" stroke="#FC5200" stroke-width="2.2" stroke-linecap="round"/><path d="M3 12.5c3-5 6-7.5 9-7.5s6 2.5 9 7.5" stroke="#FC5200" stroke-width="2.2" stroke-linecap="round" opacity="0.4"/></svg>
+            <span>FishZone</span>
+          </div>
+          <div class="page-title">Карта</div>
+          <div class="page-sub">Батуми</div>
+        </div>
+        <div class="map-wrap">
+          <div id="leafletMap"></div>
+          <div class="map-legend">
+            <span><span class="legend-dot" style="background:var(--green)"></span>Моя территория</span>
+            <span><span class="legend-dot" style="background:var(--blue)"></span>Занята другим</span>
+            <span><span class="legend-dot" style="background:#B9BBC2"></span>Свободна</span>
+          </div>
+          <div class="map-sheet-container">
+            <div class="map-sheet-row" id="mapSheet"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ TERRITORY DETAIL ============ -->
+    <div class="screen" id="screen-territory">
+      <div class="header-row">
+        <div class="icon-btn" onclick="goTo('screen-map')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </div>
+        <div class="icon-btn"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#17181B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-3.8M8.6 13.5l6.8 3.8"/></svg></div>
+      </div>
+      <div class="screen-inner" id="territoryDetail"></div>
+    </div>
+
+    <!-- ============ TERRITORIES LIST ============ -->
+    <div class="screen" id="screen-territories">
+      <div class="screen-inner">
+        <div class="page-title">Территории</div>
+        <div class="page-sub" id="terrCountSub">Побережье Батуми</div>
+        <div class="filter-row" id="terrFilterRow"></div>
+        <div class="card" id="terrList" style="overflow:hidden;"></div>
+      </div>
+    </div>
+
+    <!-- ============ CAMERA ============ -->
+    <div class="screen" id="screen-camera">
+      <div class="camera-screen">
+        <div class="camera-view">
+          <div class="camera-top">
+            <div class="cam-round-btn" onclick="goTo('screen-map')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </div>
+            <div class="gps-chip" id="gpsChip">GPS · БАТУМИ</div>
+            <div class="cam-round-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+            </div>
+          </div>
+          <svg width="150" height="150" viewBox="0 0 64 64" fill="none" opacity="0.9">
+            <path d="M6 32c8-14 20-20 34-14-2 6-2 14 0 20-14 6-26 0-34-14z" stroke="#EAF6F8" stroke-width="2" fill="rgba(234,246,248,0.14)"/>
+            <path d="M40 25c4-3 9-4 13-2-3 3-3 8 0 11-4 2-9 1-13-2" stroke="#EAF6F8" stroke-width="2" fill="rgba(234,246,248,0.14)"/>
+            <circle cx="16" cy="29" r="1.6" fill="#EAF6F8"/>
+          </svg>
+          <div class="camera-hint">
+            <div class="h1">Сделай фото улова</div>
+            <div class="h2">Рыба должна быть хорошо видна на фотографии</div>
+          </div>
+        </div>
+        <div class="camera-controls">
+          <div class="shutter" onclick="takePhoto()"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CONFIRM CATCH ============ -->
+    <div class="screen" id="screen-confirm">
+      <div class="header-row">
+        <div class="icon-btn" onclick="goTo('screen-camera')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </div>
+        <div style="font-weight:800; font-size:15px;">Новый улов</div>
+        <div style="width:36px;"></div>
+      </div>
+      <div class="screen-inner" id="confirmBody"></div>
+    </div>
+
+    <!-- ============ ACTIVITY ============ -->
+    <div class="screen" id="screen-activity">
+      <div class="screen-inner">
+        <div class="page-title">Активность</div>
+        <div class="page-sub">Что происходит на побережье</div>
+        <div class="filter-row" id="actFilterRow"></div>
+        <div id="activityFeed"></div>
+      </div>
+    </div>
+
+    <!-- ============ PROFILE ============ -->
+    <div class="screen" id="screen-profile">
+      <div class="screen-inner" id="profileBody"></div>
+    </div>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="bottomnav" id="bottomNav">
+    <div class="navitem active" data-tab="screen-map" onclick="navClick('screen-map', this)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6.5v14L9 18l6 2.5 6-2.5v-14L15 6.5 9 4Z"/><path d="M9 4v14M15 6.5v14"/></svg>
+      <span>Карта</span>
+    </div>
+    <div class="navitem" data-tab="screen-territories" onclick="navClick('screen-territories', this)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>
+      <span>Территории</span>
+    </div>
+    <div class="navitem navplus-item" onclick="startCatchFlow(null)">
+      <div class="navplus-badge">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </div>
+    </div>
+    <div class="navitem" data-tab="screen-activity" onclick="navClick('screen-activity', this)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2.5 7L14 5l2.5 7H21"/></svg>
+      <span>Активность</span>
+    </div>
+    <div class="navitem" data-tab="screen-profile" onclick="navClick('screen-profile', this)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.6-3.8 4.6-5.7 7.5-5.7s5.9 1.9 7.5 5.7"/></svg>
+      <span>Профиль</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DATA
+============================================================ */
+const SPECIES = [
+  { key:'stavrida', name:'Ставрида', latin:'Trachurus mediterraneus' },
+  { key:'skorpena', name:'Скорпена', latin:'Scorpaena porcus' },
+  { key:'laskir',   name:'Ласкирь',  latin:'Diplodus sargus' },
+];
+const SPECIES_GRADIENT = {
+  stavrida: 'linear-gradient(160deg,#123044,#0B4C63 45%,#0A6B7C 75%,#063A48)',
+  skorpena: 'linear-gradient(160deg,#3A1420,#6B2030 45%,#8C3A2E 75%,#4A1A12)',
+  laskir:   'linear-gradient(160deg,#0E3B36,#146050 45%,#1E8067 75%,#0B4038)',
+};
+function fishIcon(size, stroke){
+  stroke = stroke || '#fff';
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 64 64" fill="none">'+
+    '<path d="M6 32c8-14 20-20 34-14-2 6-2 14 0 20-14 6-26 0-34-14z" stroke="'+stroke+'" stroke-width="2" fill="rgba(255,255,255,0.10)"/>'+
+    '<path d="M40 25c4-3 9-4 13-2-3 3-3 8 0 11-4 2-9 1-13-2" stroke="'+stroke+'" stroke-width="2" fill="rgba(255,255,255,0.10)"/>'+
+    '<circle cx="16" cy="29" r="1.7" fill="'+stroke+'"/></svg>';
+}
+
+const METHODS = ['Спиннинг','Донная снасть','Поплавочная удочка'];
+const BAITS = ['Микроджиг','Креветка','Морской червь','Блесна'];
+
+// ---- Sector points ----
+// Each entry below IS one sector, placed at its own exact lat/lng. Edit any point
+// to move that sector — nudge it toward the real coastline, closer to a neighbor,
+// add a new one, or delete one. The orientation of each hexagon is calculated
+// automatically from its neighbors, so the row keeps following whatever shape
+// these points trace.
+// Rebuilt from real, verified seafront landmarks (Iveria Beach, Alphabet Tower,
+// Radisson Blu, Batumi Boulevard park, Batumi Beach, Ardagani Lake, New Boulevard
+// south) so the row actually hugs the shoreline instead of cutting through the city.
+const SECTOR_POINTS = [
+  { id:21, name:'Пирс у Дельфинария',            type:'Пирс',     lat:41.65977, lng:41.64357 },
+  { id:18, name:'Пирс у отеля Marriott',         type:'Пирс',     lat:41.65719, lng:41.64251 },
+  { id:23, name:'У порта',                       type:'Волнорез', lat:41.65604, lng:41.63990 },
+  { id:19, name:'Бульвар, участок 19',           type:'Пляж',     lat:41.65397, lng:41.63788 },
+  { id:20, name:'Бульвар, участок 20',           type:'Пляж',     lat:41.65373, lng:41.63459 },
+  { id:22, name:'Волнорез у парка',              type:'Волнорез', lat:41.65341, lng:41.63101 },
+  { id:24, name:'Старый бульвар',                type:'Пляж',     lat:41.65226, lng:41.62846 },
+  { id:25, name:'У озера Ардагани',              type:'Пляж',     lat:41.64992, lng:41.62708 },
+  { id:26, name:'Южный пирс',                    type:'Пирс',     lat:41.64817, lng:41.62433 },
+  { id:27, name:'Спуск к ботаническому саду',    type:'Пляж',     lat:41.64643, lng:41.62158 },
+  { id:28, name:'Дикий пляж',                    type:'Пляж',     lat:41.64469, lng:41.61882 },
+  { id:29, name:'Зелёный мыс',                   type:'Волнорез', lat:41.64295, lng:41.61607 },
+  { id:30, name:'Южная набережная',              type:'Пляж',     lat:41.64120, lng:41.61332 },
+  { id:31, name:'Крайняя точка маршрута',        type:'Пляж',     lat:41.63922, lng:41.61089 },
+  { id:40, name:'Участок 40',                    type:'Пляж',     lat:41.63720, lng:41.60851 },
+  { id:41, name:'Участок 41',                    type:'Пляж',     lat:41.63518, lng:41.60612 },
+  { id:42, name:'Участок 42',                    type:'Пляж',     lat:41.63316, lng:41.60373 },
+  { id:43, name:'Участок 43',                    type:'Пляж',     lat:41.63114, lng:41.60134 },
+  { id:44, name:'Участок 44',                    type:'Пляж',     lat:41.62895, lng:41.59928 },
+  { id:45, name:'Участок 45',                    type:'Пляж',     lat:41.62656, lng:41.59763 },
+  { id:46, name:'Участок 46',                    type:'Пляж',     lat:41.62416, lng:41.59598 },
+  { id:47, name:'Участок 47',                    type:'Пляж',     lat:41.62180, lng:41.59427 },
+  { id:48, name:'Участок 48',                    type:'Пляж',     lat:41.61975, lng:41.59193 },
+  { id:49, name:'Участок 49',                    type:'Пляж',     lat:41.61770, lng:41.58958 },
+];
+
+function lerp(a,b,t){ return a + (b-a)*t; }
+function metersOffset(lat, lng, dNorth, dEast){
+  const dLat = dNorth / 111320;
+  const dLng = dEast / (111320 * Math.cos(lat*Math.PI/180));
+  return [lat + dLat, lng + dLng];
+}
+// Distance/direction (in meters, North/East) between two lat/lng points
+function metersDelta(a,b){
+  const avgLat = (a.lat+b.lat)/2;
+  const dN = (b.lat-a.lat)*111320;
+  const dE = (b.lng-a.lng)*111320*Math.cos(avgLat*Math.PI/180);
+  return { dN, dE, dist: Math.hypot(dN,dE) };
+}
+
+// Hexagon vertices for sector index i, oriented along the direction to its own
+// neighbors (so each sector's rotation follows exactly the points around it)
+// and sized from the actual spacing to those neighbors (so sectors placed closer
+// together shrink to fit, and ones placed farther apart grow — no fixed grid).
+function hexCornersForPoint(i){
+  const pts = SECTOR_POINTS;
+  const p = pts[i];
+  let dN, dE, step;
+  if (i === 0){
+    const d = metersDelta(p, pts[1]);
+    dN = d.dN; dE = d.dE; step = d.dist;
+  } else if (i === pts.length-1){
+    const d = metersDelta(pts[i-1], p);
+    dN = d.dN; dE = d.dE; step = d.dist;
+  } else {
+    const d1 = metersDelta(pts[i-1], p);
+    const d2 = metersDelta(p, pts[i+1]);
+    dN = d1.dN + d2.dN; dE = d1.dE + d2.dE;
+    step = (d1.dist + d2.dist) / 2;
+  }
+  const len = Math.hypot(dN,dE) || 1;
+  const dirN = dN/len, dirE = dE/len;
+  const perpN = -dirE, perpE = dirN; // seaward (right-hand side of travel direction)
+  const R = step / Math.sqrt(3);
+  const angles = [30,90,150,210,270,330];
+  return angles.map(a=>{
+    const rad = a*Math.PI/180;
+    const u = R*Math.cos(rad); // along the coast
+    const v = R*Math.sin(rad); // toward the sea (+) / inland (-)
+    const ddN = u*dirN + v*perpN;
+    const ddE = u*dirE + v*perpE;
+    return metersOffset(p.lat, p.lng, ddN, ddE);
+  });
+}
+
+let territories = SECTOR_POINTS.map((p,i)=>{
+  let status = 'free';
+  if (p.id === 21) status = 'mine';
+  else if ([18,23].includes(p.id)) status = 'other';
+  return {
+    id: p.id,
+    name: p.name,
+    type: p.type,
+    lat: p.lat, lng: p.lng,
+    corners: hexCornersForPoint(i),
+    status: status,
+    owner: p.id===18 ? 'Алексей' : (p.id===23 ? 'Марина' : null),
+    catchCount: status==='mine' ? 7 : (status==='other' ? Math.floor(3+Math.random()*6) : 0),
+    lastCatch: status!=='free' ? 'Сегодня' : '—',
+  };
+});
+function terrById(id){ return territories.find(t=>t.id===id); }
+
+let catches = [
+  { id:1, terrId:21, species:'stavrida', length:32, weight:0.42, when:'Сегодня · 07:45', method:'Спиннинг', bait:'Микроджиг' },
+  { id:2, terrId:21, species:'skorpena', length:28, weight:0.38, when:'Вчера · 18:20', method:'Донная снасть', bait:'Креветка' },
+  { id:3, terrId:21, species:'laskir',   length:25, weight:0.31, when:'3 дня назад', method:'Поплавочная удочка', bait:'Морской червь' },
+  { id:4, terrId:18, species:'skorpena', length:29, weight:0.40, when:'Сегодня · 09:10', method:'Донная снасть', bait:'Креветка', other:'Алексей' },
+  { id:5, terrId:23, species:'laskir',   length:25, weight:0.31, when:'Вчера · 20:05', method:'Поплавочная удочка', bait:'Морской червь', other:'Марина' },
+];
+
+let activityFeed = [
+  { who:'Ты', mine:true, text:'поймал ставриду', sub:'Территория 21 · Пирс у Дельфинария', meta:'32 см · 0,42 кг', species:'stavrida', when:'Сегодня · 07:45' },
+  { who:'Ты', mine:true, text:'занял территорию 21', sub:'Пирс у Дельфинария', meta:null, species:null, when:'Сегодня · 07:46' },
+  { who:'Алексей', mine:false, text:'поймал скорпену', sub:'Территория 18 · Пирс у отеля Marriott', meta:'29 см · 0,40 кг', species:'skorpena', when:'Сегодня · 09:10' },
+  { who:'Марина', mine:false, text:'поймала ласкиря', sub:'Территория 23 · У порта', meta:'25 см · 0,31 кг', species:'laskir', when:'Вчера · 20:05' },
+];
+
+let user = {
+  name:'Батумский Рыбак',
+  location:'Батуми, Грузия',
+  followers:24,
+};
+
+/* ============================================================
+   HELPERS
+============================================================ */
+function speciesInfo(key){ return SPECIES.find(s=>s.key===key); }
+function statusBadge(status){
+  if (status==='mine') return '<span class="badge badge-green">Моя территория</span>';
+  if (status==='other') return '<span class="badge badge-blue">Занята</span>';
+  return '<span class="badge badge-neutral">Свободна</span>';
+}
+function statusColor(status){
+  if (status==='mine') return '#2FA84F';
+  if (status==='other') return '#3E7BFA';
+  return '#7C7E86';
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1700);
+}
+function myTerritories(){ return territories.filter(t=>t.status==='mine'); }
+function myCatches(){ return catches.filter(c=>!c.other); }
+function speciesCountMine(){ return new Set(myCatches().map(c=>c.species)).size; }
+function personalRecord(){
+  const mine = myCatches();
+  if (!mine.length) return null;
+  return mine.reduce((a,b)=> b.length>a.length ? b : a);
+}
+const ACH_ICONS = {
+  first: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9c0 4 2.5 7 6 7s6-3 6-7"/><path d="M6 9V4h12v5"/><path d="M4 5h2M18 5h2M10 20h4M12 16v4"/></svg>',
+  territory: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c3-5 6-7.5 9-7.5s6 2.5 9 7.5"/><circle cx="12" cy="7" r="2.4"/></svg>',
+  species: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14c4-6 9-9 13-6-1 3-1 6 0 9-4 3-9 0-13-3z"/><circle cx="7.5" cy="12.2" r="0.8" fill="currentColor" stroke="none"/></svg>',
+  sunrise: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18h16M6 18a6 6 0 0 1 12 0"/><path d="M12 8V5M5.5 12 4 10.5M18.5 12 20 10.5"/></svg>',
+  record: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M12 15l4-4M12 15l-4-4"/><path d="M5 21h14"/></svg>',
+  ten: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V10M4 10l4-4M4 10 0 6" transform="translate(2)"/><path d="M4 21h16M12 21V7l-3 2M17 21v-8l-3 2"/></svg>',
+};
+function computeAchievements(){
+  const mine = myCatches();
+  const terrMine = myTerritories();
+  const record = personalRecord();
+  const earlyCatch = mine.some(c => {
+    const m = c.when.match(/(\d{2}):(\d{2})/);
+    return m && parseInt(m[1],10) < 8;
+  });
+  return [
+    { icon:'first', title:'Первый улов', desc:'Зафиксирован первый улов в приложении', unlocked: mine.length>=1 },
+    { icon:'territory', title:'Три территории', desc:'Заняты три береговые территории', unlocked: terrMine.length>=3, progress: terrMine.length+'/3' },
+    { icon:'species', title:'Коллекционер видов', desc:'Пойманы все виды рыб Чёрного моря', unlocked: speciesCountMine()>=3, progress: speciesCountMine()+'/3' },
+    { icon:'sunrise', title:'Ранний рыбак', desc:'Улов зафиксирован до 8 утра', unlocked: earlyCatch },
+    { icon:'record', title:'Личный рекорд 40 см', desc:'Поймана рыба длиной от 40 см', unlocked: !!(record && record.length>=40) },
+    { icon:'ten', title:'Десять уловов', desc:'Зафиксировано десять уловов', unlocked: mine.length>=10, progress: Math.min(mine.length,10)+'/10' },
+  ];
+}
+function renderAchievements(){
+  const list = computeAchievements();
+  return `
+    <div class="section-title" style="margin-top:24px;">Достижения</div>
+    <div class="ach-grid">
+      ${list.map(a=>`
+        <div class="ach-card ${a.unlocked?'':'locked'}">
+          <div class="ach-icon ${a.unlocked?'on':'off'}">${ACH_ICONS[a.icon]}</div>
+          <div>
+            <div class="ach-title">${a.title}</div>
+            <div class="ach-desc">${a.desc}</div>
+            ${(!a.unlocked && a.progress) ? `<div class="ach-progress">${a.progress}</div>` : ''}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+let currentScreen = 'screen-map';
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  currentScreen = id;
+  document.getElementById('bottomNav').style.display = (id==='screen-camera') ? 'none' : 'flex';
+}
+function navClick(id, el){
+  goTo(id);
+  document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  if (id==='screen-territories') renderTerritoriesList();
+  if (id==='screen-activity') renderActivity();
+  if (id==='screen-profile') renderProfile();
+  if (id==='screen-map') setTimeout(()=>{ if(map) map.invalidateSize(); },50);
+}
+
+/* ============================================================
+   MAP (Leaflet)
+============================================================ */
+let map, markersLayer;
+function initMap(){
+  map = L.map('leafletMap', { zoomControl:false, attributionControl:false });
+  const bounds = L.latLngBounds(SECTOR_POINTS.map(p=>[p.lat,p.lng]));
+  map.fitBounds(bounds, { padding:[36,36] });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    subdomains:'abc', maxZoom:19,
+  }).addTo(map);
+  L.control.attribution({prefix:false}).addAttribution('© OpenStreetMap').addTo(map);
+
+  markersLayer = L.layerGroup().addTo(map);
+  drawTerritories();
+  renderMapSheet();
+}
+function drawTerritories(){
+  markersLayer.clearLayers();
+  territories.forEach(t=>{
+    const color = statusColor(t.status);
+    const poly = L.polygon(t.corners, {
+      color: color, weight: 1.5,
+      fillColor: color, fillOpacity: t.status==='free' ? 0.22 : 0.32,
+      opacity: 0.9,
+    }).addTo(markersLayer);
+    poly.on('click', ()=>openTerritory(t.id));
+    L.marker([t.lat, t.lng], {
+      icon: L.divIcon({ className:'leaflet-territory-label', html:String(t.id), iconSize:[26,16] }),
+      interactive:false,
+    }).addTo(markersLayer);
+  });
+}
+function renderMapSheet(){
+  const wrap = document.getElementById('mapSheet');
+  wrap.innerHTML = territories.map(t=>`
+    <div class="map-sheet-card" data-id="${t.id}">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        ${statusBadge(t.status)}
+        <span style="font-size:12px; color:var(--ink-soft); font-weight:600;">Шаг ≈300 м</span>
+      </div>
+      <div>
+        <div style="font-size:17px; font-weight:800;">Сектор ${t.id}</div>
+        <div style="font-size:13px; color:var(--ink-soft); margin-top:2px;">${t.name}</div>
+      </div>
+      <div style="display:flex; gap:18px; font-size:13px; color:var(--ink-soft); font-weight:600;">
+        <span>Уловов ${t.catchCount}</span>
+        <span>${t.lastCatch==='—' ? 'Пока нет уловов' : 'Последний улов: '+t.lastCatch}</span>
+      </div>
+      <button class="btn-primary" onclick="openTerritory(${t.id})">${t.status==='mine' ? 'Перейти к рыбалке' : t.status==='other' ? 'Посмотреть территорию' : 'Занять территорию'}</button>
+    </div>
+  `).join('');
+  wrap.scrollLeft = 0;
+  attachSheetScrollSync(wrap);
+}
+function panToTerritory(index){
+  const t = territories[index];
+  if (!t || !map) return;
+  const targetZoom = Math.max(map.getZoom(), 16.5);
+  map.flyTo([t.lat, t.lng], targetZoom, { duration:0.5 });
+}
+function attachSheetScrollSync(wrap){
+  if (wrap._synced) return;
+  wrap._synced = true;
+  wrap.addEventListener('scroll', ()=>{
+    clearTimeout(wrap._t);
+    wrap._t = setTimeout(()=>{
+      const cards = wrap.querySelectorAll('.map-sheet-card');
+      let closest = 0, min = Infinity;
+      cards.forEach((c,i)=>{
+        const d = Math.abs(c.offsetLeft - wrap.scrollLeft);
+        if (d < min){ min = d; closest = i; }
+      });
+      panToTerritory(closest);
+    }, 120);
+  }, { passive:true });
+}
+
+/* ============================================================
+   TERRITORY DETAIL
+============================================================ */
+let activeTerritoryId = 21;
+function openTerritory(id){
+  activeTerritoryId = id;
+  const t = terrById(id);
+  const recent = catches.filter(c=>c.terrId===id).slice(0,3);
+  document.getElementById('territoryDetail').innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <div class="page-title" style="margin-top:2px;">Территория ${t.id}</div>
+        <div class="page-sub" style="margin-bottom:0;">${t.name}</div>
+      </div>
+      ${statusBadge(t.status)}
+    </div>
+    <div class="card" style="margin-top:16px; padding:16px;">
+      <div class="info-grid">
+        <div><div class="label">Размер</div><div class="value">≈300 м вдоль берега</div></div>
+        <div><div class="label">Тип</div><div class="value">${t.type}</div></div>
+        <div><div class="label">Уловов</div><div class="value">${t.catchCount}</div></div>
+        <div><div class="label">Последний улов</div><div class="value">${t.lastCatch}</div></div>
+      </div>
+    </div>
+    <div class="section-title" style="margin-top:22px;">Последние уловы</div>
+    <div class="card" style="overflow:hidden;">
+      ${ recent.length ? recent.map((c,i)=>catchRow(c, i<recent.length-1)).join('') : emptyCatchesRow() }
+    </div>
+    <div style="margin-top:22px;">
+      ${ t.status==='mine'
+        ? `<button class="btn-primary" onclick="startCatchFlow(${t.id})">${fishIcon(18,'#fff')} <span style="margin-left:4px;">Отметить новый улов</span></button>`
+        : t.status==='other'
+        ? `<button class="btn-primary" onclick="startCatchFlow(${t.id})">Поймать и переоформить территорию</button>`
+        : `<button class="btn-primary" onclick="startCatchFlow(${t.id})">Поймать и занять территорию</button>`
+      }
+    </div>
+  `;
+  goTo('screen-territory');
+}
+function catchRow(c, withBorder){
+  const sp = speciesInfo(c.species);
+  return `<div style="display:flex; align-items:center; gap:12px; padding:12px 14px; ${withBorder?'border-bottom:1px solid var(--line);':''}">
+    <div class="fish-thumb" style="width:46px; height:46px; background:${SPECIES_GRADIENT[c.species]};">${fishIcon(20)}</div>
+    <div style="flex:1;">
+      <div style="font-weight:700; font-size:14.5px;">${sp.name}</div>
+      <div style="font-size:12.5px; color:var(--ink-soft); margin-top:1px;">${c.length} см · ${c.weight.toFixed(2).replace('.',',')} кг</div>
+    </div>
+    <div style="font-size:12px; color:var(--ink-faint); font-weight:600;">${c.when.split('·')[0].trim()}</div>
+  </div>`;
+}
+function emptyCatchesRow(){
+  return `<div style="padding:22px 14px; text-align:center; color:var(--ink-soft); font-size:13.5px;">Пока нет уловов на этой территории</div>`;
+}
+
+/* ============================================================
+   TERRITORIES LIST
+============================================================ */
+let terrFilter = 'all';
+function renderTerritoriesList(){
+  document.getElementById('terrCountSub').textContent = 'Побережье Батуми · ' + territories.length + ' участков';
+  document.getElementById('terrFilterRow').innerHTML = `
+    <div class="filter-chip ${terrFilter==='all'?'active':''}" onclick="setTerrFilter('all')">Все</div>
+    <div class="filter-chip ${terrFilter==='mine'?'active':''}" onclick="setTerrFilter('mine')">Мои</div>
+    <div class="filter-chip ${terrFilter==='free'?'active':''}" onclick="setTerrFilter('free')">Свободные</div>
+  `;
+  const list = territories.filter(t => terrFilter==='all' ? true : t.status===terrFilter);
+  document.getElementById('terrList').innerHTML = list.map((t,i)=>`
+    <div class="terr-list-item" style="${i<list.length-1?'border-bottom:1px solid var(--line);':''}" onclick="openTerritory(${t.id})">
+      <div style="width:10px; height:10px; border-radius:3px; background:${statusColor(t.status)}; flex:0 0 auto;"></div>
+      <div style="flex:1;">
+        <div style="font-weight:700; font-size:14.5px;">Сектор ${t.id} · ${t.name}</div>
+        <div style="font-size:12.5px; color:var(--ink-soft); margin-top:2px;">${t.type} · Уловов ${t.catchCount} · ${t.lastCatch}</div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A9AE" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+    </div>
+  `).join('') || `<div style="padding:26px; text-align:center; color:var(--ink-soft); font-size:13.5px;">Нет территорий в этой категории</div>`;
+}
+function setTerrFilter(f){ terrFilter = f; renderTerritoriesList(); }
+
+/* ============================================================
+   CATCH FLOW: camera -> confirm -> success
+============================================================ */
+let pendingCatch = null;
+function startCatchFlow(terrId){
+  activeTerritoryId = terrId || activeTerritoryId || 21;
+  const t = terrById(activeTerritoryId);
+  document.getElementById('gpsChip').textContent = 'GPS · ' + t.lat.toFixed(4) + ', ' + t.lng.toFixed(4);
+  goTo('screen-camera');
+}
+function takePhoto(){
+  const t = terrById(activeTerritoryId);
+  const sp = SPECIES[Math.floor(Math.random()*SPECIES.length)];
+  const length = Math.round(20 + Math.random()*22);
+  const weight = +(0.18 + (length/32)*0.28).toFixed(2);
+  pendingCatch = {
+    terrId: t.id, species: sp.key,
+    length, weight,
+    when: 'Сегодня · ' + new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}),
+    method: METHODS[Math.floor(Math.random()*METHODS.length)],
+    bait: BAITS[Math.floor(Math.random()*BAITS.length)],
+  };
+  renderConfirm();
+  goTo('screen-confirm');
+}
+function renderConfirm(){
+  const t = terrById(pendingCatch.terrId);
+  const sp = speciesInfo(pendingCatch.species);
+  document.getElementById('confirmBody').innerHTML = `
+    <div class="confirm-photo" style="background:${SPECIES_GRADIENT[pendingCatch.species]};">
+      ${fishIcon(96)}
+    </div>
+    <div style="margin-top:16px;">
+      <div style="font-size:20px; font-weight:800;">${sp.name}</div>
+      <div style="font-size:13px; color:var(--ink-soft); letter-spacing:0.2px; margin-top:2px;">${sp.latin}</div>
+    </div>
+    <div class="divider"></div>
+    <div class="info-grid">
+      <div><div class="label">Размер</div><div class="value">${pendingCatch.length} см</div></div>
+      <div><div class="label">Вес</div><div class="value">${pendingCatch.weight.toFixed(2).replace('.',',')} кг</div></div>
+      <div><div class="label">Дата и время</div><div class="value">${pendingCatch.when}</div></div>
+      <div><div class="label">Территория</div><div class="value">${t.id} · ${t.name}</div></div>
+      <div><div class="label">Способ ловли</div><div class="value">${pendingCatch.method}</div></div>
+      <div><div class="label">Приманка</div><div class="value">${pendingCatch.bait}</div></div>
+    </div>
+    <div style="margin-top:26px;">
+      <button class="btn-primary" onclick="confirmCatch()">Подтвердить улов</button>
+    </div>
+  `;
+}
+function confirmCatch(){
+  const t = terrById(pendingCatch.terrId);
+  const wasFree = t.status !== 'mine';
+  const newId = catches.length + 1;
+  catches.unshift({ id:newId, terrId:t.id, species:pendingCatch.species, length:pendingCatch.length, weight:pendingCatch.weight, when:pendingCatch.when, method:pendingCatch.method, bait:pendingCatch.bait });
+  t.catchCount += 1;
+  t.lastCatch = 'Сегодня';
+  const tookOver = t.status !== 'mine';
+  t.status = 'mine';
+  t.owner = null;
+
+  const sp = speciesInfo(pendingCatch.species);
+  activityFeed.unshift({ who:'Ты', mine:true, text:'поймал' + (sp.key==='laskir'?'а':'') + ' ' + sp.name.toLowerCase(), sub:'Территория '+t.id+' · '+t.name, meta:pendingCatch.length+' см · '+pendingCatch.weight.toFixed(2).replace('.',',')+' кг', species:sp.key, when:pendingCatch.when });
+  if (tookOver){
+    activityFeed.unshift({ who:'Ты', mine:true, text:'занял территорию '+t.id, sub:t.name, meta:null, species:null, when:pendingCatch.when });
+  }
+
+  document.getElementById('confirmBody').innerHTML = `
+    <div class="success-wrap">
+      <div class="success-icon">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <div style="font-size:21px; font-weight:800;">Теперь это твоя территория</div>
+      <div style="font-size:14px; color:var(--ink-soft); margin-top:8px;">Территория ${t.id} · ${t.name}</div>
+      <div style="margin-top:26px; width:100%; display:flex; flex-direction:column; gap:10px;">
+        <button class="btn-primary" onclick="finishCatchFlow()">Готово</button>
+        <button class="btn-secondary" onclick="showToast('Ссылка на улов скопирована')">Поделиться уловом</button>
+      </div>
+    </div>
+  `;
+  drawTerritories();
+}
+function finishCatchFlow(){
+  goTo('screen-map');
+  document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));
+  document.querySelector('[data-tab="screen-map"]').classList.add('active');
+  renderMapSheet();
+}
+
+/* ============================================================
+   ACTIVITY
+============================================================ */
+let actFilter = 'all';
+function renderActivity(){
+  document.getElementById('actFilterRow').innerHTML = `
+    <div class="filter-chip ${actFilter==='all'?'active':''}" onclick="setActFilter('all')">Все</div>
+    <div class="filter-chip ${actFilter==='mine'?'active':''}" onclick="setActFilter('mine')">Мои территории</div>
+    <div class="filter-chip ${actFilter==='following'?'active':''}" onclick="setActFilter('following')">Подписки</div>
+  `;
+  const list = activityFeed.filter(a=>{
+    if (actFilter==='mine') return a.mine;
+    if (actFilter==='following') return !a.mine;
+    return true;
+  });
+  document.getElementById('activityFeed').innerHTML = list.map(a=>`
+    <div class="activity-item">
+      <div class="avatar" style="${a.mine?'':'background:var(--blue);'}">${a.who.slice(0,1)}</div>
+      <div style="flex:1;">
+        <div style="font-size:14.5px; font-weight:700; line-height:1.35;">${a.who} ${a.text}</div>
+        <div style="font-size:12.5px; color:var(--ink-soft); margin-top:2px;">${a.sub}</div>
+        ${a.meta ? `<div style="font-size:12.5px; color:var(--ink-faint); margin-top:2px; font-weight:600;">${a.meta}</div>` : ''}
+        <div style="font-size:11.5px; color:var(--ink-faint); margin-top:6px;">${a.when}</div>
+      </div>
+      ${a.species ? `<div class="fish-thumb" style="width:44px; height:44px; background:${SPECIES_GRADIENT[a.species]};">${fishIcon(18)}</div>` : ''}
+    </div>
+  `).join('') || `<div style="padding:26px; text-align:center; color:var(--ink-soft); font-size:13.5px;">Пока нет активности</div>`;
+}
+function setActFilter(f){ actFilter = f; renderActivity(); }
+
+/* ============================================================
+   PROFILE
+============================================================ */
+function renderProfile(){
+  const record = personalRecord();
+  const mine = myTerritories();
+  const recentMine = myCatches().slice(0,3);
+  document.getElementById('profileBody').innerHTML = `
+    <div class="page-title" style="text-align:center; margin-top:14px;">Профиль</div>
+    <div class="profile-avatar">БР</div>
+    <div style="text-align:center;">
+      <div style="font-size:19px; font-weight:800;">${user.name}</div>
+      <div style="font-size:13.5px; color:var(--ink-soft); margin-top:2px;">${user.location}</div>
+    </div>
+    <div class="card stat-grid4" style="margin-top:20px; padding:16px 8px;">
+      <div><div class="stat-num">${mine.length}</div><div class="stat-label">Территорий</div></div>
+      <div><div class="stat-num">${myCatches().length}</div><div class="stat-label">Уловов</div></div>
+      <div><div class="stat-num">${speciesCountMine()}</div><div class="stat-label">Видов рыб</div></div>
+      <div><div class="stat-num">${user.followers}</div><div class="stat-label">Подписчика</div></div>
+    </div>
+    ${renderAchievements()}
+
+    <div class="section-title" style="margin-top:24px;">Последние уловы</div>
+    <div class="card" style="overflow:hidden;">
+      ${ recentMine.length ? recentMine.map((c,i)=>catchRow(c, i<recentMine.length-1)).join('') : emptyCatchesRow() }
+    </div>
+
+    <div class="section-title" style="margin-top:24px;">Мои территории</div>
+    <div class="card" style="overflow:hidden;">
+      ${ mine.length ? mine.map((t,i)=>`
+        <div class="terr-list-item" style="${i<mine.length-1?'border-bottom:1px solid var(--line);':''}" onclick="openTerritory(${t.id})">
+          <div style="width:10px; height:10px; border-radius:3px; background:${statusColor(t.status)};"></div>
+          <div style="flex:1;">
+            <div style="font-weight:700; font-size:14.5px;">${t.id}</div>
+            <div style="font-size:12.5px; color:var(--ink-soft); margin-top:2px;">${t.name}</div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A9AE" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </div>
+      `).join('') : emptyCatchesRow() }
+    </div>
+
+    ${ record ? `
+    <div class="section-title" style="margin-top:24px;">Личный рекорд</div>
+    <div class="card" style="padding:16px; display:flex; align-items:center; gap:14px;">
+      <div class="fish-thumb" style="width:52px; height:52px; background:${SPECIES_GRADIENT[record.species]};">${fishIcon(24)}</div>
+      <div>
+        <div style="font-weight:800; font-size:16px;">${speciesInfo(record.species).name}</div>
+        <div style="font-size:13px; color:var(--accent); font-weight:700; margin-top:2px;">${record.length} см</div>
+      </div>
+    </div>` : '' }
+  `;
+}
+
+/* ============================================================
+   INIT
+============================================================ */
+function updateClock(){
+  const d = new Date();
+  document.getElementById('clock').textContent = d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+}
+updateClock(); setInterval(updateClock, 30000);
+window.addEventListener('load', ()=>{ initMap(); });
+</script>
+</body>
+</html>
