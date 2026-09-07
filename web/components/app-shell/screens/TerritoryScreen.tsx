@@ -1,10 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import { useCatchesByTerritory, useProfile } from '@/lib/supabase/queries'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
-import { PhotoLightbox } from '@/components/app-shell/PhotoLightbox'
 import type { Territory } from '@/lib/data/types'
 
 function statusBadge(status: Territory['status']) {
@@ -30,14 +28,15 @@ export function TerritoryScreen({
   territory,
   onBack,
   onOpenUser,
+  onOpenPhoto,
 }: {
   territory: Territory
   onBack: () => void
   onOpenUser: (id: string) => void
+  onOpenPhoto: (src: string) => void
 }) {
   const { data: catches = [] } = useCatchesByTerritory(territory.id)
   const recent = catches.slice(0, 3)
-  const [lightbox, setLightbox] = useState<string | null>(null)
 
   return (
     <>
@@ -103,7 +102,7 @@ export function TerritoryScreen({
                   key={c.id}
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recent.length - 1 ? '1px solid var(--line)' : 'none' }}
                 >
-                  <div className="fish-thumb" style={{ width: 46, height: 46, cursor: 'pointer' }} onClick={() => setLightbox(c.photoUrl)}>
+                  <div className="fish-thumb" style={{ width: 46, height: 46, cursor: 'pointer' }} onClick={() => onOpenPhoto(c.photoUrl)}>
                     <img src={c.photoUrl} alt={c.speciesName} />
                   </div>
                   <div style={{ flex: 1 }}>
@@ -119,7 +118,6 @@ export function TerritoryScreen({
           )}
         </div>
       </div>
-      {lightbox && <PhotoLightbox src={lightbox} alt="Улов" onClose={() => setLightbox(null)} />}
     </>
   )
 }

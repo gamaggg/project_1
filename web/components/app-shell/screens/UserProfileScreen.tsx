@@ -1,12 +1,10 @@
 'use client'
 
-import { useState } from 'react'
 import { useProfile, useCatchesByUser, useIsFollowing, useSetFollowing } from '@/lib/supabase/queries'
 import { computeAchievements, personalRecord } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta } from '@/lib/format'
 import { ACH_ICONS } from '@/components/app-shell/icons'
-import { PhotoLightbox } from '@/components/app-shell/PhotoLightbox'
 import type { Territory } from '@/lib/data/types'
 
 // Read-only counterpart to ProfileScreen — someone else's territories/catches/
@@ -19,17 +17,18 @@ export function UserProfileScreen({
   territories,
   onBack,
   onOpenTerritory,
+  onOpenPhoto,
 }: {
   userId: string
   territories: Territory[]
   onBack: () => void
   onOpenTerritory: (id: string) => void
+  onOpenPhoto: (src: string) => void
 }) {
   const { data: profile } = useProfile(userId)
   const { data: catches = [] } = useCatchesByUser(userId)
   const { data: isFollowing, isLoading: followLoading } = useIsFollowing(userId)
   const setFollowing = useSetFollowing()
-  const [lightbox, setLightbox] = useState<string | null>(null)
 
   const speciesCount = new Set(catches.map((c) => c.species)).size
   const record = personalRecord(catches)
@@ -118,7 +117,7 @@ export function UserProfileScreen({
                   key={c.id}
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recent.length - 1 ? '1px solid var(--line)' : 'none' }}
                 >
-                  <div className="fish-thumb" style={{ width: 46, height: 46, cursor: 'pointer' }} onClick={() => setLightbox(c.photoUrl)}>
+                  <div className="fish-thumb" style={{ width: 46, height: 46, cursor: 'pointer' }} onClick={() => onOpenPhoto(c.photoUrl)}>
                     <img src={c.photoUrl} alt={c.speciesName} />
                   </div>
                   <div style={{ flex: 1 }}>
@@ -166,7 +165,7 @@ export function UserProfileScreen({
               Личный рекорд
             </div>
             <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div className="fish-thumb" style={{ width: 52, height: 52, cursor: 'pointer' }} onClick={() => setLightbox(record.photoUrl)}>
+              <div className="fish-thumb" style={{ width: 52, height: 52, cursor: 'pointer' }} onClick={() => onOpenPhoto(record.photoUrl)}>
                 <img src={record.photoUrl} alt={record.speciesName} />
               </div>
               <div>
@@ -177,8 +176,6 @@ export function UserProfileScreen({
           </>
         )}
       </div>
-
-      {lightbox && <PhotoLightbox src={lightbox} alt="Улов" onClose={() => setLightbox(null)} />}
     </>
   )
 }

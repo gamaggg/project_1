@@ -5,14 +5,22 @@ import { useActivity } from '@/lib/supabase/queries'
 import { CATEGORY_GRADIENT, KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import { FishIcon } from '@/components/app-shell/icons'
-import { PhotoLightbox } from '@/components/app-shell/PhotoLightbox'
 
 type Filter = 'all' | 'mine'
 
-export function ActivityScreen({ onOpenUser }: { onOpenUser: (id: string) => void }) {
+export function ActivityScreen({
+  onOpenUser,
+  onOpenPhoto,
+  unreadIds,
+  onMarkAllRead,
+}: {
+  onOpenUser: (id: string) => void
+  onOpenPhoto: (src: string) => void
+  unreadIds: Set<number>
+  onMarkAllRead: () => void
+}) {
   const { data: activity = [], isLoading } = useActivity()
   const [filter, setFilter] = useState<Filter>('all')
-  const [lightbox, setLightbox] = useState<string | null>(null)
   const list = activity.filter((a) => (filter === 'mine' ? a.mine : true))
 
   return (
@@ -26,6 +34,11 @@ export function ActivityScreen({ onOpenUser }: { onOpenUser: (id: string) => voi
         <div className={`filter-chip${filter === 'mine' ? ' active' : ''}`} onClick={() => setFilter('mine')}>
           Мои территории
         </div>
+        {unreadIds.size > 0 && (
+          <button className="mark-read-btn tap-scale" onClick={onMarkAllRead}>
+            Прочитать все
+          </button>
+        )}
       </div>
       <div>
         {isLoading ? (
@@ -56,13 +69,16 @@ export function ActivityScreen({ onOpenUser }: { onOpenUser: (id: string) => voi
                   {meta && (
                     <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2, fontWeight: 600 }}>{meta}</div>
                   )}
-                  <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6 }}>{formatWhen(a.createdAt)}</div>
+                  <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {unreadIds.has(a.id) && <span className="unread-dot" />}
+                    {formatWhen(a.createdAt)}
+                  </div>
                 </div>
                 {a.speciesName && (
                   <div
                     className="fish-thumb"
                     style={{ width: 44, height: 44, cursor: a.photoUrl ? 'pointer' : undefined, background: a.photoUrl ? undefined : CATEGORY_GRADIENT[a.speciesCategory ?? 'marine'] }}
-                    onClick={() => a.photoUrl && setLightbox(a.photoUrl)}
+                    onClick={() => a.photoUrl && onOpenPhoto(a.photoUrl)}
                   >
                     {a.photoUrl ? <img src={a.photoUrl} alt={a.speciesName} /> : <FishIcon size={18} />}
                   </div>
@@ -74,7 +90,6 @@ export function ActivityScreen({ onOpenUser }: { onOpenUser: (id: string) => voi
           <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет активности</div>
         )}
       </div>
-      {lightbox && <PhotoLightbox src={lightbox} alt="Улов" onClose={() => setLightbox(null)} />}
     </div>
   )
 }

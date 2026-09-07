@@ -128,6 +128,14 @@ body{
 .navitem.active{color:var(--ink);}
 .navitem.active svg{stroke:var(--ink);}
 .navitem svg{stroke:var(--ink-faint); transition:stroke .15s var(--ease);}
+.navitem-icon-wrap{position:relative; display:inline-flex;}
+.nav-badge{
+  position:absolute; top:-5px; right:-9px;
+  min-width:16px; height:16px; padding:0 4px;
+  border-radius:8px; background:var(--accent); color:#fff;
+  font-size:10px; font-weight:800; line-height:16px; text-align:center;
+  box-shadow:0 0 0 2px var(--surface);
+}
 .navplus-badge{
   width:38px; height:38px;
   border-radius:50%;
@@ -466,6 +474,12 @@ body{
   transition:background .15s var(--ease), color .15s var(--ease), border-color .15s var(--ease);
 }
 .filter-chip.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+.mark-read-btn{
+  margin-left:auto; align-self:center;
+  background:none; border:none; font-family:inherit; cursor:pointer;
+  font-size:12.5px; font-weight:700; color:var(--accent); padding:6px 2px;
+}
+.unread-dot{width:7px; height:7px; border-radius:50%; background:var(--accent); flex:0 0 auto;}
 .avatar{
   width:44px; height:44px; border-radius:50%;
   background:var(--ink); color:#fff;

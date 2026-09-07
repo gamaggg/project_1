@@ -9,7 +9,6 @@ import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta } from '@/lib/format'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import { AuthForm } from '@/components/app-shell/AuthForm'
-import { PhotoLightbox } from '@/components/app-shell/PhotoLightbox'
 import type { Territory } from '@/lib/data/types'
 
 const MAX_AVATAR_SIZE = 512
@@ -40,7 +39,11 @@ function downscaleImage(file: File): Promise<Blob> {
   })
 }
 
-function EditProfileModal({ onClose }: { onClose: () => void }) {
+// Rendered by FishZoneApp itself, not nested inside this screen's scrolling
+// `.screen-inner` — a position:absolute overlay nested inside a scrolled
+// container inherits that scroll offset (see DECISIONS.md, same bug as
+// PhotoLightbox). Exported so FishZoneApp can mount it at the app-shell level.
+export function EditProfileModal({ onClose }: { onClose: () => void }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   const updateProfile = useUpdateProfile()
@@ -127,12 +130,22 @@ function EditProfileModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-export function ProfileScreen({ myTerritories, onOpenTerritory, onSignOut }: { myTerritories: Territory[]; onOpenTerritory: (id: string) => void; onSignOut: () => void }) {
+export function ProfileScreen({
+  myTerritories,
+  onOpenTerritory,
+  onSignOut,
+  onEditProfile,
+  onOpenPhoto,
+}: {
+  myTerritories: Territory[]
+  onOpenTerritory: (id: string) => void
+  onSignOut: () => void
+  onEditProfile: () => void
+  onOpenPhoto: (src: string) => void
+}) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   const { data: myCatches = [] } = useMyCatches()
-  const [editing, setEditing] = useState(false)
-  const [lightbox, setLightbox] = useState<string | null>(null)
 
   // Signed out: the profile tab IS the sign-in/sign-up entry point (see
   // DECISIONS.md — replaced the standalone /auth redirect from the "+" button).
@@ -165,7 +178,7 @@ export function ProfileScreen({ myTerritories, onOpenTerritory, onSignOut }: { m
             initials
           )}
         </div>
-        <div className="avatar-edit-btn tap-scale" onClick={() => setEditing(true)}>
+        <div className="avatar-edit-btn tap-scale" onClick={onEditProfile}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 20h9" />
             <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
@@ -223,7 +236,7 @@ export function ProfileScreen({ myTerritories, onOpenTerritory, onSignOut }: { m
                 key={c.id}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recentMine.length - 1 ? '1px solid var(--line)' : 'none' }}
               >
-                <div className="fish-thumb" style={{ width: 46, height: 46, cursor: 'pointer' }} onClick={() => setLightbox(c.photoUrl)}>
+                <div className="fish-thumb" style={{ width: 46, height: 46, cursor: 'pointer' }} onClick={() => onOpenPhoto(c.photoUrl)}>
                   <img src={c.photoUrl} alt={c.speciesName} />
                 </div>
                 <div style={{ flex: 1 }}>
@@ -271,7 +284,7 @@ export function ProfileScreen({ myTerritories, onOpenTerritory, onSignOut }: { m
             Личный рекорд
           </div>
           <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div className="fish-thumb" style={{ width: 52, height: 52, cursor: 'pointer' }} onClick={() => setLightbox(record.photoUrl)}>
+            <div className="fish-thumb" style={{ width: 52, height: 52, cursor: 'pointer' }} onClick={() => onOpenPhoto(record.photoUrl)}>
               <img src={record.photoUrl} alt={record.speciesName} />
             </div>
             <div>
@@ -287,9 +300,6 @@ export function ProfileScreen({ myTerritories, onOpenTerritory, onSignOut }: { m
           Выйти
         </button>
       </div>
-
-      {editing && <EditProfileModal onClose={() => setEditing(false)} />}
-      {lightbox && <PhotoLightbox src={lightbox} alt="Улов" onClose={() => setLightbox(null)} />}
     </div>
   )
 }

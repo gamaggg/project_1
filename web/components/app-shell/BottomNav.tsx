@@ -1,24 +1,19 @@
 'use client'
 
-import type { ScreenId } from '@/components/app-shell/FishZoneApp'
-
-const TABS: { id: ScreenId; label: string }[] = [
-  { id: 'screen-map', label: 'Карта' },
-  { id: 'screen-territories', label: 'Территории' },
-  { id: 'screen-activity', label: 'Активность' },
-  { id: 'screen-profile', label: 'Профиль' },
-]
+import type { TabScreenId } from '@/components/app-shell/FishZoneApp'
 
 export function BottomNav({
   active,
   onNavigate,
   onPlus,
   plusPending,
+  unreadCount = 0,
 }: {
-  active: ScreenId
-  onNavigate: (id: ScreenId) => void
+  active: TabScreenId
+  onNavigate: (id: TabScreenId) => void
   onPlus: () => void
   plusPending?: boolean
+  unreadCount?: number
 }) {
   return (
     <div className="bottomnav">
@@ -46,9 +41,12 @@ export function BottomNav({
         </div>
       </div>
       <NavItem id="screen-activity" active={active === 'screen-activity'} onClick={onNavigate}>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 12h4l2.5 7L14 5l2.5 7H21" />
-        </svg>
+        <span className="navitem-icon-wrap">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 12h4l2.5 7L14 5l2.5 7H21" />
+          </svg>
+          {unreadCount > 0 && <span className="nav-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+        </span>
         <span>Активность</span>
       </NavItem>
       <NavItem id="screen-profile" active={active === 'screen-profile'} onClick={onNavigate}>
@@ -68,9 +66,9 @@ function NavItem({
   onClick,
   children,
 }: {
-  id: ScreenId
+  id: TabScreenId
   active: boolean
-  onClick: (id: ScreenId) => void
+  onClick: (id: TabScreenId) => void
   children: React.ReactNode
 }) {
   return (

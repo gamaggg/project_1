@@ -5,8 +5,10 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { useTerritories, useConfirmCatch } from '@/lib/supabase/queries'
 import { getCurrentCoords, nearestTerritory } from '@/lib/geolocation'
 import { uploadCatchPhoto } from '@/lib/supabase/storage'
+import { useActivityReadState } from '@/lib/activityRead'
 import type { PendingCatch } from '@/lib/data/types'
 import { BottomNav } from '@/components/app-shell/BottomNav'
+import { PhotoLightbox } from '@/components/app-shell/PhotoLightbox'
 import { MapScreen } from '@/components/app-shell/screens/MapScreen'
 import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import { TerritoryScreen } from '@/components/app-shell/screens/TerritoryScreen'
@@ -14,7 +16,7 @@ import { TerritoriesListScreen } from '@/components/app-shell/screens/Territorie
 import { CameraScreen } from '@/components/app-shell/screens/CameraScreen'
 import { ConfirmScreen, type CatchFormData, type PhotoStatus } from '@/components/app-shell/screens/ConfirmScreen'
 import { ActivityScreen } from '@/components/app-shell/screens/ActivityScreen'
-import { ProfileScreen } from '@/components/app-shell/screens/ProfileScreen'
+import { ProfileScreen, EditProfileModal } from '@/components/app-shell/screens/ProfileScreen'
 import { UserProfileScreen } from '@/components/app-shell/screens/UserProfileScreen'
 
 export type ScreenId =
@@ -27,18 +29,43 @@ export type ScreenId =
   | 'screen-profile'
   | 'screen-user-profile'
 
+export type TabScreenId = 'screen-map' | 'screen-territories' | 'screen-activity' | 'screen-profile'
 const NAV_SCREENS: ScreenId[] = ['screen-map', 'screen-territories', 'screen-activity', 'screen-profile']
+
+// A real navigation stack, not a single "current screen" — so every back
+// button returns to wherever you actually drilled in from (map, a list, a
+// territory, someone else's profile, ...), including several levels deep.
+// Territory/user-profile entries carry their own id so popping back through
+// a chain that visited a *different* territory/profile in between restores
+// the right one instead of whatever was opened last (see DECISIONS.md).
+type StackEntry =
+  | { screen: 'screen-map' }
+  | { screen: 'screen-territory'; territoryId: string }
+  | { screen: 'screen-territories' }
+  | { screen: 'screen-camera' }
+  | { screen: 'screen-confirm' }
+  | { screen: 'screen-activity' }
+  | { screen: 'screen-profile' }
+  | { screen: 'screen-user-profile'; userId: string }
 
 export function FishZoneApp() {
   const { user, loading: authLoading, signOut } = useAuth()
   const { data: territories = [], isLoading: territoriesLoading } = useTerritories()
   const confirmCatchMutation = useConfirmCatch()
   const mapHandleRef = useRef<LeafletMapHandle>(null)
+  const { unreadIds, unreadCount, markAllRead } = useActivityReadState()
 
-  const [currentScreen, setCurrentScreen] = useState<ScreenId>('screen-map')
-  const [navScreen, setNavScreen] = useState<ScreenId>('screen-map')
-  const [activeTerritoryId, setActiveTerritoryId] = useState<string | null>(null)
-  const [viewedUserId, setViewedUserId] = useState<string | null>(null)
+  const [stack, setStack] = useState<StackEntry[]>([{ screen: 'screen-map' }])
+  const [navScreen, setNavScreen] = useState<TabScreenId>('screen-map')
+  const [viewingTerritoryId, setViewingTerritoryId] = useState<string | null>(null)
+  const [viewingUserId, setViewingUserId] = useState<string | null>(null)
+  // Separate from viewingTerritoryId on purpose: this is which territory the
+  // camera/confirm flow is for, not what TerritoryScreen should browse to —
+  // conflating the two used to mean pressing "+" while browsing a territory
+  // could clobber the one you were looking at (see DECISIONS.md).
+  const [catchTerritoryId, setCatchTerritoryId] = useState<string | null>(null)
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
+  const [editingProfile, setEditingProfile] = useState(false)
   const [pendingCatch, setPendingCatch] = useState<PendingCatch | null>(null)
   const [confirmStep, setConfirmStep] = useState<'form' | 'success'>('form')
   const [wasFree, setWasFree] = useState(false)
@@ -62,16 +89,38 @@ export function FishZoneApp() {
   }
   useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current) }, [])
 
-  function goTo(id: ScreenId) {
-    setCurrentScreen(id)
+  const currentScreen: ScreenId = stack[stack.length - 1].screen
+
+  // Drill-in navigation (territory, camera, confirm, someone's profile) — push
+  // onto the stack so the eventual back button unwinds to exactly this point.
+  function push(entry: StackEntry) {
+    setStack((s) => [...s, entry])
   }
-  function navClick(id: ScreenId) {
-    goTo(id)
+  // Generic back button target for every screen below — pops one level and,
+  // if that reveals a territory/user-profile entry, restores which one it was
+  // (see StackEntry comment above).
+  function pop() {
+    setStack((s) => {
+      if (s.length <= 1) return s
+      const next = s.slice(0, -1)
+      const top = next[next.length - 1]
+      if (top.screen === 'screen-territory') setViewingTerritoryId(top.territoryId)
+      if (top.screen === 'screen-user-profile') setViewingUserId(top.userId)
+      return next
+    })
+  }
+  // Bottom-nav taps replace the whole stack — each tab starts its own fresh
+  // drill-down, it doesn't resume wherever you left off inside another tab.
+  function resetTo(entry: StackEntry) {
+    setStack([entry])
+  }
+  function navClick(id: TabScreenId) {
+    resetTo({ screen: id })
     setNavScreen(id)
   }
   function openTerritory(id: string) {
-    setActiveTerritoryId(id)
-    goTo('screen-territory')
+    setViewingTerritoryId(id)
+    push({ screen: 'screen-territory', territoryId: id })
   }
   // Viewing yourself through this path (e.g. tapping your own name somewhere)
   // just goes to the real (editable) profile tab instead of a second read-only
@@ -81,8 +130,8 @@ export function FishZoneApp() {
       navClick('screen-profile')
       return
     }
-    setViewedUserId(id)
-    goTo('screen-user-profile')
+    setViewingUserId(id)
+    push({ screen: 'screen-user-profile', userId: id })
   }
   // "+" in the bottom nav is the ONLY way into the camera/catch flow — picking a
   // sector by hand (map/list) only ever opens the read-only TerritoryScreen, see
@@ -107,9 +156,9 @@ export function FishZoneApp() {
     setToast(null)
     if (found) {
       mapHandleRef.current?.flyToTerritory(found.id)
-      setActiveTerritoryId(found.id)
+      setCatchTerritoryId(found.id)
       setCameraSessionId((n) => n + 1)
-      goTo('screen-camera')
+      push({ screen: 'screen-camera' })
       return
     }
     setOutOfZone(true)
@@ -127,12 +176,12 @@ export function FishZoneApp() {
   // Upload starts right after the shutter fires, not at form submit — the user
   // fills in species/length/etc. on screen-confirm while it runs in the background.
   function handleCapture(blob: Blob) {
-    if (!activeTerritoryId) return
+    if (!catchTerritoryId) return
     setCapturedPhoto(blob)
     setPhotoUrl(null)
     setPhotoStatus('uploading')
     setConfirmStep('form')
-    goTo('screen-confirm')
+    push({ screen: 'screen-confirm' })
     void startUpload(blob)
   }
   function retryUpload() {
@@ -144,12 +193,12 @@ export function FishZoneApp() {
     setCapturedPhoto(null)
     setPhotoUrl(null)
     setCameraSessionId((n) => n + 1)
-    goTo('screen-camera')
+    pop()
   }
   async function submitCatch(form: CatchFormData) {
-    if (!activeTerritoryId || !photoUrl) return
-    const t = territories.find((x) => x.id === activeTerritoryId)
-    const payload: PendingCatch = { territoryId: activeTerritoryId, photoUrl, ...form }
+    if (!catchTerritoryId || !photoUrl) return
+    const t = territories.find((x) => x.id === catchTerritoryId)
+    const payload: PendingCatch = { territoryId: catchTerritoryId, photoUrl, ...form }
     try {
       await confirmCatchMutation.mutateAsync(payload)
       setWasFree(t?.status !== 'mine')
@@ -163,10 +212,12 @@ export function FishZoneApp() {
     setPendingCatch(null)
     setCapturedPhoto(null)
     setPhotoUrl(null)
+    setCatchTerritoryId(null)
     navClick('screen-map')
   }
 
-  const activeTerritory = territories.find((t) => t.id === activeTerritoryId) ?? null
+  const viewingTerritory = territories.find((t) => t.id === viewingTerritoryId) ?? null
+  const catchTerritory = territories.find((t) => t.id === catchTerritoryId) ?? null
   const myTerritories = territories.filter((t) => t.status === 'mine')
 
   if (authLoading || territoriesLoading) {
@@ -184,18 +235,20 @@ export function FishZoneApp() {
           <MapScreen ref={mapHandleRef} territories={territories} onOpenTerritory={openTerritory} />
         </Screen>
         <Screen id="screen-territory" current={currentScreen}>
-          {activeTerritory && <TerritoryScreen territory={activeTerritory} onBack={() => goTo('screen-map')} onOpenUser={openUserProfile} />}
+          {viewingTerritory && (
+            <TerritoryScreen territory={viewingTerritory} onBack={pop} onOpenUser={openUserProfile} onOpenPhoto={setLightboxSrc} />
+          )}
         </Screen>
         <Screen id="screen-territories" current={currentScreen}>
           <TerritoriesListScreen territories={territories} onOpenTerritory={openTerritory} />
         </Screen>
         <Screen id="screen-camera" current={currentScreen}>
-          <CameraScreen key={cameraSessionId} onBack={() => goTo('screen-map')} onCapture={handleCapture} />
+          <CameraScreen key={cameraSessionId} onBack={pop} onCapture={handleCapture} />
         </Screen>
         <Screen id="screen-confirm" current={currentScreen}>
-          {activeTerritory && capturedPhoto && (confirmStep === 'form' || pendingCatch) && (
+          {catchTerritory && capturedPhoto && (confirmStep === 'form' || pendingCatch) && (
             <ConfirmScreen
-              territory={activeTerritory}
+              territory={catchTerritory}
               pendingCatch={pendingCatch}
               wasFree={wasFree}
               step={confirmStep}
@@ -211,18 +264,25 @@ export function FishZoneApp() {
           )}
         </Screen>
         <Screen id="screen-activity" current={currentScreen}>
-          <ActivityScreen onOpenUser={openUserProfile} />
+          <ActivityScreen onOpenUser={openUserProfile} onOpenPhoto={setLightboxSrc} unreadIds={unreadIds} onMarkAllRead={markAllRead} />
         </Screen>
         <Screen id="screen-profile" current={currentScreen}>
-          <ProfileScreen myTerritories={myTerritories} onOpenTerritory={openTerritory} onSignOut={signOut} />
+          <ProfileScreen
+            myTerritories={myTerritories}
+            onOpenTerritory={openTerritory}
+            onSignOut={signOut}
+            onEditProfile={() => setEditingProfile(true)}
+            onOpenPhoto={setLightboxSrc}
+          />
         </Screen>
         <Screen id="screen-user-profile" current={currentScreen}>
-          {viewedUserId && (
+          {viewingUserId && (
             <UserProfileScreen
-              userId={viewedUserId}
-              territories={territories.filter((t) => t.ownerId === viewedUserId)}
-              onBack={() => goTo('screen-activity')}
+              userId={viewingUserId}
+              territories={territories.filter((t) => t.ownerId === viewingUserId)}
+              onBack={pop}
               onOpenTerritory={openTerritory}
+              onOpenPhoto={setLightboxSrc}
             />
           )}
         </Screen>
@@ -244,12 +304,16 @@ export function FishZoneApp() {
         </div>
       )}
 
+      {editingProfile && <EditProfileModal onClose={() => setEditingProfile(false)} />}
+      {lightboxSrc && <PhotoLightbox src={lightboxSrc} alt="Улов" onClose={() => setLightboxSrc(null)} />}
+
       {currentScreen !== 'screen-camera' && (
         <BottomNav
-          active={NAV_SCREENS.includes(currentScreen) ? currentScreen : navScreen}
+          active={NAV_SCREENS.includes(currentScreen) ? (currentScreen as TabScreenId) : navScreen}
           onNavigate={navClick}
           onPlus={handlePlus}
           plusPending={locating}
+          unreadCount={unreadCount}
         />
       )}
     </div>
