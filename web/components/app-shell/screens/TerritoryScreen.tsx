@@ -1,0 +1,121 @@
+'use client'
+
+import { useCatchesByTerritory } from '@/lib/supabase/queries'
+import { KIND_LABEL, speciesInfo, SPECIES_GRADIENT } from '@/lib/data/species'
+import { formatWeight, formatWhen } from '@/lib/format'
+import { FishIcon } from '@/components/app-shell/icons'
+import type { Territory } from '@/lib/data/types'
+
+function statusBadge(status: Territory['status']) {
+  if (status === 'mine') return <span className="badge badge-green">Моя территория</span>
+  if (status === 'other') return <span className="badge badge-blue">Занята</span>
+  return <span className="badge badge-neutral">Свободна</span>
+}
+
+export function TerritoryScreen({
+  territory,
+  onBack,
+  onStartCatchFlow,
+}: {
+  territory: Territory
+  onBack: () => void
+  onStartCatchFlow: (territoryId: string) => void
+}) {
+  const { data: catches = [] } = useCatchesByTerritory(territory.id)
+  const recent = catches.slice(0, 3)
+
+  return (
+    <>
+      <div className="header-row">
+        <div className="icon-btn tap-scale" onClick={onBack}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </div>
+        <div className="icon-btn">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+            <path d="M8.6 10.5l6.8-3.8M8.6 13.5l6.8 3.8" />
+          </svg>
+        </div>
+      </div>
+      <div className="screen-inner">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <div className="page-title" style={{ marginTop: 2 }}>
+              Территория {territory.id}
+            </div>
+            <div className="page-sub" style={{ marginBottom: 0 }}>
+              {KIND_LABEL[territory.kind]}
+            </div>
+          </div>
+          {statusBadge(territory.status)}
+        </div>
+        <div className="card" style={{ marginTop: 16, padding: 16 }}>
+          <div className="info-grid">
+            <div>
+              <div className="label">Размер</div>
+              <div className="value">≈600 м</div>
+            </div>
+            <div>
+              <div className="label">Тип</div>
+              <div className="value">{KIND_LABEL[territory.kind]}</div>
+            </div>
+            <div>
+              <div className="label">Уловов</div>
+              <div className="value">{territory.catchCount}</div>
+            </div>
+            <div>
+              <div className="label">Последний улов</div>
+              <div className="value">{territory.lastCatchAt ? formatWhen(territory.lastCatchAt) : '—'}</div>
+            </div>
+          </div>
+        </div>
+        <div className="section-title" style={{ marginTop: 22 }}>
+          Последние уловы
+        </div>
+        <div className="card" style={{ overflow: 'hidden' }}>
+          {recent.length ? (
+            recent.map((c, i) => {
+              const sp = speciesInfo(c.species)
+              return (
+                <div
+                  key={c.id}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recent.length - 1 ? '1px solid var(--line)' : 'none' }}
+                >
+                  <div className="fish-thumb" style={{ width: 46, height: 46, background: SPECIES_GRADIENT[c.species] }}>
+                    <FishIcon size={20} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14.5 }}>{sp.name}</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 1 }}>
+                      {c.lengthCm} см · {formatWeight(c.weightKg)} кг
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--ink-faint)', fontWeight: 600 }}>{formatWhen(c.caughtAt).split('·')[0].trim()}</div>
+                </div>
+              )
+            })
+          ) : (
+            <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет уловов на этой территории</div>
+          )}
+        </div>
+        <div style={{ marginTop: 22 }}>
+          <button className="btn-primary" onClick={() => onStartCatchFlow(territory.id)}>
+            {territory.status === 'mine' ? (
+              <>
+                <FishIcon size={18} /> <span style={{ marginLeft: 4 }}>Отметить новый улов</span>
+              </>
+            ) : territory.status === 'other' ? (
+              'Поймать и переоформить территорию'
+            ) : (
+              'Поймать и занять территорию'
+            )}
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}

@@ -1,0 +1,16 @@
+{
+  "name": "fishing-hex",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Соты 600 м по берегу моря и всем водам OSM вокруг Батуми",
+  "scripts": {
+    "fetch": "bash fetch_osm.sh",
+    "build": "node build_hex.mjs",
+    "page": "node assemble.mjs",
+    "all": "bash fetch_osm.sh && node build_hex.mjs && node assemble.mjs"
+  },
+  "dependencies": {
+    "@turf/turf": "^7.2.0"
+  }
+}
