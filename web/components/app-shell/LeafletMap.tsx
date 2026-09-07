@@ -8,6 +8,9 @@ import type { Territory } from '@/lib/data/types'
 export type LeafletMapHandle = {
   flyToTerritory: (id: string) => void
   showUserLocation: (lat: number, lng: number) => void
+  flyToLocation: (lat: number, lng: number) => void
+  zoomIn: () => void
+  zoomOut: () => void
 }
 
 const STATUS_COLOR: Record<Territory['status'], string> = {
@@ -87,6 +90,18 @@ export const LeafletMap = forwardRef<LeafletMapHandle, { territories: Territory[
           zIndexOffset: 1000,
         }).addTo(map)
       },
+      flyToLocation(lat: number, lng: number) {
+        const map = mapRef.current
+        if (!map) return
+        const targetZoom = Math.max(map.getZoom(), 16.5)
+        map.flyTo([lat, lng], targetZoom, { duration: 0.5 })
+      },
+      zoomIn() {
+        mapRef.current?.zoomIn()
+      },
+      zoomOut() {
+        mapRef.current?.zoomOut()
+      },
     }))
 
     // Init once. Deliberately not re-run on territory changes.
@@ -112,8 +127,16 @@ export const LeafletMap = forwardRef<LeafletMapHandle, { territories: Territory[
         markersLayerRef.current = L.layerGroup().addTo(map)
         labelsLayerRef.current = L.layerGroup()
 
+        // 703 sectors span all of Adjara's coast — fitBounds alone leaves the
+        // initial view zoomed out very far. +log2(3) zoom levels triples the
+        // map scale (each Leaflet zoom level doubles it) while keeping the
+        // same center, so the view opens noticeably closer without hardcoding
+        // a fixed zoom that would ignore actual bounds/screen size.
         const bounds = L.latLngBounds(territories.flatMap((t) => t.corners))
-        if (bounds.isValid()) map.fitBounds(bounds, { padding: [36, 36] })
+        if (bounds.isValid()) {
+          const fitZoom = map.getBoundsZoom(bounds, false, L.point(36, 36))
+          map.setView(bounds.getCenter(), fitZoom + Math.log2(3))
+        }
 
         function updateLabelVisibility() {
           const show = map.getZoom() >= LABEL_MIN_ZOOM

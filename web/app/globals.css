@@ -224,7 +224,13 @@ body{
 
 /* ---------- Map screen ---------- */
 #screen-map .screen-inner{padding:0;}
-.map-header{padding:16px 20px 10px;}
+.map-header{
+  position:absolute; top:0; left:0; right:0;
+  padding:16px 20px;
+  background:transparent;
+  pointer-events:none;
+  z-index:500;
+}
 #leafletMap{
   width:100%; height:100%;
   background:#DCE7E9;
@@ -246,6 +252,31 @@ body{
   backdrop-filter: blur(6px);
 }
 .legend-dot{width:8px; height:8px; border-radius:2px; display:inline-block; margin-right:6px;}
+.map-controls{
+  position:absolute; top:50%; right:12px; transform:translateY(-50%);
+  display:flex; flex-direction:column; align-items:center; gap:12px;
+  z-index:500;
+}
+.map-control-group{
+  display:flex; flex-direction:column;
+  background:rgba(255,255,255,0.95);
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  backdrop-filter: blur(6px);
+  overflow:hidden;
+}
+.map-control-btn{
+  width:40px; height:40px;
+  display:flex; align-items:center; justify-content:center;
+  background:none; border:none; cursor:pointer; padding:0;
+}
+.map-control-group .map-control-btn + .map-control-btn{border-top:1px solid var(--line);}
+.map-control-locate{
+  background:rgba(255,255,255,0.95);
+  border-radius:50%;
+  box-shadow:var(--shadow);
+  backdrop-filter: blur(6px);
+}
 .map-sheet-container{
   position:absolute; left:0; right:0; bottom:94px; z-index:700;
   display:flex; flex-direction:column; gap:9px;
@@ -263,8 +294,8 @@ body{
   flex:0 0 84%;
   background:var(--surface);
   border-radius:var(--radius-l);
-  padding:16px 16px 15px;
-  display:flex; flex-direction:column; gap:10px;
+  padding:14px 16px 16px;
+  display:flex; flex-direction:column; gap:8px;
 }
 .user-location-icon{background:none; border:none;}
 .user-location-dot{
