@@ -6,12 +6,25 @@ import { computeAchievements, personalRecord } from '@/lib/data/achievements'
 import { speciesInfo, SPECIES_GRADIENT, KIND_LABEL } from '@/lib/data/species'
 import { formatWeight } from '@/lib/format'
 import { FishIcon, ACH_ICONS } from '@/components/app-shell/icons'
+import { AuthForm } from '@/components/app-shell/AuthForm'
 import type { Territory } from '@/lib/data/types'
 
 export function ProfileScreen({ myTerritories, onOpenTerritory, onSignOut }: { myTerritories: Territory[]; onOpenTerritory: (id: string) => void; onSignOut: () => void }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   const { data: myCatches = [] } = useMyCatches()
+
+  // Signed out: the profile tab IS the sign-in/sign-up entry point (see
+  // DECISIONS.md — replaced the standalone /auth redirect from the "+" button).
+  // Signing in here updates AuthProvider's `user` reactively, which swaps this
+  // form out for the real profile below without any navigation.
+  if (!user) {
+    return (
+      <div className="screen-inner">
+        <AuthForm />
+      </div>
+    )
+  }
 
   const speciesCount = new Set(myCatches.map((c) => c.species)).size
   const record = personalRecord(myCatches)

@@ -378,12 +378,8 @@ body{
 .ach-desc{font-size:11.5px; color:var(--ink-soft); line-height:1.4; font-weight:500;}
 .ach-progress{font-size:11px; color:var(--ink-faint); font-weight:700; margin-top:-2px;}
 
-/* ---------- Auth screen ---------- */
-.auth-wrap{
-  min-height:100dvh; display:flex; align-items:center; justify-content:center;
-  padding:24px; background:var(--bg);
-}
-.auth-card{width:100%; max-width:360px;}
+/* ---------- Auth form (embedded in the profile screen when signed out) ---------- */
+.auth-card{width:100%; max-width:360px; margin:0 auto;}
 .auth-field{display:flex; flex-direction:column; gap:6px; margin-bottom:14px;}
 .auth-field label{font-size:12.5px; font-weight:700; color:var(--ink-soft);}
 .auth-field input{

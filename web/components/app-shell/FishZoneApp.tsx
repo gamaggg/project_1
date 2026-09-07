@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useTerritories, useConfirmCatch } from '@/lib/supabase/queries'
 import { SPECIES, METHODS, BAITS } from '@/lib/data/species'
@@ -27,7 +26,6 @@ export type ScreenId =
 const NAV_SCREENS: ScreenId[] = ['screen-map', 'screen-territories', 'screen-activity', 'screen-profile']
 
 export function FishZoneApp() {
-  const router = useRouter()
   const { user, loading: authLoading, signOut } = useAuth()
   const { data: territories = [], isLoading: territoriesLoading } = useTerritories()
   const confirmCatchMutation = useConfirmCatch()
@@ -61,7 +59,7 @@ export function FishZoneApp() {
   }
   function startCatchFlow(territoryId: string | null) {
     if (!user) {
-      router.push('/auth')
+      navClick('screen-profile')
       return
     }
     const id = territoryId ?? activeTerritoryId

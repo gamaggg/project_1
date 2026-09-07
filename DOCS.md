@@ -24,13 +24,13 @@ web/
 ├── app/
 │   ├── layout.tsx        — шрифт (next/font/google Manrope), QueryProvider + AuthProvider
 │   ├── globals.css       — дизайн-токены и компонентные классы, перенесённые из fishzone-app.html
-│   ├── page.tsx           — рендерит <FishZoneApp/> (публично, без гейта на вход)
-│   └── auth/page.tsx      — форма входа/регистрации (email+пароль), единственный экран вне app-shell
+│   └── page.tsx           — рендерит <FishZoneApp/> (публично, без гейта на вход); отдельного роута /auth нет — см. ниже
 ├── proxy.ts               — обновляет cookie сессии Supabase на каждый запрос (Next.js 16: бывший middleware.ts, см. ниже). Не гейтит роуты — карта публична, запись проверяется в самих экранах/RPC.
 ├── components/
 │   ├── providers/{QueryProvider,AuthProvider}.tsx  — react-query + подписка на сессию Supabase
 │   └── app-shell/
 │       ├── FishZoneApp.tsx     — стейт-машина экранов (аналог goTo()/currentScreen из прототипа), координирует все данные и хендлеры
+│       ├── AuthForm.tsx        — форма входа/регистрации, встроена в screen-profile (не отдельный роут — см. DECISIONS.md)
 │       ├── BottomNav.tsx, icons.tsx
 │       ├── MapView.tsx         — next/dynamic(ssr:false) обёртка над LeafletMap (Leaflet трогает window)
 │       ├── LeafletMap.tsx      — императивный Leaflet-код, перенесён из initMap/drawTerritories прототипа
@@ -62,11 +62,11 @@ RLS: все четыре таблицы читаются публично (`sele
 RPC `confirm_catch(p_territory_id, p_species, p_length_cm, p_weight_kg, p_method, p_bait)` — `SECURITY DEFINER`, доступна только роли `authenticated`. Атомарно (с `select … for update` на строке территории, чтобы не ловить гонку при одновременном захвате): вставляет улов → переводит `owner_id` территории на текущего пользователя (последний улов побеждает — так же, как в прототипе) → пишет `activity_log` (запись `'catch'`, и `'claim'` дополнительно, если территория поменяла владельца). Клиент вызывает её через `supabase.rpc('confirm_catch', {...})` в `lib/supabase/queries.ts` (`useConfirmCatch`).
 
 ### Авторизация
-Supabase Auth, email+пароль (см. DECISIONS.md почему не magic link/OAuth в v1). `app/auth/page.tsx` — единственная форма для входа и регистрации (переключатель режима). **Confirm email выключен** (Supabase Dashboard → Authentication → Sign In / Providers → Confirm email) — регистрация сразу даёт активную сессию, без письма. Это временно, ради тестирования (дефолтный email-сервис Supabase уткнулся в rate limit почти сразу — см. DECISIONS.md); перед реальным публичным запуском стоит вернуть подтверждение (и/или подключить свой SMTP, чтобы rate limit не мешал живым пользователям).
+Supabase Auth, email+пароль (см. DECISIONS.md почему не magic link/OAuth в v1). Формы входа/регистрации отдельного роута `/auth` больше нет — `AuthForm.tsx` встроена прямо в `screen-profile` (см. DECISIONS.md, «форма входа встроена в профиль»). **Confirm email выключен** (Supabase Dashboard → Authentication → Sign In / Providers → Confirm email) — регистрация сразу даёт активную сессию, без письма. Это временно, ради тестирования (дефолтный email-сервис Supabase уткнулся в rate limit почти сразу — см. DECISIONS.md); перед реальным публичным запуском стоит вернуть подтверждение (и/или подключить свой SMTP, чтобы rate limit не мешал живым пользователям).
 
 `components/providers/AuthProvider.tsx` держит текущую сессию (`supabase.auth.onAuthStateChange`) в React-контексте, используется всем app-shell'ом. **Важно**: `lib/supabase/client.ts` — синглтон (`createClient()` возвращает один и тот же экземпляр на вкладку). Отдельный `createBrowserClient()` на каждый вызов — частая ошибка: `onAuthStateChange` срабатывает только на том экземпляре, который выполнил вход/выход, поэтому форма логина и `AuthProvider` с разными инстансами друг друга не видят без полной перезагрузки страницы. Наступили на эти грабли и в этой сессии — см. запись в CHANGELOG.md.
 
-Карта/территории/активность/профиль доступны без входа (просмотр). Попытка отметить улов/занять территорию без сессии (`FishZoneApp.startCatchFlow`) редиректит на `/auth`, а не молча ничего не делает.
+Карта/территории/активность/профиль доступны без входа (просмотр). Попытка отметить улов/занять территорию без сессии (`FishZoneApp.startCatchFlow`, включая нажатие «+» в нижнем меню) переключает на вкладку «Профиль» (не молча ничего не делает) — а там без сессии сразу форма входа/регистрации, а не пустая заглушка.
 
 ### Карта
 `LeafletMap.tsx` — прямой перенос `initMap()`/`drawTerritories()` из прототипа: `preferCanvas:true`, `labelsLayer` (id-подписи секторов) показывается только при `zoom >= 14`, перерисовка полигонов (при смене статуса владения) намеренно не связана с перерисовкой карусели/зумом — те же причины, что в прототипе (см. DECISIONS.md, баг `flyTo`↔`zoomend`↔сброс карусели). Геометрия (`public/data/sectors.json`) фетчится один раз и кешируется навсегда (`staleTime: Infinity` в `useTerritories`/`useSectorsGeometry`), статус владения — через `territories_with_stats`, объединяются по `id` на клиенте.
