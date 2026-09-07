@@ -28,6 +28,13 @@ const RING_AROUND = ['river'];
 // Если сота касается воды нескольких типов, берём первый по этому списку.
 const PRIORITY = ['river', 'sea', 'lake', 'stream'];
 
+// Минимальная суммарная длина связного водотока (ручей/канал, не река), чтобы
+// его касание вообще считалось водой. У OSM почти нет метаданных о размере
+// ручья (см. DECISIONS.md) — длина после склейки фрагментов в целый водоток
+// единственный доступный сигнал, чтобы отличить настоящий ручей от канавы/
+// незначительного притока.
+const STREAM_MIN_LENGTH_M = 800;
+
 // ---------- разбор OSM ----------
 
 const osm = JSON.parse(fs.readFileSync('osm.json', 'utf8'));
@@ -85,7 +92,40 @@ function ringsFromWays(wayIds) {
   return rings;
 }
 
-// Геометрия воды по типам. Каждый элемент это turf Feature (LineString или Polygon).
+// Ручьи/каналы (не реки) в OSM часто разрезаны мапперами на много мелких way
+// на одном и том же водотоке — судить о размере по отдельному фрагменту нельзя
+// (можно случайно вырезать кусок настоящего длинного ручья). Склеиваем такие
+// way в целые водотоки union-find'ом по общим id узлов OSM (river туда не
+// включаем: иначе крошечный приток унаследует длину всей реки, в которую он
+// впадает, и порог перестанет что-либо отличать) и считаем суммарную длину
+// каждого водотока — это единственный доступный сигнал размера, раз у ручьёв
+// почти нет метаданных (имя есть у 8 из ~590 линий в этом bbox).
+const streamParent = new Map();
+function streamFind(x) {
+  if (!streamParent.has(x)) streamParent.set(x, x);
+  while (streamParent.get(x) !== x) { streamParent.set(x, streamParent.get(streamParent.get(x))); x = streamParent.get(x); }
+  return x;
+}
+function streamUnion(a, b) {
+  const ra = streamFind(a), rb = streamFind(b);
+  if (ra !== rb) streamParent.set(ra, rb);
+}
+const nonRiverWaterwayWays = [...ways.values()].filter((w) => w.tags && w.tags.waterway && w.tags.waterway !== 'river');
+for (const w of nonRiverWaterwayWays) {
+  if (w.nodes.length >= 2) streamUnion(w.nodes[0], w.nodes[w.nodes.length - 1]);
+}
+const streamComponentLength = new Map(); // root node id -> суммарная длина, метры
+for (const w of nonRiverWaterwayWays) {
+  const coords = coordsOf(w);
+  if (coords.length < 2) continue;
+  let len = 0;
+  try { len = turf.length(turf.lineString(coords), { units: 'meters' }); } catch { continue; }
+  const root = streamFind(w.nodes[0]);
+  streamComponentLength.set(root, (streamComponentLength.get(root) || 0) + len);
+}
+
+// Геометрия воды по типам: { geom, root? }. `root` — только у ручьёв/каналов,
+// ссылка на streamComponentLength (нужна ниже при проверке пересечения соты).
 const water = { sea: [], river: [], stream: [], lake: [] };
 // То же самое, но в виде GeoJSON для отрисовки на карте.
 const waterForMap = [];
@@ -94,7 +134,7 @@ const waterForMap = [];
 for (const el of osm.elements) {
   if (el.type !== 'way' || !el.tags || el.tags.natural !== 'coastline') continue;
   for (const seg of clipToBox(coordsOf(el))) {
-    water.sea.push(turf.lineString(seg));
+    water.sea.push({ geom: turf.lineString(seg) });
     waterForMap.push({ type: 'Feature', properties: { kind: 'sea' }, geometry: { type: 'LineString', coordinates: round(seg) } });
   }
 }
@@ -103,8 +143,9 @@ for (const el of osm.elements) {
 for (const el of osm.elements) {
   if (el.type !== 'way' || !el.tags || !el.tags.waterway) continue;
   const kind = el.tags.waterway === 'river' ? 'river' : 'stream';
+  const root = kind === 'stream' && el.nodes.length >= 2 ? streamFind(el.nodes[0]) : null;
   for (const seg of clipToBox(coordsOf(el))) {
-    water[kind].push(turf.lineString(seg));
+    water[kind].push({ geom: turf.lineString(seg), root });
     waterForMap.push({ type: 'Feature', properties: { kind, name: el.tags.name || '' }, geometry: { type: 'LineString', coordinates: round(seg) } });
   }
 }
@@ -116,7 +157,7 @@ function addPolygon(ring, tags) {
   try { poly = turf.polygon([ring]); if (turf.area(poly) < 50) return; } catch { return; }
   const w = tags.water || '';
   const kind = (w === 'river' || w === 'oxbow' || w === 'canal') ? 'river' : 'lake';
-  water[kind].push(poly);
+  water[kind].push({ geom: poly });
   waterForMap.push({ type: 'Feature', properties: { kind: kind + 'poly', water: w, name: tags.name || '' }, geometry: { type: 'Polygon', coordinates: [round(ring)] } });
 }
 const partOfRelation = new Set();
@@ -146,13 +187,22 @@ const grid = turf.hexGrid([BBOX.w - 0.01, BBOX.s - 0.01, BBOX.e + 0.01, BBOX.n +
 console.error('сот в сетке:', grid.features.length);
 
 // Проверка пересечения сота/вода дорогая, поэтому сначала сравниваем bbox'ы.
-const indexed = Object.fromEntries(Object.entries(water).map(([k, v]) => [k, v.map((g) => ({ g, bb: turf.bbox(g) }))]));
+const indexed = Object.fromEntries(Object.entries(water).map(([k, v]) => [k, v.map((x) => ({ ...x, bb: turf.bbox(x.geom) }))]));
 const bboxHit = (a, b) => a[0] <= b[2] && a[2] >= b[0] && a[1] <= b[3] && a[3] >= b[1];
 
 const cells = grid.features.map((f, i) => {
   const bb = turf.bbox(f);
   const touches = {};
-  for (const k of PRIORITY) touches[k] = indexed[k].some((x) => bboxHit(bb, x.bb) && turf.booleanIntersects(f, x.g));
+  for (const k of PRIORITY) {
+    touches[k] = indexed[k].some((x) => {
+      if (!bboxHit(bb, x.bb) || !turf.booleanIntersects(f, x.geom)) return false;
+      // Ручей/канал короче порога (после склейки фрагментов в целый водоток,
+      // см. выше) не считается водой для этой соты — незначительный приток/
+      // канава, не место для рыбалки.
+      if (k === 'stream' && x.root != null && (streamComponentLength.get(x.root) || 0) < STREAM_MIN_LENGTH_M) return false;
+      return true;
+    });
+  }
   const kind = PRIORITY.find((k) => touches[k]) || null;
   return { f, i, center: turf.centroid(f).geometry.coordinates, touches, kind, core: !!kind };
 });

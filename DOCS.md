@@ -40,7 +40,7 @@ web/
 │   ├── data/{species.ts,achievements.ts,types.ts} — статичные справочники (виды рыб, KIND_LABEL) и портированная computeAchievements()
 │   ├── format.ts          — форматирование дат/веса под стиль прототипа («Сегодня · 07:45», «Вчера»)
 │   └── types.ts            — типы БД, сгенерированы Supabase MCP (`generate_typescript_types`), не редактируются руками
-├── public/data/sectors.json — статическая геометрия 703 секторов (копия tools/fishing-hex/sectors.json)
+├── public/data/sectors.json — статическая геометрия 658 секторов (копия tools/fishing-hex/sectors.json)
 └── supabase/ — не используется (миграции применены напрямую через Supabase MCP, см. «База данных» ниже); каталог можно завести под `supabase db` / CLI-миграции позже, если появится локальная разработка без MCP.
 ```
 
@@ -56,7 +56,7 @@ web/
 - **`species`** — справочник видов рыб: `key` (текстовый slug, PK), `name`, `category` (`'marine'`|`'freshwater'`). 36 записей (23 морских + 13 пресноводных, список — в DECISIONS.md), читается публично, пишется только вручную через миграции (не UI). Таблица, а не хардкод в TS — в отличие от `METHODS`/`BAITS` (маленькие фиксированные списки), 36+ видов с категорией — уже полноценный справочник, который может расти без передеплоя.
 - **`catches`** — один улов: `territory_id`, `user_id`, `species` (текст, FK на `species.key`), `length_cm`/`weight_kg`/`method`/`bait` (все **nullable** — обязателен только вид рыбы, остальное по желанию рыбака, см. DECISIONS.md), `photo_url` (**text, NOT NULL** — без загруженного фото улов не создаётся вообще, см. DECISIONS.md), `caught_at`.
 - **`activity_log`** — лента активности: `user_id`, `territory_id`, `kind` (`'catch'`|`'claim'`), `catch_id`. Пишется атомарно вместе с уловом внутри RPC (не отдельным клиентским запросом).
-- **`territories_with_stats`** (view, `security_invoker`) — `territories` + `catch_count`/`last_catch_at`, агрегированные из `catches`. Не денормализовано в саму таблицу — 703 территории, агрегация дешёвая, лишний триггер/риск рассинхронизации не нужен.
+- **`territories_with_stats`** (view, `security_invoker`) — `territories` + `catch_count`/`last_catch_at`, агрегированные из `catches`. Не денормализовано в саму таблицу — 658 территорий, агрегация дешёвая, лишний триггер/риск рассинхронизации не нужен.
 
 RLS: все пять таблиц читаются публично (`select using (true)`) — карта, список территорий, лента активности и справочник видов видны без входа (см. решение «Карта публична» в DECISIONS.md). Прямых `insert`/`update` политик для клиентов нет — вся запись идёт через RPC.
 
@@ -78,7 +78,7 @@ Supabase Auth, email+пароль (см. DECISIONS.md почему не magic li
 
 `LeafletMapHandle.showUserLocation(lat, lng)` — маркер реальной позиции пользователя (синяя точка с CSS-пульсацией, `.user-location-icon`/`.user-location-dot`/`.user-location-pulse` в `globals.css`), отдельный `L.marker`, не в `markersLayer` — чтобы не пропадал при перерисовке полигонов секторов. Ставится/двигается по нажатию «+» (см. «Геолокация» ниже) или кнопки «моё местоположение», не убирается сам по себе.
 
-Начальный вид карты — не просто `fitBounds` по всем 703 секторам (это оставляло вид сильно отдалённым, весь берег Аджарии целиком): зум считается через `map.getBoundsZoom(bounds, false, L.point(36,36))` (то же значение, что дал бы `fitBounds`), к нему прибавляется `Math.log2(3)` уровней — в Leaflet каждый уровень зума удваивает масштаб, значит такая прибавка утраивает его, при том же центре (`bounds.getCenter()`). Кнопки ручного управления (`.map-controls` в `MapScreen.tsx`, справа от карты, между легендой и каруселью): «+»/«−» — обёртки над `map.zoomIn()`/`map.zoomOut()` (карта создаётся с `zoomControl:false`, встроенного контрола нет), «моё местоположение» — `LeafletMapHandle.flyToLocation(lat, lng)` (как `flyToTerritory`, но по сырым координатам). Кнопка местоположения не связана с потоком улова («+» в нижнем меню) — просто `getCurrentCoords()` → маркер → перелёт, без проверки попадания в сектор и без камеры.
+Начальный вид карты — не просто `fitBounds` по всем секторам (это оставляло вид сильно отдалённым, весь берег Аджарии целиком): зум считается через `map.getBoundsZoom(bounds, false, L.point(36,36))` (то же значение, что дал бы `fitBounds`), к нему прибавляется `Math.log2(3)` уровней — в Leaflet каждый уровень зума удваивает масштаб, значит такая прибавка утраивает его, при том же центре (`bounds.getCenter()`). Кнопки ручного управления (`.map-controls` в `MapScreen.tsx`, справа от карты, между легендой и каруселью): «+»/«−» — обёртки над `map.zoomIn()`/`map.zoomOut()` (карта создаётся с `zoomControl:false`, встроенного контрола нет), «моё местоположение» — `LeafletMapHandle.flyToLocation(lat, lng)` (как `flyToTerritory`, но по сырым координатам). Кнопка местоположения не связана с потоком улова («+» в нижнем меню) — просто `getCurrentCoords()` → маркер → перелёт, без проверки попадания в сектор и без камеры.
 
 ### Поток данных / react-query
 `lib/supabase/queries.ts` — все хуки читают напрямую из Supabase JS SDK на клиенте (`'use client'`), кешируются `@tanstack/react-query` с `refetchOnWindowFocus`. Realtime-подписок нет (см. DECISIONS.md) — карта/лента обновляются на фокусе вкладки и после `useConfirmCatch` (инвалидирует `territories`/`catches`/`activity`).
@@ -191,7 +191,7 @@ fetch_osm.sh (Overpass API) → build_hex.mjs (гекс-сетка 600м, фил
 | Файл | Назначение |
 |---|---|
 | `fetch_osm.sh` | Overpass API → береговая линия, реки, ручьи, каналы, полигоны воды в bbox → `osm.json` (не коммитится, см. `.gitignore`) |
-| `build_hex.mjs` | Гекс-сетка 600м по bbox, оставляет соты, касающиеся воды → `hex.geojson` + `water.geojson` |
+| `build_hex.mjs` | Гекс-сетка 600м по bbox, оставляет соты, касающиеся воды → `hex.geojson` + `water.geojson`. Ручьи/каналы короче `STREAM_MIN_LENGTH_M` (800м, суммарно после склейки связных OSM-way — см. DECISIONS.md) не считаются водой — отсекает незначительные притоки/канавы, реки/море/озёра не затронуты |
 | `extract_sectors.mjs` | **Добавлен для FishZone** (не было у друга). Фильтрует `hex.geojson` до core-сот, конвертирует `[lon,lat]→[lat,lng]`, считает центроид → `sectors.json`, который вручную вставляется в `fishzone-app.html` как `HEX_SECTORS` |
 | `assemble.mjs`, `tiles.py` | Из инструмента друга, для его собственного демо-`map.html` (не используются приложением FishZone) |
 
@@ -201,12 +201,12 @@ cd tools/fishing-hex
 export PATH="$(git rev-parse --show-toplevel)/.tools/node/bin:$PATH"  # если узел не установлен системно
 npm install
 npm run fetch   # bash fetch_osm.sh — правки BBOX смотри в самом файле
-npm run build   # node build_hex.mjs — правки WIDTH_M/PRIORITY/RING_AROUND смотри в самом файле
+npm run build   # node build_hex.mjs — правки WIDTH_M/PRIORITY/RING_AROUND/STREAM_MIN_LENGTH_M смотри в самом файле
 node extract_sectors.mjs
 ```
 Дальше геометрию нужно разнести в оба места, которые её используют (независимы друг от друга):
 - **Прототип**: вставить содержимое `sectors.json` в `fishzone-app.html` как значение `const HEX_SECTORS` (вручную, файл однофайловый).
-- **Веб-сервис**: скопировать `sectors.json` в `web/public/data/sectors.json`, и пересеять таблицу `territories` в Supabase (id/kind/lat/lng — без `corners`, geometry там не хранится, см. раздел «Веб-сервис» выше) через `execute_sql`/`apply_migration` MCP. Существующие `owner_id` для id, которых в новой сетке не стало, отвалятся сами (строка территории просто не существует); для новых id `owner_id` будет `null` (свободны) — это ожидаемо, не нужно пытаться сохранить владение через регенерацию.
+- **Веб-сервис**: скопировать `sectors.json` в `web/public/data/sectors.json`, и пересеять таблицу `territories` в Supabase (id/kind/lat/lng — без `corners`, geometry там не хранится, см. раздел «Веб-сервис» выше) через `execute_sql`/`apply_migration` MCP. Для новых id `owner_id` будет `null` (свободны) — это ожидаемо. **Пока в БД не было реальных владений/уловов**, удаление ушедших из сетки id было тривиальным (строка территории просто не существует). **Теперь, когда есть реальные пользователи** — если у удаляемого id уже есть `catches`/`activity_log` (`owner_id is not null`), прямой `delete from territories` упадёт на FK; сперва нужно решить, сохранять эти данные (тогда не удалять id из сетки/данных вообще) или чистить (тогда явно удалить зависимые `activity_log`→`catches`→саму территорию в этом порядке) — это осознанное решение, не автоматика. Фото уловов в Storage при этом не удаляются (`storage.protect_delete()` не даёт удалить объект напрямую SQL-ем) — остаются сиротами, что безвредно.
 
 В прототипе после этого нужно заново подобрать id для стартовых `mine`/`other` секторов (см. DECISIONS.md) — старые id могут не существовать в новой сетке. В веб-сервисе такой перепрошивки не требуется — там нет захардкоженных demo-владельцев (все территории стартуют свободными, см. DECISIONS.md).
 
