@@ -39,7 +39,7 @@ export function AchievementDetailScreen({
 
   async function handleShare() {
     if (!achievement) return
-    const text = `🏆 ${achievement.title} — ${achievement.desc}`
+    const text = `🏆 Я получил достижение «${achievement.title}» в FishZone!\n${achievement.desc}\n\nПрисоединяйся и сразимся за территории на побережье Батуми 🎣\n${window.location.origin}`
     try {
       await navigator.clipboard.writeText(text)
       onShowToast('Скопировано в буфер обмена')
@@ -58,12 +58,16 @@ export function AchievementDetailScreen({
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </div>
-        <div className="icon-btn tap-scale" onClick={handleShare}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 15V4M12 4 8 8M12 4l4 4" />
-            <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
-          </svg>
-        </div>
+        {achievement.unlocked ? (
+          <div className="icon-btn tap-scale" onClick={handleShare}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 15V4M12 4 8 8M12 4l4 4" />
+              <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
+            </svg>
+          </div>
+        ) : (
+          <div style={{ width: 36 }} />
+        )}
       </div>
       <div className="screen-inner ach-detail-inner">
         <div className={`ach-detail-badge ${achievement.unlocked ? 'on' : 'off'}`}>
