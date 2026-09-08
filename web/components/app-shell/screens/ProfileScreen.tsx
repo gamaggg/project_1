@@ -190,7 +190,7 @@ export function ProfileScreen({
 
   return (
     <div className="screen-inner">
-      <div className="page-title" style={{ textAlign: 'center', marginTop: 14 }}>
+      <div className="page-title" style={{ textAlign: 'center', marginTop: 14, marginBottom: 16 }}>
         Профиль
       </div>
       <div className="avatar-edit-wrap">

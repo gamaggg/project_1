@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/AuthProvider'
-import type { Territory, Catch, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction } from '@/lib/data/types'
+import type { Territory, Catch, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry } from '@/lib/data/types'
 
 type SectorGeometry = {
   id: string
@@ -345,26 +345,23 @@ export function useSetAdmin() {
     onSuccess: (_data, { userId }) => {
       queryClient.invalidateQueries({ queryKey: ['profile', userId] })
       queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
+      queryClient.invalidateQueries({ queryKey: ['current-admins'] })
     },
   })
 }
 
-// Shared by both "Доступы" (actionTypes: ['grant_admin','revoke_admin']) and
-// "Последние действия" (no filter, every action type) — same table, same
-// shape, only the filter differs.
-export function useAdminActions(actionTypes?: string[]) {
+// "Последние действия" — full unfiltered log of every admin action.
+export function useAdminActions() {
   const isSuperAdmin = useIsSuperAdmin()
   return useQuery({
-    queryKey: ['admin-actions', actionTypes?.join(',') ?? 'all'],
+    queryKey: ['admin-actions'],
     enabled: isSuperAdmin,
     queryFn: async (): Promise<AdminAction[]> => {
       const supabase = createClient()
-      let query = supabase
+      const { data, error } = await supabase
         .from('admin_actions')
         .select('id, details, created_at, profiles!admin_actions_admin_id_fkey(display_name)')
         .order('created_at', { ascending: false })
-      if (actionTypes) query = query.in('action', actionTypes)
-      const { data, error } = await query
       if (error) throw error
       return data.map((row): AdminAction => {
         const admin = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
@@ -375,6 +372,50 @@ export function useAdminActions(actionTypes?: string[]) {
           createdAt: row.created_at,
         }
       })
+    },
+  })
+}
+
+// "Доступы" — a live list of who currently holds admin access (not a log:
+// revoking someone removes them from this list instead of leaving a
+// "revoked" trace). Grant date comes from the most recent grant_admin entry
+// in admin_actions for that user, since profiles itself doesn't track it.
+export function useCurrentAdmins() {
+  const isSuperAdmin = useIsSuperAdmin()
+  return useQuery({
+    queryKey: ['current-admins'],
+    enabled: isSuperAdmin,
+    queryFn: async (): Promise<AdminListEntry[]> => {
+      const supabase = createClient()
+      const { data: admins, error } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .eq('is_admin', true)
+        .eq('is_super_admin', false)
+      if (error) throw error
+      if (!admins.length) return []
+
+      const ids = admins.map((a) => a.id)
+      const { data: grants, error: grantsError } = await supabase
+        .from('admin_actions')
+        .select('target_user_id, created_at')
+        .eq('action', 'grant_admin')
+        .in('target_user_id', ids)
+        .order('created_at', { ascending: false })
+      if (grantsError) throw grantsError
+
+      const grantedAt = new Map<string, string>()
+      for (const g of grants ?? []) {
+        if (g.target_user_id && !grantedAt.has(g.target_user_id)) grantedAt.set(g.target_user_id, g.created_at)
+      }
+
+      return admins
+        .map((a): AdminListEntry => ({
+          id: a.id,
+          displayName: a.display_name ?? 'Админ',
+          grantedAt: grantedAt.get(a.id) ?? null,
+        }))
+        .sort((x, y) => (y.grantedAt ?? '').localeCompare(x.grantedAt ?? ''))
     },
   })
 }

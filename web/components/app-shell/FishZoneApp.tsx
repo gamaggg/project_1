@@ -21,6 +21,7 @@ import { UserProfileScreen } from '@/components/app-shell/screens/UserProfileScr
 import { ReportPhotoModal } from '@/components/app-shell/screens/ReportPhotoModal'
 import { AdminReportsScreen } from '@/components/app-shell/screens/AdminReportsScreen'
 import { AdminActionsScreen } from '@/components/app-shell/screens/AdminActionsScreen'
+import { AdminAccessScreen } from '@/components/app-shell/screens/AdminAccessScreen'
 
 export type ScreenId =
   | 'screen-map'
@@ -325,7 +326,7 @@ export function FishZoneApp() {
           <AdminReportsScreen onBack={pop} onOpenPhoto={setLightboxSrc} />
         </Screen>
         <Screen id="screen-admin-access" current={currentScreen}>
-          <AdminActionsScreen title="Доступы" actionTypes={['grant_admin', 'revoke_admin']} onBack={pop} />
+          <AdminAccessScreen onBack={pop} onOpenUser={openUserProfile} />
         </Screen>
         <Screen id="screen-admin-log" current={currentScreen}>
           <AdminActionsScreen title="Последние действия" onBack={pop} />

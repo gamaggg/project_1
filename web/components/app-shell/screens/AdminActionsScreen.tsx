@@ -3,18 +3,10 @@
 import { useAdminActions } from '@/lib/supabase/queries'
 import { formatWhen } from '@/lib/format'
 
-// Shared by "Доступы" (actionTypes: grant/revoke_admin) and "Последние
-// действия" (no filter) — same list shape, only the query filter differs.
-export function AdminActionsScreen({
-  title,
-  actionTypes,
-  onBack,
-}: {
-  title: string
-  actionTypes?: string[]
-  onBack: () => void
-}) {
-  const { data: actions = [], isLoading } = useAdminActions(actionTypes)
+// "Последние действия" — full unfiltered log of every admin action. See
+// AdminAccessScreen for "Доступы" (a live list, not a log).
+export function AdminActionsScreen({ title, onBack }: { title: string; onBack: () => void }) {
+  const { data: actions = [], isLoading } = useAdminActions()
 
   return (
     <>

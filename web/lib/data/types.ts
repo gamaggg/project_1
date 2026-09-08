@@ -71,13 +71,21 @@ export type CatchReport = {
 }
 
 // One row from admin_actions, joined with the admin's display name — shaped
-// in queries.ts (useAdminActions), used for both "Доступы" (filtered to
-// grant/revoke_admin) and "Последние действия" (unfiltered).
+// in queries.ts (useAdminActions), used for "Последние действия".
 export type AdminAction = {
   id: number
   adminName: string
   details: string
   createdAt: string
+}
+
+// A profile currently holding admin access (is_admin && !is_super_admin),
+// with when it was granted — a live view, not a log entry, so a revoked
+// admin simply drops out of this list rather than leaving a "revoked" row.
+export type AdminListEntry = {
+  id: string
+  displayName: string
+  grantedAt: string | null
 }
 
 export type PendingCatch = {
