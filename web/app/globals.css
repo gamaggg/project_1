@@ -3,7 +3,7 @@
    a real responsive shell; everything else (colors/radii/shadows/components) is
    carried over near verbatim). */
 :root{
-  --bg:#F7F7F4;
+  --bg:#FFFFFF;
   --surface:#FFFFFF;
   --ink:#17181B;
   --ink-soft:#6B6D76;

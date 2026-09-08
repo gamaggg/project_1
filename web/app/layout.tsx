@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 // background (not <body>'s #DCDAD3 desktop-letterbox gray, and not
 // whatever default Safari would otherwise show) fills those strips.
 export const viewport: Viewport = {
-  themeColor: '#F7F7F4',
+  themeColor: '#FFFFFF',
   viewportFit: 'cover',
 }
 
