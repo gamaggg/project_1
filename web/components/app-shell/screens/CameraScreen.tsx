@@ -60,16 +60,18 @@ export function CameraScreen({ onBack, onCapture }: { onBack: () => void; onCapt
     canvas.toBlob((blob) => { if (blob) onCapture(blob) }, 'image/jpeg', 0.85)
   }
 
+  const isLive = state === 'live'
+
   return (
-    <div className="camera-screen">
-      <div className="camera-view">
+    <div className={`camera-screen${isLive ? '' : ' camera-screen-intro'}`}>
+      <div className={`camera-view${isLive ? '' : ' camera-view-intro'}`}>
         <div className="camera-top">
           <div className="cam-round-btn tap-scale" onClick={handleBack}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isLive ? '#fff' : '#17181B'} strokeWidth="2.4" strokeLinecap="round">
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </div>
-          {state === 'live' && (
+          {isLive && (
             <div className="cam-round-btn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" />
@@ -78,33 +80,34 @@ export function CameraScreen({ onBack, onCapture }: { onBack: () => void; onCapt
           )}
         </div>
 
-        {state === 'live' ? (
+        {isLive ? (
           <video ref={videoRef} className="camera-live-video" autoPlay playsInline muted />
         ) : (
-          <>
-            <svg width="150" height="150" viewBox="0 0 64 64" fill="none" opacity={0.9}>
-              <path d="M6 32c8-14 20-20 34-14-2 6-2 14 0 20-14 6-26 0-34-14z" stroke="#EAF6F8" strokeWidth="2" fill="rgba(234,246,248,0.14)" />
-              <path d="M40 25c4-3 9-4 13-2-3 3-3 8 0 11-4 2-9 1-13-2" stroke="#EAF6F8" strokeWidth="2" fill="rgba(234,246,248,0.14)" />
-              <circle cx="16" cy="29" r="1.6" fill="#EAF6F8" />
-            </svg>
+          <div className="camera-intro-content">
+            <div className="camera-icon">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 7h3.2L9 4.5h6L16.8 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z" />
+                <circle cx="12" cy="13" r="3.4" />
+              </svg>
+            </div>
             <div className="camera-hint">
               {state === 'denied' ? (
                 <>
-                  <div className="h1">Нужен доступ к камере</div>
-                  <div className="h2">Без доступа к камере нельзя сфотографировать улов и занять территорию. Проверь разрешения сайта в настройках браузера.</div>
+                  <div className="h1">Нет доступа к камере</div>
+                  <div className="h2">Разреши доступ в настройках браузера — без фото улова сектор нельзя закрепить за собой.</div>
                 </>
               ) : (
                 <>
-                  <div className="h1">Быстрое добавление</div>
-                  <div className="h2">Сфотографируй улов, чтобы закрепить территорию за собой</div>
+                  <div className="h1">Доступ к камере</div>
+                  <div className="h2">Нужен, чтобы сфотографировать улов на месте — фото подтверждает поимку и закрепляет сектор за тобой.</div>
                 </>
               )}
             </div>
-          </>
+          </div>
         )}
       </div>
       <div className="camera-controls">
-        {state === 'live' ? (
+        {isLive ? (
           <div className="shutter tap-scale" onClick={shoot} />
         ) : (
           <div className="camera-controls-btn">
