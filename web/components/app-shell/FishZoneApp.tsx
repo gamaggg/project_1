@@ -493,7 +493,7 @@ function Screen({ id, current, children }: { id: ScreenId; current: ScreenId; ch
 function LoadingShell() {
   return (
     <div className="app-shell" style={{ alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-soft)' }}>Загрузка FishZone…</div>
+      <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-soft)' }}>Загрузка RANGE…</div>
     </div>
   )
 }

@@ -11,7 +11,7 @@ const manrope = Manrope({
 })
 
 export const metadata: Metadata = {
-  title: 'FishZone — Батуми',
+  title: 'RANGE — Батуми',
   description: 'Береговая рыбалка в Батуми: карта территорий, уловы, активность.',
 }
 

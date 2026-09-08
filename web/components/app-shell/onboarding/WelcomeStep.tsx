@@ -4,18 +4,18 @@ export function WelcomeStep({ onCapture, onSignIn }: { onCapture: () => void; on
   return (
     <div className="onboarding-welcome">
       <div className="onboarding-welcome-logo">
-        <svg width="56" height="56" viewBox="0 0 24 24" fill="none">
-          <path d="M3 17c3-5 6-7.5 9-7.5s6 2.5 9 7.5" stroke="#FC5200" strokeWidth="2.2" strokeLinecap="round" />
-          <path d="M3 12.5c3-5 6-7.5 9-7.5s6 2.5 9 7.5" stroke="#FC5200" strokeWidth="2.2" strokeLinecap="round" opacity="0.4" />
-        </svg>
-        <span>FishZone</span>
+        <div className="onboarding-welcome-mark-wrap">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
+          <img src="/brand/logo_1.svg" alt="RANGE" className="onboarding-welcome-mark" />
+          {/* Same image, recolored pure white via filter (so its own alpha channel gives
+              a pixel-perfect silhouette — no CSS mask/luminance guessing), then a plain
+              gradient mask sweeps a band across just that white copy for the shine. */}
+          {/* eslint-disable-next-line @next/next/no-img-element -- see above */}
+          <img src="/brand/logo_1.svg" alt="" aria-hidden="true" className="onboarding-welcome-shine" />
+        </div>
       </div>
       <div className="onboarding-welcome-card">
-        <div className="onboarding-welcome-title">
-          Когда рыбалка в радость,
-          <br />
-          она становится привычкой
-        </div>
+        <div className="onboarding-welcome-title">Рыбалка, которая затягивает</div>
         <div className="onboarding-welcome-sub">
           Двое из трёх рыбаков, занявших территорию в первый визит, вернулись за новым уловом.
         </div>

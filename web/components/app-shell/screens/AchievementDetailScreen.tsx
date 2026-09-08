@@ -39,7 +39,7 @@ export function AchievementDetailScreen({
 
   async function handleShare() {
     if (!achievement) return
-    const text = `🏆 Я получил достижение «${achievement.title}» в FishZone!\n${achievement.desc}\n\nПрисоединяйся и сразимся за территории на побережье Батуми 🎣\n${window.location.origin}`
+    const text = `🏆 Я получил достижение «${achievement.title}» в RANGE!\n${achievement.desc}\n\nПрисоединяйся и сразимся за территории на побережье Батуми 🎣\n${window.location.origin}`
     try {
       await navigator.clipboard.writeText(text)
       onShowToast('Скопировано в буфер обмена')

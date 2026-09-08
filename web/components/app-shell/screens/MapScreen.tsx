@@ -71,13 +71,8 @@ export const MapScreen = forwardRef<
       <div className="map-wrap">
         <MapView ref={mapRef} territories={territories} myTerritoryColor={myTerritoryColor} onSelect={onOpenTerritory} />
         <div className="map-header">
-          <div className="brandmark" style={{ marginBottom: 0 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M3 17c3-5 6-7.5 9-7.5s6 2.5 9 7.5" stroke="#FC5200" strokeWidth="2.2" strokeLinecap="round" />
-              <path d="M3 12.5c3-5 6-7.5 9-7.5s6 2.5 9 7.5" stroke="#FC5200" strokeWidth="2.2" strokeLinecap="round" opacity="0.4" />
-            </svg>
-            <span>FishZone</span>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
+          <img src="/brand/logo_2.svg" alt="RANGE" className="map-brandmark" />
         </div>
         <div className="map-legend">
           <span>
