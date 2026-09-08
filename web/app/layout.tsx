@@ -15,13 +15,16 @@ export const metadata: Metadata = {
   description: 'Береговая рыбалка в Батуми: карта территорий, уловы, активность.',
 }
 
-// Without this, mobile Safari has nothing to go on but <body>'s own
-// background (#DCDAD3 — the desktop letterbox color around the centered
-// app-shell) and tints its own status-bar/toolbar chrome with it, so real
-// phones show a gray strip above and below the app that isn't actually
-// part of any page layout. This tells it to use the app's real background.
+// themeColor alone turned out not to be enough on real devices (Safari kept
+// its status-bar/toolbar chrome its own default gray instead of picking up
+// the page color). viewportFit:'cover' makes the page actually extend under
+// the notch/home-indicator safe areas — combined with the safe-area padding
+// on .screen/.bottomnav in globals.css, that guarantees the app's own
+// background (not <body>'s #DCDAD3 desktop-letterbox gray, and not
+// whatever default Safari would otherwise show) fills those strips.
 export const viewport: Viewport = {
   themeColor: '#F7F7F4',
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

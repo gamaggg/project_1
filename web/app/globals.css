@@ -52,6 +52,7 @@ body{
 .screen{
   position:absolute;
   inset:0;
+  padding-top:env(safe-area-inset-top);
   overflow-y:auto;
   -ms-overflow-style:none;
   scrollbar-width:none;
