@@ -1,6 +1,6 @@
 'use client'
 
-import { useProfile, useCatchesByUser, useIsFollowing, useSetFollowing, useIsAdmin, useIsSuperAdmin, useSetBlocked, useSetAdmin } from '@/lib/supabase/queries'
+import { useProfile, useCatchesByUser, useIsFollowing, useSetFollowing, useIsAdmin, useIsSuperAdmin, useSetBlocked, useSetAdmin, useHasClaimedFromOthers } from '@/lib/supabase/queries'
 import { computeAchievements, personalRecord } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta } from '@/lib/format'
@@ -15,15 +15,19 @@ import type { Territory } from '@/lib/data/types'
 export function UserProfileScreen({
   userId,
   territories,
+  allTerritories,
   onBack,
   onOpenTerritory,
   onOpenPhoto,
+  onOpenAchievements,
 }: {
   userId: string
   territories: Territory[]
+  allTerritories: Territory[]
   onBack: () => void
   onOpenTerritory: (id: string) => void
   onOpenPhoto: (src: string) => void
+  onOpenAchievements: () => void
 }) {
   const { data: profile } = useProfile(userId)
   const { data: catches = [] } = useCatchesByUser(userId)
@@ -33,10 +37,16 @@ export function UserProfileScreen({
   const isSuperAdmin = useIsSuperAdmin()
   const setBlocked = useSetBlocked()
   const setAdmin = useSetAdmin()
+  const { data: claimedFromOthers = false } = useHasClaimedFromOthers(userId)
 
   const speciesCount = new Set(catches.map((c) => c.species)).size
   const record = personalRecord(catches)
-  const achievements = computeAchievements(catches, territories)
+  const achievements = computeAchievements(catches, {
+    myTerritories: territories,
+    allTerritories,
+    followersCount: profile?.followersCount ?? 0,
+    claimedFromOthers,
+  })
   const recent = catches.slice(0, 3)
   const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
 
@@ -129,7 +139,7 @@ export function UserProfileScreen({
           Достижения
         </div>
         <div className="ach-grid">
-          {achievements.map((a) => (
+          {achievements.slice(0, 4).map((a) => (
             <div className={`ach-card${a.unlocked ? '' : ' locked'}`} key={a.icon}>
               <div className={`ach-icon ${a.unlocked ? 'on' : 'off'}`}>{ACH_ICONS[a.icon]}</div>
               <div>
@@ -140,6 +150,9 @@ export function UserProfileScreen({
             </div>
           ))}
         </div>
+        <button className="btn-secondary" style={{ marginTop: 12 }} onClick={onOpenAchievements}>
+          Все достижения
+        </button>
 
         <div className="section-title" style={{ marginTop: 24 }}>
           Последние уловы

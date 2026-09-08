@@ -23,6 +23,7 @@ import { DeleteCatchModal } from '@/components/app-shell/screens/DeleteCatchModa
 import { AdminReportsScreen } from '@/components/app-shell/screens/AdminReportsScreen'
 import { AdminActionsScreen } from '@/components/app-shell/screens/AdminActionsScreen'
 import { AdminAccessScreen } from '@/components/app-shell/screens/AdminAccessScreen'
+import { AchievementsScreen } from '@/components/app-shell/screens/AchievementsScreen'
 
 export type ScreenId =
   | 'screen-map'
@@ -36,6 +37,7 @@ export type ScreenId =
   | 'screen-admin-reports'
   | 'screen-admin-access'
   | 'screen-admin-log'
+  | 'screen-achievements'
 
 export type TabScreenId = 'screen-map' | 'screen-territories' | 'screen-activity' | 'screen-profile'
 const NAV_SCREENS: ScreenId[] = ['screen-map', 'screen-territories', 'screen-activity', 'screen-profile']
@@ -58,6 +60,7 @@ type StackEntry =
   | { screen: 'screen-admin-reports' }
   | { screen: 'screen-admin-access' }
   | { screen: 'screen-admin-log' }
+  | { screen: 'screen-achievements'; userId: string }
 
 export function FishZoneApp() {
   const { user, loading: authLoading, signOut } = useAuth()
@@ -70,6 +73,7 @@ export function FishZoneApp() {
   const [navScreen, setNavScreen] = useState<TabScreenId>('screen-map')
   const [viewingTerritoryId, setViewingTerritoryId] = useState<string | null>(null)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
+  const [viewingAchievementsUserId, setViewingAchievementsUserId] = useState<string | null>(null)
   // Separate from viewingTerritoryId on purpose: this is which territory the
   // camera/confirm flow is for, not what TerritoryScreen should browse to —
   // conflating the two used to mean pressing "+" while browsing a territory
@@ -119,6 +123,7 @@ export function FishZoneApp() {
       const top = next[next.length - 1]
       if (top.screen === 'screen-territory') setViewingTerritoryId(top.territoryId)
       if (top.screen === 'screen-user-profile') setViewingUserId(top.userId)
+      if (top.screen === 'screen-achievements') setViewingAchievementsUserId(top.userId)
       return next
     })
   }
@@ -145,6 +150,10 @@ export function FishZoneApp() {
     }
     setViewingUserId(id)
     push({ screen: 'screen-user-profile', userId: id })
+  }
+  function openAchievements(userId: string) {
+    setViewingAchievementsUserId(userId)
+    push({ screen: 'screen-achievements', userId })
   }
   function openReportModal(catchId: number) {
     if (!user) {
@@ -332,6 +341,7 @@ export function FishZoneApp() {
         <Screen id="screen-profile" current={currentScreen}>
           <ProfileScreen
             myTerritories={myTerritories}
+            allTerritories={territories}
             onOpenTerritory={openTerritory}
             onSignOut={signOut}
             onEditProfile={() => setEditingProfile(true)}
@@ -339,6 +349,7 @@ export function FishZoneApp() {
             onOpenReports={() => push({ screen: 'screen-admin-reports' })}
             onOpenAdminAccess={() => push({ screen: 'screen-admin-access' })}
             onOpenAdminLog={() => push({ screen: 'screen-admin-log' })}
+            onOpenAchievements={() => user && openAchievements(user.id)}
           />
         </Screen>
         <Screen id="screen-user-profile" current={currentScreen}>
@@ -346,10 +357,17 @@ export function FishZoneApp() {
             <UserProfileScreen
               userId={viewingUserId}
               territories={territories.filter((t) => t.ownerId === viewingUserId)}
+              allTerritories={territories}
               onBack={pop}
               onOpenTerritory={openTerritory}
               onOpenPhoto={setLightboxSrc}
+              onOpenAchievements={() => openAchievements(viewingUserId)}
             />
+          )}
+        </Screen>
+        <Screen id="screen-achievements" current={currentScreen}>
+          {viewingAchievementsUserId && (
+            <AchievementsScreen userId={viewingAchievementsUserId} territories={territories} onBack={pop} />
           )}
         </Screen>
         <Screen id="screen-admin-reports" current={currentScreen}>

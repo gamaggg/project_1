@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useProfile, useMyCatches, useUpdateProfile, useIsAdmin, useIsSuperAdmin, useReports } from '@/lib/supabase/queries'
+import { useProfile, useMyCatches, useUpdateProfile, useIsAdmin, useIsSuperAdmin, useReports, useHasClaimedFromOthers } from '@/lib/supabase/queries'
 import { uploadAvatar } from '@/lib/supabase/storage'
 import { computeAchievements, personalRecord } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
@@ -146,6 +146,7 @@ export function EditProfileModal({ onClose }: { onClose: () => void }) {
 
 export function ProfileScreen({
   myTerritories,
+  allTerritories,
   onOpenTerritory,
   onSignOut,
   onEditProfile,
@@ -153,8 +154,10 @@ export function ProfileScreen({
   onOpenReports,
   onOpenAdminAccess,
   onOpenAdminLog,
+  onOpenAchievements,
 }: {
   myTerritories: Territory[]
+  allTerritories: Territory[]
   onOpenTerritory: (id: string) => void
   onSignOut: () => void
   onEditProfile: () => void
@@ -162,6 +165,7 @@ export function ProfileScreen({
   onOpenReports: () => void
   onOpenAdminAccess: () => void
   onOpenAdminLog: () => void
+  onOpenAchievements: () => void
 }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
@@ -169,6 +173,7 @@ export function ProfileScreen({
   const isAdmin = useIsAdmin()
   const isSuperAdmin = useIsSuperAdmin()
   const { data: reports = [] } = useReports()
+  const { data: claimedFromOthers = false } = useHasClaimedFromOthers(user?.id ?? null)
 
   // Signed out: the profile tab IS the sign-in/sign-up entry point (see
   // DECISIONS.md — replaced the standalone /auth redirect from the "+" button).
@@ -184,7 +189,12 @@ export function ProfileScreen({
 
   const speciesCount = new Set(myCatches.map((c) => c.species)).size
   const record = personalRecord(myCatches)
-  const achievements = computeAchievements(myCatches, myTerritories)
+  const achievements = computeAchievements(myCatches, {
+    myTerritories,
+    allTerritories,
+    followersCount: profile?.followersCount ?? 0,
+    claimedFromOthers,
+  })
   const recentMine = myCatches.slice(0, 3)
   const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
 
@@ -241,7 +251,7 @@ export function ProfileScreen({
         Достижения
       </div>
       <div className="ach-grid">
-        {achievements.map((a) => (
+        {achievements.slice(0, 4).map((a) => (
           <div className={`ach-card${a.unlocked ? '' : ' locked'}`} key={a.icon}>
             <div className={`ach-icon ${a.unlocked ? 'on' : 'off'}`}>{ACH_ICONS[a.icon]}</div>
             <div>
@@ -252,6 +262,9 @@ export function ProfileScreen({
           </div>
         ))}
       </div>
+      <button className="btn-secondary" style={{ marginTop: 12 }} onClick={onOpenAchievements}>
+        Все достижения
+      </button>
 
       <div className="section-title" style={{ marginTop: 24 }}>
         Последние уловы

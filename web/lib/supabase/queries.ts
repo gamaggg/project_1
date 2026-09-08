@@ -574,6 +574,30 @@ export function useDismissReport() {
   })
 }
 
+// For the "Отбил территорию" achievement — has this profile ever taken over
+// a sector that belonged to someone else? activity_log is publicly readable
+// (see the unauthenticated-feed comment on useActivity above), so this works
+// for any profile, not just the viewer's own. limit(1) since only presence
+// matters, not a count.
+export function useHasClaimedFromOthers(userId: string | null) {
+  return useQuery({
+    queryKey: ['claimed-from-others', userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<boolean> => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('activity_log')
+        .select('id')
+        .eq('kind', 'claim')
+        .eq('user_id', userId!)
+        .not('previous_owner_id', 'is', null)
+        .limit(1)
+      if (error) throw error
+      return (data?.length ?? 0) > 0
+    },
+  })
+}
+
 export function useConfirmCatch() {
   const queryClient = useQueryClient()
   return useMutation({
