@@ -37,7 +37,7 @@ export function OnboardingFlow() {
   if (step === 'welcome') return <WelcomeStep onCapture={() => setStep('account')} onSignIn={() => setStep('signin')} />
   if (step === 'signin') return <SignInStep onBack={() => setStep('welcome')} />
   if (step === 'account') return <AccountStep onBack={() => setStep('welcome')} />
-  if (step === 'name') return <NameStep initialName={myProfile?.displayName ?? ''} onDone={() => setStep('details')} />
-  if (step === 'details') return <DetailsStep onDone={() => setStep('color')} />
-  return <ColorStep onDone={() => {}} />
+  if (step === 'name') return <NameStep initialName={myProfile?.displayName ?? ''} onBack={() => setStep('welcome')} onDone={() => setStep('details')} />
+  if (step === 'details') return <DetailsStep onBack={() => setStep('name')} onDone={() => setStep('color')} />
+  return <ColorStep onBack={() => setStep('details')} onDone={() => {}} />
 }

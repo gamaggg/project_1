@@ -6,11 +6,9 @@ import { useUpdateProfile } from '@/lib/supabase/queries'
 // Native <input type="date"> instead of a custom ДД.ММ.ГГГГ text mask — the
 // browser's own picker is free, accessible, and hard to get wrong; a masked
 // text input is extra work the reference screenshot doesn't strictly require.
-export function DetailsStep({ onDone }: { onDone: () => void }) {
+export function DetailsStep({ onBack, onDone }: { onBack: () => void; onDone: () => void }) {
   const [birthDate, setBirthDate] = useState('')
   const [gender, setGender] = useState<'male' | 'female' | null>(null)
-  const [height, setHeight] = useState('')
-  const [weight, setWeight] = useState('')
   const [confirmed14, setConfirmed14] = useState(false)
   const updateProfile = useUpdateProfile()
   const valid = !!birthDate && confirmed14
@@ -21,17 +19,22 @@ export function DetailsStep({ onDone }: { onDone: () => void }) {
     await updateProfile.mutateAsync({
       birthDate,
       ...(gender ? { gender } : {}),
-      heightCm: height ? Number(height) : null,
-      weightKg: weight ? Number(weight) : null,
     })
     onDone()
   }
 
   return (
     <div className="onboarding-step">
+      <div className="header-row" style={{ padding: 0, marginBottom: 12 }}>
+        <div className="icon-btn tap-scale" onClick={onBack}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </div>
+      </div>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
         <div className="page-title">Заполните основные данные</div>
-        <div style={{ marginTop: 12 }}>
+        <div style={{ marginTop: 28 }}>
           <div className="auth-field">
             <label htmlFor="birth-date">Дата рождения</label>
             <input id="birth-date" type="date" required value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
@@ -47,18 +50,6 @@ export function DetailsStep({ onDone }: { onDone: () => void }) {
                 Мужской
               </button>
             </div>
-          </div>
-
-          <div className="auth-field unit-field">
-            <label htmlFor="height">Рост (Необязательно)</label>
-            <input id="height" type="number" inputMode="numeric" min={50} max={260} value={height} onChange={(e) => setHeight(e.target.value)} />
-            <span className="unit-suffix">см</span>
-          </div>
-
-          <div className="auth-field unit-field">
-            <label htmlFor="weight">Вес (Необязательно)</label>
-            <input id="weight" type="number" inputMode="numeric" min={20} max={400} value={weight} onChange={(e) => setWeight(e.target.value)} />
-            <span className="unit-suffix">кг</span>
           </div>
 
           <div className="onboarding-checkbox-row">

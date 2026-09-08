@@ -5,9 +5,7 @@ import { useUpdateProfile } from '@/lib/supabase/queries'
 
 const NAME_RE = /^[\p{L}\p{N}]{2,}$/u
 
-// No "back" here — the account already exists by this point (created in
-// AccountStep), so undoing to re-edit email/password isn't meaningful.
-export function NameStep({ initialName, onDone }: { initialName: string; onDone: () => void }) {
+export function NameStep({ initialName, onBack, onDone }: { initialName: string; onBack: () => void; onDone: () => void }) {
   const [name, setName] = useState(initialName)
   const updateProfile = useUpdateProfile()
   const valid = NAME_RE.test(name)
@@ -21,10 +19,17 @@ export function NameStep({ initialName, onDone }: { initialName: string; onDone:
 
   return (
     <div className="onboarding-step">
+      <div className="header-row" style={{ padding: 0, marginBottom: 12 }}>
+        <div className="icon-btn tap-scale" onClick={onBack}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </div>
+      </div>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
         <div className="page-title">Как к вам обращаться?</div>
-        <div className="page-sub">Скоро на карте появится земля с этим именем.</div>
-        <div className="auth-field" style={{ marginTop: 12 }}>
+        <div className="page-sub">Это имя увидят другие рыбаки на карте.</div>
+        <div className="auth-field" style={{ marginTop: 28 }}>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Введите имя" autoFocus />
         </div>
         <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: -8 }}>От 2 символов · без пробелов и спецсимволов</div>

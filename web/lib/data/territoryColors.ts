@@ -5,16 +5,15 @@
 // these overlap the fixed "someone else's territory" blue (#3E7BFA) or the
 // error red (#D33), so a viewer's own color is never confused with either.
 export const TERRITORY_COLORS: { id: string; hex: string; label: string }[] = [
-  { id: 'green', hex: '#2FA84F', label: 'Зелёный' },
-  { id: 'teal', hex: '#12B5A6', label: 'Бирюзовый' },
-  { id: 'purple', hex: '#8B5CF6', label: 'Фиолетовый' },
-  { id: 'magenta', hex: '#E0459C', label: 'Малиновый' },
-  { id: 'amber', hex: '#F2B705', label: 'Янтарный' },
-  { id: 'coral', hex: '#FF7A59', label: 'Коралловый' },
-  { id: 'indigo', hex: '#5B5FEF', label: 'Индиго' },
-  { id: 'mint', hex: '#00C48C', label: 'Мятный' },
-  { id: 'rose', hex: '#EF476F', label: 'Розовый' },
-  { id: 'gold', hex: '#FFB100', label: 'Золотой' },
+  { id: 'coral', hex: '#FF6B6B', label: 'Коралловый' },
+  { id: 'orange', hex: '#FB6A16', label: 'Оранжевый' },
+  { id: 'lime', hex: '#B5E254', label: 'Лаймовый' },
+  { id: 'sky', hex: '#4CC9F0', label: 'Голубой' },
+  { id: 'red', hex: '#E63946', label: 'Красный' },
+  { id: 'mint', hex: '#7EF5A0', label: 'Мятный' },
+  { id: 'pink', hex: '#EEAAE3', label: 'Розовый' },
+  { id: 'purple', hex: '#A88EF5', label: 'Фиолетовый' },
+  { id: 'yellow', hex: '#FFD60A', label: 'Жёлтый' },
 ]
 
 // Same green that was hardcoded as "mine" before this feature — pre-wizard

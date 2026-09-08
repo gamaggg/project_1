@@ -12,11 +12,17 @@ import { createClient } from '@/lib/supabase/client'
 export function AccountStep({ onBack }: { onBack: () => void }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const mismatch = passwordConfirm.length > 0 && password !== passwordConfirm
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (password !== passwordConfirm) {
+      setError('Пароли не совпадают')
+      return
+    }
     setError(null)
     setPending(true)
     const supabase = createClient()
@@ -58,8 +64,21 @@ export function AccountStep({ onBack }: { onBack: () => void }) {
               placeholder="Минимум 6 символов"
             />
           </div>
+          <div className="auth-field">
+            <label htmlFor="account-password-confirm">Повторите пароль</label>
+            <input
+              id="account-password-confirm"
+              type="password"
+              required
+              minLength={6}
+              value={passwordConfirm}
+              onChange={(e) => setPasswordConfirm(e.target.value)}
+              placeholder="Ещё раз пароль"
+            />
+            {mismatch && <div style={{ fontSize: 12.5, color: '#D33', marginTop: 4 }}>Пароли не совпадают</div>}
+          </div>
           {error && <div className="auth-error">{error}</div>}
-          <button className="btn-primary" type="submit" disabled={pending}>
+          <button className="btn-primary" type="submit" disabled={pending || mismatch}>
             {pending ? 'Подождите…' : 'Далее'}
           </button>
         </form>
