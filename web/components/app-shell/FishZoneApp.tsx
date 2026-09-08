@@ -5,7 +5,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { useTerritories, useConfirmCatch, useProfile } from '@/lib/supabase/queries'
 import { getCurrentCoords, nearestTerritory } from '@/lib/geolocation'
 import { uploadCatchPhoto } from '@/lib/supabase/storage'
-import { useActivityReadState } from '@/lib/activityRead'
+import { useActivityReadState, useAdminActionsReadState } from '@/lib/activityRead'
 import { formatCooldown } from '@/lib/format'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import type { PendingCatch } from '@/lib/data/types'
@@ -81,6 +81,7 @@ export function FishZoneApp() {
   const confirmCatchMutation = useConfirmCatch()
   const mapHandleRef = useRef<LeafletMapHandle>(null)
   const { unreadIds, unreadCount, markAllRead } = useActivityReadState()
+  const { unreadCount: adminLogUnreadCount, markAllRead: markAdminLogRead } = useAdminActionsReadState()
 
   const [stack, setStack] = useState<StackEntry[]>([{ screen: 'screen-map' }])
   const [navScreen, setNavScreen] = useState<TabScreenId>('screen-map')
@@ -415,7 +416,11 @@ export function FishZoneApp() {
             onOpenPhoto={setLightboxSrc}
             onOpenReports={() => push({ screen: 'screen-admin-reports' })}
             onOpenAdminAccess={() => push({ screen: 'screen-admin-access' })}
-            onOpenAdminLog={() => push({ screen: 'screen-admin-log' })}
+            onOpenAdminLog={() => {
+              markAdminLogRead()
+              push({ screen: 'screen-admin-log' })
+            }}
+            adminLogUnreadCount={adminLogUnreadCount}
             onOpenAchievements={() => user && openAchievements(user.id)}
             onOpenAchievementDetail={(icon) => user && openAchievementDetail(user.id, icon)}
             onShowToast={showToast}

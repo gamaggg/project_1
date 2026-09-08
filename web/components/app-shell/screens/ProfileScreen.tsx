@@ -201,6 +201,7 @@ export function ProfileScreen({
   onOpenReports,
   onOpenAdminAccess,
   onOpenAdminLog,
+  adminLogUnreadCount,
   onOpenAchievements,
   onOpenAchievementDetail,
   onShowToast,
@@ -215,6 +216,7 @@ export function ProfileScreen({
   onOpenReports: () => void
   onOpenAdminAccess: () => void
   onOpenAdminLog: () => void
+  adminLogUnreadCount: number
   onOpenAchievements: () => void
   onOpenAchievementDetail: (icon: Achievement['icon']) => void
   onShowToast: (msg: string) => void
@@ -416,10 +418,11 @@ export function ProfileScreen({
               Доступы
             </button>
           </div>
-          <div style={{ marginTop: 12 }}>
+          <div className="btn-wrap" style={{ marginTop: 12 }}>
             <button className="btn-secondary" onClick={onOpenAdminLog}>
               Последние действия
             </button>
+            {adminLogUnreadCount > 0 && <span className="btn-badge">{adminLogUnreadCount}</span>}
           </div>
         </>
       )}
