@@ -26,10 +26,10 @@ export function BottomNav({
       </NavItem>
       <NavItem id="screen-territories" active={active === 'screen-territories'} onClick={onNavigate}>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
-          <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
-          <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
-          <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
+          <polygon points="9.85,4.88 14.15,4.88 16.3,8.6 14.15,12.32 9.85,12.32 7.7,8.6" />
+          <polygon points="3.4,8.6 7.7,8.6 9.85,12.32 7.7,16.04 3.4,16.04 1.25,12.32" />
+          <polygon points="16.3,8.6 20.6,8.6 22.75,12.32 20.6,16.04 16.3,16.04 14.15,12.32" />
+          <polygon points="9.85,12.32 14.15,12.32 16.3,16.04 14.15,19.76 9.85,19.76 7.7,16.04" />
         </svg>
         <span>Территории</span>
       </NavItem>

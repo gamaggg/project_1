@@ -70,8 +70,8 @@ export function AchievementDetailScreen({
         )}
       </div>
       <div className="screen-inner ach-detail-inner">
-        <div className={`ach-detail-badge ${achievement.unlocked ? 'on' : 'off'}`}>
-          <svg className="ach-detail-hex" viewBox="0 0 100 100" aria-hidden="true">
+        <div className={`ach-detail-badge hex-aspect ${achievement.unlocked ? 'on' : 'off'}`}>
+          <svg className="ach-detail-hex" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             <defs>
               <linearGradient id="achHexFillOn" x1="0" y1="0" x2="0.25" y2="1">
                 <stop offset="0" stopColor="#FFB067" />
@@ -92,12 +92,12 @@ export function AchievementDetailScreen({
               </radialGradient>
             </defs>
             <polygon
-              points="25,3 75,3 100,50 75,97 25,97 0,50"
+              points="25,0 75,0 100,50 75,100 25,100 0,50"
               fill={achievement.unlocked ? 'url(#achHexFillOn)' : 'url(#achHexFillOff)'}
               stroke={achievement.unlocked ? 'url(#achHexStrokeOn)' : '#DAD8D0'}
               strokeWidth="2.5"
             />
-            <polygon points="25,3 75,3 100,50 75,97 25,97 0,50" fill="url(#achHexGloss)" />
+            <polygon points="25,0 75,0 100,50 75,100 25,100 0,50" fill="url(#achHexGloss)" />
           </svg>
           <div className={`ach-detail-icon-fg ${achievement.unlocked ? 'on' : 'off'}`}>
             {cloneElement(ACH_ICONS[achievement.icon] as ReactElement<{ width: number; height: number }>, { width: 100, height: 100 })}

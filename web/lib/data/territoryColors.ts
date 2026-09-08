@@ -1,3 +1,5 @@
+import type { TerritoryStatus } from '@/lib/data/types'
+
 // Chosen once during onboarding (ColorStep), painted on the map wherever the
 // viewer's OWN territories render — see DECISIONS.md for why this doesn't
 // extend to showing every player's own color (would need a new join in
@@ -21,9 +23,30 @@ export const TERRITORY_COLORS: { id: string; hex: string; label: string }[] = [
 // exactly as before.
 export const DEFAULT_TERRITORY_COLOR = '#2FA84F'
 
+// "other"/"free" stay fixed — only "mine" is the viewer's own chosen color.
+// Shared by LeafletMap, TerritoriesListScreen and TerritoryThumbnailMap so
+// the mine/other/free mapping lives in exactly one place.
+export const OTHER_TERRITORY_COLOR = '#3E7BFA'
+export const FREE_TERRITORY_COLOR = '#7C7E86'
+
+export function resolveTerritoryColor(status: TerritoryStatus, myTerritoryColor: string): string {
+  if (status === 'mine') return myTerritoryColor
+  if (status === 'other') return OTHER_TERRITORY_COLOR
+  return FREE_TERRITORY_COLOR
+}
+
 // #RRGGBBAA is supported by every evergreen browser — cheaper than hand
 // -tuning a "-soft" pair (like --green-soft) for each of the 10 colors.
 export function withAlpha(hex: string, alpha: number): string {
   const a = Math.round(alpha * 255).toString(16).padStart(2, '0')
   return `${hex}${a}`
+}
+
+// Some palette colors (yellow, mint, lime, pink) are too light to read as
+// text on their own ~16%-alpha tint — scaling every channel toward black
+// keeps the hue but darkens it enough to stay legible for any of the 9
+// colors, so "mine" badges use this for their text instead of the raw hex.
+export function darkenForBadgeText(hex: string): string {
+  const scale = (channel: string) => Math.round(parseInt(channel, 16) * 0.55).toString(16).padStart(2, '0')
+  return `#${scale(hex.slice(1, 3))}${scale(hex.slice(3, 5))}${scale(hex.slice(5, 7))}`
 }

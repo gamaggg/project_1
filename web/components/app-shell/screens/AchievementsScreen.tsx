@@ -47,7 +47,7 @@ export function AchievementsScreen({
         <div className="ach-grid">
           {achievements.map((a) => (
             <div className={`ach-card${a.unlocked ? '' : ' locked'}`} key={a.icon} onClick={() => onOpenDetail(a.icon)}>
-              <div className={`ach-icon ${a.unlocked ? 'on' : 'off'}`}>{ACH_ICONS[a.icon]}</div>
+              <div className={`ach-icon hex-aspect hex-shape ${a.unlocked ? 'on' : 'off'}`}>{ACH_ICONS[a.icon]}</div>
               <div>
                 <div className="ach-title">{a.title}</div>
                 <div className="ach-desc">{a.desc}</div>

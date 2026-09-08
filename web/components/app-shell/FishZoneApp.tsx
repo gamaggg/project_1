@@ -6,6 +6,7 @@ import { useTerritories, useConfirmCatch, useProfile } from '@/lib/supabase/quer
 import { getCurrentCoords, nearestTerritory } from '@/lib/geolocation'
 import { uploadCatchPhoto } from '@/lib/supabase/storage'
 import { useActivityReadState } from '@/lib/activityRead'
+import { formatCooldown } from '@/lib/format'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import type { PendingCatch } from '@/lib/data/types'
 import { OnboardingFlow } from '@/components/app-shell/onboarding/OnboardingFlow'
@@ -15,13 +16,15 @@ import { MapScreen } from '@/components/app-shell/screens/MapScreen'
 import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import { TerritoryScreen } from '@/components/app-shell/screens/TerritoryScreen'
 import { TerritoriesListScreen } from '@/components/app-shell/screens/TerritoriesListScreen'
+import { UsersListScreen } from '@/components/app-shell/screens/UsersListScreen'
 import { CameraScreen } from '@/components/app-shell/screens/CameraScreen'
 import { ConfirmScreen, type CatchFormData, type PhotoStatus } from '@/components/app-shell/screens/ConfirmScreen'
 import { ActivityScreen } from '@/components/app-shell/screens/ActivityScreen'
-import { ProfileScreen, EditProfileModal } from '@/components/app-shell/screens/ProfileScreen'
+import { ProfileScreen, EditProfileModal, ChangeColorModal } from '@/components/app-shell/screens/ProfileScreen'
 import { UserProfileScreen } from '@/components/app-shell/screens/UserProfileScreen'
 import { ReportPhotoModal } from '@/components/app-shell/screens/ReportPhotoModal'
 import { DeleteCatchModal } from '@/components/app-shell/screens/DeleteCatchModal'
+import { DeleteTerritoryModal } from '@/components/app-shell/screens/DeleteTerritoryModal'
 import { AdminReportsScreen } from '@/components/app-shell/screens/AdminReportsScreen'
 import { AdminActionsScreen } from '@/components/app-shell/screens/AdminActionsScreen'
 import { AdminAccessScreen } from '@/components/app-shell/screens/AdminAccessScreen'
@@ -33,6 +36,7 @@ export type ScreenId =
   | 'screen-map'
   | 'screen-territory'
   | 'screen-territories'
+  | 'screen-users'
   | 'screen-camera'
   | 'screen-confirm'
   | 'screen-activity'
@@ -57,6 +61,7 @@ type StackEntry =
   | { screen: 'screen-map' }
   | { screen: 'screen-territory'; territoryId: string }
   | { screen: 'screen-territories' }
+  | { screen: 'screen-users' }
   | { screen: 'screen-camera' }
   | { screen: 'screen-confirm' }
   | { screen: 'screen-activity' }
@@ -89,8 +94,12 @@ export function FishZoneApp() {
   const [catchTerritoryId, setCatchTerritoryId] = useState<string | null>(null)
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
   const [editingProfile, setEditingProfile] = useState(false)
+  const [changingColor, setChangingColor] = useState(false)
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false)
+  const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null)
   const [reportingCatchId, setReportingCatchId] = useState<number | null>(null)
   const [deletingCatchId, setDeletingCatchId] = useState<number | null>(null)
+  const [deletingTerritoryId, setDeletingTerritoryId] = useState<string | null>(null)
   const [pendingCatch, setPendingCatch] = useState<PendingCatch | null>(null)
   const [confirmStep, setConfirmStep] = useState<'form' | 'success'>('form')
   const [wasFree, setWasFree] = useState(false)
@@ -146,6 +155,14 @@ export function FishZoneApp() {
     setNavScreen(id)
   }
   function openTerritory(id: string) {
+    // A "Последние действия"/activity link can point at a sector a super
+    // admin has since deleted (admin_delete_territory) — it's gone from
+    // `territories` (see useTerritories' is_deleted filter), so guard
+    // against pushing a screen that'd render blank.
+    if (!territories.some((t) => t.id === id)) {
+      showToast('Этот сектор удалён')
+      return
+    }
     setViewingTerritoryId(id)
     push({ screen: 'screen-territory', territoryId: id })
   }
@@ -254,8 +271,17 @@ export function FishZoneApp() {
       setWasFree(t?.status !== 'mine')
       setPendingCatch(payload)
       setConfirmStep('success')
-    } catch {
-      showToast('Не удалось сохранить улов, попробуй ещё раз')
+    } catch (err) {
+      // Supabase's PostgrestError isn't an Error instance — duck-type the
+      // message instead of `instanceof Error` (see confirm_catch's
+      // COOLDOWN: exception, surfaced verbatim as error.message).
+      const message = typeof err === 'object' && err !== null && 'message' in err ? String((err as { message: unknown }).message) : ''
+      const match = /COOLDOWN:(\d+)/.exec(message)
+      if (match) {
+        setCooldownSeconds(Number(match[1]))
+      } else {
+        showToast('Не удалось сохранить улов, попробуй ещё раз')
+      }
     }
   }
   function finishCatchFlow() {
@@ -335,6 +361,8 @@ export function FishZoneApp() {
               onReportPhoto={openReportModal}
               onAdminCatch={startAdminCatch}
               onDeleteCatch={setDeletingCatchId}
+              onDeleteTerritory={setDeletingTerritoryId}
+              onShare={() => shareTerritory(viewingTerritory.id)}
             />
           )}
         </Screen>
@@ -343,8 +371,11 @@ export function FishZoneApp() {
             territories={territories}
             myTerritoryColor={myTerritoryColor}
             onOpenTerritory={openTerritory}
-            onOpenUser={openUserProfile}
+            onOpenUsersList={() => push({ screen: 'screen-users' })}
           />
+        </Screen>
+        <Screen id="screen-users" current={currentScreen}>
+          <UsersListScreen onBack={pop} onOpenUser={openUserProfile} />
         </Screen>
         <Screen id="screen-camera" current={currentScreen}>
           <CameraScreen key={cameraSessionId} onBack={pop} onCapture={handleCapture} />
@@ -368,21 +399,23 @@ export function FishZoneApp() {
           )}
         </Screen>
         <Screen id="screen-activity" current={currentScreen}>
-          <ActivityScreen onOpenUser={openUserProfile} onOpenPhoto={setLightboxSrc} unreadIds={unreadIds} onMarkAllRead={markAllRead} />
+          <ActivityScreen onOpenUser={openUserProfile} onOpenTerritory={openTerritory} onOpenPhoto={setLightboxSrc} unreadIds={unreadIds} onMarkAllRead={markAllRead} />
         </Screen>
         <Screen id="screen-profile" current={currentScreen}>
           <ProfileScreen
             myTerritories={myTerritories}
             allTerritories={territories}
             onOpenTerritory={openTerritory}
-            onSignOut={signOut}
+            onSignOut={() => setConfirmingSignOut(true)}
             onEditProfile={() => setEditingProfile(true)}
+            onChangeColor={() => setChangingColor(true)}
             onOpenPhoto={setLightboxSrc}
             onOpenReports={() => push({ screen: 'screen-admin-reports' })}
             onOpenAdminAccess={() => push({ screen: 'screen-admin-access' })}
             onOpenAdminLog={() => push({ screen: 'screen-admin-log' })}
             onOpenAchievements={() => user && openAchievements(user.id)}
             onOpenAchievementDetail={(icon) => user && openAchievementDetail(user.id, icon)}
+            onShowToast={showToast}
           />
         </Screen>
         <Screen id="screen-user-profile" current={currentScreen}>
@@ -421,13 +454,13 @@ export function FishZoneApp() {
           )}
         </Screen>
         <Screen id="screen-admin-reports" current={currentScreen}>
-          <AdminReportsScreen onBack={pop} onOpenPhoto={setLightboxSrc} />
+          <AdminReportsScreen onBack={pop} onOpenPhoto={setLightboxSrc} onOpenUser={openUserProfile} onOpenTerritory={openTerritory} />
         </Screen>
         <Screen id="screen-admin-access" current={currentScreen}>
           <AdminAccessScreen onBack={pop} onOpenUser={openUserProfile} />
         </Screen>
         <Screen id="screen-admin-log" current={currentScreen}>
-          <AdminActionsScreen title="Последние действия" onBack={pop} />
+          <AdminActionsScreen title="Последние действия" onBack={pop} onOpenUser={openUserProfile} onOpenTerritory={openTerritory} />
         </Screen>
       </div>
 
@@ -452,7 +485,54 @@ export function FishZoneApp() {
         </div>
       )}
 
+      {cooldownSeconds !== null && (
+        <div className="modal-overlay" onClick={() => setCooldownSeconds(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-icon" style={{ background: 'linear-gradient(160deg,#FFB067,#FC5200 65%)' }}>
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3.5 2" />
+              </svg>
+            </div>
+            <div className="modal-title">Небольшой перерыв</div>
+            <div className="modal-body">Следующий улов можно добавить через {formatCooldown(cooldownSeconds)}.</div>
+            <button className="btn-primary" onClick={() => setCooldownSeconds(null)}>
+              Понятно
+            </button>
+          </div>
+        </div>
+      )}
+
+      {confirmingSignOut && (
+        <div className="modal-overlay" onClick={() => setConfirmingSignOut(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-icon" style={{ background: 'linear-gradient(160deg,#FF6B6B,#D33 65%)' }}>
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <path d="M16 17l5-5-5-5" />
+                <path d="M21 12H9" />
+              </svg>
+            </div>
+            <div className="modal-title">Выйти из аккаунта?</div>
+            <div className="modal-body">Тебе нужно будет войти снова, чтобы продолжить пользоваться RANGE.</div>
+            <button
+              className="btn-danger"
+              onClick={() => {
+                setConfirmingSignOut(false)
+                void signOut()
+              }}
+            >
+              Выйти
+            </button>
+            <button className="btn-secondary" style={{ marginTop: 8 }} onClick={() => setConfirmingSignOut(false)}>
+              Отмена
+            </button>
+          </div>
+        </div>
+      )}
+
       {editingProfile && <EditProfileModal onClose={() => setEditingProfile(false)} />}
+      {changingColor && <ChangeColorModal onClose={() => setChangingColor(false)} />}
       {lightboxSrc && <PhotoLightbox src={lightboxSrc} alt="Улов" onClose={() => setLightboxSrc(null)} />}
       {reportingCatchId !== null && (
         <ReportPhotoModal
@@ -466,6 +546,16 @@ export function FishZoneApp() {
           catchId={deletingCatchId}
           onClose={() => setDeletingCatchId(null)}
           onDeleted={() => showToast('Улов удалён')}
+        />
+      )}
+      {deletingTerritoryId !== null && (
+        <DeleteTerritoryModal
+          territoryId={deletingTerritoryId}
+          onClose={() => setDeletingTerritoryId(null)}
+          onDeleted={() => {
+            pop()
+            showToast('Сектор удалён')
+          }}
         />
       )}
 

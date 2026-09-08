@@ -5,9 +5,13 @@ import { useReports, useAdminDeleteCatch, useDismissReport } from '@/lib/supabas
 export function AdminReportsScreen({
   onBack,
   onOpenPhoto,
+  onOpenUser,
+  onOpenTerritory,
 }: {
   onBack: () => void
   onOpenPhoto: (src: string) => void
+  onOpenUser: (id: string) => void
+  onOpenTerritory: (id: string) => void
 }) {
   const { data: reports = [], isLoading } = useReports()
   const deleteCatch = useAdminDeleteCatch()
@@ -36,9 +40,17 @@ export function AdminReportsScreen({
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>{r.reason}</div>
                 <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
-                  Территория {r.territoryId}{r.speciesName ? ` · ${r.speciesName}` : ''}
+                  <button className="activity-who-btn" onClick={() => onOpenTerritory(r.territoryId)}>
+                    Территория {r.territoryId}
+                  </button>
+                  {r.speciesName ? ` · ${r.speciesName}` : ''}
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 2 }}>Пожаловался: {r.reporterName}</div>
+                <div style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 2 }}>
+                  Пожаловался:{' '}
+                  <button className="activity-who-btn" onClick={() => onOpenUser(r.reporterId)}>
+                    {r.reporterName}
+                  </button>
+                </div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
                   <button
                     className="btn-primary"

@@ -50,6 +50,20 @@ export type Profile = {
   // accounts) — read sites fall back to DEFAULT_TERRITORY_COLOR.
   territoryColor: string | null
   onboardingCompleted: boolean
+  createdAt: string
+}
+
+// One row from profiles_with_stats for the admin "Все пользователи" list —
+// shaped in queries.ts (useAllUsers), not the full Profile (no need for the
+// self-only masked fields there).
+export type UserListEntry = {
+  id: string
+  displayName: string
+  avatarUrl: string | null
+  publicId: string
+  createdAt: string
+  catchesCount: number
+  territoriesCount: number
 }
 
 export type Catch = {
@@ -75,6 +89,7 @@ export type CatchReport = {
   catchId: number
   reason: string
   createdAt: string
+  reporterId: string
   reporterName: string
   territoryId: string
   photoUrl: string
@@ -88,6 +103,9 @@ export type AdminAction = {
   adminName: string
   details: string
   createdAt: string
+  targetUserId: string | null
+  targetUserName: string | null
+  territoryId: string | null
 }
 
 // A profile currently holding admin access (is_admin && !is_super_admin),

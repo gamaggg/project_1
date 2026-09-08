@@ -1,9 +1,9 @@
 'use client'
 
-import { useProfile, useCatchesByUser, useIsFollowing, useSetFollowing, useIsAdmin, useIsSuperAdmin, useSetBlocked, useSetAdmin, useHasClaimedFromOthers } from '@/lib/supabase/queries'
+import { useProfile, useCatchesByUser, useIsFollowing, useSetFollowing, useIsAdmin, useIsSuperAdmin, useSetBlocked, useSetAdmin, useHasClaimedFromOthers, useReportDeletionCount } from '@/lib/supabase/queries'
 import { computeAchievements, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
-import { formatCatchMeta } from '@/lib/format'
+import { formatCatchMeta, formatJoinedDate } from '@/lib/format'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import type { Territory } from '@/lib/data/types'
 
@@ -40,6 +40,7 @@ export function UserProfileScreen({
   const setBlocked = useSetBlocked()
   const setAdmin = useSetAdmin()
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(userId)
+  const { data: reportDeletionCount } = useReportDeletionCount(userId)
 
   const speciesCount = new Set(catches.map((c) => c.species)).size
   const record = personalRecord(catches)
@@ -76,7 +77,9 @@ export function UserProfileScreen({
             {profile?.displayName ?? '…'}
             {profile?.isBlocked && <span className="badge" style={{ background: '#FDE2E2', color: '#D33' }}>Заблокирован</span>}
           </div>
-          <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 2 }}>{profile?.location ?? 'Батуми, Грузия'}</div>
+          {profile?.createdAt && (
+            <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 2 }}>В RANGE с {formatJoinedDate(profile.createdAt)}</div>
+          )}
           {profile?.publicId && (
             <div style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 4, fontWeight: 700, letterSpacing: 0.4 }}>ID: {profile.publicId}</div>
           )}
@@ -105,6 +108,12 @@ export function UserProfileScreen({
             </button>
           )}
         </div>
+
+        {(isAdmin || isSuperAdmin) && reportDeletionCount !== undefined && (
+          <div style={{ marginTop: 8, fontSize: 12, fontWeight: 700, color: reportDeletionCount > 0 ? '#D33' : 'var(--ink-faint)' }}>
+            Удалённых модератором уловов: {reportDeletionCount}
+          </div>
+        )}
 
         {isSuperAdmin && !profile?.isSuperAdmin && (
           <div style={{ marginTop: 8 }}>
@@ -143,7 +152,7 @@ export function UserProfileScreen({
         <div className="ach-grid">
           {achievements.slice(0, 4).map((a) => (
             <div className={`ach-card${a.unlocked ? '' : ' locked'}`} key={a.icon} onClick={() => onOpenAchievementDetail(a.icon)}>
-              <div className={`ach-icon ${a.unlocked ? 'on' : 'off'}`}>{ACH_ICONS[a.icon]}</div>
+              <div className={`ach-icon hex-aspect hex-shape ${a.unlocked ? 'on' : 'off'}`}>{ACH_ICONS[a.icon]}</div>
               <div>
                 <div className="ach-title">{a.title}</div>
                 <div className="ach-desc">{a.desc}</div>

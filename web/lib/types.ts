@@ -415,6 +415,7 @@ export type Database = {
           claimed_at: string | null
           created_at: string
           id: string
+          is_deleted: boolean
           kind: Database["public"]["Enums"]["territory_kind"]
           lat: number
           lng: number
@@ -424,6 +425,7 @@ export type Database = {
           claimed_at?: string | null
           created_at?: string
           id: string
+          is_deleted?: boolean
           kind: Database["public"]["Enums"]["territory_kind"]
           lat: number
           lng: number
@@ -433,6 +435,7 @@ export type Database = {
           claimed_at?: string | null
           created_at?: string
           id?: string
+          is_deleted?: boolean
           kind?: Database["public"]["Enums"]["territory_kind"]
           lat?: number
           lng?: number
@@ -462,6 +465,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           birth_date: string | null
+          catches_count: number | null
           created_at: string | null
           display_name: string | null
           followers_count: number | null
@@ -475,6 +479,7 @@ export type Database = {
           location: string | null
           onboarding_completed: boolean | null
           public_id: string | null
+          territories_count: number | null
           territory_color: string | null
           weight_kg: number | null
         }
@@ -482,6 +487,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birth_date?: never
+          catches_count?: never
           created_at?: string | null
           display_name?: string | null
           followers_count?: never
@@ -495,6 +501,7 @@ export type Database = {
           location?: string | null
           onboarding_completed?: boolean | null
           public_id?: string | null
+          territories_count?: never
           territory_color?: string | null
           weight_kg?: never
         }
@@ -502,6 +509,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birth_date?: never
+          catches_count?: never
           created_at?: string | null
           display_name?: string | null
           followers_count?: never
@@ -515,6 +523,7 @@ export type Database = {
           location?: string | null
           onboarding_completed?: boolean | null
           public_id?: string | null
+          territories_count?: never
           territory_color?: string | null
           weight_kg?: never
         }
@@ -526,6 +535,7 @@ export type Database = {
           claimed_at: string | null
           created_at: string | null
           id: string | null
+          is_deleted: boolean | null
           kind: Database["public"]["Enums"]["territory_kind"] | null
           last_catch_at: string | null
           lat: number | null
@@ -552,6 +562,10 @@ export type Database = {
     }
     Functions: {
       admin_delete_catch: { Args: { p_catch_id: number }; Returns: undefined }
+      admin_delete_territory: {
+        Args: { p_territory_id: string }
+        Returns: undefined
+      }
       admin_dismiss_report: {
         Args: { p_report_id: number }
         Returns: undefined
@@ -592,6 +606,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      get_report_deletion_count: {
+        Args: { p_user_id: string }
+        Returns: number
       }
     }
     Enums: {

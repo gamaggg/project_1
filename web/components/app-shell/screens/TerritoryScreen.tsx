@@ -5,12 +5,13 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import type { Territory } from '@/lib/data/types'
-import { withAlpha } from '@/lib/data/territoryColors'
+import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
+import { TerritoryThumbnailMapView } from '@/components/app-shell/TerritoryThumbnailMapView'
 
 function statusBadge(status: Territory['status'], myTerritoryColor: string) {
   if (status === 'mine')
     return (
-      <span className="badge" style={{ background: withAlpha(myTerritoryColor, 0.16), color: myTerritoryColor }}>
+      <span className="badge" style={{ background: withAlpha(myTerritoryColor, 0.16), color: darkenForBadgeText(myTerritoryColor) }}>
         Моя территория
       </span>
     )
@@ -41,6 +42,8 @@ export function TerritoryScreen({
   onReportPhoto,
   onAdminCatch,
   onDeleteCatch,
+  onDeleteTerritory,
+  onShare,
   myTerritoryColor,
 }: {
   territory: Territory
@@ -50,12 +53,15 @@ export function TerritoryScreen({
   onReportPhoto: (catchId: number) => void
   onAdminCatch: (territoryId: string) => void
   onDeleteCatch: (catchId: number) => void
+  onDeleteTerritory: (territoryId: string) => void
+  onShare: () => void
   myTerritoryColor: string
 }) {
   const { user } = useAuth()
   const isAdmin = useIsAdmin()
   const isSuperAdmin = useIsSuperAdmin()
   const { data: catches = [] } = useCatchesByTerritory(territory.id)
+  const { data: ownerProfile } = useProfile(territory.ownerId ?? null)
   const recent = catches.slice(0, 3)
 
   return (
@@ -66,26 +72,24 @@ export function TerritoryScreen({
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </div>
-        <div className="icon-btn">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="18" cy="5" r="3" />
-            <circle cx="6" cy="12" r="3" />
-            <circle cx="18" cy="19" r="3" />
-            <path d="M8.6 10.5l6.8-3.8M8.6 13.5l6.8 3.8" />
+        <div className="icon-btn tap-scale" onClick={onShare}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 15V4M12 4 8 8M12 4l4 4" />
+            <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
           </svg>
         </div>
       </div>
       <div className="screen-inner">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
             <div className="page-title" style={{ marginTop: 2 }}>
               Территория {territory.id}
             </div>
-            <div className="page-sub" style={{ marginBottom: 0 }}>
-              {KIND_LABEL[territory.kind]}
-            </div>
+            {statusBadge(territory.status, myTerritoryColor)}
           </div>
-          {statusBadge(territory.status, myTerritoryColor)}
+          <div className="page-sub" style={{ marginBottom: 0 }}>
+            {KIND_LABEL[territory.kind]}
+          </div>
         </div>
         {territory.ownerId && (
           <OwnerRow ownerId={territory.ownerId} isMine={territory.status === 'mine'} onOpenUser={onOpenUser} />
@@ -95,6 +99,12 @@ export function TerritoryScreen({
             Добавить улов (админ)
           </button>
         )}
+        <TerritoryThumbnailMapView
+          territory={territory}
+          myTerritoryColor={myTerritoryColor}
+          ownerAvatarUrl={ownerProfile?.avatarUrl ?? null}
+          ownerInitials={(ownerProfile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()}
+        />
         <div className="card" style={{ marginTop: 16, padding: 16 }}>
           <div className="info-grid">
             <div>
@@ -159,6 +169,15 @@ export function TerritoryScreen({
             <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет уловов на этой территории</div>
           )}
         </div>
+        {isSuperAdmin && (
+          <button
+            className="btn-secondary"
+            style={{ marginTop: 16, color: '#D33' }}
+            onClick={() => onDeleteTerritory(territory.id)}
+          >
+            Удалить сектор
+          </button>
+        )}
       </div>
     </>
   )

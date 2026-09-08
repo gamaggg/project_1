@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/AuthProvider'
-import type { Territory, Catch, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry } from '@/lib/data/types'
+import type { Territory, Catch, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, UserListEntry } from '@/lib/data/types'
 
 type SectorGeometry = {
   id: string
@@ -39,25 +39,36 @@ export function useTerritories() {
       const supabase = createClient()
       const { data, error } = await supabase
         .from('territories_with_stats')
-        .select('id, kind, lat, lng, owner_id, catch_count, last_catch_at')
+        .select('id, kind, lat, lng, owner_id, catch_count, last_catch_at, is_deleted')
       if (error) throw error
 
       const byId = new Map(data!.map((row) => [row.id, row]))
-      return geometry.data!.map((g) => {
-        const row = byId.get(g.id)
-        const ownerId = row?.owner_id ?? null
-        return {
-          id: g.id,
-          kind: g.kind,
-          lat: g.lat,
-          lng: g.lng,
-          corners: g.corners,
-          ownerId,
-          status: ownerId === null ? 'free' : ownerId === user?.id ? 'mine' : 'other',
-          catchCount: row?.catch_count ?? 0,
-          lastCatchAt: row?.last_catch_at ?? null,
-        }
-      })
+      return geometry.data!
+        // Geometry is a static asset (see useSectorsGeometry) — a sector a
+        // super admin deleted (admin_delete_territory) stays in that file,
+        // so it's dropped here based on the DB row's is_deleted flag instead.
+        .filter((g) => !byId.get(g.id)?.is_deleted)
+        .map((g) => {
+          const row = byId.get(g.id)
+          const ownerId = row?.owner_id ?? null
+          return {
+            id: g.id,
+            kind: g.kind,
+            lat: g.lat,
+            lng: g.lng,
+            corners: g.corners,
+            ownerId,
+            status: ownerId === null ? 'free' : ownerId === user?.id ? 'mine' : 'other',
+            catchCount: row?.catch_count ?? 0,
+            lastCatchAt: row?.last_catch_at ?? null,
+          }
+        })
+        // Most-caught sectors first everywhere that lists territories (map
+        // carousel, territories tab) — a single sort here instead of one per
+        // screen, since every consumer shares this same array. Zero-catch
+        // sectors tie on the primary key, so the id fallback alone gives them
+        // ascending-by-number order for free.
+        .sort((a, b) => b.catchCount - a.catchCount || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
     },
     enabled: geometry.isSuccess,
   })
@@ -290,9 +301,42 @@ export function useProfile(userId: string | null) {
         weightKg: data.weight_kg ?? null,
         territoryColor: data.territory_color ?? null,
         onboardingCompleted: data.onboarding_completed ?? true,
+        createdAt: data.created_at ?? new Date().toISOString(),
       }
     },
     enabled: !!userId,
+  })
+}
+
+// Admin-only "Все пользователи" directory (TerritoriesListScreen's "Все
+// пользователи" button → UsersListScreen). Sorted newest-first at the
+// source, matching the default the screen shows before any sort chip is
+// picked; the other 3 sort keys are cheap enough to do client-side on this
+// small a dataset, so no extra cached query variant per sort mode.
+export function useAllUsers() {
+  const isAdmin = useIsAdmin()
+  return useQuery({
+    queryKey: ['all-users'],
+    enabled: isAdmin,
+    queryFn: async (): Promise<UserListEntry[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('profiles_with_stats')
+        .select('id, display_name, avatar_url, public_id, created_at, catches_count, territories_count')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data.map(
+        (r): UserListEntry => ({
+          id: r.id!,
+          displayName: r.display_name ?? 'Рыбак',
+          avatarUrl: r.avatar_url,
+          publicId: r.public_id ?? '?????',
+          createdAt: r.created_at ?? new Date().toISOString(),
+          catchesCount: r.catches_count ?? 0,
+          territoriesCount: r.territories_count ?? 0,
+        })
+      )
+    },
   })
 }
 
@@ -368,16 +412,22 @@ export function useAdminActions() {
       const supabase = createClient()
       const { data, error } = await supabase
         .from('admin_actions')
-        .select('id, details, created_at, profiles!admin_actions_admin_id_fkey(display_name)')
+        .select(
+          'id, details, created_at, territory_id, target_user_id, profiles!admin_actions_admin_id_fkey(display_name), target:profiles!admin_actions_target_user_id_fkey(display_name)'
+        )
         .order('created_at', { ascending: false })
       if (error) throw error
       return data.map((row): AdminAction => {
         const admin = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
+        const target = Array.isArray(row.target) ? row.target[0] : row.target
         return {
           id: row.id,
           adminName: admin?.display_name ?? 'Админ',
           details: row.details,
           createdAt: row.created_at,
+          targetUserId: row.target_user_id,
+          targetUserName: target?.display_name ?? null,
+          territoryId: row.territory_id,
         }
       })
     },
@@ -542,7 +592,7 @@ export function useReports() {
       const { data, error } = await supabase
         .from('catch_reports')
         .select(
-          'id, reason, created_at, profiles!catch_reports_reporter_id_fkey(display_name), catches(id, territory_id, photo_url, species_info:species(name))'
+          'id, reason, created_at, reporter_id, profiles!catch_reports_reporter_id_fkey(display_name), catches(id, territory_id, photo_url, species_info:species(name))'
         )
         .order('created_at', { ascending: false })
       if (error) throw error
@@ -557,12 +607,32 @@ export function useReports() {
             catchId: c.id,
             reason: r.reason,
             createdAt: r.created_at,
+            reporterId: r.reporter_id,
             reporterName: reporter?.display_name ?? 'Рыбак',
             territoryId: c.territory_id,
             photoUrl: c.photo_url,
             speciesName: speciesInfo?.name ?? null,
           }
         })
+    },
+  })
+}
+
+// Separate from useReports() (that's the live report queue, catch_reports —
+// rows disappear once resolved) — this counts past moderation deletions
+// (admin_actions) for one user, visible to any admin/super-admin, not just
+// the super-admins who can read the full admin_actions log.
+export function useReportDeletionCount(userId: string | null) {
+  const isAdmin = useIsAdmin()
+  const isSuperAdmin = useIsSuperAdmin()
+  return useQuery({
+    queryKey: ['report-deletion-count', userId],
+    enabled: (isAdmin || isSuperAdmin) && !!userId,
+    queryFn: async (): Promise<number> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_report_deletion_count', { p_user_id: userId! })
+      if (error) throw error
+      return data ?? 0
     },
   })
 }
@@ -580,6 +650,25 @@ export function useAdminDeleteCatch() {
       queryClient.invalidateQueries({ queryKey: ['territories'] })
       queryClient.invalidateQueries({ queryKey: ['catches'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useAdminDeleteTerritory() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (territoryId: string) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_delete_territory', { p_territory_id: territoryId })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['territories'] })
+      queryClient.invalidateQueries({ queryKey: ['catches'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
+      queryClient.invalidateQueries({ queryKey: ['all-users'] })
     },
   })
 }

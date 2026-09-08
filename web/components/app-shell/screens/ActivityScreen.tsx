@@ -10,11 +10,13 @@ type Filter = 'all' | 'mine'
 
 export function ActivityScreen({
   onOpenUser,
+  onOpenTerritory,
   onOpenPhoto,
   unreadIds,
   onMarkAllRead,
 }: {
   onOpenUser: (id: string) => void
+  onOpenTerritory: (id: string) => void
   onOpenPhoto: (src: string) => void
   unreadIds: Set<string>
   onMarkAllRead: () => void
@@ -51,7 +53,11 @@ export function ActivityScreen({
                   <div className="avatar" style={{ background: '#D33' }}>!</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>
-                      Улов на территории {a.territoryId} удалён модератором
+                      Улов на территории{' '}
+                      <button className="activity-who-btn" onClick={() => onOpenTerritory(a.territoryId!)}>
+                        {a.territoryId}
+                      </button>{' '}
+                      удалён модератором
                     </div>
                     <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
                       Нарушены правила площадки. При повторных нарушениях аккаунт будет заблокирован.
@@ -89,7 +95,10 @@ export function ActivityScreen({
                   </div>
                   {a.territoryId && a.territoryKind && (
                     <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
-                      Территория {a.territoryId} · {KIND_LABEL[a.territoryKind]}
+                      <button className="activity-who-btn" onClick={() => onOpenTerritory(a.territoryId!)}>
+                        Территория {a.territoryId}
+                      </button>{' '}
+                      · {KIND_LABEL[a.territoryKind]}
                     </div>
                   )}
                   {meta && (

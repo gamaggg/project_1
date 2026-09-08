@@ -21,6 +21,24 @@ export function CameraScreen({ onBack, onCapture }: { onBack: () => void; onCapt
 
   useEffect(() => () => stopStream(), [])
 
+  // Skips the manual "Разрешить доступ к камере" gate when the browser has
+  // already granted camera access for this origin — Safari doesn't support
+  // querying 'camera' via the Permissions API and rejects/throws here, which
+  // is caught and left as today's manual-gate behavior (see DECISIONS.md).
+  useEffect(() => {
+    let cancelled = false
+    navigator.permissions
+      ?.query({ name: 'camera' as PermissionName })
+      .then((status) => {
+        if (!cancelled && status.state === 'granted') void requestCamera()
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // The <video> only mounts once state becomes 'live', so the stream can't be
   // attached at getUserMedia-resolve time (the ref is still null then) — attach
   // it here once the element exists instead.

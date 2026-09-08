@@ -6,12 +6,12 @@ import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import type { Territory } from '@/lib/data/types'
 import { formatWhen } from '@/lib/format'
 import { getCurrentCoords } from '@/lib/geolocation'
-import { withAlpha } from '@/lib/data/territoryColors'
+import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 
 function statusBadge(status: Territory['status'], myTerritoryColor: string) {
   if (status === 'mine')
     return (
-      <span className="badge" style={{ background: withAlpha(myTerritoryColor, 0.16), color: myTerritoryColor }}>
+      <span className="badge" style={{ background: withAlpha(myTerritoryColor, 0.16), color: darkenForBadgeText(myTerritoryColor) }}>
         Моя территория
       </span>
     )
@@ -76,15 +76,15 @@ export const MapScreen = forwardRef<
         </div>
         <div className="map-legend">
           <span>
-            <span className="legend-dot" style={{ background: myTerritoryColor }} />
+            <span className="legend-dot hex-aspect hex-shape" style={{ background: myTerritoryColor }} />
             Моя территория
           </span>
           <span>
-            <span className="legend-dot" style={{ background: 'var(--blue)' }} />
+            <span className="legend-dot hex-aspect hex-shape" style={{ background: 'var(--blue)' }} />
             Занята другим
           </span>
           <span>
-            <span className="legend-dot" style={{ background: '#B9BBC2' }} />
+            <span className="legend-dot hex-aspect hex-shape" style={{ background: '#B9BBC2' }} />
             Свободна
           </span>
         </div>

@@ -1,14 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useProfile, useMyCatches, useUpdateProfile, useIsAdmin, useIsSuperAdmin, useReports, useHasClaimedFromOthers } from '@/lib/supabase/queries'
 import { uploadAvatar } from '@/lib/supabase/storage'
 import { computeAchievements, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
-import { formatCatchMeta } from '@/lib/format'
+import { formatCatchMeta, formatJoinedDate } from '@/lib/format'
 import { ACH_ICONS } from '@/components/app-shell/icons'
-import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
+import { DEFAULT_TERRITORY_COLOR, TERRITORY_COLORS } from '@/lib/data/territoryColors'
 import type { Territory } from '@/lib/data/types'
 
 const MAX_AVATAR_SIZE = 512
@@ -144,30 +144,80 @@ export function EditProfileModal({ onClose }: { onClose: () => void }) {
   )
 }
 
+// Same app-shell-level mounting as EditProfileModal, same reason (scroll
+// offset). Reuses the exact swatch grid from onboarding's ColorStep — the
+// same palette/CSS, just callable any time instead of only once.
+export function ChangeColorModal({ onClose }: { onClose: () => void }) {
+  const { user } = useAuth()
+  const { data: profile } = useProfile(user?.id ?? null)
+  const updateProfile = useUpdateProfile()
+  const [selected, setSelected] = useState<string | null>(profile?.territoryColor ?? null)
+
+  async function handleSave() {
+    if (!selected) return
+    await updateProfile.mutateAsync({ territoryColor: selected })
+    onClose()
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card modal-card-wide" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-close tap-scale" onClick={onClose}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </div>
+        <div className="modal-title" style={{ textAlign: 'center' }}>
+          Цвет территории
+        </div>
+        <div className="color-grid">
+          {TERRITORY_COLORS.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              className={`color-swatch${selected === c.hex ? ' selected' : ''}`}
+              style={{ '--swatch-color': c.hex } as CSSProperties}
+              aria-label={c.label}
+              onClick={() => setSelected(c.hex)}
+            />
+          ))}
+        </div>
+        <button className="btn-primary" onClick={handleSave} disabled={!selected || updateProfile.isPending}>
+          {updateProfile.isPending ? 'Сохраняем…' : 'Сохранить'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export function ProfileScreen({
   myTerritories,
   allTerritories,
   onOpenTerritory,
   onSignOut,
   onEditProfile,
+  onChangeColor,
   onOpenPhoto,
   onOpenReports,
   onOpenAdminAccess,
   onOpenAdminLog,
   onOpenAchievements,
   onOpenAchievementDetail,
+  onShowToast,
 }: {
   myTerritories: Territory[]
   allTerritories: Territory[]
   onOpenTerritory: (id: string) => void
   onSignOut: () => void
   onEditProfile: () => void
+  onChangeColor: () => void
   onOpenPhoto: (src: string) => void
   onOpenReports: () => void
   onOpenAdminAccess: () => void
   onOpenAdminLog: () => void
   onOpenAchievements: () => void
   onOpenAchievementDetail: (icon: Achievement['icon']) => void
+  onShowToast: (msg: string) => void
 }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
@@ -191,6 +241,16 @@ export function ProfileScreen({
   const recentMine = myCatches.slice(0, 3)
   const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
 
+  async function handleShareProfile() {
+    const text = `🎣 Я в RANGE — ${myTerritories.length} территорий, ${myCatches.length} уловов на побережье Батуми!\n\nПрисоединяйся и сразимся за территории 🏆\n${window.location.origin}`
+    try {
+      await navigator.clipboard.writeText(text)
+      onShowToast('Скопировано в буфер обмена')
+    } catch {
+      onShowToast('Не удалось скопировать')
+    }
+  }
+
   return (
     <div className="screen-inner">
       <div className="page-title" style={{ textAlign: 'center', marginTop: 14, marginBottom: 16 }}>
@@ -213,7 +273,9 @@ export function ProfileScreen({
       </div>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 19, fontWeight: 800 }}>{profile?.displayName ?? '…'}</div>
-        <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 2 }}>{profile?.location ?? 'Батуми, Грузия'}</div>
+        {profile?.createdAt && (
+          <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 2 }}>В RANGE с {formatJoinedDate(profile.createdAt)}</div>
+        )}
         {profile?.publicId && (
           <div style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 4, fontWeight: 700, letterSpacing: 0.4 }}>ID: {profile.publicId}</div>
         )}
@@ -246,7 +308,7 @@ export function ProfileScreen({
       <div className="ach-grid">
         {achievements.slice(0, 4).map((a) => (
           <div className={`ach-card${a.unlocked ? '' : ' locked'}`} key={a.icon} onClick={() => onOpenAchievementDetail(a.icon)}>
-            <div className={`ach-icon ${a.unlocked ? 'on' : 'off'}`}>{ACH_ICONS[a.icon]}</div>
+            <div className={`ach-icon hex-aspect hex-shape ${a.unlocked ? 'on' : 'off'}`}>{ACH_ICONS[a.icon]}</div>
             <div>
               <div className="ach-title">{a.title}</div>
               <div className="ach-desc">{a.desc}</div>
@@ -311,6 +373,15 @@ export function ProfileScreen({
         ) : (
           <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет своих территорий</div>
         )}
+      </div>
+
+      <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+        <button className="btn-secondary" style={{ flex: 1 }} onClick={onChangeColor}>
+          Цвет территории
+        </button>
+        <button className="btn-secondary" style={{ flex: 1 }} onClick={handleShareProfile}>
+          Поделиться профилем
+        </button>
       </div>
 
       {record && (

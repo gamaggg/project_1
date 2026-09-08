@@ -22,3 +22,18 @@ export function formatWeight(kg: number): string {
 export function formatCatchMeta(lengthCm: number | null, weightKg: number | null): string {
   return [lengthCm ? `${lengthCm} см` : null, weightKg ? `${formatWeight(weightKg)} кг` : null].filter(Boolean).join(' · ')
 }
+
+// "9/2026" — numeric month/year an account was created (see ProfileScreen/
+// UserProfileScreen "В RANGE с ..."). No month name, per spec.
+export function formatJoinedDate(iso: string): string {
+  const d = new Date(iso)
+  return `${d.getMonth() + 1}/${d.getFullYear()}`
+}
+
+// "4:32" — minutes:seconds, no leading zero on minutes. Only used for the
+// catch-cooldown modal (see confirm_catch's COOLDOWN: exception).
+export function formatCooldown(totalSeconds: number): string {
+  const m = Math.floor(totalSeconds / 60)
+  const s = totalSeconds % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}

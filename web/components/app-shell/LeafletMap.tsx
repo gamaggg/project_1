@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css'
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import type L from 'leaflet'
 import type { Territory } from '@/lib/data/types'
+import { resolveTerritoryColor } from '@/lib/data/territoryColors'
 
 export type LeafletMapHandle = {
   flyToTerritory: (id: string) => void
@@ -12,12 +13,6 @@ export type LeafletMapHandle = {
   zoomIn: () => void
   zoomOut: () => void
 }
-
-// "other"/"free" stay fixed — only "mine" is dynamic (the viewer's own
-// chosen territoryColor, see DECISIONS.md for why other players' colors
-// aren't shown individually).
-const OTHER_COLOR = '#3E7BFA'
-const FREE_COLOR = '#7C7E86'
 
 const LABEL_MIN_ZOOM = 14
 
@@ -45,7 +40,7 @@ export const LeafletMap = forwardRef<
       markersLayer.clearLayers()
       labelsLayer.clearLayers()
       territories.forEach((t) => {
-        const color = t.status === 'mine' ? myTerritoryColor : t.status === 'other' ? OTHER_COLOR : FREE_COLOR
+        const color = resolveTerritoryColor(t.status, myTerritoryColor)
         const poly = L.polygon(t.corners, {
           color,
           weight: 1.5,
