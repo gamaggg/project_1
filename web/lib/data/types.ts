@@ -107,6 +107,7 @@ export type ActivityEntry = {
   id: string
   who: string
   userId: string
+  avatarUrl: string | null
   mine: boolean
   kind: 'catch' | 'claim' | 'follow' | 'moderation'
   territoryId?: string

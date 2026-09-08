@@ -181,7 +181,7 @@ export function useActivity() {
       let query = supabase
         .from('activity_log')
         .select(
-          'id, kind, created_at, user_id, previous_owner_id, territory_id, territories(kind), catches(length_cm, weight_kg, photo_url, species_info:species(name, category)), profiles!activity_log_user_id_fkey(display_name)'
+          'id, kind, created_at, user_id, previous_owner_id, territory_id, territories(kind), catches(length_cm, weight_kg, photo_url, species_info:species(name, category)), profiles!activity_log_user_id_fkey(display_name, avatar_url)'
         )
 
       let followedSince = new Map<string, string>()
@@ -215,6 +215,7 @@ export function useActivity() {
           id: `log:${row.id}`,
           who: row.user_id === user?.id ? 'Ты' : (profile?.display_name ?? 'Рыбак'),
           userId: row.user_id,
+          avatarUrl: profile?.avatar_url ?? null,
           mine: row.user_id === user?.id,
           kind: row.kind as 'catch' | 'claim',
           territoryId: row.territory_id,
@@ -235,7 +236,7 @@ export function useActivity() {
       if (user) {
         const { data: followedByRows, error: followedByError } = await supabase
           .from('follows')
-          .select('follower_id, created_at, profiles!follows_follower_id_fkey(display_name)')
+          .select('follower_id, created_at, profiles!follows_follower_id_fkey(display_name, avatar_url)')
           .eq('followee_id', user.id)
           .order('created_at', { ascending: false })
           .limit(50)
@@ -246,6 +247,7 @@ export function useActivity() {
             id: `follow:${f.follower_id}`,
             who: p?.display_name ?? 'Рыбак',
             userId: f.follower_id,
+            avatarUrl: p?.avatar_url ?? null,
             mine: false,
             kind: 'follow',
             speciesName: null,

@@ -88,7 +88,7 @@ export function TerritoriesListScreen({
               style={{ borderBottom: i < list.length - 1 ? '1px solid var(--line)' : 'none' }}
               onClick={() => onOpenTerritory(t.id)}
             >
-              <div style={{ width: 10, height: 10, borderRadius: 3, background: STATUS_COLOR[t.status], flex: '0 0 auto' }} />
+              <div className="hex-swatch" style={{ width: 12, height: 12, background: STATUS_COLOR[t.status], flex: '0 0 auto' }} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: 14.5 }}>Сектор {t.id}</div>
                 <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>

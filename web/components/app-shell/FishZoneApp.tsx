@@ -19,6 +19,7 @@ import { ActivityScreen } from '@/components/app-shell/screens/ActivityScreen'
 import { ProfileScreen, EditProfileModal } from '@/components/app-shell/screens/ProfileScreen'
 import { UserProfileScreen } from '@/components/app-shell/screens/UserProfileScreen'
 import { ReportPhotoModal } from '@/components/app-shell/screens/ReportPhotoModal'
+import { DeleteCatchModal } from '@/components/app-shell/screens/DeleteCatchModal'
 import { AdminReportsScreen } from '@/components/app-shell/screens/AdminReportsScreen'
 import { AdminActionsScreen } from '@/components/app-shell/screens/AdminActionsScreen'
 import { AdminAccessScreen } from '@/components/app-shell/screens/AdminAccessScreen'
@@ -77,6 +78,7 @@ export function FishZoneApp() {
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
   const [editingProfile, setEditingProfile] = useState(false)
   const [reportingCatchId, setReportingCatchId] = useState<number | null>(null)
+  const [deletingCatchId, setDeletingCatchId] = useState<number | null>(null)
   const [pendingCatch, setPendingCatch] = useState<PendingCatch | null>(null)
   const [confirmStep, setConfirmStep] = useState<'form' | 'success'>('form')
   const [wasFree, setWasFree] = useState(false)
@@ -241,10 +243,37 @@ export function FishZoneApp() {
     setCatchTerritoryId(null)
     navClick('screen-map')
   }
+  // Real clipboard write, not a fake toast — the link round-trips through the
+  // deep-link effect below, which opens screen-territory straight from it.
+  async function shareTerritory(territoryId: string) {
+    const url = `${window.location.origin}${window.location.pathname}?territory=${territoryId}`
+    try {
+      await navigator.clipboard.writeText(url)
+      showToast('Ссылка на территорию скопирована')
+    } catch {
+      showToast('Не удалось скопировать ссылку')
+    }
+  }
 
   const viewingTerritory = territories.find((t) => t.id === viewingTerritoryId) ?? null
   const catchTerritory = territories.find((t) => t.id === catchTerritoryId) ?? null
   const myTerritories = territories.filter((t) => t.status === 'mine')
+
+  // Opens a ?territory=<id> link (from shareTerritory above) straight into
+  // that sector on first load. Guarded by a ref, not just the effect's deps,
+  // since territories can re-fetch/re-render many times over the session but
+  // this should only ever fire once. Query string is cleared afterwards so a
+  // later refresh/back doesn't reopen it.
+  const deepLinkOpened = useRef(false)
+  useEffect(() => {
+    if (deepLinkOpened.current || territoriesLoading || !territories.length) return
+    const id = new URLSearchParams(window.location.search).get('territory')
+    if (id && territories.some((t) => t.id === id)) {
+      deepLinkOpened.current = true
+      openTerritory(id)
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+  }, [territories, territoriesLoading])
 
   if (authLoading || territoriesLoading) {
     return (
@@ -269,6 +298,7 @@ export function FishZoneApp() {
               onOpenPhoto={setLightboxSrc}
               onReportPhoto={openReportModal}
               onAdminCatch={startAdminCatch}
+              onDeleteCatch={setDeletingCatchId}
             />
           )}
         </Screen>
@@ -292,7 +322,7 @@ export function FishZoneApp() {
               onSubmit={submitCatch}
               onFinish={finishCatchFlow}
               onBack={backToCamera}
-              onShare={() => showToast('Ссылка на улов скопирована')}
+              onShare={() => shareTerritory(catchTerritory.id)}
             />
           )}
         </Screen>
@@ -361,6 +391,13 @@ export function FishZoneApp() {
           catchId={reportingCatchId}
           onClose={() => setReportingCatchId(null)}
           onSubmitted={() => showToast('Жалоба отправлена, спасибо')}
+        />
+      )}
+      {deletingCatchId !== null && (
+        <DeleteCatchModal
+          catchId={deletingCatchId}
+          onClose={() => setDeletingCatchId(null)}
+          onDeleted={() => showToast('Улов удалён')}
         />
       )}
 

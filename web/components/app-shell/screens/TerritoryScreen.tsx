@@ -1,6 +1,6 @@
 'use client'
 
-import { useCatchesByTerritory, useProfile, useIsAdmin } from '@/lib/supabase/queries'
+import { useCatchesByTerritory, useProfile, useIsAdmin, useIsSuperAdmin } from '@/lib/supabase/queries'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
@@ -34,6 +34,7 @@ export function TerritoryScreen({
   onOpenPhoto,
   onReportPhoto,
   onAdminCatch,
+  onDeleteCatch,
 }: {
   territory: Territory
   onBack: () => void
@@ -41,9 +42,11 @@ export function TerritoryScreen({
   onOpenPhoto: (src: string) => void
   onReportPhoto: (catchId: number) => void
   onAdminCatch: (territoryId: string) => void
+  onDeleteCatch: (catchId: number) => void
 }) {
   const { user } = useAuth()
   const isAdmin = useIsAdmin()
+  const isSuperAdmin = useIsSuperAdmin()
   const { data: catches = [] } = useCatchesByTerritory(territory.id)
   const recent = catches.slice(0, 3)
 
@@ -131,6 +134,13 @@ export function TerritoryScreen({
                           <path d="M5 3v18M5 4h12l-2.5 4L17 12H5" />
                         </svg>
                         Пожаловаться
+                      </button>
+                    )}
+                    {isSuperAdmin && (
+                      <button className="delete-catch-btn tap-scale" onClick={() => onDeleteCatch(c.id)} title="Удалить улов">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                          <path d="M6 6l12 12M18 6L6 18" />
+                        </svg>
                       </button>
                     )}
                   </div>

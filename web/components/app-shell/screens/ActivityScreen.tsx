@@ -74,7 +74,7 @@ export function ActivityScreen({
             return (
               <div className="activity-item" key={a.id}>
                 <div className="avatar" style={a.mine ? {} : { background: 'var(--blue)' }}>
-                  {a.who.slice(0, 1)}
+                  {a.avatarUrl ? <img src={a.avatarUrl} alt="" /> : a.who.slice(0, 1)}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>
