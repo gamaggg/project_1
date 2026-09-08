@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/AuthProvider'
-import type { Territory, Catch, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, UserListEntry } from '@/lib/data/types'
+import type { Territory, TerritoryStatus, Catch, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, UserListEntry } from '@/lib/data/types'
 
 type SectorGeometry = {
   id: string
@@ -48,9 +48,10 @@ export function useTerritories() {
         // super admin deleted (admin_delete_territory) stays in that file,
         // so it's dropped here based on the DB row's is_deleted flag instead.
         .filter((g) => !byId.get(g.id)?.is_deleted)
-        .map((g) => {
+        .map((g): Territory => {
           const row = byId.get(g.id)
           const ownerId = row?.owner_id ?? null
+          const status: TerritoryStatus = ownerId === null ? 'free' : ownerId === user?.id ? 'mine' : 'other'
           return {
             id: g.id,
             kind: g.kind,
@@ -58,7 +59,7 @@ export function useTerritories() {
             lng: g.lng,
             corners: g.corners,
             ownerId,
-            status: ownerId === null ? 'free' : ownerId === user?.id ? 'mine' : 'other',
+            status,
             catchCount: row?.catch_count ?? 0,
             lastCatchAt: row?.last_catch_at ?? null,
           }
