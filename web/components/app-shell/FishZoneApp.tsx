@@ -25,6 +25,7 @@ import { UserProfileScreen } from '@/components/app-shell/screens/UserProfileScr
 import { ReportPhotoModal } from '@/components/app-shell/screens/ReportPhotoModal'
 import { DeleteCatchModal } from '@/components/app-shell/screens/DeleteCatchModal'
 import { DeleteTerritoryModal } from '@/components/app-shell/screens/DeleteTerritoryModal'
+import { DeleteUserModal } from '@/components/app-shell/screens/DeleteUserModal'
 import { AdminReportsScreen } from '@/components/app-shell/screens/AdminReportsScreen'
 import { AdminActionsScreen } from '@/components/app-shell/screens/AdminActionsScreen'
 import { AdminAccessScreen } from '@/components/app-shell/screens/AdminAccessScreen'
@@ -100,6 +101,8 @@ export function FishZoneApp() {
   const [reportingCatchId, setReportingCatchId] = useState<number | null>(null)
   const [deletingCatchId, setDeletingCatchId] = useState<number | null>(null)
   const [deletingTerritoryId, setDeletingTerritoryId] = useState<string | null>(null)
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
+  const { data: deletingUserProfile } = useProfile(deletingUserId)
   const [pendingCatch, setPendingCatch] = useState<PendingCatch | null>(null)
   const [confirmStep, setConfirmStep] = useState<'form' | 'success'>('form')
   const [wasFree, setWasFree] = useState(false)
@@ -429,6 +432,7 @@ export function FishZoneApp() {
               onOpenPhoto={setLightboxSrc}
               onOpenAchievements={() => openAchievements(viewingUserId)}
               onOpenAchievementDetail={(icon) => openAchievementDetail(viewingUserId, icon)}
+              onDeleteUser={setDeletingUserId}
             />
           )}
         </Screen>
@@ -555,6 +559,17 @@ export function FishZoneApp() {
           onDeleted={() => {
             pop()
             showToast('Сектор удалён')
+          }}
+        />
+      )}
+      {deletingUserId !== null && (
+        <DeleteUserModal
+          userId={deletingUserId}
+          userName={deletingUserProfile?.displayName ?? 'этого пользователя'}
+          onClose={() => setDeletingUserId(null)}
+          onDeleted={() => {
+            pop()
+            showToast('Пользователь удалён')
           }}
         />
       )}

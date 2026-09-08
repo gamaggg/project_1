@@ -21,6 +21,7 @@ export function UserProfileScreen({
   onOpenPhoto,
   onOpenAchievements,
   onOpenAchievementDetail,
+  onDeleteUser,
 }: {
   userId: string
   territories: Territory[]
@@ -30,6 +31,7 @@ export function UserProfileScreen({
   onOpenPhoto: (src: string) => void
   onOpenAchievements: () => void
   onOpenAchievementDetail: (icon: Achievement['icon']) => void
+  onDeleteUser: (id: string) => void
 }) {
   const { data: profile } = useProfile(userId)
   const { data: catches = [] } = useCatchesByUser(userId)
@@ -125,6 +127,16 @@ export function UserProfileScreen({
               {profile?.isAdmin ? 'Забрать права админа' : 'Выдать права админа'}
             </button>
           </div>
+        )}
+
+        {isSuperAdmin && !profile?.isAdmin && !profile?.isSuperAdmin && (
+          <button
+            className="btn-secondary"
+            style={{ marginTop: 8, color: '#D33' }}
+            onClick={() => onDeleteUser(userId)}
+          >
+            Удалить пользователя
+          </button>
         )}
 
         <div className="card stat-grid4" style={{ marginTop: 20, padding: '16px 8px' }}>

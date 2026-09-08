@@ -674,6 +674,25 @@ export function useAdminDeleteTerritory() {
   })
 }
 
+export function useAdminDeleteUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_delete_user', { p_user_id: userId })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-users'] })
+      queryClient.invalidateQueries({ queryKey: ['territories'] })
+      queryClient.invalidateQueries({ queryKey: ['catches'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
+    },
+  })
+}
+
 export function useDismissReport() {
   const queryClient = useQueryClient()
   return useMutation({
