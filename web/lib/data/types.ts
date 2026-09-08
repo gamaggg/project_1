@@ -39,6 +39,17 @@ export type Profile = {
   publicId: string
   followersCount: number
   followingCount: number
+  // birthDate/gender/heightCm/weightKg are masked to non-owners at the view
+  // level (profiles_with_stats) — always null when viewing someone else's
+  // profile, regardless of whether they actually set them.
+  birthDate: string | null
+  gender: 'male' | 'female' | null
+  heightCm: number | null
+  weightKg: number | null
+  // null until the onboarding wizard's color step runs (or for pre-wizard
+  // accounts) — read sites fall back to DEFAULT_TERRITORY_COLOR.
+  territoryColor: string | null
+  onboardingCompleted: boolean
 }
 
 export type Catch = {

@@ -6,20 +6,20 @@ import { KIND_LABEL } from '@/lib/data/species'
 import { formatWhen } from '@/lib/format'
 import { useIsAdmin, useFindUserByPublicId } from '@/lib/supabase/queries'
 
-const STATUS_COLOR: Record<TerritoryStatus, string> = {
-  mine: '#2FA84F',
-  other: '#3E7BFA',
-  free: '#7C7E86',
-}
+// "other"/"free" stay fixed — only "mine" is the viewer's own chosen color.
+const OTHER_COLOR = '#3E7BFA'
+const FREE_COLOR = '#7C7E86'
 
 type Filter = 'all' | TerritoryStatus
 
 export function TerritoriesListScreen({
   territories,
+  myTerritoryColor,
   onOpenTerritory,
   onOpenUser,
 }: {
   territories: Territory[]
+  myTerritoryColor: string
   onOpenTerritory: (id: string) => void
   onOpenUser: (id: string) => void
 }) {
@@ -88,7 +88,15 @@ export function TerritoriesListScreen({
               style={{ borderBottom: i < list.length - 1 ? '1px solid var(--line)' : 'none' }}
               onClick={() => onOpenTerritory(t.id)}
             >
-              <div className="hex-swatch" style={{ width: 12, height: 12, background: STATUS_COLOR[t.status], flex: '0 0 auto' }} />
+              <div
+                className="hex-swatch"
+                style={{
+                  width: 12,
+                  height: 12,
+                  background: t.status === 'mine' ? myTerritoryColor : t.status === 'other' ? OTHER_COLOR : FREE_COLOR,
+                  flex: '0 0 auto',
+                }}
+              />
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: 14.5 }}>Сектор {t.id}</div>
                 <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>

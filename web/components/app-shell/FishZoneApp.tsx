@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useTerritories, useConfirmCatch } from '@/lib/supabase/queries'
+import { useTerritories, useConfirmCatch, useProfile } from '@/lib/supabase/queries'
 import { getCurrentCoords, nearestTerritory } from '@/lib/geolocation'
 import { uploadCatchPhoto } from '@/lib/supabase/storage'
 import { useActivityReadState } from '@/lib/activityRead'
+import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import type { PendingCatch } from '@/lib/data/types'
+import { OnboardingFlow } from '@/components/app-shell/onboarding/OnboardingFlow'
 import { BottomNav } from '@/components/app-shell/BottomNav'
 import { PhotoLightbox } from '@/components/app-shell/PhotoLightbox'
 import { MapScreen } from '@/components/app-shell/screens/MapScreen'
@@ -68,6 +70,7 @@ type StackEntry =
 
 export function FishZoneApp() {
   const { user, loading: authLoading, signOut } = useAuth()
+  const { data: myProfile, isLoading: myProfileLoading } = useProfile(user?.id ?? null)
   const { data: territories = [], isLoading: territoriesLoading } = useTerritories()
   const confirmCatchMutation = useConfirmCatch()
   const mapHandleRef = useRef<LeafletMapHandle>(null)
@@ -294,24 +297,38 @@ export function FishZoneApp() {
     }
   }, [territories, territoriesLoading])
 
-  if (authLoading || territoriesLoading) {
+  if (authLoading || (user && myProfileLoading)) {
+    return <LoadingShell />
+  }
+
+  // Onboarding gate: no account, or an account that hasn't finished the
+  // wizard (onboarding_completed=false) — never render the real map/screens
+  // in either case. See DECISIONS.md.
+  if (!user || (myProfile && !myProfile.onboardingCompleted)) {
     return (
-      <div className="app-shell" style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-soft)' }}>Загрузка FishZone…</div>
+      <div className="app-shell">
+        <OnboardingFlow />
       </div>
     )
   }
+
+  if (territoriesLoading) {
+    return <LoadingShell />
+  }
+
+  const myTerritoryColor = myProfile?.territoryColor ?? DEFAULT_TERRITORY_COLOR
 
   return (
     <div className="app-shell">
       <div className="screens">
         <Screen id="screen-map" current={currentScreen}>
-          <MapScreen ref={mapHandleRef} territories={territories} onOpenTerritory={openTerritory} />
+          <MapScreen ref={mapHandleRef} territories={territories} myTerritoryColor={myTerritoryColor} onOpenTerritory={openTerritory} />
         </Screen>
         <Screen id="screen-territory" current={currentScreen}>
           {viewingTerritory && (
             <TerritoryScreen
               territory={viewingTerritory}
+              myTerritoryColor={myTerritoryColor}
               onBack={pop}
               onOpenUser={openUserProfile}
               onOpenPhoto={setLightboxSrc}
@@ -322,7 +339,12 @@ export function FishZoneApp() {
           )}
         </Screen>
         <Screen id="screen-territories" current={currentScreen}>
-          <TerritoriesListScreen territories={territories} onOpenTerritory={openTerritory} onOpenUser={openUserProfile} />
+          <TerritoriesListScreen
+            territories={territories}
+            myTerritoryColor={myTerritoryColor}
+            onOpenTerritory={openTerritory}
+            onOpenUser={openUserProfile}
+          />
         </Screen>
         <Screen id="screen-camera" current={currentScreen}>
           <CameraScreen key={cameraSessionId} onBack={pop} onCapture={handleCapture} />
@@ -464,6 +486,14 @@ function Screen({ id, current, children }: { id: ScreenId; current: ScreenId; ch
   return (
     <div className={`screen${current === id ? ' active' : ''}`} id={id}>
       {children}
+    </div>
+  )
+}
+
+function LoadingShell() {
+  return (
+    <div className="app-shell" style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-soft)' }}>Загрузка FishZone…</div>
     </div>
   )
 }

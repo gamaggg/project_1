@@ -5,9 +5,15 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import type { Territory } from '@/lib/data/types'
+import { withAlpha } from '@/lib/data/territoryColors'
 
-function statusBadge(status: Territory['status']) {
-  if (status === 'mine') return <span className="badge badge-green">Моя территория</span>
+function statusBadge(status: Territory['status'], myTerritoryColor: string) {
+  if (status === 'mine')
+    return (
+      <span className="badge" style={{ background: withAlpha(myTerritoryColor, 0.16), color: myTerritoryColor }}>
+        Моя территория
+      </span>
+    )
   if (status === 'other') return <span className="badge badge-blue">Занята</span>
   return <span className="badge badge-neutral">Свободна</span>
 }
@@ -35,6 +41,7 @@ export function TerritoryScreen({
   onReportPhoto,
   onAdminCatch,
   onDeleteCatch,
+  myTerritoryColor,
 }: {
   territory: Territory
   onBack: () => void
@@ -43,6 +50,7 @@ export function TerritoryScreen({
   onReportPhoto: (catchId: number) => void
   onAdminCatch: (territoryId: string) => void
   onDeleteCatch: (catchId: number) => void
+  myTerritoryColor: string
 }) {
   const { user } = useAuth()
   const isAdmin = useIsAdmin()
@@ -77,7 +85,7 @@ export function TerritoryScreen({
               {KIND_LABEL[territory.kind]}
             </div>
           </div>
-          {statusBadge(territory.status)}
+          {statusBadge(territory.status, myTerritoryColor)}
         </div>
         {territory.ownerId && (
           <OwnerRow ownerId={territory.ownerId} isMine={territory.status === 'mine'} onOpenUser={onOpenUser} />

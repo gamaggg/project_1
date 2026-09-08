@@ -6,9 +6,15 @@ import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import type { Territory } from '@/lib/data/types'
 import { formatWhen } from '@/lib/format'
 import { getCurrentCoords } from '@/lib/geolocation'
+import { withAlpha } from '@/lib/data/territoryColors'
 
-function statusBadge(status: Territory['status']) {
-  if (status === 'mine') return <span className="badge badge-green">Моя территория</span>
+function statusBadge(status: Territory['status'], myTerritoryColor: string) {
+  if (status === 'mine')
+    return (
+      <span className="badge" style={{ background: withAlpha(myTerritoryColor, 0.16), color: myTerritoryColor }}>
+        Моя территория
+      </span>
+    )
   if (status === 'other') return <span className="badge badge-blue">Занята</span>
   return <span className="badge badge-neutral">Свободна</span>
 }
@@ -16,8 +22,10 @@ function statusBadge(status: Territory['status']) {
 // forwardRef so FishZoneApp can fly the map to a geolocated sector (from the
 // "+" handler) even while the camera screen is showing — the map stays
 // mounted the whole time, it's just visually hidden (see .screen CSS).
-export const MapScreen = forwardRef<LeafletMapHandle, { territories: Territory[]; onOpenTerritory: (id: string) => void }>(
-  function MapScreen({ territories, onOpenTerritory }, forwardedRef) {
+export const MapScreen = forwardRef<
+  LeafletMapHandle,
+  { territories: Territory[]; myTerritoryColor: string; onOpenTerritory: (id: string) => void }
+>(function MapScreen({ territories, myTerritoryColor, onOpenTerritory }, forwardedRef) {
   const mapRef = useRef<LeafletMapHandle>(null)
   useImperativeHandle(forwardedRef, () => ({
     flyToTerritory: (id: string) => mapRef.current?.flyToTerritory(id),
@@ -61,7 +69,7 @@ export const MapScreen = forwardRef<LeafletMapHandle, { territories: Territory[]
   return (
     <div className="screen-inner" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}>
       <div className="map-wrap">
-        <MapView ref={mapRef} territories={territories} onSelect={onOpenTerritory} />
+        <MapView ref={mapRef} territories={territories} myTerritoryColor={myTerritoryColor} onSelect={onOpenTerritory} />
         <div className="map-header">
           <div className="brandmark" style={{ marginBottom: 0 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -73,7 +81,7 @@ export const MapScreen = forwardRef<LeafletMapHandle, { territories: Territory[]
         </div>
         <div className="map-legend">
           <span>
-            <span className="legend-dot" style={{ background: 'var(--green)' }} />
+            <span className="legend-dot" style={{ background: myTerritoryColor }} />
             Моя территория
           </span>
           <span>
@@ -111,7 +119,7 @@ export const MapScreen = forwardRef<LeafletMapHandle, { territories: Territory[]
               <div className="map-sheet-card" key={t.id} data-id={t.id}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ fontSize: 17, fontWeight: 800 }}>Сектор {t.id}</div>
-                  {statusBadge(t.status)}
+                  {statusBadge(t.status, myTerritoryColor)}
                 </div>
                 <div style={{ display: 'flex', gap: 18, fontSize: 13, color: 'var(--ink-soft)', fontWeight: 600 }}>
                   <span>Уловов {t.catchCount}</span>

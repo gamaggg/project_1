@@ -13,19 +13,21 @@ export type LeafletMapHandle = {
   zoomOut: () => void
 }
 
-const STATUS_COLOR: Record<Territory['status'], string> = {
-  mine: '#2FA84F',
-  other: '#3E7BFA',
-  free: '#7C7E86',
-}
+// "other"/"free" stay fixed — only "mine" is dynamic (the viewer's own
+// chosen territoryColor, see DECISIONS.md for why other players' colors
+// aren't shown individually).
+const OTHER_COLOR = '#3E7BFA'
+const FREE_COLOR = '#7C7E86'
 
 const LABEL_MIN_ZOOM = 14
 
 // Ported from fishzone-app.html initMap()/drawTerritories() — see DECISIONS.md for
 // why preferCanvas + the zoom-gated labelsLayer exist (703 sectors across all of
 // Adjara's coast; SVG-per-polygon and always-on labels were measured as a problem).
-export const LeafletMap = forwardRef<LeafletMapHandle, { territories: Territory[]; onSelect: (id: string) => void }>(
-  function LeafletMap({ territories, onSelect }, ref) {
+export const LeafletMap = forwardRef<
+  LeafletMapHandle,
+  { territories: Territory[]; myTerritoryColor: string; onSelect: (id: string) => void }
+>(function LeafletMap({ territories, myTerritoryColor, onSelect }, ref) {
     const containerRef = useRef<HTMLDivElement>(null)
     const mapRef = useRef<L.Map | null>(null)
     const leafletRef = useRef<typeof import('leaflet') | null>(null)
@@ -43,7 +45,7 @@ export const LeafletMap = forwardRef<LeafletMapHandle, { territories: Territory[
       markersLayer.clearLayers()
       labelsLayer.clearLayers()
       territories.forEach((t) => {
-        const color = STATUS_COLOR[t.status]
+        const color = t.status === 'mine' ? myTerritoryColor : t.status === 'other' ? OTHER_COLOR : FREE_COLOR
         const poly = L.polygon(t.corners, {
           color,
           weight: 1.5,
@@ -180,7 +182,7 @@ export const LeafletMap = forwardRef<LeafletMapHandle, { territories: Territory[
       if (!mapRef.current) return
       draw(territories)
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [territories])
+    }, [territories, myTerritoryColor])
 
     return <div id="leafletMap" ref={containerRef} />
   }

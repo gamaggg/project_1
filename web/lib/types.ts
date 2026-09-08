@@ -339,38 +339,56 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          birth_date: string | null
           created_at: string
           display_name: string
+          gender: string | null
+          height_cm: number | null
           id: string
           is_admin: boolean
           is_blocked: boolean
           is_super_admin: boolean
           location: string | null
+          onboarding_completed: boolean
           public_id: string
+          territory_color: string | null
+          weight_kg: number | null
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: string | null
           created_at?: string
           display_name?: string
+          gender?: string | null
+          height_cm?: number | null
           id: string
           is_admin?: boolean
           is_blocked?: boolean
           is_super_admin?: boolean
           location?: string | null
+          onboarding_completed?: boolean
           public_id: string
+          territory_color?: string | null
+          weight_kg?: number | null
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: string | null
           created_at?: string
           display_name?: string
+          gender?: string | null
+          height_cm?: number | null
           id?: string
           is_admin?: boolean
           is_blocked?: boolean
           is_super_admin?: boolean
           location?: string | null
+          onboarding_completed?: boolean
           public_id?: string
+          territory_color?: string | null
+          weight_kg?: number | null
         }
         Relationships: []
       }
@@ -443,44 +461,62 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          birth_date: string | null
           created_at: string | null
           display_name: string | null
           followers_count: number | null
           following_count: number | null
+          gender: string | null
+          height_cm: number | null
           id: string | null
           is_admin: boolean | null
           is_blocked: boolean | null
           is_super_admin: boolean | null
           location: string | null
+          onboarding_completed: boolean | null
           public_id: string | null
+          territory_color: string | null
+          weight_kg: number | null
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: never
           created_at?: string | null
           display_name?: string | null
           followers_count?: never
           following_count?: never
+          gender?: never
+          height_cm?: never
           id?: string | null
           is_admin?: boolean | null
           is_blocked?: boolean | null
           is_super_admin?: boolean | null
           location?: string | null
+          onboarding_completed?: boolean | null
           public_id?: string | null
+          territory_color?: string | null
+          weight_kg?: never
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: never
           created_at?: string | null
           display_name?: string | null
           followers_count?: never
           following_count?: never
+          gender?: never
+          height_cm?: never
           id?: string | null
           is_admin?: boolean | null
           is_blocked?: boolean | null
           is_super_admin?: boolean | null
           location?: string | null
+          onboarding_completed?: boolean | null
           public_id?: string | null
+          territory_color?: string | null
+          weight_kg?: never
         }
         Relationships: []
       }

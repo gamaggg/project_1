@@ -8,7 +8,7 @@ import { computeAchievements, personalRecord, type Achievement } from '@/lib/dat
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta } from '@/lib/format'
 import { ACH_ICONS } from '@/components/app-shell/icons'
-import { AuthForm } from '@/components/app-shell/AuthForm'
+import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import type { Territory } from '@/lib/data/types'
 
 const MAX_AVATAR_SIZE = 512
@@ -177,18 +177,9 @@ export function ProfileScreen({
   const { data: reports = [] } = useReports()
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(user?.id ?? null)
 
-  // Signed out: the profile tab IS the sign-in/sign-up entry point (see
-  // DECISIONS.md — replaced the standalone /auth redirect from the "+" button).
-  // Signing in here updates AuthProvider's `user` reactively, which swaps this
-  // form out for the real profile below without any navigation.
-  if (!user) {
-    return (
-      <div className="screen-inner">
-        <AuthForm />
-      </div>
-    )
-  }
-
+  // `!user` never reaches this screen anymore — FishZoneApp's onboarding gate
+  // intercepts before ProfileScreen (or any other screen) can mount. See
+  // DECISIONS.md.
   const speciesCount = new Set(myCatches.map((c) => c.species)).size
   const record = personalRecord(myCatches)
   const achievements = computeAchievements(myCatches, {
@@ -307,7 +298,7 @@ export function ProfileScreen({
               style={{ borderBottom: i < myTerritories.length - 1 ? '1px solid var(--line)' : 'none' }}
               onClick={() => onOpenTerritory(t.id)}
             >
-              <div style={{ width: 10, height: 10, borderRadius: 3, background: 'var(--green)' }} />
+              <div style={{ width: 10, height: 10, borderRadius: 3, background: profile?.territoryColor ?? DEFAULT_TERRITORY_COLOR }} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: 14.5 }}>{t.id}</div>
                 <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{KIND_LABEL[t.kind]}</div>

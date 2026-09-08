@@ -177,7 +177,6 @@ body{
   border-radius:20px;
   white-space:nowrap; flex:0 0 auto;
 }
-.badge-green{background:var(--green-soft); color:var(--green);}
 .badge-blue{background:var(--blue-soft); color:var(--blue);}
 .badge-accent{background:var(--accent-soft); color:var(--accent);}
 .badge-neutral{background:#EFEEEA; color:var(--ink-soft);}
@@ -632,3 +631,40 @@ body{
 .auth-error{color:#D33; font-size:13px; font-weight:600; margin:-4px 0 14px;}
 .auth-switch{text-align:center; margin-top:16px; font-size:13.5px; color:var(--ink-soft);}
 .auth-switch button{background:none; border:none; color:var(--accent); font-weight:700; font-family:inherit; font-size:inherit; cursor:pointer; padding:0;}
+
+/* ---------- Onboarding (welcome + signup wizard, see DECISIONS.md) ---------- */
+.onboarding-welcome{position:relative; flex:1 1 auto; min-height:100dvh; overflow:hidden;}
+.onboarding-globe{position:absolute; inset:0; z-index:0;}
+.onboarding-globe .leaflet-container{background:#0B1C2C;}
+.onboarding-scrim{
+  position:absolute; inset:0; pointer-events:none; z-index:1;
+  background:linear-gradient(180deg, rgba(11,28,44,0.15) 0%, rgba(11,28,44,0.05) 40%, rgba(11,28,44,0.9) 100%);
+}
+.onboarding-welcome-card{
+  position:absolute; left:0; right:0; bottom:0; color:#fff; text-align:center; z-index:2;
+  padding:28px 24px calc(28px + env(safe-area-inset-bottom));
+  display:flex; flex-direction:column; gap:14px;
+}
+.onboarding-welcome-title{font-size:27px; font-weight:800; letter-spacing:-0.5px; line-height:1.18;}
+.onboarding-welcome-link{background:none; border:none; color:#fff; opacity:0.85; font-weight:700; font-size:14px; font-family:inherit; cursor:pointer; padding:4px;}
+
+.onboarding-step{
+  flex:1 1 auto; display:flex; flex-direction:column; min-height:100dvh; background:var(--bg);
+  padding:calc(20px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));
+}
+
+.gender-pill-row{display:flex; gap:10px;}
+.gender-pill{flex:1; padding:13px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-weight:700; font-size:14.5px; font-family:inherit; cursor:pointer;}
+.gender-pill.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+
+.unit-field{position:relative;}
+.unit-field input{padding-right:44px;}
+.unit-suffix{position:absolute; right:14px; top:38px; font-size:13px; font-weight:700; color:var(--ink-faint); pointer-events:none;}
+
+.onboarding-checkbox-row{display:flex; align-items:flex-start; gap:10px; margin:4px 0 18px;}
+.onboarding-checkbox-row input[type=checkbox]{width:20px; height:20px; accent-color:var(--accent); margin-top:1px; flex:0 0 auto;}
+.onboarding-checkbox-row label{font-size:13.5px; color:var(--ink-soft); font-weight:600; line-height:1.4;}
+
+.color-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; justify-items:center; margin:20px 0 24px;}
+.color-swatch{width:64px; height:64px; border-radius:50%; border:none; cursor:pointer; box-shadow:var(--shadow-sm); position:relative;}
+.color-swatch.selected::after{content:''; position:absolute; inset:-5px; border-radius:50%; border:2.5px solid var(--ink);}

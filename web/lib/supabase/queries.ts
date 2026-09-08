@@ -284,6 +284,12 @@ export function useProfile(userId: string | null) {
         publicId: data.public_id ?? '?????',
         followersCount: data.followers_count ?? 0,
         followingCount: data.following_count ?? 0,
+        birthDate: data.birth_date ?? null,
+        gender: (data.gender as Profile['gender']) ?? null,
+        heightCm: data.height_cm ?? null,
+        weightKg: data.weight_kg ?? null,
+        territoryColor: data.territory_color ?? null,
+        onboardingCompleted: data.onboarding_completed ?? true,
       }
     },
     enabled: !!userId,
@@ -426,7 +432,17 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient()
   const { user } = useAuth()
   return useMutation({
-    mutationFn: async (patch: { displayName?: string; avatarUrl?: string; bio?: string | null }) => {
+    mutationFn: async (patch: {
+      displayName?: string
+      avatarUrl?: string
+      bio?: string | null
+      birthDate?: string
+      gender?: 'male' | 'female'
+      heightCm?: number | null
+      weightKg?: number | null
+      territoryColor?: string
+      onboardingCompleted?: boolean
+    }) => {
       if (!user) throw new Error('not authenticated')
       const supabase = createClient()
       const { error } = await supabase
@@ -435,6 +451,12 @@ export function useUpdateProfile() {
           ...(patch.displayName !== undefined ? { display_name: patch.displayName } : {}),
           ...(patch.avatarUrl !== undefined ? { avatar_url: patch.avatarUrl } : {}),
           ...(patch.bio !== undefined ? { bio: patch.bio } : {}),
+          ...(patch.birthDate !== undefined ? { birth_date: patch.birthDate } : {}),
+          ...(patch.gender !== undefined ? { gender: patch.gender } : {}),
+          ...(patch.heightCm !== undefined ? { height_cm: patch.heightCm } : {}),
+          ...(patch.weightKg !== undefined ? { weight_kg: patch.weightKg } : {}),
+          ...(patch.territoryColor !== undefined ? { territory_color: patch.territoryColor } : {}),
+          ...(patch.onboardingCompleted !== undefined ? { onboarding_completed: patch.onboardingCompleted } : {}),
         })
         .eq('id', user.id)
       if (error) throw error
