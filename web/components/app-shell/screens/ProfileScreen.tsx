@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useProfile, useMyCatches, useUpdateProfile, useIsAdmin, useIsSuperAdmin, useReports, useHasClaimedFromOthers } from '@/lib/supabase/queries'
 import { uploadAvatar } from '@/lib/supabase/storage'
-import { computeAchievements, personalRecord } from '@/lib/data/achievements'
+import { computeAchievements, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta } from '@/lib/format'
 import { ACH_ICONS } from '@/components/app-shell/icons'
@@ -155,6 +155,7 @@ export function ProfileScreen({
   onOpenAdminAccess,
   onOpenAdminLog,
   onOpenAchievements,
+  onOpenAchievementDetail,
 }: {
   myTerritories: Territory[]
   allTerritories: Territory[]
@@ -166,6 +167,7 @@ export function ProfileScreen({
   onOpenAdminAccess: () => void
   onOpenAdminLog: () => void
   onOpenAchievements: () => void
+  onOpenAchievementDetail: (icon: Achievement['icon']) => void
 }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
@@ -252,7 +254,7 @@ export function ProfileScreen({
       </div>
       <div className="ach-grid">
         {achievements.slice(0, 4).map((a) => (
-          <div className={`ach-card${a.unlocked ? '' : ' locked'}`} key={a.icon}>
+          <div className={`ach-card${a.unlocked ? '' : ' locked'}`} key={a.icon} onClick={() => onOpenAchievementDetail(a.icon)}>
             <div className={`ach-icon ${a.unlocked ? 'on' : 'off'}`}>{ACH_ICONS[a.icon]}</div>
             <div>
               <div className="ach-title">{a.title}</div>

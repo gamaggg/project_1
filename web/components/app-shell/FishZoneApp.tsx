@@ -24,6 +24,8 @@ import { AdminReportsScreen } from '@/components/app-shell/screens/AdminReportsS
 import { AdminActionsScreen } from '@/components/app-shell/screens/AdminActionsScreen'
 import { AdminAccessScreen } from '@/components/app-shell/screens/AdminAccessScreen'
 import { AchievementsScreen } from '@/components/app-shell/screens/AchievementsScreen'
+import { AchievementDetailScreen } from '@/components/app-shell/screens/AchievementDetailScreen'
+import type { Achievement } from '@/lib/data/achievements'
 
 export type ScreenId =
   | 'screen-map'
@@ -38,6 +40,7 @@ export type ScreenId =
   | 'screen-admin-access'
   | 'screen-admin-log'
   | 'screen-achievements'
+  | 'screen-achievement-detail'
 
 export type TabScreenId = 'screen-map' | 'screen-territories' | 'screen-activity' | 'screen-profile'
 const NAV_SCREENS: ScreenId[] = ['screen-map', 'screen-territories', 'screen-activity', 'screen-profile']
@@ -61,6 +64,7 @@ type StackEntry =
   | { screen: 'screen-admin-access' }
   | { screen: 'screen-admin-log' }
   | { screen: 'screen-achievements'; userId: string }
+  | { screen: 'screen-achievement-detail'; userId: string; icon: Achievement['icon'] }
 
 export function FishZoneApp() {
   const { user, loading: authLoading, signOut } = useAuth()
@@ -74,6 +78,7 @@ export function FishZoneApp() {
   const [viewingTerritoryId, setViewingTerritoryId] = useState<string | null>(null)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const [viewingAchievementsUserId, setViewingAchievementsUserId] = useState<string | null>(null)
+  const [viewingAchievementDetail, setViewingAchievementDetail] = useState<{ userId: string; icon: Achievement['icon'] } | null>(null)
   // Separate from viewingTerritoryId on purpose: this is which territory the
   // camera/confirm flow is for, not what TerritoryScreen should browse to —
   // conflating the two used to mean pressing "+" while browsing a territory
@@ -124,6 +129,7 @@ export function FishZoneApp() {
       if (top.screen === 'screen-territory') setViewingTerritoryId(top.territoryId)
       if (top.screen === 'screen-user-profile') setViewingUserId(top.userId)
       if (top.screen === 'screen-achievements') setViewingAchievementsUserId(top.userId)
+      if (top.screen === 'screen-achievement-detail') setViewingAchievementDetail({ userId: top.userId, icon: top.icon })
       return next
     })
   }
@@ -154,6 +160,10 @@ export function FishZoneApp() {
   function openAchievements(userId: string) {
     setViewingAchievementsUserId(userId)
     push({ screen: 'screen-achievements', userId })
+  }
+  function openAchievementDetail(userId: string, icon: Achievement['icon']) {
+    setViewingAchievementDetail({ userId, icon })
+    push({ screen: 'screen-achievement-detail', userId, icon })
   }
   function openReportModal(catchId: number) {
     if (!user) {
@@ -350,6 +360,7 @@ export function FishZoneApp() {
             onOpenAdminAccess={() => push({ screen: 'screen-admin-access' })}
             onOpenAdminLog={() => push({ screen: 'screen-admin-log' })}
             onOpenAchievements={() => user && openAchievements(user.id)}
+            onOpenAchievementDetail={(icon) => user && openAchievementDetail(user.id, icon)}
           />
         </Screen>
         <Screen id="screen-user-profile" current={currentScreen}>
@@ -362,12 +373,29 @@ export function FishZoneApp() {
               onOpenTerritory={openTerritory}
               onOpenPhoto={setLightboxSrc}
               onOpenAchievements={() => openAchievements(viewingUserId)}
+              onOpenAchievementDetail={(icon) => openAchievementDetail(viewingUserId, icon)}
             />
           )}
         </Screen>
         <Screen id="screen-achievements" current={currentScreen}>
           {viewingAchievementsUserId && (
-            <AchievementsScreen userId={viewingAchievementsUserId} territories={territories} onBack={pop} />
+            <AchievementsScreen
+              userId={viewingAchievementsUserId}
+              territories={territories}
+              onBack={pop}
+              onOpenDetail={(icon) => openAchievementDetail(viewingAchievementsUserId, icon)}
+            />
+          )}
+        </Screen>
+        <Screen id="screen-achievement-detail" current={currentScreen}>
+          {viewingAchievementDetail && (
+            <AchievementDetailScreen
+              userId={viewingAchievementDetail.userId}
+              icon={viewingAchievementDetail.icon}
+              territories={territories}
+              onBack={pop}
+              onShowToast={showToast}
+            />
           )}
         </Screen>
         <Screen id="screen-admin-reports" current={currentScreen}>

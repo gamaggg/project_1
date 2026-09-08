@@ -1,7 +1,7 @@
 'use client'
 
 import { useCatchesByUser, useProfile, useHasClaimedFromOthers } from '@/lib/supabase/queries'
-import { computeAchievements } from '@/lib/data/achievements'
+import { computeAchievements, type Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import type { Territory } from '@/lib/data/types'
 
@@ -14,10 +14,12 @@ export function AchievementsScreen({
   userId,
   territories,
   onBack,
+  onOpenDetail,
 }: {
   userId: string
   territories: Territory[]
   onBack: () => void
+  onOpenDetail: (icon: Achievement['icon']) => void
 }) {
   const { data: profile } = useProfile(userId)
   const { data: catches = [] } = useCatchesByUser(userId)
@@ -44,7 +46,7 @@ export function AchievementsScreen({
       <div className="screen-inner">
         <div className="ach-grid">
           {achievements.map((a) => (
-            <div className={`ach-card${a.unlocked ? '' : ' locked'}`} key={a.icon}>
+            <div className={`ach-card${a.unlocked ? '' : ' locked'}`} key={a.icon} onClick={() => onOpenDetail(a.icon)}>
               <div className={`ach-icon ${a.unlocked ? 'on' : 'off'}`}>{ACH_ICONS[a.icon]}</div>
               <div>
                 <div className="ach-title">{a.title}</div>
