@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Manrope } from 'next/font/google'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
@@ -13,6 +13,15 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: 'FishZone — Батуми',
   description: 'Береговая рыбалка в Батуми: карта территорий, уловы, активность.',
+}
+
+// Without this, mobile Safari has nothing to go on but <body>'s own
+// background (#DCDAD3 — the desktop letterbox color around the centered
+// app-shell) and tints its own status-bar/toolbar chrome with it, so real
+// phones show a gray strip above and below the app that isn't actually
+// part of any page layout. This tells it to use the app's real background.
+export const viewport: Viewport = {
+  themeColor: '#F7F7F4',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
