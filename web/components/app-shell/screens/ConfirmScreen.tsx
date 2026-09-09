@@ -59,6 +59,7 @@ export function ConfirmScreen({
   }, [capturedPhoto])
 
   const speciesOptions = species.filter((s) => s.category === category)
+  const caughtSpeciesName = pendingCatch ? species.find((s) => s.key === pendingCatch.species)?.name : undefined
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -70,6 +71,61 @@ export function ConfirmScreen({
       method: method || null,
       bait: bait || null,
     })
+  }
+
+  if (step === 'success') {
+    const meta = [
+      pendingCatch?.lengthCm ? `${pendingCatch.lengthCm} см` : null,
+      pendingCatch?.weightKg ? `${formatWeight(pendingCatch.weightKg)} кг` : null,
+      territory.id,
+    ]
+      .filter(Boolean)
+      .join(' · ')
+
+    return (
+      <div className="catch-trophy-scene">
+        <div className="catch-trophy-glow" />
+        <div className="catch-trophy-stage">
+          <div className="catch-trophy-card">
+            <div className="catch-trophy-face">
+              {previewUrl && <img src={previewUrl} alt={caughtSpeciesName ?? 'Улов'} className="catch-trophy-photo" />}
+              <div className="catch-trophy-shine" />
+              <div className="catch-trophy-stats">
+                <div className="catch-trophy-species">{caughtSpeciesName ?? pendingCatch?.species}</div>
+                <div className="catch-trophy-meta">{meta}</div>
+              </div>
+            </div>
+            <div className="catch-trophy-stamp">
+              <div className="catch-trophy-stamp-ring" />
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="catchStampFill" x1="0" y1="0" x2="0.25" y2="1">
+                    <stop offset="0" stopColor="#FFB067" />
+                    <stop offset="0.55" stopColor="#FC5200" />
+                    <stop offset="1" stopColor="#D94400" />
+                  </linearGradient>
+                </defs>
+                <polygon points="25,0 75,0 100,50 75,100 25,100 0,50" fill="url(#catchStampFill)" stroke="#fff" strokeWidth="3" />
+              </svg>
+              <div className="catch-trophy-stamp-fg">
+                <svg width="46%" height="46%" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3 8l4 3 5-6 5 6 4-3-2 11H5L3 8z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="catch-trophy-title">{wasFree ? 'Теперь это твоя территория' : 'Улов зафиксирован'}</div>
+        <div className="catch-trophy-ctas" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <button className="btn-primary" onClick={onShare}>
+            Поделиться уловом
+          </button>
+          <button className="btn-secondary" onClick={onFinish}>
+            Готово
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -84,128 +140,98 @@ export function ConfirmScreen({
         <div style={{ width: 36 }} />
       </div>
       <div className="screen-inner">
-        {step === 'form' ? (
-          <form onSubmit={handleSubmit}>
-            <div className="confirm-photo">
-              {previewUrl && <img src={previewUrl} alt="Улов" className="confirm-photo-img" />}
-              {photoStatus === 'uploading' && (
-                <div className="confirm-photo-status">
-                  <div className="spinner" />
-                  <div className="msg">Загружаем фото…</div>
-                </div>
-              )}
-              {photoStatus === 'error' && (
-                <div className="confirm-photo-status">
-                  <div className="msg">Не удалось загрузить фото. Без фото улов сохранить нельзя.</div>
-                  <button type="button" className="confirm-photo-retry tap-scale" onClick={onRetryUpload}>
-                    Повторить попытку
-                  </button>
-                </div>
-              )}
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 12 }}>
-              Территория {territory.id} · {KIND_LABEL[territory.kind]}
-            </div>
+        <form onSubmit={handleSubmit}>
+          <div className="confirm-photo">
+            {previewUrl && <img src={previewUrl} alt="Улов" className="confirm-photo-img" />}
+            {photoStatus === 'uploading' && (
+              <div className="confirm-photo-status">
+                <div className="spinner" />
+                <div className="msg">Загружаем фото…</div>
+              </div>
+            )}
+            {photoStatus === 'error' && (
+              <div className="confirm-photo-status">
+                <div className="msg">Не удалось загрузить фото. Без фото улов сохранить нельзя.</div>
+                <button type="button" className="confirm-photo-retry tap-scale" onClick={onRetryUpload}>
+                  Повторить попытку
+                </button>
+              </div>
+            )}
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 12 }}>
+            Территория {territory.id} · {KIND_LABEL[territory.kind]}
+          </div>
 
-            <div className="filter-row" style={{ marginTop: 18 }}>
-              {(['marine', 'freshwater'] as const).map((c) => (
-                <div
-                  key={c}
-                  className={`filter-chip${category === c ? ' active' : ''}`}
-                  onClick={() => {
-                    setCategory(c)
-                    setSpeciesKey('')
-                  }}
-                >
-                  {CATEGORY_LABEL[c]}
-                </div>
-              ))}
-            </div>
+          <div className="filter-row" style={{ marginTop: 18 }}>
+            {(['marine', 'freshwater'] as const).map((c) => (
+              <div
+                key={c}
+                className={`filter-chip${category === c ? ' active' : ''}`}
+                onClick={() => {
+                  setCategory(c)
+                  setSpeciesKey('')
+                }}
+              >
+                {CATEGORY_LABEL[c]}
+              </div>
+            ))}
+          </div>
 
-            <div className="auth-field">
-              <label htmlFor="species">Вид рыбы</label>
-              <select id="species" required value={speciesKey} onChange={(e) => setSpeciesKey(e.target.value)}>
-                <option value="" disabled>
-                  Выбери вид рыбы
+          <div className="auth-field">
+            <label htmlFor="species">Вид рыбы</label>
+            <select id="species" required value={speciesKey} onChange={(e) => setSpeciesKey(e.target.value)}>
+              <option value="" disabled>
+                Выбери вид рыбы
+              </option>
+              {speciesOptions.map((s) => (
+                <option key={s.key} value={s.key}>
+                  {s.name}
                 </option>
-                {speciesOptions.map((s) => (
-                  <option key={s.key} value={s.key}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+              ))}
+            </select>
+          </div>
 
-            <div style={{ display: 'flex', gap: 12 }}>
-              <div className="auth-field" style={{ flex: 1 }}>
-                <label htmlFor="length">Размер, см</label>
-                <input id="length" type="number" min={1} max={300} inputMode="numeric" placeholder="необязательно" value={lengthCm} onChange={(e) => setLengthCm(e.target.value)} />
-              </div>
-              <div className="auth-field" style={{ flex: 1 }}>
-                <label htmlFor="weight">Вес, кг</label>
-                <input id="weight" type="number" min={0.01} max={100} step={0.01} inputMode="decimal" placeholder="необязательно" value={weightKg} onChange={(e) => setWeightKg(e.target.value)} />
-              </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div className="auth-field" style={{ flex: 1 }}>
+              <label htmlFor="length">Размер, см</label>
+              <input id="length" type="number" min={1} max={300} inputMode="numeric" placeholder="необязательно" value={lengthCm} onChange={(e) => setLengthCm(e.target.value)} />
             </div>
-
-            <div className="auth-field">
-              <label htmlFor="method">Способ ловли</label>
-              <select id="method" value={method} onChange={(e) => setMethod(e.target.value)}>
-                <option value="">Не указано</option>
-                {METHODS.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="auth-field">
-              <label htmlFor="bait">Приманка</label>
-              <select id="bait" value={bait} onChange={(e) => setBait(e.target.value)}>
-                <option value="">Не указано</option>
-                {BAITS.map((b) => (
-                  <option key={b} value={b}>
-                    {b}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div style={{ marginTop: 10 }}>
-              <button className="btn-primary" type="submit" disabled={!speciesKey || photoStatus !== 'success' || pending}>
-                {pending ? 'Сохраняем…' : 'Подтвердить улов'}
-              </button>
-            </div>
-          </form>
-        ) : (
-          <div className="success-wrap">
-            <div className="success-icon">
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 6 9 17l-5-5" />
-              </svg>
-            </div>
-            <div style={{ fontSize: 21, fontWeight: 800 }}>{wasFree ? 'Теперь это твоя территория' : 'Улов зафиксирован'}</div>
-            <div style={{ fontSize: 14, color: 'var(--ink-soft)', marginTop: 8 }}>
-              Территория {territory.id} · {KIND_LABEL[territory.kind]}
-              {pendingCatch?.lengthCm || pendingCatch?.weightKg ? (
-                <>
-                  <br />
-                  {[pendingCatch.lengthCm ? `${pendingCatch.lengthCm} см` : null, pendingCatch.weightKg ? `${formatWeight(pendingCatch.weightKg)} кг` : null]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </>
-              ) : null}
-            </div>
-            <div style={{ marginTop: 26, width: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <button className="btn-primary" onClick={onFinish}>
-                Готово
-              </button>
-              <button className="btn-secondary" onClick={onShare}>
-                Поделиться уловом
-              </button>
+            <div className="auth-field" style={{ flex: 1 }}>
+              <label htmlFor="weight">Вес, кг</label>
+              <input id="weight" type="number" min={0.01} max={100} step={0.01} inputMode="decimal" placeholder="необязательно" value={weightKg} onChange={(e) => setWeightKg(e.target.value)} />
             </div>
           </div>
-        )}
+
+          <div className="auth-field">
+            <label htmlFor="method">Способ ловли</label>
+            <select id="method" value={method} onChange={(e) => setMethod(e.target.value)}>
+              <option value="">Не указано</option>
+              {METHODS.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="auth-field">
+            <label htmlFor="bait">Приманка</label>
+            <select id="bait" value={bait} onChange={(e) => setBait(e.target.value)}>
+              <option value="">Не указано</option>
+              {BAITS.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ marginTop: 10 }}>
+            <button className="btn-primary" type="submit" disabled={!speciesKey || photoStatus !== 'success' || pending}>
+              {pending ? 'Сохраняем…' : 'Подтвердить улов'}
+            </button>
+          </div>
+        </form>
       </div>
     </>
   )

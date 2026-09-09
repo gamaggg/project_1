@@ -6,6 +6,7 @@ import { useTerritories, useConfirmCatch, useProfile } from '@/lib/supabase/quer
 import { getCurrentCoords, nearestTerritory } from '@/lib/geolocation'
 import { uploadCatchPhoto } from '@/lib/supabase/storage'
 import { useActivityReadState, useAdminActionsReadState } from '@/lib/activityRead'
+import { useAchievementUnlock } from '@/lib/achievementUnlock'
 import { formatCooldown } from '@/lib/format'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import type { PendingCatch } from '@/lib/data/types'
@@ -26,6 +27,7 @@ import { ReportPhotoModal } from '@/components/app-shell/screens/ReportPhotoModa
 import { DeleteCatchModal } from '@/components/app-shell/screens/DeleteCatchModal'
 import { DeleteTerritoryModal } from '@/components/app-shell/screens/DeleteTerritoryModal'
 import { DeleteUserModal } from '@/components/app-shell/screens/DeleteUserModal'
+import { AchievementUnlockedModal } from '@/components/app-shell/screens/AchievementUnlockedModal'
 import { AdminReportsScreen } from '@/components/app-shell/screens/AdminReportsScreen'
 import { AdminActionsScreen } from '@/components/app-shell/screens/AdminActionsScreen'
 import { AdminAccessScreen } from '@/components/app-shell/screens/AdminAccessScreen'
@@ -82,6 +84,7 @@ export function FishZoneApp() {
   const mapHandleRef = useRef<LeafletMapHandle>(null)
   const { unreadIds, unreadCount, markAllRead } = useActivityReadState()
   const { unreadCount: adminLogUnreadCount, markAllRead: markAdminLogRead } = useAdminActionsReadState()
+  const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories)
 
   const [stack, setStack] = useState<StackEntry[]>([{ screen: 'screen-map' }])
   const [navScreen, setNavScreen] = useState<TabScreenId>('screen-map')
@@ -577,6 +580,13 @@ export function FishZoneApp() {
             showToast('Пользователь удалён')
           }}
         />
+      )}
+      {/* Held back while the trophy-card success screen is up (currentScreen ===
+          'screen-confirm' && confirmStep === 'success') so it never stacks on top
+          of that screen's own celebration — it shows right after "Готово"/"Поделиться
+          уловом" moves on, instead. */}
+      {unlockedAchievement && !(currentScreen === 'screen-confirm' && confirmStep === 'success') && (
+        <AchievementUnlockedModal achievement={unlockedAchievement} onClose={dismissUnlockedAchievement} onShowToast={showToast} />
       )}
 
       {currentScreen !== 'screen-camera' && (
