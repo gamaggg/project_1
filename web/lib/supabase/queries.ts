@@ -76,8 +76,12 @@ export function useTerritories() {
       // is stored on the row itself instead (see lib/data/hexGrid.ts for how
       // it's computed to still land on the exact same grid).
       const fromDb = data!
-        .filter((row): row is typeof row & { corners: NonNullable<typeof row.corners> } => !staticIds.has(row.id) && !row.is_deleted && !!row.corners)
-        .map((row) => toTerritory(row.id, row.kind, row.lat, row.lng, row.corners as unknown as [number, number][]))
+        // territories_with_stats' columns are typed nullable because it's a
+        // view (PostgREST can't see the base table's NOT NULL constraints
+        // through the join) — id/kind/lat/lng are never actually null here,
+        // same reasoning as useAllUsers' row.id! below.
+        .filter((row): row is typeof row & { corners: NonNullable<typeof row.corners> } => !staticIds.has(row.id!) && !row.is_deleted && !!row.corners)
+        .map((row) => toTerritory(row.id!, row.kind!, row.lat!, row.lng!, row.corners as unknown as [number, number][]))
 
       return [...fromStatic, ...fromDb]
         // Most-caught sectors first everywhere that lists territories (map
