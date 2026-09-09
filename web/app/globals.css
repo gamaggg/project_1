@@ -728,10 +728,22 @@ body{
 
 /* ---------- Onboarding (welcome + signup wizard, see DECISIONS.md) ---------- */
 .onboarding-welcome{
+  position:relative; overflow:hidden;
   display:flex; flex-direction:column; min-height:100dvh; background:var(--bg);
   padding:calc(24px + env(safe-area-inset-top)) 24px calc(56px + env(safe-area-inset-bottom));
 }
+.onboarding-welcome-bg{position:absolute; inset:0; width:100%; height:100%; pointer-events:none;}
+.onboarding-welcome-meta{
+  position:absolute; top:calc(24px + env(safe-area-inset-top)); z-index:1;
+  font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  font-size:10.5px; font-weight:600; letter-spacing:.05em; color:var(--ink-faint); line-height:1.6;
+}
+.onboarding-welcome-meta--left{left:24px; text-align:left;}
+.onboarding-welcome-meta--right{right:24px; text-align:right;}
+.onboarding-welcome-meta-dash{width:16px; height:1px; background:var(--ink-faint); margin-top:6px; opacity:.6;}
+.onboarding-welcome-meta--right .onboarding-welcome-meta-dash{margin-left:auto;}
 .onboarding-welcome-logo{
+  position:relative; z-index:1;
   flex:1 1 auto; display:flex; flex-direction:column; align-items:center; justify-content:center;
 }
 .onboarding-welcome-mark-wrap{
@@ -764,6 +776,7 @@ body{
   100%{-webkit-mask-position:-150% 0; mask-position:-150% 0;}
 }
 .onboarding-welcome-card{
+  position:relative; z-index:1;
   text-align:center;
   display:flex; flex-direction:column; gap:14px;
   margin-top:28px;
