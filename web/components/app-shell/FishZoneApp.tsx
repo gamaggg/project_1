@@ -131,6 +131,9 @@ export function FishZoneApp() {
   useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current) }, [])
 
   const currentScreen: ScreenId = stack[stack.length - 1].screen
+  // The trophy-card celebration is full-bleed and edge-to-edge on purpose —
+  // both the nav and any achievement popup stay off it, see below.
+  const showingTrophyScene = currentScreen === 'screen-confirm' && confirmStep === 'success'
 
   // Drill-in navigation (territory, camera, confirm, someone's profile) — push
   // onto the stack so the eventual back button unwinds to exactly this point.
@@ -581,15 +584,14 @@ export function FishZoneApp() {
           }}
         />
       )}
-      {/* Held back while the trophy-card success screen is up (currentScreen ===
-          'screen-confirm' && confirmStep === 'success') so it never stacks on top
-          of that screen's own celebration — it shows right after "Готово"/"Поделиться
-          уловом" moves on, instead. */}
-      {unlockedAchievement && !(currentScreen === 'screen-confirm' && confirmStep === 'success') && (
+      {/* Held back while the trophy-card success screen is up so it never stacks
+          on top of that screen's own celebration — it shows right after
+          "Готово"/"Поделиться уловом" moves on, instead. */}
+      {unlockedAchievement && !showingTrophyScene && (
         <AchievementUnlockedModal achievement={unlockedAchievement} onClose={dismissUnlockedAchievement} onShowToast={showToast} />
       )}
 
-      {currentScreen !== 'screen-camera' && (
+      {currentScreen !== 'screen-camera' && !showingTrophyScene && (
         <BottomNav
           active={NAV_SCREENS.includes(currentScreen) ? (currentScreen as TabScreenId) : navScreen}
           onNavigate={navClick}

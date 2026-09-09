@@ -362,7 +362,10 @@ export function ProfileScreen({
               style={{ borderBottom: i < myTerritories.length - 1 ? '1px solid var(--line)' : 'none' }}
               onClick={() => onOpenTerritory(t.id)}
             >
-              <div style={{ width: 10, height: 10, borderRadius: 3, background: profile?.territoryColor ?? DEFAULT_TERRITORY_COLOR }} />
+              <div
+                className="hex-aspect hex-shape"
+                style={{ width: 12, background: profile?.territoryColor ?? DEFAULT_TERRITORY_COLOR, flex: '0 0 auto', alignSelf: 'flex-start', marginTop: 4 }}
+              />
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: 14.5 }}>{t.id}</div>
                 <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{KIND_LABEL[t.kind]}</div>

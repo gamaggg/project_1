@@ -67,7 +67,7 @@ export function AchievementUnlockedModal({
         </div>
         <div className="unlock-modal-eyebrow">Достижение открыто</div>
         <div className="unlock-modal-badge">
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+          <svg className="unlock-modal-hex" viewBox="0 0 100 100" preserveAspectRatio="none">
             <defs>
               <linearGradient id="unlockHexFillOn" x1="0" y1="0" x2="0.25" y2="1">
                 <stop offset="0" stopColor="#FFB067" />
@@ -87,7 +87,7 @@ export function AchievementUnlockedModal({
             <polygon points="25,0 75,0 100,50 75,100 25,100 0,50" fill="url(#unlockHexGloss)" />
           </svg>
           <div className="unlock-modal-badge-fg">
-            {cloneElement(ACH_ICONS[achievement.icon] as ReactElement<{ width: number; height: number }>, { width: 48, height: 48 })}
+            {cloneElement(ACH_ICONS[achievement.icon] as ReactElement<{ width: number; height: number }>, { width: 38, height: 38 })}
           </div>
         </div>
         <div className="modal-title">{achievement.title}</div>

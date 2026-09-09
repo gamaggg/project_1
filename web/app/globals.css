@@ -521,10 +521,10 @@ body{
 .info-grid .value{font-size:15.5px; font-weight:800; letter-spacing:-0.1px;}
 /* ---------- Catch success: trophy card (see ConfirmScreen's 'success' step) ---------- */
 .catch-trophy-scene{
-  position:absolute; inset:0; overflow-y:auto;
+  position:absolute; inset:0; overflow:hidden;
   background:linear-gradient(180deg,#181920,#0B0C10);
-  display:flex; flex-direction:column; align-items:center;
-  padding:32px 24px calc(108px + env(safe-area-inset-bottom));
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:24px 20px calc(24px + env(safe-area-inset-bottom));
 }
 .catch-trophy-glow{
   position:absolute; top:-40px; left:50%; transform:translateX(-50%);
@@ -548,8 +548,9 @@ body{
 .catch-trophy-shine{
   position:absolute; inset:0; pointer-events:none;
   background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.5) 50%,transparent 60%);
+  background-repeat:no-repeat;
   background-size:250% 250%; background-position:160% 0;
-  animation:trophyShine 2.6s ease-in-out .9s 1;
+  animation:trophyShine 2.6s ease-in-out .9s 1 both;
 }
 @keyframes trophyShine{0%{background-position:160% 0;} 60%,100%{background-position:-60% 0;}}
 .catch-trophy-stats{
@@ -562,11 +563,11 @@ body{
   position:absolute; top:14px; right:14px; width:58px; aspect-ratio:2/1.7320508; z-index:5;
   animation:trophyStampIn .5s 1.05s cubic-bezier(.3,1.7,.4,1) both;
 }
-.catch-trophy-stamp svg:first-child{width:100%; height:100%; display:block;}
+.catch-trophy-stamp-hex{width:100%; height:100%; display:block;}
 @keyframes trophyStampIn{
   0%{opacity:0; transform:scale(2.2) rotate(-16deg);}
   70%{opacity:1;}
-  100%{opacity:1; transform:scale(1) rotate(-8deg);}
+  100%{opacity:1; transform:scale(1) rotate(0deg);}
 }
 .catch-trophy-stamp-fg{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff;}
 .catch-trophy-stamp-ring{
@@ -605,7 +606,7 @@ body{
 .unlock-modal-eyebrow{font-size:11.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--accent); margin-bottom:16px; position:relative;}
 .unlock-modal-badge{width:92px; aspect-ratio:2/1.7320508; margin:0 auto 18px; position:relative; animation:unlockBadgeIn .6s .1s cubic-bezier(.34,1.56,.64,1) both;}
 @keyframes unlockBadgeIn{from{opacity:0; transform:scale(.4) rotate(-14deg);} to{opacity:1; transform:scale(1) rotate(0);}}
-.unlock-modal-badge svg:first-child{width:100%; height:100%; display:block; filter:drop-shadow(0 14px 24px rgba(252,82,0,.32));}
+.unlock-modal-hex{width:100%; height:100%; display:block; filter:drop-shadow(0 14px 24px rgba(252,82,0,.32));}
 .unlock-modal-badge-fg{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff;}
 .unlock-modal-close{
   background:none; border:none; color:var(--ink-soft); font-weight:700; font-size:13.5px;
@@ -882,7 +883,7 @@ body{
 
   .catch-trophy-card, .catch-trophy-title, .catch-trophy-ctas{animation:none !important; opacity:1 !important; transform:none !important;}
   .catch-trophy-shine, .catch-trophy-stamp-ring{display:none !important;}
-  .catch-trophy-stamp{animation:none !important; opacity:1 !important; transform:rotate(-8deg) !important;}
+  .catch-trophy-stamp{animation:none !important; opacity:1 !important; transform:none !important;}
   .unlock-confetti-piece{display:none !important;}
   .unlock-modal-badge{animation:none !important; opacity:1 !important; transform:none !important;}
 }

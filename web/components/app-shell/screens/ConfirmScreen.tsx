@@ -97,7 +97,7 @@ export function ConfirmScreen({
             </div>
             <div className="catch-trophy-stamp">
               <div className="catch-trophy-stamp-ring" />
-              <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+              <svg className="catch-trophy-stamp-hex" viewBox="0 0 100 100" preserveAspectRatio="none">
                 <defs>
                   <linearGradient id="catchStampFill" x1="0" y1="0" x2="0.25" y2="1">
                     <stop offset="0" stopColor="#FFB067" />
@@ -105,10 +105,10 @@ export function ConfirmScreen({
                     <stop offset="1" stopColor="#D94400" />
                   </linearGradient>
                 </defs>
-                <polygon points="25,0 75,0 100,50 75,100 25,100 0,50" fill="url(#catchStampFill)" stroke="#fff" strokeWidth="3" />
+                <polygon points="25,0 75,0 100,50 75,100 25,100 0,50" fill="url(#catchStampFill)" stroke="#fff" strokeWidth="2.5" />
               </svg>
               <div className="catch-trophy-stamp-fg">
-                <svg width="46%" height="46%" viewBox="0 0 24 24" fill="currentColor">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M3 8l4 3 5-6 5 6 4-3-2 11H5L3 8z" />
                 </svg>
               </div>
