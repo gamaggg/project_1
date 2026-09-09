@@ -81,7 +81,7 @@ export function computeAchievements(myCatches: Catch[], ctx: AchievementContext)
   for (const c of myCatches) speciesCounts.set(c.species, (speciesCounts.get(c.species) ?? 0) + 1)
   const maxSameSpecies = Math.max(0, ...speciesCounts.values())
 
-  return [
+  const list: Achievement[] = [
     { icon: 'first', title: 'Первый улов', desc: 'Зафиксирован первый улов в приложении', unlocked: myCatches.length >= 1 },
     { icon: 'territory', title: 'Три территории', desc: 'Заняты три береговые территории', unlocked: myTerritories.length >= 3, progress: `${myTerritories.length}/3` },
     {
@@ -141,7 +141,8 @@ export function computeAchievements(myCatches: Catch[], ctx: AchievementContext)
       progress: `${Math.min(followersCount, POPULAR_TARGET)}/${POPULAR_TARGET}`,
     },
     { icon: 'conqueror', title: 'Отбил территорию', desc: 'Занял сектор, который раньше принадлежал другому', unlocked: claimedFromOthers },
-  ].sort((a, b) => Number(b.unlocked) - Number(a.unlocked)) // unlocked first, stable otherwise
+  ]
+  return list.sort((a, b) => Number(b.unlocked) - Number(a.unlocked)) // unlocked first, stable otherwise
 }
 
 // Only among catches where a size was actually given — see DECISIONS.md, size
