@@ -238,6 +238,15 @@ export function FishZoneApp() {
   // it up — mirrors toggleTerritorySelection's add/remove-by-id symmetry.
   function toggleAddDraft(lat: number, lng: number) {
     const { lat: cLat, lng: cLng, corners, gridX, gridY } = draftHexAt(lat, lng, 'sea')
+    // Belt-and-suspenders on top of LeafletMap's own stopPropagation fix
+    // (which is what actually stops a press on an existing sector from also
+    // reaching this handler): every existing territory's own lat/lng came
+    // from this exact same grid math, so a genuine cell match lands far
+    // closer than 0.0001° — real neighboring cells are ~0.003°+ apart. A
+    // sector already there means this press missed the stopPropagation
+    // guard somehow; no-op rather than stack a duplicate on top of it.
+    const collides = territories.some((t) => Math.abs(t.lat - cLat) < 0.0001 && Math.abs(t.lng - cLng) < 0.0001)
+    if (collides) return
     setPendingAddDrafts((prev) => {
       const i = prev.findIndex((d) => d.gridX === gridX && d.gridY === gridY)
       if (i >= 0) return prev.filter((_, idx) => idx !== i)

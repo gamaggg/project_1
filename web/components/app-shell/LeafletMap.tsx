@@ -108,7 +108,13 @@ export const LeafletMap = forwardRef<
         // that one click is swallowed via longPressFired.
         let longPressFired = false
         if (onLongPressRef.current) {
-          poly.on('mousedown', () => {
+          poly.on('mousedown', (e) => {
+            // Canvas-rendered interactive layers don't stop the underlying
+            // native event from also bubbling to the map's own listeners —
+            // without this, every press here ALSO started the map's
+            // empty-space long-press timer below, so long-pressing an
+            // existing sector offered to create a new one on top of it.
+            L.DomEvent.stopPropagation(e)
             longPressFired = false
             if (pressTimerRef.current) clearTimeout(pressTimerRef.current)
             pressTimerRef.current = setTimeout(() => {
@@ -117,14 +123,16 @@ export const LeafletMap = forwardRef<
               onLongPressRef.current?.(t.id)
             }, 500)
           })
-          poly.on('mouseup mouseout', () => {
+          poly.on('mouseup mouseout', (e) => {
+            L.DomEvent.stopPropagation(e)
             if (pressTimerRef.current) {
               clearTimeout(pressTimerRef.current)
               pressTimerRef.current = null
             }
           })
         }
-        poly.on('click', () => {
+        poly.on('click', (e) => {
+          L.DomEvent.stopPropagation(e)
           if (longPressFired) {
             longPressFired = false
             return
