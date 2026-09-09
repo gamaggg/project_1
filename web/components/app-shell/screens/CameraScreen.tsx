@@ -67,10 +67,8 @@ export function CameraScreen({ onBack, onCapture }: { onBack: () => void; onCapt
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
       streamRef.current = stream
       localStorage.setItem(CAMERA_GRANTED_KEY, '1')
-      const track = stream.getVideoTracks()[0] as
-        | (MediaStreamTrack & { getCapabilities?: () => TorchCapabilities })
-        | undefined
-      const caps = track?.getCapabilities?.()
+      const track = stream.getVideoTracks()[0]
+      const caps = track?.getCapabilities?.() as unknown as TorchCapabilities | undefined
       setTorchSupported(!!caps?.torch)
       setTorchOn(false)
       setState('live')
