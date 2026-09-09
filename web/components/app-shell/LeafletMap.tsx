@@ -38,8 +38,14 @@ export const LeafletMap = forwardRef<
     onSelect: (id: string) => void
     selectedIds?: Set<string>
     onLongPressTerritory?: (id: string) => void
+    pendingAddDrafts?: { corners: [number, number][] }[]
+    onLongPressEmptyMap?: (lat: number, lng: number) => void
+    onClickEmptyMap?: (lat: number, lng: number) => void
   }
->(function LeafletMap({ territories, myTerritoryColor, onSelect, selectedIds, onLongPressTerritory }, ref) {
+>(function LeafletMap(
+  { territories, myTerritoryColor, onSelect, selectedIds, onLongPressTerritory, pendingAddDrafts, onLongPressEmptyMap, onClickEmptyMap },
+  ref
+) {
     const containerRef = useRef<HTMLDivElement>(null)
     const mapRef = useRef<L.Map | null>(null)
     const leafletRef = useRef<typeof import('leaflet') | null>(null)
@@ -50,10 +56,18 @@ export const LeafletMap = forwardRef<
     onSelectRef.current = onSelect
     const onLongPressRef = useRef(onLongPressTerritory)
     onLongPressRef.current = onLongPressTerritory
+    const onLongPressEmptyMapRef = useRef(onLongPressEmptyMap)
+    onLongPressEmptyMapRef.current = onLongPressEmptyMap
+    const onClickEmptyMapRef = useRef(onClickEmptyMap)
+    onClickEmptyMapRef.current = onClickEmptyMap
     // Shared across every polygon (not per-polygon) so a press started on one
     // sector and cancelled by, say, the map starting to pan can be cleared
     // from a single map-level listener instead of one per polygon.
     const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    // Mirrors the per-polygon longPressFired flag, but for the map's own
+    // empty-space gesture — swallows the trailing 'click' Leaflet fires on
+    // release right after a long-press already handled it.
+    const emptyMapLongPressFiredRef = useRef(false)
 
     function draw(territories: Territory[]) {
       const L = leafletRef.current
@@ -62,6 +76,20 @@ export const LeafletMap = forwardRef<
       if (!L || !markersLayer || !labelsLayer) return
       markersLayer.clearLayers()
       labelsLayer.clearLayers()
+      // Preview of sectors an admin is about to create (see
+      // onLongPressEmptyMap below) — plain non-interactive outlines, dashed
+      // to read as "not committed yet", drawn first so real sector polygons
+      // (drawn next) still win on click if a preview happens to overlap one.
+      pendingAddDrafts?.forEach((draft) => {
+        L.polygon(draft.corners, {
+          color: '#2E7D32',
+          weight: 2,
+          dashArray: '4 4',
+          fillColor: '#2E7D32',
+          fillOpacity: 0.35,
+          interactive: false,
+        }).addTo(markersLayer)
+      })
       territories.forEach((t) => {
         const isSelectedForDeletion = selectedIds?.has(t.id) ?? false
         const color = isSelectedForDeletion ? '#D33' : resolveTerritoryColor(t.status, myTerritoryColor)
@@ -218,6 +246,40 @@ export const LeafletMap = forwardRef<
             pressTimerRef.current = null
           }
         })
+        // Long-press on EMPTY map (not an existing sector) starts/extends a
+        // new-sector placement batch — super admin only, same gating as
+        // onLongPressTerritory. Leaflet's interactive polygons stop mouse
+        // events from bubbling to the map by default, so this only ever
+        // fires for a press that didn't land on a sector — no extra "was it
+        // on a polygon" check needed.
+        map.on('mousedown', (e: L.LeafletMouseEvent) => {
+          if (!onLongPressEmptyMapRef.current) return
+          emptyMapLongPressFiredRef.current = false
+          if (pressTimerRef.current) clearTimeout(pressTimerRef.current)
+          const { lat, lng } = e.latlng
+          pressTimerRef.current = setTimeout(() => {
+            emptyMapLongPressFiredRef.current = true
+            pressTimerRef.current = null
+            onLongPressEmptyMapRef.current?.(lat, lng)
+          }, 500)
+        })
+        map.on('mouseup', () => {
+          if (pressTimerRef.current) {
+            clearTimeout(pressTimerRef.current)
+            pressTimerRef.current = null
+          }
+        })
+        // Once a new-sector batch is underway, a plain tap on more empty
+        // space queues more drafts — mirrors onSelect's re-purposing while a
+        // delete selection is active. Never fires for a click that landed on
+        // an existing sector's own polygon (those don't bubble to the map).
+        map.on('click', (e: L.LeafletMouseEvent) => {
+          if (emptyMapLongPressFiredRef.current) {
+            emptyMapLongPressFiredRef.current = false
+            return
+          }
+          onClickEmptyMapRef.current?.(e.latlng.lat, e.latlng.lng)
+        })
 
         draw(territories)
         updateLabelVisibility()
@@ -254,7 +316,7 @@ export const LeafletMap = forwardRef<
       if (!mapRef.current) return
       draw(territories)
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [territories, myTerritoryColor, selectedIds])
+    }, [territories, myTerritoryColor, selectedIds, pendingAddDrafts])
 
     return <div id="leafletMap" ref={containerRef} />
   }

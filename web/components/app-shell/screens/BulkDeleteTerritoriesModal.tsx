@@ -19,16 +19,22 @@ export function BulkDeleteTerritoriesModal({
 }) {
   const deleteTerritory = useAdminDeleteTerritory()
   const [isPending, setIsPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleConfirm() {
     setIsPending(true)
+    setError(null)
     try {
       for (const id of territoryIds) {
         await deleteTerritory.mutateAsync(id)
       }
       onClose()
       onDeleted()
-    } catch {
+    } catch (err) {
+      // A batch can fail partway through — surfaced here rather than
+      // swallowed, so a retry after a genuine error isn't just a silent
+      // no-op (see DECISIONS.md).
+      setError(err instanceof Error ? err.message : 'Не удалось удалить сектор')
       setIsPending(false)
     }
   }
@@ -47,6 +53,7 @@ export function BulkDeleteTerritoriesModal({
           <br />
           Сектора, все их уловы и история будут удалены без возможности восстановления.
         </div>
+        {error && <div style={{ color: '#D33', fontSize: 12.5, fontWeight: 600, marginBottom: 10 }}>{error}</div>}
         <button className="btn-danger" disabled={isPending} onClick={handleConfirm}>
           {isPending ? 'Удаляем…' : `Удалить ${territoryIds.length === 1 ? 'сектор' : 'сектора'}`}
         </button>

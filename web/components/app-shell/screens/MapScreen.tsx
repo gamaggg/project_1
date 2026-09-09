@@ -33,9 +33,27 @@ export const MapScreen = forwardRef<
     onLongPressTerritory?: (id: string) => void
     onDeleteSelected?: () => void
     onCancelSelection?: () => void
+    pendingAddDrafts?: { corners: [number, number][] }[]
+    onLongPressEmptyMap?: (lat: number, lng: number) => void
+    onClickEmptyMap?: (lat: number, lng: number) => void
+    onConfirmAdd?: () => void
+    onCancelAdd?: () => void
   }
 >(function MapScreen(
-  { territories, myTerritoryColor, onOpenTerritory, selectedIds, onLongPressTerritory, onDeleteSelected, onCancelSelection },
+  {
+    territories,
+    myTerritoryColor,
+    onOpenTerritory,
+    selectedIds,
+    onLongPressTerritory,
+    onDeleteSelected,
+    onCancelSelection,
+    pendingAddDrafts,
+    onLongPressEmptyMap,
+    onClickEmptyMap,
+    onConfirmAdd,
+    onCancelAdd,
+  },
   forwardedRef
 ) {
   const mapRef = useRef<LeafletMapHandle>(null)
@@ -105,6 +123,9 @@ export const MapScreen = forwardRef<
           onSelect={onOpenTerritory}
           selectedIds={selectedIds}
           onLongPressTerritory={onLongPressTerritory}
+          pendingAddDrafts={pendingAddDrafts}
+          onLongPressEmptyMap={onLongPressEmptyMap}
+          onClickEmptyMap={onClickEmptyMap}
         />
         <div className="map-header">
           {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
@@ -117,6 +138,17 @@ export const MapScreen = forwardRef<
               Удалить
             </button>
             <button className="map-selection-bar-btn cancel" onClick={onCancelSelection}>
+              Отмена
+            </button>
+          </div>
+        )}
+        {pendingAddDrafts && pendingAddDrafts.length > 0 && (
+          <div className="map-selection-bar">
+            <span>Новых: {pendingAddDrafts.length}</span>
+            <button className="map-selection-bar-btn add" onClick={onConfirmAdd}>
+              Создать
+            </button>
+            <button className="map-selection-bar-btn cancel" onClick={onCancelAdd}>
               Отмена
             </button>
           </div>

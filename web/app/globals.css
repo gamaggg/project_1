@@ -419,6 +419,7 @@ body{
   padding:8px 12px; cursor:pointer; font-family:inherit;
 }
 .map-selection-bar-btn.delete{background:#D33; color:#fff;}
+.map-selection-bar-btn.add{background:#2E7D32; color:#fff;}
 .map-selection-bar-btn.cancel{background:rgba(255,255,255,0.12); color:#fff;}
 .map-selection-bar-btn:active{transform:scale(0.96);}
 .map-sheet-container{
@@ -669,7 +670,7 @@ body{
   font-family:inherit; padding:14px 6px 6px; cursor:pointer; width:100%;
 }
 .activity-item{display:flex; gap:13px; padding:16px 0; border-bottom:1px solid var(--line);}
-.filter-row{display:flex; gap:8px; margin-bottom:16px;}
+.filter-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;}
 .filter-chip{
   padding:8px 15px; border-radius:20px; font-size:13px; font-weight:700; font-family:inherit;
   border:1.5px solid var(--line); color:var(--ink-soft); background:var(--surface); cursor:pointer;

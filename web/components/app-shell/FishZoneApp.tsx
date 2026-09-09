@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useTerritories, useConfirmCatch, useProfile, useRealtimeSync, useIsSuperAdmin } from '@/lib/supabase/queries'
+import { useTerritories, useConfirmCatch, useProfile, useRealtimeSync, useIsSuperAdmin, useAllTerritoryIds } from '@/lib/supabase/queries'
 import { getCurrentCoords, nearestTerritory } from '@/lib/geolocation'
 import { uploadCatchPhoto } from '@/lib/supabase/storage'
 import { useActivityReadState, useAdminActionsReadState } from '@/lib/activityRead'
 import { useAchievementUnlock } from '@/lib/achievementUnlock'
 import { formatCooldown } from '@/lib/format'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
+import { draftHexAt } from '@/lib/data/hexGrid'
 import type { PendingCatch, TerritoryStatus } from '@/lib/data/types'
 import { OnboardingFlow } from '@/components/app-shell/onboarding/OnboardingFlow'
 import { BottomNav } from '@/components/app-shell/BottomNav'
@@ -28,6 +29,7 @@ import { ReportPhotoModal } from '@/components/app-shell/screens/ReportPhotoModa
 import { DeleteCatchModal } from '@/components/app-shell/screens/DeleteCatchModal'
 import { DeleteTerritoryModal } from '@/components/app-shell/screens/DeleteTerritoryModal'
 import { BulkDeleteTerritoriesModal } from '@/components/app-shell/screens/BulkDeleteTerritoriesModal'
+import { BulkAddTerritoriesModal } from '@/components/app-shell/screens/BulkAddTerritoriesModal'
 import { DeleteUserModal } from '@/components/app-shell/screens/DeleteUserModal'
 import { AchievementUnlockedModal } from '@/components/app-shell/screens/AchievementUnlockedModal'
 import { AdminReportsScreen } from '@/components/app-shell/screens/AdminReportsScreen'
@@ -85,6 +87,7 @@ export function FishZoneApp() {
   const { data: myProfile, isLoading: myProfileLoading } = useProfile(user?.id ?? null)
   const { data: territories = [], isLoading: territoriesLoading, isSuccess: territoriesReady } = useTerritories()
   const isSuperAdmin = useIsSuperAdmin()
+  const { data: allTerritoryIds = [] } = useAllTerritoryIds()
   const confirmCatchMutation = useConfirmCatch()
   const mapHandleRef = useRef<LeafletMapHandle>(null)
   const { unreadIds, unreadCount, markAllRead } = useActivityReadState()
@@ -117,6 +120,11 @@ export function FishZoneApp() {
   // picks it up.
   const [selectedTerritoryIds, setSelectedTerritoryIds] = useState<Set<string>>(new Set())
   const [confirmingBulkDelete, setConfirmingBulkDelete] = useState(false)
+  // New-sector placement batch (super admin only) — each draft snapped to
+  // the same hex grid as every existing sector (see lib/data/hexGrid.ts), no
+  // id/kind yet (chosen once for the whole batch in the confirm modal).
+  const [pendingAddDrafts, setPendingAddDrafts] = useState<{ lat: number; lng: number; corners: [number, number][]; gridX: number; gridY: number }[]>([])
+  const [confirmingBulkAdd, setConfirmingBulkAdd] = useState(false)
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
   const { data: deletingUserProfile } = useProfile(deletingUserId)
   const [pendingCatch, setPendingCatch] = useState<PendingCatch | null>(null)
@@ -208,7 +216,7 @@ export function FishZoneApp() {
   // Long-press start of a bulk-delete selection — only ever wired up for a
   // super admin (see the <MapScreen> prop below), but double-checked here too.
   function handleLongPressTerritory(id: string) {
-    if (!isSuperAdmin) return
+    if (!isSuperAdmin || pendingAddDrafts.length > 0) return
     toggleTerritorySelection(id)
   }
   // While a selection is active, a plain tap on the map picks/unpicks sectors
@@ -224,6 +232,30 @@ export function FishZoneApp() {
   }
   function cancelTerritorySelection() {
     setSelectedTerritoryIds(new Set())
+  }
+  // Toggling by grid cell (not lat/lng) means tapping the same spot twice
+  // removes it again, and two taps that snap to the same cell never double
+  // it up — mirrors toggleTerritorySelection's add/remove-by-id symmetry.
+  function toggleAddDraft(lat: number, lng: number) {
+    const { lat: cLat, lng: cLng, corners, gridX, gridY } = draftHexAt(lat, lng, 'sea')
+    setPendingAddDrafts((prev) => {
+      const i = prev.findIndex((d) => d.gridX === gridX && d.gridY === gridY)
+      if (i >= 0) return prev.filter((_, idx) => idx !== i)
+      return [...prev, { lat: cLat, lng: cLng, corners, gridX, gridY }]
+    })
+  }
+  // Long-press on empty map starts a new-sector batch — blocked while a
+  // delete selection is active so the two admin gestures never overlap.
+  function handleLongPressEmptyMap(lat: number, lng: number) {
+    if (!isSuperAdmin || selectedTerritoryIds.size > 0) return
+    toggleAddDraft(lat, lng)
+  }
+  function handleClickEmptyMap(lat: number, lng: number) {
+    if (!isSuperAdmin || pendingAddDrafts.length === 0) return
+    toggleAddDraft(lat, lng)
+  }
+  function cancelAddDrafts() {
+    setPendingAddDrafts([])
   }
   // Viewing yourself through this path (e.g. tapping your own name somewhere)
   // just goes to the real (editable) profile tab instead of a second read-only
@@ -416,6 +448,11 @@ export function FishZoneApp() {
             onLongPressTerritory={isSuperAdmin ? handleLongPressTerritory : undefined}
             onDeleteSelected={() => setConfirmingBulkDelete(true)}
             onCancelSelection={cancelTerritorySelection}
+            pendingAddDrafts={isSuperAdmin ? pendingAddDrafts : undefined}
+            onLongPressEmptyMap={isSuperAdmin ? handleLongPressEmptyMap : undefined}
+            onClickEmptyMap={isSuperAdmin ? handleClickEmptyMap : undefined}
+            onConfirmAdd={() => setConfirmingBulkAdd(true)}
+            onCancelAdd={cancelAddDrafts}
           />
         </Screen>
         <Screen id="screen-territory" current={currentScreen}>
@@ -645,6 +682,18 @@ export function FishZoneApp() {
             const count = selectedTerritoryIds.size
             setSelectedTerritoryIds(new Set())
             showToast(count === 1 ? 'Сектор удалён' : `Секторов удалено: ${count}`)
+          }}
+        />
+      )}
+      {confirmingBulkAdd && (
+        <BulkAddTerritoriesModal
+          drafts={pendingAddDrafts}
+          existingIds={allTerritoryIds}
+          onClose={() => setConfirmingBulkAdd(false)}
+          onAdded={() => {
+            const count = pendingAddDrafts.length
+            setPendingAddDrafts([])
+            showToast(count === 1 ? 'Сектор создан' : `Секторов создано: ${count}`)
           }}
         />
       )}

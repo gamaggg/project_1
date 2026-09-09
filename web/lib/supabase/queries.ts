@@ -40,31 +40,46 @@ export function useTerritories() {
       const supabase = createClient()
       const { data, error } = await supabase
         .from('territories_with_stats')
-        .select('id, kind, lat, lng, owner_id, catch_count, last_catch_at, is_deleted')
+        .select('id, kind, lat, lng, corners, owner_id, catch_count, last_catch_at, is_deleted')
       if (error) throw error
 
       const byId = new Map(data!.map((row) => [row.id, row]))
-      return geometry.data!
+      const staticIds = new Set(geometry.data!.map((g) => g.id))
+
+      function toTerritory(id: string, kind: TerritoryKind, lat: number, lng: number, corners: [number, number][]): Territory {
+        const row = byId.get(id)
+        const ownerId = row?.owner_id ?? null
+        const status: TerritoryStatus = ownerId === null ? 'free' : ownerId === user?.id ? 'mine' : 'other'
+        return {
+          id,
+          kind,
+          lat,
+          lng,
+          corners,
+          ownerId,
+          status,
+          catchCount: row?.catch_count ?? 0,
+          lastCatchAt: row?.last_catch_at ?? null,
+        }
+      }
+
+      const fromStatic = geometry.data!
         // Geometry is a static asset (see useSectorsGeometry) — a sector a
         // super admin deleted (admin_delete_territory) stays in that file,
         // so it's dropped here based on the DB row's is_deleted flag instead.
         .filter((g) => !byId.get(g.id)?.is_deleted)
-        .map((g): Territory => {
-          const row = byId.get(g.id)
-          const ownerId = row?.owner_id ?? null
-          const status: TerritoryStatus = ownerId === null ? 'free' : ownerId === user?.id ? 'mine' : 'other'
-          return {
-            id: g.id,
-            kind: g.kind,
-            lat: g.lat,
-            lng: g.lng,
-            corners: g.corners,
-            ownerId,
-            status,
-            catchCount: row?.catch_count ?? 0,
-            lastCatchAt: row?.last_catch_at ?? null,
-          }
-        })
+        .map((g) => toTerritory(g.id, g.kind, g.lat, g.lng, g.corners))
+
+      // Sectors a super admin placed on the map (admin_add_territory) live
+      // only in the DB — the static file is generated once offline (see
+      // tools/fishing-hex) and isn't writable at runtime, so their geometry
+      // is stored on the row itself instead (see lib/data/hexGrid.ts for how
+      // it's computed to still land on the exact same grid).
+      const fromDb = data!
+        .filter((row): row is typeof row & { corners: NonNullable<typeof row.corners> } => !staticIds.has(row.id) && !row.is_deleted && !!row.corners)
+        .map((row) => toTerritory(row.id, row.kind, row.lat, row.lng, row.corners as unknown as [number, number][]))
+
+      return [...fromStatic, ...fromDb]
         // Most-caught sectors first everywhere that lists territories (map
         // carousel, territories tab) — a single sort here instead of one per
         // screen, since every consumer shares this same array. Zero-catch
@@ -73,6 +88,26 @@ export function useTerritories() {
         .sort((a, b) => b.catchCount - a.catchCount || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
     },
     enabled: geometry.isSuccess,
+  })
+}
+
+// Every id that has ever existed, deleted or not — useTerritories() filters
+// out is_deleted rows, but admin_add_territory rejects any id that's already
+// a row in the table regardless of is_deleted, so picking a "next available"
+// id (see lib/data/hexGrid.ts's nextSectorId) needs the unfiltered set or it
+// can re-offer an id that's just soft-deleted, not actually free. Admin-only:
+// nothing outside the bulk-add flow needs this.
+export function useAllTerritoryIds() {
+  const isSuperAdmin = useIsSuperAdmin()
+  return useQuery({
+    queryKey: ['all-territory-ids'],
+    enabled: isSuperAdmin,
+    queryFn: async (): Promise<string[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.from('territories').select('id')
+      if (error) throw error
+      return data.map((row) => row.id)
+    },
   })
 }
 
@@ -705,6 +740,28 @@ export function useAdminDeleteTerritory() {
       queryClient.invalidateQueries({ queryKey: ['reports'] })
       queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
       queryClient.invalidateQueries({ queryKey: ['all-users'] })
+    },
+  })
+}
+
+export function useAdminAddTerritory() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (draft: { id: string; kind: TerritoryKind; lat: number; lng: number; corners: [number, number][] }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_add_territory', {
+        p_id: draft.id,
+        p_kind: draft.kind,
+        p_lat: draft.lat,
+        p_lng: draft.lng,
+        p_corners: draft.corners,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['territories'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
+      queryClient.invalidateQueries({ queryKey: ['all-territory-ids'] })
     },
   })
 }

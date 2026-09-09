@@ -413,6 +413,7 @@ export type Database = {
       territories: {
         Row: {
           claimed_at: string | null
+          corners: Json | null
           created_at: string
           id: string
           is_deleted: boolean
@@ -423,6 +424,7 @@ export type Database = {
         }
         Insert: {
           claimed_at?: string | null
+          corners?: Json | null
           created_at?: string
           id: string
           is_deleted?: boolean
@@ -433,6 +435,7 @@ export type Database = {
         }
         Update: {
           claimed_at?: string | null
+          corners?: Json | null
           created_at?: string
           id?: string
           is_deleted?: boolean
@@ -533,6 +536,7 @@ export type Database = {
         Row: {
           catch_count: number | null
           claimed_at: string | null
+          corners: Json | null
           created_at: string | null
           id: string | null
           is_deleted: boolean | null
@@ -561,6 +565,16 @@ export type Database = {
       }
     }
     Functions: {
+      admin_add_territory: {
+        Args: {
+          p_corners: Json
+          p_id: string
+          p_kind: string
+          p_lat: number
+          p_lng: number
+        }
+        Returns: undefined
+      }
       admin_delete_catch: { Args: { p_catch_id: number }; Returns: undefined }
       admin_delete_territory: {
         Args: { p_territory_id: string }
