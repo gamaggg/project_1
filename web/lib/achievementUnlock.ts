@@ -53,7 +53,14 @@ export function useAchievementUnlock(territories: Territory[]) {
       writeSeen(user.id, new Set(unlockedIcons))
       return
     }
-    const fresh = unlockedIcons.filter((icon) => !seen.has(icon))
+    // Prune anything no longer unlocked (e.g. a moderator deleted the catches
+    // behind it) out of "seen" too — achievements aren't guaranteed monotonic
+    // here, so losing one and earning it again should pop the modal again,
+    // not stay silently marked as already shown.
+    const unlockedSet = new Set(unlockedIcons)
+    const pruned = new Set([...seen].filter((icon) => unlockedSet.has(icon)))
+    if (pruned.size !== seen.size) writeSeen(user.id, pruned)
+    const fresh = unlockedIcons.filter((icon) => !pruned.has(icon))
     if (fresh.length === 0) return
     setQueue((q) => [...q, ...fresh.filter((icon) => !q.includes(icon))])
     // eslint-disable-next-line react-hooks/exhaustive-deps
