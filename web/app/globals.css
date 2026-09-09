@@ -733,6 +733,13 @@ body{
   background:var(--bg) url('/brand/welcome-bg.png') top center / auto 100% no-repeat;
   padding:calc(16px + env(safe-area-inset-top)) 24px calc(16px + env(safe-area-inset-bottom));
 }
+/* Positioned to match where these shapes sat in the original composite
+   background (measured against it: left blob centered ~41% down, right
+   blob ~76% down) — sized relative to container height (dvh) since the
+   background image itself scales that way (background-size: auto 100%). */
+.onboarding-welcome-splash{position:absolute; z-index:0; pointer-events:none; height:auto; transform:translateY(-50%);}
+.onboarding-welcome-splash--left{left:0; top:41%; width:14.9dvh;}
+.onboarding-welcome-splash--right{right:0; top:76%; width:11.5dvh;}
 .onboarding-welcome-logo{
   flex:1 1 auto; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
 }

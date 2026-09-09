@@ -3,6 +3,10 @@
 export function WelcomeStep({ onCapture, onSignIn }: { onCapture: () => void; onSignIn: () => void }) {
   return (
     <div className="onboarding-welcome">
+      {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
+      <img src="/brand/welcome-splash-left.svg" alt="" aria-hidden="true" className="onboarding-welcome-splash onboarding-welcome-splash--left" />
+      {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
+      <img src="/brand/welcome-splash-right.svg" alt="" aria-hidden="true" className="onboarding-welcome-splash onboarding-welcome-splash--right" />
       <div className="onboarding-welcome-logo">
         <div className="onboarding-welcome-mark-wrap">
           {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
