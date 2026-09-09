@@ -21,7 +21,9 @@ export function WelcomeStep({ onCapture, onSignIn }: { onCapture: () => void; on
           <span>Владей</span>
         </div>
         <div className="onboarding-welcome-sub">
-          Двое из трёх рыбаков, занявших территорию в первый визит, вернулись за новым уловом.
+          Двое из трёх рыбаков, занявших территорию
+          <br />
+          в первый визит, вернулись за новым уловом.
         </div>
         <button className="btn-primary" onClick={onCapture}>
           Захватить первую территорию
