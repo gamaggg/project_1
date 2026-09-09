@@ -728,7 +728,7 @@ body{
 
 /* ---------- Onboarding (welcome + signup wizard, see DECISIONS.md) ---------- */
 .onboarding-welcome{
-  position:relative; overflow:hidden;
+  position:relative; overflow:hidden; isolation:isolate;
   display:flex; flex-direction:column; height:100dvh;
   background:var(--bg) url('/brand/welcome-bg.png') top center / auto 100% no-repeat;
   padding:calc(16px + env(safe-area-inset-top)) 24px calc(16px + env(safe-area-inset-bottom));
@@ -737,7 +737,11 @@ body{
    background (measured against it: left blob centered ~41% down, right
    blob ~76% down) — sized relative to container height (dvh) since the
    background image itself scales that way (background-size: auto 100%). */
-.onboarding-welcome-splash{position:absolute; z-index:0; pointer-events:none; height:auto; transform:translateY(-50%);}
+/* z-index:-1, not 0/auto — a *positioned* z-index:0 element paints AFTER
+   static in-flow siblings (CSS2.1 painting order), so at z-index:0 this was
+   covering the headline instead of sitting behind it. Negative puts it back
+   with the container's own background, below all normal content. */
+.onboarding-welcome-splash{position:absolute; z-index:-1; pointer-events:none; height:auto; transform:translateY(-50%);}
 .onboarding-welcome-splash--left{left:0; top:41%; width:14.9dvh;}
 .onboarding-welcome-splash--right{right:0; top:76%; width:11.5dvh;}
 .onboarding-welcome-logo{
