@@ -148,7 +148,7 @@ body{
   box-shadow:0 0 0 2px var(--bg);
 }
 .navplus-badge{
-  width:38px; height:38px;
+  width:46px; height:46px;
   border-radius:50%;
   background:linear-gradient(160deg,#FF6A1F,var(--accent) 65%);
   display:flex; align-items:center; justify-content:center;
@@ -699,9 +699,16 @@ body{
    Full-bleed illustration screens (unlike the white .onboarding-step wizard
    screens) — a deliberate, more editorial treatment for these two, see
    DECISIONS.md. Forward-only, no back button, matching the reference. ---------- */
-.intro-screen{display:flex; flex-direction:column; min-height:100dvh; padding-top:env(safe-area-inset-top); padding-bottom:calc(24px + env(safe-area-inset-bottom));}
+.intro-screen{position:relative; display:flex; flex-direction:column; min-height:100dvh; padding-top:env(safe-area-inset-top); padding-bottom:calc(24px + env(safe-area-inset-bottom));}
 .intro-screen--territory{background:radial-gradient(120% 90% at 20% 0%, #FF9A52 0%, var(--accent) 42%, #C7430B 100%); color:#fff;}
 .intro-screen--catch{background:#FFF3E7; color:var(--ink);}
+.intro-back{
+  position:absolute; top:calc(16px + env(safe-area-inset-top)); left:16px; z-index:6;
+  width:36px; height:36px; border-radius:50%; border:none; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; padding:0;
+}
+.intro-screen--territory .intro-back{background:rgba(255,255,255,.22);}
+.intro-screen--catch .intro-back{background:rgba(23,24,27,.08);}
 .intro-illustration{position:relative; flex:1; min-height:0;}
 .intro-copy{padding:20px 24px 0;}
 .intro-title{font-size:27px; font-weight:800; line-height:1.16; margin:0 0 10px; letter-spacing:-.01em;}

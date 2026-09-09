@@ -35,8 +35,9 @@ export function BottomNav({
       </NavItem>
       <div className="navitem tap-scale" onClick={plusPending ? undefined : onPlus} style={plusPending ? { pointerEvents: 'none', opacity: 0.6 } : undefined}>
         <div className="navplus-badge">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.8" strokeLinecap="round">
-            <path d="M12 5v14M5 12h14" />
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 7h3.2L9 4.5h6L16.8 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z" />
+            <circle cx="12" cy="13" r="3.4" />
           </svg>
         </div>
       </div>

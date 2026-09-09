@@ -37,9 +37,14 @@ const MINE_ORDER: [number, number][] = [
 const CLUSTER_W = 4 * COL_STEP + HEX_W
 const CLUSTER_H = 3 * HEX_H + ROW_OFF
 
-export function TerritoryIntroStep({ onDone }: { onDone: () => void }) {
+export function TerritoryIntroStep({ onBack, onDone }: { onBack: () => void; onDone: () => void }) {
   return (
     <div className="intro-screen intro-screen--territory">
+      <button className="intro-back" onClick={onBack} aria-label="Назад">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
       <div className="intro-illustration">
         <div className="intro-hexfield">
           <div className="intro-hexcluster" style={{ width: CLUSTER_W, height: CLUSTER_H }}>

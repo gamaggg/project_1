@@ -120,7 +120,7 @@ export const MapScreen = forwardRef<
                   <span>Уловов {t.catchCount}</span>
                   <span>{t.lastCatchAt ? 'Последний улов: ' + formatWhen(t.lastCatchAt) : 'Пока нет уловов'}</span>
                 </div>
-                <button className="btn-primary" onClick={() => onOpenTerritory(t.id)}>
+                <button className="btn-primary" style={{ marginTop: 6 }} onClick={() => onOpenTerritory(t.id)}>
                   Подробнее о секторе
                 </button>
               </div>
