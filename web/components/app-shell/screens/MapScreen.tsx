@@ -25,8 +25,19 @@ function statusBadge(status: Territory['status'], myTerritoryColor: string) {
 // mounted the whole time, it's just visually hidden (see .screen CSS).
 export const MapScreen = forwardRef<
   LeafletMapHandle,
-  { territories: Territory[]; myTerritoryColor: string; onOpenTerritory: (id: string) => void }
->(function MapScreen({ territories, myTerritoryColor, onOpenTerritory }, forwardedRef) {
+  {
+    territories: Territory[]
+    myTerritoryColor: string
+    onOpenTerritory: (id: string) => void
+    selectedIds?: Set<string>
+    onLongPressTerritory?: (id: string) => void
+    onDeleteSelected?: () => void
+    onCancelSelection?: () => void
+  }
+>(function MapScreen(
+  { territories, myTerritoryColor, onOpenTerritory, selectedIds, onLongPressTerritory, onDeleteSelected, onCancelSelection },
+  forwardedRef
+) {
   const mapRef = useRef<LeafletMapHandle>(null)
   useImperativeHandle(forwardedRef, () => ({
     flyToTerritory: (id: string) => mapRef.current?.flyToTerritory(id),
@@ -87,11 +98,29 @@ export const MapScreen = forwardRef<
   return (
     <div className="screen-inner" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}>
       <div className="map-wrap">
-        <MapView ref={mapRef} territories={territories} myTerritoryColor={myTerritoryColor} onSelect={onOpenTerritory} />
+        <MapView
+          ref={mapRef}
+          territories={territories}
+          myTerritoryColor={myTerritoryColor}
+          onSelect={onOpenTerritory}
+          selectedIds={selectedIds}
+          onLongPressTerritory={onLongPressTerritory}
+        />
         <div className="map-header">
           {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
           <img src="/brand/logo_2.svg" alt="RANGE" className="map-brandmark" />
         </div>
+        {selectedIds && selectedIds.size > 0 && (
+          <div className="map-selection-bar">
+            <span>Выбрано: {selectedIds.size}</span>
+            <button className="map-selection-bar-btn delete" onClick={onDeleteSelected}>
+              Удалить
+            </button>
+            <button className="map-selection-bar-btn cancel" onClick={onCancelSelection}>
+              Отмена
+            </button>
+          </div>
+        )}
         <div className="map-legend">
           <span>
             <span className="legend-dot hex-aspect hex-shape" style={{ background: myTerritoryColor }} />

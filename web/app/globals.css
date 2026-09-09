@@ -403,6 +403,24 @@ body{
   box-shadow:var(--shadow);
   backdrop-filter: blur(6px);
 }
+/* Super-admin multi-select for bulk sector deletion (long-press a sector on
+   the map to start/extend it) — see MapScreen.tsx/LeafletMap.tsx. Top-center,
+   above the legend/header, only rendered while at least one sector is picked. */
+.map-selection-bar{
+  position:absolute; top:12px; left:50%; transform:translateX(-50%);
+  background:rgba(23,24,27,0.95); color:#fff;
+  border-radius:14px; padding:8px 8px 8px 14px;
+  display:flex; align-items:center; gap:10px;
+  font-size:13px; font-weight:700; white-space:nowrap;
+  z-index:800; box-shadow:var(--shadow);
+}
+.map-selection-bar-btn{
+  border:none; border-radius:10px; font-weight:700; font-size:12.5px;
+  padding:8px 12px; cursor:pointer; font-family:inherit;
+}
+.map-selection-bar-btn.delete{background:#D33; color:#fff;}
+.map-selection-bar-btn.cancel{background:rgba(255,255,255,0.12); color:#fff;}
+.map-selection-bar-btn:active{transform:scale(0.96);}
 .map-sheet-container{
   position:absolute; left:0; right:0; bottom:94px; z-index:700;
   display:flex; flex-direction:column; gap:9px;

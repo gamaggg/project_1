@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useTerritories, useConfirmCatch, useProfile, useRealtimeSync } from '@/lib/supabase/queries'
+import { useTerritories, useConfirmCatch, useProfile, useRealtimeSync, useIsSuperAdmin } from '@/lib/supabase/queries'
 import { getCurrentCoords, nearestTerritory } from '@/lib/geolocation'
 import { uploadCatchPhoto } from '@/lib/supabase/storage'
 import { useActivityReadState, useAdminActionsReadState } from '@/lib/activityRead'
@@ -27,6 +27,7 @@ import { UserProfileScreen } from '@/components/app-shell/screens/UserProfileScr
 import { ReportPhotoModal } from '@/components/app-shell/screens/ReportPhotoModal'
 import { DeleteCatchModal } from '@/components/app-shell/screens/DeleteCatchModal'
 import { DeleteTerritoryModal } from '@/components/app-shell/screens/DeleteTerritoryModal'
+import { BulkDeleteTerritoriesModal } from '@/components/app-shell/screens/BulkDeleteTerritoriesModal'
 import { DeleteUserModal } from '@/components/app-shell/screens/DeleteUserModal'
 import { AchievementUnlockedModal } from '@/components/app-shell/screens/AchievementUnlockedModal'
 import { AdminReportsScreen } from '@/components/app-shell/screens/AdminReportsScreen'
@@ -83,6 +84,7 @@ export function FishZoneApp() {
   const { user, loading: authLoading, signOut } = useAuth()
   const { data: myProfile, isLoading: myProfileLoading } = useProfile(user?.id ?? null)
   const { data: territories = [], isLoading: territoriesLoading, isSuccess: territoriesReady } = useTerritories()
+  const isSuperAdmin = useIsSuperAdmin()
   const confirmCatchMutation = useConfirmCatch()
   const mapHandleRef = useRef<LeafletMapHandle>(null)
   const { unreadIds, unreadCount, markAllRead } = useActivityReadState()
@@ -109,6 +111,12 @@ export function FishZoneApp() {
   const [reportingCatchId, setReportingCatchId] = useState<number | null>(null)
   const [deletingCatchId, setDeletingCatchId] = useState<number | null>(null)
   const [deletingTerritoryId, setDeletingTerritoryId] = useState<string | null>(null)
+  // Multi-select on the map for bulk deletion (super admin only) — a Set so
+  // toggling one sector doesn't touch the others, and a fresh Set instance on
+  // every change so LeafletMap's redraw effect (keyed on this by reference)
+  // picks it up.
+  const [selectedTerritoryIds, setSelectedTerritoryIds] = useState<Set<string>>(new Set())
+  const [confirmingBulkDelete, setConfirmingBulkDelete] = useState(false)
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
   const { data: deletingUserProfile } = useProfile(deletingUserId)
   const [pendingCatch, setPendingCatch] = useState<PendingCatch | null>(null)
@@ -188,6 +196,34 @@ export function FishZoneApp() {
     }
     setViewingTerritoryId(id)
     push({ screen: 'screen-territory', territoryId: id })
+  }
+  function toggleTerritorySelection(id: string) {
+    setSelectedTerritoryIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+  // Long-press start of a bulk-delete selection — only ever wired up for a
+  // super admin (see the <MapScreen> prop below), but double-checked here too.
+  function handleLongPressTerritory(id: string) {
+    if (!isSuperAdmin) return
+    toggleTerritorySelection(id)
+  }
+  // While a selection is active, a plain tap on the map picks/unpicks sectors
+  // instead of opening TerritoryScreen — but only for the map itself, so
+  // territory links elsewhere (list, activity feed) keep navigating normally
+  // even mid-selection.
+  function handleMapTerritoryClick(id: string) {
+    if (isSuperAdmin && selectedTerritoryIds.size > 0) {
+      toggleTerritorySelection(id)
+      return
+    }
+    openTerritory(id)
+  }
+  function cancelTerritorySelection() {
+    setSelectedTerritoryIds(new Set())
   }
   // Viewing yourself through this path (e.g. tapping your own name somewhere)
   // just goes to the real (editable) profile tab instead of a second read-only
@@ -371,7 +407,16 @@ export function FishZoneApp() {
     <div className="app-shell">
       <div className="screens">
         <Screen id="screen-map" current={currentScreen}>
-          <MapScreen ref={mapHandleRef} territories={territories} myTerritoryColor={myTerritoryColor} onOpenTerritory={openTerritory} />
+          <MapScreen
+            ref={mapHandleRef}
+            territories={territories}
+            myTerritoryColor={myTerritoryColor}
+            onOpenTerritory={handleMapTerritoryClick}
+            selectedIds={isSuperAdmin ? selectedTerritoryIds : undefined}
+            onLongPressTerritory={isSuperAdmin ? handleLongPressTerritory : undefined}
+            onDeleteSelected={() => setConfirmingBulkDelete(true)}
+            onCancelSelection={cancelTerritorySelection}
+          />
         </Screen>
         <Screen id="screen-territory" current={currentScreen}>
           {viewingTerritory && (
@@ -589,6 +634,17 @@ export function FishZoneApp() {
           onDeleted={() => {
             pop()
             showToast('Сектор удалён')
+          }}
+        />
+      )}
+      {confirmingBulkDelete && (
+        <BulkDeleteTerritoriesModal
+          territoryIds={[...selectedTerritoryIds]}
+          onClose={() => setConfirmingBulkDelete(false)}
+          onDeleted={() => {
+            const count = selectedTerritoryIds.size
+            setSelectedTerritoryIds(new Set())
+            showToast(count === 1 ? 'Сектор удалён' : `Секторов удалено: ${count}`)
           }}
         />
       )}

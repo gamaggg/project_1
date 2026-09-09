@@ -32,8 +32,14 @@ const LABEL_MIN_ZOOM = 14
 // Adjara's coast; SVG-per-polygon and always-on labels were measured as a problem).
 export const LeafletMap = forwardRef<
   LeafletMapHandle,
-  { territories: Territory[]; myTerritoryColor: string; onSelect: (id: string) => void }
->(function LeafletMap({ territories, myTerritoryColor, onSelect }, ref) {
+  {
+    territories: Territory[]
+    myTerritoryColor: string
+    onSelect: (id: string) => void
+    selectedIds?: Set<string>
+    onLongPressTerritory?: (id: string) => void
+  }
+>(function LeafletMap({ territories, myTerritoryColor, onSelect, selectedIds, onLongPressTerritory }, ref) {
     const containerRef = useRef<HTMLDivElement>(null)
     const mapRef = useRef<L.Map | null>(null)
     const leafletRef = useRef<typeof import('leaflet') | null>(null)
@@ -42,6 +48,12 @@ export const LeafletMap = forwardRef<
     const userMarkerRef = useRef<L.Marker | null>(null)
     const onSelectRef = useRef(onSelect)
     onSelectRef.current = onSelect
+    const onLongPressRef = useRef(onLongPressTerritory)
+    onLongPressRef.current = onLongPressTerritory
+    // Shared across every polygon (not per-polygon) so a press started on one
+    // sector and cancelled by, say, the map starting to pan can be cleared
+    // from a single map-level listener instead of one per polygon.
+    const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     function draw(territories: Territory[]) {
       const L = leafletRef.current
@@ -51,15 +63,46 @@ export const LeafletMap = forwardRef<
       markersLayer.clearLayers()
       labelsLayer.clearLayers()
       territories.forEach((t) => {
-        const color = resolveTerritoryColor(t.status, myTerritoryColor)
+        const isSelectedForDeletion = selectedIds?.has(t.id) ?? false
+        const color = isSelectedForDeletion ? '#D33' : resolveTerritoryColor(t.status, myTerritoryColor)
         const poly = L.polygon(t.corners, {
           color,
-          weight: 1.5,
+          weight: isSelectedForDeletion ? 2.5 : 1.5,
           fillColor: color,
-          fillOpacity: t.status === 'free' ? 0.22 : 0.32,
+          fillOpacity: isSelectedForDeletion ? 0.5 : t.status === 'free' ? 0.22 : 0.32,
           opacity: 0.9,
         }).addTo(markersLayer)
-        poly.on('click', () => onSelectRef.current(t.id))
+        // Long-press (super admin only — onLongPressTerritory is only ever
+        // passed down when the caller already checked) starts/extends a
+        // multi-select for bulk deletion; a plain click on the SAME sector
+        // right after firing the long-press would otherwise toggle it back
+        // off immediately (Leaflet fires 'click' on release regardless), so
+        // that one click is swallowed via longPressFired.
+        let longPressFired = false
+        if (onLongPressRef.current) {
+          poly.on('mousedown', () => {
+            longPressFired = false
+            if (pressTimerRef.current) clearTimeout(pressTimerRef.current)
+            pressTimerRef.current = setTimeout(() => {
+              longPressFired = true
+              pressTimerRef.current = null
+              onLongPressRef.current?.(t.id)
+            }, 500)
+          })
+          poly.on('mouseup mouseout', () => {
+            if (pressTimerRef.current) {
+              clearTimeout(pressTimerRef.current)
+              pressTimerRef.current = null
+            }
+          })
+        }
+        poly.on('click', () => {
+          if (longPressFired) {
+            longPressFired = false
+            return
+          }
+          onSelectRef.current(t.id)
+        })
         L.marker([t.lat, t.lng], {
           icon: L.divIcon({ className: 'leaflet-territory-label', html: t.id, iconSize: [38, 16] }),
           interactive: false,
@@ -166,6 +209,15 @@ export const LeafletMap = forwardRef<
           if (!show && map.hasLayer(labelsLayerRef.current!)) map.removeLayer(labelsLayerRef.current!)
         }
         map.on('zoomend', updateLabelVisibility)
+        // A drag can start with a mousedown on a polygon — don't let that
+        // turn into a long-press selection once the map actually starts
+        // moving under it.
+        map.on('movestart', () => {
+          if (pressTimerRef.current) {
+            clearTimeout(pressTimerRef.current)
+            pressTimerRef.current = null
+          }
+        })
 
         draw(territories)
         updateLabelVisibility()
@@ -202,7 +254,7 @@ export const LeafletMap = forwardRef<
       if (!mapRef.current) return
       draw(territories)
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [territories, myTerritoryColor])
+    }, [territories, myTerritoryColor, selectedIds])
 
     return <div id="leafletMap" ref={containerRef} />
   }
