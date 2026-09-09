@@ -470,6 +470,7 @@ body{
   color:#fff; cursor:pointer;
   border:none;
 }
+.cam-round-btn.active{background:var(--accent);}
 .camera-view-intro .cam-round-btn{
   background:var(--surface); border:1px solid var(--line); box-shadow:var(--shadow-sm);
 }
