@@ -1,10 +1,21 @@
 'use client'
 
 import 'leaflet/dist/leaflet.css'
+import 'maplibre-gl/dist/maplibre-gl.css'
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import type L from 'leaflet'
 import type { Territory } from '@/lib/data/types'
 import { resolveTerritoryColor } from '@/lib/data/territoryColors'
+
+// OpenFreeMap's "Bright" style — free, no API key, no request quota (unlike
+// tile.openstreetmap.org, which OSM's own usage policy says isn't meant for
+// production traffic at our scale). Pinned to maplibre-gl v5, not v6: v6's
+// worker is a real ESM module file that imports a sibling file by relative
+// path, which Turbopack (this project's default bundler, see AGENTS.md)
+// doesn't emit correctly — the map mounts but no tile ever loads. v5's older
+// worker doesn't have that sibling-file dependency, so it isn't hit. See
+// DECISIONS.md.
+const BASEMAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/bright'
 
 export type LeafletMapHandle = {
   flyToTerritory: (id: string) => void
@@ -104,7 +115,7 @@ export const LeafletMap = forwardRef<
     // Init once. Deliberately not re-run on territory changes.
     useEffect(() => {
       let cancelled = false
-      import('leaflet').then((L) => {
+      Promise.all([import('leaflet'), import('@maplibre/maplibre-gl-leaflet')]).then(([L, { maplibreGL }]) => {
         if (cancelled || !containerRef.current || mapRef.current) return
         leafletRef.current = L
 
@@ -115,11 +126,25 @@ export const LeafletMap = forwardRef<
         })
         mapRef.current = map
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          subdomains: 'abc',
-          maxZoom: 19,
-        }).addTo(map)
-        L.control.attribution({ prefix: false }).addAttribution('© OpenStreetMap').addTo(map)
+        // attributionControl: false — this project supplies its own attribution
+        // (below) rather than trusting the style JSON's own `source.attribution`
+        // strings, which the bridge would otherwise inject verbatim into the
+        // Leaflet attribution control. Also sidesteps a disclosed maplibre-gl
+        // advisory (GHSA-jrc7-96c5-q579, XSS via DOM.sanitize() on third-party
+        // style attribution) — moot here regardless, since the bridge always
+        // hardcodes attributionControl: false on its own internal MapLibre
+        // instance and never touches that sanitizer, but no reason to also
+        // forward untrusted third-party text through Leaflet's unsanitized
+        // addAttribution() when we don't need to.
+        maplibreGL({ style: BASEMAP_STYLE_URL, attributionControl: false }).addTo(map)
+        L.control
+          .attribution({ prefix: false })
+          .addAttribution(
+            '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> · ' +
+              '<a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> · ' +
+              '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'
+          )
+          .addTo(map)
 
         markersLayerRef.current = L.layerGroup().addTo(map)
         labelsLayerRef.current = L.layerGroup()

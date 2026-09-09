@@ -1,9 +1,15 @@
 'use client'
 
 import 'leaflet/dist/leaflet.css'
+import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef } from 'react'
 import type { Territory } from '@/lib/data/types'
 import { resolveTerritoryColor } from '@/lib/data/territoryColors'
+
+// Same OpenFreeMap basemap as LeafletMap.tsx — see that file for why it's
+// pinned to maplibre-gl v5 (Turbopack) and why attributionControl is off
+// (GHSA-jrc7-96c5-q579).
+const BASEMAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/bright'
 
 // A static, single-sector preview for TerritoryScreen — not the interactive
 // multi-sector LeafletMap. The number/avatar overlay is plain HTML, not a
@@ -26,7 +32,7 @@ export function TerritoryThumbnailMap({
 
   useEffect(() => {
     let cancelled = false
-    import('leaflet').then((L) => {
+    Promise.all([import('leaflet'), import('@maplibre/maplibre-gl-leaflet')]).then(([L, { maplibreGL }]) => {
       if (cancelled || !containerRef.current) return
       const map = L.map(containerRef.current, {
         dragging: false,
@@ -40,7 +46,7 @@ export function TerritoryThumbnailMap({
         preferCanvas: true,
       })
       mapRef.current = map
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { subdomains: 'abc', maxZoom: 19 }).addTo(map)
+      maplibreGL({ style: BASEMAP_STYLE_URL, attributionControl: false }).addTo(map)
       const color = resolveTerritoryColor(territory.status, myTerritoryColor)
       const poly = L.polygon(territory.corners, {
         color,
