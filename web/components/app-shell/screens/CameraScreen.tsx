@@ -13,7 +13,15 @@ type TorchCapabilities = { torch?: boolean }
 // No "continue without photo" path anywhere here — a catch cannot be logged
 // without a real photo (see DECISIONS.md). Denied/error only ever offers a
 // retry of getUserMedia, never a way to skip past the camera.
-export function CameraScreen({ onBack, onCapture }: { onBack: () => void; onCapture: (blob: Blob) => void }) {
+export function CameraScreen({
+  active,
+  onBack,
+  onCapture,
+}: {
+  active: boolean
+  onBack: () => void
+  onCapture: (blob: Blob) => void
+}) {
   const [state, setState] = useState<CameraState>('intro')
   const [torchSupported, setTorchSupported] = useState(false)
   const [torchOn, setTorchOn] = useState(false)
@@ -34,7 +42,15 @@ export function CameraScreen({ onBack, onCapture }: { onBack: () => void; onCapt
   // localStorage flag (set once a request actually succeeds) is the fallback
   // that also works on iOS: getUserMedia itself resolves silently there when
   // the origin already has access, no repeat native prompt (see DECISIONS.md).
+  //
+  // Gated on `active`: this screen never unmounts on its own (screens stay
+  // mounted app-wide, only their CSS 'active' class toggles — see
+  // FishZoneApp), so it's already sitting in the tree, hidden, the moment the
+  // app first loads. Without this check that first mount alone would fire
+  // getUserMedia — and the native permission prompt with it — while the user
+  // is still looking at the map, with no camera screen in sight.
   useEffect(() => {
+    if (!active) return
     let cancelled = false
     if (localStorage.getItem(CAMERA_GRANTED_KEY) === '1') {
       void requestCamera()
@@ -50,7 +66,7 @@ export function CameraScreen({ onBack, onCapture }: { onBack: () => void; onCapt
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [active])
 
   // The <video> only mounts once state becomes 'live', so the stream can't be
   // attached at getUserMedia-resolve time (the ref is still null then) — attach

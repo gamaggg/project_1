@@ -388,7 +388,7 @@ export function FishZoneApp() {
           <UsersListScreen onBack={pop} onOpenUser={openUserProfile} />
         </Screen>
         <Screen id="screen-camera" current={currentScreen}>
-          <CameraScreen key={cameraSessionId} onBack={pop} onCapture={handleCapture} />
+          <CameraScreen key={cameraSessionId} active={currentScreen === 'screen-camera'} onBack={pop} onCapture={handleCapture} />
         </Screen>
         <Screen id="screen-confirm" current={currentScreen}>
           {catchTerritory && capturedPhoto && (confirmStep === 'form' || pendingCatch) && (
