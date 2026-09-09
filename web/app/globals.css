@@ -532,6 +532,16 @@ body{
   animation:spin 0.8s linear infinite;
 }
 @keyframes spin{to{transform:rotate(360deg);}}
+.loading-shell{
+  background:var(--accent);
+  align-items:center; justify-content:center; gap:28px;
+}
+.loading-shell-logo{
+  width:112px; height:auto;
+  /* logo_1.svg is a solid #ff6a1f fill — brightness(0) flattens it to black,
+     invert(1) flips that to white so it reads on the orange background. */
+  filter:brightness(0) invert(1);
+}
 .info-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px 16px; margin-top:4px;}
 .info-grid .label{font-size:11.5px; color:var(--ink-soft); font-weight:700; margin-bottom:4px; letter-spacing:0.1px;}
 .info-grid .value{font-size:15.5px; font-weight:800; letter-spacing:-0.1px;}

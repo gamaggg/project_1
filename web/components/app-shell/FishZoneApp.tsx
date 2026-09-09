@@ -633,8 +633,10 @@ function Screen({ id, current, children }: { id: ScreenId; current: ScreenId; ch
 
 function LoadingShell() {
   return (
-    <div className="app-shell" style={{ alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-soft)' }}>Загрузка RANGE…</div>
+    <div className="app-shell loading-shell">
+      {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, same as MapScreen's brandmark */}
+      <img src="/brand/logo_1.svg" alt="RANGE" className="loading-shell-logo" />
+      <div className="spinner" />
     </div>
   )
 }
