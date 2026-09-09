@@ -79,12 +79,12 @@ type StackEntry =
 export function FishZoneApp() {
   const { user, loading: authLoading, signOut } = useAuth()
   const { data: myProfile, isLoading: myProfileLoading } = useProfile(user?.id ?? null)
-  const { data: territories = [], isLoading: territoriesLoading } = useTerritories()
+  const { data: territories = [], isLoading: territoriesLoading, isSuccess: territoriesReady } = useTerritories()
   const confirmCatchMutation = useConfirmCatch()
   const mapHandleRef = useRef<LeafletMapHandle>(null)
   const { unreadIds, unreadCount, markAllRead } = useActivityReadState()
   const { unreadCount: adminLogUnreadCount, markAllRead: markAdminLogRead } = useAdminActionsReadState()
-  const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories)
+  const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories, territoriesReady)
 
   const [stack, setStack] = useState<StackEntry[]>([{ screen: 'screen-map' }])
   const [navScreen, setNavScreen] = useState<TabScreenId>('screen-map')

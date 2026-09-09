@@ -27,12 +27,18 @@ function writeSeen(userId: string, seen: Set<Achievement['icon']>) {
 // that set to whatever's already unlocked (no popup for pre-existing progress),
 // gated on all three queries actually resolving so we never bootstrap against
 // a still-loading (falsely empty) achievement list.
-export function useAchievementUnlock(territories: Territory[]) {
+export function useAchievementUnlock(territories: Territory[], territoriesReady: boolean) {
   const { user } = useAuth()
   const catchesQ = useCatchesByUser(user?.id ?? null)
   const profileQ = useProfile(user?.id ?? null)
   const claimedQ = useHasClaimedFromOthers(user?.id ?? null)
-  const ready = catchesQ.isSuccess && profileQ.isSuccess && claimedQ.isSuccess
+  // territoriesReady comes from the caller's own useTerritories() — without it,
+  // territory-dependent achievements briefly compute against an empty []
+  // (its default before that query resolves) whenever it happens to resolve
+  // *after* the three queries above, and the prune step below then wrongly
+  // reads that blip as "no longer unlocked" and wipes it from "seen",
+  // re-popping the modal once real data arrives (see DECISIONS.md).
+  const ready = catchesQ.isSuccess && profileQ.isSuccess && claimedQ.isSuccess && territoriesReady
 
   const myTerritories = territories.filter((t) => t.ownerId === user?.id)
   const achievements = computeAchievements(catchesQ.data ?? [], {
