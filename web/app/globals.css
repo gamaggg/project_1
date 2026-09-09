@@ -779,7 +779,6 @@ body{
 .onboarding-welcome-title span{display:block;}
 .onboarding-welcome-title-accent{color:var(--accent);}
 .onboarding-welcome-sub{font-size:14px; color:var(--ink-soft); line-height:1.5; text-align:left;}
-.onboarding-welcome-card .btn-primary{margin-top:38px;}
 .onboarding-welcome-link{background:none; border:none; color:var(--ink-soft); font-weight:700; font-size:14px; font-family:inherit; cursor:pointer; padding:4px;}
 
 .onboarding-step{
