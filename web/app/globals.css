@@ -360,6 +360,21 @@ body{
    real sector polygons — see DECISIONS.md hex-shape-consistency fix. */
 .hex-aspect{ aspect-ratio: 2 / 1.7320508; }
 .hex-shape{ clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); }
+
+/* ---------- HexBadge (see HexBadge.tsx) — stacked hex-shape layers instead of
+   an SVG polygon+stroke, so the "stroke" (the .hexbadge-stroke ring peeking out
+   from behind .hexbadge-fill) is a true, evenly-thick hex outline at any size,
+   never distorted by a non-uniformly-scaled viewBox. ---------- */
+.hexbadge{ position:relative; width:100%; height:100%; }
+.hexbadge-stroke{ position:absolute; inset:0; }
+.hexbadge-stroke.on{ background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.15)); }
+.hexbadge-stroke.off{ background:#DAD8D0; }
+.hexbadge-fill{ position:absolute; }
+.hexbadge-fill.on{ background:linear-gradient(165deg,#FFB067,#FC5200 55%,#D94400); }
+.hexbadge-fill.off{ background:linear-gradient(180deg,#F5F4F0,#E5E3DC); }
+.hexbadge-gloss{ position:absolute; pointer-events:none; background:radial-gradient(circle at 32% 16%, rgba(255,255,255,.55), transparent 60%); }
+.hexbadge-icon{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; }
+.hexbadge-icon.off{ color:var(--ink-faint); }
 .legend-dot{
   width:9px; display:inline-block; margin-right:6px;
 }
@@ -563,13 +578,11 @@ body{
   position:absolute; top:14px; right:14px; width:58px; aspect-ratio:2/1.7320508; z-index:5;
   animation:trophyStampIn .5s 1.05s cubic-bezier(.3,1.7,.4,1) both;
 }
-.catch-trophy-stamp-hex{width:100%; height:100%; display:block;}
 @keyframes trophyStampIn{
   0%{opacity:0; transform:scale(2.2) rotate(-16deg);}
   70%{opacity:1;}
   100%{opacity:1; transform:scale(1) rotate(0deg);}
 }
-.catch-trophy-stamp-fg{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff;}
 .catch-trophy-stamp-ring{
   position:absolute; inset:-12px; border-radius:50%; border:2px solid rgba(255,255,255,.55); opacity:0;
   animation:trophyRing .7s 1.15s ease-out both;
@@ -604,10 +617,12 @@ body{
   100%{opacity:0; transform:translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1) rotate(var(--rot));}
 }
 .unlock-modal-eyebrow{font-size:11.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--accent); margin-bottom:16px; position:relative;}
-.unlock-modal-badge{width:92px; aspect-ratio:2/1.7320508; margin:0 auto 18px; position:relative; animation:unlockBadgeIn .6s .1s cubic-bezier(.34,1.56,.64,1) both;}
+.unlock-modal-badge{
+  width:92px; aspect-ratio:2/1.7320508; margin:0 auto 18px; position:relative;
+  filter:drop-shadow(0 14px 24px rgba(252,82,0,.32));
+  animation:unlockBadgeIn .6s .1s cubic-bezier(.34,1.56,.64,1) both;
+}
 @keyframes unlockBadgeIn{from{opacity:0; transform:scale(.4) rotate(-14deg);} to{opacity:1; transform:scale(1) rotate(0);}}
-.unlock-modal-hex{width:100%; height:100%; display:block; filter:drop-shadow(0 14px 24px rgba(252,82,0,.32));}
-.unlock-modal-badge-fg{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff;}
 .unlock-modal-close{
   background:none; border:none; color:var(--ink-soft); font-weight:700; font-size:13.5px;
   font-family:inherit; padding:14px 6px 6px; cursor:pointer; width:100%;
@@ -687,13 +702,6 @@ body{
 .screen.active .ach-detail-badge{transform:scale(1) rotate(0deg); opacity:1;}
 .ach-detail-badge.on{filter:drop-shadow(0 24px 40px rgba(252,82,0,0.32));}
 .ach-detail-badge.off{filter:drop-shadow(0 14px 24px rgba(23,24,27,0.12));}
-.ach-detail-hex{position:absolute; inset:0; width:100%; height:100%;}
-.ach-detail-icon-fg{
-  position:absolute; inset:0;
-  display:flex; align-items:center; justify-content:center;
-  color:#fff;
-}
-.ach-detail-icon-fg.off{color:var(--ink-faint);}
 .ach-detail-title{font-size:21px; font-weight:800; letter-spacing:-0.2px; text-align:center;}
 .ach-detail-desc{font-size:14.5px; color:var(--ink-soft); line-height:1.5; margin:10px auto 0; text-align:center; max-width:280px;}
 .ach-detail-progress{font-size:13px; color:var(--ink-faint); font-weight:700; margin-top:16px; text-align:center;}

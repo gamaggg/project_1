@@ -141,7 +141,7 @@ export function computeAchievements(myCatches: Catch[], ctx: AchievementContext)
       progress: `${Math.min(followersCount, POPULAR_TARGET)}/${POPULAR_TARGET}`,
     },
     { icon: 'conqueror', title: 'Отбил территорию', desc: 'Занял сектор, который раньше принадлежал другому', unlocked: claimedFromOthers },
-  ]
+  ].sort((a, b) => Number(b.unlocked) - Number(a.unlocked)) // unlocked first, stable otherwise
 }
 
 // Only among catches where a size was actually given — see DECISIONS.md, size

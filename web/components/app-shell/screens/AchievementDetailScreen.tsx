@@ -4,6 +4,7 @@ import { cloneElement, type ReactElement } from 'react'
 import { useCatchesByUser, useProfile, useHasClaimedFromOthers } from '@/lib/supabase/queries'
 import { computeAchievements, type Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
+import { HexBadge } from '@/components/app-shell/HexBadge'
 import type { Territory } from '@/lib/data/types'
 
 // Single-achievement screen (pushed from a card tap in AchievementsScreen or
@@ -71,37 +72,11 @@ export function AchievementDetailScreen({
       </div>
       <div className="screen-inner ach-detail-inner">
         <div className={`ach-detail-badge hex-aspect ${achievement.unlocked ? 'on' : 'off'}`}>
-          <svg className="ach-detail-hex" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            <defs>
-              <linearGradient id="achHexFillOn" x1="0" y1="0" x2="0.25" y2="1">
-                <stop offset="0" stopColor="#FFB067" />
-                <stop offset="0.55" stopColor="#FC5200" />
-                <stop offset="1" stopColor="#D94400" />
-              </linearGradient>
-              <linearGradient id="achHexStrokeOn" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.95" />
-                <stop offset="1" stopColor="#FFFFFF" stopOpacity="0.1" />
-              </linearGradient>
-              <linearGradient id="achHexFillOff" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#F5F4F0" />
-                <stop offset="1" stopColor="#E5E3DC" />
-              </linearGradient>
-              <radialGradient id="achHexGloss" cx="32%" cy="16%" r="60%">
-                <stop offset="0" stopColor="#fff" stopOpacity="0.55" />
-                <stop offset="1" stopColor="#fff" stopOpacity="0" />
-              </radialGradient>
-            </defs>
-            <polygon
-              points="25,0 75,0 100,50 75,100 25,100 0,50"
-              fill={achievement.unlocked ? 'url(#achHexFillOn)' : 'url(#achHexFillOff)'}
-              stroke={achievement.unlocked ? 'url(#achHexStrokeOn)' : '#DAD8D0'}
-              strokeWidth="2.5"
-            />
-            <polygon points="25,0 75,0 100,50 75,100 25,100 0,50" fill="url(#achHexGloss)" />
-          </svg>
-          <div className={`ach-detail-icon-fg ${achievement.unlocked ? 'on' : 'off'}`}>
-            {cloneElement(ACH_ICONS[achievement.icon] as ReactElement<{ width: number; height: number }>, { width: 100, height: 100 })}
-          </div>
+          <HexBadge
+            unlocked={achievement.unlocked}
+            strokeWidth={7}
+            icon={cloneElement(ACH_ICONS[achievement.icon] as ReactElement<{ width: number; height: number }>, { width: 100, height: 100 })}
+          />
         </div>
         <div className="ach-detail-title">{achievement.title}</div>
         <div className="ach-detail-desc">{achievement.desc}</div>

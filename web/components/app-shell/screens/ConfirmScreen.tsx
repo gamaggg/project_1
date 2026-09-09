@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSpecies } from '@/lib/supabase/queries'
 import { CATEGORY_LABEL, KIND_LABEL, METHODS, BAITS, categoryForKind, type SpeciesCategory } from '@/lib/data/species'
 import { formatWeight } from '@/lib/format'
+import { HexBadge } from '@/components/app-shell/HexBadge'
 import type { PendingCatch, Territory } from '@/lib/data/types'
 
 export type CatchFormData = {
@@ -97,21 +98,15 @@ export function ConfirmScreen({
             </div>
             <div className="catch-trophy-stamp">
               <div className="catch-trophy-stamp-ring" />
-              <svg className="catch-trophy-stamp-hex" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="catchStampFill" x1="0" y1="0" x2="0.25" y2="1">
-                    <stop offset="0" stopColor="#FFB067" />
-                    <stop offset="0.55" stopColor="#FC5200" />
-                    <stop offset="1" stopColor="#D94400" />
-                  </linearGradient>
-                </defs>
-                <polygon points="25,0 75,0 100,50 75,100 25,100 0,50" fill="url(#catchStampFill)" stroke="#fff" strokeWidth="2.5" />
-              </svg>
-              <div className="catch-trophy-stamp-fg">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M3 8l4 3 5-6 5 6 4-3-2 11H5L3 8z" />
-                </svg>
-              </div>
+              <HexBadge
+                unlocked
+                strokeWidth={2.5}
+                icon={
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 8l4 3 5-6 5 6 4-3-2 11H5L3 8z" />
+                  </svg>
+                }
+              />
             </div>
           </div>
         </div>
