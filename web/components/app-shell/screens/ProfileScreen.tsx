@@ -194,6 +194,8 @@ export function ProfileScreen({
   myTerritories,
   allTerritories,
   onOpenTerritory,
+  onOpenAllTerritories,
+  onOpenAllCatches,
   onSignOut,
   onEditProfile,
   onChangeColor,
@@ -209,6 +211,8 @@ export function ProfileScreen({
   myTerritories: Territory[]
   allTerritories: Territory[]
   onOpenTerritory: (id: string) => void
+  onOpenAllTerritories: () => void
+  onOpenAllCatches: () => void
   onSignOut: () => void
   onEditProfile: () => void
   onChangeColor: () => void
@@ -241,6 +245,7 @@ export function ProfileScreen({
     claimedFromOthers,
   })
   const recentMine = myCatches.slice(0, 3)
+  const visibleTerritories = myTerritories.slice(0, 5)
   const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
 
   async function handleShareProfile() {
@@ -349,17 +354,22 @@ export function ProfileScreen({
           <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет уловов</div>
         )}
       </div>
+      {myCatches.length > recentMine.length && (
+        <button className="btn-secondary" style={{ marginTop: 12 }} onClick={onOpenAllCatches}>
+          Показать все
+        </button>
+      )}
 
       <div className="section-title" style={{ marginTop: 24 }}>
         Мои территории
       </div>
       <div className="card" style={{ overflow: 'hidden' }}>
-        {myTerritories.length ? (
-          myTerritories.map((t, i) => (
+        {visibleTerritories.length ? (
+          visibleTerritories.map((t, i) => (
             <button
               key={t.id}
               className="terr-list-item"
-              style={{ borderBottom: i < myTerritories.length - 1 ? '1px solid var(--line)' : 'none' }}
+              style={{ borderBottom: i < visibleTerritories.length - 1 ? '1px solid var(--line)' : 'none' }}
               onClick={() => onOpenTerritory(t.id)}
             >
               <div
@@ -379,6 +389,11 @@ export function ProfileScreen({
           <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет своих территорий</div>
         )}
       </div>
+      {myTerritories.length > visibleTerritories.length && (
+        <button className="btn-secondary" style={{ marginTop: 12 }} onClick={onOpenAllTerritories}>
+          Все мои территории
+        </button>
+      )}
 
       <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
         <button className="btn-secondary" style={{ flex: 1 }} onClick={onChangeColor}>

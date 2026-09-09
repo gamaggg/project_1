@@ -9,7 +9,7 @@ import { useActivityReadState, useAdminActionsReadState } from '@/lib/activityRe
 import { useAchievementUnlock } from '@/lib/achievementUnlock'
 import { formatCooldown } from '@/lib/format'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
-import type { PendingCatch } from '@/lib/data/types'
+import type { PendingCatch, TerritoryStatus } from '@/lib/data/types'
 import { OnboardingFlow } from '@/components/app-shell/onboarding/OnboardingFlow'
 import { BottomNav } from '@/components/app-shell/BottomNav'
 import { PhotoLightbox } from '@/components/app-shell/PhotoLightbox'
@@ -17,6 +17,7 @@ import { MapScreen } from '@/components/app-shell/screens/MapScreen'
 import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import { TerritoryScreen } from '@/components/app-shell/screens/TerritoryScreen'
 import { TerritoriesListScreen } from '@/components/app-shell/screens/TerritoriesListScreen'
+import { MyCatchesScreen } from '@/components/app-shell/screens/MyCatchesScreen'
 import { UsersListScreen } from '@/components/app-shell/screens/UsersListScreen'
 import { CameraScreen } from '@/components/app-shell/screens/CameraScreen'
 import { ConfirmScreen, type CatchFormData, type PhotoStatus } from '@/components/app-shell/screens/ConfirmScreen'
@@ -39,6 +40,7 @@ export type ScreenId =
   | 'screen-map'
   | 'screen-territory'
   | 'screen-territories'
+  | 'screen-catches'
   | 'screen-users'
   | 'screen-camera'
   | 'screen-confirm'
@@ -63,7 +65,8 @@ const NAV_SCREENS: ScreenId[] = ['screen-map', 'screen-territories', 'screen-act
 type StackEntry =
   | { screen: 'screen-map' }
   | { screen: 'screen-territory'; territoryId: string }
-  | { screen: 'screen-territories' }
+  | { screen: 'screen-territories'; initialFilter?: TerritoryStatus }
+  | { screen: 'screen-catches' }
   | { screen: 'screen-users' }
   | { screen: 'screen-camera' }
   | { screen: 'screen-confirm' }
@@ -130,7 +133,9 @@ export function FishZoneApp() {
   }
   useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current) }, [])
 
-  const currentScreen: ScreenId = stack[stack.length - 1].screen
+  const topEntry = stack[stack.length - 1]
+  const currentScreen: ScreenId = topEntry.screen
+  const territoriesInitialFilter = topEntry.screen === 'screen-territories' ? topEntry.initialFilter : undefined
   // The trophy-card celebration is full-bleed and edge-to-edge on purpose —
   // both the nav and any achievement popup stay off it, see below.
   const showingTrophyScene = currentScreen === 'screen-confirm' && confirmStep === 'success'
@@ -163,6 +168,13 @@ export function FishZoneApp() {
   function navClick(id: TabScreenId) {
     resetTo({ screen: id })
     setNavScreen(id)
+  }
+  // "Все мои территории" from the profile — jumps to the same Территории tab
+  // (pre-filtered to "Мои"), same as tapping the tab itself, not a drill-in
+  // (see DECISIONS.md: TerritoriesListScreen has no back button, it's a tab).
+  function openMyTerritories() {
+    resetTo({ screen: 'screen-territories', initialFilter: 'mine' })
+    setNavScreen('screen-territories')
   }
   function openTerritory(id: string) {
     // A "Последние действия"/activity link can point at a sector a super
@@ -380,9 +392,13 @@ export function FishZoneApp() {
           <TerritoriesListScreen
             territories={territories}
             myTerritoryColor={myTerritoryColor}
+            initialFilter={territoriesInitialFilter}
             onOpenTerritory={openTerritory}
             onOpenUsersList={() => push({ screen: 'screen-users' })}
           />
+        </Screen>
+        <Screen id="screen-catches" current={currentScreen}>
+          {user && <MyCatchesScreen userId={user.id} onBack={pop} onOpenPhoto={setLightboxSrc} />}
         </Screen>
         <Screen id="screen-users" current={currentScreen}>
           <UsersListScreen onBack={pop} onOpenUser={openUserProfile} />
@@ -416,6 +432,8 @@ export function FishZoneApp() {
             myTerritories={myTerritories}
             allTerritories={territories}
             onOpenTerritory={openTerritory}
+            onOpenAllTerritories={openMyTerritories}
+            onOpenAllCatches={() => push({ screen: 'screen-catches' })}
             onSignOut={() => setConfirmingSignOut(true)}
             onEditProfile={() => setEditingProfile(true)}
             onChangeColor={() => setChangingColor(true)}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Territory, TerritoryStatus } from '@/lib/data/types'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatWhen } from '@/lib/format'
@@ -12,15 +12,25 @@ type Filter = 'all' | TerritoryStatus
 export function TerritoriesListScreen({
   territories,
   myTerritoryColor,
+  initialFilter,
   onOpenTerritory,
   onOpenUsersList,
 }: {
   territories: Territory[]
   myTerritoryColor: string
+  initialFilter?: Filter
   onOpenTerritory: (id: string) => void
   onOpenUsersList: () => void
 }) {
-  const [filter, setFilter] = useState<Filter>('all')
+  const [filter, setFilter] = useState<Filter>(initialFilter ?? 'all')
+  // This screen (like every other one in the app-shell) never unmounts — only
+  // its CSS 'active' class toggles — so the useState initial value above only
+  // ever applies to the very first app load. Re-sync whenever a fresh
+  // initialFilter comes in (e.g. "Все мои территории" from the profile),
+  // so it isn't stuck showing whatever filter was picked last time.
+  useEffect(() => {
+    if (initialFilter) setFilter(initialFilter)
+  }, [initialFilter])
   const list = territories.filter((t) => (filter === 'all' ? true : t.status === filter))
   const isAdmin = useIsAdmin()
 
