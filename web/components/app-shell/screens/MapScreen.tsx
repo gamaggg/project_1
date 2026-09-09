@@ -36,6 +36,16 @@ export const MapScreen = forwardRef<
     zoomOut: () => mapRef.current?.zoomOut(),
   }))
   const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Set by a real touch/wheel gesture starting on the carousel, consumed (and
+  // cleared) the next time a scroll settles — distinguishes an actual swipe
+  // from the browser just firing 'scroll' because `territories` re-sorted out
+  // from under the current scrollLeft (it's sorted by catch count; realtime
+  // now reorders it for every connected client, not just the one who caught
+  // something — see DECISIONS.md). Without this, another user's catch could
+  // reshuffle the cards under a client that never touched the carousel, and
+  // whichever card ended up nearest the old scrollLeft would yank their map
+  // to an unrelated sector.
+  const userScrollRef = useRef(false)
 
   // Self-contained "locate me" button — just recenters the map on the
   // visitor's position, unrelated to the "+" catch flow (no sector matching,
@@ -48,10 +58,17 @@ export const MapScreen = forwardRef<
     mapRef.current?.flyToLocation(coords.lat, coords.lng)
   }
 
+  function markUserScroll() {
+    userScrollRef.current = true
+  }
+
   function handleScroll(e: React.UIEvent<HTMLDivElement>) {
     const wrap = e.currentTarget
     if (scrollTimer.current) clearTimeout(scrollTimer.current)
     scrollTimer.current = setTimeout(() => {
+      const wasUserScroll = userScrollRef.current
+      userScrollRef.current = false
+      if (!wasUserScroll) return
       const cards = wrap.querySelectorAll<HTMLElement>('.map-sheet-card')
       let closest = 0
       let min = Infinity
@@ -110,7 +127,7 @@ export const MapScreen = forwardRef<
           </button>
         </div>
         <div className="map-sheet-container">
-          <div className="map-sheet-row" onScroll={handleScroll}>
+          <div className="map-sheet-row" onScroll={handleScroll} onPointerDown={markUserScroll} onWheel={markUserScroll}>
             {territories.map((t) => (
               <div className="map-sheet-card" key={t.id} data-id={t.id}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
