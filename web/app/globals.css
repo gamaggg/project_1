@@ -742,8 +742,8 @@ body{
    covering the headline instead of sitting behind it. Negative puts it back
    with the container's own background, below all normal content. */
 .onboarding-welcome-splash{position:absolute; z-index:-1; pointer-events:none; height:auto; transform:translateY(-50%);}
-.onboarding-welcome-splash--left{left:0; top:41%; width:14.9dvh;}
-.onboarding-welcome-splash--right{right:0; top:76%; width:11.5dvh;}
+.onboarding-welcome-splash--left{left:0; top:31%; width:14.9dvh;}
+.onboarding-welcome-splash--right{right:0; top:70%; width:11.5dvh;}
 .onboarding-welcome-logo{
   flex:1 1 auto; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
 }
