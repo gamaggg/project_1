@@ -67,12 +67,15 @@ export function AchievementUnlockedModal({
           ))}
         </div>
         <div className="unlock-modal-eyebrow">Достижение открыто</div>
-        <div className="unlock-modal-badge">
-          <HexBadge
-            unlocked
-            strokeWidth={3}
-            icon={cloneElement(ACH_ICONS[achievement.icon] as ReactElement<{ width: number; height: number }>, { width: 38, height: 38 })}
-          />
+        <div className="unlock-modal-badge-outer">
+          <div className="unlock-modal-badge-glow" />
+          <div className="unlock-modal-badge">
+            <HexBadge
+              unlocked
+              strokeWidth={3}
+              icon={cloneElement(ACH_ICONS[achievement.icon] as ReactElement<{ width: number; height: number }>, { width: 38, height: 38 })}
+            />
+          </div>
         </div>
         <div className="modal-title">{achievement.title}</div>
         <div className="modal-body" style={{ marginBottom: 22 }}>

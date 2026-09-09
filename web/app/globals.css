@@ -601,7 +601,7 @@ body{
 /* ---------- Achievement-unlocked modal (see AchievementUnlockedModal) ---------- */
 .unlock-modal-card{
   position:relative; background:var(--surface); border-radius:var(--radius-l);
-  padding:30px 22px 8px; max-width:320px; width:100%;
+  padding:30px 22px 22px; max-width:320px; width:100%;
   box-shadow:var(--shadow-lg); text-align:center;
 }
 .unlock-modal-confetti{position:absolute; inset:0; pointer-events:none; overflow:visible;}
@@ -617,9 +617,21 @@ body{
   100%{opacity:0; transform:translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1) rotate(var(--rot));}
 }
 .unlock-modal-eyebrow{font-size:11.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--accent); margin-bottom:16px; position:relative;}
+.unlock-modal-badge-outer{width:92px; aspect-ratio:2/1.7320508; margin:0 auto 18px; position:relative; isolation:isolate;}
+/* Glow lives on its own static (non-transformed) layer, separate from the
+   badge that scales/rotates in — combining filter:drop-shadow with an
+   animated transform on the same element renders the shadow clipped to a
+   rectangular pre-transform layer on iOS Safari once the animation settles
+   ("boxed in"). Blur here + no transform sidesteps that entirely. */
+.unlock-modal-badge-glow{
+  position:absolute; inset:-22%; z-index:-1; border-radius:50%;
+  background:radial-gradient(circle, rgba(252,82,0,.4), transparent 70%);
+  filter:blur(14px);
+  opacity:0; animation:unlockGlowIn .5s .25s ease both;
+}
+@keyframes unlockGlowIn{to{opacity:1;}}
 .unlock-modal-badge{
-  width:92px; aspect-ratio:2/1.7320508; margin:0 auto 18px; position:relative;
-  filter:drop-shadow(0 14px 24px rgba(252,82,0,.32));
+  width:100%; height:100%; position:relative;
   animation:unlockBadgeIn .6s .1s cubic-bezier(.34,1.56,.64,1) both;
 }
 @keyframes unlockBadgeIn{from{opacity:0; transform:scale(.4) rotate(-14deg);} to{opacity:1; transform:scale(1) rotate(0);}}
@@ -692,16 +704,25 @@ body{
   flex:1 1 auto; display:flex; flex-direction:column;
   align-items:center; justify-content:center;
 }
+.ach-detail-badge-outer{position:relative; isolation:isolate; width:288px; margin:0 auto 26px;}
+/* Glow is a separate static (non-transformed) layer — filter:drop-shadow
+   combined with an animated transform on the same element renders the
+   shadow clipped to a rectangular pre-transform layer on iOS Safari once
+   the transition settles ("boxed in"). Blur here + no transform avoids it. */
+.ach-detail-badge-glow{
+  position:absolute; inset:-14%; z-index:-1; border-radius:50%;
+  filter:blur(20px); opacity:0; transition:opacity .5s ease .15s;
+}
+.ach-detail-badge-glow.on{background:radial-gradient(circle, rgba(252,82,0,.4), transparent 70%);}
+.ach-detail-badge-glow.off{background:radial-gradient(circle, rgba(23,24,27,.16), transparent 70%);}
+.screen.active .ach-detail-badge-glow{opacity:1;}
 .ach-detail-badge{
-  position:relative; width:288px;
-  margin:0 auto 26px;
+  position:relative; width:100%; height:100%;
   transform:scale(0.4) rotate(-6deg);
   opacity:0;
   transition:transform .55s cubic-bezier(.34,1.56,.64,1), opacity .4s ease;
 }
 .screen.active .ach-detail-badge{transform:scale(1) rotate(0deg); opacity:1;}
-.ach-detail-badge.on{filter:drop-shadow(0 24px 40px rgba(252,82,0,0.32));}
-.ach-detail-badge.off{filter:drop-shadow(0 14px 24px rgba(23,24,27,0.12));}
 .ach-detail-title{font-size:21px; font-weight:800; letter-spacing:-0.2px; text-align:center;}
 .ach-detail-desc{font-size:14.5px; color:var(--ink-soft); line-height:1.5; margin:10px auto 0; text-align:center; max-width:280px;}
 .ach-detail-progress{font-size:13px; color:var(--ink-faint); font-weight:700; margin-top:16px; text-align:center;}
@@ -906,7 +927,7 @@ body{
   .catch-trophy-shine, .catch-trophy-stamp-ring{display:none !important;}
   .catch-trophy-stamp{animation:none !important; opacity:1 !important; transform:none !important;}
   .unlock-confetti-piece{display:none !important;}
-  .unlock-modal-badge{animation:none !important; opacity:1 !important; transform:none !important;}
+  .unlock-modal-badge, .unlock-modal-badge-glow{animation:none !important; opacity:1 !important; transform:none !important;}
 }
 
 /* Glossy, slightly-3D circles — same depth treatment as .fish-thumb (shadow + inset rim + radial highlight). */

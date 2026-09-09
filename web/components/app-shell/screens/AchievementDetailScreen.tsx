@@ -71,12 +71,15 @@ export function AchievementDetailScreen({
         )}
       </div>
       <div className="screen-inner ach-detail-inner">
-        <div className={`ach-detail-badge hex-aspect ${achievement.unlocked ? 'on' : 'off'}`}>
-          <HexBadge
-            unlocked={achievement.unlocked}
-            strokeWidth={7}
-            icon={cloneElement(ACH_ICONS[achievement.icon] as ReactElement<{ width: number; height: number }>, { width: 100, height: 100 })}
-          />
+        <div className="ach-detail-badge-outer hex-aspect">
+          <div className={`ach-detail-badge-glow ${achievement.unlocked ? 'on' : 'off'}`} />
+          <div className="ach-detail-badge">
+            <HexBadge
+              unlocked={achievement.unlocked}
+              strokeWidth={7}
+              icon={cloneElement(ACH_ICONS[achievement.icon] as ReactElement<{ width: number; height: number }>, { width: 100, height: 100 })}
+            />
+          </div>
         </div>
         <div className="ach-detail-title">{achievement.title}</div>
         <div className="ach-detail-desc">{achievement.desc}</div>
