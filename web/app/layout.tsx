@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Manrope, Bebas_Neue } from 'next/font/google'
+import { Manrope, Oswald } from 'next/font/google'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import './globals.css'
@@ -10,10 +10,10 @@ const manrope = Manrope({
   variable: '--font-manrope',
 })
 
-const bebasNeue = Bebas_Neue({
-  subsets: ['cyrillic'],
-  weight: '400',
-  variable: '--font-bebas',
+const oswald = Oswald({
+  subsets: ['latin', 'cyrillic'],
+  weight: '700',
+  variable: '--font-display',
 })
 
 export const metadata: Metadata = {
@@ -37,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ru">
       <body
-        className={`${manrope.variable} ${bebasNeue.variable}`}
+        className={`${manrope.variable} ${oswald.variable}`}
         style={{ fontFamily: 'var(--font-manrope), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}
       >
         <QueryProvider>
