@@ -680,7 +680,7 @@ body{
 }
 .onboarding-welcome-title{
   font-family:var(--font-display), 'Manrope', sans-serif; font-weight:700; text-transform:uppercase;
-  font-size:52px; line-height:.92; letter-spacing:.01em; color:var(--ink);
+  font-size:63px; line-height:1.1; letter-spacing:.01em; color:var(--ink);
   text-align:left;
 }
 .onboarding-welcome-title span{display:block;}
