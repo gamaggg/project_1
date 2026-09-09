@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useTerritories, useConfirmCatch, useProfile } from '@/lib/supabase/queries'
+import { useTerritories, useConfirmCatch, useProfile, useRealtimeSync } from '@/lib/supabase/queries'
 import { getCurrentCoords, nearestTerritory } from '@/lib/geolocation'
 import { uploadCatchPhoto } from '@/lib/supabase/storage'
 import { useActivityReadState, useAdminActionsReadState } from '@/lib/activityRead'
@@ -88,6 +88,7 @@ export function FishZoneApp() {
   const { unreadIds, unreadCount, markAllRead } = useActivityReadState()
   const { unreadCount: adminLogUnreadCount, markAllRead: markAdminLogRead } = useAdminActionsReadState()
   const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories, territoriesReady)
+  useRealtimeSync()
 
   const [stack, setStack] = useState<StackEntry[]>([{ screen: 'screen-map' }])
   const [navScreen, setNavScreen] = useState<TabScreenId>('screen-map')

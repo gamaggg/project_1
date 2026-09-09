@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -73,6 +74,40 @@ export function useTerritories() {
     },
     enabled: geometry.isSuccess,
   })
+}
+
+// Without this, territories/catches/activity only ever refresh from this
+// tab's own mutations (the invalidateQueries calls below), a window refocus,
+// or a reload — another user's capture never reaches an already-open tab on
+// its own (see DECISIONS.md). One shared channel for the session, mirroring
+// the same query keys those mutations already invalidate on success; the
+// payload itself is ignored; a change just means "go refetch" and the
+// existing queries re-apply their own filtering/sorting/RLS as normal.
+export function useRealtimeSync() {
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+
+  useEffect(() => {
+    if (!user) return
+    const supabase = createClient()
+    const channel = supabase
+      .channel('territory-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'territories' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['territories'] })
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'catches' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['territories'] })
+        queryClient.invalidateQueries({ queryKey: ['catches'] })
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['activity'] })
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user, queryClient])
 }
 
 // Reference data (36 species, sea/river/stream/lake) — read-only, cached like
