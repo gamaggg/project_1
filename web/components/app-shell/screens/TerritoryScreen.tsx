@@ -12,7 +12,8 @@ function statusBadge(status: Territory['status'], myTerritoryColor: string) {
   if (status === 'mine')
     return (
       <span className="badge" style={{ background: withAlpha(myTerritoryColor, 0.16), color: darkenForBadgeText(myTerritoryColor) }}>
-        Моя территория
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4 3 5-6 5 6 4-3-2 11H5L3 8z" /></svg>
+        Моя
       </span>
     )
   if (status === 'other') return <span className="badge badge-blue">Занята</span>

@@ -678,8 +678,14 @@ body{
   text-align:center;
   display:flex; flex-direction:column; gap:14px;
 }
-.onboarding-welcome-title{font-size:27px; font-weight:800; letter-spacing:-0.5px; line-height:1.18; color:var(--ink);}
-.onboarding-welcome-sub{font-size:14px; color:var(--ink-soft); line-height:1.5;}
+.onboarding-welcome-title{
+  font-family:var(--font-bebas), 'Manrope', sans-serif; font-weight:400; text-transform:uppercase;
+  font-size:52px; line-height:.92; letter-spacing:.01em; color:var(--ink);
+  text-align:left;
+}
+.onboarding-welcome-title span{display:block;}
+.onboarding-welcome-title-accent{color:var(--accent);}
+.onboarding-welcome-sub{font-size:14px; color:var(--ink-soft); line-height:1.5; text-align:left;}
 .onboarding-welcome-link{background:none; border:none; color:var(--ink-soft); font-weight:700; font-size:14px; font-family:inherit; cursor:pointer; padding:4px;}
 
 .onboarding-step{

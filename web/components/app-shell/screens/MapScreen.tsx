@@ -12,7 +12,8 @@ function statusBadge(status: Territory['status'], myTerritoryColor: string) {
   if (status === 'mine')
     return (
       <span className="badge" style={{ background: withAlpha(myTerritoryColor, 0.16), color: darkenForBadgeText(myTerritoryColor) }}>
-        Моя территория
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4 3 5-6 5 6 4-3-2 11H5L3 8z" /></svg>
+        Моя
       </span>
     )
   if (status === 'other') return <span className="badge badge-blue">Занята</span>
@@ -113,7 +114,7 @@ export const MapScreen = forwardRef<
             {territories.map((t) => (
               <div className="map-sheet-card" key={t.id} data-id={t.id}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ fontSize: 17, fontWeight: 800 }}>Сектор {t.id}</div>
+                  <div style={{ fontSize: 21, fontWeight: 800 }}>{t.id}</div>
                   {statusBadge(t.status, myTerritoryColor)}
                 </div>
                 <div style={{ display: 'flex', gap: 18, fontSize: 13, color: 'var(--ink-soft)', fontWeight: 600 }}>

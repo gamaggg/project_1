@@ -15,7 +15,11 @@ export function WelcomeStep({ onCapture, onSignIn }: { onCapture: () => void; on
         </div>
       </div>
       <div className="onboarding-welcome-card">
-        <div className="onboarding-welcome-title">Рыбалка, которая затягивает</div>
+        <div className="onboarding-welcome-title">
+          <span>Лови</span>
+          <span className="onboarding-welcome-title-accent">Занимай</span>
+          <span>Владей</span>
+        </div>
         <div className="onboarding-welcome-sub">
           Двое из трёх рыбаков, занявших территорию в первый визит, вернулись за новым уловом.
         </div>
