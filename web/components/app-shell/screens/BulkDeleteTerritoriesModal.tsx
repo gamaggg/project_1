@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useAdminDeleteTerritory } from '@/lib/supabase/queries'
+import { pluralSectors } from '@/lib/format'
 
 // Rendered by FishZoneApp itself, same reasoning as DeleteTerritoryModal —
 // loops the same admin_delete_territory RPC per sector rather than a new
@@ -47,7 +48,7 @@ export function BulkDeleteTerritoriesModal({
             <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M10 11v6M14 11v6M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" />
           </svg>
         </div>
-        <div className="modal-title">Удалить {territoryIds.length} {territoryIds.length === 1 ? 'сектор' : 'секторов'}?</div>
+        <div className="modal-title">Удалить {territoryIds.length} {pluralSectors(territoryIds.length)}?</div>
         <div className="modal-body">
           {territoryIds.join(', ')}
           <br />

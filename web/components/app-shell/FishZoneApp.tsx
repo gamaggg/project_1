@@ -7,6 +7,7 @@ import { getCurrentCoords, nearestTerritory, queryGeolocationPermission } from '
 import { uploadCatchPhoto } from '@/lib/supabase/storage'
 import { useActivityReadState, useAdminActionsReadState } from '@/lib/activityRead'
 import { useAchievementUnlock } from '@/lib/achievementUnlock'
+import { useWeekTopModal } from '@/lib/weekTopModal'
 import { formatCooldown } from '@/lib/format'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { draftHexAt } from '@/lib/data/hexGrid'
@@ -17,7 +18,9 @@ import { PhotoLightbox } from '@/components/app-shell/PhotoLightbox'
 import { MapScreen } from '@/components/app-shell/screens/MapScreen'
 import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import { TerritoryScreen } from '@/components/app-shell/screens/TerritoryScreen'
-import { TerritoriesListScreen } from '@/components/app-shell/screens/TerritoriesListScreen'
+import { TerritoriesListScreen, type Mode as RatingMode } from '@/components/app-shell/screens/TerritoriesListScreen'
+import { LastWeekScreen } from '@/components/app-shell/screens/LastWeekScreen'
+import { WeekTopModal } from '@/components/app-shell/screens/WeekTopModal'
 import { MyCatchesScreen } from '@/components/app-shell/screens/MyCatchesScreen'
 import { UsersListScreen } from '@/components/app-shell/screens/UsersListScreen'
 import { CameraScreen } from '@/components/app-shell/screens/CameraScreen'
@@ -32,6 +35,8 @@ import { BulkDeleteTerritoriesModal } from '@/components/app-shell/screens/BulkD
 import { BulkAddTerritoriesModal } from '@/components/app-shell/screens/BulkAddTerritoriesModal'
 import { DeleteUserModal } from '@/components/app-shell/screens/DeleteUserModal'
 import { AchievementUnlockedModal } from '@/components/app-shell/screens/AchievementUnlockedModal'
+import { AwardDetailModal } from '@/components/app-shell/AwardDetailModal'
+import type { UserAward } from '@/lib/data/types'
 import { AdminReportsScreen } from '@/components/app-shell/screens/AdminReportsScreen'
 import { AdminActionsScreen } from '@/components/app-shell/screens/AdminActionsScreen'
 import { AdminAccessScreen } from '@/components/app-shell/screens/AdminAccessScreen'
@@ -55,6 +60,7 @@ export type ScreenId =
   | 'screen-admin-log'
   | 'screen-achievements'
   | 'screen-achievement-detail'
+  | 'screen-last-week'
 
 export type TabScreenId = 'screen-map' | 'screen-territories' | 'screen-activity' | 'screen-profile'
 const NAV_SCREENS: ScreenId[] = ['screen-map', 'screen-territories', 'screen-activity', 'screen-profile']
@@ -68,7 +74,7 @@ const NAV_SCREENS: ScreenId[] = ['screen-map', 'screen-territories', 'screen-act
 type StackEntry =
   | { screen: 'screen-map' }
   | { screen: 'screen-territory'; territoryId: string }
-  | { screen: 'screen-territories'; initialFilter?: TerritoryStatus }
+  | { screen: 'screen-territories'; initialFilter?: TerritoryStatus; initialMode?: RatingMode }
   | { screen: 'screen-catches' }
   | { screen: 'screen-users' }
   | { screen: 'screen-camera' }
@@ -81,6 +87,7 @@ type StackEntry =
   | { screen: 'screen-admin-log' }
   | { screen: 'screen-achievements'; userId: string }
   | { screen: 'screen-achievement-detail'; userId: string; icon: Achievement['icon'] }
+  | { screen: 'screen-last-week' }
 
 export function FishZoneApp() {
   const { user, loading: authLoading, signOut } = useAuth()
@@ -93,6 +100,7 @@ export function FishZoneApp() {
   const { unreadIds, unreadCount, markAllRead } = useActivityReadState()
   const { unreadCount: adminLogUnreadCount, markAllRead: markAdminLogRead } = useAdminActionsReadState()
   const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories, territoriesReady)
+  const { show: showWeekTop, entry: weekTopEntry, dismiss: dismissWeekTop } = useWeekTopModal()
   useRealtimeSync()
 
   const [stack, setStack] = useState<StackEntry[]>([{ screen: 'screen-map' }])
@@ -110,6 +118,7 @@ export function FishZoneApp() {
   const [editingProfile, setEditingProfile] = useState(false)
   const [changingColor, setChangingColor] = useState(false)
   const [confirmingSignOut, setConfirmingSignOut] = useState(false)
+  const [openAward, setOpenAward] = useState<UserAward | null>(null)
   const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null)
   const [reportingCatchId, setReportingCatchId] = useState<number | null>(null)
   const [deletingCatchId, setDeletingCatchId] = useState<number | null>(null)
@@ -153,6 +162,7 @@ export function FishZoneApp() {
   const topEntry = stack[stack.length - 1]
   const currentScreen: ScreenId = topEntry.screen
   const territoriesInitialFilter = topEntry.screen === 'screen-territories' ? topEntry.initialFilter : undefined
+  const territoriesInitialMode = topEntry.screen === 'screen-territories' ? topEntry.initialMode : undefined
   // The trophy-card celebration is full-bleed and edge-to-edge on purpose —
   // both the nav and any achievement popup stay off it, see below.
   const showingTrophyScene = currentScreen === 'screen-confirm' && confirmStep === 'success'
@@ -192,6 +202,19 @@ export function FishZoneApp() {
   function openMyTerritories() {
     resetTo({ screen: 'screen-territories', initialFilter: 'mine' })
     setNavScreen('screen-territories')
+  }
+  // "Перейти к текущему рейтингу" from the last-week recap — same reset-tab
+  // pattern as openMyTerritories, landing straight on the live Рейтинг view
+  // instead of wherever Территории was last left (see TerritoriesListScreen's
+  // initialMode re-sync effect).
+  function openWeeklyRating() {
+    resetTo({ screen: 'screen-territories', initialMode: 'rating' })
+    setNavScreen('screen-territories')
+  }
+  // Drill-in from the WeekTopModal (which can show over any tab) — a real
+  // push so its back button returns to wherever the modal actually caught you.
+  function openLastWeek() {
+    push({ screen: 'screen-last-week' })
   }
   function openTerritory(id: string) {
     // A "Последние действия"/activity link can point at a sector a super
@@ -493,9 +516,14 @@ export function FishZoneApp() {
             territories={territories}
             myTerritoryColor={myTerritoryColor}
             initialFilter={territoriesInitialFilter}
+            initialMode={territoriesInitialMode}
             onOpenTerritory={openTerritory}
             onOpenUsersList={() => push({ screen: 'screen-users' })}
+            onOpenUser={openUserProfile}
           />
+        </Screen>
+        <Screen id="screen-last-week" current={currentScreen}>
+          <LastWeekScreen onBack={pop} onOpenUser={openUserProfile} onOpenCurrentRating={openWeeklyRating} />
         </Screen>
         <Screen id="screen-catches" current={currentScreen}>
           {user && <MyCatchesScreen userId={user.id} onBack={pop} onOpenPhoto={setLightboxSrc} />}
@@ -548,6 +576,7 @@ export function FishZoneApp() {
             onOpenAchievements={() => user && openAchievements(user.id)}
             onOpenAchievementDetail={(icon) => user && openAchievementDetail(user.id, icon)}
             onShowToast={showToast}
+            onOpenAward={setOpenAward}
           />
         </Screen>
         <Screen id="screen-user-profile" current={currentScreen}>
@@ -562,6 +591,7 @@ export function FishZoneApp() {
               onOpenAchievements={() => openAchievements(viewingUserId)}
               onOpenAchievementDetail={(icon) => openAchievementDetail(viewingUserId, icon)}
               onDeleteUser={setDeletingUserId}
+              onOpenAward={setOpenAward}
             />
           )}
         </Screen>
@@ -730,6 +760,19 @@ export function FishZoneApp() {
           "Готово"/"Поделиться уловом" moves on, instead. */}
       {unlockedAchievement && !showingTrophyScene && (
         <AchievementUnlockedModal achievement={unlockedAchievement} onClose={dismissUnlockedAchievement} onShowToast={showToast} />
+      )}
+      {openAward && <AwardDetailModal award={openAward} onClose={() => setOpenAward(null)} />}
+      {/* Deferred behind the achievement modal above so the two celebrations
+          never stack — this one waits its turn and appears once that clears. */}
+      {showWeekTop && weekTopEntry && !unlockedAchievement && !showingTrophyScene && (
+        <WeekTopModal
+          entry={weekTopEntry}
+          onViewRecap={() => {
+            dismissWeekTop()
+            openLastWeek()
+          }}
+          onClose={dismissWeekTop}
+        />
       )}
 
       {currentScreen !== 'screen-camera' && !showingTrophyScene && (

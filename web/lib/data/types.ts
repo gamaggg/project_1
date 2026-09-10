@@ -66,6 +66,33 @@ export type UserListEntry = {
   territoriesCount: number
 }
 
+// One row from get_weekly_leaderboard(), shaped in queries.ts
+// (useWeeklyLeaderboard). Ranked by sectors first-claimed this Batumi week
+// (Mon 00:00 – Sun 23:59), catches this week as the tiebreaker/secondary
+// stat — see DECISIONS.md.
+export type WeeklyLeaderboardEntry = {
+  userId: string
+  displayName: string
+  avatarUrl: string | null
+  sectorsThisWeek: number
+  catchesThisWeek: number
+  rank: number
+}
+
+// A collectible medal a user has earned (see user_awards, AwardsRing) — public
+// on any profile, distinct from Achievement (progress-grid, self-computed).
+// kind drives the icon/color (see awardIcons.tsx); title/subtitle/description
+// are plain text set when the award was granted, not recomputed client-side.
+export type AwardKind = 'weekly_rank' | 'guardian' | 'catch_of_month' | 'lightning' | 'season_legend' | 'night_watch' | 'duelist'
+export type UserAward = {
+  id: number
+  kind: AwardKind
+  title: string
+  subtitle: string
+  description: string
+  earnedAt: string
+}
+
 export type Catch = {
   id: number
   territoryId: string

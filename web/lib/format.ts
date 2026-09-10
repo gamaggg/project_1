@@ -37,3 +37,44 @@ export function formatCooldown(totalSeconds: number): string {
   const s = totalSeconds % 60
   return `${m}:${String(s).padStart(2, '0')}`
 }
+
+// Picks the Russian plural form for a count: 1/21/31 → one, 2-4/22-24 → few,
+// 0/5-20/25-30 → many (11-14 are always "many", overriding the last-digit rule).
+export function pluralRu(n: number, [one, few, many]: [string, string, string]): string {
+  const mod100 = Math.abs(n) % 100
+  const mod10 = mod100 % 10
+  if (mod100 >= 11 && mod100 <= 14) return many
+  if (mod10 === 1) return one
+  if (mod10 >= 2 && mod10 <= 4) return few
+  return many
+}
+
+export const pluralSectors = (n: number) => pluralRu(n, ['сектор', 'сектора', 'секторов'])
+export const pluralCatches = (n: number) => pluralRu(n, ['улов', 'улова', 'уловов'])
+export const pluralTerritories = (n: number) => pluralRu(n, ['территория', 'территории', 'территорий'])
+
+const RU_MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+
+// Monday 00:00 of the Batumi/Tbilisi week (UTC+4, no DST) `offsetWeeks` weeks
+// from the current one — mirrors get_weekly_leaderboard's own week-truncation
+// exactly, via Intl rather than manual UTC+4 math, so it's still correct if
+// this ever runs somewhere DST could otherwise bite. Returned as a UTC-based
+// Date whose UTC fields equal that Monday's Tbilisi wall-clock date.
+export function tbilisiWeekStart(offsetWeeks: number): Date {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tbilisi', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date())
+  const y = Number(parts.find((p) => p.type === 'year')!.value)
+  const m = Number(parts.find((p) => p.type === 'month')!.value)
+  const d = Number(parts.find((p) => p.type === 'day')!.value)
+  const todayUTC = Date.UTC(y, m - 1, d)
+  const daysSinceMonday = (new Date(todayUTC).getUTCDay() + 6) % 7
+  return new Date(todayUTC - daysSinceMonday * 86_400_000 + offsetWeeks * 7 * 86_400_000)
+}
+
+// "Сентябрь, 2 неделя" — replaces "Топ недели" on the past-week recap screen,
+// since that badge implies "current week" and a recap is never the current one.
+export function formatWeekOfMonth(offsetWeeks: number): string {
+  const monday = tbilisiWeekStart(offsetWeeks)
+  const firstOfMonthUTC = Date.UTC(monday.getUTCFullYear(), monday.getUTCMonth(), 1)
+  const weekOfMonth = Math.floor((monday.getTime() - firstOfMonthUTC) / (7 * 86_400_000)) + 1
+  return `${RU_MONTHS[monday.getUTCMonth()]}, ${weekOfMonth} неделя`
+}

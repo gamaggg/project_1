@@ -95,6 +95,10 @@ body{
   box-shadow:var(--shadow-sm);
 }
 .icon-btn:active{transform:scale(0.94);}
+/* The "<" chevron's point sits on its own left edge, so centering its 18px
+   bounding box in the circle (the default) reads as slightly right-heavy —
+   nudge it left so the glyph's visual weight, not its box, is centered. */
+.icon-back{transform:translateX(-1.5px);}
 
 /* ---------- Bottom Nav ---------- */
 .bottomnav{
@@ -288,6 +292,19 @@ body{
   background:var(--ink); color:#fff;
   display:flex; align-items:center; justify-content:center;
   border:2.5px solid var(--bg); cursor:pointer;
+}
+.avatar-color-btn{
+  position:absolute; left:-2px; bottom:-2px;
+  width:30px; height:30px; border-radius:50%;
+  background:var(--ink); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  border:2.5px solid var(--bg); cursor:pointer;
+}
+.section-title-row{display:flex; align-items:center; justify-content:space-between; margin:0 0 12px;}
+.section-title-row .section-title{margin:0;}
+.section-link{
+  background:none; border:none; font-family:inherit; cursor:pointer;
+  color:var(--accent); font-size:13px; font-weight:700; padding:0;
 }
 .owner-row{
   display:flex; align-items:center; gap:10px;
@@ -687,6 +704,70 @@ body{
   background:none; border:none; color:var(--ink-soft); font-weight:700; font-size:13.5px;
   font-family:inherit; padding:14px 6px 6px; cursor:pointer; width:100%;
 }
+
+/* ---------- AwardsRing (see AwardsRing.tsx / awardIcons.tsx) ---------- */
+.award-ring-stage{position:relative; display:flex; align-items:center; justify-content:center; margin:0 auto;}
+.award-ring-badge{
+  position:absolute; width:40px; height:40px; border-radius:50%; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; color:#fff; padding:0;
+  border:2.5px solid var(--surface); box-shadow:0 5px 14px rgba(0,0,0,0.22);
+  font-family:inherit; z-index:2;
+  animation-name:award-drift; animation-timing-function:ease-in-out; animation-iteration-count:infinite; animation-direction:alternate;
+}
+.award-ring-badge svg{width:18px; height:18px;}
+@keyframes award-drift{
+  0%{transform:translate(calc(-50% + var(--dx1)), calc(-50% + var(--dy1)));}
+  100%{transform:translate(calc(-50% + var(--dx2)), calc(-50% + var(--dy2)));}
+}
+
+/* ---------- AwardDetailModal (see AwardDetailModal.tsx) ---------- */
+.award-detail-card{
+  position:relative; background:var(--surface); border-radius:var(--radius-l);
+  padding:32px 24px 22px; max-width:300px; width:100%; text-align:center;
+  animation:award-detail-pop .5s cubic-bezier(.22,1.4,.36,1) both;
+}
+@keyframes award-detail-pop{
+  0%{transform:scale(0.6) rotate(-6deg); opacity:0;}
+  60%{transform:scale(1.08) rotate(2deg); opacity:1;}
+  100%{transform:scale(1) rotate(0deg); opacity:1;}
+}
+.award-detail-confetti{position:absolute; inset:0; pointer-events:none; overflow:visible; z-index:1;}
+.award-detail-confetti-piece{
+  position:absolute; top:8%; left:50%; width:7px; height:7px; border-radius:2px;
+  background:var(--c); opacity:0; animation:award-confetti-burst .9s cubic-bezier(.2,.7,.3,1) .1s forwards;
+}
+@keyframes award-confetti-burst{
+  0%{opacity:0; transform:translate(-50%,0) scale(0.4) rotate(0deg);}
+  15%{opacity:1;}
+  100%{opacity:0; transform:translate(calc(-50% + var(--tx)), var(--ty)) scale(1) rotate(var(--rot));}
+}
+/* isolation:isolate scopes the glow's z-index:-1 to just this small box,
+   instead of sitting behind the whole .award-detail-card (which has an
+   opaque background and, before this, was quietly eating clicks on the
+   Закрыть button underneath it — see DECISIONS.md-style note in AwardDetailModal). */
+.award-detail-icon-wrap{position:relative; z-index:2; width:76px; height:76px; margin:0 auto 16px; isolation:isolate;}
+.award-detail-icon-glow{
+  position:absolute; inset:-14px; z-index:-1; border-radius:50%; filter:blur(12px);
+  opacity:0; animation:award-glow-in .6s ease-out .05s forwards;
+}
+@keyframes award-glow-in{
+  0%{opacity:0; transform:scale(0.5);}
+  60%{opacity:0.6;}
+  100%{opacity:0.45; transform:scale(1.05);}
+}
+.award-detail-icon{
+  width:100%; height:100%; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; color:#fff;
+}
+.award-detail-icon svg{width:34px; height:34px;}
+.award-detail-title{position:relative; z-index:2; font-size:18px; font-weight:800; margin-bottom:6px;}
+.award-detail-subtitle{position:relative; z-index:2; font-size:12px; font-weight:700; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:12px;}
+.award-detail-desc{position:relative; z-index:2; font-size:13px; color:var(--ink-soft); line-height:1.5; margin-bottom:6px;}
+@media (prefers-reduced-motion: reduce){
+  .award-ring-badge{animation:none;}
+  .award-detail-card, .award-detail-icon-glow, .award-detail-confetti-piece{animation:none !important; opacity:1 !important; transform:none !important;}
+}
+
 .activity-item{display:flex; gap:13px; padding:16px 0; border-bottom:1px solid var(--line);}
 .filter-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;}
 .filter-chip{
@@ -720,6 +801,101 @@ body{
 }
 .stat-grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; text-align:center;}
 .terr-list-item{display:flex; align-items:center; gap:12px; padding:15px 14px; cursor:pointer; width:100%; background:none; border:none; text-align:left; font-family:inherit;}
+
+/* ---------- Weekly leaderboard (Территории → Рейтинг) ---------- */
+.rating-tabs{display:flex; gap:26px; border-bottom:1px solid var(--line); margin:2px 0 18px;}
+.rating-tab{
+  background:none; border:none; font-family:inherit; cursor:pointer;
+  padding:0 0 12px; font-size:15.5px; font-weight:800; color:var(--ink-faint);
+  border-bottom:2.5px solid transparent; margin-bottom:-1px;
+}
+.rating-tab.active{color:var(--ink); border-bottom-color:var(--accent);}
+.rating-week-note{margin-bottom:14px;}
+.rating-week-badge{
+  font-size:11px; font-weight:800; letter-spacing:0.3px; text-transform:uppercase;
+  color:var(--accent); background:var(--accent-soft); padding:5px 10px; border-radius:20px;
+}
+.rating-week-badge-inline{margin-left:auto; align-self:center; white-space:nowrap;}
+.rating-podium{display:flex; align-items:flex-end; justify-content:center; gap:10px; padding:22px 6px 26px;}
+.rating-podium-item{
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  background:none; border:none; font-family:inherit; cursor:pointer;
+  width:98px; padding:0;
+}
+.rating-podium-item.rank-1{width:112px; padding-bottom:16px;}
+.rating-podium-stage{position:relative; display:flex; align-items:center; justify-content:center;}
+.rating-podium-avatar-wrap{position:relative; isolation:isolate; display:flex; align-items:center; justify-content:center;}
+.rating-podium-float{animation:rating-float-bob 3s ease-in-out infinite;}
+.rating-podium-shadow{
+  position:absolute; left:50%; bottom:-6px; z-index:0;
+  width:56px; height:10px; margin-left:-28px;
+  background:radial-gradient(ellipse, rgba(23,24,27,0.28), transparent 72%);
+  animation:rating-shadow-pulse 3s ease-in-out infinite;
+}
+@keyframes rating-float-bob{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-7px);}
+}
+@keyframes rating-shadow-pulse{
+  0%,100%{transform:scale(1); opacity:0.5;}
+  50%{transform:scale(0.7); opacity:0.24;}
+}
+.rating-podium-medal{
+  position:absolute; bottom:-2px; right:-2px; z-index:3;
+  width:24px; height:24px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:11.5px; font-weight:800; color:#fff;
+  border:2px solid var(--surface);
+}
+.rating-podium-crown{
+  position:absolute; top:-11px; right:-1px; z-index:4;
+  width:34px; height:28px;
+  transform:rotate(22deg); transform-origin:bottom left;
+  filter:drop-shadow(0 2px 3px rgba(23,24,27,0.25));
+}
+.rating-podium-name{font-weight:800; font-size:13.5px; text-align:center; max-width:98px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.rating-podium-stat-main{font-weight:800; font-size:13.5px; color:var(--accent);}
+.rating-podium-stat-sub{font-size:11px; color:var(--ink-faint); margin-top:-4px;}
+.rating-list-rank{width:18px; flex:0 0 auto; text-align:center; font-weight:800; font-size:13.5px; color:var(--ink-faint);}
+
+.rating-podium-glow{
+  position:absolute; inset:-16px; border-radius:50%; z-index:0;
+  filter:blur(10px);
+  animation:rating-glow-pulse 2.6s ease-in-out infinite;
+}
+.rating-podium-item.rank-1 .rating-podium-glow{inset:-20px; filter:blur(13px);}
+@keyframes rating-glow-pulse{
+  0%,100%{opacity:0.22; transform:scale(0.92);}
+  50%{opacity:0.55; transform:scale(1.06);}
+}
+@media (prefers-reduced-motion: reduce){
+  .rating-podium-glow, .rating-podium-float, .rating-podium-shadow{animation:none;}
+}
+
+/* ---------- LastWeekScreen: ceremony reveal (see PodiumItem's enterDelayMs) ---------- */
+.rating-podium-item-enter{opacity:0; transform:translateY(14px) scale(0.92); animation:rating-item-pop .5s cubic-bezier(.22,.85,.3,1.25) both;}
+@keyframes rating-item-pop{
+  0%{opacity:0; transform:translateY(14px) scale(0.92);}
+  70%{opacity:1; transform:translateY(-3px) scale(1.03);}
+  100%{opacity:1; transform:translateY(0) scale(1);}
+}
+.recap-hero{position:relative;}
+.recap-confetti{position:absolute; inset:0; pointer-events:none; overflow:visible; z-index:6;}
+.recap-confetti i{
+  position:absolute; top:-10px; width:7px; aspect-ratio:2/1.7320508;
+  clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%);
+  opacity:0; animation:recap-confetti-fall 1.4s ease-in both;
+}
+@keyframes recap-confetti-fall{
+  0%{opacity:0; transform:translateY(0) rotate(0deg);}
+  12%{opacity:1;}
+  100%{opacity:0; transform:translateY(190px) rotate(200deg);}
+}
+@media (prefers-reduced-motion: reduce){
+  .rating-podium-item-enter{animation:none; opacity:1; transform:none;}
+  .recap-confetti{display:none;}
+}
+
 .ach-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
 .ach-card{
   background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m);

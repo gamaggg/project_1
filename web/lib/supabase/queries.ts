@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/AuthProvider'
-import type { Territory, TerritoryStatus, Catch, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, UserListEntry } from '@/lib/data/types'
+import type { Territory, TerritoryStatus, Catch, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, UserListEntry, WeeklyLeaderboardEntry, UserAward, AwardKind } from '@/lib/data/types'
 
 type SectorGeometry = {
   id: string
@@ -409,6 +409,60 @@ export function useAllUsers() {
           createdAt: r.created_at ?? new Date().toISOString(),
           catchesCount: r.catches_count ?? 0,
           territoriesCount: r.territories_count ?? 0,
+        })
+      )
+    },
+  })
+}
+
+// Weekly rating for the Territories tab's "Рейтинг" toggle — ranked by
+// sectors first-claimed this Batumi week (Mon 00:00 – Sun 23:59, see the
+// RPC), catches this week as the secondary stat. friendsOnly scopes it to
+// people the viewer follows (plus the viewer themselves) instead of everyone.
+// A fresh query per scope (not client-side refiltering of one big list) —
+// "friends" would otherwise need every profile's full follow graph client-side
+// just to filter ten rows.
+export function useWeeklyLeaderboard(friendsOnly: boolean, weekOffset: number = 0) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['weekly-leaderboard', friendsOnly, weekOffset],
+    enabled: !!user,
+    queryFn: async (): Promise<WeeklyLeaderboardEntry[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_weekly_leaderboard', { p_friends_only: friendsOnly, p_limit: 10, p_week_offset: weekOffset })
+      if (error) throw error
+      return data.map(
+        (r): WeeklyLeaderboardEntry => ({
+          userId: r.user_id,
+          displayName: r.display_name ?? 'Рыбак',
+          avatarUrl: r.avatar_url,
+          sectorsThisWeek: r.sectors_this_week,
+          catchesThisWeek: r.catches_this_week,
+          rank: r.rank,
+        })
+      )
+    },
+  })
+}
+
+// Collectible medals for one profile (see AwardsRing) — public on anyone's
+// profile, not just the viewer's own, so no auth gating beyond RLS itself.
+export function useUserAwards(userId: string | null) {
+  return useQuery({
+    queryKey: ['user-awards', userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<UserAward[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.from('user_awards').select('*').eq('user_id', userId!).order('earned_at', { ascending: false })
+      if (error) throw error
+      return data.map(
+        (r): UserAward => ({
+          id: r.id,
+          kind: r.kind as AwardKind,
+          title: r.title,
+          subtitle: r.subtitle,
+          description: r.description,
+          earnedAt: r.earned_at,
         })
       )
     },

@@ -1,11 +1,12 @@
 'use client'
 
-import { useProfile, useCatchesByUser, useIsFollowing, useSetFollowing, useIsAdmin, useIsSuperAdmin, useSetBlocked, useSetAdmin, useHasClaimedFromOthers, useReportDeletionCount } from '@/lib/supabase/queries'
+import { useProfile, useCatchesByUser, useIsFollowing, useSetFollowing, useIsAdmin, useIsSuperAdmin, useSetBlocked, useSetAdmin, useHasClaimedFromOthers, useReportDeletionCount, useUserAwards } from '@/lib/supabase/queries'
+import { AwardsRing } from '@/components/app-shell/AwardsRing'
 import { computeAchievements, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatJoinedDate } from '@/lib/format'
 import { ACH_ICONS } from '@/components/app-shell/icons'
-import type { Territory } from '@/lib/data/types'
+import type { Territory, UserAward } from '@/lib/data/types'
 
 // Read-only counterpart to ProfileScreen — someone else's territories/catches/
 // achievements, plus a follow button instead of edit/sign-out controls. See
@@ -22,6 +23,7 @@ export function UserProfileScreen({
   onOpenAchievements,
   onOpenAchievementDetail,
   onDeleteUser,
+  onOpenAward,
 }: {
   userId: string
   territories: Territory[]
@@ -32,6 +34,7 @@ export function UserProfileScreen({
   onOpenAchievements: () => void
   onOpenAchievementDetail: (icon: Achievement['icon']) => void
   onDeleteUser: (id: string) => void
+  onOpenAward: (award: UserAward) => void
 }) {
   const { data: profile } = useProfile(userId)
   const { data: catches = [] } = useCatchesByUser(userId)
@@ -43,6 +46,7 @@ export function UserProfileScreen({
   const setAdmin = useSetAdmin()
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(userId)
   const { data: reportDeletionCount } = useReportDeletionCount(userId)
+  const { data: awards = [] } = useUserAwards(userId)
 
   const speciesCount = new Set(catches.map((c) => c.species)).size
   const record = personalRecord(catches)
@@ -59,26 +63,29 @@ export function UserProfileScreen({
     <>
       <div className="header-row">
         <div className="icon-btn tap-scale" onClick={onBack}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </div>
-        <div style={{ fontWeight: 800, fontSize: 15 }}>Профиль</div>
+        <div style={{ fontWeight: 800, fontSize: 15 }}>{profile?.displayName ?? 'Профиль'}</div>
         <div style={{ width: 36 }} />
       </div>
       <div className="screen-inner">
-        <div className="profile-avatar">
-          {profile?.avatarUrl ? (
-            <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-          ) : (
-            initials
-          )}
-        </div>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 19, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            {profile?.displayName ?? '…'}
-            {profile?.isBlocked && <span className="badge" style={{ background: '#FDE2E2', color: '#D33' }}>Заблокирован</span>}
+        <AwardsRing awards={awards} onOpenAward={onOpenAward}>
+          <div className="profile-avatar">
+            {profile?.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+            ) : (
+              initials
+            )}
           </div>
+        </AwardsRing>
+        <div style={{ textAlign: 'center' }}>
+          {profile?.isBlocked && (
+            <div style={{ marginBottom: 2 }}>
+              <span className="badge" style={{ background: '#FDE2E2', color: '#D33' }}>Заблокирован</span>
+            </div>
+          )}
           {profile?.createdAt && (
             <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 2 }}>В RANGE с {formatJoinedDate(profile.createdAt)}</div>
           )}

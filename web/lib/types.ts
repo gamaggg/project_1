@@ -461,6 +461,51 @@ export type Database = {
           },
         ]
       }
+      user_awards: {
+        Row: {
+          description: string
+          earned_at: string
+          id: number
+          kind: string
+          subtitle: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          description: string
+          earned_at?: string
+          id?: never
+          kind: string
+          subtitle: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          description?: string
+          earned_at?: string
+          id?: never
+          kind?: string
+          subtitle?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_awards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_awards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       profiles_with_stats: {
@@ -625,6 +670,21 @@ export type Database = {
       get_report_deletion_count: {
         Args: { p_user_id: string }
         Returns: number
+      }
+      get_weekly_leaderboard: {
+        Args: {
+          p_friends_only?: boolean
+          p_limit?: number
+          p_week_offset?: number
+        }
+        Returns: {
+          avatar_url: string
+          catches_this_week: number
+          display_name: string
+          rank: number
+          sectors_this_week: number
+          user_id: string
+        }[]
       }
     }
     Enums: {

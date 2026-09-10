@@ -2,14 +2,15 @@
 
 import { useState, type CSSProperties } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useProfile, useMyCatches, useUpdateProfile, useIsAdmin, useIsSuperAdmin, useReports, useHasClaimedFromOthers } from '@/lib/supabase/queries'
+import { useProfile, useMyCatches, useUpdateProfile, useIsAdmin, useIsSuperAdmin, useReports, useHasClaimedFromOthers, useUserAwards } from '@/lib/supabase/queries'
+import { AwardsRing } from '@/components/app-shell/AwardsRing'
 import { uploadAvatar } from '@/lib/supabase/storage'
 import { computeAchievements, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
-import { formatCatchMeta, formatJoinedDate } from '@/lib/format'
+import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralTerritories } from '@/lib/format'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import { DEFAULT_TERRITORY_COLOR, TERRITORY_COLORS } from '@/lib/data/territoryColors'
-import type { Territory } from '@/lib/data/types'
+import type { Territory, UserAward } from '@/lib/data/types'
 
 const MAX_AVATAR_SIZE = 512
 
@@ -207,6 +208,7 @@ export function ProfileScreen({
   onOpenAchievements,
   onOpenAchievementDetail,
   onShowToast,
+  onOpenAward,
 }: {
   myTerritories: Territory[]
   allTerritories: Territory[]
@@ -224,6 +226,7 @@ export function ProfileScreen({
   onOpenAchievements: () => void
   onOpenAchievementDetail: (icon: Achievement['icon']) => void
   onShowToast: (msg: string) => void
+  onOpenAward: (award: UserAward) => void
 }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
@@ -232,6 +235,7 @@ export function ProfileScreen({
   const isSuperAdmin = useIsSuperAdmin()
   const { data: reports = [] } = useReports()
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(user?.id ?? null)
+  const { data: awards = [] } = useUserAwards(user?.id ?? null)
 
   // `!user` never reaches this screen anymore — FishZoneApp's onboarding gate
   // intercepts before ProfileScreen (or any other screen) can mount. See
@@ -249,7 +253,7 @@ export function ProfileScreen({
   const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
 
   async function handleShareProfile() {
-    const text = `🎣 Я в RANGE — ${myTerritories.length} территорий, ${myCatches.length} уловов на побережье Батуми!\n\nПрисоединяйся и сразимся за территории 🏆\n${window.location.origin}`
+    const text = `🎣 Я в RANGE — ${myTerritories.length} ${pluralTerritories(myTerritories.length)}, ${myCatches.length} ${pluralCatches(myCatches.length)} на побережье Батуми!\n\nПрисоединяйся и сразимся за территории 🏆\n${window.location.origin}`
     try {
       await navigator.clipboard.writeText(text)
       onShowToast('Скопировано в буфер обмена')
@@ -260,26 +264,44 @@ export function ProfileScreen({
 
   return (
     <div className="screen-inner">
-      <div className="page-title" style={{ textAlign: 'center', marginTop: 14, marginBottom: 16 }}>
-        Профиль
-      </div>
-      <div className="avatar-edit-wrap">
-        <div className="profile-avatar">
-          {profile?.avatarUrl ? (
-            <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-          ) : (
-            initials
-          )}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, marginBottom: 16 }}>
+        <div style={{ width: 36 }} />
+        <div className="page-title" style={{ textAlign: 'center', margin: 0, flex: 1 }}>
+          {profile?.displayName ?? 'Профиль'}
         </div>
-        <div className="avatar-edit-btn tap-scale" onClick={onEditProfile}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 20h9" />
-            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+        <div className="icon-btn tap-scale" onClick={handleShareProfile}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 15V4M12 4 8 8M12 4l4 4" />
+            <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
           </svg>
         </div>
       </div>
+      <AwardsRing awards={awards} onOpenAward={onOpenAward}>
+        <div className="avatar-edit-wrap">
+          <div className="profile-avatar">
+            {profile?.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+            ) : (
+              initials
+            )}
+          </div>
+          <div className="avatar-color-btn tap-scale" onClick={onChangeColor}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-.5-1.5-1-2 .5-2 2-2h2a3 3 0 0 0 3-3 9 9 0 0 0-8-9z" />
+              <circle cx="7.5" cy="10.5" r="1" fill="#fff" stroke="none" />
+              <circle cx="12" cy="7.5" r="1" fill="#fff" stroke="none" />
+              <circle cx="16.5" cy="10.5" r="1" fill="#fff" stroke="none" />
+            </svg>
+          </div>
+          <div className="avatar-edit-btn tap-scale" onClick={onEditProfile}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+            </svg>
+          </div>
+        </div>
+      </AwardsRing>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 19, fontWeight: 800 }}>{profile?.displayName ?? '…'}</div>
         {profile?.createdAt && (
           <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 2 }}>В RANGE с {formatJoinedDate(profile.createdAt)}</div>
         )}
@@ -309,8 +331,11 @@ export function ProfileScreen({
         </div>
       </div>
 
-      <div className="section-title" style={{ marginTop: 24 }}>
-        Достижения
+      <div className="section-title-row" style={{ marginTop: 24 }}>
+        <div className="section-title">Достижения</div>
+        <button className="section-link" onClick={onOpenAchievements}>
+          Все достижения
+        </button>
       </div>
       <div className="ach-grid">
         {achievements.slice(0, 4).map((a) => (
@@ -324,12 +349,14 @@ export function ProfileScreen({
           </div>
         ))}
       </div>
-      <button className="btn-secondary" style={{ marginTop: 12 }} onClick={onOpenAchievements}>
-        Все достижения
-      </button>
 
-      <div className="section-title" style={{ marginTop: 24 }}>
-        Последние уловы
+      <div className="section-title-row" style={{ marginTop: 24 }}>
+        <div className="section-title">Последние уловы</div>
+        {myCatches.length > recentMine.length && (
+          <button className="section-link" onClick={onOpenAllCatches}>
+            Все уловы
+          </button>
+        )}
       </div>
       <div className="card" style={{ overflow: 'hidden' }}>
         {recentMine.length ? (
@@ -354,14 +381,14 @@ export function ProfileScreen({
           <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет уловов</div>
         )}
       </div>
-      {myCatches.length > recentMine.length && (
-        <button className="btn-secondary" style={{ marginTop: 12 }} onClick={onOpenAllCatches}>
-          Показать все
-        </button>
-      )}
 
-      <div className="section-title" style={{ marginTop: 24 }}>
-        Мои территории
+      <div className="section-title-row" style={{ marginTop: 24 }}>
+        <div className="section-title">Мои территории</div>
+        {myTerritories.length > visibleTerritories.length && (
+          <button className="section-link" onClick={onOpenAllTerritories}>
+            Все мои территории
+          </button>
+        )}
       </div>
       <div className="card" style={{ overflow: 'hidden' }}>
         {visibleTerritories.length ? (
@@ -388,20 +415,6 @@ export function ProfileScreen({
         ) : (
           <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет своих территорий</div>
         )}
-      </div>
-      {myTerritories.length > visibleTerritories.length && (
-        <button className="btn-secondary" style={{ marginTop: 12 }} onClick={onOpenAllTerritories}>
-          Все мои территории
-        </button>
-      )}
-
-      <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-        <button className="btn-secondary" style={{ flex: 1 }} onClick={onChangeColor}>
-          Цвет территории
-        </button>
-        <button className="btn-secondary" style={{ flex: 1 }} onClick={handleShareProfile}>
-          Поделиться профилем
-        </button>
       </div>
 
       {record && (
