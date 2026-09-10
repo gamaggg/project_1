@@ -1,6 +1,7 @@
 'use client'
 
-import { useCatchesByUser } from '@/lib/supabase/queries'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { useCatchesByUser, useProfile } from '@/lib/supabase/queries'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 
 // Full catch history for one profile (own or someone else's, by userId) —
@@ -16,7 +17,11 @@ export function MyCatchesScreen({
   onBack: () => void
   onOpenPhoto: (src: string) => void
 }) {
+  const { user } = useAuth()
   const { data: catches = [] } = useCatchesByUser(userId)
+  const isOwn = userId === user?.id
+  const { data: profile } = useProfile(isOwn ? null : userId)
+  const title = isOwn ? 'Мои уловы' : `Уловы: ${profile?.displayName ?? '…'}`
 
   return (
     <>
@@ -26,7 +31,7 @@ export function MyCatchesScreen({
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </div>
-        <div style={{ fontWeight: 800, fontSize: 15 }}>Мои уловы</div>
+        <div style={{ fontWeight: 800, fontSize: 15 }}>{title}</div>
         <div style={{ width: 36 }} />
       </div>
       <div className="screen-inner">

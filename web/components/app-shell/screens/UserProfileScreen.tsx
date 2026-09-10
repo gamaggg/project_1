@@ -22,6 +22,7 @@ export function UserProfileScreen({
   onOpenPhoto,
   onOpenAchievements,
   onOpenAchievementDetail,
+  onOpenAllCatches,
   onDeleteUser,
   onOpenAward,
 }: {
@@ -33,6 +34,7 @@ export function UserProfileScreen({
   onOpenPhoto: (src: string) => void
   onOpenAchievements: () => void
   onOpenAchievementDetail: (icon: Achievement['icon']) => void
+  onOpenAllCatches: () => void
   onDeleteUser: (id: string) => void
   onOpenAward: (award: UserAward) => void
 }) {
@@ -165,8 +167,11 @@ export function UserProfileScreen({
           </div>
         </div>
 
-        <div className="section-title" style={{ marginTop: 24 }}>
-          Достижения
+        <div className="section-title-row" style={{ marginTop: 24 }}>
+          <div className="section-title">Достижения</div>
+          <button className="section-link" onClick={onOpenAchievements}>
+            Все достижения
+          </button>
         </div>
         <div className="ach-grid">
           {achievements.slice(0, 4).map((a) => (
@@ -180,12 +185,14 @@ export function UserProfileScreen({
             </div>
           ))}
         </div>
-        <button className="btn-secondary" style={{ marginTop: 12 }} onClick={onOpenAchievements}>
-          Все достижения
-        </button>
 
-        <div className="section-title" style={{ marginTop: 24 }}>
-          Последние уловы
+        <div className="section-title-row" style={{ marginTop: 24 }}>
+          <div className="section-title">Последние уловы</div>
+          {catches.length > recent.length && (
+            <button className="section-link" onClick={onOpenAllCatches}>
+              Все уловы
+            </button>
+          )}
         </div>
         <div className="card" style={{ overflow: 'hidden' }}>
           {recent.length ? (

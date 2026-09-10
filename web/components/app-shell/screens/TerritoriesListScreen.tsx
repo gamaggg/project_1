@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import type { Territory, TerritoryStatus } from '@/lib/data/types'
 import { KIND_LABEL } from '@/lib/data/species'
-import { formatWhen } from '@/lib/format'
+import { formatWhen, pluralSectors } from '@/lib/format'
 import { useIsAdmin } from '@/lib/supabase/queries'
 import { resolveTerritoryColor } from '@/lib/data/territoryColors'
 import { WeeklyLeaderboard } from '@/components/app-shell/screens/WeeklyLeaderboard'
@@ -48,7 +48,7 @@ export function TerritoriesListScreen({
   return (
     <div className="screen-inner">
       <div className="page-title">Территории</div>
-      <div className="page-sub">Море, реки и озёра Батуми · {territories.length} участков</div>
+      <div className="page-sub">Море, реки и озёра Батуми · {territories.length} {pluralSectors(territories.length)}</div>
 
       <div className="rating-tabs">
         <button className={`rating-tab${mode === 'territories' ? ' active' : ''}`} onClick={() => setMode('territories')}>

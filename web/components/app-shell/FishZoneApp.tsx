@@ -75,7 +75,7 @@ type StackEntry =
   | { screen: 'screen-map' }
   | { screen: 'screen-territory'; territoryId: string }
   | { screen: 'screen-territories'; initialFilter?: TerritoryStatus; initialMode?: RatingMode }
-  | { screen: 'screen-catches' }
+  | { screen: 'screen-catches'; userId?: string }
   | { screen: 'screen-users' }
   | { screen: 'screen-camera' }
   | { screen: 'screen-confirm' }
@@ -163,6 +163,7 @@ export function FishZoneApp() {
   const currentScreen: ScreenId = topEntry.screen
   const territoriesInitialFilter = topEntry.screen === 'screen-territories' ? topEntry.initialFilter : undefined
   const territoriesInitialMode = topEntry.screen === 'screen-territories' ? topEntry.initialMode : undefined
+  const catchesUserId = topEntry.screen === 'screen-catches' ? (topEntry.userId ?? user?.id) : undefined
   // The trophy-card celebration is full-bleed and edge-to-edge on purpose —
   // both the nav and any achievement popup stay off it, see below.
   const showingTrophyScene = currentScreen === 'screen-confirm' && confirmStep === 'success'
@@ -200,7 +201,7 @@ export function FishZoneApp() {
   // (pre-filtered to "Мои"), same as tapping the tab itself, not a drill-in
   // (see DECISIONS.md: TerritoriesListScreen has no back button, it's a tab).
   function openMyTerritories() {
-    resetTo({ screen: 'screen-territories', initialFilter: 'mine' })
+    resetTo({ screen: 'screen-territories', initialFilter: 'mine', initialMode: 'territories' })
     setNavScreen('screen-territories')
   }
   // "Перейти к текущему рейтингу" from the last-week recap — same reset-tab
@@ -526,7 +527,7 @@ export function FishZoneApp() {
           <LastWeekScreen onBack={pop} onOpenUser={openUserProfile} onOpenCurrentRating={openWeeklyRating} />
         </Screen>
         <Screen id="screen-catches" current={currentScreen}>
-          {user && <MyCatchesScreen userId={user.id} onBack={pop} onOpenPhoto={setLightboxSrc} />}
+          {catchesUserId && <MyCatchesScreen userId={catchesUserId} onBack={pop} onOpenPhoto={setLightboxSrc} />}
         </Screen>
         <Screen id="screen-users" current={currentScreen}>
           <UsersListScreen onBack={pop} onOpenUser={openUserProfile} />
@@ -590,6 +591,7 @@ export function FishZoneApp() {
               onOpenPhoto={setLightboxSrc}
               onOpenAchievements={() => openAchievements(viewingUserId)}
               onOpenAchievementDetail={(icon) => openAchievementDetail(viewingUserId, icon)}
+              onOpenAllCatches={() => push({ screen: 'screen-catches', userId: viewingUserId })}
               onDeleteUser={setDeletingUserId}
               onOpenAward={setOpenAward}
             />
