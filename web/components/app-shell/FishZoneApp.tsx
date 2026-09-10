@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useTerritories, useConfirmCatch, useProfile, useRealtimeSync, useIsSuperAdmin, useAllTerritoryIds } from '@/lib/supabase/queries'
-import { getCurrentCoords, nearestTerritory } from '@/lib/geolocation'
+import { getCurrentCoords, nearestTerritory, queryGeolocationPermission } from '@/lib/geolocation'
 import { uploadCatchPhoto } from '@/lib/supabase/storage'
 import { useActivityReadState, useAdminActionsReadState } from '@/lib/activityRead'
 import { useAchievementUnlock } from '@/lib/achievementUnlock'
@@ -315,7 +315,15 @@ export function FishZoneApp() {
     const coords = await getCurrentCoords()
     setLocating(false)
     if (!coords) {
-      showToast('Не получилось определить твоё местоположение. Попробуй ещё раз')
+      // "Попробуй ещё раз" is actively wrong once permission is explicitly
+      // denied — the browser blocks getCurrentPosition silently forever
+      // after that, no retry will ever succeed without a settings change.
+      const permission = await queryGeolocationPermission()
+      showToast(
+        permission === 'denied'
+          ? 'Доступ к геолокации запрещён. Разреши его в настройках браузера для этого сайта'
+          : 'Не получилось определить твоё местоположение. Попробуй ещё раз'
+      )
       return
     }
     mapHandleRef.current?.showUserLocation(coords.lat, coords.lng)

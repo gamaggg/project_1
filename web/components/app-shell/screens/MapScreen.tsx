@@ -5,7 +5,7 @@ import { MapView } from '@/components/app-shell/MapView'
 import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import type { Territory } from '@/lib/data/types'
 import { formatWhen } from '@/lib/format'
-import { getCurrentCoords } from '@/lib/geolocation'
+import { getCurrentCoords, useGeolocationPermission } from '@/lib/geolocation'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 
 function statusBadge(status: Territory['status'], myTerritoryColor: string) {
@@ -57,6 +57,7 @@ export const MapScreen = forwardRef<
   forwardedRef
 ) {
   const mapRef = useRef<LeafletMapHandle>(null)
+  const geoPermission = useGeolocationPermission()
   useImperativeHandle(forwardedRef, () => ({
     flyToTerritory: (id: string) => mapRef.current?.flyToTerritory(id),
     showUserLocation: (lat: number, lng: number) => mapRef.current?.showUserLocation(lat, lng),
@@ -115,6 +116,18 @@ export const MapScreen = forwardRef<
 
   return (
     <div className="screen-inner" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}>
+      {(geoPermission === 'prompt' || geoPermission === 'denied') && (
+        <div className="map-geo-banner">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flex: '0 0 auto' }}>
+            <path d="M12 21c-4-4.5-7-8-7-11a7 7 0 0 1 14 0c0 3-3 6.5-7 11z" />
+            <circle cx="12" cy="10" r="2.3" />
+          </svg>
+          <div className="map-geo-banner-text">Геолокация выключена — включи её и мы найдём тебя на карте</div>
+          <button className="map-geo-banner-btn tap-scale" onClick={handleLocate}>
+            Разрешить
+          </button>
+        </div>
+      )}
       <div className="map-wrap">
         <MapView
           ref={mapRef}

@@ -6,6 +6,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import type L from 'leaflet'
 import type { Territory } from '@/lib/data/types'
 import { resolveTerritoryColor } from '@/lib/data/territoryColors'
+import { getCurrentCoords, queryGeolocationPermission } from '@/lib/geolocation'
 
 // OpenFreeMap's "Bright" style — free, no API key, no request quota (unlike
 // tile.openstreetmap.org, which OSM's own usage policy says isn't meant for
@@ -26,6 +27,19 @@ export type LeafletMapHandle = {
 }
 
 const LABEL_MIN_ZOOM = 14
+
+// Fallback view for a visitor whose real position isn't known yet (no
+// geolocation permission decided/granted — see the map-geo-banner in
+// MapScreen.tsx). Deliberately NOT derived from fitBounds over all 658
+// sectors: that box's raw geometric center falls inland, nowhere near the
+// coast, once zoomed in this close (tried it — landed in a forest outside
+// Makhvilauri with no sectors on screen). Anchored instead on central Batumi
+// bay itself — the coordinates are the centroid of the sector cluster
+// (B0934–B1174) visible in the reference screenshot for this feature, zoom
+// picked just above LABEL_MIN_ZOOM so sector labels and the "Batumi" place
+// name are both legible without being a tight, single-sector view.
+const FALLBACK_CENTER: [number, number] = [41.6513, 41.6325]
+const FALLBACK_ZOOM = 14.3
 
 // Ported from fishzone-app.html initMap()/drawTerritories() — see DECISIONS.md for
 // why preferCanvas + the zoom-gated labelsLayer exist (703 sectors across all of
@@ -146,6 +160,32 @@ export const LeafletMap = forwardRef<
       })
     }
 
+    // Places (or moves) a marker at the visitor's real GPS position — shown
+    // once geolocation succeeds, regardless of whether it lands on a sector
+    // (see DECISIONS.md, "+" flow). Kept outside markersLayer so redrawing
+    // sector polygons on ownership changes doesn't clear it. Also used by the
+    // init effect below for a visitor whose browser already granted access in
+    // an earlier session.
+    function placeUserMarker(lat: number, lng: number) {
+      const L = leafletRef.current
+      const map = mapRef.current
+      if (!L || !map) return
+      if (userMarkerRef.current) {
+        userMarkerRef.current.setLatLng([lat, lng])
+        return
+      }
+      userMarkerRef.current = L.marker([lat, lng], {
+        icon: L.divIcon({
+          className: 'user-location-icon',
+          html: '<div class="user-location-pulse"></div><div class="user-location-dot"></div>',
+          iconSize: [16, 16],
+          iconAnchor: [8, 8],
+        }),
+        interactive: false,
+        zIndexOffset: 1000,
+      }).addTo(map)
+    }
+
     useImperativeHandle(ref, () => ({
       flyToTerritory(id: string) {
         const map = mapRef.current
@@ -154,29 +194,7 @@ export const LeafletMap = forwardRef<
         const targetZoom = Math.max(map.getZoom(), 16.5)
         map.flyTo([t.lat, t.lng], targetZoom, { duration: 0.5 })
       },
-      // Places (or moves) a marker at the visitor's real GPS position — shown
-      // once geolocation succeeds, regardless of whether it lands on a sector
-      // (see DECISIONS.md, "+" flow). Kept outside markersLayer so redrawing
-      // sector polygons on ownership changes doesn't clear it.
-      showUserLocation(lat: number, lng: number) {
-        const L = leafletRef.current
-        const map = mapRef.current
-        if (!L || !map) return
-        if (userMarkerRef.current) {
-          userMarkerRef.current.setLatLng([lat, lng])
-          return
-        }
-        userMarkerRef.current = L.marker([lat, lng], {
-          icon: L.divIcon({
-            className: 'user-location-icon',
-            html: '<div class="user-location-pulse"></div><div class="user-location-dot"></div>',
-            iconSize: [16, 16],
-            iconAnchor: [8, 8],
-          }),
-          interactive: false,
-          zIndexOffset: 1000,
-        }).addTo(map)
-      },
+      showUserLocation: placeUserMarker,
       flyToLocation(lat: number, lng: number) {
         const map = mapRef.current
         if (!map) return
@@ -228,16 +246,22 @@ export const LeafletMap = forwardRef<
         markersLayerRef.current = L.layerGroup().addTo(map)
         labelsLayerRef.current = L.layerGroup()
 
-        // 703 sectors span all of Adjara's coast — fitBounds alone leaves the
-        // initial view zoomed out very far. +log2(3) zoom levels triples the
-        // map scale (each Leaflet zoom level doubles it) while keeping the
-        // same center, so the view opens noticeably closer without hardcoding
-        // a fixed zoom that would ignore actual bounds/screen size.
-        const bounds = L.latLngBounds(territories.flatMap((t) => t.corners))
-        if (bounds.isValid()) {
-          const fitZoom = map.getBoundsZoom(bounds, false, L.point(36, 36))
-          map.setView(bounds.getCenter(), fitZoom + Math.log2(3))
-        }
+        map.setView(FALLBACK_CENTER, FALLBACK_ZOOM)
+
+        // Silently confirm (never prompts — see DECISIONS.md "геолокация
+        // только по «+»") whether this origin already has geolocation access
+        // from an earlier session, and if so smoothly fly to the visitor's
+        // real position instead of leaving the generic regional view up. A
+        // first-time visitor (nothing decided yet) or one who denied it stays
+        // on the wide view above — see the map-geo-banner in MapScreen.tsx
+        // for how they're prompted to grant it.
+        queryGeolocationPermission().then(async (permission) => {
+          if (cancelled || permission !== 'granted') return
+          const coords = await getCurrentCoords()
+          if (cancelled || !coords) return
+          map.flyTo([coords.lat, coords.lng], 16.5, { duration: 0.6 })
+          placeUserMarker(coords.lat, coords.lng)
+        })
 
         function updateLabelVisibility() {
           const show = map.getZoom() >= LABEL_MIN_ZOOM
@@ -256,10 +280,11 @@ export const LeafletMap = forwardRef<
         })
         // Long-press on EMPTY map (not an existing sector) starts/extends a
         // new-sector placement batch — super admin only, same gating as
-        // onLongPressTerritory. Leaflet's interactive polygons stop mouse
-        // events from bubbling to the map by default, so this only ever
-        // fires for a press that didn't land on a sector — no extra "was it
-        // on a polygon" check needed.
+        // onLongPressTerritory. A press that landed on a sector's own polygon
+        // never reaches here: each polygon calls L.DomEvent.stopPropagation
+        // on its own mousedown/mouseup/click (Canvas-rendered interactive
+        // layers do NOT stop native event bubbling on their own — confirmed
+        // by reading Leaflet's source — so that stop has to be explicit).
         map.on('mousedown', (e: L.LeafletMouseEvent) => {
           if (!onLongPressEmptyMapRef.current) return
           emptyMapLongPressFiredRef.current = false
@@ -280,7 +305,8 @@ export const LeafletMap = forwardRef<
         // Once a new-sector batch is underway, a plain tap on more empty
         // space queues more drafts — mirrors onSelect's re-purposing while a
         // delete selection is active. Never fires for a click that landed on
-        // an existing sector's own polygon (those don't bubble to the map).
+        // an existing sector's own polygon — see the stopPropagation note
+        // above the map's 'mousedown' listener.
         map.on('click', (e: L.LeafletMouseEvent) => {
           if (emptyMapLongPressFiredRef.current) {
             emptyMapLongPressFiredRef.current = false
