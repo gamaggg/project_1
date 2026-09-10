@@ -20,7 +20,7 @@ export function AdminAccessScreen({
     <>
       <div className="header-row">
         <div className="icon-btn tap-scale" onClick={onBack}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </div>
