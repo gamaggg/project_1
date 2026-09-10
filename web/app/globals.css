@@ -305,7 +305,6 @@ body{
 .owner-row .owner-avatar img{width:100%; height:100%; object-fit:cover;}
 .territory-thumb-wrap{position:relative; isolation:isolate; width:100%; height:150px; border-radius:var(--radius-l); overflow:hidden; margin-top:16px; box-shadow:var(--shadow-sm);}
 .territory-thumb-map{width:100%; height:100%; background:#DCE7E9;}
-.territory-thumb-map .leaflet-tile-pane{filter:grayscale(0.55) brightness(1.1) contrast(0.92) saturate(0.7);}
 .territory-thumb-overlay{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:6px; pointer-events:none; z-index:1000;}
 .territory-thumb-avatar{width:30px; height:30px; border-radius:50%; overflow:hidden; border:2px solid #fff; box-shadow:0 2px 6px rgba(23,24,27,0.35); background:linear-gradient(160deg,#FF7A38,var(--accent) 70%); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800;}
 .territory-thumb-avatar img{width:100%; height:100%; object-fit:cover;}
@@ -340,9 +339,10 @@ body{
   width:100%; height:100%;
   background:#DCE7E9;
 }
-#leafletMap .leaflet-tile-pane{
-  filter: grayscale(0.55) brightness(1.1) contrast(0.92) saturate(0.7);
-}
+/* No tile-pane desaturation filter here anymore — that was compensating for
+   OpenFreeMap Bright's more vivid stock palette; the custom Mapbox style
+   (see LeafletMap.tsx) already bakes in RANGE's muted brand colors directly,
+   so an extra CSS filter on top just washed them back out. */
 .map-wrap{position:relative; flex:1 1 auto; min-height:0;}
 /* Real flex sibling above .map-wrap, not an absolute overlay — a permit
    banner floating over the canvas would collide with .map-legend/.map-header

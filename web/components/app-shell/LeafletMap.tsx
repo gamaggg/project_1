@@ -1,22 +1,22 @@
 'use client'
 
 import 'leaflet/dist/leaflet.css'
-import 'maplibre-gl/dist/maplibre-gl.css'
+import 'mapbox-gl/dist/mapbox-gl.css'
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import type L from 'leaflet'
 import type { Territory } from '@/lib/data/types'
 import { resolveTerritoryColor } from '@/lib/data/territoryColors'
 import { getCurrentCoords, queryGeolocationPermission } from '@/lib/geolocation'
 
-// OpenFreeMap's "Bright" style — free, no API key, no request quota (unlike
-// tile.openstreetmap.org, which OSM's own usage policy says isn't meant for
-// production traffic at our scale). Pinned to maplibre-gl v5, not v6: v6's
-// worker is a real ESM module file that imports a sibling file by relative
-// path, which Turbopack (this project's default bundler, see AGENTS.md)
-// doesn't emit correctly — the map mounts but no tile ever loads. v5's older
-// worker doesn't have that sibling-file dependency, so it isn't hit. See
-// DECISIONS.md.
-const BASEMAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/bright'
+// Trial swap from OpenFreeMap — a custom Mapbox Standard style, hand-tuned to
+// RANGE's brand colors (deep-water blue that's deliberately distinct from the
+// blue "occupied" territory badge, brand-orange motorways, flat 2D — no 3D
+// buildings). Kept as a single clean commit specifically so it's a one-command
+// `git revert` back to OpenFreeMap if it doesn't work out. Token is a public
+// (pk.) Mapbox token — safe client-side by design, same as any mapbox-gl-js
+// app; scope/domain-restrict it in the Mapbox dashboard if usage needs limiting.
+const MAPBOX_STYLE_URL = process.env.NEXT_PUBLIC_MAPBOX_STYLE!
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 
 export type LeafletMapHandle = {
   flyToTerritory: (id: string) => void
@@ -212,34 +212,47 @@ export const LeafletMap = forwardRef<
     // Init once. Deliberately not re-run on territory changes.
     useEffect(() => {
       let cancelled = false
-      Promise.all([import('leaflet'), import('@maplibre/maplibre-gl-leaflet')]).then(([L, { maplibreGL }]) => {
+      Promise.all([import('leaflet'), import('mapbox-gl-leaflet')]).then(([LModule]) => {
         if (cancelled || !containerRef.current || mapRef.current) return
+        // mapbox-gl-leaflet is a CJS-only UMD plugin: it does its own internal
+        // require('leaflet') and mutates that module's exports object with
+        // `L.mapboxGL` as a side effect (no named export of its own — see its
+        // source). Turbopack's ESM namespace for our own `import('leaflet')`
+        // above is a separate snapshot taken before that mutation lands, so
+        // `LModule.mapboxGL` is undefined even though the plugin worked;
+        // `LModule.default` is the live, unwrapped CJS exports object the
+        // plugin actually mutated (confirmed by inspection), so it has to be
+        // used from here on instead of the namespace `LModule` itself.
+        const L = (LModule as unknown as { default?: typeof LModule }).default ?? LModule
         leafletRef.current = L
 
         const map = L.map(containerRef.current, {
           zoomControl: false,
           attributionControl: false,
           preferCanvas: true,
+          // Leaflet's Canvas renderer only pre-renders vector layers slightly
+          // beyond the viewport (default padding: 0.1 = 10% each side) — swipe
+          // or pinch-zoom far/fast enough during one gesture and the newly
+          // revealed edge is genuinely blank (nothing drawn there yet) until
+          // the real redraw fires at gesture end, reading as "sectors pop in
+          // after you let go." A wider buffer covers normal gesture speeds; the
+          // trade-off is a bigger canvas to redraw on every real update.
+          renderer: L.canvas({ padding: 0.6 }),
         })
         mapRef.current = map
 
-        // attributionControl: false — this project supplies its own attribution
-        // (below) rather than trusting the style JSON's own `source.attribution`
-        // strings, which the bridge would otherwise inject verbatim into the
-        // Leaflet attribution control. Also sidesteps a disclosed maplibre-gl
-        // advisory (GHSA-jrc7-96c5-q579, XSS via DOM.sanitize() on third-party
-        // style attribution) — moot here regardless, since the bridge always
-        // hardcodes attributionControl: false on its own internal MapLibre
-        // instance and never touches that sanitizer, but no reason to also
-        // forward untrusted third-party text through Leaflet's unsanitized
-        // addAttribution() when we don't need to.
-        maplibreGL({ style: BASEMAP_STYLE_URL, attributionControl: false }).addTo(map)
+        // This project supplies its own attribution (below) rather than trusting
+        // the style JSON's own `source.attribution` strings, which the bridge
+        // would otherwise inject verbatim into the Leaflet attribution control —
+        // moot regardless, since the bridge (mapbox-gl-leaflet, imported above
+        // for its L.mapboxGL side-effect registration) always hardcodes its own
+        // internal mapbox-gl instance to attributionControl: false already.
+        L.mapboxGL({ style: MAPBOX_STYLE_URL, accessToken: MAPBOX_TOKEN }).addTo(map)
         L.control
           .attribution({ prefix: false })
           .addAttribution(
-            '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> · ' +
-              '<a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> · ' +
-              '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'
+            '© <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener">Mapbox</a> · ' +
+              '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'
           )
           .addTo(map)
 

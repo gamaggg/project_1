@@ -1,15 +1,15 @@
 'use client'
 
 import 'leaflet/dist/leaflet.css'
-import 'maplibre-gl/dist/maplibre-gl.css'
+import 'mapbox-gl/dist/mapbox-gl.css'
 import { useEffect, useRef } from 'react'
 import type { Territory } from '@/lib/data/types'
 import { resolveTerritoryColor } from '@/lib/data/territoryColors'
 
-// Same OpenFreeMap basemap as LeafletMap.tsx — see that file for why it's
-// pinned to maplibre-gl v5 (Turbopack) and why attributionControl is off
-// (GHSA-jrc7-96c5-q579).
-const BASEMAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/bright'
+// Same Mapbox basemap as LeafletMap.tsx — see that file for the trial-swap
+// rationale and rollback plan.
+const MAPBOX_STYLE_URL = process.env.NEXT_PUBLIC_MAPBOX_STYLE!
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 
 // A static, single-sector preview for TerritoryScreen — not the interactive
 // multi-sector LeafletMap. The number/avatar overlay is plain HTML, not a
@@ -32,8 +32,12 @@ export function TerritoryThumbnailMap({
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([import('leaflet'), import('@maplibre/maplibre-gl-leaflet')]).then(([L, { maplibreGL }]) => {
+    Promise.all([import('leaflet'), import('mapbox-gl-leaflet')]).then(([LModule]) => {
       if (cancelled || !containerRef.current) return
+      // See LeafletMap.tsx's init effect for why `.default` — mapbox-gl-leaflet
+      // mutates the real CJS exports object, which Turbopack's ESM namespace
+      // for this import doesn't reflect.
+      const L = (LModule as unknown as { default?: typeof LModule }).default ?? LModule
       const map = L.map(containerRef.current, {
         dragging: false,
         scrollWheelZoom: false,
@@ -46,7 +50,7 @@ export function TerritoryThumbnailMap({
         preferCanvas: true,
       })
       mapRef.current = map
-      maplibreGL({ style: BASEMAP_STYLE_URL, attributionControl: false }).addTo(map)
+      L.mapboxGL({ style: MAPBOX_STYLE_URL, accessToken: MAPBOX_TOKEN }).addTo(map)
       const color = resolveTerritoryColor(territory.status, myTerritoryColor)
       const poly = L.polygon(territory.corners, {
         color,
