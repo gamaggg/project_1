@@ -75,7 +75,7 @@ type StackEntry =
   | { screen: 'screen-map' }
   | { screen: 'screen-territory'; territoryId: string }
   | { screen: 'screen-territories'; initialFilter?: TerritoryStatus; initialMode?: RatingMode }
-  | { screen: 'screen-catches'; userId?: string }
+  | { screen: 'screen-catches'; userId?: string; territoryId?: string }
   | { screen: 'screen-users' }
   | { screen: 'screen-camera' }
   | { screen: 'screen-confirm' }
@@ -163,7 +163,8 @@ export function FishZoneApp() {
   const currentScreen: ScreenId = topEntry.screen
   const territoriesInitialFilter = topEntry.screen === 'screen-territories' ? topEntry.initialFilter : undefined
   const territoriesInitialMode = topEntry.screen === 'screen-territories' ? topEntry.initialMode : undefined
-  const catchesUserId = topEntry.screen === 'screen-catches' ? (topEntry.userId ?? user?.id) : undefined
+  const catchesTerritoryId = topEntry.screen === 'screen-catches' ? topEntry.territoryId : undefined
+  const catchesUserId = topEntry.screen === 'screen-catches' && !catchesTerritoryId ? (topEntry.userId ?? user?.id) : undefined
   // The trophy-card celebration is full-bleed and edge-to-edge on purpose —
   // both the nav and any achievement popup stay off it, see below.
   const showingTrophyScene = currentScreen === 'screen-confirm' && confirmStep === 'success'
@@ -509,6 +510,7 @@ export function FishZoneApp() {
               onDeleteCatch={setDeletingCatchId}
               onDeleteTerritory={setDeletingTerritoryId}
               onShare={() => shareTerritory(viewingTerritory.id)}
+              onOpenAllCatches={() => push({ screen: 'screen-catches', territoryId: viewingTerritory.id })}
             />
           )}
         </Screen>
@@ -527,7 +529,9 @@ export function FishZoneApp() {
           <LastWeekScreen onBack={pop} onOpenUser={openUserProfile} onOpenCurrentRating={openWeeklyRating} />
         </Screen>
         <Screen id="screen-catches" current={currentScreen}>
-          {catchesUserId && <MyCatchesScreen userId={catchesUserId} onBack={pop} onOpenPhoto={setLightboxSrc} />}
+          {(catchesUserId || catchesTerritoryId) && (
+            <MyCatchesScreen userId={catchesUserId} territoryId={catchesTerritoryId} onBack={pop} onOpenPhoto={setLightboxSrc} onOpenUser={openUserProfile} />
+          )}
         </Screen>
         <Screen id="screen-users" current={currentScreen}>
           <UsersListScreen onBack={pop} onOpenUser={openUserProfile} />

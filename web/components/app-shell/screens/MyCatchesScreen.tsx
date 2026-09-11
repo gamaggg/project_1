@@ -1,27 +1,36 @@
 'use client'
 
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useCatchesByUser, useProfile } from '@/lib/supabase/queries'
+import { useCatchesByUser, useCatchesByTerritory, useProfile } from '@/lib/supabase/queries'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
+import { CatcherLabel } from '@/components/app-shell/screens/TerritoryScreen'
 
-// Full catch history for one profile (own or someone else's, by userId) —
-// ProfileScreen/UserProfileScreen only show a 3-item preview with a button
-// into this screen. Self-contained (fetches its own catches by userId)
-// rather than fed pre-computed data, matching AchievementsScreen.
+// Full catch history — either one profile's (own or someone else's, by
+// userId; ProfileScreen/UserProfileScreen show a 3-item preview with a button
+// in here) or one sector's (by territoryId, from TerritoryScreen's "Все
+// уловы" — spans different catchers, so rows show who caught each one).
+// Self-contained (fetches its own catches) rather than fed pre-computed data,
+// matching AchievementsScreen.
 export function MyCatchesScreen({
   userId,
+  territoryId,
   onBack,
   onOpenPhoto,
+  onOpenUser,
 }: {
-  userId: string
+  userId?: string
+  territoryId?: string
   onBack: () => void
   onOpenPhoto: (src: string) => void
+  onOpenUser: (id: string) => void
 }) {
   const { user } = useAuth()
-  const { data: catches = [] } = useCatchesByUser(userId)
-  const isOwn = userId === user?.id
-  const { data: profile } = useProfile(isOwn ? null : userId)
-  const title = isOwn ? 'Мои уловы' : `Уловы: ${profile?.displayName ?? '…'}`
+  const { data: byUser = [] } = useCatchesByUser(territoryId ? null : (userId ?? null))
+  const { data: byTerritory = [] } = useCatchesByTerritory(territoryId ?? null)
+  const catches = territoryId ? byTerritory : byUser
+  const isOwn = !territoryId && userId === user?.id
+  const { data: profile } = useProfile(!territoryId && !isOwn ? (userId ?? null) : null)
+  const title = territoryId ? `Уловы: ${territoryId}` : isOwn ? 'Мои уловы' : `Уловы: ${profile?.displayName ?? '…'}`
 
   return (
     <>
@@ -48,10 +57,13 @@ export function MyCatchesScreen({
                     <img src={c.photoUrl} alt={c.speciesName} />
                   </div>
                   <div style={{ flex: 1 }}>
+                    {territoryId && <CatcherLabel userId={c.userId} mine={c.mine} onOpenUser={onOpenUser} />}
                     <div style={{ fontWeight: 700, fontSize: 14.5 }}>{c.speciesName}</div>
-                    <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 1 }}>
-                      {[meta, c.territoryId].filter(Boolean).join(' · ')}
-                    </div>
+                    {(meta || !territoryId) && (
+                      <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 1 }}>
+                        {[meta, territoryId ? null : c.territoryId].filter(Boolean).join(' · ')}
+                      </div>
+                    )}
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--ink-faint)', fontWeight: 600, textAlign: 'right' }}>
                     {formatWhen(c.caughtAt).split('·')[0].trim()}

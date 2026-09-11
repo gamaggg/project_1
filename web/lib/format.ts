@@ -13,14 +13,17 @@ export function formatWhen(iso: string): string {
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
 }
 
-export function formatWeight(kg: number): string {
-  return kg.toFixed(2).replace('.', ',')
+// weight_kg is stored in the DB as kilograms (numeric(4,2), see confirm_catch)
+// — grams are purely a display/input convention on top of that, so this just
+// rescales for presentation; nothing downstream needs to know grams exist.
+export function formatWeightGrams(kg: number): string {
+  return String(Math.round(kg * 1000))
 }
 
 // Size/weight are optional now (see DECISIONS.md — only species is required
 // when logging a catch) — joins whichever of the two were given, or ''.
 export function formatCatchMeta(lengthCm: number | null, weightKg: number | null): string {
-  return [lengthCm ? `${lengthCm} см` : null, weightKg ? `${formatWeight(weightKg)} кг` : null].filter(Boolean).join(' · ')
+  return [lengthCm ? `${lengthCm} см` : null, weightKg ? `${formatWeightGrams(weightKg)} г` : null].filter(Boolean).join(' · ')
 }
 
 // "9/2026" — numeric month/year an account was created (see ProfileScreen/

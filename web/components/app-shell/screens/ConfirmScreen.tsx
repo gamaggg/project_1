@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSpecies } from '@/lib/supabase/queries'
 import { CATEGORY_LABEL, KIND_LABEL, METHODS, BAITS, categoryForKind, type SpeciesCategory } from '@/lib/data/species'
-import { formatWeight } from '@/lib/format'
+import { formatWeightGrams } from '@/lib/format'
 import { HexBadge } from '@/components/app-shell/HexBadge'
 import type { PendingCatch, Territory } from '@/lib/data/types'
 
@@ -48,7 +48,7 @@ export function ConfirmScreen({
   const [category, setCategory] = useState<SpeciesCategory>(categoryForKind(territory.kind))
   const [speciesKey, setSpeciesKey] = useState('')
   const [lengthCm, setLengthCm] = useState('')
-  const [weightKg, setWeightKg] = useState('')
+  const [weightG, setWeightG] = useState('')
   const [method, setMethod] = useState('')
   const [bait, setBait] = useState('')
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -68,7 +68,7 @@ export function ConfirmScreen({
     onSubmit({
       species: speciesKey,
       lengthCm: lengthCm.trim() ? Number(lengthCm) : null,
-      weightKg: weightKg.trim() ? Number(weightKg) : null,
+      weightKg: weightG.trim() ? Number(weightG) / 1000 : null,
       method: method || null,
       bait: bait || null,
     })
@@ -77,7 +77,7 @@ export function ConfirmScreen({
   if (step === 'success') {
     const meta = [
       pendingCatch?.lengthCm ? `${pendingCatch.lengthCm} см` : null,
-      pendingCatch?.weightKg ? `${formatWeight(pendingCatch.weightKg)} кг` : null,
+      pendingCatch?.weightKg ? `${formatWeightGrams(pendingCatch.weightKg)} г` : null,
       territory.id,
     ]
       .filter(Boolean)
@@ -192,8 +192,8 @@ export function ConfirmScreen({
               <input id="length" type="number" min={1} max={300} inputMode="numeric" placeholder="необязательно" value={lengthCm} onChange={(e) => setLengthCm(e.target.value)} />
             </div>
             <div className="auth-field" style={{ flex: 1 }}>
-              <label htmlFor="weight">Вес, кг</label>
-              <input id="weight" type="number" min={0.01} max={100} step={0.01} inputMode="decimal" placeholder="необязательно" value={weightKg} onChange={(e) => setWeightKg(e.target.value)} />
+              <label htmlFor="weight">Вес, г</label>
+              <input id="weight" type="number" min={10} max={9999} step={10} inputMode="numeric" placeholder="необязательно" value={weightG} onChange={(e) => setWeightG(e.target.value)} />
             </div>
           </div>
 

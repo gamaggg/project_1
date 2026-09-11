@@ -16,9 +16,37 @@ const oswald = Oswald({
   variable: '--font-display',
 })
 
+// TODO: swap for the custom domain once it's connected in Vercel (Settings ->
+// Domains) — this is what Next.js resolves the og/twitter image URLs against,
+// so a stale value here means link previews keep pointing at the old host.
+const SITE_URL = 'https://web-flame-mu-44.vercel.app'
+const TITLE = 'RANGE: Cast & Claim Territory'
+const DESCRIPTION = 'Каждый улов меняет карту. Захватывай территории, собирай награды, обгоняй соперников.'
+
 export const metadata: Metadata = {
-  title: 'RANGE — Батуми',
-  description: 'Береговая рыбалка в Батуми: карта территорий, уловы, активность.',
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
+  keywords: ['рыбалка', 'Батуми', 'территории', 'RANGE', 'береговая рыбалка', 'Грузия'],
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: SITE_URL,
+    siteName: 'RANGE',
+    locale: 'ru_RU',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+  // Short label shown under the icon on iOS when someone adds the site to
+  // their Home Screen — otherwise iOS falls back to the full <title>, which
+  // is too long to fit under the icon. Matches manifest.ts's short_name.
+  appleWebApp: {
+    title: 'RANGE',
+  },
 }
 
 // themeColor alone turned out not to be enough on real devices (Safari kept

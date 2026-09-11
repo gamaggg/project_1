@@ -117,7 +117,7 @@ export function computeAchievements(myCatches: Catch[], ctx: AchievementContext)
       unlocked: waterKindsCaught.size >= 4,
       progress: `${waterKindsCaught.size}/4`,
     },
-    { icon: 'heavy', title: 'Тяжеловес', desc: `Поймана рыба весом от ${HEAVY_TARGET_KG} кг`, unlocked: heaviestKg >= HEAVY_TARGET_KG },
+    { icon: 'heavy', title: 'Тяжеловес', desc: `Поймана рыба весом от ${HEAVY_TARGET_KG * 1000} г`, unlocked: heaviestKg >= HEAVY_TARGET_KG },
     { icon: 'giant', title: 'Гигант', desc: `Поймана рыба длиной от ${GIANT_TARGET_CM} см`, unlocked: !!(record && record.lengthCm !== null && record.lengthCm >= GIANT_TARGET_CM) },
     {
       icon: 'loyal',

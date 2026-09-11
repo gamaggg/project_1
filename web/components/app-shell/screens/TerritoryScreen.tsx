@@ -31,6 +31,24 @@ function OwnerRow({ ownerId, isMine, onOpenUser }: { ownerId: string; isMine: bo
   )
 }
 
+// A sector's catches span different owners over time (unlike a profile's own
+// catch list), so each row needs to say who caught it — exported for reuse by
+// MyCatchesScreen's territory mode ("Все уловы" from this screen). Clickable
+// through to that person's profile, same as OwnerRow above — except "Ты",
+// which is already where you are.
+export function CatcherLabel({ userId, mine, onOpenUser }: { userId: string; mine: boolean; onOpenUser: (id: string) => void }) {
+  const { data: profile } = useProfile(mine ? null : userId)
+  const style: React.CSSProperties = { fontSize: 11.5, fontWeight: 700, color: 'var(--ink-faint)', marginBottom: 2 }
+  if (mine) return <div style={style}>Ты</div>
+  return (
+    <div style={style}>
+      <button className="activity-who-btn" onClick={() => onOpenUser(userId)}>
+        {profile?.displayName ?? '…'}
+      </button>
+    </div>
+  )
+}
+
 // View-only for regular users — a catch can only be recorded through "+"
 // (geolocation), never by picking a sector by hand (see DECISIONS.md). The
 // one exception is the admin-only "Добавить улов" button below, which skips
@@ -45,6 +63,7 @@ export function TerritoryScreen({
   onDeleteCatch,
   onDeleteTerritory,
   onShare,
+  onOpenAllCatches,
   myTerritoryColor,
 }: {
   territory: Territory
@@ -56,6 +75,7 @@ export function TerritoryScreen({
   onDeleteCatch: (catchId: number) => void
   onDeleteTerritory: (territoryId: string) => void
   onShare: () => void
+  onOpenAllCatches: () => void
   myTerritoryColor: string
 }) {
   const { user } = useAuth()
@@ -126,8 +146,13 @@ export function TerritoryScreen({
             </div>
           </div>
         </div>
-        <div className="section-title" style={{ marginTop: 22 }}>
-          Последние уловы
+        <div className="section-title-row" style={{ marginTop: 22 }}>
+          <div className="section-title">Последние уловы</div>
+          {catches.length > recent.length && (
+            <button className="section-link" onClick={onOpenAllCatches}>
+              Все уловы
+            </button>
+          )}
         </div>
         <div className="card" style={{ overflow: 'hidden' }}>
           {recent.length ? (
@@ -142,6 +167,7 @@ export function TerritoryScreen({
                     <img src={c.photoUrl} alt={c.speciesName} />
                   </div>
                   <div style={{ flex: 1 }}>
+                    <CatcherLabel userId={c.userId} mine={c.mine} onOpenUser={onOpenUser} />
                     <div style={{ fontWeight: 700, fontSize: 14.5 }}>{c.speciesName}</div>
                     {meta && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 1 }}>{meta}</div>}
                   </div>
