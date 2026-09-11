@@ -1239,11 +1239,11 @@ body{
 }
 .sector-hex.claimed ~ .sector-pin{opacity:1; transform:translate(-50%,-6px) scale(1);}
 
-.wizard-field{display:flex; flex-direction:column; gap:6px; margin-bottom:12px;}
+.wizard-field{display:flex; flex-direction:column; gap:6px; margin-bottom:12px; min-width:0;}
 .wizard-field label{font-size:12px; font-weight:700; color:var(--ink-soft);}
 .wizard-field input{
   font-family:inherit; font-size:16px; padding:12px 14px; border-radius:13px; border:1.5px solid #EAD9C4;
-  background:#FFFDF9; outline:none; width:100%; color:var(--ink);
+  background:#FFFDF9; outline:none; width:100%; min-width:0; box-sizing:border-box; color:var(--ink);
   transition:border-color .15s, box-shadow .15s;
 }
 /* -webkit-appearance:none on an empty type=date input makes iOS Safari
@@ -1251,7 +1251,12 @@ body{
    affordance at all (confirmed live: reported as "field looks empty").
    Chrome desktop still shows its own placeholder either way, which is why
    this wasn't caught testing there. Left native so Safari's built-in empty
-   state — and the value once one is picked — actually renders. */
+   state — and the value once one is picked — actually renders. Restoring
+   native appearance brings back Safari's own intrinsic content width for
+   the day/month/year segments too, which a flex child won't shrink below
+   by default (min-width:auto) — without min-width:0 above, that pushed the
+   field past the screen edge instead of respecting width:100% (also
+   confirmed live). */
 .wizard-field input:not([type='date']){appearance:none; -webkit-appearance:none;}
 .wizard-field input:focus{border-color:var(--accent); box-shadow:0 0 0 4px rgba(252,82,0,.12);}
 .wizard-field input:disabled{color:var(--ink-faint); background:var(--bg); cursor:not-allowed;}
