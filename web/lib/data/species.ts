@@ -33,16 +33,17 @@ export const CATEGORIES_BY_CITY: Record<CityId, [SpeciesCategory, SpeciesCategor
 
 // Starting category shown when the catch form opens — Batumi can infer it
 // from the sector's kind (sea -> marine), Moscow's kinds are all freshwater
-// water bodies so predator/peaceful isn't derivable from kind at all.
+// water bodies so predator/peaceful isn't derivable from kind at all; defaults
+// to predator there since that's the more commonly targeted catch.
 export function categoryForKind(kind: Database['public']['Enums']['territory_kind'], city: CityId): SpeciesCategory {
-  if (city === 'moscow') return 'peaceful'
+  if (city === 'moscow') return 'predator'
   return kind === 'sea' ? 'marine' : 'freshwater'
 }
 
 export const METHODS = ['Спиннинг', 'Донная снасть', 'Поплавочная удочка']
 
 export const BAITS_BY_CITY: Record<CityId, string[]> = {
-  batumi: ['Микроджиг', 'Креветка', 'Морской червь', 'Блесна'],
+  batumi: ['Микроджиг', 'Силикон', 'Блесна', 'Воблер', 'Креветка', 'Морской червь', 'Вертушка', 'Бомбарда', 'Пилькер', 'Булер', 'Мормышка'],
   moscow: ['Микроджиг', 'Блесна', 'Воблер', 'Червь', 'Опарыш', 'Кукуруза'],
 }
 
