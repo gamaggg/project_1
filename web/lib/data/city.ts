@@ -36,7 +36,7 @@ export const CITIES: Record<CityId, CityInfo> = {
     // geometric centroid of the whole city, zoomed in to match Batumi's own
     // close-up default instead of showing the entire MKAD ring at once.
     name: 'Москва',
-    boundaryLabel: 'Реки и озёра Москвы в границах МКАД',
+    boundaryLabel: 'Реки, озёра и пруды Москвы',
     timezone: 'Europe/Moscow',
     center: [55.7522, 37.6228],
     zoom: 14.3,

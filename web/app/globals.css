@@ -1205,17 +1205,31 @@ body{
    picked) — everywhere else the hex claims in the plain brand accent. */
 .sector-stage{flex:0 0 auto; height:128px; margin-top:44px; display:flex; align-items:center; justify-content:center;}
 .sector-hex-wrap{position:relative; width:100px; aspect-ratio:2/1.7320508;}
+/* CSS `border` paints 4 rectangular strips (top/right/bottom/left) — clipped
+   to a hexagon, only the flat top/bottom edges keep a visible stripe, the 4
+   diagonal edges get none (a real, reported bug, not just imprecise). Fixed
+   by layering two identically-clipped hexagons instead: the element itself
+   (full size, painted in the "border" color) and an ::after inset by the
+   stroke width (painted in the fill color) — the visible ring between them
+   traces all 6 edges uniformly, however the polygon is clipped. */
 .sector-hex{
-  width:100%; height:100%; clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%);
-  background:rgba(23,24,27,.05); border:2px solid #EAD9C4; display:flex; align-items:center; justify-content:center;
-  transition:background .4s, border-color .4s, box-shadow .4s;
+  position:relative; width:100%; height:100%;
+  clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%);
+  background:#EAD9C4; display:flex; align-items:center; justify-content:center;
+  transition:background .4s, box-shadow .4s;
 }
-.sector-hex svg{stroke:var(--ink-faint); opacity:.6; transition:stroke .3s, opacity .3s;}
+.sector-hex::after{
+  content:''; position:absolute; inset:2px;
+  clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%);
+  background:rgba(23,24,27,.05); transition:background .4s;
+}
+.sector-hex svg{position:relative; z-index:1; stroke:var(--ink-faint); opacity:.6; transition:stroke .3s, opacity .3s;}
 .sector-hex.claimed{
-  background:var(--sector-color, var(--accent)); border-color:var(--sector-color, var(--accent));
+  background:var(--sector-color, var(--accent));
   box-shadow:0 0 0 7px var(--sector-glow, rgba(252,82,0,.16));
   animation:sectorClaim .5s ease both;
 }
+.sector-hex.claimed::after{background:var(--sector-color, var(--accent));}
 .sector-hex.claimed svg{stroke:#fff; opacity:1;}
 @keyframes sectorClaim{0%{transform:scale(1);} 45%{transform:scale(1.14);} 100%{transform:scale(1);}}
 .sector-pin{
@@ -1229,9 +1243,16 @@ body{
 .wizard-field label{font-size:12px; font-weight:700; color:var(--ink-soft);}
 .wizard-field input{
   font-family:inherit; font-size:16px; padding:12px 14px; border-radius:13px; border:1.5px solid #EAD9C4;
-  background:#FFFDF9; outline:none; width:100%; color:var(--ink); appearance:none; -webkit-appearance:none;
+  background:#FFFDF9; outline:none; width:100%; color:var(--ink);
   transition:border-color .15s, box-shadow .15s;
 }
+/* -webkit-appearance:none on an empty type=date input makes iOS Safari
+   render fully blank — no "ДД.ММ.ГГГГ"-style placeholder, no visible
+   affordance at all (confirmed live: reported as "field looks empty").
+   Chrome desktop still shows its own placeholder either way, which is why
+   this wasn't caught testing there. Left native so Safari's built-in empty
+   state — and the value once one is picked — actually renders. */
+.wizard-field input:not([type='date']){appearance:none; -webkit-appearance:none;}
 .wizard-field input:focus{border-color:var(--accent); box-shadow:0 0 0 4px rgba(252,82,0,.12);}
 .wizard-field input:disabled{color:var(--ink-faint); background:var(--bg); cursor:not-allowed;}
 .wizard-hint{font-size:11.5px; color:var(--ink-faint); margin:-6px 0 12px;}

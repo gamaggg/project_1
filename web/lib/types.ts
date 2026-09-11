@@ -429,9 +429,9 @@ export type Database = {
           created_at: string
           id: string
           is_deleted: boolean
-          kind: Database["public"]["Enums"]["territory_kind"]
-          lat: number
-          lng: number
+          kind: Database["public"]["Enums"]["territory_kind"] | null
+          lat: number | null
+          lng: number | null
           owner_id: string | null
         }
         Insert: {
@@ -440,9 +440,9 @@ export type Database = {
           created_at?: string
           id: string
           is_deleted?: boolean
-          kind: Database["public"]["Enums"]["territory_kind"]
-          lat: number
-          lng: number
+          kind?: Database["public"]["Enums"]["territory_kind"] | null
+          lat?: number | null
+          lng?: number | null
           owner_id?: string | null
         }
         Update: {
@@ -451,9 +451,9 @@ export type Database = {
           created_at?: string
           id?: string
           is_deleted?: boolean
-          kind?: Database["public"]["Enums"]["territory_kind"]
-          lat?: number
-          lng?: number
+          kind?: Database["public"]["Enums"]["territory_kind"] | null
+          lat?: number | null
+          lng?: number | null
           owner_id?: string | null
         }
         Relationships: [
