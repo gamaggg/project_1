@@ -324,7 +324,7 @@ body{
 .territory-thumb-overlay{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:6px; pointer-events:none; z-index:1000;}
 .territory-thumb-avatar{width:30px; height:30px; border-radius:50%; overflow:hidden; border:2px solid #fff; box-shadow:0 2px 6px rgba(23,24,27,0.35); background:linear-gradient(160deg,#FF7A38,var(--accent) 70%); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800;}
 .territory-thumb-avatar img{width:100%; height:100%; object-fit:cover;}
-.territory-thumb-label{background:rgba(23,24,27,0.72); color:#fff; font-size:11.5px; font-weight:800; padding:3px 9px; border-radius:10px; letter-spacing:0.2px; text-shadow:0 1px 2px rgba(0,0,0,0.4);}
+.territory-thumb-label{background:rgba(23,24,27,0.5); color:#fff; font-size:11.5px; font-weight:800; padding:3px 9px; border-radius:10px; letter-spacing:0.2px; text-shadow:0 1px 2px rgba(0,0,0,0.4);}
 .activity-who-btn{
   background:none; border:none; padding:0; font:inherit; color:inherit;
   cursor:pointer; font-weight:700; text-decoration:underline; text-underline-offset:2px;
@@ -495,7 +495,7 @@ body{
 .leaflet-territory-marker-wrap{background:transparent; border:none; box-shadow:none;}
 .leaflet-territory-marker{display:flex; flex-direction:column; align-items:center; gap:3px; pointer-events:none;}
 .leaflet-territory-label{
-  background:rgba(23,24,27,0.72); color:#fff; font-weight:800; font-size:9.5px;
+  background:rgba(23,24,27,0.5); color:#fff; font-weight:800; font-size:9.5px;
   padding:2px 6px; border-radius:7px; letter-spacing:0.2px; white-space:nowrap;
   box-shadow:0 1px 3px rgba(0,0,0,0.25);
 }
