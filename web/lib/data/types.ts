@@ -15,6 +15,8 @@ export type Territory = {
   corners: [number, number][]
   status: TerritoryStatus
   ownerId: string | null
+  ownerAvatarUrl: string | null
+  ownerDisplayName: string | null
   catchCount: number
   lastCatchAt: string | null
 }

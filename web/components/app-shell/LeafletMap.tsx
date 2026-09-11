@@ -28,6 +28,28 @@ export type LeafletMapHandle = {
 
 const LABEL_MIN_ZOOM = 14
 
+// ownerDisplayName/ownerAvatarUrl are user-controlled (a display name, or an
+// avatar_url a user could in principle set to an arbitrary string via a raw
+// API call) — unlike a JSX attribute/text node, L.divIcon's `html` is parsed
+// as real markup, so anything interpolated into it needs escaping or it's a
+// stored-XSS hole.
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+
+// Matches TerritoryThumbnailMap's pill-label + avatar treatment (see that
+// file) so a sector reads the same whether you're looking at the full map or
+// its own screen's mini-map.
+function territoryMarkerHtml(t: Territory): string {
+  const label = `<div class="leaflet-territory-label">${escapeHtml(t.id)}</div>`
+  if (t.status === 'free' || !t.ownerId) return `<div class="leaflet-territory-marker">${label}</div>`
+  const initials = escapeHtml((t.ownerDisplayName ?? 'Рыбак').slice(0, 2).toUpperCase())
+  const avatar = t.ownerAvatarUrl
+    ? `<img src="${escapeHtml(t.ownerAvatarUrl)}" alt="" />`
+    : initials
+  return `<div class="leaflet-territory-marker"><div class="leaflet-territory-avatar">${avatar}</div>${label}</div>`
+}
+
 // Fallback view for a visitor whose real position isn't known yet (no
 // geolocation permission decided/granted — see the map-geo-banner in
 // MapScreen.tsx). Deliberately NOT derived from fitBounds over all 658
@@ -153,8 +175,13 @@ export const LeafletMap = forwardRef<
           }
           onSelectRef.current(t.id)
         })
+        const isOccupied = t.status !== 'free' && !!t.ownerId
         L.marker([t.lat, t.lng], {
-          icon: L.divIcon({ className: 'leaflet-territory-label', html: t.id, iconSize: [38, 16] }),
+          icon: L.divIcon({
+            className: 'leaflet-territory-marker-wrap',
+            html: territoryMarkerHtml(t),
+            iconSize: isOccupied ? [40, 40] : [40, 18],
+          }),
           interactive: false,
         }).addTo(labelsLayer)
       })

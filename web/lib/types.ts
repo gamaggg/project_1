@@ -589,6 +589,8 @@ export type Database = {
           last_catch_at: string | null
           lat: number | null
           lng: number | null
+          owner_avatar_url: string | null
+          owner_display_name: string | null
           owner_id: string | null
         }
         Relationships: [

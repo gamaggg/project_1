@@ -40,7 +40,7 @@ export function useTerritories() {
       const supabase = createClient()
       const { data, error } = await supabase
         .from('territories_with_stats')
-        .select('id, kind, lat, lng, corners, owner_id, catch_count, last_catch_at, is_deleted')
+        .select('id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted')
       if (error) throw error
 
       const byId = new Map(data!.map((row) => [row.id, row]))
@@ -57,6 +57,8 @@ export function useTerritories() {
           lng,
           corners,
           ownerId,
+          ownerAvatarUrl: row?.owner_avatar_url ?? null,
+          ownerDisplayName: row?.owner_display_name ?? null,
           status,
           catchCount: row?.catch_count ?? 0,
           lastCatchAt: row?.last_catch_at ?? null,
