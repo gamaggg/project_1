@@ -48,7 +48,10 @@ export function DetailsStep({ onBack, onDone }: { onBack: () => void; onDone: ()
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '0 24px' }}>
         <div className="wizard-field">
           <label htmlFor="birth-date">Дата рождения</label>
-          <input id="birth-date" type="date" required value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+          <div className="wizard-date-wrap">
+            <input id="birth-date" type="date" required value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+            {!birthDate && <span className="wizard-date-placeholder">ДД.ММ.ГГГГ</span>}
+          </div>
         </div>
 
         <div className="wizard-field">

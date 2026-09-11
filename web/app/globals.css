@@ -1244,22 +1244,24 @@ body{
 .wizard-field input{
   font-family:inherit; font-size:16px; padding:12px 14px; border-radius:13px; border:1.5px solid #EAD9C4;
   background:#FFFDF9; outline:none; width:100%; min-width:0; box-sizing:border-box; color:var(--ink);
+  appearance:none; -webkit-appearance:none;
   transition:border-color .15s, box-shadow .15s;
 }
-/* -webkit-appearance:none on an empty type=date input makes iOS Safari
-   render fully blank — no "ДД.ММ.ГГГГ"-style placeholder, no visible
-   affordance at all (confirmed live: reported as "field looks empty").
-   Chrome desktop still shows its own placeholder either way, which is why
-   this wasn't caught testing there. Left native so Safari's built-in empty
-   state — and the value once one is picked — actually renders. Restoring
-   native appearance brings back Safari's own intrinsic content width for
-   the day/month/year segments too, which a flex child won't shrink below
-   by default (min-width:auto) — without min-width:0 above, that pushed the
-   field past the screen edge instead of respecting width:100% (also
-   confirmed live). */
-.wizard-field input:not([type='date']){appearance:none; -webkit-appearance:none;}
 .wizard-field input:focus{border-color:var(--accent); box-shadow:0 0 0 4px rgba(252,82,0,.12);}
 .wizard-field input:disabled{color:var(--ink-faint); background:var(--bg); cursor:not-allowed;}
+/* type=date needs appearance:none for consistent sizing (see git history —
+   left native once, it both went fully blank AND overflowed the screen on
+   iOS Safari, two separate WebKit quirks). But appearance:none also means
+   an EMPTY date input shows nothing at all on iOS (no icon, no "day/month/
+   year" placeholder — unlike Chrome, which keeps drawing its own segmented
+   placeholder regardless), so DetailsStep renders its own placeholder text
+   here, absolutely positioned over the real input and hidden the moment a
+   value is picked (see wizard-date-wrap usage there). */
+.wizard-date-wrap{position:relative;}
+.wizard-date-placeholder{
+  position:absolute; left:14px; top:50%; transform:translateY(-50%);
+  font-size:16px; color:var(--ink-faint); pointer-events:none;
+}
 .wizard-hint{font-size:11.5px; color:var(--ink-faint); margin:-6px 0 12px;}
 
 @media (prefers-reduced-motion: reduce){
