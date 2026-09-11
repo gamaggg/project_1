@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useTerritories, useConfirmCatch, useProfile, useRealtimeSync, useIsSuperAdmin, useAllTerritoryIds } from '@/lib/supabase/queries'
 import { getCurrentCoords, nearestTerritory, queryGeolocationPermission } from '@/lib/geolocation'
@@ -11,6 +11,7 @@ import { useWeekTopModal } from '@/lib/weekTopModal'
 import { formatCooldown } from '@/lib/format'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { draftHexAt } from '@/lib/data/hexGrid'
+import { cityForSectorId, loadStoredCity, storeCity, type CityId } from '@/lib/data/city'
 import type { PendingCatch, TerritoryStatus } from '@/lib/data/types'
 import { OnboardingFlow } from '@/components/app-shell/onboarding/OnboardingFlow'
 import { BottomNav } from '@/components/app-shell/BottomNav'
@@ -27,6 +28,7 @@ import { CameraScreen } from '@/components/app-shell/screens/CameraScreen'
 import { ConfirmScreen, type CatchFormData, type PhotoStatus } from '@/components/app-shell/screens/ConfirmScreen'
 import { ActivityScreen } from '@/components/app-shell/screens/ActivityScreen'
 import { ProfileScreen, EditProfileModal, ChangeColorModal } from '@/components/app-shell/screens/ProfileScreen'
+import { CityPickerModal } from '@/components/app-shell/CityPickerModal'
 import { UserProfileScreen } from '@/components/app-shell/screens/UserProfileScreen'
 import { ReportPhotoModal } from '@/components/app-shell/screens/ReportPhotoModal'
 import { DeleteCatchModal } from '@/components/app-shell/screens/DeleteCatchModal'
@@ -103,6 +105,27 @@ export function FishZoneApp() {
   const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories, territoriesReady)
   const { show: showWeekTop, entry: weekTopEntry, dismiss: dismissWeekTop } = useWeekTopModal()
   useRealtimeSync()
+
+  // Which city's sectors the map/territories tab/rating currently show — a
+  // client-only lens over the one shared territories list (see lib/data/city),
+  // not something the server knows about. Starts on Batumi (matches every
+  // existing user's expectation) and only syncs from localStorage after
+  // mount, so server-rendered and first-client-render markup still agree.
+  const [city, setCity] = useState<CityId>('batumi')
+  useEffect(() => {
+    setCity(loadStoredCity())
+  }, [])
+  // Jumps straight to the map tab on switch — the whole point of picking a
+  // city is to see its sectors, and that's the one screen where the change
+  // is immediately visible (unlike Territории/Профиль, which just relabel).
+  function changeCity(next: CityId) {
+    setCity(next)
+    storeCity(next)
+    resetTo({ screen: 'screen-map' })
+    setNavScreen('screen-map')
+  }
+  const [changingCity, setChangingCity] = useState(false)
+  const cityTerritories = useMemo(() => territories.filter((t) => cityForSectorId(t.id) === city), [territories, city])
 
   const [stack, setStack] = useState<StackEntry[]>([{ screen: 'screen-map' }])
   const [navScreen, setNavScreen] = useState<TabScreenId>('screen-map')
@@ -468,7 +491,7 @@ export function FishZoneApp() {
   if (!user || (myProfile && !myProfile.onboardingCompleted)) {
     return (
       <div className="app-shell">
-        <OnboardingFlow />
+        <OnboardingFlow onCityChosen={changeCity} />
       </div>
     )
   }
@@ -485,7 +508,7 @@ export function FishZoneApp() {
         <Screen id="screen-map" current={currentScreen}>
           <MapScreen
             ref={mapHandleRef}
-            territories={territories}
+            territories={cityTerritories}
             myTerritoryColor={myTerritoryColor}
             onOpenTerritory={handleMapTerritoryClick}
             selectedIds={isSuperAdmin ? selectedTerritoryIds : undefined}
@@ -497,6 +520,7 @@ export function FishZoneApp() {
             onClickEmptyMap={isSuperAdmin ? handleClickEmptyMap : undefined}
             onConfirmAdd={() => setConfirmingBulkAdd(true)}
             onCancelAdd={cancelAddDrafts}
+            city={city}
           />
         </Screen>
         <Screen id="screen-territory" current={currentScreen}>
@@ -518,8 +542,9 @@ export function FishZoneApp() {
         </Screen>
         <Screen id="screen-territories" current={currentScreen}>
           <TerritoriesListScreen
-            territories={territories}
+            territories={cityTerritories}
             myTerritoryColor={myTerritoryColor}
+            city={city}
             initialFilter={territoriesInitialFilter}
             initialMode={territoriesInitialMode}
             onOpenTerritory={openTerritory}
@@ -528,7 +553,7 @@ export function FishZoneApp() {
           />
         </Screen>
         <Screen id="screen-last-week" current={currentScreen}>
-          <LastWeekScreen onBack={pop} onOpenUser={openUserProfile} onOpenCurrentRating={openWeeklyRating} />
+          <LastWeekScreen city={city} onBack={pop} onOpenUser={openUserProfile} onOpenCurrentRating={openWeeklyRating} />
         </Screen>
         <Screen id="screen-catches" current={currentScreen}>
           {(catchesUserId || catchesTerritoryId) && (
@@ -566,12 +591,14 @@ export function FishZoneApp() {
           <ProfileScreen
             myTerritories={myTerritories}
             allTerritories={territories}
+            city={city}
             onOpenTerritory={openTerritory}
             onOpenAllTerritories={openMyTerritories}
             onOpenAllCatches={() => push({ screen: 'screen-catches' })}
             onSignOut={() => setConfirmingSignOut(true)}
             onEditProfile={() => setEditingProfile(true)}
             onChangeColor={() => setChangingColor(true)}
+            onOpenCityPicker={() => setChangingCity(true)}
             onOpenPhoto={setLightboxSrc}
             onOpenReports={() => push({ screen: 'screen-admin-reports' })}
             onOpenAdminAccess={() => push({ screen: 'screen-admin-access' })}
@@ -705,6 +732,7 @@ export function FishZoneApp() {
 
       {editingProfile && <EditProfileModal onClose={() => setEditingProfile(false)} />}
       {changingColor && <ChangeColorModal onClose={() => setChangingColor(false)} />}
+      {changingCity && <CityPickerModal city={city} onChange={changeCity} onClose={() => setChangingCity(false)} />}
       {editingAdminAccessId && <AdminPermissionsModal userId={editingAdminAccessId} onClose={() => setEditingAdminAccessId(null)} />}
       {lightboxSrc && <PhotoLightbox src={lightboxSrc} alt="Улов" onClose={() => setLightboxSrc(null)} />}
       {reportingCatchId !== null && (

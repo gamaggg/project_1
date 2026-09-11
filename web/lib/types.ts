@@ -716,8 +716,10 @@ export type Database = {
       }
       get_weekly_leaderboard: {
         Args: {
+          p_city_prefix?: string
           p_friends_only?: boolean
           p_limit?: number
+          p_timezone?: string
           p_week_offset?: number
         }
         Returns: {

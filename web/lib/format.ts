@@ -63,8 +63,8 @@ const RU_MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель',
 // exactly, via Intl rather than manual UTC+4 math, so it's still correct if
 // this ever runs somewhere DST could otherwise bite. Returned as a UTC-based
 // Date whose UTC fields equal that Monday's Tbilisi wall-clock date.
-export function tbilisiWeekStart(offsetWeeks: number): Date {
-  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tbilisi', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date())
+export function tbilisiWeekStart(offsetWeeks: number, timezone: string = 'Asia/Tbilisi'): Date {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date())
   const y = Number(parts.find((p) => p.type === 'year')!.value)
   const m = Number(parts.find((p) => p.type === 'month')!.value)
   const d = Number(parts.find((p) => p.type === 'day')!.value)
@@ -75,8 +75,8 @@ export function tbilisiWeekStart(offsetWeeks: number): Date {
 
 // "Сентябрь, 2 неделя" — replaces "Топ недели" on the past-week recap screen,
 // since that badge implies "current week" and a recap is never the current one.
-export function formatWeekOfMonth(offsetWeeks: number): string {
-  const monday = tbilisiWeekStart(offsetWeeks)
+export function formatWeekOfMonth(offsetWeeks: number, timezone: string = 'Asia/Tbilisi'): string {
+  const monday = tbilisiWeekStart(offsetWeeks, timezone)
   const firstOfMonthUTC = Date.UTC(monday.getUTCFullYear(), monday.getUTCMonth(), 1)
   const weekOfMonth = Math.floor((monday.getTime() - firstOfMonthUTC) / (7 * 86_400_000)) + 1
   return `${RU_MONTHS[monday.getUTCMonth()]}, ${weekOfMonth} неделя`

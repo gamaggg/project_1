@@ -24,41 +24,56 @@ export function DetailsStep({ onBack, onDone }: { onBack: () => void; onDone: ()
   }
 
   return (
-    <div className="onboarding-step">
-      <div className="header-row" style={{ padding: 0, marginBottom: 12 }}>
-        <div className="icon-btn tap-scale" onClick={onBack}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
+    <div className="intro-screen intro-screen--catch">
+      <button className="intro-back" onClick={onBack} aria-label="Назад">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+      <div className="sector-stage">
+        <div className="sector-hex-wrap">
+          <div className={`sector-hex${valid ? ' claimed' : ''}`}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="5" width="18" height="16" rx="2" />
+              <path d="M16 3v4M8 3v4M3 10h18" />
+            </svg>
+          </div>
+          <div className="sector-pin" />
         </div>
       </div>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-        <div className="page-title">Заполните основные данные</div>
-        <div style={{ marginTop: 28 }}>
-          <div className="auth-field">
-            <label htmlFor="birth-date">Дата рождения</label>
-            <input id="birth-date" type="date" required value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
-          </div>
+      <div className="intro-copy">
+        <div className="intro-title">Заполните основные данные</div>
+        <div className="intro-sub">Останутся только у вас в профиле — на карте их не видно.</div>
+      </div>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '0 24px' }}>
+        <div className="wizard-field">
+          <label htmlFor="birth-date">Дата рождения</label>
+          <input id="birth-date" type="date" required value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+        </div>
 
-          <div className="auth-field">
-            <label>Пол (Необязательно)</label>
-            <div className="gender-pill-row">
-              <button type="button" className={`gender-pill${gender === 'female' ? ' active' : ''}`} onClick={() => setGender(gender === 'female' ? null : 'female')}>
-                Женский
-              </button>
-              <button type="button" className={`gender-pill${gender === 'male' ? ' active' : ''}`} onClick={() => setGender(gender === 'male' ? null : 'male')}>
-                Мужской
-              </button>
-            </div>
-          </div>
-
-          <div className="onboarding-checkbox-row">
-            <input id="confirm14" type="checkbox" checked={confirmed14} onChange={(e) => setConfirmed14(e.target.checked)} />
-            <label htmlFor="confirm14">Мне уже исполнилось 14 лет</label>
+        <div className="wizard-field">
+          <label>Пол (Необязательно)</label>
+          <div className="gender-pill-row">
+            <button type="button" className={`gender-pill${gender === 'female' ? ' active' : ''}`} onClick={() => setGender(gender === 'female' ? null : 'female')}>
+              Женский
+            </button>
+            <button type="button" className={`gender-pill${gender === 'male' ? ' active' : ''}`} onClick={() => setGender(gender === 'male' ? null : 'male')}>
+              Мужской
+            </button>
           </div>
         </div>
+
+        <div className="onboarding-checkbox-row">
+          <input id="confirm14" type="checkbox" checked={confirmed14} onChange={(e) => setConfirmed14(e.target.checked)} />
+          <label htmlFor="confirm14">Мне уже исполнилось 14 лет</label>
+        </div>
         <div style={{ flex: 1 }} />
-        <button className="btn-primary" type="submit" disabled={!valid || updateProfile.isPending}>
+        <button
+          className="intro-cta"
+          type="submit"
+          disabled={!valid || updateProfile.isPending}
+          style={!valid || updateProfile.isPending ? { opacity: 0.4, pointerEvents: 'none' } : undefined}
+        >
           {updateProfile.isPending ? 'Сохраняем…' : 'Далее'}
         </button>
       </form>

@@ -1,9 +1,10 @@
 'use client'
 
-import { forwardRef, useImperativeHandle, useRef } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import { MapView } from '@/components/app-shell/MapView'
 import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import type { Territory } from '@/lib/data/types'
+import { CITIES, type CityId } from '@/lib/data/city'
 import { formatWhen } from '@/lib/format'
 import { getCurrentCoords, useGeolocationPermission } from '@/lib/geolocation'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
@@ -38,6 +39,7 @@ export const MapScreen = forwardRef<
     onClickEmptyMap?: (lat: number, lng: number) => void
     onConfirmAdd?: () => void
     onCancelAdd?: () => void
+    city: CityId
   }
 >(function MapScreen(
   {
@@ -53,6 +55,7 @@ export const MapScreen = forwardRef<
     onClickEmptyMap,
     onConfirmAdd,
     onCancelAdd,
+    city,
   },
   forwardedRef
 ) {
@@ -62,9 +65,22 @@ export const MapScreen = forwardRef<
     flyToTerritory: (id: string) => mapRef.current?.flyToTerritory(id),
     showUserLocation: (lat: number, lng: number) => mapRef.current?.showUserLocation(lat, lng),
     flyToLocation: (lat: number, lng: number) => mapRef.current?.flyToLocation(lat, lng),
+    flyToCity: (center: [number, number], zoom: number) => mapRef.current?.flyToCity(center, zoom),
     zoomIn: () => mapRef.current?.zoomIn(),
     zoomOut: () => mapRef.current?.zoomOut(),
   }))
+  // Skips the fly-over on the very first render — the map already opens
+  // straight at CITIES[city]'s own center/zoom (see the init effect below,
+  // fallbackCenter/fallbackZoom), so there's nowhere to "arrive from" yet.
+  const cityMounted = useRef(false)
+  useEffect(() => {
+    if (!cityMounted.current) {
+      cityMounted.current = true
+      return
+    }
+    mapRef.current?.flyToCity(CITIES[city].center, CITIES[city].zoom)
+  }, [city])
+
   const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Set by a real touch/wheel gesture starting on the carousel, consumed (and
   // cleared) the next time a scroll settles — distinguishes an actual swipe
@@ -139,6 +155,8 @@ export const MapScreen = forwardRef<
           pendingAddDrafts={pendingAddDrafts}
           onLongPressEmptyMap={onLongPressEmptyMap}
           onClickEmptyMap={onClickEmptyMap}
+          fallbackCenter={CITIES[city].center}
+          fallbackZoom={CITIES[city].zoom}
         />
         <div className="map-header">
           {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}

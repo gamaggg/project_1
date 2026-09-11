@@ -1064,8 +1064,8 @@ body{
 }
 
 .gender-pill-row{display:flex; gap:10px;}
-.gender-pill{flex:1; padding:13px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-weight:700; font-size:14.5px; font-family:inherit; cursor:pointer;}
-.gender-pill.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+.gender-pill{flex:1; padding:13px; border-radius:14px; border:1.5px solid #EAD9C4; background:#FFFDF9; color:var(--ink); font-weight:700; font-size:14.5px; font-family:inherit; cursor:pointer; transition:background .15s, color .15s, border-color .15s;}
+.gender-pill.active{background:var(--ink); color:#FFF3E7; border-color:var(--ink);}
 
 .onboarding-checkbox-row{display:flex; align-items:flex-start; gap:10px; margin:4px 0 18px;}
 .onboarding-checkbox-row input[type=checkbox]{width:20px; height:20px; accent-color:var(--accent); margin-top:1px; flex:0 0 auto;}
@@ -1162,8 +1162,86 @@ body{
   94%,100%{opacity:0; transform:translate(-50%,10px) scale(.92);}
 }
 
+/* CityStep (onboarding) — GPS-pin drop + two location chips, cream/dark
+   palette matching intro-screen--catch since it sits right after it. */
+.city-illustration{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:44px;}
+.city-pin-wrap{position:relative; width:54px; height:54px; animation:cityPinDrop .7s cubic-bezier(.34,1.56,.64,1) both;}
+.city-pin-ring{position:absolute; inset:-14px; border-radius:50%; border:2px solid var(--accent); opacity:0; animation:cityRingPulse 1.6s ease-out .7s infinite;}
+.city-chips{display:flex; gap:12px; opacity:0; animation:cityChipsIn .5s ease .5s both;}
+.city-chip{
+  padding:13px 22px; border-radius:14px; background:#fff; border:2px solid #EAE0D2; cursor:pointer;
+  font-family:inherit; font-weight:800; font-size:14.5px; color:var(--ink);
+  display:flex; align-items:center; gap:8px; transition:border-color .2s, background .2s, transform .15s;
+}
+.city-chip:active{transform:scale(.96);}
+.city-chip.selected{border-color:var(--accent); background:#FFF0E5; animation:citySnap .35s ease;}
+.city-chip-dot{width:8px; height:8px; border-radius:50%; background:#D8CFC0; transition:background .2s, box-shadow .2s;}
+.city-chip.selected .city-chip-dot{background:var(--accent); box-shadow:0 0 0 4px rgba(252,82,0,.18);}
+@keyframes cityPinDrop{
+  0%{transform:translateY(-140px) scale(.7); opacity:0;}
+  60%{transform:translateY(6px) scale(1); opacity:1;}
+  100%{transform:translateY(0) scale(1);}
+}
+@keyframes cityRingPulse{
+  0%{opacity:.55; transform:scale(.6);}
+  100%{opacity:0; transform:scale(1.5);}
+}
+@keyframes cityChipsIn{
+  from{opacity:0; transform:translateY(10px);}
+  to{opacity:1; transform:translateY(0);}
+}
+@keyframes citySnap{
+  0%{transform:scale(1);}
+  40%{transform:scale(1.08);}
+  100%{transform:scale(1);}
+}
+
+/* Registration wizard (Account/Name/Details/Color) — "growing sector": a
+   single hex claims itself exactly like a real territory once that screen's
+   own fields are valid, reusing intro-screen--catch's cream palette so these
+   read as part of the same journey as TerritoryIntroStep/CatchIntroStep/
+   CityStep instead of a separate plain white form wizard. --sector-color/
+   --sector-glow are only ever set inline (ColorStep, once a swatch is
+   picked) — everywhere else the hex claims in the plain brand accent. */
+.sector-stage{flex:0 0 auto; height:128px; margin-top:44px; display:flex; align-items:center; justify-content:center;}
+.sector-hex-wrap{position:relative; width:100px; aspect-ratio:2/1.7320508;}
+.sector-hex{
+  width:100%; height:100%; clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%);
+  background:rgba(23,24,27,.05); border:2px solid #EAD9C4; display:flex; align-items:center; justify-content:center;
+  transition:background .4s, border-color .4s, box-shadow .4s;
+}
+.sector-hex svg{stroke:var(--ink-faint); opacity:.6; transition:stroke .3s, opacity .3s;}
+.sector-hex.claimed{
+  background:var(--sector-color, var(--accent)); border-color:var(--sector-color, var(--accent));
+  box-shadow:0 0 0 7px var(--sector-glow, rgba(252,82,0,.16));
+  animation:sectorClaim .5s ease both;
+}
+.sector-hex.claimed svg{stroke:#fff; opacity:1;}
+@keyframes sectorClaim{0%{transform:scale(1);} 45%{transform:scale(1.14);} 100%{transform:scale(1);}}
+.sector-pin{
+  position:absolute; left:50%; top:-2px; width:9px; height:9px; border-radius:50%;
+  background:var(--sector-color, var(--accent)); box-shadow:0 0 0 3px #FFF3E7;
+  opacity:0; transform:translate(-50%,4px) scale(.5); transition:opacity .3s, transform .3s;
+}
+.sector-hex.claimed ~ .sector-pin{opacity:1; transform:translate(-50%,-6px) scale(1);}
+
+.wizard-field{display:flex; flex-direction:column; gap:6px; margin-bottom:12px;}
+.wizard-field label{font-size:12px; font-weight:700; color:var(--ink-soft);}
+.wizard-field input{
+  font-family:inherit; font-size:16px; padding:12px 14px; border-radius:13px; border:1.5px solid #EAD9C4;
+  background:#FFFDF9; outline:none; width:100%; color:var(--ink); appearance:none; -webkit-appearance:none;
+  transition:border-color .15s, box-shadow .15s;
+}
+.wizard-field input:focus{border-color:var(--accent); box-shadow:0 0 0 4px rgba(252,82,0,.12);}
+.wizard-field input:disabled{color:var(--ink-faint); background:var(--bg); cursor:not-allowed;}
+.wizard-hint{font-size:11.5px; color:var(--ink-faint); margin:-6px 0 12px;}
+
 @media (prefers-reduced-motion: reduce){
   .intro-hex--mine, .intro-hex-pin, .intro-flash, .intro-photocard, .intro-badge{animation:none !important;}
+  .city-pin-wrap, .city-pin-ring, .city-chips, .city-chip.selected{animation:none !important;}
+  .city-pin-wrap{opacity:1; transform:none;}
+  .city-chips{opacity:1; transform:none;}
+  .sector-hex.claimed{animation:none !important;}
   .intro-hex--mine{background:#fff; box-shadow:0 0 0 7px rgba(255,255,255,.22);}
   .intro-hex-pin{opacity:1; transform:translate(-50%,-50%) translateY(-15px) scale(1);}
   .intro-photocard{opacity:1; transform:translate(-50%,-132%) scale(1) rotate(-4deg);}

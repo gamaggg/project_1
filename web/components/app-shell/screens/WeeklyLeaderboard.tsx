@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useWeeklyLeaderboard } from '@/lib/supabase/queries'
 import type { WeeklyLeaderboardEntry } from '@/lib/data/types'
+import { CITIES, type CityId } from '@/lib/data/city'
 import { formatWeekOfMonth, pluralCatches, pluralSectors } from '@/lib/format'
 
 type Scope = 'all' | 'friends'
@@ -74,9 +75,10 @@ export function PodiumItem({
   )
 }
 
-export function WeeklyLeaderboard({ onOpenUser }: { onOpenUser: (id: string) => void }) {
+export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUser: (id: string) => void }) {
   const [scope, setScope] = useState<Scope>('all')
-  const { data: entries = [], isLoading } = useWeeklyLeaderboard(scope === 'friends')
+  const cityInfo = CITIES[city]
+  const { data: entries = [], isLoading } = useWeeklyLeaderboard(scope === 'friends', 0, cityInfo.idPrefix, cityInfo.timezone)
 
   const podium = entries.slice(0, 3)
   const rest = entries.slice(3, 10)
@@ -93,7 +95,7 @@ export function WeeklyLeaderboard({ onOpenUser }: { onOpenUser: (id: string) => 
         <div className={`filter-chip${scope === 'friends' ? ' active' : ''}`} onClick={() => setScope('friends')}>
           Друзья
         </div>
-        <span className="rating-week-badge rating-week-badge-inline">{formatWeekOfMonth(0)}</span>
+        <span className="rating-week-badge rating-week-badge-inline">{formatWeekOfMonth(0, cityInfo.timezone)}</span>
       </div>
 
       {isLoading ? (

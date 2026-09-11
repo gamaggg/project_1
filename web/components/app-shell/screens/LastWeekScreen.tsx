@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import { useWeeklyLeaderboard } from '@/lib/supabase/queries'
 import { PodiumItem } from '@/components/app-shell/screens/WeeklyLeaderboard'
+import { CITIES, type CityId } from '@/lib/data/city'
 import { formatWeekOfMonth, pluralCatches, pluralSectors } from '@/lib/format'
 
 const CONFETTI_COLORS = ['#FC5200', '#F0A93E', '#B8C0CC', '#B06B36']
@@ -10,19 +11,22 @@ const CONFETTI_COLORS = ['#FC5200', '#F0A93E', '#B8C0CC', '#B06B36']
 const STAGGER_DELAY_MS: Record<1 | 2 | 3, number> = { 3: 0, 2: 260, 1: 540 }
 
 export function LastWeekScreen({
+  city,
   onBack,
   onOpenUser,
   onOpenCurrentRating,
 }: {
+  city: CityId
   onBack: () => void
   onOpenUser: (id: string) => void
   onOpenCurrentRating: () => void
 }) {
-  const { data: entries = [], isLoading } = useWeeklyLeaderboard(false, -1)
+  const cityInfo = CITIES[city]
+  const { data: entries = [], isLoading } = useWeeklyLeaderboard(false, -1, cityInfo.idPrefix, cityInfo.timezone)
   const podium = entries.slice(0, 3)
   const rest = entries.slice(3, 10)
   const podiumOrder = podium.length === 3 ? [podium[1], podium[0], podium[2]] : podium
-  const weekLabel = useMemo(() => formatWeekOfMonth(-1), [])
+  const weekLabel = useMemo(() => formatWeekOfMonth(-1, cityInfo.timezone), [cityInfo.timezone])
 
   const confetti = useMemo(
     () =>

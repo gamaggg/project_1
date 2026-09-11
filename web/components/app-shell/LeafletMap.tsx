@@ -22,6 +22,7 @@ export type LeafletMapHandle = {
   flyToTerritory: (id: string) => void
   showUserLocation: (lat: number, lng: number) => void
   flyToLocation: (lat: number, lng: number) => void
+  flyToCity: (center: [number, number], zoom: number) => void
   zoomIn: () => void
   zoomOut: () => void
 }
@@ -50,16 +51,20 @@ function territoryMarkerHtml(t: Territory): string {
   return `<div class="leaflet-territory-marker"><div class="leaflet-territory-avatar">${avatar}</div>${label}</div>`
 }
 
-// Fallback view for a visitor whose real position isn't known yet (no
+// Default fallback view for a visitor whose real position isn't known yet (no
 // geolocation permission decided/granted — see the map-geo-banner in
-// MapScreen.tsx). Deliberately NOT derived from fitBounds over all 658
-// sectors: that box's raw geometric center falls inland, nowhere near the
-// coast, once zoomed in this close (tried it — landed in a forest outside
-// Makhvilauri with no sectors on screen). Anchored instead on central Batumi
-// bay itself — the coordinates are the centroid of the sector cluster
-// (B0934–B1174) visible in the reference screenshot for this feature, zoom
-// picked just above LABEL_MIN_ZOOM so sector labels and the "Batumi" place
-// name are both legible without being a tight, single-sector view.
+// MapScreen.tsx) AND no city-specific fallbackCenter/fallbackZoom prop was
+// passed (MapScreen always passes CITIES[city]'s own center/zoom in practice
+// — see lib/data/city.ts — so these constants are really just Batumi's own
+// entry there, kept as the literal default). Deliberately NOT derived from
+// fitBounds over all sectors: that box's raw geometric center falls inland,
+// nowhere near the coast, once zoomed in this close (tried it — landed in a
+// forest outside Makhvilauri with no sectors on screen). Anchored instead on
+// central Batumi bay itself — the coordinates are the centroid of the sector
+// cluster (B0934–B1174) visible in the reference screenshot for this
+// feature, zoom picked just above LABEL_MIN_ZOOM so sector labels and the
+// "Batumi" place name are both legible without being a tight, single-sector
+// view.
 const FALLBACK_CENTER: [number, number] = [41.6513, 41.6325]
 const FALLBACK_ZOOM = 14.3
 
@@ -77,9 +82,11 @@ export const LeafletMap = forwardRef<
     pendingAddDrafts?: { corners: [number, number][] }[]
     onLongPressEmptyMap?: (lat: number, lng: number) => void
     onClickEmptyMap?: (lat: number, lng: number) => void
+    fallbackCenter?: [number, number]
+    fallbackZoom?: number
   }
 >(function LeafletMap(
-  { territories, myTerritoryColor, onSelect, selectedIds, onLongPressTerritory, pendingAddDrafts, onLongPressEmptyMap, onClickEmptyMap },
+  { territories, myTerritoryColor, onSelect, selectedIds, onLongPressTerritory, pendingAddDrafts, onLongPressEmptyMap, onClickEmptyMap, fallbackCenter, fallbackZoom },
   ref
 ) {
     const containerRef = useRef<HTMLDivElement>(null)
@@ -228,6 +235,33 @@ export const LeafletMap = forwardRef<
         const targetZoom = Math.max(map.getZoom(), 16.5)
         map.flyTo([lat, lng], targetZoom, { duration: 0.5 })
       },
+      // City switch — a real forced duration (not proportional-to-distance
+      // like flyTo's default) so Batumi<->Moscow always reads as one
+      // deliberate "zoom out to the region, swoop to the new city" journey
+      // instead of a quick jump. Leaflet's own flyTo easing already dips to a
+      // wide intermediate zoom on its own for a trip this long — no need to
+      // hand-animate a separate "zoom out to a globe" stage. Duration bumped
+      // from 2.4s to 3.4s (per user feedback that the flight felt short) —
+      // spreading the same motion over more time also eases the mapbox-gl
+      // tile bridge below.
+      flyToCity(center: [number, number], zoom: number) {
+        const map = mapRef.current
+        const labelsLayer = labelsLayerRef.current
+        if (!map) return
+        // labelsLayer is hundreds of real DOM divIcon markers (avatar pills)
+        // that Leaflet repositions on every 'move' tick — normally cheap
+        // because a plain pinch-zoom only spans a couple of zoom levels, but
+        // a cross-city flyTo dips all the way out to a near-world view and
+        // back, so those hundreds of markers would otherwise get reflowed at
+        // 60fps for the full ~3.4s flight while sitting off-screen or
+        // crammed into an unreadable cluster. Detaching them for the
+        // duration and letting the existing zoomend-driven
+        // updateLabelVisibility() reattach (or not) once the flight settles
+        // removes that dead weight — the labels were never legible mid-flight
+        // anyway.
+        if (labelsLayer && map.hasLayer(labelsLayer)) map.removeLayer(labelsLayer)
+        map.flyTo(center, zoom, { duration: 3.4 })
+      },
       zoomIn() {
         mapRef.current?.zoomIn()
       },
@@ -286,7 +320,7 @@ export const LeafletMap = forwardRef<
         markersLayerRef.current = L.layerGroup().addTo(map)
         labelsLayerRef.current = L.layerGroup()
 
-        map.setView(FALLBACK_CENTER, FALLBACK_ZOOM)
+        map.setView(fallbackCenter ?? FALLBACK_CENTER, fallbackZoom ?? FALLBACK_ZOOM)
 
         // Silently confirm (never prompts — see DECISIONS.md "геолокация
         // только по «+»") whether this origin already has geolocation access

@@ -9,6 +9,11 @@ import { createClient } from '@/lib/supabase/client'
 // real account state instead of losing everything typed so far. On success,
 // nothing to do here — the parent OnboardingFlow's resume effect picks up
 // the new session + freshly-inserted (onboarding_completed:false) profile.
+//
+// Visually a "growing sector" screen like TerritoryIntroStep/CatchIntroStep/
+// CityStep (cream intro-screen, hex that claims itself) rather than the old
+// plain white form — the hex claims once the form looks submittable, same
+// gesture as claiming a real sector by catching a fish there.
 export function AccountStep({ onBack }: { onBack: () => void }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -16,13 +21,11 @@ export function AccountStep({ onBack }: { onBack: () => void }) {
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const mismatch = passwordConfirm.length > 0 && password !== passwordConfirm
+  const valid = email.trim().length > 0 && password.length >= 6 && passwordConfirm.length >= 6 && !mismatch
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (password !== passwordConfirm) {
-      setError('Пароли не совпадают')
-      return
-    }
+    if (!valid) return
     setError(null)
     setPending(true)
     const supabase = createClient()
@@ -32,57 +35,63 @@ export function AccountStep({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <div className="onboarding-step">
-      <div className="header-row" style={{ padding: 0, marginBottom: 12 }}>
-        <div className="icon-btn tap-scale" onClick={onBack}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
+    <div className="intro-screen intro-screen--catch">
+      <button className="intro-back" onClick={onBack} aria-label="Назад">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+      <div className="sector-stage">
+        <div className="sector-hex-wrap">
+          <div className={`sector-hex${valid ? ' claimed' : ''}`}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="8" r="3.6" />
+              <path d="M4.5 20c1.6-3.8 4.6-5.7 7.5-5.7s5.9 1.9 7.5 5.7" />
+            </svg>
+          </div>
+          <div className="sector-pin" />
         </div>
       </div>
-      <div className="auth-card">
-        <div className="page-title" style={{ textAlign: 'center', fontSize: 24 }}>
-          Создать аккаунт
-        </div>
-        <div className="page-sub" style={{ textAlign: 'center' }}>
-          Аккаунт нужен, чтобы фиксировать уловы и занимать территории
-        </div>
-        <form onSubmit={handleSubmit} style={{ marginTop: 20 }}>
-          <div className="auth-field">
-            <label htmlFor="account-email">Email</label>
-            <input id="account-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
-          </div>
-          <div className="auth-field">
-            <label htmlFor="account-password">Пароль</label>
-            <input
-              id="account-password"
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Минимум 6 символов"
-            />
-          </div>
-          <div className="auth-field">
-            <label htmlFor="account-password-confirm">Повторите пароль</label>
-            <input
-              id="account-password-confirm"
-              type="password"
-              required
-              minLength={6}
-              value={passwordConfirm}
-              onChange={(e) => setPasswordConfirm(e.target.value)}
-              placeholder="Ещё раз пароль"
-            />
-            {mismatch && <div style={{ fontSize: 12.5, color: '#D33', marginTop: 4 }}>Пароли не совпадают</div>}
-          </div>
-          {error && <div className="auth-error">{error}</div>}
-          <button className="btn-primary" type="submit" disabled={pending || mismatch}>
-            {pending ? 'Подождите…' : 'Далее'}
-          </button>
-        </form>
+      <div className="intro-copy">
+        <div className="intro-title">Создать аккаунт</div>
+        <div className="intro-sub">Аккаунт нужен, чтобы фиксировать уловы и занимать территории.</div>
       </div>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '0 24px' }}>
+        <div className="wizard-field">
+          <label htmlFor="account-email">Email</label>
+          <input id="account-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+        </div>
+        <div className="wizard-field">
+          <label htmlFor="account-password">Пароль</label>
+          <input
+            id="account-password"
+            type="password"
+            required
+            minLength={6}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Минимум 6 символов"
+          />
+        </div>
+        <div className="wizard-field">
+          <label htmlFor="account-password-confirm">Повторите пароль</label>
+          <input
+            id="account-password-confirm"
+            type="password"
+            required
+            minLength={6}
+            value={passwordConfirm}
+            onChange={(e) => setPasswordConfirm(e.target.value)}
+            placeholder="Ещё раз пароль"
+          />
+          {mismatch && <div style={{ fontSize: 12.5, color: '#D33', marginTop: 4 }}>Пароли не совпадают</div>}
+        </div>
+        {error && <div className="auth-error">{error}</div>}
+        <div style={{ flex: 1 }} />
+        <button className="intro-cta" type="submit" disabled={!valid || pending} style={!valid || pending ? { opacity: 0.4, pointerEvents: 'none' } : undefined}>
+          {pending ? 'Подождите…' : 'Далее'}
+        </button>
+      </form>
     </div>
   )
 }

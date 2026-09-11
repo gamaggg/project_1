@@ -6,6 +6,7 @@ import { KIND_LABEL } from '@/lib/data/species'
 import { formatWhen, pluralSectors } from '@/lib/format'
 import { useCanViewAllUsers } from '@/lib/supabase/queries'
 import { resolveTerritoryColor } from '@/lib/data/territoryColors'
+import { CITIES, type CityId } from '@/lib/data/city'
 import { WeeklyLeaderboard } from '@/components/app-shell/screens/WeeklyLeaderboard'
 
 type Filter = 'all' | TerritoryStatus
@@ -14,6 +15,7 @@ export type Mode = 'territories' | 'rating'
 export function TerritoriesListScreen({
   territories,
   myTerritoryColor,
+  city,
   initialFilter,
   initialMode,
   onOpenTerritory,
@@ -22,6 +24,7 @@ export function TerritoriesListScreen({
 }: {
   territories: Territory[]
   myTerritoryColor: string
+  city: CityId
   initialFilter?: Filter
   initialMode?: Mode
   onOpenTerritory: (id: string) => void
@@ -48,7 +51,7 @@ export function TerritoriesListScreen({
   return (
     <div className="screen-inner">
       <div className="page-title">Территории</div>
-      <div className="page-sub">Море, реки и озёра Батуми · {territories.length} {pluralSectors(territories.length)}</div>
+      <div className="page-sub">{CITIES[city].boundaryLabel} · {territories.length} {pluralSectors(territories.length)}</div>
 
       <div className="rating-tabs">
         <button className={`rating-tab${mode === 'territories' ? ' active' : ''}`} onClick={() => setMode('territories')}>
@@ -60,7 +63,7 @@ export function TerritoriesListScreen({
       </div>
 
       {mode === 'rating' ? (
-        <WeeklyLeaderboard onOpenUser={onOpenUser} />
+        <WeeklyLeaderboard city={city} onOpenUser={onOpenUser} />
       ) : (
         <>
           {canViewAllUsers && (

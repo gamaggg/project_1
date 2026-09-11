@@ -10,6 +10,7 @@ import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralTerritories } from '@/lib/format'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import { DEFAULT_TERRITORY_COLOR, TERRITORY_COLORS } from '@/lib/data/territoryColors'
+import { CITIES, type CityId } from '@/lib/data/city'
 import type { Territory, UserAward } from '@/lib/data/types'
 
 const MAX_AVATAR_SIZE = 512
@@ -194,12 +195,14 @@ export function ChangeColorModal({ onClose }: { onClose: () => void }) {
 export function ProfileScreen({
   myTerritories,
   allTerritories,
+  city,
   onOpenTerritory,
   onOpenAllTerritories,
   onOpenAllCatches,
   onSignOut,
   onEditProfile,
   onChangeColor,
+  onOpenCityPicker,
   onOpenPhoto,
   onOpenReports,
   onOpenAdminAccess,
@@ -212,12 +215,14 @@ export function ProfileScreen({
 }: {
   myTerritories: Territory[]
   allTerritories: Territory[]
+  city: CityId
   onOpenTerritory: (id: string) => void
   onOpenAllTerritories: () => void
   onOpenAllCatches: () => void
   onSignOut: () => void
   onEditProfile: () => void
   onChangeColor: () => void
+  onOpenCityPicker: () => void
   onOpenPhoto: (src: string) => void
   onOpenReports: () => void
   onOpenAdminAccess: () => void
@@ -253,7 +258,7 @@ export function ProfileScreen({
   const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
 
   async function handleShareProfile() {
-    const text = `🎣 Я в RANGE — ${myTerritories.length} ${pluralTerritories(myTerritories.length)}, ${myCatches.length} ${pluralCatches(myCatches.length)} на побережье Батуми!\n\nПрисоединяйся и сразимся за территории 🏆\n${window.location.origin}`
+    const text = `🎣 Я в RANGE — ${myTerritories.length} ${pluralTerritories(myTerritories.length)}, ${myCatches.length} ${pluralCatches(myCatches.length)}!\n\nПрисоединяйся и сразимся за территории 🏆\n${window.location.origin}`
     try {
       await navigator.clipboard.writeText(text)
       onShowToast('Скопировано в буфер обмена')
@@ -308,6 +313,17 @@ export function ProfileScreen({
         {profile?.publicId && (
           <div style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 4, fontWeight: 700, letterSpacing: 0.4 }}>ID: {profile.publicId}</div>
         )}
+        <button
+          className="section-link"
+          style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 5 }}
+          onClick={onOpenCityPicker}
+        >
+          Город: {CITIES[city].name}
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+          </svg>
+        </button>
         {profile?.bio && (
           <div style={{ fontSize: 13.5, color: 'var(--ink)', marginTop: 8, lineHeight: 1.4 }}>{profile.bio}</div>
         )}

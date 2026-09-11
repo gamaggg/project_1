@@ -428,14 +428,20 @@ export function useAllUsers() {
 // A fresh query per scope (not client-side refiltering of one big list) —
 // "friends" would otherwise need every profile's full follow graph client-side
 // just to filter ten rows.
-export function useWeeklyLeaderboard(friendsOnly: boolean, weekOffset: number = 0) {
+export function useWeeklyLeaderboard(friendsOnly: boolean, weekOffset: number = 0, cityPrefix: string = 'B', timezone: string = 'Asia/Tbilisi') {
   const { user } = useAuth()
   return useQuery({
-    queryKey: ['weekly-leaderboard', friendsOnly, weekOffset],
+    queryKey: ['weekly-leaderboard', friendsOnly, weekOffset, cityPrefix],
     enabled: !!user,
     queryFn: async (): Promise<WeeklyLeaderboardEntry[]> => {
       const supabase = createClient()
-      const { data, error } = await supabase.rpc('get_weekly_leaderboard', { p_friends_only: friendsOnly, p_limit: 10, p_week_offset: weekOffset })
+      const { data, error } = await supabase.rpc('get_weekly_leaderboard', {
+        p_friends_only: friendsOnly,
+        p_limit: 10,
+        p_week_offset: weekOffset,
+        p_city_prefix: cityPrefix,
+        p_timezone: timezone,
+      })
       if (error) throw error
       return data.map(
         (r): WeeklyLeaderboardEntry => ({
