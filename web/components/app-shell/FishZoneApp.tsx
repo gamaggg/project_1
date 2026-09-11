@@ -287,7 +287,7 @@ export function FishZoneApp() {
   // removes it again, and two taps that snap to the same cell never double
   // it up — mirrors toggleTerritorySelection's add/remove-by-id symmetry.
   function toggleAddDraft(lat: number, lng: number) {
-    const { lat: cLat, lng: cLng, corners, gridX, gridY } = draftHexAt(lat, lng, 'sea')
+    const { lat: cLat, lng: cLng, corners, gridX, gridY } = draftHexAt(lat, lng, 'sea', city)
     // Belt-and-suspenders on top of LeafletMap's own stopPropagation fix
     // (which is what actually stops a press on an existing sector from also
     // reaching this handler): every existing territory's own lat/lng came
@@ -774,6 +774,7 @@ export function FishZoneApp() {
         <BulkAddTerritoriesModal
           drafts={pendingAddDrafts}
           existingIds={allTerritoryIds}
+          city={city}
           onClose={() => setConfirmingBulkAdd(false)}
           onAdded={() => {
             const count = pendingAddDrafts.length

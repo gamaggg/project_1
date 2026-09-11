@@ -5,6 +5,7 @@ import { useAdminAddTerritory } from '@/lib/supabase/queries'
 import { nextSectorId } from '@/lib/data/hexGrid'
 import { KIND_LABEL } from '@/lib/data/species'
 import type { TerritoryKind } from '@/lib/data/types'
+import { CITIES, type CityId } from '@/lib/data/city'
 
 const KINDS: TerritoryKind[] = ['sea', 'river', 'stream', 'lake']
 
@@ -16,11 +17,13 @@ const KINDS: TerritoryKind[] = ['sea', 'river', 'stream', 'lake']
 export function BulkAddTerritoriesModal({
   drafts,
   existingIds,
+  city,
   onClose,
   onAdded,
 }: {
   drafts: { lat: number; lng: number; corners: [number, number][] }[]
   existingIds: string[]
+  city: CityId
   onClose: () => void
   onAdded: () => void
 }) {
@@ -29,7 +32,7 @@ export function BulkAddTerritoriesModal({
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const ids = drafts.map((_, i) => nextSectorId(existingIds, i + 1))
+  const ids = drafts.map((_, i) => nextSectorId(existingIds, i + 1, CITIES[city].idPrefix))
 
   async function handleConfirm() {
     setIsPending(true)
