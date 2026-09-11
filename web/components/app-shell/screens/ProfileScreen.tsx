@@ -247,12 +247,16 @@ export function ProfileScreen({
   // DECISIONS.md.
   const speciesCount = new Set(myCatches.map((c) => c.species)).size
   const record = personalRecord(myCatches)
-  const achievements = computeAchievements(myCatches, {
-    myTerritories,
-    allTerritories,
-    followersCount: profile?.followersCount ?? 0,
-    claimedFromOthers,
-  })
+  const achievements = computeAchievements(
+    myCatches,
+    {
+      myTerritories,
+      allTerritories,
+      followersCount: profile?.followersCount ?? 0,
+      claimedFromOthers,
+    },
+    city
+  )
   const recentMine = myCatches.slice(0, 3)
   const visibleTerritories = myTerritories.slice(0, 5)
   const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()

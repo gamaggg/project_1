@@ -5,6 +5,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { useCatchesByUser, useProfile, useHasClaimedFromOthers } from '@/lib/supabase/queries'
 import { computeAchievements, type Achievement } from '@/lib/data/achievements'
 import type { Territory } from '@/lib/data/types'
+import type { CityId } from '@/lib/data/city'
 
 function storageKey(userId: string) {
   return `fishzone:seenAchievements:${userId}`
@@ -27,7 +28,7 @@ function writeSeen(userId: string, seen: Set<Achievement['icon']>) {
 // that set to whatever's already unlocked (no popup for pre-existing progress),
 // gated on all three queries actually resolving so we never bootstrap against
 // a still-loading (falsely empty) achievement list.
-export function useAchievementUnlock(territories: Territory[], territoriesReady: boolean) {
+export function useAchievementUnlock(territories: Territory[], territoriesReady: boolean, city: CityId) {
   const { user } = useAuth()
   const catchesQ = useCatchesByUser(user?.id ?? null)
   const profileQ = useProfile(user?.id ?? null)
@@ -41,12 +42,16 @@ export function useAchievementUnlock(territories: Territory[], territoriesReady:
   const ready = catchesQ.isSuccess && profileQ.isSuccess && claimedQ.isSuccess && territoriesReady
 
   const myTerritories = territories.filter((t) => t.ownerId === user?.id)
-  const achievements = computeAchievements(catchesQ.data ?? [], {
-    myTerritories,
-    allTerritories: territories,
-    followersCount: profileQ.data?.followersCount ?? 0,
-    claimedFromOthers: claimedQ.data ?? false,
-  })
+  const achievements = computeAchievements(
+    catchesQ.data ?? [],
+    {
+      myTerritories,
+      allTerritories: territories,
+      followersCount: profileQ.data?.followersCount ?? 0,
+      claimedFromOthers: claimedQ.data ?? false,
+    },
+    city
+  )
   const unlockedIcons = achievements.filter((a) => a.unlocked).map((a) => a.icon)
   const unlockedKey = unlockedIcons.join(',')
 

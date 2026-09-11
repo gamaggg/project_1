@@ -409,16 +409,19 @@ export type Database = {
           category: string
           key: string
           name: string
+          sort_order: number
         }
         Insert: {
           category: string
           key: string
           name: string
+          sort_order?: number
         }
         Update: {
           category?: string
           key?: string
           name?: string
+          sort_order?: number
         }
         Relationships: []
       }
@@ -733,7 +736,7 @@ export type Database = {
       }
     }
     Enums: {
-      territory_kind: "sea" | "river" | "stream" | "lake"
+      territory_kind: "sea" | "river" | "stream" | "lake" | "pond"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -861,7 +864,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      territory_kind: ["sea", "river", "stream", "lake"],
+      territory_kind: ["sea", "river", "stream", "lake", "pond"],
     },
   },
 } as const

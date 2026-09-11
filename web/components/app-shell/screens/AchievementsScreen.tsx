@@ -4,6 +4,7 @@ import { useCatchesByUser, useProfile, useHasClaimedFromOthers } from '@/lib/sup
 import { computeAchievements, type Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import type { Territory } from '@/lib/data/types'
+import type { CityId } from '@/lib/data/city'
 
 // Full achievements list for one profile (own or someone else's) — ProfileScreen/
 // UserProfileScreen only show a 4-item preview with a button into this screen.
@@ -13,11 +14,13 @@ import type { Territory } from '@/lib/data/types'
 export function AchievementsScreen({
   userId,
   territories,
+  city,
   onBack,
   onOpenDetail,
 }: {
   userId: string
   territories: Territory[]
+  city: CityId
   onBack: () => void
   onOpenDetail: (icon: Achievement['icon']) => void
 }) {
@@ -25,12 +28,16 @@ export function AchievementsScreen({
   const { data: catches = [] } = useCatchesByUser(userId)
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(userId)
   const myTerritories = territories.filter((t) => t.ownerId === userId)
-  const achievements = computeAchievements(catches, {
-    myTerritories,
-    allTerritories: territories,
-    followersCount: profile?.followersCount ?? 0,
-    claimedFromOthers,
-  })
+  const achievements = computeAchievements(
+    catches,
+    {
+      myTerritories,
+      allTerritories: territories,
+      followersCount: profile?.followersCount ?? 0,
+      claimedFromOthers,
+    },
+    city
+  )
 
   return (
     <>

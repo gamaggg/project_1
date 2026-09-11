@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/AuthProvider'
 import type { Territory, TerritoryStatus, Catch, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, WeeklyLeaderboardEntry, UserAward, AwardKind } from '@/lib/data/types'
+import type { SpeciesCategory } from '@/lib/data/species'
 
 type SectorGeometry = {
   id: string
@@ -159,7 +160,7 @@ export function useSpecies() {
     queryKey: ['species'],
     queryFn: async (): Promise<Species[]> => {
       const supabase = createClient()
-      const { data, error } = await supabase.from('species').select('key, name, category').order('name')
+      const { data, error } = await supabase.from('species').select('key, name, category').order('sort_order').order('name')
       if (error) throw error
       return data as Species[]
     },
@@ -192,7 +193,7 @@ function rowToCatch(c: CatchRow, currentUserId?: string): Catch {
     userId: c.user_id,
     species: c.species,
     speciesName: info?.name ?? c.species,
-    speciesCategory: (info?.category as 'marine' | 'freshwater') ?? 'marine',
+    speciesCategory: (info?.category as SpeciesCategory) ?? 'marine',
     lengthCm: c.length_cm,
     weightKg: c.weight_kg,
     method: c.method,
@@ -309,7 +310,7 @@ export function useActivity() {
           territoryId: row.territory_id,
           territoryKind: territory?.kind ?? 'sea',
           speciesName: speciesInfo?.name ?? null,
-          speciesCategory: (speciesInfo?.category as 'marine' | 'freshwater' | undefined) ?? null,
+          speciesCategory: (speciesInfo?.category as SpeciesCategory | undefined) ?? null,
           lengthCm: c?.length_cm ?? null,
           weightKg: c?.weight_kg ?? null,
           photoUrl: c?.photo_url ?? null,

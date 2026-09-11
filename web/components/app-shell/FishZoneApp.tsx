@@ -102,19 +102,21 @@ export function FishZoneApp() {
   const mapHandleRef = useRef<LeafletMapHandle>(null)
   const { unreadIds, unreadCount, markAllRead } = useActivityReadState()
   const { unreadCount: adminLogUnreadCount, markAllRead: markAdminLogRead } = useAdminActionsReadState()
-  const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories, territoriesReady)
-  const { show: showWeekTop, entry: weekTopEntry, dismiss: dismissWeekTop } = useWeekTopModal()
-  useRealtimeSync()
-
   // Which city's sectors the map/territories tab/rating currently show — a
   // client-only lens over the one shared territories list (see lib/data/city),
   // not something the server knows about. Starts on Batumi (matches every
   // existing user's expectation) and only syncs from localStorage after
   // mount, so server-rendered and first-client-render markup still agree.
+  // Declared before useAchievementUnlock below since that hook's achievement
+  // computation is itself city-aware (see lib/data/achievements).
   const [city, setCity] = useState<CityId>('batumi')
   useEffect(() => {
     setCity(loadStoredCity())
   }, [])
+  const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories, territoriesReady, city)
+  const { show: showWeekTop, entry: weekTopEntry, dismiss: dismissWeekTop } = useWeekTopModal()
+  useRealtimeSync()
+
   // Jumps straight to the map tab on switch — the whole point of picking a
   // city is to see its sectors, and that's the one screen where the change
   // is immediately visible (unlike Territории/Профиль, which just relabel).
@@ -619,6 +621,7 @@ export function FishZoneApp() {
               userId={viewingUserId}
               territories={territories.filter((t) => t.ownerId === viewingUserId)}
               allTerritories={territories}
+              city={city}
               onBack={pop}
               onOpenTerritory={openTerritory}
               onOpenPhoto={setLightboxSrc}
@@ -636,6 +639,7 @@ export function FishZoneApp() {
             <AchievementsScreen
               userId={viewingAchievementsUserId}
               territories={territories}
+              city={city}
               onBack={pop}
               onOpenDetail={(icon) => openAchievementDetail(viewingAchievementsUserId, icon)}
             />
@@ -647,6 +651,7 @@ export function FishZoneApp() {
               userId={viewingAchievementDetail.userId}
               icon={viewingAchievementDetail.icon}
               territories={territories}
+              city={city}
               onBack={pop}
               onShowToast={showToast}
             />

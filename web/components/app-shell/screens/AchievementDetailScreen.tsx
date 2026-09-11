@@ -6,6 +6,7 @@ import { computeAchievements, type Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import { HexBadge } from '@/components/app-shell/HexBadge'
 import type { Territory } from '@/lib/data/types'
+import type { CityId } from '@/lib/data/city'
 
 // Single-achievement screen (pushed from a card tap in AchievementsScreen or
 // the profile preview) — mirrors the Apple Fitness+ "award detail" layout the
@@ -17,12 +18,14 @@ export function AchievementDetailScreen({
   userId,
   icon,
   territories,
+  city,
   onBack,
   onShowToast,
 }: {
   userId: string
   icon: Achievement['icon']
   territories: Territory[]
+  city: CityId
   onBack: () => void
   onShowToast: (msg: string) => void
 }) {
@@ -30,12 +33,16 @@ export function AchievementDetailScreen({
   const { data: catches = [] } = useCatchesByUser(userId)
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(userId)
   const myTerritories = territories.filter((t) => t.ownerId === userId)
-  const achievements = computeAchievements(catches, {
-    myTerritories,
-    allTerritories: territories,
-    followersCount: profile?.followersCount ?? 0,
-    claimedFromOthers,
-  })
+  const achievements = computeAchievements(
+    catches,
+    {
+      myTerritories,
+      allTerritories: territories,
+      followersCount: profile?.followersCount ?? 0,
+      claimedFromOthers,
+    },
+    city
+  )
   const achievement = achievements.find((a) => a.icon === icon)
 
   async function handleShare() {

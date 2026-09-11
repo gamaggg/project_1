@@ -7,7 +7,7 @@ import { KIND_LABEL } from '@/lib/data/species'
 import type { TerritoryKind } from '@/lib/data/types'
 import { CITIES, type CityId } from '@/lib/data/city'
 
-const KINDS: TerritoryKind[] = ['sea', 'river', 'stream', 'lake']
+const KINDS: TerritoryKind[] = ['sea', 'river', 'stream', 'lake', 'pond']
 
 // Rendered by FishZoneApp, same reasoning as BulkDeleteTerritoriesModal — one
 // admin_add_territory call per drafted sector rather than a batch RPC, each

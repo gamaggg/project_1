@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useSpecies } from '@/lib/supabase/queries'
-import { CATEGORY_LABEL, KIND_LABEL, METHODS, BAITS, categoryForKind, type SpeciesCategory } from '@/lib/data/species'
+import { CATEGORY_LABEL, CATEGORIES_BY_CITY, KIND_LABEL, METHODS, BAITS_BY_CITY, categoryForKind, type SpeciesCategory } from '@/lib/data/species'
+import { cityForSectorId } from '@/lib/data/city'
 import { formatWeightGrams } from '@/lib/format'
 import { HexBadge } from '@/components/app-shell/HexBadge'
 import type { PendingCatch, Territory } from '@/lib/data/types'
@@ -44,8 +45,11 @@ export function ConfirmScreen({
   onBack: () => void
   onShare: () => void
 }) {
+  const city = cityForSectorId(territory.id)
+  const categories = CATEGORIES_BY_CITY[city]
+  const baits = BAITS_BY_CITY[city]
   const { data: species = [] } = useSpecies()
-  const [category, setCategory] = useState<SpeciesCategory>(categoryForKind(territory.kind))
+  const [category, setCategory] = useState<SpeciesCategory>(categoryForKind(territory.kind, city))
   const [speciesKey, setSpeciesKey] = useState('')
   const [lengthCm, setLengthCm] = useState('')
   const [weightG, setWeightG] = useState('')
@@ -158,7 +162,7 @@ export function ConfirmScreen({
           </div>
 
           <div className="filter-row" style={{ marginTop: 18 }}>
-            {(['marine', 'freshwater'] as const).map((c) => (
+            {categories.map((c) => (
               <div
                 key={c}
                 className={`filter-chip${category === c ? ' active' : ''}`}
@@ -213,7 +217,7 @@ export function ConfirmScreen({
             <label htmlFor="bait">Приманка</label>
             <select id="bait" value={bait} onChange={(e) => setBait(e.target.value)}>
               <option value="">Не указано</option>
-              {BAITS.map((b) => (
+              {baits.map((b) => (
                 <option key={b} value={b}>
                   {b}
                 </option>
