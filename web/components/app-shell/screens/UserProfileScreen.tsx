@@ -1,6 +1,6 @@
 'use client'
 
-import { useProfile, useCatchesByUser, useIsFollowing, useSetFollowing, useIsAdmin, useIsSuperAdmin, useSetBlocked, useSetAdmin, useHasClaimedFromOthers, useReportDeletionCount, useUserAwards } from '@/lib/supabase/queries'
+import { useProfile, useCatchesByUser, useIsFollowing, useSetFollowing, useIsAdmin, useIsSuperAdmin, useCanBlockUsers, useSetBlocked, useHasClaimedFromOthers, useReportDeletionCount, useUserAwards } from '@/lib/supabase/queries'
 import { AwardsRing } from '@/components/app-shell/AwardsRing'
 import { computeAchievements, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
@@ -25,6 +25,7 @@ export function UserProfileScreen({
   onOpenAllCatches,
   onDeleteUser,
   onOpenAward,
+  onEditAdminAccess,
 }: {
   userId: string
   territories: Territory[]
@@ -37,6 +38,7 @@ export function UserProfileScreen({
   onOpenAllCatches: () => void
   onDeleteUser: (id: string) => void
   onOpenAward: (award: UserAward) => void
+  onEditAdminAccess: (id: string) => void
 }) {
   const { data: profile } = useProfile(userId)
   const { data: catches = [] } = useCatchesByUser(userId)
@@ -44,8 +46,8 @@ export function UserProfileScreen({
   const setFollowing = useSetFollowing()
   const isAdmin = useIsAdmin()
   const isSuperAdmin = useIsSuperAdmin()
+  const canBlockUsers = useCanBlockUsers()
   const setBlocked = useSetBlocked()
-  const setAdmin = useSetAdmin()
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(userId)
   const { data: reportDeletionCount } = useReportDeletionCount(userId)
   const { data: awards = [] } = useUserAwards(userId)
@@ -108,7 +110,7 @@ export function UserProfileScreen({
           >
             {isFollowing ? 'Отписаться' : 'Подписаться'}
           </button>
-          {isAdmin && !profile?.isSuperAdmin && (
+          {canBlockUsers && !profile?.isSuperAdmin && (
             <button
               className="btn-secondary"
               style={{ flex: 1, color: profile?.isBlocked ? undefined : '#D33' }}
@@ -128,12 +130,8 @@ export function UserProfileScreen({
 
         {isSuperAdmin && !profile?.isSuperAdmin && (
           <div style={{ marginTop: 8 }}>
-            <button
-              className="btn-secondary"
-              disabled={setAdmin.isPending}
-              onClick={() => setAdmin.mutate({ userId, isAdmin: !profile?.isAdmin })}
-            >
-              {profile?.isAdmin ? 'Забрать права админа' : 'Выдать права админа'}
+            <button className="btn-secondary" onClick={() => onEditAdminAccess(userId)}>
+              {profile?.isAdmin ? 'Права администратора' : 'Выдать права админа'}
             </button>
           </div>
         )}

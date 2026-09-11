@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import type { Territory, TerritoryStatus } from '@/lib/data/types'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatWhen, pluralSectors } from '@/lib/format'
-import { useIsAdmin } from '@/lib/supabase/queries'
+import { useCanViewAllUsers } from '@/lib/supabase/queries'
 import { resolveTerritoryColor } from '@/lib/data/territoryColors'
 import { WeeklyLeaderboard } from '@/components/app-shell/screens/WeeklyLeaderboard'
 
@@ -43,7 +43,7 @@ export function TerritoriesListScreen({
     if (initialMode) setMode(initialMode)
   }, [initialMode])
   const list = territories.filter((t) => (filter === 'all' ? true : t.status === filter))
-  const isAdmin = useIsAdmin()
+  const canViewAllUsers = useCanViewAllUsers()
 
   return (
     <div className="screen-inner">
@@ -63,7 +63,7 @@ export function TerritoriesListScreen({
         <WeeklyLeaderboard onOpenUser={onOpenUser} />
       ) : (
         <>
-          {isAdmin && (
+          {canViewAllUsers && (
             <button className="btn-secondary" style={{ margin: '14px 0' }} onClick={onOpenUsersList}>
               Все пользователи
             </button>

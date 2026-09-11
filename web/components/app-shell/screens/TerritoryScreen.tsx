@@ -1,6 +1,6 @@
 'use client'
 
-import { useCatchesByTerritory, useProfile, useIsAdmin, useIsSuperAdmin } from '@/lib/supabase/queries'
+import { useCatchesByTerritory, useProfile, useCanAddCatchManually, useIsSuperAdmin } from '@/lib/supabase/queries'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
@@ -79,7 +79,7 @@ export function TerritoryScreen({
   myTerritoryColor: string
 }) {
   const { user } = useAuth()
-  const isAdmin = useIsAdmin()
+  const canAddCatchManually = useCanAddCatchManually()
   const isSuperAdmin = useIsSuperAdmin()
   const { data: catches = [] } = useCatchesByTerritory(territory.id)
   const { data: ownerProfile } = useProfile(territory.ownerId ?? null)
@@ -115,7 +115,7 @@ export function TerritoryScreen({
         {territory.ownerId && (
           <OwnerRow ownerId={territory.ownerId} isMine={territory.status === 'mine'} onOpenUser={onOpenUser} />
         )}
-        {isAdmin && (
+        {canAddCatchManually && (
           <button className="btn-secondary" style={{ marginTop: 12 }} onClick={() => onAdminCatch(territory.id)}>
             Добавить улов (админ)
           </button>

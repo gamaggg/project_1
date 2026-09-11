@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useProfile, useMyCatches, useUpdateProfile, useIsAdmin, useIsSuperAdmin, useReports, useHasClaimedFromOthers, useUserAwards } from '@/lib/supabase/queries'
+import { useProfile, useMyCatches, useUpdateProfile, useCanModerateReports, useIsSuperAdmin, useReports, useHasClaimedFromOthers, useUserAwards } from '@/lib/supabase/queries'
 import { AwardsRing } from '@/components/app-shell/AwardsRing'
 import { uploadAvatar } from '@/lib/supabase/storage'
 import { computeAchievements, personalRecord, type Achievement } from '@/lib/data/achievements'
@@ -231,7 +231,7 @@ export function ProfileScreen({
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   const { data: myCatches = [] } = useMyCatches()
-  const isAdmin = useIsAdmin()
+  const canModerateReports = useCanModerateReports()
   const isSuperAdmin = useIsSuperAdmin()
   const { data: reports = [] } = useReports()
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(user?.id ?? null)
@@ -434,7 +434,7 @@ export function ProfileScreen({
         </>
       )}
 
-      {isAdmin && (
+      {canModerateReports && (
         <div className="btn-wrap" style={{ marginTop: 24 }}>
           <button className="btn-secondary" onClick={onOpenReports}>
             Жалобы на фото
@@ -458,7 +458,7 @@ export function ProfileScreen({
         </>
       )}
 
-      <div style={{ marginTop: isAdmin ? 12 : 24 }}>
+      <div style={{ marginTop: canModerateReports || isSuperAdmin ? 12 : 24 }}>
         <button className="btn-secondary" onClick={onSignOut}>
           Выйти
         </button>

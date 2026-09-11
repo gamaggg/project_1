@@ -53,6 +53,26 @@ export type Profile = {
   territoryColor: string | null
   onboardingCompleted: boolean
   createdAt: string
+  // Granular admin permissions (see AdminPermissionsModal) — masked to null
+  // for anyone but the profile's own owner, same as birthDate/gender/etc
+  // above. A super admin editing someone else's permissions reads the real,
+  // unmasked values via useAdminPermissions() (get_admin_permissions RPC)
+  // instead of these fields.
+  canModerateReports: boolean | null
+  canBlockUsers: boolean | null
+  canAddCatchManually: boolean | null
+  canViewAllUsers: boolean | null
+}
+
+// The real, unmasked permission set for one admin — only a super admin can
+// fetch this (get_admin_permissions RPC), for any user id, not just their
+// own. Drives AdminPermissionsModal's toggles.
+export type AdminPermissions = {
+  isAdmin: boolean
+  canModerateReports: boolean
+  canBlockUsers: boolean
+  canAddCatchManually: boolean
+  canViewAllUsers: boolean
 }
 
 // One row from profiles_with_stats for the admin "Все пользователи" list —

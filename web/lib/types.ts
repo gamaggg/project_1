@@ -340,6 +340,10 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           birth_date: string | null
+          can_add_catch_manually: boolean
+          can_block_users: boolean
+          can_moderate_reports: boolean
+          can_view_all_users: boolean
           created_at: string
           display_name: string
           gender: string | null
@@ -358,6 +362,10 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birth_date?: string | null
+          can_add_catch_manually?: boolean
+          can_block_users?: boolean
+          can_moderate_reports?: boolean
+          can_view_all_users?: boolean
           created_at?: string
           display_name?: string
           gender?: string | null
@@ -376,6 +384,10 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birth_date?: string | null
+          can_add_catch_manually?: boolean
+          can_block_users?: boolean
+          can_moderate_reports?: boolean
+          can_view_all_users?: boolean
           created_at?: string
           display_name?: string
           gender?: string | null
@@ -513,6 +525,10 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           birth_date: string | null
+          can_add_catch_manually: boolean | null
+          can_block_users: boolean | null
+          can_moderate_reports: boolean | null
+          can_view_all_users: boolean | null
           catches_count: number | null
           created_at: string | null
           display_name: string | null
@@ -535,6 +551,10 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birth_date?: never
+          can_add_catch_manually?: never
+          can_block_users?: never
+          can_moderate_reports?: never
+          can_view_all_users?: never
           catches_count?: never
           created_at?: string | null
           display_name?: string | null
@@ -557,6 +577,10 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birth_date?: never
+          can_add_catch_manually?: never
+          can_block_users?: never
+          can_moderate_reports?: never
+          can_view_all_users?: never
           catches_count?: never
           created_at?: string | null
           display_name?: string | null
@@ -633,7 +657,14 @@ export type Database = {
         Returns: undefined
       }
       admin_set_admin: {
-        Args: { p_is_admin: boolean; p_user_id: string }
+        Args: {
+          p_can_add_catch_manually?: boolean
+          p_can_block_users?: boolean
+          p_can_moderate_reports?: boolean
+          p_can_view_all_users?: boolean
+          p_is_admin: boolean
+          p_user_id: string
+        }
         Returns: undefined
       }
       admin_set_blocked: {
@@ -668,6 +699,16 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      get_admin_permissions: {
+        Args: { p_user_id: string }
+        Returns: {
+          can_add_catch_manually: boolean
+          can_block_users: boolean
+          can_moderate_reports: boolean
+          can_view_all_users: boolean
+          is_admin: boolean
+        }[]
       }
       get_report_deletion_count: {
         Args: { p_user_id: string }

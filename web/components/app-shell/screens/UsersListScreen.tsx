@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useIsAdmin, useAllUsers, useFindUserByPublicId } from '@/lib/supabase/queries'
+import { useCanViewAllUsers, useAllUsers, useFindUserByPublicId } from '@/lib/supabase/queries'
 import { formatWhen } from '@/lib/format'
 import type { UserListEntry } from '@/lib/data/types'
 
@@ -24,7 +24,7 @@ export function UsersListScreen({
   onBack: () => void
   onOpenUser: (id: string) => void
 }) {
-  const isAdmin = useIsAdmin()
+  const canViewAllUsers = useCanViewAllUsers()
   const { data: users = [], isLoading } = useAllUsers()
   const [sort, setSort] = useState<SortKey>('new')
   const [search, setSearch] = useState('')
@@ -44,7 +44,7 @@ export function UsersListScreen({
     }
   }
 
-  if (!isAdmin) return null
+  if (!canViewAllUsers) return null
 
   const sorted = [...users].sort(SORTERS[sort])
 

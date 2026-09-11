@@ -40,6 +40,7 @@ import type { UserAward } from '@/lib/data/types'
 import { AdminReportsScreen } from '@/components/app-shell/screens/AdminReportsScreen'
 import { AdminActionsScreen } from '@/components/app-shell/screens/AdminActionsScreen'
 import { AdminAccessScreen } from '@/components/app-shell/screens/AdminAccessScreen'
+import { AdminPermissionsModal } from '@/components/app-shell/AdminPermissionsModal'
 import { AchievementsScreen } from '@/components/app-shell/screens/AchievementsScreen'
 import { AchievementDetailScreen } from '@/components/app-shell/screens/AchievementDetailScreen'
 import type { Achievement } from '@/lib/data/achievements'
@@ -119,6 +120,7 @@ export function FishZoneApp() {
   const [changingColor, setChangingColor] = useState(false)
   const [confirmingSignOut, setConfirmingSignOut] = useState(false)
   const [openAward, setOpenAward] = useState<UserAward | null>(null)
+  const [editingAdminAccessId, setEditingAdminAccessId] = useState<string | null>(null)
   const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null)
   const [reportingCatchId, setReportingCatchId] = useState<number | null>(null)
   const [deletingCatchId, setDeletingCatchId] = useState<number | null>(null)
@@ -598,6 +600,7 @@ export function FishZoneApp() {
               onOpenAllCatches={() => push({ screen: 'screen-catches', userId: viewingUserId })}
               onDeleteUser={setDeletingUserId}
               onOpenAward={setOpenAward}
+              onEditAdminAccess={setEditingAdminAccessId}
             />
           )}
         </Screen>
@@ -626,7 +629,7 @@ export function FishZoneApp() {
           <AdminReportsScreen onBack={pop} onOpenPhoto={setLightboxSrc} onOpenUser={openUserProfile} onOpenTerritory={openTerritory} />
         </Screen>
         <Screen id="screen-admin-access" current={currentScreen}>
-          <AdminAccessScreen onBack={pop} onOpenUser={openUserProfile} />
+          <AdminAccessScreen onBack={pop} onOpenUser={openUserProfile} onEditAccess={setEditingAdminAccessId} />
         </Screen>
         <Screen id="screen-admin-log" current={currentScreen}>
           <AdminActionsScreen title="Последние действия" onBack={pop} onOpenUser={openUserProfile} onOpenTerritory={openTerritory} />
@@ -702,6 +705,7 @@ export function FishZoneApp() {
 
       {editingProfile && <EditProfileModal onClose={() => setEditingProfile(false)} />}
       {changingColor && <ChangeColorModal onClose={() => setChangingColor(false)} />}
+      {editingAdminAccessId && <AdminPermissionsModal userId={editingAdminAccessId} onClose={() => setEditingAdminAccessId(null)} />}
       {lightboxSrc && <PhotoLightbox src={lightboxSrc} alt="Улов" onClose={() => setLightboxSrc(null)} />}
       {reportingCatchId !== null && (
         <ReportPhotoModal

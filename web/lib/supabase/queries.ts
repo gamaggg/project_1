@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/AuthProvider'
-import type { Territory, TerritoryStatus, Catch, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, UserListEntry, WeeklyLeaderboardEntry, UserAward, AwardKind } from '@/lib/data/types'
+import type { Territory, TerritoryStatus, Catch, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, WeeklyLeaderboardEntry, UserAward, AwardKind } from '@/lib/data/types'
 
 type SectorGeometry = {
   id: string
@@ -379,6 +379,10 @@ export function useProfile(userId: string | null) {
         territoryColor: data.territory_color ?? null,
         onboardingCompleted: data.onboarding_completed ?? true,
         createdAt: data.created_at ?? new Date().toISOString(),
+        canModerateReports: data.can_moderate_reports ?? null,
+        canBlockUsers: data.can_block_users ?? null,
+        canAddCatchManually: data.can_add_catch_manually ?? null,
+        canViewAllUsers: data.can_view_all_users ?? null,
       }
     },
     enabled: !!userId,
@@ -391,10 +395,10 @@ export function useProfile(userId: string | null) {
 // picked; the other 3 sort keys are cheap enough to do client-side on this
 // small a dataset, so no extra cached query variant per sort mode.
 export function useAllUsers() {
-  const isAdmin = useIsAdmin()
+  const canViewAllUsers = useCanViewAllUsers()
   return useQuery({
     queryKey: ['all-users'],
-    enabled: isAdmin,
+    enabled: canViewAllUsers,
     queryFn: async (): Promise<UserListEntry[]> => {
       const supabase = createClient()
       const { data, error } = await supabase
@@ -514,19 +518,82 @@ export function useIsSuperAdmin() {
   return profile?.isSuperAdmin ?? false
 }
 
+// Gates one of the 4 delegable admin actions on the *viewer's own* account —
+// a super admin always passes (they're not limited by the granular flags),
+// a plain admin needs is_admin plus the specific permission column.
+function useAdminFlag(flag: 'canModerateReports' | 'canBlockUsers' | 'canAddCatchManually' | 'canViewAllUsers') {
+  const { user } = useAuth()
+  const { data: profile } = useProfile(user?.id ?? null)
+  return !!profile?.isSuperAdmin || (!!profile?.isAdmin && !!profile?.[flag])
+}
+export function useCanModerateReports() {
+  return useAdminFlag('canModerateReports')
+}
+export function useCanBlockUsers() {
+  return useAdminFlag('canBlockUsers')
+}
+export function useCanAddCatchManually() {
+  return useAdminFlag('canAddCatchManually')
+}
+export function useCanViewAllUsers() {
+  return useAdminFlag('canViewAllUsers')
+}
+
+// The real, unmasked permission set for one admin (profiles_with_stats masks
+// these to null for anyone but the row's own owner) — only a super admin can
+// call get_admin_permissions, for any target user. Pre-fills
+// AdminPermissionsModal's toggles when editing an existing admin.
+export function useAdminPermissions(userId: string | null) {
+  const isSuperAdmin = useIsSuperAdmin()
+  return useQuery({
+    queryKey: ['admin-permissions', userId],
+    enabled: isSuperAdmin && !!userId,
+    queryFn: async (): Promise<AdminPermissions> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_admin_permissions', { p_user_id: userId! })
+      if (error) throw error
+      const row = data?.[0]
+      return {
+        isAdmin: row?.is_admin ?? false,
+        canModerateReports: row?.can_moderate_reports ?? false,
+        canBlockUsers: row?.can_block_users ?? false,
+        canAddCatchManually: row?.can_add_catch_manually ?? false,
+        canViewAllUsers: row?.can_view_all_users ?? false,
+      }
+    },
+  })
+}
+
 // Only a super admin may call this (admin_set_admin checks is_super_admin,
 // not just is_admin, on the caller) — granting/revoking admin rights is not
-// itself an admin capability, see DECISIONS.md.
-export function useSetAdmin() {
+// itself an admin capability, see DECISIONS.md. Sets the full permission set
+// in one call — used both to grant a fresh admin (with whichever toggles were
+// picked) and to edit an existing admin's permissions (isAdmin stays true).
+export function useSetAdminPermissions() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ userId, isAdmin }: { userId: string; isAdmin: boolean }) => {
+    mutationFn: async (args: {
+      userId: string
+      isAdmin: boolean
+      canModerateReports: boolean
+      canBlockUsers: boolean
+      canAddCatchManually: boolean
+      canViewAllUsers: boolean
+    }) => {
       const supabase = createClient()
-      const { error } = await supabase.rpc('admin_set_admin', { p_user_id: userId, p_is_admin: isAdmin })
+      const { error } = await supabase.rpc('admin_set_admin', {
+        p_user_id: args.userId,
+        p_is_admin: args.isAdmin,
+        p_can_moderate_reports: args.canModerateReports,
+        p_can_block_users: args.canBlockUsers,
+        p_can_add_catch_manually: args.canAddCatchManually,
+        p_can_view_all_users: args.canViewAllUsers,
+      })
       if (error) throw error
     },
     onSuccess: (_data, { userId }) => {
       queryClient.invalidateQueries({ queryKey: ['profile', userId] })
+      queryClient.invalidateQueries({ queryKey: ['admin-permissions', userId] })
       queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
       queryClient.invalidateQueries({ queryKey: ['current-admins'] })
     },
@@ -714,10 +781,10 @@ export function useReportCatch() {
 // all for the common case (AdminReportsScreen stays mounted for every
 // visitor, admin or not, same as every other screen in this app-shell).
 export function useReports() {
-  const isAdmin = useIsAdmin()
+  const canModerateReports = useCanModerateReports()
   return useQuery({
     queryKey: ['reports'],
-    enabled: isAdmin,
+    enabled: canModerateReports,
     queryFn: async (): Promise<CatchReport[]> => {
       const supabase = createClient()
       const { data, error } = await supabase

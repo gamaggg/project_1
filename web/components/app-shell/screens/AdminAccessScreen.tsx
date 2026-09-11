@@ -1,20 +1,22 @@
 'use client'
 
-import { useCurrentAdmins, useSetAdmin } from '@/lib/supabase/queries'
+import { useCurrentAdmins } from '@/lib/supabase/queries'
 import { formatWhen } from '@/lib/format'
 
 // Unlike AdminActionsScreen (an append-only log of every action), this is a
-// live view of who currently holds admin access — revoking someone here
-// drops them from the list immediately instead of leaving a "revoked" row.
+// live view of who currently holds admin access — revoking someone (via
+// AdminPermissionsModal, opened per-row) drops them from this list
+// immediately instead of leaving a "revoked" row.
 export function AdminAccessScreen({
   onBack,
   onOpenUser,
+  onEditAccess,
 }: {
   onBack: () => void
   onOpenUser: (id: string) => void
+  onEditAccess: (id: string) => void
 }) {
   const { data: admins = [], isLoading } = useCurrentAdmins()
-  const setAdmin = useSetAdmin()
 
   return (
     <>
@@ -41,13 +43,8 @@ export function AdminAccessScreen({
                 <button className="btn-secondary" style={{ flex: 1 }} onClick={() => onOpenUser(a.id)}>
                   Профиль
                 </button>
-                <button
-                  className="btn-secondary"
-                  style={{ flex: 1, color: '#D33' }}
-                  disabled={setAdmin.isPending}
-                  onClick={() => setAdmin.mutate({ userId: a.id, isAdmin: false })}
-                >
-                  Забрать доступ
+                <button className="btn-secondary" style={{ flex: 1 }} onClick={() => onEditAccess(a.id)}>
+                  Права доступа
                 </button>
               </div>
             </div>
