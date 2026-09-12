@@ -30,6 +30,10 @@ export function AccountStep({ onBack }: { onBack: () => void }) {
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false)
+  const [code, setCode] = useState('')
+  const [verifyError, setVerifyError] = useState<string | null>(null)
+  const [verifying, setVerifying] = useState(false)
+  const [resent, setResent] = useState(false)
   const mismatch = passwordConfirm.length > 0 && password !== passwordConfirm
   const valid = email.trim().length > 0 && password.length >= 6 && passwordConfirm.length >= 6 && !mismatch
 
@@ -43,6 +47,27 @@ export function AccountStep({ onBack }: { onBack: () => void }) {
     setPending(false)
     if (error) setError(error.message)
     else if (!data.session) setAwaitingConfirmation(true)
+  }
+
+  // Success here sets a real session directly (no redirect/link involved),
+  // so OnboardingFlow's resume effect just picks it up like any other
+  // sign-in — same as handleSubmit above needing nothing further on success.
+  async function handleVerify(e: React.FormEvent) {
+    e.preventDefault()
+    if (code.trim().length !== 6) return
+    setVerifyError(null)
+    setVerifying(true)
+    const supabase = createClient()
+    const { error } = await supabase.auth.verifyOtp({ email, token: code.trim(), type: 'signup' })
+    setVerifying(false)
+    if (error) setVerifyError('Неверный или устаревший код')
+  }
+
+  async function handleResend() {
+    setResent(false)
+    const supabase = createClient()
+    await supabase.auth.resend({ type: 'signup', email })
+    setResent(true)
   }
 
   if (awaitingConfirmation) {
@@ -65,8 +90,38 @@ export function AccountStep({ onBack }: { onBack: () => void }) {
         </div>
         <div className="intro-copy">
           <div className="intro-title">Проверь почту</div>
-          <div className="intro-sub">Отправили письмо на {email} — перейди по ссылке в нём, чтобы подтвердить аккаунт.</div>
+          <div className="intro-sub">Отправили код на {email} — введи его ниже, чтобы подтвердить аккаунт.</div>
         </div>
+        <form onSubmit={handleVerify} style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '0 24px' }}>
+          <div className="wizard-field">
+            <label htmlFor="account-code">Код подтверждения</label>
+            <input
+              id="account-code"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              required
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+              placeholder="000000"
+              style={{ letterSpacing: 4, textAlign: 'center', fontSize: 20 }}
+            />
+          </div>
+          {verifyError && <div className="auth-error">{verifyError}</div>}
+          <button type="button" className="wizard-hint" style={{ background: 'none', border: 'none', textAlign: 'left', padding: 0, cursor: 'pointer', color: 'var(--accent)' }} onClick={handleResend}>
+            {resent ? 'Код отправлен ещё раз' : 'Отправить код ещё раз'}
+          </button>
+          <div style={{ flex: 1 }} />
+          <button
+            className="intro-cta"
+            type="submit"
+            disabled={code.trim().length !== 6 || verifying}
+            style={code.trim().length !== 6 || verifying ? { opacity: 0.4, pointerEvents: 'none' } : undefined}
+          >
+            {verifying ? 'Проверяем…' : 'Подтвердить'}
+          </button>
+        </form>
       </div>
     )
   }
