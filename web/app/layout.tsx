@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Manrope, Oswald } from 'next/font/google'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
+import { SITE_URL } from '@/lib/site'
 import './globals.css'
 
 const manrope = Manrope({
@@ -16,10 +17,6 @@ const oswald = Oswald({
   variable: '--font-display',
 })
 
-// TODO: swap for the custom domain once it's connected in Vercel (Settings ->
-// Domains) — this is what Next.js resolves the og/twitter image URLs against,
-// so a stale value here means link previews keep pointing at the old host.
-const SITE_URL = 'https://web-flame-mu-44.vercel.app'
 const TITLE = 'RANGE: Cast & Claim Territory'
 const DESCRIPTION = 'Каждый улов меняет карту. Захватывай территории, собирай награды, обгоняй соперников.'
 
@@ -27,7 +24,10 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: TITLE,
   description: DESCRIPTION,
-  keywords: ['рыбалка', 'Батуми', 'территории', 'RANGE', 'береговая рыбалка', 'Грузия'],
+  keywords: ['рыбалка', 'Батуми', 'Москва', 'территории', 'RANGE', 'береговая рыбалка', 'Грузия'],
+  alternates: {
+    canonical: SITE_URL,
+  },
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,

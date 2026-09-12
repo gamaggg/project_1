@@ -4,7 +4,7 @@ import type { MetadataRoute } from 'next'
 // home screen (Android "Add to Home screen", iOS uses app/apple-icon.png).
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'RANGE — Батуми',
+    name: 'RANGE — рыболовные территории',
     short_name: 'RANGE',
     description: 'Каждый улов меняет карту. Захватывай территории, собирай награды, обгоняй соперников.',
     start_url: '/',
