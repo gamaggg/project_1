@@ -75,6 +75,7 @@ body{
   font-weight:800;
   letter-spacing:-0.6px;
   margin:2px 0 2px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;
 }
 .page-sub{
   font-size:14px;
@@ -85,6 +86,12 @@ body{
 .header-row{
   display:flex; align-items:center; justify-content:space-between;
   padding:6px 20px 4px;
+}
+/* The middle child is always the screen title — an unbroken display name
+   (no spaces allowed, see NameStep's NAME_RE) can't wrap, so without this it
+   overflows the row and forces horizontal scroll on the whole page. */
+.header-row > div:nth-child(2){
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;
 }
 .icon-btn{
   width:37px; height:37px;
@@ -326,7 +333,12 @@ body{
   margin-top:14px; padding:10px 12px;
   background:var(--bg); border-radius:12px;
   cursor:pointer; border:none; width:100%; text-align:left; font-family:inherit;
+  overflow:hidden;
 }
+/* Name div (second child, after the fixed-size avatar) — same unbroken-name
+   overflow risk as .header-row/.terr-list-item, but here nothing else clips
+   it, so it can push the whole screen into horizontal scroll. */
+.owner-row > div:last-child{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
 .owner-row .owner-avatar{
   width:32px; height:32px; border-radius:50%; flex:0 0 auto;
   background:linear-gradient(160deg,#FF7A38,var(--accent) 70%);
@@ -822,7 +834,12 @@ body{
   letter-spacing:0.5px;
 }
 .stat-grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; text-align:center;}
-.terr-list-item{display:flex; align-items:center; gap:12px; padding:15px 14px; cursor:pointer; width:100%; background:none; border:none; text-align:left; font-family:inherit;}
+.terr-list-item{display:flex; align-items:center; gap:12px; padding:15px 14px; cursor:pointer; width:100%; background:none; border:none; text-align:left; font-family:inherit; overflow:hidden;}
+/* A long unbroken display name (no spaces allowed, see NameStep) can't wrap —
+   without this it forces flex children apart instead of shrinking, squeezing
+   or overlapping the trailing stat column in every list row that uses this
+   class (leaderboards, territory/user lists). */
+.terr-list-item > *{min-width:0;}
 
 /* ---------- Weekly leaderboard (Территории → Рейтинг) ---------- */
 .rating-tabs{display:flex; gap:26px; border-bottom:1px solid var(--line); margin:2px 0 18px;}

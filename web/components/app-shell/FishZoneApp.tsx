@@ -119,7 +119,7 @@ export function FishZoneApp() {
   }, [myProfile?.city])
   const updateProfile = useUpdateProfile()
   const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories, territoriesReady, city)
-  const { show: showWeekTop, entry: weekTopEntry, dismiss: dismissWeekTop } = useWeekTopModal()
+  const { show: showWeekTop, entry: weekTopEntry, dismiss: dismissWeekTop } = useWeekTopModal(city)
   useRealtimeSync()
 
   // Jumps straight to the map tab on switch — the whole point of picking a
@@ -396,13 +396,21 @@ export function FishZoneApp() {
     }
     setOutOfZone(true)
   }
+  // Tags each upload attempt so a slow, since-abandoned upload (backed out of
+  // via backToCamera, or superseded by a retry) can't win the race and land
+  // photoUrl/photoStatus after a newer capture already took over — see
+  // handleCapture/retryUpload, both of which start a fresh attempt here.
+  const uploadSeqRef = useRef(0)
   async function startUpload(blob: Blob) {
     if (!user) return
+    const seq = ++uploadSeqRef.current
     try {
       const url = await uploadCatchPhoto(user.id, blob)
+      if (uploadSeqRef.current !== seq) return
       setPhotoUrl(url)
       setPhotoStatus('success')
     } catch {
+      if (uploadSeqRef.current !== seq) return
       setPhotoStatus('error')
     }
   }
@@ -445,6 +453,8 @@ export function FishZoneApp() {
       const match = /COOLDOWN:(\d+)/.exec(message)
       if (match) {
         setCooldownSeconds(Number(match[1]))
+      } else if (message === 'account blocked') {
+        showToast('Аккаунт заблокирован, добавлять уловы нельзя')
       } else {
         showToast('Не удалось сохранить улов, попробуй ещё раз')
       }

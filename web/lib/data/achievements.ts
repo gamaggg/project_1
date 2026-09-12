@@ -82,6 +82,7 @@ export function computeAchievements(myCatches: Catch[], ctx: AchievementContext,
   const requiredWaterKinds: TerritoryKind[] = isMoscow ? ['river', 'stream', 'lake', 'pond'] : ['sea', 'river', 'stream', 'lake']
   const waterKindsCaught = new Set(
     myCatches
+      .filter((c) => cityForSectorId(c.territoryId) === city)
       .map((c) => territoryKindById.get(c.territoryId))
       .filter((k): k is TerritoryKind => !!k && requiredWaterKinds.includes(k))
   )
