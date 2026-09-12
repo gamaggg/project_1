@@ -1312,7 +1312,7 @@ body{
   scrollbar-width:none; -ms-overflow-style:none;
 }
 .color-row::-webkit-scrollbar{display:none;}
-.color-row .color-swatch{flex:0 0 calc((100% - 56px) / 5); width:auto; height:auto; aspect-ratio:1 / 1; scroll-snap-align:start;}
+.color-row .color-swatch{flex:none; width:54px; height:54px; scroll-snap-align:start;}
 .color-row .color-swatch.selected{
   box-shadow:0 6px 14px rgba(9,25,32,0.18), inset 0 0 0 1px rgba(255,255,255,0.15), 0 0 0 3px var(--bg), 0 0 10px 2px var(--swatch-color);
 }
