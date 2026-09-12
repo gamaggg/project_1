@@ -9,6 +9,7 @@ import { computeAchievements, personalRecord, type Achievement } from '@/lib/dat
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralTerritories } from '@/lib/format'
 import { ACH_ICONS } from '@/components/app-shell/icons'
+import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorPreviewMap'
 import { DEFAULT_TERRITORY_COLOR, TERRITORY_COLORS } from '@/lib/data/territoryColors'
 import { CITIES, type CityId } from '@/lib/data/city'
 import type { Territory, UserAward } from '@/lib/data/types'
@@ -147,9 +148,11 @@ export function EditProfileModal({ onClose }: { onClose: () => void }) {
 }
 
 // Same app-shell-level mounting as EditProfileModal, same reason (scroll
-// offset). Reuses the exact swatch grid from onboarding's ColorStep — the
-// same palette/CSS, just callable any time instead of only once.
-export function ChangeColorModal({ onClose }: { onClose: () => void }) {
+// offset). Live preview centers on that city's colorPreviewCenter (a real,
+// recognizably busy landmark — see city.ts) rather than the viewer's own
+// first sector, which could be anywhere or not exist yet for a brand-new
+// account with zero territories.
+export function ChangeColorModal({ onClose, city }: { onClose: () => void; city: CityId }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   const updateProfile = useUpdateProfile()
@@ -172,7 +175,8 @@ export function ChangeColorModal({ onClose }: { onClose: () => void }) {
         <div className="modal-title" style={{ textAlign: 'center' }}>
           Цвет территории
         </div>
-        <div className="color-grid">
+        <TerritoryColorPreviewMap city={city} myTerritoryColor={selected ?? profile?.territoryColor ?? DEFAULT_TERRITORY_COLOR} />
+        <div className="color-row">
           {TERRITORY_COLORS.map((c) => (
             <button
               key={c.id}

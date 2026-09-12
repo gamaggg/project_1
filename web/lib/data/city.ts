@@ -16,6 +16,11 @@ export type CityInfo = {
   timezone: string
   center: [number, number]
   zoom: number
+  // Anchor for ChangeColorModal's neighborhood preview — a real, recognizable,
+  // densely-claimed spot rather than "wherever the viewer's own first sector
+  // happens to be" (which could be anywhere, or not exist yet for a brand-new
+  // account with zero territories).
+  colorPreviewCenter: [number, number]
 }
 
 export const CITIES: Record<CityId, CityInfo> = {
@@ -27,6 +32,8 @@ export const CITIES: Record<CityId, CityInfo> = {
     timezone: 'Asia/Tbilisi',
     center: [41.6513, 41.6325],
     zoom: 14.3,
+    // Batumi sea port.
+    colorPreviewCenter: [41.6555, 41.6414],
   },
   moscow: {
     id: 'moscow',
@@ -40,6 +47,8 @@ export const CITIES: Record<CityId, CityInfo> = {
     timezone: 'Europe/Moscow',
     center: [55.7522, 37.6228],
     zoom: 14.3,
+    // Kremlin embankment.
+    colorPreviewCenter: [55.7485, 37.6180],
   },
 }
 

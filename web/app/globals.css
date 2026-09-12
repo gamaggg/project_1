@@ -1304,6 +1304,18 @@ body{
 }
 
 /* Glossy, slightly-3D circles — same depth treatment as .fish-thumb (shadow + inset rim + radial highlight). */
+.color-preview-map{height:210px; margin-top:20px; margin-bottom:8px;}
+.color-row{
+  display:flex; gap:14px; overflow-x:auto; padding:16px 18px; margin:8px 0 26px;
+  -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity;
+  scroll-padding-left:18px; scroll-padding-right:18px;
+  scrollbar-width:none; -ms-overflow-style:none;
+}
+.color-row::-webkit-scrollbar{display:none;}
+.color-row .color-swatch{flex:0 0 calc((100% - 56px) / 5); width:auto; height:auto; aspect-ratio:1 / 1; scroll-snap-align:start;}
+.color-row .color-swatch.selected{
+  box-shadow:0 6px 14px rgba(9,25,32,0.18), inset 0 0 0 1px rgba(255,255,255,0.15), 0 0 0 3px var(--bg), 0 0 10px 2px var(--swatch-color);
+}
 .color-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:40px 22px; justify-items:center; margin:36px 0 24px;}
 .color-swatch{
   width:64px; height:64px; border-radius:50%; border:none; cursor:pointer; position:relative;

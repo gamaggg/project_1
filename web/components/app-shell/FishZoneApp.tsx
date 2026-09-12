@@ -736,7 +736,7 @@ export function FishZoneApp() {
       )}
 
       {editingProfile && <EditProfileModal onClose={() => setEditingProfile(false)} />}
-      {changingColor && <ChangeColorModal onClose={() => setChangingColor(false)} />}
+      {changingColor && <ChangeColorModal onClose={() => setChangingColor(false)} city={city} />}
       {changingCity && <CityPickerModal city={city} onChange={changeCity} onClose={() => setChangingCity(false)} />}
       {editingAdminAccessId && <AdminPermissionsModal userId={editingAdminAccessId} onClose={() => setEditingAdminAccessId(null)} />}
       {lightboxSrc && <PhotoLightbox src={lightboxSrc} alt="Улов" onClose={() => setLightboxSrc(null)} />}
