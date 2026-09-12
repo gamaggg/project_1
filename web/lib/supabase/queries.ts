@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/AuthProvider'
 import type { Territory, TerritoryStatus, Catch, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, WeeklyLeaderboardEntry, UserAward, AwardKind } from '@/lib/data/types'
 import type { SpeciesCategory } from '@/lib/data/species'
+import type { CityId } from '@/lib/data/city'
 
 type SectorGeometry = {
   id: string
@@ -380,6 +381,7 @@ export function useProfile(userId: string | null) {
         territoryColor: data.territory_color ?? null,
         onboardingCompleted: data.onboarding_completed ?? true,
         createdAt: data.created_at ?? new Date().toISOString(),
+        city: (data.city as CityId) ?? 'batumi',
         canModerateReports: data.can_moderate_reports ?? null,
         canBlockUsers: data.can_block_users ?? null,
         canAddCatchManually: data.can_add_catch_manually ?? null,
@@ -697,6 +699,7 @@ export function useUpdateProfile() {
       weightKg?: number | null
       territoryColor?: string
       onboardingCompleted?: boolean
+      city?: CityId
     }) => {
       if (!user) throw new Error('not authenticated')
       const supabase = createClient()
@@ -712,6 +715,7 @@ export function useUpdateProfile() {
           ...(patch.weightKg !== undefined ? { weight_kg: patch.weightKg } : {}),
           ...(patch.territoryColor !== undefined ? { territory_color: patch.territoryColor } : {}),
           ...(patch.onboardingCompleted !== undefined ? { onboarding_completed: patch.onboardingCompleted } : {}),
+          ...(patch.city !== undefined ? { city: patch.city } : {}),
         })
         .eq('id', user.id)
       if (error) throw error

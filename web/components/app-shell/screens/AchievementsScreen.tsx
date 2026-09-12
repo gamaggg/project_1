@@ -4,23 +4,21 @@ import { useCatchesByUser, useProfile, useHasClaimedFromOthers } from '@/lib/sup
 import { computeAchievements, type Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import type { Territory } from '@/lib/data/types'
-import type { CityId } from '@/lib/data/city'
 
 // Full achievements list for one profile (own or someone else's) — ProfileScreen/
 // UserProfileScreen only show a 4-item preview with a button into this screen.
 // Self-contained (fetches its own catches/profile/claim-history by userId) rather
 // than fed pre-computed data, so it works the same regardless of which screen
-// pushed it.
+// pushed it. City comes from that profile's own `city` column (not the viewer's)
+// so achievement thresholds match whichever city this account actually plays in.
 export function AchievementsScreen({
   userId,
   territories,
-  city,
   onBack,
   onOpenDetail,
 }: {
   userId: string
   territories: Territory[]
-  city: CityId
   onBack: () => void
   onOpenDetail: (icon: Achievement['icon']) => void
 }) {
@@ -36,7 +34,7 @@ export function AchievementsScreen({
       followersCount: profile?.followersCount ?? 0,
       claimedFromOthers,
     },
-    city
+    profile?.city ?? 'batumi'
   )
 
   return (

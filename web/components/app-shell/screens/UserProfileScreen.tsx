@@ -7,7 +7,7 @@ import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatJoinedDate } from '@/lib/format'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import type { Territory, UserAward } from '@/lib/data/types'
-import { CITIES, type CityId } from '@/lib/data/city'
+import { CITIES } from '@/lib/data/city'
 
 // Read-only counterpart to ProfileScreen — someone else's territories/catches/
 // achievements, plus a follow button instead of edit/sign-out controls. See
@@ -18,7 +18,6 @@ export function UserProfileScreen({
   userId,
   territories,
   allTerritories,
-  city,
   onBack,
   onOpenTerritory,
   onOpenPhoto,
@@ -32,7 +31,6 @@ export function UserProfileScreen({
   userId: string
   territories: Territory[]
   allTerritories: Territory[]
-  city: CityId
   onBack: () => void
   onOpenTerritory: (id: string) => void
   onOpenPhoto: (src: string) => void
@@ -57,6 +55,7 @@ export function UserProfileScreen({
 
   const speciesCount = new Set(catches.map((c) => c.species)).size
   const record = personalRecord(catches)
+  const viewedCity = profile?.city ?? 'batumi'
   const achievements = computeAchievements(
     catches,
     {
@@ -65,7 +64,7 @@ export function UserProfileScreen({
       followersCount: profile?.followersCount ?? 0,
       claimedFromOthers,
     },
-    city
+    viewedCity
   )
   const recent = catches.slice(0, 3)
   const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
@@ -103,7 +102,7 @@ export function UserProfileScreen({
           {profile?.publicId && (
             <div style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 4, fontWeight: 700, letterSpacing: 0.4 }}>ID: {profile.publicId}</div>
           )}
-          <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 8, fontWeight: 700 }}>Город: {CITIES[city].name}</div>
+          <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 8, fontWeight: 700 }}>Город: {CITIES[viewedCity].name}</div>
           {profile?.bio && (
             <div style={{ fontSize: 13.5, color: 'var(--ink)', marginTop: 8, lineHeight: 1.4 }}>{profile.bio}</div>
           )}

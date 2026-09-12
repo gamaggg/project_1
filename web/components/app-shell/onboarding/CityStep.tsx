@@ -5,10 +5,11 @@ import { CITY_LIST, storeCity, type CityId } from '@/lib/data/city'
 
 // Right after CatchIntroStep ("Поймал — значит занял") — by then the visitor
 // already understands the mechanic, so picking where to play it makes sense
-// here rather than earlier. Purely client-side (see lib/data/city — no
-// profile column), changeable any time later from the Профиль tab. Visually
-// a third intro-screen variant (GPS-pin drop, see globals.css) alongside
-// TerritoryIntroStep/CatchIntroStep — chosen from two proposed designs.
+// here rather than earlier. storeCity() below is just the same-device local
+// cache (see lib/data/city); OnboardingFlow's onDone also persists the real
+// choice to the profile row. Changeable any time later from the Профиль tab.
+// Visually a third intro-screen variant (GPS-pin drop, see globals.css)
+// alongside TerritoryIntroStep/CatchIntroStep — chosen from two proposed designs.
 export function CityStep({ onBack, onDone }: { onBack: () => void; onDone: (city: CityId) => void }) {
   const [selected, setSelected] = useState<CityId | null>(null)
 

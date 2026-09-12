@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useTerritories, useConfirmCatch, useProfile, useRealtimeSync, useIsSuperAdmin, useAllTerritoryIds } from '@/lib/supabase/queries'
+import { useTerritories, useConfirmCatch, useProfile, useUpdateProfile, useRealtimeSync, useIsSuperAdmin, useAllTerritoryIds } from '@/lib/supabase/queries'
 import { getCurrentCoords, nearestTerritory, queryGeolocationPermission } from '@/lib/geolocation'
 import { uploadCatchPhoto } from '@/lib/supabase/storage'
 import { useActivityReadState, useAdminActionsReadState } from '@/lib/activityRead'
@@ -102,17 +102,22 @@ export function FishZoneApp() {
   const mapHandleRef = useRef<LeafletMapHandle>(null)
   const { unreadIds, unreadCount, markAllRead } = useActivityReadState()
   const { unreadCount: adminLogUnreadCount, markAllRead: markAdminLogRead } = useAdminActionsReadState()
-  // Which city's sectors the map/territories tab/rating currently show — a
-  // client-only lens over the one shared territories list (see lib/data/city),
-  // not something the server knows about. Starts on Batumi (matches every
-  // existing user's expectation) and only syncs from localStorage after
-  // mount, so server-rendered and first-client-render markup still agree.
+  // Which city's sectors the map/territories tab/rating currently show — the
+  // signed-in user's own `profiles.city` (see lib/data/city) once it loads.
+  // Starts on Batumi and syncs from localStorage right after mount so
+  // server-rendered and first-client-render markup still agree and there's
+  // no flicker while the profile fetch is in flight; the profile value (once
+  // loaded) then wins, since it's the real cross-device source of truth.
   // Declared before useAchievementUnlock below since that hook's achievement
   // computation is itself city-aware (see lib/data/achievements).
   const [city, setCity] = useState<CityId>('batumi')
   useEffect(() => {
     setCity(loadStoredCity())
   }, [])
+  useEffect(() => {
+    if (myProfile?.city) setCity(myProfile.city)
+  }, [myProfile?.city])
+  const updateProfile = useUpdateProfile()
   const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories, territoriesReady, city)
   const { show: showWeekTop, entry: weekTopEntry, dismiss: dismissWeekTop } = useWeekTopModal()
   useRealtimeSync()
@@ -123,6 +128,7 @@ export function FishZoneApp() {
   function changeCity(next: CityId) {
     setCity(next)
     storeCity(next)
+    if (user) updateProfile.mutate({ city: next })
     resetTo({ screen: 'screen-map' })
     setNavScreen('screen-map')
   }
@@ -621,7 +627,6 @@ export function FishZoneApp() {
               userId={viewingUserId}
               territories={territories.filter((t) => t.ownerId === viewingUserId)}
               allTerritories={territories}
-              city={city}
               onBack={pop}
               onOpenTerritory={openTerritory}
               onOpenPhoto={setLightboxSrc}
@@ -639,7 +644,6 @@ export function FishZoneApp() {
             <AchievementsScreen
               userId={viewingAchievementsUserId}
               territories={territories}
-              city={city}
               onBack={pop}
               onOpenDetail={(icon) => openAchievementDetail(viewingAchievementsUserId, icon)}
             />
@@ -651,7 +655,6 @@ export function FishZoneApp() {
               userId={viewingAchievementDetail.userId}
               icon={viewingAchievementDetail.icon}
               territories={territories}
-              city={city}
               onBack={pop}
               onShowToast={showToast}
             />

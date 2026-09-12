@@ -344,6 +344,7 @@ export type Database = {
           can_block_users: boolean
           can_moderate_reports: boolean
           can_view_all_users: boolean
+          city: string
           created_at: string
           display_name: string
           gender: string | null
@@ -366,6 +367,7 @@ export type Database = {
           can_block_users?: boolean
           can_moderate_reports?: boolean
           can_view_all_users?: boolean
+          city?: string
           created_at?: string
           display_name?: string
           gender?: string | null
@@ -388,6 +390,7 @@ export type Database = {
           can_block_users?: boolean
           can_moderate_reports?: boolean
           can_view_all_users?: boolean
+          city?: string
           created_at?: string
           display_name?: string
           gender?: string | null
@@ -533,6 +536,7 @@ export type Database = {
           can_moderate_reports: boolean | null
           can_view_all_users: boolean | null
           catches_count: number | null
+          city: string | null
           created_at: string | null
           display_name: string | null
           followers_count: number | null
@@ -559,6 +563,7 @@ export type Database = {
           can_moderate_reports?: never
           can_view_all_users?: never
           catches_count?: never
+          city?: string | null
           created_at?: string | null
           display_name?: string | null
           followers_count?: never
@@ -585,6 +590,7 @@ export type Database = {
           can_moderate_reports?: never
           can_view_all_users?: never
           catches_count?: never
+          city?: string | null
           created_at?: string | null
           display_name?: string | null
           followers_count?: never

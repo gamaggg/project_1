@@ -6,26 +6,24 @@ import { computeAchievements, type Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import { HexBadge } from '@/components/app-shell/HexBadge'
 import type { Territory } from '@/lib/data/types'
-import type { CityId } from '@/lib/data/city'
 
 // Single-achievement screen (pushed from a card tap in AchievementsScreen or
 // the profile preview) — mirrors the Apple Fitness+ "award detail" layout the
 // user pointed at: big badge, title, description, share in the header.
 // Self-contained like AchievementsScreen (fetches its own data by userId)
 // rather than threading one Achievement object through the stack, since the
-// stack only carries the icon key (see FishZoneApp's StackEntry).
+// stack only carries the icon key (see FishZoneApp's StackEntry). City comes
+// from that profile's own `city` column, same reasoning as AchievementsScreen.
 export function AchievementDetailScreen({
   userId,
   icon,
   territories,
-  city,
   onBack,
   onShowToast,
 }: {
   userId: string
   icon: Achievement['icon']
   territories: Territory[]
-  city: CityId
   onBack: () => void
   onShowToast: (msg: string) => void
 }) {
@@ -41,7 +39,7 @@ export function AchievementDetailScreen({
       followersCount: profile?.followersCount ?? 0,
       claimedFromOthers,
     },
-    city
+    profile?.city ?? 'batumi'
   )
   const achievement = achievements.find((a) => a.icon === icon)
 

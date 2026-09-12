@@ -67,6 +67,7 @@ export function OnboardingFlow({ onCityChosen }: { onCityChosen?: (city: CityId)
       <CityStep
         onBack={() => setStep('color')}
         onDone={(chosen) => {
+          updateProfile.mutate({ city: chosen })
           onCityChosen?.(chosen)
           setStep('territory-intro')
         }}

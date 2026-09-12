@@ -1,10 +1,12 @@
-// A "city" is purely a client-side lens over one shared sectors/territories
-// world — not a DB column. Every sector id already carries its city as a
-// prefix (see tools/fishing-hex: Batumi = "B", Moscow = "M"), so a city is
-// just that prefix plus some display/map-defaults metadata. Adding a third
-// city later means one more entry here plus a migration to teach
-// get_weekly_leaderboard's p_city_prefix about it — nothing else keys off a
-// stored "which city" value anywhere.
+// A "city" is a lens over one shared sectors/territories world. Every sector
+// id already carries its city as a prefix (see tools/fishing-hex: Batumi =
+// "B", Moscow = "M"), so a city is just that prefix plus some display/map-
+// defaults metadata. Which city an account is currently in is a real
+// `profiles.city` column (set at onboarding's CityStep, changeable later from
+// Профиль) — loadStoredCity/storeCity below are only a same-device, no-
+// network-wait cache of that value for the first paint, not the source of
+// truth. Adding a third city later means one more entry here plus a
+// migration to teach get_weekly_leaderboard's p_city_prefix about it.
 export type CityId = 'batumi' | 'moscow'
 
 export type CityInfo = {

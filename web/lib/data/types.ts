@@ -1,5 +1,6 @@
 import type { Database } from '@/lib/types'
 import type { SpeciesCategory } from '@/lib/data/species'
+import type { CityId } from '@/lib/data/city'
 
 export type TerritoryKind = Database['public']['Enums']['territory_kind']
 export type TerritoryStatus = 'mine' | 'other' | 'free'
@@ -53,6 +54,11 @@ export type Profile = {
   territoryColor: string | null
   onboardingCompleted: boolean
   createdAt: string
+  // Which city this account plays in — a real per-profile column (not just
+  // the viewer's own localStorage lens, see lib/data/city), set at onboarding's
+  // CityStep and changeable later from Профиль. Used to compute achievements
+  // for THIS profile under its owner's own city, not the viewer's.
+  city: CityId
   // Granular admin permissions (see AdminPermissionsModal) — masked to null
   // for anyone but the profile's own owner, same as birthDate/gender/etc
   // above. A super admin editing someone else's permissions reads the real,
