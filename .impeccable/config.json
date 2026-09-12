@@ -1,0 +1,32 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.3, 1.7, .4, 1)",
+        "createdAt": "2026-09-12T08:56:29.089Z",
+        "reason": "catch-trophy-stamp: territory-claim stamp landing, a rare per-catch celebration moment — earned bounce per animate skill's playful-interaction exception"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.34, 1.56, .64, 1)",
+        "createdAt": "2026-09-12T08:56:29.113Z",
+        "reason": "achievement-unlock badge / achievement-detail badge / city-pin drop: reused reward-reveal bounce across 3 rare first-time-per-event moments (unlock modal, detail screen, city onboarding pin) — same sanctioned playful-interaction exception, not accidental drift"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.22, 1.4, .36, 1)",
+        "createdAt": "2026-09-12T08:56:29.135Z",
+        "reason": "award-detail-card: medal/award detail screen pop-in, a rare celebratory reveal — earned bounce"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.22, .85, .3, 1.25)",
+        "createdAt": "2026-09-12T08:56:29.159Z",
+        "reason": "rating-podium-item-enter: explicitly a 'ceremony reveal' (see code comment) for the weekly leaderboard podium — earned bounce for a rare ceremonial moment"
+      }
+    ]
+  }
+}
