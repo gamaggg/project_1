@@ -21,7 +21,7 @@ export function SignInStep({ onBack }: { onBack: () => void }) {
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     setPending(false)
-    if (error) setError('Неверный email или пароль')
+    if (error) setError(error.code === 'email_not_confirmed' ? 'Подтверди почту по ссылке из письма, которое мы прислали при регистрации' : 'Неверный email или пароль')
   }
 
   return (

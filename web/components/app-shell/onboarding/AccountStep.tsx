@@ -10,6 +10,15 @@ import { createClient } from '@/lib/supabase/client'
 // nothing to do here — the parent OnboardingFlow's resume effect picks up
 // the new session + freshly-inserted (onboarding_completed:false) profile.
 //
+// That "nothing to do" only holds when email confirmation is off. With it
+// on (see auth/smtp — Confirm email toggle), signUp() succeeds but returns
+// no session until the visitor clicks the emailed link, so there's nothing
+// for OnboardingFlow's resume effect to pick up yet — show a "check your
+// email" screen instead of silently going nowhere. Note: Supabase
+// deliberately returns this same no-error, no-session response for an
+// email that's already registered too (anti-enumeration), so a mistyped
+// existing address looks identical to a fresh signup here — expected.
+//
 // Visually a "growing sector" screen like TerritoryIntroStep/CatchIntroStep/
 // CityStep (cream intro-screen, hex that claims itself) rather than the old
 // plain white form — the hex claims once the form looks submittable, same
@@ -20,6 +29,7 @@ export function AccountStep({ onBack }: { onBack: () => void }) {
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false)
   const mismatch = passwordConfirm.length > 0 && password !== passwordConfirm
   const valid = email.trim().length > 0 && password.length >= 6 && passwordConfirm.length >= 6 && !mismatch
 
@@ -29,9 +39,36 @@ export function AccountStep({ onBack }: { onBack: () => void }) {
     setError(null)
     setPending(true)
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({ email, password })
+    const { data, error } = await supabase.auth.signUp({ email, password })
     setPending(false)
     if (error) setError(error.message)
+    else if (!data.session) setAwaitingConfirmation(true)
+  }
+
+  if (awaitingConfirmation) {
+    return (
+      <div className="intro-screen intro-screen--catch">
+        <button className="intro-back" onClick={onBack} aria-label="Назад">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <div className="sector-stage">
+          <div className="sector-hex-wrap">
+            <div className="sector-hex claimed">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 8l7 12 11-16" />
+              </svg>
+            </div>
+            <div className="sector-pin" />
+          </div>
+        </div>
+        <div className="intro-copy">
+          <div className="intro-title">Проверь почту</div>
+          <div className="intro-sub">Отправили письмо на {email} — перейди по ссылке в нём, чтобы подтвердить аккаунт.</div>
+        </div>
+      </div>
+    )
   }
 
   return (
