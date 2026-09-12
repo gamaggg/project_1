@@ -14,6 +14,7 @@ import { draftHexAt } from '@/lib/data/hexGrid'
 import { cityForSectorId, loadStoredCity, storeCity, type CityId } from '@/lib/data/city'
 import type { PendingCatch, TerritoryStatus } from '@/lib/data/types'
 import { OnboardingFlow } from '@/components/app-shell/onboarding/OnboardingFlow'
+import { ForgotPasswordFlow } from '@/components/app-shell/onboarding/ForgotPasswordFlow'
 import { BottomNav } from '@/components/app-shell/BottomNav'
 import { PhotoLightbox } from '@/components/app-shell/PhotoLightbox'
 import { MapScreen } from '@/components/app-shell/screens/MapScreen'
@@ -150,6 +151,13 @@ export function FishZoneApp() {
   const [editingProfile, setEditingProfile] = useState(false)
   const [changingColor, setChangingColor] = useState(false)
   const [confirmingSignOut, setConfirmingSignOut] = useState(false)
+  // Own gate, checked before the onboarding one below — verifyOtp('recovery')
+  // sets a real session the moment the code is confirmed, and the onboarding
+  // gate only keys off `!user`, so nesting this flow inside OnboardingFlow
+  // would make it vanish mid-flow (right after the code step, before a new
+  // password is even set) once that session appears. This flag keeps
+  // ForgotPasswordFlow mounted regardless of session state until it's done.
+  const [recoveryMode, setRecoveryMode] = useState(false)
   const [openAward, setOpenAward] = useState<UserAward | null>(null)
   const [editingAdminAccessId, setEditingAdminAccessId] = useState<string | null>(null)
   const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null)
@@ -503,13 +511,21 @@ export function FishZoneApp() {
     return <LoadingShell />
   }
 
+  if (recoveryMode) {
+    return (
+      <div className="app-shell">
+        <ForgotPasswordFlow onDone={() => setRecoveryMode(false)} onCancel={() => setRecoveryMode(false)} />
+      </div>
+    )
+  }
+
   // Onboarding gate: no account, or an account that hasn't finished the
   // wizard (onboarding_completed=false) — never render the real map/screens
   // in either case. See DECISIONS.md.
   if (!user || (myProfile && !myProfile.onboardingCompleted)) {
     return (
       <div className="app-shell">
-        <OnboardingFlow onCityChosen={changeCity} />
+        <OnboardingFlow onCityChosen={changeCity} onForgotPassword={() => setRecoveryMode(true)} />
       </div>
     )
   }

@@ -1271,6 +1271,41 @@ body{
 }
 .sector-hex.claimed ~ .sector-pin{opacity:1; transform:translate(-50%,-6px) scale(1);}
 
+/* OTP-code screens (signup confirm code, password-reset code) — an envelope
+   drops in with the same spring curve as CityStep's GPS pin, plus its pulsing
+   ring, so these read as part of the same wizard rather than a bolted-on
+   afterthought. Form fields below it stagger in via .otp-form's own
+   nth-child delays — one shared recipe, reused by ForgotPasswordStep. */
+.otp-icon-wrap{position:relative; width:64px; height:64px; margin:0 auto; animation:otpIconDrop .7s cubic-bezier(.34,1.56,.64,1) both;}
+.otp-icon-ring{position:absolute; inset:-14px; border-radius:50%; border:2px solid var(--accent); opacity:0; animation:cityRingPulse 1.6s ease-out .7s infinite;}
+.otp-icon{
+  width:100%; height:100%; border-radius:50%; background:var(--accent); color:#fff;
+  display:flex; align-items:center; justify-content:center; position:relative;
+  box-shadow:0 8px 20px rgba(252,82,0,.28);
+}
+@keyframes otpIconDrop{
+  0%{transform:translateY(-90px) scale(.7); opacity:0;}
+  60%{transform:translateY(6px) scale(1); opacity:1;}
+  100%{transform:translateY(0) scale(1);}
+}
+.otp-form > *{opacity:0; animation:otpFieldIn .45s var(--ease-out) both;}
+.otp-form > *:nth-child(1){animation-delay:.2s;}
+.otp-form > *:nth-child(2){animation-delay:.3s;}
+.otp-form > *:nth-child(3){animation-delay:.4s;}
+.otp-form > *:nth-child(4){animation-delay:.5s;}
+.otp-form > *:nth-child(5){animation-delay:.6s;}
+@keyframes otpFieldIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+.otp-resend{background:none; border:none; text-align:left; padding:0; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:700; color:var(--accent);}
+.otp-resend:disabled{color:var(--ink-faint); cursor:not-allowed;}
+/* Same staggered-field entrance as .otp-form, reused by ForgotPasswordFlow's
+   email/new-password steps so the whole recovery journey (not just the code
+   screen) reads as one animated wizard. */
+.wizard-anim-form > *{opacity:0; animation:otpFieldIn .45s var(--ease-out) both;}
+.wizard-anim-form > *:nth-child(1){animation-delay:.1s;}
+.wizard-anim-form > *:nth-child(2){animation-delay:.2s;}
+.wizard-anim-form > *:nth-child(3){animation-delay:.3s;}
+.wizard-anim-form > *:nth-child(4){animation-delay:.4s;}
+
 .wizard-field{display:flex; flex-direction:column; gap:6px; margin-bottom:12px; min-width:0;}
 .wizard-field label{font-size:12px; font-weight:700; color:var(--ink-soft);}
 .wizard-field input{
@@ -1302,6 +1337,9 @@ body{
   .city-pin-wrap{opacity:1; transform:none;}
   .city-chips{opacity:1; transform:none;}
   .sector-hex.claimed{animation:none !important;}
+  .otp-icon-wrap, .otp-icon-ring{animation:none !important;}
+  .otp-icon-wrap{opacity:1; transform:none;}
+  .otp-form > *, .wizard-anim-form > *{animation:none !important; opacity:1 !important; transform:none !important;}
   .intro-hex--mine{background:#fff; box-shadow:0 0 0 7px rgba(255,255,255,.22);}
   .intro-hex-pin{opacity:1; transform:translate(-50%,-50%) translateY(-15px) scale(1);}
   .intro-photocard{opacity:1; transform:translate(-50%,-132%) scale(1) rotate(-4deg);}

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { OtpCodeStep } from '@/components/app-shell/onboarding/OtpCodeStep'
 
 // First real step of the wizard: creates the Supabase account right away
 // (no name/details/color yet — those get filled in via useUpdateProfile in
@@ -12,9 +13,9 @@ import { createClient } from '@/lib/supabase/client'
 //
 // That "nothing to do" only holds when email confirmation is off. With it
 // on (see auth/smtp — Confirm email toggle), signUp() succeeds but returns
-// no session until the visitor clicks the emailed link, so there's nothing
-// for OnboardingFlow's resume effect to pick up yet — show a "check your
-// email" screen instead of silently going nowhere. Note: Supabase
+// no session until the code from the confirmation email is verified — see
+// OtpCodeStep below, whose onVerified also needs nothing further, since
+// verifyOtp() sets the session directly the same way. Note: Supabase
 // deliberately returns this same no-error, no-session response for an
 // email that's already registered too (anti-enumeration), so a mistyped
 // existing address looks identical to a fresh signup here — expected.
@@ -30,10 +31,6 @@ export function AccountStep({ onBack }: { onBack: () => void }) {
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false)
-  const [code, setCode] = useState('')
-  const [verifyError, setVerifyError] = useState<string | null>(null)
-  const [verifying, setVerifying] = useState(false)
-  const [resent, setResent] = useState(false)
   const mismatch = passwordConfirm.length > 0 && password !== passwordConfirm
   const valid = email.trim().length > 0 && password.length >= 6 && passwordConfirm.length >= 6 && !mismatch
 
@@ -49,80 +46,18 @@ export function AccountStep({ onBack }: { onBack: () => void }) {
     else if (!data.session) setAwaitingConfirmation(true)
   }
 
-  // Success here sets a real session directly (no redirect/link involved),
-  // so OnboardingFlow's resume effect just picks it up like any other
-  // sign-in — same as handleSubmit above needing nothing further on success.
-  async function handleVerify(e: React.FormEvent) {
-    e.preventDefault()
-    if (code.trim().length !== 6) return
-    setVerifyError(null)
-    setVerifying(true)
-    const supabase = createClient()
-    const { error } = await supabase.auth.verifyOtp({ email, token: code.trim(), type: 'signup' })
-    setVerifying(false)
-    if (error) setVerifyError('Неверный или устаревший код')
-  }
-
-  async function handleResend() {
-    setResent(false)
-    const supabase = createClient()
-    await supabase.auth.resend({ type: 'signup', email })
-    setResent(true)
-  }
-
   if (awaitingConfirmation) {
     return (
-      <div className="intro-screen intro-screen--catch">
-        <button className="intro-back" onClick={onBack} aria-label="Назад">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
-        <div className="sector-stage">
-          <div className="sector-hex-wrap">
-            <div className="sector-hex claimed">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 8l7 12 11-16" />
-              </svg>
-            </div>
-            <div className="sector-pin" />
-          </div>
-        </div>
-        <div className="intro-copy">
-          <div className="intro-title">Проверь почту</div>
-          <div className="intro-sub">Отправили код на {email} — введи его ниже, чтобы подтвердить аккаунт.</div>
-        </div>
-        <form onSubmit={handleVerify} style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '0 24px' }}>
-          <div className="wizard-field">
-            <label htmlFor="account-code">Код подтверждения</label>
-            <input
-              id="account-code"
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              maxLength={6}
-              required
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-              placeholder="000000"
-              style={{ letterSpacing: 4, textAlign: 'center', fontSize: 20 }}
-            />
-          </div>
-          {verifyError && <div className="auth-error">{verifyError}</div>}
-          <button type="button" className="wizard-hint" style={{ background: 'none', border: 'none', textAlign: 'left', padding: 0, cursor: 'pointer', color: 'var(--accent)' }} onClick={handleResend}>
-            {resent ? 'Код отправлен ещё раз' : 'Отправить код ещё раз'}
-          </button>
-          <div style={{ flex: 1 }} />
-          <button
-            className="intro-cta"
-            type="submit"
-            disabled={code.trim().length !== 6 || verifying}
-            style={code.trim().length !== 6 || verifying ? { opacity: 0.4, pointerEvents: 'none' } : undefined}
-          >
-            {verifying ? 'Проверяем…' : 'Подтвердить'}
-          </button>
-        </form>
-      </div>
+      <OtpCodeStep
+        email={email}
+        type="signup"
+        title="Проверь почту"
+        subtitle={`Отправили код на ${email} — введи его ниже, чтобы подтвердить аккаунт.`}
+        ctaLabel="Подтвердить"
+        onBack={() => setAwaitingConfirmation(false)}
+        onVerified={() => {}}
+        onResend={() => createClient().auth.resend({ type: 'signup', email })}
+      />
     )
   }
 

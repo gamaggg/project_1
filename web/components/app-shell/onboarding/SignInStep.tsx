@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 // On success there's nothing to do here: onAuthStateChange (AuthProvider)
 // updates `user`, and FishZoneApp's gate reacts (existing accounts have
 // onboarding_completed=true by default, so it drops straight to the map).
-export function SignInStep({ onBack }: { onBack: () => void }) {
+export function SignInStep({ onBack, onForgotPassword }: { onBack: () => void; onForgotPassword: () => void }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -21,7 +21,7 @@ export function SignInStep({ onBack }: { onBack: () => void }) {
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     setPending(false)
-    if (error) setError(error.code === 'email_not_confirmed' ? 'Подтверди почту по ссылке из письма, которое мы прислали при регистрации' : 'Неверный email или пароль')
+    if (error) setError(error.code === 'email_not_confirmed' ? 'Подтверди почту кодом из письма, которое мы прислали при регистрации' : 'Неверный email или пароль')
   }
 
   return (
@@ -60,6 +60,9 @@ export function SignInStep({ onBack }: { onBack: () => void }) {
           {error && <div className="auth-error">{error}</div>}
           <button className="btn-primary" type="submit" disabled={pending}>
             {pending ? 'Подождите…' : 'Войти'}
+          </button>
+          <button type="button" className="otp-resend" style={{ display: 'block', margin: '14px auto 0', textAlign: 'center' }} onClick={onForgotPassword}>
+            Забыли пароль?
           </button>
         </form>
       </div>

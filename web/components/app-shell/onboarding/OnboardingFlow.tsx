@@ -28,7 +28,7 @@ type Step = 'welcome' | 'signin' | 'account' | 'name' | 'details' | 'color' | 'c
 // CityStep's onDone fires here, since this whole flow renders *inside*
 // FishZoneApp rather than replacing it — writing to localStorage alone
 // wouldn't be re-read, so the pick has to reach that live state directly.
-export function OnboardingFlow({ onCityChosen }: { onCityChosen?: (city: CityId) => void }) {
+export function OnboardingFlow({ onCityChosen, onForgotPassword }: { onCityChosen?: (city: CityId) => void; onForgotPassword: () => void }) {
   const { user } = useAuth()
   const { data: myProfile, isLoading: myProfileLoading } = useProfile(user?.id ?? null)
   const [step, setStep] = useState<Step>('welcome')
@@ -57,7 +57,7 @@ export function OnboardingFlow({ onCityChosen }: { onCityChosen?: (city: CityId)
   if (user && myProfileLoading) return null
 
   if (step === 'welcome') return <WelcomeStep onCapture={() => setStep('account')} onSignIn={() => setStep('signin')} />
-  if (step === 'signin') return <SignInStep onBack={() => setStep('welcome')} />
+  if (step === 'signin') return <SignInStep onBack={() => setStep('welcome')} onForgotPassword={onForgotPassword} />
   if (step === 'account') return <AccountStep onBack={() => setStep('welcome')} />
   if (step === 'name') return <NameStep initialName={myProfile?.displayName ?? ''} onBack={() => setStep('account')} onDone={() => setStep('details')} />
   if (step === 'details') return <DetailsStep onBack={() => setStep('name')} onDone={() => setStep('color')} />
