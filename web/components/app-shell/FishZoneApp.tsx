@@ -385,7 +385,7 @@ export function FishZoneApp() {
       return
     }
     mapHandleRef.current?.showUserLocation(coords.lat, coords.lng)
-    const found = nearestTerritory(coords.lat, coords.lng, territories)
+    const found = nearestTerritory(coords.lat, coords.lng, cityTerritories)
     setToast(null)
     if (found) {
       mapHandleRef.current?.flyToTerritory(found.id)
