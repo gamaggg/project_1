@@ -7,7 +7,7 @@ import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatJoinedDate } from '@/lib/format'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import type { Territory, UserAward } from '@/lib/data/types'
-import type { CityId } from '@/lib/data/city'
+import { CITIES, type CityId } from '@/lib/data/city'
 
 // Read-only counterpart to ProfileScreen — someone else's territories/catches/
 // achievements, plus a follow button instead of edit/sign-out controls. See
@@ -103,6 +103,7 @@ export function UserProfileScreen({
           {profile?.publicId && (
             <div style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 4, fontWeight: 700, letterSpacing: 0.4 }}>ID: {profile.publicId}</div>
           )}
+          <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 8, fontWeight: 700 }}>Город: {CITIES[city].name}</div>
           {profile?.bio && (
             <div style={{ fontSize: 13.5, color: 'var(--ink)', marginTop: 8, lineHeight: 1.4 }}>{profile.bio}</div>
           )}
