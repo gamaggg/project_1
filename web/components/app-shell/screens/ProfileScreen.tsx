@@ -206,6 +206,7 @@ export function ProfileScreen({
   onSignOut,
   onEditProfile,
   onChangeColor,
+  onLinkEmail,
   onOpenCityPicker,
   onOpenPhoto,
   onOpenReports,
@@ -226,6 +227,7 @@ export function ProfileScreen({
   onSignOut: () => void
   onEditProfile: () => void
   onChangeColor: () => void
+  onLinkEmail: () => void
   onOpenCityPicker: () => void
   onOpenPhoto: (src: string) => void
   onOpenReports: () => void
@@ -264,6 +266,10 @@ export function ProfileScreen({
   const recentMine = myCatches.slice(0, 3)
   const visibleTerritories = myTerritories.slice(0, 5)
   const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
+  // Synthetic placeholder set by the Telegram auto-sign-in handshake (see
+  // api/auth/telegram/route.ts) — never a real address the person chose, so
+  // offering "Link email" only makes sense while it's still this pattern.
+  const isTelegramAccount = user?.email?.endsWith('@telegram.catchrange.com') ?? false
 
   async function handleShareProfile() {
     const text = `🎣 Я в RANGE — ${myTerritories.length} ${pluralTerritories(myTerritories.length)}, ${myCatches.length} ${pluralCatches(myCatches.length)}!\n\nПрисоединяйся и сразимся за территории 🏆\n${window.location.origin}`
@@ -482,7 +488,15 @@ export function ProfileScreen({
         </>
       )}
 
-      <div style={{ marginTop: canModerateReports || isSuperAdmin ? 12 : 24 }}>
+      {isTelegramAccount && (
+        <div style={{ marginTop: canModerateReports || isSuperAdmin ? 12 : 24 }}>
+          <button className="btn-secondary" onClick={onLinkEmail}>
+            Привязать почту
+          </button>
+        </div>
+      )}
+
+      <div style={{ marginTop: isTelegramAccount || canModerateReports || isSuperAdmin ? 12 : 24 }}>
         <button className="btn-secondary" onClick={onSignOut}>
           Выйти
         </button>

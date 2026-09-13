@@ -15,6 +15,7 @@ import { cityForSectorId, loadStoredCity, storeCity, type CityId } from '@/lib/d
 import type { PendingCatch, TerritoryStatus } from '@/lib/data/types'
 import { OnboardingFlow } from '@/components/app-shell/onboarding/OnboardingFlow'
 import { ForgotPasswordFlow } from '@/components/app-shell/onboarding/ForgotPasswordFlow'
+import { LinkEmailFlow } from '@/components/app-shell/onboarding/LinkEmailFlow'
 import { BottomNav } from '@/components/app-shell/BottomNav'
 import { PhotoLightbox } from '@/components/app-shell/PhotoLightbox'
 import { MapScreen } from '@/components/app-shell/screens/MapScreen'
@@ -158,6 +159,9 @@ export function FishZoneApp() {
   // password is even set) once that session appears. This flag keeps
   // ForgotPasswordFlow mounted regardless of session state until it's done.
   const [recoveryMode, setRecoveryMode] = useState(false)
+  // Same top-level gate as recoveryMode, triggered from ProfileScreen instead
+  // of OnboardingFlow — see LinkEmailFlow.
+  const [linkingEmail, setLinkingEmail] = useState(false)
   const [openAward, setOpenAward] = useState<UserAward | null>(null)
   const [editingAdminAccessId, setEditingAdminAccessId] = useState<string | null>(null)
   const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null)
@@ -519,6 +523,14 @@ export function FishZoneApp() {
     )
   }
 
+  if (linkingEmail) {
+    return (
+      <div className="app-shell">
+        <LinkEmailFlow onDone={() => setLinkingEmail(false)} onCancel={() => setLinkingEmail(false)} />
+      </div>
+    )
+  }
+
   // Onboarding gate: no account, or an account that hasn't finished the
   // wizard (onboarding_completed=false) — never render the real map/screens
   // in either case. See DECISIONS.md.
@@ -632,6 +644,7 @@ export function FishZoneApp() {
             onSignOut={() => setConfirmingSignOut(true)}
             onEditProfile={() => setEditingProfile(true)}
             onChangeColor={() => setChangingColor(true)}
+            onLinkEmail={() => setLinkingEmail(true)}
             onOpenCityPicker={() => setChangingCity(true)}
             onOpenPhoto={setLightboxSrc}
             onOpenReports={() => push({ screen: 'screen-admin-reports' })}
