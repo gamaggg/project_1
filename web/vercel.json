@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/telegram/send-followups",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 10 * * *"
     }
   ]
 }
