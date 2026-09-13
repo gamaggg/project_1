@@ -29,7 +29,13 @@ type Step = 'welcome' | 'signin' | 'account' | 'name' | 'details' | 'color' | 'c
 // FishZoneApp rather than replacing it — writing to localStorage alone
 // wouldn't be re-read, so the pick has to reach that live state directly.
 export function OnboardingFlow({ onCityChosen, onForgotPassword }: { onCityChosen?: (city: CityId) => void; onForgotPassword: () => void }) {
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
+  // Only true for an account that just got silently created by the Telegram
+  // auto-sign-in (see AuthProvider) — offers a way out for someone who
+  // actually already has an email account, instead of stranding them on a
+  // freshly-made, empty Telegram-linked one. Read once: by the time this
+  // matters (NameStep) the WebApp object is already populated.
+  const [viaTelegram] = useState(() => typeof window !== 'undefined' && !!window.Telegram?.WebApp?.initData)
   const { data: myProfile, isLoading: myProfileLoading } = useProfile(user?.id ?? null)
   const [step, setStep] = useState<Step>('welcome')
   const updateProfile = useUpdateProfile()
@@ -59,7 +65,22 @@ export function OnboardingFlow({ onCityChosen, onForgotPassword }: { onCityChose
   if (step === 'welcome') return <WelcomeStep onCapture={() => setStep('account')} onSignIn={() => setStep('signin')} />
   if (step === 'signin') return <SignInStep onBack={() => setStep('welcome')} onForgotPassword={onForgotPassword} />
   if (step === 'account') return <AccountStep onBack={() => setStep('welcome')} />
-  if (step === 'name') return <NameStep initialName={myProfile?.displayName ?? ''} onBack={() => setStep('account')} onDone={() => setStep('details')} />
+  if (step === 'name')
+    return (
+      <NameStep
+        initialName={myProfile?.displayName ?? ''}
+        onBack={() => setStep('account')}
+        onDone={() => setStep('details')}
+        onSwitchToEmailSignIn={
+          viaTelegram
+            ? async () => {
+                await signOut()
+                setStep('signin')
+              }
+            : undefined
+        }
+      />
+    )
   if (step === 'details') return <DetailsStep onBack={() => setStep('name')} onDone={() => setStep('color')} />
   if (step === 'color') return <ColorStep onBack={() => setStep('details')} onDone={() => setStep('city')} />
   if (step === 'city')

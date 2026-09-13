@@ -5,7 +5,17 @@ import { useUpdateProfile } from '@/lib/supabase/queries'
 
 const NAME_RE = /^[\p{L}\p{N}]{2,}$/u
 
-export function NameStep({ initialName, onBack, onDone }: { initialName: string; onBack: () => void; onDone: () => void }) {
+export function NameStep({
+  initialName,
+  onBack,
+  onDone,
+  onSwitchToEmailSignIn,
+}: {
+  initialName: string
+  onBack: () => void
+  onDone: () => void
+  onSwitchToEmailSignIn?: () => void
+}) {
   const [name, setName] = useState(initialName)
   const updateProfile = useUpdateProfile()
   const valid = NAME_RE.test(name)
@@ -45,6 +55,11 @@ export function NameStep({ initialName, onBack, onDone }: { initialName: string;
         </div>
         <div className="wizard-hint">От 2 символов · без пробелов и спецсимволов</div>
         <div style={{ flex: 1 }} />
+        {onSwitchToEmailSignIn && (
+          <button type="button" className="otp-resend" style={{ marginBottom: 14 }} onClick={onSwitchToEmailSignIn}>
+            Уже есть аккаунт? Войти по почте
+          </button>
+        )}
         <button
           className="intro-cta"
           type="submit"
