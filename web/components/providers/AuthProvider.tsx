@@ -35,6 +35,7 @@ declare global {
         contentSafeAreaInset?: TelegramSafeAreaInset
         onEvent?: (type: string, cb: () => void) => void
         offEvent?: (type: string, cb: () => void) => void
+        enableClosingConfirmation?: () => void
         BackButton?: {
           show: () => void
           hide: () => void
@@ -94,6 +95,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const webApp = window.Telegram?.WebApp
     webApp?.ready()
     webApp?.expand()
+    // Telegram's own "changes may be lost" prompt on Close/swipe-down —
+    // native to the client, no UI of our own to build. Left on unconditionally
+    // rather than only during an in-progress catch/edit: this app has no
+    // reliable single "is something unsaved" flag to gate it on (onboarding
+    // steps, the catch form, profile edits all live in different
+    // components), and asking before every accidental close is the safer
+    // default for a territory-capture game where a stray swipe mid-session
+    // is exactly what this exists to catch.
+    webApp?.enableClosingConfirmation?.()
     // BotFather's "Launch Mode: Fullscreen" is only a default hint — some
     // clients honor it inconsistently (this is the likely cause if fullscreen
     // opens for one Telegram account/device but not another). Requesting it

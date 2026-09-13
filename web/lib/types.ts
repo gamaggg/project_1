@@ -431,6 +431,24 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_bot_starts: {
+        Row: {
+          chat_id: number
+          followup_sent_at: string | null
+          started_at: string
+        }
+        Insert: {
+          chat_id: number
+          followup_sent_at?: string | null
+          started_at?: string
+        }
+        Update: {
+          chat_id?: number
+          followup_sent_at?: string | null
+          started_at?: string
+        }
+        Relationships: []
+      }
       territories: {
         Row: {
           claimed_at: string | null

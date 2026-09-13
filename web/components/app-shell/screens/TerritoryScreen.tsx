@@ -27,7 +27,7 @@ function OwnerRow({ ownerId, isMine, onOpenUser }: { ownerId: string; isMine: bo
   return (
     <button className="owner-row tap-scale" onClick={() => onOpenUser(ownerId)} disabled={isMine}>
       <div className="owner-avatar">{profile?.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : initials}</div>
-      <div style={{ fontSize: 13.5, fontWeight: 700 }}>{isMine ? 'Твоя территория' : profile?.displayName ?? '…'}</div>
+      <div style={{ fontSize: 13.5, fontWeight: 700 }}>{isMine ? 'Твой сектор' : profile?.displayName ?? '…'}</div>
     </button>
   )
 }
@@ -101,7 +101,7 @@ export function TerritoryScreen({
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
             <div className="page-title" style={{ marginTop: 2 }}>
-              Территория {territory.id}
+              Сектор {territory.id}
             </div>
             {statusBadge(territory.status, myTerritoryColor)}
           </div>
@@ -190,7 +190,7 @@ export function TerritoryScreen({
               )
             })
           ) : (
-            <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет уловов на этой территории</div>
+            <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет уловов в этом секторе</div>
           )}
         </div>
         {isSuperAdmin && (
