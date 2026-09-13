@@ -12,15 +12,50 @@ type AuthState = {
 
 const AuthContext = createContext<AuthState>({ user: null, loading: true, signOut: async () => {} })
 
+declare global {
+  interface Window {
+    Telegram?: { WebApp?: { initData: string; ready: () => void; expand: () => void } }
+  }
+}
+
+// Silent sign-in for the Telegram Mini App build: initData is only ever
+// present when this page is actually running inside Telegram's WebView, so
+// this is a no-op everywhere else (regular web, PWA). See
+// app/api/auth/telegram/route.ts for the server side of this handshake.
+async function trySignInWithTelegram(supabase: ReturnType<typeof createClient>) {
+  const initData = window.Telegram?.WebApp?.initData
+  if (!initData) return false
+  try {
+    const res = await fetch('/api/auth/telegram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ initData }),
+    })
+    if (!res.ok) return false
+    const { email, token } = await res.json()
+    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'magiclink' })
+    return !error
+  } catch {
+    return false
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const supabase = createClient()
+    window.Telegram?.WebApp?.ready()
+    window.Telegram?.WebApp?.expand()
 
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user)
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user && (await trySignInWithTelegram(supabase))) {
+        const { data: refreshed } = await supabase.auth.getUser()
+        setUser(refreshed.user)
+      } else {
+        setUser(data.user)
+      }
       setLoading(false)
     })
 

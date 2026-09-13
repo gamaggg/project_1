@@ -356,6 +356,7 @@ export type Database = {
           location: string | null
           onboarding_completed: boolean
           public_id: string
+          telegram_id: number | null
           territory_color: string | null
           weight_kg: number | null
         }
@@ -379,6 +380,7 @@ export type Database = {
           location?: string | null
           onboarding_completed?: boolean
           public_id: string
+          telegram_id?: number | null
           territory_color?: string | null
           weight_kg?: number | null
         }
@@ -402,6 +404,7 @@ export type Database = {
           location?: string | null
           onboarding_completed?: boolean
           public_id?: string
+          telegram_id?: number | null
           territory_color?: string | null
           weight_kg?: number | null
         }

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Manrope, Oswald } from 'next/font/google'
+import Script from 'next/script'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { SITE_URL } from '@/lib/site'
@@ -68,6 +69,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${manrope.variable} ${oswald.variable}`}
         style={{ fontFamily: 'var(--font-manrope), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}
       >
+        {/* beforeInteractive so window.Telegram.WebApp exists by the time
+            AuthProvider's effect checks for it — harmless no-op outside Telegram. */}
+        <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
         <QueryProvider>
           <AuthProvider>{children}</AuthProvider>
         </QueryProvider>
