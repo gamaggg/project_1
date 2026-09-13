@@ -5,11 +5,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
 
-const WELCOME_TEXT = `Добро пожаловать в RANGE 🎣
-
-Здесь каждый улов меняет карту. Захватывай береговые сектора, следи за соперниками и поднимайся в рейтинге недели.
-
-Нажми «Открыть RANGE», чтобы начать.`
+// Short — the welcome image itself already carries the headline and pitch
+// (see public/telegram/welcome.png), so the caption is just the call to action.
+const WELCOME_CAPTION = `🎣 Нажми «Открыть RANGE», чтобы начать.`
 
 // Telegram POSTs every update here once the webhook is registered (see
 // scripts/setTelegramWebhook.sh) — the only one handled is a /start command,
@@ -28,12 +26,13 @@ export async function POST(req: Request) {
   const update = await req.json()
   const message = update.message
   if (typeof message?.text === 'string' && message.text.startsWith('/start')) {
-    await fetch(`${TELEGRAM_API}/sendMessage`, {
+    await fetch(`${TELEGRAM_API}/sendPhoto`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: message.chat.id,
-        text: WELCOME_TEXT,
+        photo: `${SITE_URL}/telegram/welcome.png`,
+        caption: WELCOME_CAPTION,
         reply_markup: {
           inline_keyboard: [[{ text: '🎣 Открыть RANGE', web_app: { url: SITE_URL } }]],
         },

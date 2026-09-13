@@ -6,19 +6,10 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
 const DELAY_MINUTES = 30
 
-const FOLLOWUP_TEXT = `Как работает RANGE?
-
-🗺️ Каждый берег, озеро и участок реки на карте — сектор. Пока свободный — или уже чей-то.
-
-🎣 Поймал рыбу — сразу фотографируй её в приложении, прямо на месте улова. Сектор в ту же секунду становится твоим.
-
-🏆 Раз в неделю подводим итоги: кто наловил больше — тот наверху рейтинга.
-
-⚔️ Территория держится только до следующего чужого улова — сектор всегда можно перехватить.
-
-🏅 За уловы и территории открываются достижения — есть на что охотиться, кроме рыбы.
-
-👀 Подписывайся на других рыбаков и следи за их уловами и захватами в реальном времени.`
+// No caption text — the image itself (public/telegram/how-it-works.png) is
+// a 6-step infographic already carrying this exact copy (map/sector, photo,
+// weekly ranking, territory contest, achievements, following), so repeating
+// it as a caption underneath would just be the same words twice.
 
 // Polled by a Vercel Cron job (see vercel.json) — sends the "how it works"
 // follow-up to anyone who pressed /start (see webhook/route.ts, which
@@ -45,12 +36,12 @@ export async function GET(req: Request) {
 
   let sent = 0
   for (const { chat_id } of due) {
-    const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
+    const res = await fetch(`${TELEGRAM_API}/sendPhoto`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id,
-        text: FOLLOWUP_TEXT,
+        photo: `${SITE_URL}/telegram/how-it-works.png`,
         reply_markup: {
           inline_keyboard: [[{ text: '🎣 Открыть RANGE', web_app: { url: SITE_URL } }]],
         },
