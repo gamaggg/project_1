@@ -126,9 +126,20 @@ export function useAllTerritoryIds() {
     enabled: isSuperAdmin,
     queryFn: async (): Promise<string[]> => {
       const supabase = createClient()
-      const { data, error } = await supabase.from('territories').select('id')
-      if (error) throw error
-      return data.map((row) => row.id)
+      // Same PostgREST 1000-row cap as useTerritories() above — this list
+      // decides the next free sector id (see hexGrid.ts's nextSectorId), so
+      // a silent truncation here doesn't just hide rows, it makes the admin
+      // bulk-add flow think already-used ids are free and collide with them.
+      const pageSize = 1000
+      const ids: string[] = []
+      let lastPageLength = 0
+      for (let from = 0; from === 0 || lastPageLength === pageSize; from += pageSize) {
+        const { data, error } = await supabase.from('territories').select('id').range(from, from + pageSize - 1)
+        if (error) throw error
+        ids.push(...data.map((row) => row.id))
+        lastPageLength = data.length
+      }
+      return ids
     },
   })
 }
