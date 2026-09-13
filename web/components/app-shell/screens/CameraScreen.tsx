@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useTelegramBackButton } from '@/lib/telegram/useTelegramBackButton'
 
 const MAX_PHOTO_WIDTH = 1280
 const CAMERA_GRANTED_KEY = 'fishzone:cameraGranted'
@@ -34,6 +35,11 @@ export function CameraScreen({
   }
 
   useEffect(() => () => stopStream(), [])
+
+  // Same `active` gating as the permission effect below, for the same reason
+  // (this screen never unmounts on its own) — routes Telegram's native
+  // chrome back button to the same stopStream()+onBack() as the in-page X.
+  useTelegramBackButton(active ? handleBack : undefined)
 
   // Skips the manual "Разрешить доступ к камере" gate when this browser has
   // granted camera access before. The Permissions API (checked first, where

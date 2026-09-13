@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useCanViewAllUsers, useAllUsers, useFindUserByPublicId } from '@/lib/supabase/queries'
 import { formatWhen } from '@/lib/format'
 import type { UserListEntry } from '@/lib/data/types'
+import { BackButton } from '@/components/app-shell/BackButton'
 
 type SortKey = 'new' | 'catches' | 'territories' | 'name'
 
@@ -51,11 +52,7 @@ export function UsersListScreen({
   return (
     <>
       <div className="header-row">
-        <div className="icon-btn tap-scale" onClick={onBack}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </div>
+        <BackButton onClick={onBack} registerNative={false} />
         <div style={{ fontWeight: 800, fontSize: 15 }}>Все пользователи</div>
         <div style={{ width: 36 }} />
       </div>

@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 import { useAdminActions } from '@/lib/supabase/queries'
 import { formatWhen } from '@/lib/format'
+import { BackButton } from '@/components/app-shell/BackButton'
 import type { AdminAction } from '@/lib/data/types'
 
 // `details` is a free-text sentence assembled server-side (see the admin_*
@@ -73,11 +74,7 @@ export function AdminActionsScreen({
   return (
     <>
       <div className="header-row">
-        <div className="icon-btn tap-scale" onClick={onBack}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </div>
+        <BackButton onClick={onBack} registerNative={false} />
         <div style={{ fontWeight: 800, fontSize: 15 }}>{title}</div>
         <div style={{ width: 36 }} />
       </div>

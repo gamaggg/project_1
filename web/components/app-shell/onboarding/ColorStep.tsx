@@ -3,6 +3,7 @@
 import { useState, type CSSProperties } from 'react'
 import { useUpdateProfile } from '@/lib/supabase/queries'
 import { TERRITORY_COLORS, withAlpha } from '@/lib/data/territoryColors'
+import { BackButton } from '@/components/app-shell/BackButton'
 
 // Not the last step (city/territory-intro/catch-intro still follow — see
 // OnboardingFlow) — onboarding_completed only flips true at the very end,
@@ -23,11 +24,7 @@ export function ColorStep({ onBack, onDone }: { onBack: () => void; onDone: () =
 
   return (
     <div className="intro-screen intro-screen--catch">
-      <button className="intro-back" onClick={onBack} aria-label="Назад">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
+      <BackButton onClick={onBack} variant="intro" />
       <div className="sector-stage">
         <div className="sector-hex-wrap">
           <div

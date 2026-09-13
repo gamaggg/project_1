@@ -1,6 +1,7 @@
 'use client'
 
 import type { CSSProperties } from 'react'
+import { BackButton } from '@/components/app-shell/BackButton'
 
 // Flat-top hex grid — same geometry as the real map (see .hex-shape /
 // resolveTerritoryColor), just laid out as a fixed decorative cluster here
@@ -40,11 +41,7 @@ const CLUSTER_H = 3 * HEX_H + ROW_OFF
 export function TerritoryIntroStep({ onBack, onDone }: { onBack: () => void; onDone: () => void }) {
   return (
     <div className="intro-screen intro-screen--territory">
-      <button className="intro-back" onClick={onBack} aria-label="Назад">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
+      <BackButton onClick={onBack} variant="intro" stroke="#fff" />
       <div className="intro-illustration">
         <div className="intro-hexfield">
           <div className="intro-hexcluster" style={{ width: CLUSTER_W, height: CLUSTER_H }}>

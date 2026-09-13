@@ -16,6 +16,7 @@ import type { PendingCatch, TerritoryStatus } from '@/lib/data/types'
 import { OnboardingFlow } from '@/components/app-shell/onboarding/OnboardingFlow'
 import { ForgotPasswordFlow } from '@/components/app-shell/onboarding/ForgotPasswordFlow'
 import { LinkEmailFlow } from '@/components/app-shell/onboarding/LinkEmailFlow'
+import { useTelegramBackButton } from '@/lib/telegram/useTelegramBackButton'
 import { BottomNav } from '@/components/app-shell/BottomNav'
 import { PhotoLightbox } from '@/components/app-shell/PhotoLightbox'
 import { MapScreen } from '@/components/app-shell/screens/MapScreen'
@@ -569,7 +570,7 @@ export function FishZoneApp() {
             city={city}
           />
         </Screen>
-        <Screen id="screen-territory" current={currentScreen}>
+        <Screen id="screen-territory" current={currentScreen} onBack={pop}>
           {viewingTerritory && (
             <TerritoryScreen
               territory={viewingTerritory}
@@ -598,21 +599,21 @@ export function FishZoneApp() {
             onOpenUser={openUserProfile}
           />
         </Screen>
-        <Screen id="screen-last-week" current={currentScreen}>
+        <Screen id="screen-last-week" current={currentScreen} onBack={pop}>
           <LastWeekScreen city={city} onBack={pop} onOpenUser={openUserProfile} onOpenCurrentRating={openWeeklyRating} />
         </Screen>
-        <Screen id="screen-catches" current={currentScreen}>
+        <Screen id="screen-catches" current={currentScreen} onBack={pop}>
           {(catchesUserId || catchesTerritoryId) && (
             <MyCatchesScreen userId={catchesUserId} territoryId={catchesTerritoryId} onBack={pop} onOpenPhoto={setLightboxSrc} onOpenUser={openUserProfile} />
           )}
         </Screen>
-        <Screen id="screen-users" current={currentScreen}>
+        <Screen id="screen-users" current={currentScreen} onBack={pop}>
           <UsersListScreen onBack={pop} onOpenUser={openUserProfile} />
         </Screen>
         <Screen id="screen-camera" current={currentScreen}>
           <CameraScreen key={cameraSessionId} active={currentScreen === 'screen-camera'} onBack={pop} onCapture={handleCapture} />
         </Screen>
-        <Screen id="screen-confirm" current={currentScreen}>
+        <Screen id="screen-confirm" current={currentScreen} onBack={backToCamera}>
           {catchTerritory && capturedPhoto && (confirmStep === 'form' || pendingCatch) && (
             <ConfirmScreen
               territory={catchTerritory}
@@ -660,7 +661,7 @@ export function FishZoneApp() {
             onOpenAward={setOpenAward}
           />
         </Screen>
-        <Screen id="screen-user-profile" current={currentScreen}>
+        <Screen id="screen-user-profile" current={currentScreen} onBack={pop}>
           {viewingUserId && (
             <UserProfileScreen
               userId={viewingUserId}
@@ -678,7 +679,7 @@ export function FishZoneApp() {
             />
           )}
         </Screen>
-        <Screen id="screen-achievements" current={currentScreen}>
+        <Screen id="screen-achievements" current={currentScreen} onBack={pop}>
           {viewingAchievementsUserId && (
             <AchievementsScreen
               userId={viewingAchievementsUserId}
@@ -688,7 +689,7 @@ export function FishZoneApp() {
             />
           )}
         </Screen>
-        <Screen id="screen-achievement-detail" current={currentScreen}>
+        <Screen id="screen-achievement-detail" current={currentScreen} onBack={pop}>
           {viewingAchievementDetail && (
             <AchievementDetailScreen
               userId={viewingAchievementDetail.userId}
@@ -699,13 +700,13 @@ export function FishZoneApp() {
             />
           )}
         </Screen>
-        <Screen id="screen-admin-reports" current={currentScreen}>
+        <Screen id="screen-admin-reports" current={currentScreen} onBack={pop}>
           <AdminReportsScreen onBack={pop} onOpenPhoto={setLightboxSrc} onOpenUser={openUserProfile} onOpenTerritory={openTerritory} />
         </Screen>
-        <Screen id="screen-admin-access" current={currentScreen}>
+        <Screen id="screen-admin-access" current={currentScreen} onBack={pop}>
           <AdminAccessScreen onBack={pop} onOpenUser={openUserProfile} onEditAccess={setEditingAdminAccessId} />
         </Screen>
-        <Screen id="screen-admin-log" current={currentScreen}>
+        <Screen id="screen-admin-log" current={currentScreen} onBack={pop}>
           <AdminActionsScreen title="Последние действия" onBack={pop} onOpenUser={openUserProfile} onOpenTerritory={openTerritory} />
         </Screen>
       </div>
@@ -874,7 +875,12 @@ export function FishZoneApp() {
   )
 }
 
-function Screen({ id, current, children }: { id: ScreenId; current: ScreenId; children: React.ReactNode }) {
+// Owns native-BackButton registration for every screen in the stack (see
+// BackButton's registerNative doc) — gated on `current === id` so only the
+// actually-visible screen ever holds it, regardless of how many earlier
+// screens are still mounted underneath.
+function Screen({ id, current, onBack, children }: { id: ScreenId; current: ScreenId; onBack?: () => void; children: React.ReactNode }) {
+  useTelegramBackButton(current === id ? onBack : undefined)
   return (
     <div className={`screen${current === id ? ' active' : ''}`} id={id}>
       {children}

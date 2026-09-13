@@ -1,13 +1,11 @@
 'use client'
 
+import { BackButton } from '@/components/app-shell/BackButton'
+
 export function CatchIntroStep({ onBack, onDone }: { onBack: () => void; onDone: () => void }) {
   return (
     <div className="intro-screen intro-screen--catch">
-      <button className="intro-back" onClick={onBack} aria-label="Назад">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
+      <BackButton onClick={onBack} variant="intro" />
       <div className="intro-illustration">
         <div className="intro-camwrap">
           <div className="intro-camring">

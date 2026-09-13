@@ -5,6 +5,7 @@ import { useCatchesByUser, useProfile, useHasClaimedFromOthers } from '@/lib/sup
 import { computeAchievements, type Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import { HexBadge } from '@/components/app-shell/HexBadge'
+import { BackButton } from '@/components/app-shell/BackButton'
 import type { Territory } from '@/lib/data/types'
 
 // Single-achievement screen (pushed from a card tap in AchievementsScreen or
@@ -59,11 +60,7 @@ export function AchievementDetailScreen({
   return (
     <>
       <div className="header-row">
-        <div className="icon-btn tap-scale" onClick={onBack}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </div>
+        <BackButton onClick={onBack} registerNative={false} />
         {achievement.unlocked ? (
           <div className="icon-btn tap-scale" onClick={handleShare}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">

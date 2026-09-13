@@ -7,6 +7,7 @@ import { matchFishialSpecies } from '@/lib/data/fishSpeciesMatch'
 import { cityForSectorId } from '@/lib/data/city'
 import { formatWeightGrams } from '@/lib/format'
 import { HexBadge } from '@/components/app-shell/HexBadge'
+import { BackButton } from '@/components/app-shell/BackButton'
 import type { PendingCatch, Territory } from '@/lib/data/types'
 
 export type CatchFormData = {
@@ -162,11 +163,7 @@ export function ConfirmScreen({
   return (
     <>
       <div className="header-row">
-        <div className="icon-btn tap-scale" onClick={onBack}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </div>
+        <BackButton onClick={onBack} registerNative={false} />
         <div style={{ fontWeight: 800, fontSize: 15 }}>Новый улов</div>
         <div style={{ width: 36 }} />
       </div>

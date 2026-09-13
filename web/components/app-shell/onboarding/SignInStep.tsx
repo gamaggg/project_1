@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { BackButton } from '@/components/app-shell/BackButton'
 
 // Mirrors the old AuthForm's signin mode exactly (same copy, same error
 // text) — just given its own screen now that AuthForm itself is retired.
@@ -27,11 +28,7 @@ export function SignInStep({ onBack, onForgotPassword }: { onBack: () => void; o
   return (
     <div className="onboarding-step">
       <div className="header-row" style={{ padding: 0, marginBottom: 12 }}>
-        <div className="icon-btn tap-scale" onClick={onBack}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </div>
+        <BackButton onClick={onBack} />
       </div>
       <div className="auth-card">
         <div className="page-title" style={{ textAlign: 'center', fontSize: 24 }}>

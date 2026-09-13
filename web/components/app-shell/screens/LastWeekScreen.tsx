@@ -5,6 +5,7 @@ import { useWeeklyLeaderboard } from '@/lib/supabase/queries'
 import { PodiumItem } from '@/components/app-shell/screens/WeeklyLeaderboard'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { formatWeekOfMonth, pluralCatches, pluralSectors } from '@/lib/format'
+import { BackButton } from '@/components/app-shell/BackButton'
 
 const CONFETTI_COLORS = ['#FC5200', '#F0A93E', '#B8C0CC', '#B06B36']
 // Reveal 3rd -> 2nd -> 1st, slowest for 1st so the ceremony builds toward it.
@@ -41,11 +42,7 @@ export function LastWeekScreen({
   return (
     <>
       <div className="header-row">
-        <div className="icon-btn tap-scale" onClick={onBack}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </div>
+        <BackButton onClick={onBack} registerNative={false} />
         <div style={{ fontWeight: 800, fontSize: 15 }}>Итоги недели</div>
         <div style={{ width: 36 }} />
       </div>

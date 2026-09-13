@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { BackButton } from '@/components/app-shell/BackButton'
 import type { EmailOtpType } from '@supabase/supabase-js'
 
 const RESEND_COOLDOWN_S = 30
@@ -70,11 +71,7 @@ export function OtpCodeStep({
 
   return (
     <div className="intro-screen intro-screen--catch">
-      <button className="intro-back" onClick={onBack} aria-label="Назад">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
+      <BackButton onClick={onBack} variant="intro" />
       <div className="sector-stage">
         <div className="otp-icon-wrap">
           <div className="otp-icon-ring" />
@@ -100,7 +97,6 @@ export function OtpCodeStep({
             autoComplete="one-time-code"
             maxLength={6}
             required
-            autoFocus
             value={code}
             onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
             placeholder="000000"

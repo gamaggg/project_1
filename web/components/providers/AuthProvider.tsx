@@ -35,6 +35,12 @@ declare global {
         contentSafeAreaInset?: TelegramSafeAreaInset
         onEvent?: (type: string, cb: () => void) => void
         offEvent?: (type: string, cb: () => void) => void
+        BackButton?: {
+          show: () => void
+          hide: () => void
+          onClick: (cb: () => void) => void
+          offClick: (cb: () => void) => void
+        }
       }
     }
   }

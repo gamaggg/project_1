@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useUpdateProfile } from '@/lib/supabase/queries'
+import { BackButton } from '@/components/app-shell/BackButton'
 
 const NAME_RE = /^[\p{L}\p{N}]{2,}$/u
 
@@ -29,11 +30,7 @@ export function NameStep({
 
   return (
     <div className="intro-screen intro-screen--catch">
-      <button className="intro-back" onClick={onBack} aria-label="Назад">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
+      <BackButton onClick={onBack} variant="intro" />
       <div className="sector-stage">
         <div className="sector-hex-wrap">
           <div className={`sector-hex${valid ? ' claimed' : ''}`}>

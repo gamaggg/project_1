@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { OtpCodeStep } from '@/components/app-shell/onboarding/OtpCodeStep'
+import { BackButton } from '@/components/app-shell/BackButton'
 
 // Rendered by FishZoneApp itself, same top-level-gate pattern as
 // ForgotPasswordFlow — triggered from ProfileScreen for an account whose
@@ -45,7 +46,17 @@ export function LinkEmailFlow({ onDone, onCancel }: { onDone: () => void; onCanc
         subtitle={`Отправили код на ${email.trim()} — введи его ниже, чтобы привязать почту к аккаунту.`}
         ctaLabel="Привязать"
         onBack={() => setStep('form')}
-        onVerified={() => setStep('done')}
+        onVerified={async () => {
+          // verifyOtp above only proves the new address — this project's
+          // "secure email change" also wants a confirmation from the old
+          // one, which for a Telegram account is an unreachable synthetic
+          // placeholder (see complete-email-link/route.ts). Finish the swap
+          // server-side, then refresh so the client's session (and
+          // ProfileScreen's isTelegramAccount check) sees the new email.
+          await fetch('/api/auth/complete-email-link', { method: 'POST' })
+          await createClient().auth.refreshSession()
+          setStep('done')
+        }}
         onResend={() => createClient().auth.updateUser({ email: email.trim() })}
       />
     )
@@ -54,11 +65,7 @@ export function LinkEmailFlow({ onDone, onCancel }: { onDone: () => void; onCanc
   if (step === 'done') {
     return (
       <div className="intro-screen intro-screen--catch">
-        <button className="intro-back" onClick={onDone} aria-label="Назад">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
+        <BackButton onClick={onDone} variant="intro" />
         <div className="sector-stage">
           <div className="sector-hex-wrap">
             <div className="sector-hex claimed">
@@ -82,11 +89,7 @@ export function LinkEmailFlow({ onDone, onCancel }: { onDone: () => void; onCanc
 
   return (
     <div className="intro-screen intro-screen--catch">
-      <button className="intro-back" onClick={onCancel} aria-label="Назад">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
+      <BackButton onClick={onCancel} variant="intro" />
       <div className="sector-stage">
         <div className="otp-icon-wrap">
           <div className="otp-icon-ring" />
@@ -105,7 +108,7 @@ export function LinkEmailFlow({ onDone, onCancel }: { onDone: () => void; onCanc
       <form onSubmit={handleSubmit} className="wizard-anim-form" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '0 24px' }}>
         <div className="wizard-field">
           <label htmlFor="link-email">Email</label>
-          <input id="link-email" type="email" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+          <input id="link-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
         </div>
         <div className="wizard-field">
           <label htmlFor="link-password">Пароль</label>

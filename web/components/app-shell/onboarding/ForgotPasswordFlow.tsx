@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { OtpCodeStep } from '@/components/app-shell/onboarding/OtpCodeStep'
+import { BackButton } from '@/components/app-shell/BackButton'
 
 // Rendered by FishZoneApp itself (see `recoveryMode`), not nested inside
 // OnboardingFlow — verifyOtp's 'recovery' type sets a real session the
@@ -66,11 +67,7 @@ export function ForgotPasswordFlow({ onDone, onCancel }: { onDone: () => void; o
   if (step === 'password' || step === 'done') {
     return (
       <div className="intro-screen intro-screen--catch">
-        <button className="intro-back" onClick={onCancel} aria-label="Назад">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
+        <BackButton onClick={onCancel} variant="intro" />
         <div className="sector-stage">
           <div className="sector-hex-wrap">
             <div className={`sector-hex${step === 'done' ? ' claimed' : ''}`}>
@@ -104,7 +101,6 @@ export function ForgotPasswordFlow({ onDone, onCancel }: { onDone: () => void; o
                   type="password"
                   required
                   minLength={6}
-                  autoFocus
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Минимум 6 символов"
@@ -137,11 +133,7 @@ export function ForgotPasswordFlow({ onDone, onCancel }: { onDone: () => void; o
 
   return (
     <div className="intro-screen intro-screen--catch">
-      <button className="intro-back" onClick={onCancel} aria-label="Назад">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
+      <BackButton onClick={onCancel} variant="intro" />
       <div className="sector-stage">
         <div className="otp-icon-wrap">
           <div className="otp-icon-ring" />
@@ -160,7 +152,7 @@ export function ForgotPasswordFlow({ onDone, onCancel }: { onDone: () => void; o
       <form onSubmit={handleSendCode} className="wizard-anim-form" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '0 24px' }}>
         <div className="wizard-field">
           <label htmlFor="forgot-email">Email</label>
-          <input id="forgot-email" type="email" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+          <input id="forgot-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
         </div>
         {error && <div className="auth-error">{error}</div>}
         <div style={{ flex: 1 }} />
