@@ -5,9 +5,11 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
 
-// Short — the welcome image itself already carries the headline and pitch
-// (see public/telegram/welcome.png), so the caption is just the call to action.
-const WELCOME_CAPTION = `🎣 Нажми «Открыть RANGE», чтобы начать.`
+const WELCOME_CAPTION = `Добро пожаловать в RANGE 🎣
+
+Здесь каждый улов меняет карту. Захватывай береговые сектора, следи за соперниками и поднимайся в рейтинге недели.
+
+Нажми «Открыть RANGE», чтобы начать.`
 
 // Telegram POSTs every update here once the webhook is registered (see
 // scripts/setTelegramWebhook.sh) — the only one handled is a /start command,
@@ -40,7 +42,9 @@ export async function POST(req: Request) {
     })
 
     // Queues the "how it works" follow-up (see send-followups/route.ts,
-    // polled by a Vercel Cron job) for 30 minutes from now. ignoreDuplicates
+    // polled every 10 minutes by a Supabase pg_cron job — see migration
+    // schedule_telegram_followups_via_pg_cron) for 30 minutes from now.
+    // ignoreDuplicates
     // makes this a no-op on chat_id's primary-key conflict — only a
     // person's very first /start ever starts this timer; reopening the bot
     // later shouldn't re-queue a message they may have already gotten (or

@@ -11,12 +11,14 @@ const DELAY_MINUTES = 30
 // weekly ranking, territory contest, achievements, following), so repeating
 // it as a caption underneath would just be the same words twice.
 
-// Polled by a Vercel Cron job (see vercel.json) — sends the "how it works"
-// follow-up to anyone who pressed /start (see webhook/route.ts, which
-// queues the row this reads) at least DELAY_MINUTES ago and hasn't gotten
-// it yet. Runs more often than once every 30 minutes so a given chat's
-// follow-up goes out within one polling interval of its due time, not up to
-// a full period late.
+// Polled every 10 minutes by a Supabase pg_cron job (see migration
+// schedule_telegram_followups_via_pg_cron — Vercel Cron can't do this on
+// the Hobby plan, see git log) — sends the "how it works" follow-up to
+// anyone who pressed /start (see webhook/route.ts, which queues the row
+// this reads) at least DELAY_MINUTES ago and hasn't gotten it yet. Runs
+// more often than once every 30 minutes so a given chat's follow-up goes
+// out within one polling interval of its due time, not up to a full period
+// late.
 export async function GET(req: Request) {
   const auth = req.headers.get('authorization')
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
