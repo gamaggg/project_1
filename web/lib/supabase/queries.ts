@@ -40,12 +40,26 @@ export function useTerritories() {
     queryKey: ['territories', user?.id ?? null],
     queryFn: async (): Promise<Territory[]> => {
       const supabase = createClient()
-      const { data, error } = await supabase
-        .from('territories_with_stats')
-        .select('id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted')
-      if (error) throw error
+      const columns = 'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted'
+      // PostgREST caps a single response at 1000 rows by default and stays
+      // silent about it (no error, just a truncated array) — the table
+      // crossed that count once admin-added sectors piled up, which is how
+      // a whole batch of newly created territories could exist in the
+      // database yet never reach the map. Page through with .range() so the
+      // table can keep growing past 1000 without this recurring.
+      const pageSize = 1000
+      const first = await supabase.from('territories_with_stats').select(columns).range(0, pageSize - 1)
+      if (first.error) throw first.error
+      const data = first.data
+      let lastPageLength = data.length
+      for (let from = pageSize; lastPageLength === pageSize; from += pageSize) {
+        const page = await supabase.from('territories_with_stats').select(columns).range(from, from + pageSize - 1)
+        if (page.error) throw page.error
+        data.push(...page.data)
+        lastPageLength = page.data.length
+      }
 
-      const byId = new Map(data!.map((row) => [row.id, row]))
+      const byId = new Map(data.map((row) => [row.id, row]))
       const staticIds = new Set(geometry.data!.map((g) => g.id))
 
       function toTerritory(id: string, kind: TerritoryKind, lat: number, lng: number, corners: [number, number][]): Territory {
@@ -79,7 +93,7 @@ export function useTerritories() {
       // tools/fishing-hex) and isn't writable at runtime, so their geometry
       // is stored on the row itself instead (see lib/data/hexGrid.ts for how
       // it's computed to still land on the exact same grid).
-      const fromDb = data!
+      const fromDb = data
         // territories_with_stats' columns are typed nullable because it's a
         // view (PostgREST can't see the base table's NOT NULL constraints
         // through the join) — id/kind/lat/lng are never actually null here,
