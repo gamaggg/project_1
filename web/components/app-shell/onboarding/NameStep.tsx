@@ -51,7 +51,7 @@ export function NameStep({
       </div>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '0 24px' }}>
         <div className="wizard-field">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Введите имя" maxLength={40} autoFocus />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Введите имя" maxLength={40} />
         </div>
         <div className="wizard-hint">От 2 символов · без пробелов и спецсимволов</div>
         <div style={{ flex: 1 }} />

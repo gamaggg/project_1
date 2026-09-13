@@ -93,7 +93,9 @@ export function OnboardingFlow({ onCityChosen, onForgotPassword }: { onCityChose
     return (
       <NameStep
         initialName={myProfile?.displayName ?? ''}
-        onBack={() => setStep('account')}
+        // AccountStep (email signup) makes no sense to land on for a
+        // Telegram-authenticated user — send them back to Welcome instead.
+        onBack={() => setStep(viaTelegram ? 'welcome' : 'account')}
         onDone={() => setStep('details')}
         onSwitchToEmailSignIn={
           viaTelegram

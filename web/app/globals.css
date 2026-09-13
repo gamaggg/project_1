@@ -117,7 +117,12 @@ body{
 .bottomnav{
   position:absolute;
   left:0; right:0; bottom:0;
-  height:82px;
+  /* min-height, not height: a fixed height combined with border-box and the
+     safe-area padding below would eat into the 82px content area on any
+     device/context with a nonzero bottom inset, squeezing the already
+     slightly-raised camera button (.navitem-plus's -8px) until it visibly
+     pokes out past the bar's own top edge instead of just resting above it. */
+  min-height:82px;
   background:rgba(247,247,244,0.94);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -1037,8 +1042,13 @@ body{
    covering the headline instead of sitting behind it. Negative puts it back
    with the container's own background, below all normal content. */
 .onboarding-welcome-splash{position:absolute; z-index:-1; pointer-events:none; height:auto; opacity:0;}
-.onboarding-welcome-splash--left{left:0; top:31%; width:14.9dvh; animation:onboardingSplashInLeft .7s var(--ease-out) .05s both;}
-.onboarding-welcome-splash--right{right:0; top:70%; width:11.5dvh; animation:onboardingSplashInRight .7s var(--ease-out) .12s both;}
+/* +var(--tg-safe-area-top): these percentages were tuned against the
+   headline/logo's flow position, which itself shifts down inside Telegram
+   (see .onboarding-welcome's padding-top) — without the same offset here,
+   the splash stayed put while the logo moved toward it and they collided.
+   0px outside Telegram, so no change there. */
+.onboarding-welcome-splash--left{left:0; top:calc(31% + var(--tg-safe-area-top, 0px)); width:14.9dvh; animation:onboardingSplashInLeft .7s var(--ease-out) .05s both;}
+.onboarding-welcome-splash--right{right:0; top:calc(70% + var(--tg-safe-area-top, 0px)); width:11.5dvh; animation:onboardingSplashInRight .7s var(--ease-out) .12s both;}
 @keyframes onboardingSplashInLeft{from{opacity:0; transform:translate(-10px,-50%);} to{opacity:1; transform:translate(0,-50%);}}
 @keyframes onboardingSplashInRight{from{opacity:0; transform:translate(10px,-50%);} to{opacity:1; transform:translate(0,-50%);}}
 .onboarding-welcome-logo{
