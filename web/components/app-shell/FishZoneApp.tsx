@@ -58,6 +58,7 @@ import { AdminPermissionsModal } from '@/components/app-shell/AdminPermissionsMo
 import { AchievementsScreen } from '@/components/app-shell/screens/AchievementsScreen'
 import { AchievementDetailScreen } from '@/components/app-shell/screens/AchievementDetailScreen'
 import type { Achievement } from '@/lib/data/achievements'
+import { ACH_ICONS } from '@/components/app-shell/icons'
 
 export type ScreenId =
   | 'screen-map'
@@ -515,6 +516,20 @@ export function FishZoneApp() {
       showToast('Не удалось скопировать ссылку')
     }
   }
+  // Same idea again, one level more specific: publicId identifies whose
+  // achievement it is, icon identifies which one (colon-joined into a single
+  // param rather than two — nothing else needs ':' in either half). The
+  // ?achievement= deep-link effect below splits on the first ':' and
+  // resolves publicId the same way the ?user= one does.
+  async function shareAchievement(publicId: string, icon: string, text: string) {
+    const url = `${window.location.origin}${window.location.pathname}?achievement=${publicId}:${icon}`
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`)
+      showToast('Ссылка на достижение скопирована')
+    } catch {
+      showToast('Не удалось скопировать ссылку')
+    }
+  }
 
   const viewingTerritory = territories.find((t) => t.id === viewingTerritoryId) ?? null
   const catchTerritory = territories.find((t) => t.id === catchTerritoryId) ?? null
@@ -552,6 +567,28 @@ export function FishZoneApp() {
     findUserByPublicId.mutate(publicId, {
       onSuccess: (resolvedId) => {
         if (resolvedId) openUserProfile(resolvedId)
+        window.history.replaceState(null, '', window.location.pathname)
+      },
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
+  // Opens a ?achievement=<publicId>:<icon> link (from shareAchievement
+  // above) straight into that achievement on first load — same resolve-
+  // then-open shape as the ?user= effect, plus validating the icon half
+  // against ACH_ICONS (the full Achievement['icon'] union) since it comes
+  // from an untrusted URL rather than a value this app generated itself.
+  const achievementDeepLinkOpened = useRef(false)
+  useEffect(() => {
+    if (achievementDeepLinkOpened.current || !user) return
+    const raw = new URLSearchParams(window.location.search).get('achievement')
+    if (!raw) return
+    const [publicId, icon] = raw.split(':')
+    if (!publicId || !icon || !(icon in ACH_ICONS)) return
+    achievementDeepLinkOpened.current = true
+    findUserByPublicId.mutate(publicId, {
+      onSuccess: (resolvedId) => {
+        if (resolvedId) openAchievementDetail(resolvedId, icon as Achievement['icon'])
         window.history.replaceState(null, '', window.location.pathname)
       },
     })
@@ -743,7 +780,7 @@ export function FishZoneApp() {
               icon={viewingAchievementDetail.icon}
               territories={territories}
               onBack={pop}
-              onShowToast={showToast}
+              onShareAchievement={shareAchievement}
             />
           )}
         </Screen>

@@ -20,13 +20,13 @@ export function AchievementDetailScreen({
   icon,
   territories,
   onBack,
-  onShowToast,
+  onShareAchievement,
 }: {
   userId: string
   icon: Achievement['icon']
   territories: Territory[]
   onBack: () => void
-  onShowToast: (msg: string) => void
+  onShareAchievement: (publicId: string, icon: Achievement['icon'], text: string) => void
 }) {
   const { data: profile } = useProfile(userId)
   const { data: catches = [] } = useCatchesByUser(userId)
@@ -44,15 +44,10 @@ export function AchievementDetailScreen({
   )
   const achievement = achievements.find((a) => a.icon === icon)
 
-  async function handleShare() {
-    if (!achievement) return
-    const text = `🏆 Я получил достижение «${achievement.title}» в RANGE!\n${achievement.desc}\n\nПрисоединяйся и сразимся за территории на побережье Батуми 🎣\n${window.location.origin}`
-    try {
-      await navigator.clipboard.writeText(text)
-      onShowToast('Скопировано в буфер обмена')
-    } catch {
-      onShowToast('Не удалось скопировать')
-    }
+  function handleShare() {
+    if (!achievement || !profile?.publicId) return
+    const text = `🏆 Я получил достижение «${achievement.title}» в RANGE!\n${achievement.desc}\n\nПрисоединяйся и сразимся за территории 🎣`
+    onShareAchievement(profile.publicId, icon, text)
   }
 
   if (!achievement) return null
