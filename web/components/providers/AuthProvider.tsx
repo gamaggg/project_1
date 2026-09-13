@@ -36,6 +36,7 @@ declare global {
         onEvent?: (type: string, cb: () => void) => void
         offEvent?: (type: string, cb: () => void) => void
         enableClosingConfirmation?: () => void
+        disableVerticalSwipes?: () => void
         BackButton?: {
           show: () => void
           hide: () => void
@@ -95,6 +96,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const webApp = window.Telegram?.WebApp
     webApp?.ready()
     webApp?.expand()
+    // Without this, a downward drag on content already scrolled to the top
+    // (map, any list) is read by Telegram's own chrome as "swipe to
+    // minimize/close" instead of reaching our page — this is what was
+    // collapsing the app out of fullscreen on a top-of-map scroll-down.
+    webApp?.disableVerticalSwipes?.()
     // Tried Telegram's own "changes may be lost" confirmation
     // (enableClosingConfirmation) on Close/swipe-down, but its text is fixed
     // by the client — not something the Web App API lets a Mini App
