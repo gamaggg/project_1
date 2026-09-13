@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSpecies } from '@/lib/supabase/queries'
 import { CATEGORY_LABEL, CATEGORIES_BY_CITY, KIND_LABEL, METHODS, BAITS_BY_CITY, categoryForKind, type SpeciesCategory } from '@/lib/data/species'
+import { matchFishialSpecies } from '@/lib/data/fishSpeciesMatch'
 import { cityForSectorId } from '@/lib/data/city'
 import { formatWeightGrams } from '@/lib/format'
 import { HexBadge } from '@/components/app-shell/HexBadge'
@@ -51,17 +52,48 @@ export function ConfirmScreen({
   const { data: species = [] } = useSpecies()
   const [category, setCategory] = useState<SpeciesCategory>(categoryForKind(territory.kind, city))
   const [speciesKey, setSpeciesKey] = useState('')
+  const [speciesGuessed, setSpeciesGuessed] = useState(false)
   const [lengthCm, setLengthCm] = useState('')
   const [weightG, setWeightG] = useState('')
   const [method, setMethod] = useState('')
   const [bait, setBait] = useState('')
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const touchedSpeciesRef = useRef(false)
 
   useEffect(() => {
     const url = URL.createObjectURL(capturedPhoto)
     setPreviewUrl(url)
     return () => URL.revokeObjectURL(url)
   }, [capturedPhoto])
+
+  // Best-effort species suggestion (see recognize-fish/route.ts and
+  // fishSpeciesMatch.ts) — never blocks the form, and backs off the moment
+  // the angler touches the species field themselves.
+  useEffect(() => {
+    // Waits for the species list so a fired-too-early call (matching against
+    // an empty set) can't burn a credit for nothing — Fishial's free tier is
+    // only 100/month for the whole app, shared across every angler.
+    if (species.length === 0) return
+    let cancelled = false
+    fetch('/api/recognize-fish', { method: 'POST', headers: { 'Content-Type': capturedPhoto.type || 'image/jpeg' }, body: capturedPhoto })
+      .then((res) => (res.ok ? res.json() : { candidates: [] }))
+      .then((data: { candidates: { scientificName: string; confidence: number }[] }) => {
+        if (cancelled || touchedSpeciesRef.current) return
+        const allKeys = new Set(species.map((s) => s.key))
+        const matchedKey = matchFishialSpecies(data.candidates ?? [], allKeys)
+        if (!matchedKey) return
+        const matched = species.find((s) => s.key === matchedKey)
+        if (!matched) return
+        setCategory(matched.category)
+        setSpeciesKey(matchedKey)
+        setSpeciesGuessed(true)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [capturedPhoto, species.length])
 
   const speciesOptions = species.filter((s) => s.category === category)
   const caughtSpeciesName = pendingCatch ? species.find((s) => s.key === pendingCatch.species)?.name : undefined
@@ -167,6 +199,8 @@ export function ConfirmScreen({
                 key={c}
                 className={`filter-chip${category === c ? ' active' : ''}`}
                 onClick={() => {
+                  touchedSpeciesRef.current = true
+                  setSpeciesGuessed(false)
                   setCategory(c)
                   setSpeciesKey('')
                 }}
@@ -177,8 +211,20 @@ export function ConfirmScreen({
           </div>
 
           <div className="auth-field">
-            <label htmlFor="species">Вид рыбы</label>
-            <select id="species" required value={speciesKey} onChange={(e) => setSpeciesKey(e.target.value)}>
+            <label htmlFor="species">
+              Вид рыбы
+              {speciesGuessed && <span className="species-guess-badge">определено по фото</span>}
+            </label>
+            <select
+              id="species"
+              required
+              value={speciesKey}
+              onChange={(e) => {
+                touchedSpeciesRef.current = true
+                setSpeciesGuessed(false)
+                setSpeciesKey(e.target.value)
+              }}
+            >
               <option value="" disabled>
                 Выбери вид рыбы
               </option>

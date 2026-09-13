@@ -26,6 +26,42 @@
         "value": "cubic-bezier(.22, .85, .3, 1.25)",
         "createdAt": "2026-09-12T08:56:29.159Z",
         "reason": "rating-podium-item-enter: explicitly a 'ceremony reveal' (see code comment) for the weekly leaderboard podium — earned bounce for a rare ceremonial moment"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.3, 1.7, .4, 1)",
+        "files": [
+          "web/app/globals.css"
+        ],
+        "createdAt": "2026-09-13T07:50:59.361Z",
+        "reason": "trophy-stamp pop-in for a caught fish — intentional celebratory overshoot, predates this session"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.34, 1.56, .64, 1)",
+        "files": [
+          "web/app/globals.css"
+        ],
+        "createdAt": "2026-09-13T07:50:59.386Z",
+        "reason": "shared app-wide celebratory pop-in curve (achievement unlock badge, achievement detail badge, city-pin onboarding drop, OTP icon drop) — deliberately reused across all four for stylistic consistency, per user request to match onboarding's existing animated style"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.22, 1.4, .36, 1)",
+        "files": [
+          "web/app/globals.css"
+        ],
+        "createdAt": "2026-09-13T07:50:59.410Z",
+        "reason": "award-detail modal pop-in — intentional celebratory overshoot, predates this session"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.22, .85, .3, 1.25)",
+        "files": [
+          "web/app/globals.css"
+        ],
+        "createdAt": "2026-09-13T07:50:59.434Z",
+        "reason": "weekly-leaderboard podium item reveal — intentional celebratory overshoot, predates this session"
       }
     ]
   }
