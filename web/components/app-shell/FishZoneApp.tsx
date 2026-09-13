@@ -2,7 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useTerritories, useConfirmCatch, useProfile, useUpdateProfile, useRealtimeSync, useIsSuperAdmin, useAllTerritoryIds } from '@/lib/supabase/queries'
+import {
+  useTerritories,
+  useConfirmCatch,
+  useProfile,
+  useUpdateProfile,
+  useRealtimeSync,
+  useIsSuperAdmin,
+  useAllTerritoryIds,
+  useFindUserByPublicId,
+} from '@/lib/supabase/queries'
 import { getCurrentCoords, nearestTerritory, queryGeolocationPermission } from '@/lib/geolocation'
 import { uploadCatchPhoto } from '@/lib/supabase/storage'
 import { useActivityReadState, useAdminActionsReadState } from '@/lib/activityRead'
@@ -102,6 +111,7 @@ export function FishZoneApp() {
   const isSuperAdmin = useIsSuperAdmin()
   const { data: allTerritoryIds = [] } = useAllTerritoryIds()
   const confirmCatchMutation = useConfirmCatch()
+  const findUserByPublicId = useFindUserByPublicId()
   const mapHandleRef = useRef<LeafletMapHandle>(null)
   const { unreadIds, unreadCount, markAllRead } = useActivityReadState()
   const { unreadCount: adminLogUnreadCount, markAllRead: markAdminLogRead } = useAdminActionsReadState()
@@ -491,6 +501,20 @@ export function FishZoneApp() {
       showToast('Не удалось скопировать ссылку')
     }
   }
+  // Same shape as shareTerritory above, keyed by the short public_id (not
+  // the internal uuid) so the URL matches the format people already see as
+  // their own "ID: 12345" — the ?user=<id> deep-link effect below resolves
+  // it back via the same lookup the admin/territories "find by ID" search
+  // already uses (useFindUserByPublicId).
+  async function shareProfile(publicId: string, text: string) {
+    const url = `${window.location.origin}${window.location.pathname}?user=${publicId}`
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`)
+      showToast('Ссылка на профиль скопирована')
+    } catch {
+      showToast('Не удалось скопировать ссылку')
+    }
+  }
 
   const viewingTerritory = territories.find((t) => t.id === viewingTerritoryId) ?? null
   const catchTerritory = territories.find((t) => t.id === catchTerritoryId) ?? null
@@ -511,6 +535,28 @@ export function FishZoneApp() {
       window.history.replaceState(null, '', window.location.pathname)
     }
   }, [territories, territoriesLoading])
+
+  // Opens a ?user=<publicId> link (from shareProfile above) straight into
+  // that profile on first load — same pattern as the ?territory= effect,
+  // just resolving the short public_id to the real id first since
+  // openUserProfile takes the uuid. A separate ref/effect from the
+  // territory one so an app that's shared as both kinds of link in the
+  // same session (unlikely, but cheap to keep correct) doesn't have one
+  // guard block the other.
+  const userDeepLinkOpened = useRef(false)
+  useEffect(() => {
+    if (userDeepLinkOpened.current || !user) return
+    const publicId = new URLSearchParams(window.location.search).get('user')
+    if (!publicId) return
+    userDeepLinkOpened.current = true
+    findUserByPublicId.mutate(publicId, {
+      onSuccess: (resolvedId) => {
+        if (resolvedId) openUserProfile(resolvedId)
+        window.history.replaceState(null, '', window.location.pathname)
+      },
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   if (authLoading || (user && myProfileLoading)) {
     return <LoadingShell />
@@ -657,8 +703,8 @@ export function FishZoneApp() {
             adminLogUnreadCount={adminLogUnreadCount}
             onOpenAchievements={() => user && openAchievements(user.id)}
             onOpenAchievementDetail={(icon) => user && openAchievementDetail(user.id, icon)}
-            onShowToast={showToast}
             onOpenAward={setOpenAward}
+            onShareProfile={shareProfile}
           />
         </Screen>
         <Screen id="screen-user-profile" current={currentScreen} onBack={pop}>
@@ -676,6 +722,7 @@ export function FishZoneApp() {
               onDeleteUser={setDeletingUserId}
               onOpenAward={setOpenAward}
               onEditAdminAccess={setEditingAdminAccessId}
+              onShareProfile={shareProfile}
             />
           )}
         </Screen>

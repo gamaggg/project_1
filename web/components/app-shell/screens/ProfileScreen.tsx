@@ -215,8 +215,8 @@ export function ProfileScreen({
   adminLogUnreadCount,
   onOpenAchievements,
   onOpenAchievementDetail,
-  onShowToast,
   onOpenAward,
+  onShareProfile,
 }: {
   myTerritories: Territory[]
   allTerritories: Territory[]
@@ -236,8 +236,8 @@ export function ProfileScreen({
   adminLogUnreadCount: number
   onOpenAchievements: () => void
   onOpenAchievementDetail: (icon: Achievement['icon']) => void
-  onShowToast: (msg: string) => void
   onOpenAward: (award: UserAward) => void
+  onShareProfile: (publicId: string, text: string) => void
 }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
@@ -271,14 +271,10 @@ export function ProfileScreen({
   // offering "Link email" only makes sense while it's still this pattern.
   const isTelegramAccount = user?.email?.endsWith('@telegram.catchrange.com') ?? false
 
-  async function handleShareProfile() {
-    const text = `🎣 Я в RANGE — ${myTerritories.length} ${pluralTerritories(myTerritories.length)}, ${myCatches.length} ${pluralCatches(myCatches.length)}!\n\nПрисоединяйся и сразимся за территории 🏆\n${window.location.origin}`
-    try {
-      await navigator.clipboard.writeText(text)
-      onShowToast('Скопировано в буфер обмена')
-    } catch {
-      onShowToast('Не удалось скопировать')
-    }
+  function handleShareProfile() {
+    if (!profile?.publicId) return
+    const text = `🎣 Я в RANGE — ${myTerritories.length} ${pluralTerritories(myTerritories.length)}, ${myCatches.length} ${pluralCatches(myCatches.length)}!\n\nПрисоединяйся и сразимся за территории 🏆`
+    onShareProfile(profile.publicId, text)
   }
 
   return (

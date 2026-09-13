@@ -28,6 +28,7 @@ export function UserProfileScreen({
   onDeleteUser,
   onOpenAward,
   onEditAdminAccess,
+  onShareProfile,
 }: {
   userId: string
   territories: Territory[]
@@ -41,6 +42,7 @@ export function UserProfileScreen({
   onDeleteUser: (id: string) => void
   onOpenAward: (award: UserAward) => void
   onEditAdminAccess: (id: string) => void
+  onShareProfile: (publicId: string, text: string) => void
 }) {
   const { data: profile } = useProfile(userId)
   const { data: catches = [] } = useCatchesByUser(userId)
@@ -70,12 +72,22 @@ export function UserProfileScreen({
   const recent = catches.slice(0, 3)
   const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
 
+  function handleShare() {
+    if (!profile?.publicId) return
+    onShareProfile(profile.publicId, `🎣 Профиль ${profile.displayName ?? 'рыбака'} в RANGE`)
+  }
+
   return (
     <>
       <div className="header-row">
         <BackButton onClick={onBack} registerNative={false} />
         <div style={{ fontWeight: 800, fontSize: 15 }}>{profile?.displayName ?? 'Профиль'}</div>
-        <div style={{ width: 36 }} />
+        <div className="icon-btn tap-scale" onClick={handleShare}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 15V4M12 4 8 8M12 4l4 4" />
+            <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
+          </svg>
+        </div>
       </div>
       <div className="screen-inner">
         <AwardsRing awards={awards} onOpenAward={onOpenAward}>
