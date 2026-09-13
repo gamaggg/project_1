@@ -1,6 +1,14 @@
 'use client'
 
-export function WelcomeStep({ onCapture, onSignIn }: { onCapture: () => void; onSignIn: () => void }) {
+export function WelcomeStep({
+  onCapture,
+  onSignIn,
+  onContinue,
+}: {
+  onCapture?: () => void
+  onSignIn?: () => void
+  onContinue?: () => void
+}) {
   return (
     <div className="onboarding-welcome">
       {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
@@ -29,12 +37,20 @@ export function WelcomeStep({ onCapture, onSignIn }: { onCapture: () => void; on
           <br />
           в первый визит, вернулись за новым уловом.
         </div>
-        <button className="btn-primary" onClick={onCapture}>
-          Захватить первую территорию
-        </button>
-        <button className="onboarding-welcome-link" onClick={onSignIn}>
-          У меня уже есть аккаунт
-        </button>
+        {onContinue ? (
+          <button className="btn-primary" onClick={onContinue}>
+            Продолжить
+          </button>
+        ) : (
+          <>
+            <button className="btn-primary" onClick={onCapture}>
+              Захватить первую территорию
+            </button>
+            <button className="onboarding-welcome-link" onClick={onSignIn}>
+              У меня уже есть аккаунт
+            </button>
+          </>
+        )}
       </div>
     </div>
   )

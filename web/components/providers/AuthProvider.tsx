@@ -8,9 +8,16 @@ type AuthState = {
   user: User | null
   loading: boolean
   signOut: () => Promise<void>
+  // Re-runs the Telegram handshake on demand — used by WelcomeStep's
+  // "Продолжить" when someone signed out mid-session (see NameStep's
+  // "Войти по почте" and ProfileScreen's sign-out) and comes back to a
+  // still-open Mini App: initData is still valid, so this logs them straight
+  // back into the same telegram_id-linked account rather than leaving them
+  // stuck navigating the wizard with no session.
+  signInWithTelegram: () => Promise<boolean>
 }
 
-const AuthContext = createContext<AuthState>({ user: null, loading: true, signOut: async () => {} })
+const AuthContext = createContext<AuthState>({ user: null, loading: true, signOut: async () => {}, signInWithTelegram: async () => false })
 
 declare global {
   interface Window {
@@ -72,7 +79,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
-  return <AuthContext.Provider value={{ user, loading, signOut }}>{children}</AuthContext.Provider>
+  async function signInWithTelegram() {
+    const supabase = createClient()
+    const ok = await trySignInWithTelegram(supabase)
+    if (ok) {
+      const { data } = await supabase.auth.getUser()
+      setUser(data.user)
+    }
+    return ok
+  }
+
+  return <AuthContext.Provider value={{ user, loading, signOut, signInWithTelegram }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
