@@ -59,6 +59,15 @@ body{
 }
 .like-count-pop-anim{display:inline-block; animation:like-count-pop .3s var(--ease-out);}
 
+/* CatchPhotoScreen's swipe/button pagination between a sector's catches —
+   the simplest thing that still reads as a transition and still avoids the
+   white-flash problem (opacity animation exposes the plain white .screen
+   background behind the photo — see the fix history in git log for this
+   file). transform-only, no direction/exit-phase choreography: the new
+   catch just settles in from a hair smaller. */
+@keyframes catch-fade-in{from{transform:scale(0.98);} to{transform:scale(1);}}
+.catch-fade-in{animation:catch-fade-in .18s var(--ease-out);}
+
 .app-shell{
   max-width:480px;
   margin:0 auto;

@@ -400,6 +400,13 @@ export function useActivity() {
       // them — following someone doesn't backfill their past catches into your
       // feed, only "mine" and "someone took my territory" are unconditional.
       const relevant = data!.filter((row) => {
+        // A 'like' row's user_id is who liked it, not whose activity this is
+        // — unlike catch/claim, the liker isn't meant to see it in their own
+        // feed (only the recipient, via previous_owner_id below), so the
+        // usual "it's mine" shortcut has to be skipped for this kind or a
+        // like on someone else's catch shows up as "Ты лайкнул твой улов"
+        // in the liker's own feed.
+        if (row.kind === 'like' && row.user_id === user?.id) return false
         if (!user || row.user_id === user.id || row.previous_owner_id === user.id) return true
         const since = followedSince.get(row.user_id)
         return !!since && row.created_at > since

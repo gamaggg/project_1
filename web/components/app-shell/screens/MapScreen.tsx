@@ -9,6 +9,28 @@ import { formatWhen } from '@/lib/format'
 import { getCurrentCoords, useGeolocationPermission } from '@/lib/geolocation'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 
+// Native scrollIntoView({behavior:'smooth'}) paces itself by distance, not
+// time — fine for the carousel's own drag-driven scrolling, but a map tap
+// can jump from the first sector to the last one, and that native scroll
+// then visibly grinds along for seconds. A fixed short duration keeps a
+// map-triggered jump feeling equally snappy regardless of how far apart the
+// two sectors are.
+function scrollToCardFast(row: HTMLElement, card: HTMLElement, duration = 280) {
+  const start = row.scrollLeft
+  const max = row.scrollWidth - row.clientWidth
+  const target = Math.max(0, Math.min(max, card.offsetLeft - (row.clientWidth - card.offsetWidth) / 2))
+  const distance = target - start
+  if (Math.abs(distance) < 1) return
+  const startTime = performance.now()
+  function step(now: number) {
+    const t = Math.min(1, (now - startTime) / duration)
+    const eased = 1 - Math.pow(1 - t, 3)
+    row.scrollLeft = start + distance * eased
+    if (t < 1) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+
 function statusBadge(status: Territory['status'], myTerritoryColor: string) {
   if (status === 'mine')
     return (
@@ -123,8 +145,9 @@ export const MapScreen = forwardRef<
       onOpenTerritory(id)
       return
     }
-    const card = sheetRowRef.current?.querySelector<HTMLElement>(`[data-id="${id}"]`)
-    card?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+    const row = sheetRowRef.current
+    const card = row?.querySelector<HTMLElement>(`[data-id="${id}"]`)
+    if (row && card) scrollToCardFast(row, card)
   }
 
   function handleScroll(e: React.UIEvent<HTMLDivElement>) {
