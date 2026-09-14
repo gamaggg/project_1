@@ -6,13 +6,13 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import { CatcherLabel } from '@/components/app-shell/screens/TerritoryScreen'
 import { BackButton } from '@/components/app-shell/BackButton'
-import type { CatchLiker } from '@/lib/data/types'
+import type { ProfileSummary } from '@/lib/data/types'
 
 // "Иван" / "Иван и Мария" / "Иван, Мария и ещё 5" — sidesteps gender-correct
 // verb conjugation entirely (no existing activity text in this app bothers
 // with it either, see ActivityScreen's fixed masculine forms) by phrasing
 // this as a plain label instead of a sentence.
-function likersSummary(likers: CatchLiker[]): string {
+function likersSummary(likers: ProfileSummary[]): string {
   const names = likers.map((l) => l.displayName)
   if (names.length === 1) return names[0]
   if (names.length === 2) return `${names[0]} и ${names[1]}`
@@ -42,7 +42,7 @@ export function CatchPhotoScreen({
   onShare: (catchId: number, text: string) => void
   onReportPhoto: (catchId: number) => void
   onDeleteCatch: (catchId: number) => void
-  onOpenLikers: (likers: CatchLiker[]) => void
+  onOpenLikers: (likers: ProfileSummary[]) => void
 }) {
   const { user } = useAuth()
   const isSuperAdmin = useIsSuperAdmin()
@@ -223,7 +223,7 @@ export function CatchPhotoScreen({
             </div>
           </div>
 
-          {/* Tapping either this or the count above opens CatchLikersModal —
+          {/* Tapping either this or the count above opens PeopleListModal —
               the Instagram "liked by" sheet, with search and a follow button
               per row (see FishZoneApp's viewingLikersFor). */}
           {!!likes?.likers.length && (

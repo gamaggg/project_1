@@ -1,14 +1,36 @@
 'use client'
 
-import { useProfile, useCatchesByUser, useIsFollowing, useSetFollowing, useIsAdmin, useIsSuperAdmin, useCanBlockUsers, useSetBlocked, useHasClaimedFromOthers, useReportDeletionCount, useUserAwards } from '@/lib/supabase/queries'
+import { useRef, type CSSProperties } from 'react'
+import { useProfile, useCatchesByUser, useIsFollowing, useSetFollowing, useIsAdmin, useIsSuperAdmin, useCanBlockUsers, useSetBlocked, useHasClaimedFromOthers, useReportDeletionCount, useUserAwards, useFollowers } from '@/lib/supabase/queries'
 import { AwardsRing } from '@/components/app-shell/AwardsRing'
 import { computeAchievements, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
-import { formatCatchMeta, formatJoinedDate } from '@/lib/format'
+import { formatCatchMeta, formatJoinedDate, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
 import { ACH_ICONS } from '@/components/app-shell/icons'
-import type { Territory, UserAward } from '@/lib/data/types'
+import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
 import { CITIES } from '@/lib/data/city'
+import { resolveHeroBackground } from '@/lib/data/heroBackgrounds'
 import { BackButton } from '@/components/app-shell/BackButton'
+import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
+
+// Rendered by FishZoneApp itself, not nested inside a screen's scrolling
+// `.screen-inner` — same clipping reasoning as every other app-shell-level
+// modal (see DECISIONS.md). Just the photo, tap outside (or the photo itself)
+// to dismiss — a peek, not a screen, so it skips the stack/back-button
+// machinery CatchPhotoScreen needs for a real destination.
+export function AvatarPreviewModal({ url, onClose }: { url: string; onClose: () => void }) {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div style={{ width: '100%', maxWidth: 340 }} onClick={onClose}>
+        <img
+          src={url}
+          alt=""
+          style={{ width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', borderRadius: 28, display: 'block', boxShadow: '0 24px 48px rgba(0,0,0,.35)' }}
+        />
+      </div>
+    </div>
+  )
+}
 
 // Read-only counterpart to ProfileScreen — someone else's territories/catches/
 // achievements, plus a follow button instead of edit/sign-out controls. See
@@ -30,6 +52,9 @@ export function UserProfileScreen({
   onEditAdminAccess,
   onEditPublicId,
   onShareProfile,
+  onOpenFollowers,
+  onOpenAvatarPreview,
+  onOpenSpecies,
 }: {
   userId: string
   territories: Territory[]
@@ -45,6 +70,9 @@ export function UserProfileScreen({
   onEditAdminAccess: (id: string) => void
   onEditPublicId: (id: string) => void
   onShareProfile: (publicId: string, text: string) => void
+  onOpenFollowers: (people: ProfileSummary[]) => void
+  onOpenAvatarPreview: (url: string) => void
+  onOpenSpecies: (species: SpeciesEntry[]) => void
 }) {
   const { data: profile } = useProfile(userId)
   const { data: catches = [] } = useCatchesByUser(userId)
@@ -57,8 +85,10 @@ export function UserProfileScreen({
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(userId)
   const { data: reportDeletionCount } = useReportDeletionCount(userId)
   const { data: awards = [] } = useUserAwards(userId)
+  const { data: followers = [] } = useFollowers(userId)
 
-  const speciesCount = new Set(catches.map((c) => c.species)).size
+  const catchSpecies = speciesBreakdown(catches)
+  const speciesCount = catchSpecies.length
   const record = personalRecord(catches)
   const viewedCity = profile?.city ?? 'batumi'
   const achievements = computeAchievements(
@@ -73,6 +103,8 @@ export function UserProfileScreen({
   )
   const recent = catches.slice(0, 3)
   const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
+  const territoriesRef = useRef<HTMLDivElement>(null)
+  const heroRef = useMagneticProfileHero()
 
   function handleShare() {
     if (!profile?.publicId) return
@@ -81,45 +113,60 @@ export function UserProfileScreen({
 
   return (
     <>
-      <div className="header-row">
-        <BackButton onClick={onBack} registerNative={false} />
-        <div style={{ fontWeight: 800, fontSize: 15 }}>{profile?.displayName ?? 'Профиль'}</div>
-        <div className="icon-btn tap-scale" onClick={handleShare}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 15V4M12 4 8 8M12 4l4 4" />
-            <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
-          </svg>
-        </div>
-      </div>
       <div className="screen-inner">
+      <div
+        className="profile-hero"
+        ref={heroRef}
+        style={{ background: resolveHeroBackground(profile?.heroBg).base, '--hero-accent-rgb': resolveHeroBackground(profile?.heroBg).accentRgb } as CSSProperties}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
+          <BackButton onClick={onBack} registerNative={false} />
+          <div className="icon-btn tap-scale" onClick={handleShare}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 15V4M12 4 8 8M12 4l4 4" />
+              <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
+            </svg>
+          </div>
+        </div>
         <AwardsRing awards={awards} onOpenAward={onOpenAward}>
-          <div className="profile-avatar">
-            {profile?.avatarUrl ? (
-              <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-            ) : (
-              initials
-            )}
+          <div className="profile-hero-avatar-ring">
+            <button
+              className="profile-hero-avatar-btn"
+              style={{ cursor: profile?.avatarUrl ? 'pointer' : 'default' }}
+              onClick={() => profile?.avatarUrl && onOpenAvatarPreview(profile.avatarUrl)}
+              aria-label={profile?.avatarUrl ? 'Открыть фото' : undefined}
+            >
+              <div className="profile-avatar">
+                {profile?.avatarUrl ? (
+                  <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                ) : (
+                  initials
+                )}
+              </div>
+            </button>
           </div>
         </AwardsRing>
-        <div style={{ textAlign: 'center' }}>
-          {profile?.isBlocked && (
-            <div style={{ marginBottom: 2 }}>
-              <span className="badge" style={{ background: '#FDE2E2', color: '#D33' }}>Заблокирован</span>
-            </div>
-          )}
-          {profile?.createdAt && (
-            <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 2 }}>В RANGE с {formatJoinedDate(profile.createdAt)}</div>
-          )}
-          {profile?.publicId && (
-            <div style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 4, fontWeight: 700, letterSpacing: 0.4 }}>ID: {profile.publicId}</div>
-          )}
-          <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 8, fontWeight: 700 }}>Город: {CITIES[viewedCity].name}</div>
-          {profile?.bio && (
-            <div style={{ fontSize: 13.5, color: 'var(--ink)', marginTop: 8, lineHeight: 1.4 }}>{profile.bio}</div>
-          )}
+        <div className="profile-hero-name">{profile?.displayName ?? 'Профиль'}</div>
+        {profile?.isBlocked && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
+            <span className="badge" style={{ background: '#FDE2E2', color: '#D33' }}>Заблокирован</span>
+          </div>
+        )}
+        <div className="profile-hero-meta">
+          {profile?.createdAt && <>В RANGE с <b>{formatJoinedDate(profile.createdAt)}</b></>}
+          {profile?.publicId && <> · ID {profile.publicId}</>}
         </div>
-
-        <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
+        <div className="profile-hero-badge">
+          <span className="section-link" style={{ color: 'rgba(255,255,255,.75)', cursor: 'default' }}>
+            Город: {CITIES[viewedCity].name}
+          </span>
+        </div>
+        {profile?.bio && (
+          <div style={{ fontSize: 13.5, color: 'rgba(255,255,255,.85)', marginTop: 10, lineHeight: 1.4, textAlign: 'center' }}>{profile.bio}</div>
+        )}
+      </div>
+      <div className="profile-body">
+        <div style={{ display: 'flex', gap: 8 }}>
           <button
             className={isFollowing ? 'btn-secondary' : 'btn-primary'}
             style={{ flex: 1 }}
@@ -170,23 +217,26 @@ export function UserProfileScreen({
           </button>
         )}
 
-        <div className="card stat-grid4" style={{ marginTop: 20, padding: '16px 8px' }}>
-          <div>
-            <div className="stat-num">{territories.length}</div>
-            <div className="stat-label">Территорий</div>
-          </div>
-          <div>
-            <div className="stat-num">{catches.length}</div>
-            <div className="stat-label">Уловов</div>
-          </div>
-          <div>
-            <div className="stat-num">{speciesCount}</div>
-            <div className="stat-label">Видов рыб</div>
-          </div>
-          <div>
-            <div className="stat-num">{profile?.followersCount ?? 0}</div>
-            <div className="stat-label">Подписчика</div>
-          </div>
+        <div className="hero-stat-grid" style={{ marginTop: 20 }}>
+          <button className="hero-stat" onClick={() => territoriesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+            <b>{territories.length}</b>
+            <span>Территорий</span>
+          </button>
+          <button className="hero-stat" onClick={onOpenAllCatches}>
+            <b>{catches.length}</b>
+            <span>Уловов</span>
+          </button>
+          <button className="hero-stat" onClick={() => onOpenSpecies(catchSpecies)}>
+            <b>{speciesCount}</b>
+            <span>Видов рыб</span>
+          </button>
+          <button
+            className="hero-stat"
+            onClick={() => (profile?.followersCount ?? 0) > 0 && onOpenFollowers(followers)}
+          >
+            <b>{profile?.followersCount ?? 0}</b>
+            <span>Подписчика</span>
+          </button>
         </div>
 
         <div className="section-title-row" style={{ marginTop: 24 }}>
@@ -241,7 +291,7 @@ export function UserProfileScreen({
           )}
         </div>
 
-        <div className="section-title" style={{ marginTop: 24 }}>
+        <div className="section-title" style={{ marginTop: 24 }} ref={territoriesRef}>
           Территории
         </div>
         <div className="card" style={{ overflow: 'hidden' }}>
@@ -284,6 +334,7 @@ export function UserProfileScreen({
             </div>
           </>
         )}
+      </div>
       </div>
     </>
   )

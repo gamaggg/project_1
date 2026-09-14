@@ -52,6 +52,11 @@ export type Profile = {
   // null until the onboarding wizard's color step runs (or for pre-wizard
   // accounts) — read sites fall back to DEFAULT_TERRITORY_COLOR.
   territoryColor: string | null
+  // Preset id for the profile hero panel's background (see heroBackgrounds.ts
+  // and ChangeColorModal) — null until the owner picks one, read sites fall
+  // back to DEFAULT_HERO_BG. Unmasked in profiles_with_stats: everyone who
+  // opens this profile sees the owner's chosen background, not just them.
+  heroBg: string | null
   onboardingCompleted: boolean
   createdAt: string
   // Which city this account plays in — a real per-profile column (not just
@@ -137,8 +142,11 @@ export type Catch = {
   mine: boolean
 }
 
-// One row of useCatchLikes' likers list (CatchPhotoScreen's facepile).
-export type CatchLiker = {
+// A minimal person reference for list-of-people UI — useCatchLikes' likers
+// (CatchPhotoScreen's facepile) and useFollowers' followers (ProfileScreen/
+// UserProfileScreen's "Подписчики" list) share this exact shape, both
+// rendered by the same PeopleListModal.
+export type ProfileSummary = {
   userId: string
   displayName: string
   avatarUrl: string | null

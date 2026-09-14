@@ -2,17 +2,19 @@
 
 import { useState, type CSSProperties } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useProfile, useMyCatches, useUpdateProfile, useCanModerateReports, useIsSuperAdmin, useReports, useHasClaimedFromOthers, useUserAwards } from '@/lib/supabase/queries'
+import { useProfile, useMyCatches, useUpdateProfile, useCanModerateReports, useIsSuperAdmin, useReports, useHasClaimedFromOthers, useUserAwards, useFollowers } from '@/lib/supabase/queries'
 import { AwardsRing } from '@/components/app-shell/AwardsRing'
 import { uploadAvatar } from '@/lib/supabase/storage'
 import { computeAchievements, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
-import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralTerritories } from '@/lib/format'
+import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorPreviewMap'
 import { DEFAULT_TERRITORY_COLOR, TERRITORY_COLORS } from '@/lib/data/territoryColors'
+import { HERO_BACKGROUNDS, DEFAULT_HERO_BG, resolveHeroBackground } from '@/lib/data/heroBackgrounds'
 import { CITIES, type CityId } from '@/lib/data/city'
-import type { Territory, UserAward } from '@/lib/data/types'
+import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
+import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
 
 const MAX_AVATAR_SIZE = 512
 
@@ -156,41 +158,119 @@ export function ChangeColorModal({ onClose, city }: { onClose: () => void; city:
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   const updateProfile = useUpdateProfile()
+  const [view, setView] = useState<'menu' | 'color' | 'background'>('menu')
   const [selected, setSelected] = useState<string | null>(profile?.territoryColor ?? null)
+  const [selectedHeroBg, setSelectedHeroBg] = useState<string>(profile?.heroBg ?? DEFAULT_HERO_BG)
 
-  async function handleSave() {
+  const currentColor = profile?.territoryColor ?? DEFAULT_TERRITORY_COLOR
+  const currentBg = resolveHeroBackground(profile?.heroBg)
+
+  async function handleSaveColor() {
     if (!selected) return
     await updateProfile.mutateAsync({ territoryColor: selected })
-    onClose()
+    setView('menu')
+  }
+
+  async function handleSaveBg() {
+    await updateProfile.mutateAsync({ heroBg: selectedHeroBg })
+    setView('menu')
   }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card modal-card-wide" onClick={(e) => e.stopPropagation()}>
+        {view !== 'menu' && (
+          <div className="modal-back tap-scale" onClick={() => setView('menu')}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </div>
+        )}
         <div className="modal-close tap-scale" onClick={onClose}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round">
             <path d="M6 6l12 12M18 6L6 18" />
           </svg>
         </div>
-        <div className="modal-title" style={{ textAlign: 'center' }}>
-          Цвет территории
-        </div>
-        <TerritoryColorPreviewMap city={city} myTerritoryColor={selected ?? profile?.territoryColor ?? DEFAULT_TERRITORY_COLOR} />
-        <div className="color-row">
-          {TERRITORY_COLORS.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className={`color-swatch${selected === c.hex ? ' selected' : ''}`}
-              style={{ '--swatch-color': c.hex } as CSSProperties}
-              aria-label={c.label}
-              onClick={() => setSelected(c.hex)}
-            />
-          ))}
-        </div>
-        <button className="btn-primary" onClick={handleSave} disabled={!selected || updateProfile.isPending}>
-          {updateProfile.isPending ? 'Сохраняем…' : 'Сохранить'}
-        </button>
+
+        {view === 'menu' && (
+          <>
+            <div className="modal-title" style={{ textAlign: 'center' }}>
+              Оформление профиля
+            </div>
+            <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button className="appearance-row" onClick={() => setView('color')}>
+                <div className="appearance-row-preview" style={{ background: currentColor, borderRadius: '50%' }} />
+                <div className="appearance-row-text">
+                  <div className="appearance-row-title">Цвет территории</div>
+                  <div className="appearance-row-sub">Как выглядят твои сектора на карте</div>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A9AE" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 6l6 6-6 6" />
+                </svg>
+              </button>
+              <button className="appearance-row" onClick={() => setView('background')}>
+                <div className="appearance-row-preview" style={{ background: currentBg.css }} />
+                <div className="appearance-row-text">
+                  <div className="appearance-row-title">Фон профиля</div>
+                  <div className="appearance-row-sub">{currentBg.label} · виден всем в профиле</div>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A9AE" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 6l6 6-6 6" />
+                </svg>
+              </button>
+            </div>
+          </>
+        )}
+
+        {view === 'color' && (
+          <>
+            <div className="modal-title" style={{ textAlign: 'center' }}>
+              Цвет территории
+            </div>
+            <TerritoryColorPreviewMap city={city} myTerritoryColor={selected ?? profile?.territoryColor ?? DEFAULT_TERRITORY_COLOR} />
+            <div className="color-row">
+              {TERRITORY_COLORS.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`color-swatch${selected === c.hex ? ' selected' : ''}`}
+                  style={{ '--swatch-color': c.hex } as CSSProperties}
+                  aria-label={c.label}
+                  onClick={() => setSelected(c.hex)}
+                />
+              ))}
+            </div>
+            <button className="btn-primary" onClick={handleSaveColor} disabled={!selected || updateProfile.isPending}>
+              {updateProfile.isPending ? 'Сохраняем…' : 'Сохранить'}
+            </button>
+          </>
+        )}
+
+        {view === 'background' && (
+          <>
+            <div className="modal-title" style={{ textAlign: 'center' }}>
+              Фон профиля
+            </div>
+            <div className="herobg-preview" style={{ background: resolveHeroBackground(selectedHeroBg).css }} />
+            <div className="herobg-grid">
+              {HERO_BACKGROUNDS.map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  className={`herobg-swatch${selectedHeroBg === b.id ? ' selected' : ''}`}
+                  style={{ background: b.css }}
+                  aria-label={b.label}
+                  onClick={() => setSelectedHeroBg(b.id)}
+                >
+                  <span>{b.label}</span>
+                </button>
+              ))}
+            </div>
+            <button className="btn-primary" onClick={handleSaveBg} disabled={updateProfile.isPending}>
+              {updateProfile.isPending ? 'Сохраняем…' : 'Сохранить'}
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
@@ -217,6 +297,8 @@ export function ProfileScreen({
   onOpenAchievementDetail,
   onOpenAward,
   onShareProfile,
+  onOpenFollowers,
+  onOpenSpecies,
 }: {
   myTerritories: Territory[]
   allTerritories: Territory[]
@@ -238,6 +320,8 @@ export function ProfileScreen({
   onOpenAchievementDetail: (icon: Achievement['icon']) => void
   onOpenAward: (award: UserAward) => void
   onShareProfile: (publicId: string, text: string) => void
+  onOpenFollowers: (people: ProfileSummary[]) => void
+  onOpenSpecies: (species: SpeciesEntry[]) => void
 }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
@@ -247,11 +331,14 @@ export function ProfileScreen({
   const { data: reports = [] } = useReports()
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(user?.id ?? null)
   const { data: awards = [] } = useUserAwards(user?.id ?? null)
+  const { data: followers = [] } = useFollowers(user?.id ?? null)
 
   // `!user` never reaches this screen anymore — FishZoneApp's onboarding gate
   // intercepts before ProfileScreen (or any other screen) can mount. See
   // DECISIONS.md.
-  const speciesCount = new Set(myCatches.map((c) => c.species)).size
+  const heroRef = useMagneticProfileHero()
+  const mySpecies = speciesBreakdown(myCatches)
+  const speciesCount = mySpecies.length
   const record = personalRecord(myCatches)
   const achievements = computeAchievements(
     myCatches,
@@ -279,82 +366,89 @@ export function ProfileScreen({
 
   return (
     <div className="screen-inner">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, marginBottom: 16 }}>
-        <div style={{ width: 36 }} />
-        <div className="page-title" style={{ textAlign: 'center', margin: 0, flex: 1 }}>
-          {profile?.displayName ?? 'Профиль'}
-        </div>
-        <div className="icon-btn tap-scale" onClick={handleShareProfile}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 15V4M12 4 8 8M12 4l4 4" />
-            <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
-          </svg>
-        </div>
-      </div>
-      <AwardsRing awards={awards} onOpenAward={onOpenAward}>
-        <div className="avatar-edit-wrap">
-          <div className="profile-avatar">
-            {profile?.avatarUrl ? (
-              <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-            ) : (
-              initials
-            )}
-          </div>
-          <div className="avatar-color-btn tap-scale" onClick={onChangeColor}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-.5-1.5-1-2 .5-2 2-2h2a3 3 0 0 0 3-3 9 9 0 0 0-8-9z" />
-              <circle cx="7.5" cy="10.5" r="1" fill="#fff" stroke="none" />
-              <circle cx="12" cy="7.5" r="1" fill="#fff" stroke="none" />
-              <circle cx="16.5" cy="10.5" r="1" fill="#fff" stroke="none" />
+      <div
+        className="profile-hero"
+        ref={heroRef}
+        style={{ background: resolveHeroBackground(profile?.heroBg).base, '--hero-accent-rgb': resolveHeroBackground(profile?.heroBg).accentRgb } as CSSProperties}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginTop: 14 }}>
+          <div className="icon-btn tap-scale" onClick={handleShareProfile}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 15V4M12 4 8 8M12 4l4 4" />
+              <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
             </svg>
           </div>
-          <div className="avatar-edit-btn tap-scale" onClick={onEditProfile}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        </div>
+        <AwardsRing awards={awards} onOpenAward={onOpenAward}>
+          <div className="profile-hero-avatar-ring">
+            <div className="avatar-edit-wrap">
+              <div className="profile-avatar">
+                {profile?.avatarUrl ? (
+                  <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                ) : (
+                  initials
+                )}
+              </div>
+              <div className="avatar-color-btn tap-scale" onClick={onChangeColor}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-.5-1.5-1-2 .5-2 2-2h2a3 3 0 0 0 3-3 9 9 0 0 0-8-9z" />
+                  <circle cx="7.5" cy="10.5" r="1" fill="#fff" stroke="none" />
+                  <circle cx="12" cy="7.5" r="1" fill="#fff" stroke="none" />
+                  <circle cx="16.5" cy="10.5" r="1" fill="#fff" stroke="none" />
+                </svg>
+              </div>
+              <div className="avatar-edit-btn tap-scale" onClick={onEditProfile}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </AwardsRing>
+        <div className="profile-hero-name">{profile?.displayName ?? 'Профиль'}</div>
+        <div className="profile-hero-meta">
+          {profile?.createdAt && <>В RANGE с <b>{formatJoinedDate(profile.createdAt)}</b></>}
+          {profile?.publicId && <> · ID {profile.publicId}</>}
+        </div>
+        <div className="profile-hero-badge">
+          <button
+            className="section-link"
+            style={{ color: 'rgba(255,255,255,.75)', display: 'inline-flex', alignItems: 'center', gap: 5 }}
+            onClick={onOpenCityPicker}
+          >
+            Город: {CITIES[city].name}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 20h9" />
               <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
             </svg>
-          </div>
+          </button>
         </div>
-      </AwardsRing>
-      <div style={{ textAlign: 'center' }}>
-        {profile?.createdAt && (
-          <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 2 }}>В RANGE с {formatJoinedDate(profile.createdAt)}</div>
-        )}
-        {profile?.publicId && (
-          <div style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 4, fontWeight: 700, letterSpacing: 0.4 }}>ID: {profile.publicId}</div>
-        )}
-        <button
-          className="section-link"
-          style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 5 }}
-          onClick={onOpenCityPicker}
-        >
-          Город: {CITIES[city].name}
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 20h9" />
-            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
-          </svg>
-        </button>
         {profile?.bio && (
-          <div style={{ fontSize: 13.5, color: 'var(--ink)', marginTop: 8, lineHeight: 1.4 }}>{profile.bio}</div>
+          <div style={{ fontSize: 13.5, color: 'rgba(255,255,255,.85)', marginTop: 10, lineHeight: 1.4, textAlign: 'center' }}>{profile.bio}</div>
         )}
       </div>
-      <div className="card stat-grid4" style={{ marginTop: 20, padding: '16px 8px' }}>
-        <div>
-          <div className="stat-num">{myTerritories.length}</div>
-          <div className="stat-label">Территорий</div>
-        </div>
-        <div>
-          <div className="stat-num">{myCatches.length}</div>
-          <div className="stat-label">Уловов</div>
-        </div>
-        <div>
-          <div className="stat-num">{speciesCount}</div>
-          <div className="stat-label">Видов рыб</div>
-        </div>
-        <div>
-          <div className="stat-num">{profile?.followersCount ?? 0}</div>
-          <div className="stat-label">Подписчика</div>
-        </div>
+      <div className="profile-body">
+      <div className="hero-stat-grid">
+        <button className="hero-stat" onClick={onOpenAllTerritories}>
+          <b>{myTerritories.length}</b>
+          <span>Территорий</span>
+        </button>
+        <button className="hero-stat" onClick={onOpenAllCatches}>
+          <b>{myCatches.length}</b>
+          <span>Уловов</span>
+        </button>
+        <button className="hero-stat" onClick={() => onOpenSpecies(mySpecies)}>
+          <b>{speciesCount}</b>
+          <span>Видов рыб</span>
+        </button>
+        <button
+          className="hero-stat"
+          onClick={() => (profile?.followersCount ?? 0) > 0 && onOpenFollowers(followers)}
+        >
+          <b>{profile?.followersCount ?? 0}</b>
+          <span>Подписчика</span>
+        </button>
       </div>
 
       <div className="section-title-row" style={{ marginTop: 24 }}>
@@ -493,10 +587,11 @@ export function ProfileScreen({
         </div>
       )}
 
-      <div style={{ marginTop: isTelegramAccount || canModerateReports || isSuperAdmin ? 12 : 24 }}>
+      <div style={{ marginTop: isTelegramAccount || canModerateReports || isSuperAdmin ? 12 : 24, paddingBottom: 24 }}>
         <button className="btn-secondary" onClick={onSignOut}>
           Выйти
         </button>
+      </div>
       </div>
     </div>
   )

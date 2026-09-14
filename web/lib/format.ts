@@ -1,3 +1,41 @@
+import type { Catch } from '@/lib/data/types'
+import type { SpeciesCategory } from '@/lib/data/species'
+
+export type SpeciesEntry = {
+  key: string
+  name: string
+  category: SpeciesCategory
+  count: number
+  photoUrl: string
+  lastCatchId: number
+}
+
+// Groups a catches list (already loaded by the caller — ProfileScreen's
+// myCatches / UserProfileScreen's useCatchesByUser, both full Catch[] lists,
+// not just the count) into one row per distinct species, most-caught first.
+// Powers SpeciesListModal — the "Видов рыб" stat used to just link to the
+// full catches list, which doesn't answer "which species", so it opens this
+// breakdown instead.
+export function speciesBreakdown(catches: Catch[]): SpeciesEntry[] {
+  const byKey = new Map<string, SpeciesEntry>()
+  for (const c of catches) {
+    const existing = byKey.get(c.species)
+    if (existing) {
+      existing.count += 1
+    } else {
+      byKey.set(c.species, {
+        key: c.species,
+        name: c.speciesName,
+        category: c.speciesCategory,
+        count: 1,
+        photoUrl: c.photoUrl,
+        lastCatchId: c.id,
+      })
+    }
+  }
+  return [...byKey.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ru'))
+}
+
 // Relative day label matching fishzone-app.html's demo strings ("Сегодня", "Вчера",
 // "N дней назад") plus a time-of-day for same-day entries ("Сегодня · 07:45").
 export function formatWhen(iso: string): string {

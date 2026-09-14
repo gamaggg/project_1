@@ -270,8 +270,6 @@ body{
   cursor:pointer;
 }
 .btn-secondary:active{transform:scale(0.97); background:#F1F0EC;}
-.stat-num{font-size:23px; font-weight:800; letter-spacing:-0.4px;}
-.stat-label{font-size:11.5px; color:var(--ink-soft); font-weight:600; margin-top:2px;}
 .fish-thumb{
   border-radius:13px;
   display:flex; align-items:center; justify-content:center;
@@ -338,6 +336,25 @@ body{
   background:var(--bg); display:flex; align-items:center; justify-content:center;
   cursor:pointer;
 }
+.modal-back{
+  position:absolute; top:14px; left:14px;
+  width:32px; height:32px; border-radius:50%;
+  background:var(--bg); display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+}
+
+/* ---------- Profile appearance menu (ChangeColorModal's "menu" step) ---------- */
+.appearance-row{
+  display:flex; align-items:center; gap:14px; width:100%;
+  padding:14px; border-radius:16px; border:1px solid var(--line); background:var(--surface);
+  cursor:pointer; text-align:left; font-family:inherit;
+  transition:transform .15s var(--ease), background .15s var(--ease);
+}
+.appearance-row:active{transform:scale(.98); background:#F6F4EF;}
+.appearance-row-preview{width:48px; height:48px; border-radius:14px; flex:0 0 auto; box-shadow:inset 0 0 0 1px rgba(255,255,255,0.12);}
+.appearance-row-text{flex:1; min-width:0;}
+.appearance-row-title{font-size:14.5px; font-weight:800;}
+.appearance-row-sub{font-size:12px; color:var(--ink-soft); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 
 .lightbox-overlay{
   position:absolute; inset:0;
@@ -353,7 +370,7 @@ body{
   cursor:pointer;
 }
 
-.avatar-edit-wrap{position:relative; width:88px; height:88px; margin:0 auto 16px;}
+.avatar-edit-wrap{position:relative; width:108px; height:108px; margin:0 auto 16px;}
 .avatar-edit-wrap .profile-avatar{margin:0;}
 .avatar-edit-btn{
   position:absolute; right:-2px; bottom:-2px;
@@ -369,6 +386,56 @@ body{
   display:flex; align-items:center; justify-content:center;
   border:2.5px solid var(--bg); cursor:pointer;
 }
+
+/* ---------- Profile hero (ProfileScreen / UserProfileScreen) ----------
+   Own profile keeps the edit/color pencils on the avatar itself (functional
+   real-estate), so only UserProfileScreen's read-only avatar opens the
+   preview modal — see onOpenAvatarPreview. The single authored motion here
+   is the pulsing accent ring; the body's rise-in on mount is the other half
+   of that one moment, not a separate effect per section (see craft-floor:
+   "one authored moment, not scattered effects"). */
+.profile-hero{
+  position:sticky; top:0; z-index:0;
+  margin:-6px -20px 0; padding:10px 20px 60px; overflow:hidden;
+  /* Base (dark gradient/pattern, no radial) comes from an inline style —
+     resolveHeroBackground(profile?.heroBg).base, see heroBackgrounds.ts —
+     so each profile can show its own chosen preset. The radial glow itself
+     is the ::before below instead of part of this background, so it can
+     breathe independently without animating the whole multi-layer value. */
+}
+.profile-hero::before{
+  content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:radial-gradient(120% 85% at 50% -15%, rgba(var(--hero-accent-rgb, 252,82,0),.7), rgba(var(--hero-accent-rgb, 252,82,0),0) 60%);
+  animation:heroGlowBreathe 7s var(--ease-in-out) infinite;
+}
+@keyframes heroGlowBreathe{
+  0%,100%{opacity:.45; transform:scale(1);}
+  50%{opacity:1; transform:scale(1.14);}
+}
+@media (prefers-reduced-motion: reduce){.profile-hero::before{animation:none;}}
+.profile-hero .icon-btn{background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.16);}
+.profile-hero .icon-back{stroke:#fff;}
+.profile-hero-avatar-ring{position:relative; width:108px; height:108px; margin:14px auto 0;}
+.profile-hero .profile-avatar{box-shadow:none;}
+.profile-hero-avatar-btn{
+  display:block; background:none; border:none; padding:0; cursor:pointer; border-radius:50%;
+}
+.profile-hero .avatar-edit-btn,
+.profile-hero .avatar-color-btn{border-color:#17181B;}
+.profile-hero-name{
+  font-family:var(--font-display),'Manrope',sans-serif; text-transform:uppercase;
+  color:#fff; font-size:22px; letter-spacing:.01em; text-align:center; margin-top:14px;
+}
+.profile-hero-meta{font-size:12.5px; color:rgba(255,255,255,.58); text-align:center; margin-top:5px; line-height:1.5;}
+.profile-hero-meta b{color:rgba(255,255,255,.92); font-weight:700;}
+.profile-hero-badge{margin-top:6px; display:flex; justify-content:center;}
+.profile-body{
+  background:var(--bg); border-radius:24px 24px 0 0; margin:-40px -20px 0; padding:20px 20px 0;
+  position:relative; z-index:1;
+  animation:profileBodyIn .5s var(--ease-out) both;
+}
+@keyframes profileBodyIn{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:none;}}
+@media (prefers-reduced-motion: reduce){.profile-body{animation:none;}}
 .section-title-row{display:flex; align-items:center; justify-content:space-between; margin:0 0 12px;}
 .section-title-row .section-title{margin:0;}
 .section-link{
@@ -903,14 +970,22 @@ body{
 }
 .avatar img{width:100%; height:100%; object-fit:cover;}
 .profile-avatar{
-  width:88px; height:88px; border-radius:50%;
+  width:108px; height:108px; border-radius:50%;
   background:linear-gradient(160deg,#FF7A38,var(--accent) 70%);
   color:#fff; display:flex; align-items:center; justify-content:center;
-  font-weight:800; font-size:29px; margin:0 auto 16px;
+  font-weight:800; font-size:35px; margin:0 auto 16px;
   box-shadow:0 14px 28px rgba(252,82,0,0.3);
   letter-spacing:0.5px;
 }
-.stat-grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; text-align:center;}
+.hero-stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+.hero-stat{
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  padding:12px 3px; text-align:center; font-family:inherit; cursor:pointer;
+  transition:transform .15s var(--ease), box-shadow .15s var(--ease);
+}
+.hero-stat:active{transform:scale(.93);}
+.hero-stat b{display:block; font-family:var(--font-display),'Manrope',sans-serif; font-size:19px; font-weight:700;}
+.hero-stat span{display:block; font-size:10px; color:var(--ink-faint); font-weight:700; text-transform:uppercase; letter-spacing:.03em; margin-top:3px;}
 .terr-list-item{display:flex; align-items:center; gap:12px; padding:15px 14px; cursor:pointer; width:100%; background:none; border:none; text-align:left; font-family:inherit; overflow:hidden;}
 /* A long unbroken display name (no spaces allowed, see NameStep) can't wrap —
    without this it forces flex children apart instead of shrinking, squeezing
@@ -1472,4 +1547,25 @@ body{
 .color-swatch.selected{
   transform:scale(1.08);
   box-shadow:0 6px 14px rgba(9,25,32,0.18), inset 0 0 0 1px rgba(255,255,255,0.15), 0 0 0 4px var(--bg), 0 0 22px 6px var(--swatch-color);
+}
+
+/* ---------- Profile hero background picker (ChangeColorModal) ---------- */
+.herobg-preview{
+  height:64px; border-radius:16px; margin:16px 0 4px;
+  transition:background .2s var(--ease);
+}
+.herobg-grid{display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin:16px 0 24px;}
+.herobg-swatch{
+  aspect-ratio:1; border-radius:14px; border:none; cursor:pointer; position:relative;
+  font-family:inherit;
+  box-shadow:0 4px 10px rgba(9,25,32,0.16), inset 0 0 0 1px rgba(255,255,255,0.1);
+  transition:transform .15s var(--ease), box-shadow .2s var(--ease);
+}
+.herobg-swatch.selected{
+  transform:scale(1.06);
+  box-shadow:0 4px 10px rgba(9,25,32,0.16), inset 0 0 0 1px rgba(255,255,255,0.15), 0 0 0 3px var(--bg), 0 0 0 5px var(--ink);
+}
+.herobg-swatch span{
+  position:absolute; left:0; right:0; bottom:6px; text-align:center;
+  font-size:9.5px; font-weight:700; color:rgba(255,255,255,.85); letter-spacing:0.2px;
 }

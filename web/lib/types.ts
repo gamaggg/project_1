@@ -389,6 +389,7 @@ export type Database = {
           display_name: string
           gender: string | null
           height_cm: number | null
+          hero_bg: string | null
           id: string
           is_admin: boolean
           is_blocked: boolean
@@ -413,6 +414,7 @@ export type Database = {
           display_name?: string
           gender?: string | null
           height_cm?: number | null
+          hero_bg?: string | null
           id: string
           is_admin?: boolean
           is_blocked?: boolean
@@ -437,6 +439,7 @@ export type Database = {
           display_name?: string
           gender?: string | null
           height_cm?: number | null
+          hero_bg?: string | null
           id?: string
           is_admin?: boolean
           is_blocked?: boolean
@@ -604,6 +607,7 @@ export type Database = {
           following_count: number | null
           gender: string | null
           height_cm: number | null
+          hero_bg: string | null
           id: string | null
           is_admin: boolean | null
           is_blocked: boolean | null
@@ -631,6 +635,7 @@ export type Database = {
           following_count?: never
           gender?: never
           height_cm?: never
+          hero_bg?: string | null
           id?: string | null
           is_admin?: boolean | null
           is_blocked?: boolean | null
@@ -658,6 +663,7 @@ export type Database = {
           following_count?: never
           gender?: never
           height_cm?: never
+          hero_bg?: string | null
           id?: string | null
           is_admin?: boolean | null
           is_blocked?: boolean | null

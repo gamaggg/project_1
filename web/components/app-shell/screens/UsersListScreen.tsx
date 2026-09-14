@@ -53,7 +53,7 @@ export function UsersListScreen({
     <>
       <div className="header-row">
         <BackButton onClick={onBack} registerNative={false} />
-        <div style={{ fontWeight: 800, fontSize: 15 }}>Все пользователи</div>
+        <div style={{ fontWeight: 800, fontSize: 15 }}>Все пользователи{!isLoading && ` · ${users.length}`}</div>
         <div style={{ width: 36 }} />
       </div>
       <div className="screen-inner">

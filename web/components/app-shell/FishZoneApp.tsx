@@ -17,7 +17,7 @@ import { uploadCatchPhoto } from '@/lib/supabase/storage'
 import { useActivityReadState, useAdminActionsReadState } from '@/lib/activityRead'
 import { useAchievementUnlock } from '@/lib/achievementUnlock'
 import { useWeekTopModal } from '@/lib/weekTopModal'
-import { formatCooldown } from '@/lib/format'
+import { formatCooldown, type SpeciesEntry } from '@/lib/format'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { draftHexAt } from '@/lib/data/hexGrid'
 import { cityForSectorId, loadStoredCity, storeCity, type CityId } from '@/lib/data/city'
@@ -40,7 +40,8 @@ import { ConfirmScreen, type CatchFormData, type PhotoStatus } from '@/component
 import { ActivityScreen } from '@/components/app-shell/screens/ActivityScreen'
 import { ProfileScreen, EditProfileModal, ChangeColorModal } from '@/components/app-shell/screens/ProfileScreen'
 import { CityPickerModal } from '@/components/app-shell/CityPickerModal'
-import { UserProfileScreen } from '@/components/app-shell/screens/UserProfileScreen'
+import { UserProfileScreen, AvatarPreviewModal } from '@/components/app-shell/screens/UserProfileScreen'
+import { SpeciesListModal } from '@/components/app-shell/screens/SpeciesListModal'
 import { ReportPhotoModal } from '@/components/app-shell/screens/ReportPhotoModal'
 import { DeleteCatchModal } from '@/components/app-shell/screens/DeleteCatchModal'
 import { DeleteTerritoryModal } from '@/components/app-shell/screens/DeleteTerritoryModal'
@@ -49,8 +50,8 @@ import { BulkAddTerritoriesModal } from '@/components/app-shell/screens/BulkAddT
 import { DeleteUserModal } from '@/components/app-shell/screens/DeleteUserModal'
 import { ChangeUserIdModal } from '@/components/app-shell/screens/ChangeUserIdModal'
 import { CatchPhotoScreen } from '@/components/app-shell/screens/CatchPhotoScreen'
-import { CatchLikersModal } from '@/components/app-shell/screens/CatchLikersModal'
-import type { CatchLiker } from '@/lib/data/types'
+import { PeopleListModal } from '@/components/app-shell/screens/PeopleListModal'
+import type { ProfileSummary } from '@/lib/data/types'
 import { AchievementUnlockedModal } from '@/components/app-shell/screens/AchievementUnlockedModal'
 import { AwardDetailModal } from '@/components/app-shell/AwardDetailModal'
 import type { UserAward } from '@/lib/data/types'
@@ -198,7 +199,10 @@ export function FishZoneApp() {
   const [confirmingBulkAdd, setConfirmingBulkAdd] = useState(false)
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
   const [editingPublicIdUserId, setEditingPublicIdUserId] = useState<string | null>(null)
-  const [viewingLikersFor, setViewingLikersFor] = useState<CatchLiker[] | null>(null)
+  const [viewingLikersFor, setViewingLikersFor] = useState<ProfileSummary[] | null>(null)
+  const [viewingFollowersFor, setViewingFollowersFor] = useState<ProfileSummary[] | null>(null)
+  const [viewingAvatarUrl, setViewingAvatarUrl] = useState<string | null>(null)
+  const [viewingSpeciesFor, setViewingSpeciesFor] = useState<SpeciesEntry[] | null>(null)
   const { data: editingPublicIdProfile } = useProfile(editingPublicIdUserId)
   const { data: deletingUserProfile } = useProfile(deletingUserId)
   const [pendingCatch, setPendingCatch] = useState<PendingCatch | null>(null)
@@ -800,6 +804,8 @@ export function FishZoneApp() {
             onOpenAchievementDetail={(icon) => user && openAchievementDetail(user.id, icon)}
             onOpenAward={setOpenAward}
             onShareProfile={shareProfile}
+            onOpenFollowers={setViewingFollowersFor}
+            onOpenSpecies={setViewingSpeciesFor}
           />
         </Screen>
         <Screen id="screen-user-profile" current={currentScreen} onBack={pop}>
@@ -819,6 +825,9 @@ export function FishZoneApp() {
               onEditAdminAccess={setEditingAdminAccessId}
               onEditPublicId={setEditingPublicIdUserId}
               onShareProfile={shareProfile}
+              onOpenFollowers={setViewingFollowersFor}
+              onOpenAvatarPreview={setViewingAvatarUrl}
+              onOpenSpecies={setViewingSpeciesFor}
             />
           )}
         </Screen>
@@ -992,12 +1001,35 @@ export function FishZoneApp() {
         />
       )}
       {viewingLikersFor !== null && (
-        <CatchLikersModal
-          likers={viewingLikersFor}
+        <PeopleListModal
+          title="Отметки «Нравится»"
+          people={viewingLikersFor}
           onClose={() => setViewingLikersFor(null)}
           onOpenUser={(id) => {
             setViewingLikersFor(null)
             openUserProfile(id)
+          }}
+        />
+      )}
+      {viewingFollowersFor !== null && (
+        <PeopleListModal
+          title="Подписчики"
+          people={viewingFollowersFor}
+          onClose={() => setViewingFollowersFor(null)}
+          onOpenUser={(id) => {
+            setViewingFollowersFor(null)
+            openUserProfile(id)
+          }}
+        />
+      )}
+      {viewingAvatarUrl !== null && <AvatarPreviewModal url={viewingAvatarUrl} onClose={() => setViewingAvatarUrl(null)} />}
+      {viewingSpeciesFor !== null && (
+        <SpeciesListModal
+          species={viewingSpeciesFor}
+          onClose={() => setViewingSpeciesFor(null)}
+          onOpenCatch={(id) => {
+            setViewingSpeciesFor(null)
+            openCatchPhoto(id)
           }}
         />
       )}

@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/AuthProvider'
-import type { Territory, TerritoryStatus, Catch, CatchLiker, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, WeeklyLeaderboardEntry, UserAward, AwardKind } from '@/lib/data/types'
+import type { Territory, TerritoryStatus, Catch, ProfileSummary, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, WeeklyLeaderboardEntry, UserAward, AwardKind } from '@/lib/data/types'
 import type { SpeciesCategory } from '@/lib/data/species'
 import type { CityId } from '@/lib/data/city'
 
@@ -295,7 +295,7 @@ export function useCatchLikes(catchId: number | null) {
   return useQuery({
     queryKey: ['catch-likes', catchId],
     enabled: !!catchId,
-    queryFn: async (): Promise<{ count: number; likedByMe: boolean; likers: CatchLiker[] }> => {
+    queryFn: async (): Promise<{ count: number; likedByMe: boolean; likers: ProfileSummary[] }> => {
       const supabase = createClient()
       const { data, error } = await supabase
         .from('catch_likes')
@@ -329,7 +329,7 @@ export function useToggleCatchLike() {
     onMutate: async ({ catchId, liked }) => {
       const key = ['catch-likes', catchId]
       await queryClient.cancelQueries({ queryKey: key })
-      type LikesData = { count: number; likedByMe: boolean; likers: CatchLiker[] }
+      type LikesData = { count: number; likedByMe: boolean; likers: ProfileSummary[] }
       const previous = queryClient.getQueryData<LikesData>(key)
       // Read from cache rather than useProfile() here — this hook only
       // needs a snapshot at click time, not to re-render when it changes.
@@ -497,6 +497,7 @@ export function useProfile(userId: string | null) {
         heightCm: data.height_cm ?? null,
         weightKg: data.weight_kg ?? null,
         territoryColor: data.territory_color ?? null,
+        heroBg: data.hero_bg ?? null,
         onboardingCompleted: data.onboarding_completed ?? true,
         createdAt: data.created_at ?? new Date().toISOString(),
         city: (data.city as CityId) ?? 'batumi',
@@ -816,6 +817,7 @@ export function useUpdateProfile() {
       heightCm?: number | null
       weightKg?: number | null
       territoryColor?: string
+      heroBg?: string
       onboardingCompleted?: boolean
       city?: CityId
     }) => {
@@ -832,6 +834,7 @@ export function useUpdateProfile() {
           ...(patch.heightCm !== undefined ? { height_cm: patch.heightCm } : {}),
           ...(patch.weightKg !== undefined ? { weight_kg: patch.weightKg } : {}),
           ...(patch.territoryColor !== undefined ? { territory_color: patch.territoryColor } : {}),
+          ...(patch.heroBg !== undefined ? { hero_bg: patch.heroBg } : {}),
           ...(patch.onboardingCompleted !== undefined ? { onboarding_completed: patch.onboardingCompleted } : {}),
           ...(patch.city !== undefined ? { city: patch.city } : {}),
         })
@@ -841,6 +844,28 @@ export function useUpdateProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+// Who follows userId — same follows_follower_id_fkey join useActivity already
+// uses to resolve a follower's profile, just without the followee_id filter.
+export function useFollowers(userId: string | null) {
+  return useQuery({
+    queryKey: ['followers', userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<ProfileSummary[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('follows')
+        .select('follower_id, profiles!follows_follower_id_fkey(display_name, avatar_url)')
+        .eq('followee_id', userId!)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return (data ?? []).map((r) => {
+        const p = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
+        return { userId: r.follower_id, displayName: p?.display_name ?? 'Рыбак', avatarUrl: p?.avatar_url ?? null }
+      })
     },
   })
 }
