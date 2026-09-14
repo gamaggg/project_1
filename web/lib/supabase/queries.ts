@@ -311,7 +311,23 @@ export function useToggleCatchLike() {
         : await supabase.from('catch_likes').insert({ catch_id: catchId, user_id: user!.id })
       if (error) throw error
     },
-    onSuccess: (_data, { catchId }) => queryClient.invalidateQueries({ queryKey: ['catch-likes', catchId] }),
+    // Optimistic — a like needs to feel instant (CatchPhotoScreen's pop
+    // animation is tied to the tap, not the round trip); rolled back on
+    // failure from the snapshot captured here.
+    onMutate: async ({ catchId, liked }) => {
+      const key = ['catch-likes', catchId]
+      await queryClient.cancelQueries({ queryKey: key })
+      const previous = queryClient.getQueryData<{ count: number; likedByMe: boolean }>(key)
+      queryClient.setQueryData(key, (old: { count: number; likedByMe: boolean } | undefined) => ({
+        count: Math.max(0, (old?.count ?? 0) + (liked ? -1 : 1)),
+        likedByMe: !liked,
+      }))
+      return { previous }
+    },
+    onError: (_err, { catchId }, context) => {
+      if (context?.previous) queryClient.setQueryData(['catch-likes', catchId], context.previous)
+    },
+    onSettled: (_data, _error, { catchId }) => queryClient.invalidateQueries({ queryKey: ['catch-likes', catchId] }),
   })
 }
 

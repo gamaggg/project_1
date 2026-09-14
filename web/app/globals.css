@@ -42,6 +42,23 @@ body{
 .tap-scale{transition:transform .15s var(--ease);}
 .tap-scale:active{transform:scale(0.96);}
 
+/* CatchPhotoScreen's like button — a one-shot squash-and-stretch pop on the
+   tap that adds a like, not a generic bounce easing curve (the overshoot
+   lives in the keyframe waypoints, each segment still uses --ease-out). */
+@keyframes like-pop{
+  0%{transform:scale(1);}
+  35%{transform:scale(1.32);}
+  60%{transform:scale(0.92);}
+  100%{transform:scale(1);}
+}
+.like-pop-anim{animation:like-pop .42s var(--ease-out);}
+@keyframes like-count-pop{
+  0%{transform:scale(1); opacity:1;}
+  40%{transform:scale(1.22) translateY(-2px); opacity:1;}
+  100%{transform:scale(1) translateY(0); opacity:1;}
+}
+.like-count-pop-anim{display:inline-block; animation:like-count-pop .3s var(--ease-out);}
+
 .app-shell{
   max-width:480px;
   margin:0 auto;
