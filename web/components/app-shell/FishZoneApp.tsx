@@ -27,7 +27,6 @@ import { ForgotPasswordFlow } from '@/components/app-shell/onboarding/ForgotPass
 import { LinkEmailFlow } from '@/components/app-shell/onboarding/LinkEmailFlow'
 import { useTelegramBackButton } from '@/lib/telegram/useTelegramBackButton'
 import { BottomNav } from '@/components/app-shell/BottomNav'
-import { PhotoLightbox } from '@/components/app-shell/PhotoLightbox'
 import { MapScreen } from '@/components/app-shell/screens/MapScreen'
 import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import { TerritoryScreen } from '@/components/app-shell/screens/TerritoryScreen'
@@ -48,6 +47,8 @@ import { DeleteTerritoryModal } from '@/components/app-shell/screens/DeleteTerri
 import { BulkDeleteTerritoriesModal } from '@/components/app-shell/screens/BulkDeleteTerritoriesModal'
 import { BulkAddTerritoriesModal } from '@/components/app-shell/screens/BulkAddTerritoriesModal'
 import { DeleteUserModal } from '@/components/app-shell/screens/DeleteUserModal'
+import { ChangeUserIdModal } from '@/components/app-shell/screens/ChangeUserIdModal'
+import { CatchPhotoScreen } from '@/components/app-shell/screens/CatchPhotoScreen'
 import { AchievementUnlockedModal } from '@/components/app-shell/screens/AchievementUnlockedModal'
 import { AwardDetailModal } from '@/components/app-shell/AwardDetailModal'
 import type { UserAward } from '@/lib/data/types'
@@ -65,6 +66,7 @@ export type ScreenId =
   | 'screen-territory'
   | 'screen-territories'
   | 'screen-catches'
+  | 'screen-catch-photo'
   | 'screen-users'
   | 'screen-camera'
   | 'screen-confirm'
@@ -92,6 +94,7 @@ type StackEntry =
   | { screen: 'screen-territory'; territoryId: string }
   | { screen: 'screen-territories'; initialFilter?: TerritoryStatus; initialMode?: RatingMode }
   | { screen: 'screen-catches'; userId?: string; territoryId?: string }
+  | { screen: 'screen-catch-photo'; catchId: number }
   | { screen: 'screen-users' }
   | { screen: 'screen-camera' }
   | { screen: 'screen-confirm' }
@@ -160,7 +163,7 @@ export function FishZoneApp() {
   // conflating the two used to mean pressing "+" while browsing a territory
   // could clobber the one you were looking at (see DECISIONS.md).
   const [catchTerritoryId, setCatchTerritoryId] = useState<string | null>(null)
-  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
+  const [viewingCatchId, setViewingCatchId] = useState<number | null>(null)
   const [editingProfile, setEditingProfile] = useState(false)
   const [changingColor, setChangingColor] = useState(false)
   const [confirmingSignOut, setConfirmingSignOut] = useState(false)
@@ -192,6 +195,8 @@ export function FishZoneApp() {
   const [pendingAddDrafts, setPendingAddDrafts] = useState<{ lat: number; lng: number; corners: [number, number][]; gridX: number; gridY: number }[]>([])
   const [confirmingBulkAdd, setConfirmingBulkAdd] = useState(false)
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
+  const [editingPublicIdUserId, setEditingPublicIdUserId] = useState<string | null>(null)
+  const { data: editingPublicIdProfile } = useProfile(editingPublicIdUserId)
   const { data: deletingUserProfile } = useProfile(deletingUserId)
   const [pendingCatch, setPendingCatch] = useState<PendingCatch | null>(null)
   const [confirmStep, setConfirmStep] = useState<'form' | 'success'>('form')
@@ -286,6 +291,14 @@ export function FishZoneApp() {
     }
     setViewingTerritoryId(id)
     push({ screen: 'screen-territory', territoryId: id })
+  }
+  // A real stack entry, not a bare overlay (see the removed PhotoLightbox) —
+  // so both the in-app back button and Telegram's native one pop just the
+  // photo, and the screen underneath is never left showing through a photo
+  // that back button didn't actually close (see DECISIONS.md).
+  function openCatchPhoto(id: number) {
+    setViewingCatchId(id)
+    push({ screen: 'screen-catch-photo', catchId: id })
   }
   function toggleTerritorySelection(id: string) {
     setSelectedTerritoryIds((prev) => {
@@ -531,6 +544,19 @@ export function FishZoneApp() {
     }
   }
 
+  // Simpler than shareTerritory/shareProfile above — a catch id is already
+  // the public, stable identifier (no short-id resolve step needed), so the
+  // ?catch= deep-link effect below can open it straight away.
+  async function shareCatch(catchId: number, text: string) {
+    const url = `${window.location.origin}${window.location.pathname}?catch=${catchId}`
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`)
+      showToast('Ссылка на улов скопирована')
+    } catch {
+      showToast('Не удалось скопировать ссылку')
+    }
+  }
+
   const viewingTerritory = territories.find((t) => t.id === viewingTerritoryId) ?? null
   const catchTerritory = territories.find((t) => t.id === catchTerritoryId) ?? null
   const myTerritories = territories.filter((t) => t.status === 'mine')
@@ -570,6 +596,23 @@ export function FishZoneApp() {
         window.history.replaceState(null, '', window.location.pathname)
       },
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
+  // Opens a ?catch=<id> link (from shareCatch above) straight into that
+  // catch's photo on first load — simpler than the ?user=/?achievement=
+  // effects since a catch id is already the real identifier, no public_id
+  // resolve step needed.
+  const catchDeepLinkOpened = useRef(false)
+  useEffect(() => {
+    if (catchDeepLinkOpened.current || !user) return
+    const raw = new URLSearchParams(window.location.search).get('catch')
+    if (!raw) return
+    const id = Number(raw)
+    if (!Number.isFinite(id)) return
+    catchDeepLinkOpened.current = true
+    openCatchPhoto(id)
+    window.history.replaceState(null, '', window.location.pathname)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
@@ -660,10 +703,8 @@ export function FishZoneApp() {
               myTerritoryColor={myTerritoryColor}
               onBack={pop}
               onOpenUser={openUserProfile}
-              onOpenPhoto={setLightboxSrc}
-              onReportPhoto={openReportModal}
+              onOpenPhoto={openCatchPhoto}
               onAdminCatch={startAdminCatch}
-              onDeleteCatch={setDeletingCatchId}
               onDeleteTerritory={setDeletingTerritoryId}
               onShare={() => shareTerritory(viewingTerritory.id)}
               onOpenAllCatches={() => push({ screen: 'screen-catches', territoryId: viewingTerritory.id })}
@@ -687,7 +728,20 @@ export function FishZoneApp() {
         </Screen>
         <Screen id="screen-catches" current={currentScreen} onBack={pop}>
           {(catchesUserId || catchesTerritoryId) && (
-            <MyCatchesScreen userId={catchesUserId} territoryId={catchesTerritoryId} onBack={pop} onOpenPhoto={setLightboxSrc} onOpenUser={openUserProfile} />
+            <MyCatchesScreen userId={catchesUserId} territoryId={catchesTerritoryId} onBack={pop} onOpenPhoto={openCatchPhoto} onOpenUser={openUserProfile} />
+          )}
+        </Screen>
+        <Screen id="screen-catch-photo" current={currentScreen} onBack={pop}>
+          {viewingCatchId !== null && (
+            <CatchPhotoScreen
+              catchId={viewingCatchId}
+              onBack={pop}
+              onOpenUser={openUserProfile}
+              onOpenTerritory={openTerritory}
+              onShare={shareCatch}
+              onReportPhoto={openReportModal}
+              onDeleteCatch={setDeletingCatchId}
+            />
           )}
         </Screen>
         <Screen id="screen-users" current={currentScreen} onBack={pop}>
@@ -715,7 +769,7 @@ export function FishZoneApp() {
           )}
         </Screen>
         <Screen id="screen-activity" current={currentScreen}>
-          <ActivityScreen onOpenUser={openUserProfile} onOpenTerritory={openTerritory} onOpenPhoto={setLightboxSrc} unreadIds={unreadIds} onMarkAllRead={markAllRead} />
+          <ActivityScreen onOpenUser={openUserProfile} onOpenTerritory={openTerritory} onOpenPhoto={openCatchPhoto} unreadIds={unreadIds} onMarkAllRead={markAllRead} />
         </Screen>
         <Screen id="screen-profile" current={currentScreen}>
           <ProfileScreen
@@ -730,7 +784,7 @@ export function FishZoneApp() {
             onChangeColor={() => setChangingColor(true)}
             onLinkEmail={() => setLinkingEmail(true)}
             onOpenCityPicker={() => setChangingCity(true)}
-            onOpenPhoto={setLightboxSrc}
+            onOpenPhoto={openCatchPhoto}
             onOpenReports={() => push({ screen: 'screen-admin-reports' })}
             onOpenAdminAccess={() => push({ screen: 'screen-admin-access' })}
             onOpenAdminLog={() => {
@@ -752,13 +806,14 @@ export function FishZoneApp() {
               allTerritories={territories}
               onBack={pop}
               onOpenTerritory={openTerritory}
-              onOpenPhoto={setLightboxSrc}
+              onOpenPhoto={openCatchPhoto}
               onOpenAchievements={() => openAchievements(viewingUserId)}
               onOpenAchievementDetail={(icon) => openAchievementDetail(viewingUserId, icon)}
               onOpenAllCatches={() => push({ screen: 'screen-catches', userId: viewingUserId })}
               onDeleteUser={setDeletingUserId}
               onOpenAward={setOpenAward}
               onEditAdminAccess={setEditingAdminAccessId}
+              onEditPublicId={setEditingPublicIdUserId}
               onShareProfile={shareProfile}
             />
           )}
@@ -785,7 +840,7 @@ export function FishZoneApp() {
           )}
         </Screen>
         <Screen id="screen-admin-reports" current={currentScreen} onBack={pop}>
-          <AdminReportsScreen onBack={pop} onOpenPhoto={setLightboxSrc} onOpenUser={openUserProfile} onOpenTerritory={openTerritory} />
+          <AdminReportsScreen onBack={pop} onOpenPhoto={openCatchPhoto} onOpenUser={openUserProfile} onOpenTerritory={openTerritory} />
         </Screen>
         <Screen id="screen-admin-access" current={currentScreen} onBack={pop}>
           <AdminAccessScreen onBack={pop} onOpenUser={openUserProfile} onEditAccess={setEditingAdminAccessId} />
@@ -866,7 +921,6 @@ export function FishZoneApp() {
       {changingColor && <ChangeColorModal onClose={() => setChangingColor(false)} city={city} />}
       {changingCity && <CityPickerModal city={city} onChange={changeCity} onClose={() => setChangingCity(false)} />}
       {editingAdminAccessId && <AdminPermissionsModal userId={editingAdminAccessId} onClose={() => setEditingAdminAccessId(null)} />}
-      {lightboxSrc && <PhotoLightbox src={lightboxSrc} alt="Улов" onClose={() => setLightboxSrc(null)} />}
       {reportingCatchId !== null && (
         <ReportPhotoModal
           catchId={reportingCatchId}
@@ -924,6 +978,13 @@ export function FishZoneApp() {
             pop()
             showToast('Пользователь удалён')
           }}
+        />
+      )}
+      {editingPublicIdUserId !== null && editingPublicIdProfile && (
+        <ChangeUserIdModal
+          userId={editingPublicIdUserId}
+          currentPublicId={editingPublicIdProfile.publicId}
+          onClose={() => setEditingPublicIdUserId(null)}
         />
       )}
       {/* Held back while the trophy-card success screen is up so it never stacks

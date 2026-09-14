@@ -1,7 +1,6 @@
 'use client'
 
 import { useCatchesByTerritory, useProfile, useCanAddCatchManually, useIsSuperAdmin } from '@/lib/supabase/queries'
-import { useAuth } from '@/components/providers/AuthProvider'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import type { Territory } from '@/lib/data/types'
@@ -43,7 +42,10 @@ export function CatcherLabel({ userId, mine, onOpenUser }: { userId: string; min
   if (mine) return <div style={style}>Ты</div>
   return (
     <div style={style}>
-      <button className="activity-who-btn" onClick={() => onOpenUser(userId)}>
+      {/* Rows that show this now also open the catch photo on their own
+          click (TerritoryScreen/MyCatchesScreen) — stop the click here so
+          tapping the name opens the profile, not the photo underneath it. */}
+      <button className="activity-who-btn" onClick={(e) => { e.stopPropagation(); onOpenUser(userId) }}>
         {profile?.displayName ?? '…'}
       </button>
     </div>
@@ -59,9 +61,7 @@ export function TerritoryScreen({
   onBack,
   onOpenUser,
   onOpenPhoto,
-  onReportPhoto,
   onAdminCatch,
-  onDeleteCatch,
   onDeleteTerritory,
   onShare,
   onOpenAllCatches,
@@ -70,16 +70,13 @@ export function TerritoryScreen({
   territory: Territory
   onBack: () => void
   onOpenUser: (id: string) => void
-  onOpenPhoto: (src: string) => void
-  onReportPhoto: (catchId: number) => void
+  onOpenPhoto: (catchId: number) => void
   onAdminCatch: (territoryId: string) => void
-  onDeleteCatch: (catchId: number) => void
   onDeleteTerritory: (territoryId: string) => void
   onShare: () => void
   onOpenAllCatches: () => void
   myTerritoryColor: string
 }) {
-  const { user } = useAuth()
   const canAddCatchManually = useCanAddCatchManually()
   const isSuperAdmin = useIsSuperAdmin()
   const { data: catches = [] } = useCatchesByTerritory(territory.id)
@@ -156,11 +153,18 @@ export function TerritoryScreen({
             recent.map((c, i) => {
               const meta = formatCatchMeta(c.lengthCm, c.weightKg)
               return (
+                // Whole row opens the catch photo now — report/delete moved
+                // into CatchPhotoScreen itself, where they get a real touch
+                // target instead of being crammed into this thin row (that
+                // used to cause mis-taps landing on "Пожаловаться" instead
+                // of the photo). CatcherLabel still stops its own click from
+                // bubbling here, so tapping the name opens the profile.
                 <div
                   key={c.id}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recent.length - 1 ? '1px solid var(--line)' : 'none' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recent.length - 1 ? '1px solid var(--line)' : 'none', cursor: 'pointer' }}
+                  onClick={() => onOpenPhoto(c.id)}
                 >
-                  <div className="fish-thumb" style={{ width: 46, height: 46, cursor: 'pointer' }} onClick={() => onOpenPhoto(c.photoUrl)}>
+                  <div className="fish-thumb" style={{ width: 46, height: 46 }}>
                     <img src={c.photoUrl} alt={c.speciesName} />
                   </div>
                   <div style={{ flex: 1 }}>
@@ -168,24 +172,7 @@ export function TerritoryScreen({
                     <div style={{ fontWeight: 700, fontSize: 14.5 }}>{c.speciesName}</div>
                     {meta && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 1 }}>{meta}</div>}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                    <div style={{ fontSize: 12, color: 'var(--ink-faint)', fontWeight: 600 }}>{formatWhen(c.caughtAt).split('·')[0].trim()}</div>
-                    {user && !c.mine && (
-                      <button className="report-flag-btn tap-scale" onClick={() => onReportPhoto(c.id)} title="Пожаловаться на фото">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M5 3v18M5 4h12l-2.5 4L17 12H5" />
-                        </svg>
-                        Пожаловаться
-                      </button>
-                    )}
-                    {isSuperAdmin && (
-                      <button className="delete-catch-btn tap-scale" onClick={() => onDeleteCatch(c.id)} title="Удалить улов">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-                          <path d="M6 6l12 12M18 6L6 18" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--ink-faint)', fontWeight: 600 }}>{formatWhen(c.caughtAt).split('·')[0].trim()}</div>
                 </div>
               )
             })

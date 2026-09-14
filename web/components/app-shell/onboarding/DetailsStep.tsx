@@ -9,6 +9,12 @@ import { BackButton } from '@/components/app-shell/BackButton'
 // text input is extra work the reference screenshot doesn't strictly require.
 export function DetailsStep({ onBack, onDone }: { onBack: () => void; onDone: () => void }) {
   const [birthDate, setBirthDate] = useState('')
+  // Hides the moment the field is tapped, not just once fully filled — see
+  // wizard-date-placeholder's own comment in globals.css: iOS Safari starts
+  // drawing its own in-progress "06.ММ.ГГГГ" segments as soon as typing
+  // starts, well before birthDate (which needs all three segments) stops
+  // being ''. Without this, our placeholder kept rendering on top of that.
+  const [focused, setFocused] = useState(false)
   const [gender, setGender] = useState<'male' | 'female' | null>(null)
   const [confirmed14, setConfirmed14] = useState(false)
   const updateProfile = useUpdateProfile()
@@ -46,8 +52,8 @@ export function DetailsStep({ onBack, onDone }: { onBack: () => void; onDone: ()
         <div className="wizard-field">
           <label htmlFor="birth-date">Дата рождения</label>
           <div className="wizard-date-wrap">
-            <input id="birth-date" type="date" required value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
-            {!birthDate && <span className="wizard-date-placeholder">ДД.ММ.ГГГГ</span>}
+            <input id="birth-date" type="date" required value={birthDate} onChange={(e) => setBirthDate(e.target.value)} onFocus={() => setFocused(true)} />
+            {!birthDate && !focused && <span className="wizard-date-placeholder">ДД.ММ.ГГГГ</span>}
           </div>
         </div>
 

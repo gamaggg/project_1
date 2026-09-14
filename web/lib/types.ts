@@ -167,6 +167,46 @@ export type Database = {
           },
         ]
       }
+      catch_likes: {
+        Row: {
+          catch_id: number
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          catch_id: number
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          catch_id?: number
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catch_likes_catch_id_fkey"
+            columns: ["catch_id"]
+            isOneToOne: false
+            referencedRelation: "catches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catch_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catch_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catch_reports: {
         Row: {
           catch_id: number
@@ -699,6 +739,10 @@ export type Database = {
       }
       admin_set_blocked: {
         Args: { p_blocked: boolean; p_user_id: string }
+        Returns: undefined
+      }
+      admin_set_public_id: {
+        Args: { p_public_id: string; p_user_id: string }
         Returns: undefined
       }
       confirm_catch: {

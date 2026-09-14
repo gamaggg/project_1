@@ -229,7 +229,7 @@ export function ProfileScreen({
   onChangeColor: () => void
   onLinkEmail: () => void
   onOpenCityPicker: () => void
-  onOpenPhoto: (src: string) => void
+  onOpenPhoto: (catchId: number) => void
   onOpenReports: () => void
   onOpenAdminAccess: () => void
   onOpenAdminLog: () => void
@@ -391,9 +391,10 @@ export function ProfileScreen({
             return (
               <div
                 key={c.id}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recentMine.length - 1 ? '1px solid var(--line)' : 'none' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recentMine.length - 1 ? '1px solid var(--line)' : 'none', cursor: 'pointer' }}
+                onClick={() => onOpenPhoto(c.id)}
               >
-                <div className="fish-thumb" style={{ width: 46, height: 46, cursor: 'pointer' }} onClick={() => onOpenPhoto(c.photoUrl)}>
+                <div className="fish-thumb" style={{ width: 46, height: 46 }}>
                   <img src={c.photoUrl} alt={c.speciesName} />
                 </div>
                 <div style={{ flex: 1 }}>
@@ -448,8 +449,8 @@ export function ProfileScreen({
           <div className="section-title" style={{ marginTop: 24 }}>
             Личный рекорд
           </div>
-          <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div className="fish-thumb" style={{ width: 52, height: 52, cursor: 'pointer' }} onClick={() => onOpenPhoto(record.photoUrl)}>
+          <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }} onClick={() => onOpenPhoto(record.id)}>
+            <div className="fish-thumb" style={{ width: 52, height: 52 }}>
               <img src={record.photoUrl} alt={record.speciesName} />
             </div>
             <div>

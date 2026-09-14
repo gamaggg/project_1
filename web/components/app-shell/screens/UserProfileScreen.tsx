@@ -28,6 +28,7 @@ export function UserProfileScreen({
   onDeleteUser,
   onOpenAward,
   onEditAdminAccess,
+  onEditPublicId,
   onShareProfile,
 }: {
   userId: string
@@ -35,13 +36,14 @@ export function UserProfileScreen({
   allTerritories: Territory[]
   onBack: () => void
   onOpenTerritory: (id: string) => void
-  onOpenPhoto: (src: string) => void
+  onOpenPhoto: (catchId: number) => void
   onOpenAchievements: () => void
   onOpenAchievementDetail: (icon: Achievement['icon']) => void
   onOpenAllCatches: () => void
   onDeleteUser: (id: string) => void
   onOpenAward: (award: UserAward) => void
   onEditAdminAccess: (id: string) => void
+  onEditPublicId: (id: string) => void
   onShareProfile: (publicId: string, text: string) => void
 }) {
   const { data: profile } = useProfile(userId)
@@ -162,6 +164,12 @@ export function UserProfileScreen({
           </button>
         )}
 
+        {isSuperAdmin && (
+          <button className="btn-secondary" style={{ marginTop: 8 }} onClick={() => onEditPublicId(userId)}>
+            Изменить ID
+          </button>
+        )}
+
         <div className="card stat-grid4" style={{ marginTop: 20, padding: '16px 8px' }}>
           <div>
             <div className="stat-num">{territories.length}</div>
@@ -215,9 +223,10 @@ export function UserProfileScreen({
               return (
                 <div
                   key={c.id}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recent.length - 1 ? '1px solid var(--line)' : 'none' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recent.length - 1 ? '1px solid var(--line)' : 'none', cursor: 'pointer' }}
+                  onClick={() => onOpenPhoto(c.id)}
                 >
-                  <div className="fish-thumb" style={{ width: 46, height: 46, cursor: 'pointer' }} onClick={() => onOpenPhoto(c.photoUrl)}>
+                  <div className="fish-thumb" style={{ width: 46, height: 46 }}>
                     <img src={c.photoUrl} alt={c.speciesName} />
                   </div>
                   <div style={{ flex: 1 }}>
@@ -264,8 +273,8 @@ export function UserProfileScreen({
             <div className="section-title" style={{ marginTop: 24 }}>
               Личный рекорд
             </div>
-            <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div className="fish-thumb" style={{ width: 52, height: 52, cursor: 'pointer' }} onClick={() => onOpenPhoto(record.photoUrl)}>
+            <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }} onClick={() => onOpenPhoto(record.id)}>
+              <div className="fish-thumb" style={{ width: 52, height: 52 }}>
                 <img src={record.photoUrl} alt={record.speciesName} />
               </div>
               <div>

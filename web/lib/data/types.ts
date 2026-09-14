@@ -201,5 +201,6 @@ export type ActivityEntry = {
   lengthCm: number | null
   weightKg: number | null
   photoUrl: string | null
+  catchId: number | null
   createdAt: string
 }

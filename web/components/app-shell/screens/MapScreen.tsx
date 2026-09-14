@@ -108,6 +108,25 @@ export const MapScreen = forwardRef<
     userScrollRef.current = true
   }
 
+  const sheetRowRef = useRef<HTMLDivElement>(null)
+  // A plain tap on a sector used to jump straight into its full screen — too
+  // heavy for "just checking if there's fish there". The sheet carousel
+  // below already shows exactly that summary per sector (id/status/catch
+  // count), just never driven by a map tap (only the reverse: scrolling the
+  // carousel flies the map, see handleScroll) — so a tap now brings that
+  // card into view instead, and its own "Подробнее о секторе" button (still
+  // onOpenTerritory, unchanged) is the explicit way to actually drill in.
+  function handlePolygonSelect(id: string) {
+    if (selectedIds && selectedIds.size > 0) {
+      // Active bulk-selection (super admin, long-press to start) — a plain
+      // tap toggles the selection like before, no preview involved.
+      onOpenTerritory(id)
+      return
+    }
+    const card = sheetRowRef.current?.querySelector<HTMLElement>(`[data-id="${id}"]`)
+    card?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  }
+
   function handleScroll(e: React.UIEvent<HTMLDivElement>) {
     const wrap = e.currentTarget
     if (scrollTimer.current) clearTimeout(scrollTimer.current)
@@ -149,7 +168,7 @@ export const MapScreen = forwardRef<
           ref={mapRef}
           territories={territories}
           myTerritoryColor={myTerritoryColor}
-          onSelect={onOpenTerritory}
+          onSelect={handlePolygonSelect}
           selectedIds={selectedIds}
           onLongPressTerritory={onLongPressTerritory}
           pendingAddDrafts={pendingAddDrafts}
@@ -219,7 +238,7 @@ export const MapScreen = forwardRef<
           </button>
         </div>
         <div className="map-sheet-container">
-          <div className="map-sheet-row" onScroll={handleScroll} onPointerDown={markUserScroll} onWheel={markUserScroll}>
+          <div className="map-sheet-row" ref={sheetRowRef} onScroll={handleScroll} onPointerDown={markUserScroll} onWheel={markUserScroll}>
             {territories.map((t) => (
               <div className="map-sheet-card" key={t.id} data-id={t.id}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -230,7 +249,7 @@ export const MapScreen = forwardRef<
                   <span>Уловов {t.catchCount}</span>
                   <span>{t.lastCatchAt ? 'Последний улов: ' + formatWhen(t.lastCatchAt) : 'Пока нет уловов'}</span>
                 </div>
-                <button className="btn-primary" style={{ marginTop: 6 }} onClick={() => onOpenTerritory(t.id)}>
+                <button className="btn-primary" style={{ marginTop: 'auto' }} onClick={() => onOpenTerritory(t.id)}>
                   Подробнее о секторе
                 </button>
               </div>

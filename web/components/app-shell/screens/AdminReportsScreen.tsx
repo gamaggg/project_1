@@ -10,7 +10,7 @@ export function AdminReportsScreen({
   onOpenTerritory,
 }: {
   onBack: () => void
-  onOpenPhoto: (src: string) => void
+  onOpenPhoto: (catchId: number) => void
   onOpenUser: (id: string) => void
   onOpenTerritory: (id: string) => void
 }) {
@@ -31,7 +31,7 @@ export function AdminReportsScreen({
         ) : reports.length ? (
           reports.map((r) => (
             <div key={r.id} className="card" style={{ padding: 14, marginBottom: 12, display: 'flex', gap: 12 }}>
-              <div className="fish-thumb" style={{ width: 56, height: 56, cursor: 'pointer', flex: '0 0 auto' }} onClick={() => onOpenPhoto(r.photoUrl)}>
+              <div className="fish-thumb" style={{ width: 56, height: 56, cursor: 'pointer', flex: '0 0 auto' }} onClick={() => onOpenPhoto(r.catchId)}>
                 <img src={r.photoUrl} alt={r.speciesName ?? ''} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>

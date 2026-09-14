@@ -47,7 +47,13 @@ export const metadata: Metadata = {
   // their Home Screen — otherwise iOS falls back to the full <title>, which
   // is too long to fit under the icon. Matches manifest.ts's short_name.
   appleWebApp: {
+    // Without `capable`, Next.js never emits apple-mobile-web-app-capable —
+    // an iOS "Add to Home Screen" then opens in ordinary Safari chrome
+    // (address bar and all) instead of standalone, silently defeating the
+    // whole point of the manifest below.
+    capable: true,
     title: 'RANGE',
+    statusBarStyle: 'black-translucent',
   },
 }
 

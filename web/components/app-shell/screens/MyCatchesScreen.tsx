@@ -22,7 +22,7 @@ export function MyCatchesScreen({
   userId?: string
   territoryId?: string
   onBack: () => void
-  onOpenPhoto: (src: string) => void
+  onOpenPhoto: (catchId: number) => void
   onOpenUser: (id: string) => void
 }) {
   const { user } = useAuth()
@@ -48,9 +48,10 @@ export function MyCatchesScreen({
               return (
                 <div
                   key={c.id}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < catches.length - 1 ? '1px solid var(--line)' : 'none' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < catches.length - 1 ? '1px solid var(--line)' : 'none', cursor: 'pointer' }}
+                  onClick={() => onOpenPhoto(c.id)}
                 >
-                  <div className="fish-thumb" style={{ width: 46, height: 46, cursor: 'pointer' }} onClick={() => onOpenPhoto(c.photoUrl)}>
+                  <div className="fish-thumb" style={{ width: 46, height: 46 }}>
                     <img src={c.photoUrl} alt={c.speciesName} />
                   </div>
                   <div style={{ flex: 1 }}>

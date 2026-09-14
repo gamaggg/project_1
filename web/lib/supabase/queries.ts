@@ -268,6 +268,53 @@ export function useCatchesByUser(userId: string | null) {
   })
 }
 
+// Fetches one catch directly by id — for CatchPhotoScreen, which needs to be
+// self-contained (same reasoning as MyCatchesScreen/AchievementDetailScreen)
+// and openable from a ?catch=<id> deep link a viewer's own list caches may
+// not already contain.
+export function useCatchById(id: number | null) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['catches', 'by-id', id],
+    queryFn: async (): Promise<Catch> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.from('catches').select(CATCH_SELECT).eq('id', id!).single()
+      if (error) throw error
+      return rowToCatch(data as CatchRow, user?.id)
+    },
+    enabled: !!id,
+  })
+}
+
+export function useCatchLikes(catchId: number | null) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['catch-likes', catchId],
+    enabled: !!catchId,
+    queryFn: async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase.from('catch_likes').select('user_id').eq('catch_id', catchId!)
+      if (error) throw error
+      return { count: data.length, likedByMe: !!user && data.some((r) => r.user_id === user.id) }
+    },
+  })
+}
+
+export function useToggleCatchLike() {
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ catchId, liked }: { catchId: number; liked: boolean }) => {
+      const supabase = createClient()
+      const { error } = liked
+        ? await supabase.from('catch_likes').delete().eq('catch_id', catchId).eq('user_id', user!.id)
+        : await supabase.from('catch_likes').insert({ catch_id: catchId, user_id: user!.id })
+      if (error) throw error
+    },
+    onSuccess: (_data, { catchId }) => queryClient.invalidateQueries({ queryKey: ['catch-likes', catchId] }),
+  })
+}
+
 export function useMyCatches() {
   const { user } = useAuth()
   return useCatchesByUser(user?.id ?? null)
@@ -296,7 +343,7 @@ export function useActivity() {
       let query = supabase
         .from('activity_log')
         .select(
-          'id, kind, created_at, user_id, previous_owner_id, territory_id, territories(kind), catches(length_cm, weight_kg, photo_url, species_info:species(name, category)), profiles!activity_log_user_id_fkey(display_name, avatar_url)'
+          'id, kind, created_at, user_id, previous_owner_id, territory_id, catch_id, territories(kind), catches(length_cm, weight_kg, photo_url, species_info:species(name, category)), profiles!activity_log_user_id_fkey(display_name, avatar_url)'
         )
 
       let followedSince = new Map<string, string>()
@@ -340,6 +387,7 @@ export function useActivity() {
           lengthCm: c?.length_cm ?? null,
           weightKg: c?.weight_kg ?? null,
           photoUrl: c?.photo_url ?? null,
+          catchId: row.catch_id,
           createdAt: row.created_at,
         }
       })
@@ -370,6 +418,7 @@ export function useActivity() {
             lengthCm: null,
             weightKg: null,
             photoUrl: null,
+            catchId: null,
             createdAt: f.created_at,
           }
         })
@@ -943,6 +992,22 @@ export function useAdminDeleteUser() {
       queryClient.invalidateQueries({ queryKey: ['catches'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
       queryClient.invalidateQueries({ queryKey: ['reports'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
+    },
+  })
+}
+
+export function useAdminSetPublicId() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ userId, publicId }: { userId: string; publicId: string }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_set_public_id', { p_user_id: userId, p_public_id: publicId })
+      if (error) throw error
+    },
+    onSuccess: (_data, { userId }) => {
+      queryClient.invalidateQueries({ queryKey: ['profile', userId] })
+      queryClient.invalidateQueries({ queryKey: ['all-users'] })
       queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
     },
   })

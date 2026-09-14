@@ -17,7 +17,7 @@ export function ActivityScreen({
 }: {
   onOpenUser: (id: string) => void
   onOpenTerritory: (id: string) => void
-  onOpenPhoto: (src: string) => void
+  onOpenPhoto: (catchId: number) => void
   unreadIds: Set<string>
   onMarkAllRead: () => void
 }) {
@@ -112,8 +112,8 @@ export function ActivityScreen({
                 {a.speciesName && (
                   <div
                     className="fish-thumb"
-                    style={{ width: 44, height: 44, cursor: a.photoUrl ? 'pointer' : undefined, background: a.photoUrl ? undefined : CATEGORY_GRADIENT[a.speciesCategory ?? 'marine'] }}
-                    onClick={() => a.photoUrl && onOpenPhoto(a.photoUrl)}
+                    style={{ width: 44, height: 44, cursor: a.catchId ? 'pointer' : undefined, background: a.photoUrl ? undefined : CATEGORY_GRADIENT[a.speciesCategory ?? 'marine'] }}
+                    onClick={() => a.catchId && onOpenPhoto(a.catchId)}
                   >
                     {a.photoUrl ? <img src={a.photoUrl} alt={a.speciesName} /> : <FishIcon size={18} />}
                   </div>
