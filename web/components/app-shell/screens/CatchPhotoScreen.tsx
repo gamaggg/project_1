@@ -6,6 +6,18 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import { CatcherLabel } from '@/components/app-shell/screens/TerritoryScreen'
 import { BackButton } from '@/components/app-shell/BackButton'
+import type { CatchLiker } from '@/lib/data/types'
+
+// "Иван" / "Иван и Мария" / "Иван, Мария и ещё 5" — sidesteps gender-correct
+// verb conjugation entirely (no existing activity text in this app bothers
+// with it either, see ActivityScreen's fixed masculine forms) by phrasing
+// this as a plain label instead of a sentence.
+function likersSummary(likers: CatchLiker[]): string {
+  const names = likers.map((l) => l.displayName)
+  if (names.length === 1) return names[0]
+  if (names.length === 2) return `${names[0]} и ${names[1]}`
+  return `${names[0]}, ${names[1]} и ещё ${names.length - 2}`
+}
 
 // A real screen (pushed on the stack, reachable via ?catch=<id>) rather than
 // the old bare-overlay lightbox — see FishZoneApp's openCatchPhoto. Replaces
@@ -21,6 +33,7 @@ export function CatchPhotoScreen({
   onShare,
   onReportPhoto,
   onDeleteCatch,
+  onOpenLikers,
 }: {
   catchId: number
   onBack: () => void
@@ -29,6 +42,7 @@ export function CatchPhotoScreen({
   onShare: (catchId: number, text: string) => void
   onReportPhoto: (catchId: number) => void
   onDeleteCatch: (catchId: number) => void
+  onOpenLikers: (likers: CatchLiker[]) => void
 }) {
   const { user } = useAuth()
   const isSuperAdmin = useIsSuperAdmin()
@@ -55,9 +69,14 @@ export function CatchPhotoScreen({
     // No .header-row — a separate white bar above the photo left dead space
     // at the top. Back/delete float over the photo instead (padding:0 here,
     // restored on the sheet below so the fixed bottom nav still clears it).
-    <div className="screen-inner" style={{ padding: 0 }}>
-      <div style={{ position: 'relative' }}>
-        <img src={c.photoUrl} alt={c.speciesName} style={{ width: '100%', display: 'block' }} />
+    // flex column, photo flex:1 / sheet flex:0-auto: the photo fills exactly
+    // whatever space the sheet's own (roughly fixed) content height leaves
+    // behind, on any screen height — a fixed aspect-ratio crop either left a
+    // gap (short sheet, tall screen) or still needed a scroll (long sheet,
+    // short screen); this adapts instead of guessing one ratio.
+    <div className="screen-inner" style={{ padding: 0, display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0 }}>
+      <div style={{ position: 'relative', flex: '1 1 auto', minHeight: 0 }}>
+        <img src={c.photoUrl} alt={c.speciesName} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         <div style={{ position: 'absolute', top: 12, left: 12 }}>
           <BackButton onClick={onBack} registerNative={false} />
         </div>
@@ -81,6 +100,7 @@ export function CatchPhotoScreen({
       <div
         style={{
           position: 'relative',
+          flex: '0 0 auto',
           marginTop: -18,
           borderRadius: '20px 20px 0 0',
           background: 'var(--surface)',
@@ -110,12 +130,52 @@ export function CatchPhotoScreen({
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
             </div>
-            <div key={likes?.count ?? 0} className={justLiked ? 'like-count-pop-anim' : undefined} style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-soft)', minWidth: 12 }}>
+            <div
+              key={likes?.count ?? 0}
+              className={justLiked ? 'like-count-pop-anim' : undefined}
+              style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-soft)', minWidth: 12, cursor: likes?.count ? 'pointer' : undefined }}
+              onClick={() => likes?.count ? onOpenLikers(likes.likers) : undefined}
+            >
               {likes?.count ?? 0}
             </div>
           </div>
         </div>
-        <div style={{ fontWeight: 800, fontSize: 20, marginTop: 4 }}>{c.speciesName}</div>
+
+        {/* Tapping either this or the count above opens CatchLikersModal —
+            the Instagram "liked by" sheet, with search and a follow button
+            per row (see FishZoneApp's viewingLikersFor). */}
+        {!!likes?.likers.length && (
+          <div className="tap-scale" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, cursor: 'pointer' }} onClick={() => onOpenLikers(likes.likers)}>
+            <div style={{ display: 'flex' }}>
+              {likes.likers.slice(0, 3).map((l, i) => (
+                <div
+                  key={l.userId}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    background: 'var(--ink)',
+                    color: '#fff',
+                    fontSize: 10,
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 0 0 2px var(--surface)',
+                    marginLeft: i === 0 ? 0 : -8,
+                    flex: '0 0 auto',
+                  }}
+                >
+                  {l.avatarUrl ? <img src={l.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : l.displayName.slice(0, 1).toUpperCase()}
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: 12.5, color: 'var(--ink-soft)' }}>Нравится: {likersSummary(likes.likers)}</div>
+          </div>
+        )}
+
+        <div style={{ fontWeight: 800, fontSize: 20, marginTop: likes?.likers.length ? 12 : 4 }}>{c.speciesName}</div>
         {meta && <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 2 }}>{meta}</div>}
         <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
           <button className="section-link" style={{ fontSize: 12.5 }} onClick={() => onOpenTerritory(c.territoryId)}>

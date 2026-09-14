@@ -76,7 +76,9 @@ export function ActivityScreen({
                 ? `занял территорию ${a.territoryId}`
                 : a.kind === 'follow'
                   ? 'подписался на тебя'
-                  : `поймал ${a.speciesName?.toLowerCase() ?? 'рыбу'}`
+                  : a.kind === 'like'
+                    ? 'лайкнул твой улов'
+                    : `поймал ${a.speciesName?.toLowerCase() ?? 'рыбу'}`
             return (
               <div className="activity-item" key={a.id}>
                 <div className="avatar" style={a.mine ? {} : { background: 'var(--blue)' }}>

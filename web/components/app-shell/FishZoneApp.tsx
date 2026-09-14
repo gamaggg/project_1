@@ -49,6 +49,8 @@ import { BulkAddTerritoriesModal } from '@/components/app-shell/screens/BulkAddT
 import { DeleteUserModal } from '@/components/app-shell/screens/DeleteUserModal'
 import { ChangeUserIdModal } from '@/components/app-shell/screens/ChangeUserIdModal'
 import { CatchPhotoScreen } from '@/components/app-shell/screens/CatchPhotoScreen'
+import { CatchLikersModal } from '@/components/app-shell/screens/CatchLikersModal'
+import type { CatchLiker } from '@/lib/data/types'
 import { AchievementUnlockedModal } from '@/components/app-shell/screens/AchievementUnlockedModal'
 import { AwardDetailModal } from '@/components/app-shell/AwardDetailModal'
 import type { UserAward } from '@/lib/data/types'
@@ -196,6 +198,7 @@ export function FishZoneApp() {
   const [confirmingBulkAdd, setConfirmingBulkAdd] = useState(false)
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
   const [editingPublicIdUserId, setEditingPublicIdUserId] = useState<string | null>(null)
+  const [viewingLikersFor, setViewingLikersFor] = useState<CatchLiker[] | null>(null)
   const { data: editingPublicIdProfile } = useProfile(editingPublicIdUserId)
   const { data: deletingUserProfile } = useProfile(deletingUserId)
   const [pendingCatch, setPendingCatch] = useState<PendingCatch | null>(null)
@@ -741,6 +744,7 @@ export function FishZoneApp() {
               onShare={shareCatch}
               onReportPhoto={openReportModal}
               onDeleteCatch={setDeletingCatchId}
+              onOpenLikers={setViewingLikersFor}
             />
           )}
         </Screen>
@@ -985,6 +989,16 @@ export function FishZoneApp() {
           userId={editingPublicIdUserId}
           currentPublicId={editingPublicIdProfile.publicId}
           onClose={() => setEditingPublicIdUserId(null)}
+        />
+      )}
+      {viewingLikersFor !== null && (
+        <CatchLikersModal
+          likers={viewingLikersFor}
+          onClose={() => setViewingLikersFor(null)}
+          onOpenUser={(id) => {
+            setViewingLikersFor(null)
+            openUserProfile(id)
+          }}
         />
       )}
       {/* Held back while the trophy-card success screen is up so it never stacks

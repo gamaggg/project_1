@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/AuthProvider'
-import type { Territory, TerritoryStatus, Catch, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, WeeklyLeaderboardEntry, UserAward, AwardKind } from '@/lib/data/types'
+import type { Territory, TerritoryStatus, Catch, CatchLiker, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, WeeklyLeaderboardEntry, UserAward, AwardKind } from '@/lib/data/types'
 import type { SpeciesCategory } from '@/lib/data/species'
 import type { CityId } from '@/lib/data/city'
 
@@ -286,16 +286,28 @@ export function useCatchById(id: number | null) {
   })
 }
 
+// Powers both the heart+count and CatchPhotoScreen's facepile — one fetch,
+// most-recent-first (so the facepile's leading avatars are whoever just
+// liked it), since a catch's like count is small enough that paginating
+// separately from the preview isn't worth the extra round trip.
 export function useCatchLikes(catchId: number | null) {
   const { user } = useAuth()
   return useQuery({
     queryKey: ['catch-likes', catchId],
     enabled: !!catchId,
-    queryFn: async () => {
+    queryFn: async (): Promise<{ count: number; likedByMe: boolean; likers: CatchLiker[] }> => {
       const supabase = createClient()
-      const { data, error } = await supabase.from('catch_likes').select('user_id').eq('catch_id', catchId!)
+      const { data, error } = await supabase
+        .from('catch_likes')
+        .select('user_id, profiles(display_name, avatar_url)')
+        .eq('catch_id', catchId!)
+        .order('created_at', { ascending: false })
       if (error) throw error
-      return { count: data.length, likedByMe: !!user && data.some((r) => r.user_id === user.id) }
+      const likers = data.map((r) => {
+        const p = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
+        return { userId: r.user_id, displayName: p?.display_name ?? 'Рыбак', avatarUrl: p?.avatar_url ?? null }
+      })
+      return { count: likers.length, likedByMe: !!user && likers.some((l) => l.userId === user.id), likers }
     },
   })
 }
@@ -317,11 +329,20 @@ export function useToggleCatchLike() {
     onMutate: async ({ catchId, liked }) => {
       const key = ['catch-likes', catchId]
       await queryClient.cancelQueries({ queryKey: key })
-      const previous = queryClient.getQueryData<{ count: number; likedByMe: boolean }>(key)
-      queryClient.setQueryData(key, (old: { count: number; likedByMe: boolean } | undefined) => ({
-        count: Math.max(0, (old?.count ?? 0) + (liked ? -1 : 1)),
-        likedByMe: !liked,
-      }))
+      type LikesData = { count: number; likedByMe: boolean; likers: CatchLiker[] }
+      const previous = queryClient.getQueryData<LikesData>(key)
+      // Read from cache rather than useProfile() here — this hook only
+      // needs a snapshot at click time, not to re-render when it changes.
+      const myProfile = user ? queryClient.getQueryData<Profile>(['profile', user.id]) : undefined
+      queryClient.setQueryData(key, (old: LikesData | undefined): LikesData => {
+        const likers = old?.likers ?? []
+        const nextLikers = liked
+          ? likers.filter((l) => l.userId !== user!.id)
+          : user && !likers.some((l) => l.userId === user.id)
+            ? [{ userId: user.id, displayName: myProfile?.displayName ?? 'Ты', avatarUrl: myProfile?.avatarUrl ?? null }, ...likers]
+            : likers
+        return { count: Math.max(0, (old?.count ?? 0) + (liked ? -1 : 1)), likedByMe: !liked, likers: nextLikers }
+      })
       return { previous }
     },
     onError: (_err, { catchId }, context) => {
@@ -395,7 +416,7 @@ export function useActivity() {
           userId: row.user_id,
           avatarUrl: profile?.avatar_url ?? null,
           mine: row.user_id === user?.id,
-          kind: row.kind as 'catch' | 'claim',
+          kind: row.kind as 'catch' | 'claim' | 'like',
           territoryId: row.territory_id,
           territoryKind: territory?.kind ?? 'sea',
           speciesName: speciesInfo?.name ?? null,

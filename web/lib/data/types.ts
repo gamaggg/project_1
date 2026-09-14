@@ -137,6 +137,13 @@ export type Catch = {
   mine: boolean
 }
 
+// One row of useCatchLikes' likers list (CatchPhotoScreen's facepile).
+export type CatchLiker = {
+  userId: string
+  displayName: string
+  avatarUrl: string | null
+}
+
 // One row from catch_reports, joined with what an admin needs to act on it —
 // shaped in queries.ts (useReports), not a raw DB row.
 export type CatchReport = {
@@ -193,7 +200,7 @@ export type ActivityEntry = {
   userId: string
   avatarUrl: string | null
   mine: boolean
-  kind: 'catch' | 'claim' | 'follow' | 'moderation'
+  kind: 'catch' | 'claim' | 'follow' | 'moderation' | 'like'
   territoryId?: string
   territoryKind?: TerritoryKind
   speciesName: string | null
