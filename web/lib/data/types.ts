@@ -208,7 +208,7 @@ export type ActivityEntry = {
   userId: string
   avatarUrl: string | null
   mine: boolean
-  kind: 'catch' | 'claim' | 'follow' | 'moderation' | 'like'
+  kind: 'catch' | 'claim' | 'follow' | 'moderation' | 'like' | 'announcement'
   territoryId?: string
   territoryKind?: TerritoryKind
   speciesName: string | null
@@ -218,4 +218,12 @@ export type ActivityEntry = {
   photoUrl: string | null
   catchId: number | null
   createdAt: string
+  // 'announcement' only — a super admin's broadcast post, shown to every
+  // user in their feed (see useActivity/admin_post_announcement). Null for
+  // every other kind.
+  body: string | null
+  // 'announcement' only — an optional CTA button under the text (both null,
+  // or both set together — see admin_post_announcement's check).
+  buttonLabel: string | null
+  buttonUrl: string | null
 }

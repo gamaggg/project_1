@@ -42,6 +42,7 @@ import { ProfileScreen, EditProfileModal, ChangeColorModal } from '@/components/
 import { CityPickerModal } from '@/components/app-shell/CityPickerModal'
 import { UserProfileScreen, AvatarPreviewModal } from '@/components/app-shell/screens/UserProfileScreen'
 import { SpeciesListModal } from '@/components/app-shell/screens/SpeciesListModal'
+import { PostAnnouncementModal } from '@/components/app-shell/screens/PostAnnouncementModal'
 import { ReportPhotoModal } from '@/components/app-shell/screens/ReportPhotoModal'
 import { DeleteCatchModal } from '@/components/app-shell/screens/DeleteCatchModal'
 import { DeleteTerritoryModal } from '@/components/app-shell/screens/DeleteTerritoryModal'
@@ -203,6 +204,7 @@ export function FishZoneApp() {
   const [viewingFollowersFor, setViewingFollowersFor] = useState<ProfileSummary[] | null>(null)
   const [viewingAvatarUrl, setViewingAvatarUrl] = useState<string | null>(null)
   const [viewingSpeciesFor, setViewingSpeciesFor] = useState<SpeciesEntry[] | null>(null)
+  const [postingAnnouncement, setPostingAnnouncement] = useState(false)
   const { data: editingPublicIdProfile } = useProfile(editingPublicIdUserId)
   const { data: deletingUserProfile } = useProfile(deletingUserId)
   const [pendingCatch, setPendingCatch] = useState<PendingCatch | null>(null)
@@ -806,6 +808,7 @@ export function FishZoneApp() {
             onShareProfile={shareProfile}
             onOpenFollowers={setViewingFollowersFor}
             onOpenSpecies={setViewingSpeciesFor}
+            onPostAnnouncement={() => setPostingAnnouncement(true)}
           />
         </Screen>
         <Screen id="screen-user-profile" current={currentScreen} onBack={pop}>
@@ -1033,6 +1036,7 @@ export function FishZoneApp() {
           }}
         />
       )}
+      {postingAnnouncement && <PostAnnouncementModal onClose={() => setPostingAnnouncement(false)} />}
       {/* Held back while the trophy-card success screen is up so it never stacks
           on top of that screen's own celebration — it shows right after
           "Готово"/"Поделиться уловом" moves on, instead. */}

@@ -8,6 +8,22 @@ import { FishIcon } from '@/components/app-shell/icons'
 
 type Filter = 'all' | 'mine'
 
+// Splitting on a capturing group keeps the URLs themselves in the result
+// array at the odd indices (a plain JS quirk of String.split with a
+// capturing regex) — cheaper and more reliable than re-testing a stateful
+// global regex per part.
+function linkifyBody(text: string) {
+  return text.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+    i % 2 === 1 ? (
+      <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="announcement-link">
+        {part}
+      </a>
+    ) : (
+      part
+    )
+  )
+}
+
 export function ActivityScreen({
   onOpenUser,
   onOpenTerritory,
@@ -47,6 +63,44 @@ export function ActivityScreen({
           <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Загрузка…</div>
         ) : list.length ? (
           list.map((a) => {
+            if (a.kind === 'announcement') {
+              return (
+                <div className="activity-item" key={a.id}>
+                  <div className="avatar" style={{ background: 'var(--accent)', padding: 5 }}>
+                    {/* logo_2.svg's own fill is brand-orange — forced white here
+                        via filter (brightness(0) turns any opaque shape solid
+                        black, invert(1) flips that to white) instead of a
+                        second export, since it now sits on the orange chip. */}
+                    <img
+                      src="/brand/logo_2.svg"
+                      alt="RANGE"
+                      style={{ width: '100%', height: 'auto', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 800 }}>RANGE</div>
+                    <div style={{ fontSize: 13.5, color: 'var(--ink)', marginTop: 4, lineHeight: 1.45, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+                      {linkifyBody(a.body ?? '')}
+                    </div>
+                    {a.buttonLabel && a.buttonUrl && (
+                      <a
+                        href={a.buttonUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-secondary tap-scale"
+                        style={{ width: 'auto', display: 'inline-flex', padding: '9px 18px', fontSize: 13, marginTop: 10 }}
+                      >
+                        {a.buttonLabel}
+                      </a>
+                    )}
+                    <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {unreadIds.has(a.id) && <span className="unread-dot" />}
+                      {formatWhen(a.createdAt)}
+                    </div>
+                  </div>
+                </div>
+              )
+            }
             if (a.kind === 'moderation') {
               return (
                 <div className="activity-item" key={a.id}>

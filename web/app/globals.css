@@ -947,6 +947,7 @@ body{
 }
 
 .activity-item{display:flex; gap:13px; padding:16px 0; border-bottom:1px solid var(--line);}
+.announcement-link{color:var(--accent); font-weight:700; word-break:break-word;}
 .filter-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;}
 .filter-chip{
   padding:8px 15px; border-radius:20px; font-size:13px; font-weight:700; font-family:inherit;

@@ -167,6 +167,48 @@ export type Database = {
           },
         ]
       }
+      announcements: {
+        Row: {
+          author_id: string | null
+          body: string
+          button_label: string | null
+          button_url: string | null
+          created_at: string
+          id: number
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          button_label?: string | null
+          button_url?: string | null
+          created_at?: string
+          id?: never
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          button_label?: string | null
+          button_url?: string | null
+          created_at?: string
+          id?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcements_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catch_likes: {
         Row: {
           catch_id: number
@@ -730,6 +772,10 @@ export type Database = {
       admin_delete_user: { Args: { p_user_id: string }; Returns: undefined }
       admin_dismiss_report: {
         Args: { p_report_id: number }
+        Returns: undefined
+      }
+      admin_post_announcement: {
+        Args: { p_body: string; p_button_label?: string; p_button_url?: string }
         Returns: undefined
       }
       admin_set_admin: {

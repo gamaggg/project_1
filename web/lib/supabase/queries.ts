@@ -433,6 +433,9 @@ export function useActivity() {
           photoUrl: c?.photo_url ?? null,
           catchId: row.catch_id,
           createdAt: row.created_at,
+          body: null,
+          buttonLabel: null,
+          buttonUrl: null,
         }
       })
 
@@ -464,11 +467,60 @@ export function useActivity() {
             photoUrl: null,
             catchId: null,
             createdAt: f.created_at,
+            body: null,
+            buttonLabel: null,
+            buttonUrl: null,
           }
         })
       }
 
-      return [...catchEntries, ...followEntries].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+      // Super-admin broadcasts (see admin_post_announcement) — global, not
+      // scoped to this user or who they follow, so every user's feed shows
+      // the same ones merged in at the right chronological spot.
+      const { data: announcementRows, error: announcementsError } = await supabase
+        .from('announcements')
+        .select('id, body, button_label, button_url, created_at')
+        .order('created_at', { ascending: false })
+        .limit(20)
+      if (announcementsError) throw announcementsError
+      const announcementEntries: ActivityEntry[] = (announcementRows ?? []).map((a) => ({
+        id: `announcement:${a.id}`,
+        who: 'RANGE',
+        userId: '',
+        avatarUrl: null,
+        mine: false,
+        kind: 'announcement',
+        speciesName: null,
+        speciesCategory: null,
+        lengthCm: null,
+        weightKg: null,
+        photoUrl: null,
+        catchId: null,
+        createdAt: a.created_at,
+        body: a.body,
+        buttonLabel: a.button_label,
+        buttonUrl: a.button_url,
+      }))
+
+      return [...catchEntries, ...followEntries, ...announcementEntries].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    },
+  })
+}
+
+export function useAdminPostAnnouncement() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ body, buttonLabel, buttonUrl }: { body: string; buttonLabel?: string; buttonUrl?: string }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_post_announcement', {
+        p_body: body,
+        p_button_label: buttonLabel,
+        p_button_url: buttonUrl,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })
 }

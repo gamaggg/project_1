@@ -299,6 +299,7 @@ export function ProfileScreen({
   onShareProfile,
   onOpenFollowers,
   onOpenSpecies,
+  onPostAnnouncement,
 }: {
   myTerritories: Territory[]
   allTerritories: Territory[]
@@ -322,6 +323,7 @@ export function ProfileScreen({
   onShareProfile: (publicId: string, text: string) => void
   onOpenFollowers: (people: ProfileSummary[]) => void
   onOpenSpecies: (species: SpeciesEntry[]) => void
+  onPostAnnouncement: () => void
 }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
@@ -575,6 +577,11 @@ export function ProfileScreen({
               Последние действия
             </button>
             {adminLogUnreadCount > 0 && <span className="btn-badge">{adminLogUnreadCount}</span>}
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <button className="btn-secondary" onClick={onPostAnnouncement}>
+              Написать пост
+            </button>
           </div>
         </>
       )}
