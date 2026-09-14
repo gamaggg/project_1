@@ -1,6 +1,6 @@
 'use client'
 
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { MapView } from '@/components/app-shell/MapView'
 import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import type { Territory } from '@/lib/data/types'
@@ -131,6 +131,13 @@ export const MapScreen = forwardRef<
   }
 
   const sheetRowRef = useRef<HTMLDivElement>(null)
+  // A fast fixed-duration scroll (see scrollToCardFast) barely reads as
+  // "something moved" when the target card was already near the viewport —
+  // the id text changing is easy to miss entirely. This flashes a ring
+  // around whichever card a map tap landed on, independent of the scroll
+  // itself, so the "which one did I just pick" question has an answer even
+  // when the scroll distance was tiny or zero.
+  const [justSelectedId, setJustSelectedId] = useState<string | null>(null)
   // A plain tap on a sector used to jump straight into its full screen — too
   // heavy for "just checking if there's fish there". The sheet carousel
   // below already shows exactly that summary per sector (id/status/catch
@@ -148,6 +155,7 @@ export const MapScreen = forwardRef<
     const row = sheetRowRef.current
     const card = row?.querySelector<HTMLElement>(`[data-id="${id}"]`)
     if (row && card) scrollToCardFast(row, card)
+    setJustSelectedId(id)
   }
 
   function handleScroll(e: React.UIEvent<HTMLDivElement>) {
@@ -263,7 +271,12 @@ export const MapScreen = forwardRef<
         <div className="map-sheet-container">
           <div className="map-sheet-row" ref={sheetRowRef} onScroll={handleScroll} onPointerDown={markUserScroll} onWheel={markUserScroll}>
             {territories.map((t) => (
-              <div className="map-sheet-card" key={t.id} data-id={t.id}>
+              <div
+                className={`map-sheet-card${t.id === justSelectedId ? ' map-sheet-card-pulse' : ''}`}
+                key={t.id}
+                data-id={t.id}
+                onAnimationEnd={() => setJustSelectedId((cur) => (cur === t.id ? null : cur))}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ fontSize: 21, fontWeight: 800 }}>{t.id}</div>
                   {statusBadge(t.status, myTerritoryColor)}

@@ -547,17 +547,40 @@ body{
   overflow-x:auto;
   scroll-snap-type:x mandatory;
   -webkit-overflow-scrolling:touch;
-  padding:0 12px;
+  /* overflow-x:auto forces the y-axis to clip too (a non-'visible' axis
+     drags the other one along with it), so the card's selection-pulse ring
+     (map-sheet-card-pulse, up to 6px of box-shadow spread) had nowhere to
+     render above/below the card and got cut off flush with its edge —
+     8px top/bottom gives that spread actual room. The container below
+     anchors by bottom:94px, so the extra height grows upward only. */
+  padding:8px 12px;
 }
 .map-sheet-row::-webkit-scrollbar{display:none;}
 .map-sheet-card{
   scroll-snap-align:center;
-  flex:0 0 84%;
+  /* Was 84% so neighboring cards peeked in on both sides as a "swipe for
+     more" hint — the peek itself read as clutter (a truncated id/button
+     with no room to actually use), so the card now fills the full row
+     width instead; neighbors sit fully off-screen until scrolled to. */
+  flex:0 0 100%;
   background:var(--surface);
   border-radius:var(--radius-l);
   padding:14px 16px 16px;
   display:flex; flex-direction:column; gap:8px;
 }
+/* Tapping a sector on the map (MapScreen's handlePolygonSelect) flashes this
+   on whichever carousel card it landed on — the fixed-duration scroll fix
+   (see scrollToCardFast) reads as "barely moved" when the target was
+   already close by, so the id text alone wasn't enough confirmation of
+   which sector got picked. Ring + a hair of scale, no opacity (see
+   CatchPhotoScreen's own history for why that's avoided against a
+   same-color background) — settles back to nothing on its own. */
+@keyframes map-sheet-card-pulse{
+  0%{box-shadow:0 0 0 0 rgba(252,82,0,0); transform:scale(1);}
+  45%{box-shadow:0 0 0 6px rgba(252,82,0,0.28); transform:scale(1.02);}
+  100%{box-shadow:0 0 0 0 rgba(252,82,0,0); transform:scale(1);}
+}
+.map-sheet-card-pulse{animation:map-sheet-card-pulse .9s var(--ease-in-out);}
 .user-location-icon{background:none; border:none;}
 .user-location-dot{
   width:16px; height:16px; border-radius:50%;
