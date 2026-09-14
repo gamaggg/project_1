@@ -180,6 +180,13 @@ export const MapScreen = forwardRef<
     }, 120)
   }
 
+  // territories arrives already sorted by catch count (see useTerritories),
+  // so index 0 is exactly the sector shown first on open — labeling it here
+  // makes that ordering visible instead of just an unexplained first card.
+  // Guarded on catchCount so an empty city (everyone at 0) doesn't call some
+  // arbitrary sector "most popular".
+  const mostPopularId = territories[0]?.catchCount ? territories[0].id : null
+
   return (
     <div className="screen-inner" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}>
       {(geoPermission === 'prompt' || geoPermission === 'denied') && (
@@ -280,6 +287,7 @@ export const MapScreen = forwardRef<
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ fontSize: 21, fontWeight: 800 }}>{t.id}</div>
                   {statusBadge(t.status, myTerritoryColor)}
+                  {t.id === mostPopularId && <span className="badge badge-accent">🔥 Самый популярный</span>}
                 </div>
                 <div style={{ display: 'flex', gap: 18, fontSize: 13, color: 'var(--ink-soft)', fontWeight: 600 }}>
                   <span>Уловов {t.catchCount}</span>
