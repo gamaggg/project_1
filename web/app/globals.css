@@ -517,10 +517,14 @@ body{
 .sector-hero-map-icons{position:absolute; top:calc(env(safe-area-inset-top) + var(--tg-safe-area-top, 0px) + 10px); left:12px; right:12px; display:flex; justify-content:space-between; z-index:10;}
 .sector-dock-card{
   position:relative; z-index:5; margin:-26px 0 0; background:var(--surface);
-  border-radius:var(--radius-l) var(--radius-l) 0 0; padding:20px 20px 4px;
+  border-radius:var(--radius-l) var(--radius-l) 0 0; padding:12px 20px 4px;
   box-shadow:0 -14px 26px rgba(23,24,27,0.07);
   animation:sectorDockIn .42s var(--ease-out);
 }
+/* Tighter leading than .page-title's default just for the sector id's own
+   forced second line — its normal line-height reads as a gap, not a
+   two-line title, at this font size. */
+.sector-dock-card .page-title{line-height:1.02;}
 /* Starts low enough that the card's own top edge sits below the map's
    bottom edge — it visibly rises up and over the map into its resting,
    overlapping position, rather than just nudging into place. */
