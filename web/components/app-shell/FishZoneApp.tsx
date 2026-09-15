@@ -26,6 +26,7 @@ import { OnboardingFlow } from '@/components/app-shell/onboarding/OnboardingFlow
 import { ForgotPasswordFlow } from '@/components/app-shell/onboarding/ForgotPasswordFlow'
 import { LinkEmailFlow } from '@/components/app-shell/onboarding/LinkEmailFlow'
 import { useTelegramBackButton } from '@/lib/telegram/useTelegramBackButton'
+import { hapticBuildUp, hapticTap } from '@/lib/telegram/haptics'
 import { BottomNav } from '@/components/app-shell/BottomNav'
 import { MapScreen } from '@/components/app-shell/screens/MapScreen'
 import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
@@ -142,6 +143,19 @@ export function FishZoneApp() {
   const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories, territoriesReady, city)
   const { show: showWeekTop, entry: weekTopEntry, dismiss: dismissWeekTop } = useWeekTopModal(city)
   useRealtimeSync()
+
+  // One delegated listener for the whole app instead of wiring a haptic tap
+  // into every individual button — .tap-scale is already the established
+  // "this is a tappable element" marker used throughout app-shell (see its
+  // globals.css definition), so any click landing on/inside one gets the
+  // same light buzz for free.
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if ((e.target as HTMLElement | null)?.closest?.('.tap-scale')) hapticTap()
+    }
+    document.addEventListener('click', onClick)
+    return () => document.removeEventListener('click', onClick)
+  }, [])
 
   // Jumps straight to the map tab on switch — the whole point of picking a
   // city is to see its sectors, and that's the one screen where the change
@@ -491,6 +505,7 @@ export function FishZoneApp() {
       setWasFree(t?.status !== 'mine')
       setPendingCatch(payload)
       setConfirmStep('success')
+      hapticBuildUp()
     } catch (err) {
       // Supabase's PostgrestError isn't an Error instance — duck-type the
       // message instead of `instanceof Error` (see confirm_catch's

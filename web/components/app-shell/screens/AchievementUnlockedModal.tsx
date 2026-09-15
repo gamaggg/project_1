@@ -1,9 +1,10 @@
 'use client'
 
-import { cloneElement, useMemo, type ReactElement } from 'react'
+import { cloneElement, useEffect, useMemo, type ReactElement } from 'react'
 import type { Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import { HexBadge } from '@/components/app-shell/HexBadge'
+import { hapticSuccess } from '@/lib/telegram/haptics'
 
 const CONFETTI_COLORS = ['#FF6B6B', '#FB6A16', '#B5E254', '#4CC9F0', '#E63946', '#7EF5A0', '#EEAAE3', '#A88EF5', '#FFD60A']
 
@@ -35,6 +36,11 @@ export function AchievementUnlockedModal({
       }),
     [achievement.icon]
   )
+
+  useEffect(() => {
+    hapticSuccess()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleShare() {
     const text = `🏆 Я получил достижение «${achievement.title}» в RANGE!\n${achievement.desc}\n\nПрисоединяйся и сразимся за территории на побережье Батуми 🎣\n${window.location.origin}`
