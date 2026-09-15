@@ -84,7 +84,13 @@ export function WavyBackground({
         ctx!.lineWidth = waveWidth
         ctx!.strokeStyle = colors[i % colors.length]
         for (let x = 0; x <= w; x += 5) {
-          const y = noise3D(x / 800, 0.3 * i, nt) * (h * 0.18) + h * 0.5
+          // The reference's x/800 was tuned for a full-viewport-wide canvas
+          // (1500px+) where that stretch of noise reads as a couple of
+          // organic undulations. Our hero panel is a few hundred px wide —
+          // the same divisor there only covers a fraction of one, reading
+          // as a single arc bent to fit the box rather than a slice of a
+          // continuously flowing pattern, so scale the divisor down with it.
+          const y = noise3D(x / 220, 0.3 * i, nt) * (h * 0.18) + h * 0.5
           ctx!.lineTo(x, y)
         }
         ctx!.stroke()
