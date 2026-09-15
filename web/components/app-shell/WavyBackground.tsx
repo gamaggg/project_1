@@ -35,13 +35,6 @@ export function WavyBackground({
   waveOpacity?: number
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  // A CSS-blurred element fades to transparent past its own box — there's
-  // nothing outside it to blend with — so a canvas sized exactly to the
-  // visible area shows that fade as a dark frame around the waves instead
-  // of them reaching the edge. Rendering margin px oversized on every side
-  // (clipped away by the parent's overflow:hidden) pushes that fade zone
-  // outside the visible area entirely.
-  const margin = blur * 3
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -58,18 +51,17 @@ export function WavyBackground({
     let nt = 0
     let frameId = 0
 
-    // Returns whether the canvas (sized off its own CSS box, which is the
-    // container plus the oversize margin — see `margin` above) had a real
-    // (non-zero) size to measure. Telegram's in-app browser can run this
-    // effect before the hero panel has actually been laid out —
-    // clientWidth/clientHeight read 0 (or some transient wrong value) at
-    // that instant, and drawing at that size then gets stretched by the
-    // canvas's own CSS box into a blocky, torn-looking mess. Regular
-    // browser tabs don't hit this because layout has already settled by
-    // the time this effect runs.
+    // Returns whether the container had a real (non-zero) size to measure.
+    // Telegram's in-app browser can run this effect before the hero panel
+    // has actually been laid out — clientWidth/clientHeight read 0 (or some
+    // transient wrong value) at that instant, and a canvas sized off that
+    // then gets stretched by the width:100%/height:100% CSS below into the
+    // blocky, torn-looking mess this was reported as. Regular browser tabs
+    // don't hit this because layout has already settled by the time this
+    // effect runs.
     function resize() {
-      w = canvas!.clientWidth
-      h = canvas!.clientHeight
+      w = container!.clientWidth
+      h = container!.clientHeight
       if (w === 0 || h === 0) return false
       canvas!.width = w * dpr
       canvas!.height = h * dpr
@@ -79,18 +71,18 @@ export function WavyBackground({
 
     function drawWave(n: number) {
       nt += getSpeed()
+      // Drawn (and sampled for noise) past both edges by the blur radius —
+      // ctx.filter's blur only has the canvas's own bitmap to sample from,
+      // so a line stopping exactly at x=0/x=w gets blurred against nothing
+      // but backgroundFill just past it, reading as a dark frame around the
+      // waves instead of them reaching the true edge.
+      const margin = blur * 3
       for (let i = 0; i < n; i++) {
         ctx!.beginPath()
         ctx!.lineWidth = waveWidth
         ctx!.strokeStyle = colors[i % colors.length]
-        for (let x = 0; x <= w; x += 5) {
-          // The reference's x/800 was tuned for a full-viewport-wide canvas
-          // (1500px+) where that stretch of noise reads as a couple of
-          // organic undulations. Our hero panel is a few hundred px wide —
-          // the same divisor there only covers a fraction of one, reading
-          // as a single arc bent to fit the box rather than a slice of a
-          // continuously flowing pattern, so scale the divisor down with it.
-          const y = noise3D(x / 220, 0.3 * i, nt) * (h * 0.18) + h * 0.5
+        for (let x = -margin; x <= w + margin; x += 5) {
+          const y = noise3D(x / 800, 0.3 * i, nt) * (h * 0.18) + h * 0.5
           ctx!.lineTo(x, y)
         }
         ctx!.stroke()
@@ -143,7 +135,9 @@ export function WavyBackground({
       ref={canvasRef}
       style={{
         position: 'absolute',
-        inset: -margin,
+        inset: 0,
+        width: '100%',
+        height: '100%',
         display: 'block',
         zIndex: -1,
         // Always blurred via a CSS filter on the element itself, not
