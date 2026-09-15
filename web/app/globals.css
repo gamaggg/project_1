@@ -172,19 +172,15 @@ body{
   -webkit-backdrop-filter: blur(14px);
   border-top:1px solid var(--line);
   box-shadow: 0 -10px 26px rgba(23,24,27,0.06);
-  /* grid, not flex+space-between: 5 equal columns can't drift out of even
-     spacing the way space-between can when .bottomnav's own rendered width
-     shifts by a pixel or two between contexts (regular Safari tab vs iOS
-     standalone PWA) — each item just centers in its own 1fr slice. */
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
+  display:flex;
   align-items:center;
+  justify-content:space-between;
   padding:0 20px calc(env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px));
   z-index:40;
 }
 .navitem{
   display:flex; flex-direction:column; align-items:center; gap:6px;
-  justify-self:center;
+  width:56px;
   cursor:pointer;
   color:var(--ink-faint);
   background:none; border:none; font-family:inherit;
