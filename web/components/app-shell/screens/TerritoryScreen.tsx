@@ -141,15 +141,19 @@ export function TerritoryScreen({
       </div>
       <div style={{ padding: '0 20px 100px' }}>
         <div className="sector-dock-card">
-          {/* Own line for the title, not squeezed against the badges on one
-              row — with both "Занята" and "Самый популярный" showing, that
-              row left too little room and ellipsized the sector id itself. */}
-          <div className="page-title" style={{ marginTop: 2 }}>
-            Сектор {territory.id}
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-            {statusBadge(territory.status, myTerritoryColor)}
-            {isMostPopular && <span className="badge badge-accent">🔥 Самый популярный</span>}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+            {/* "Сектор" and the id forced onto their own lines so the id
+                never ellipsizes, regardless of how much width the badge
+                column on the right takes up. */}
+            <div className="page-title" style={{ marginTop: 2 }}>
+              Сектор
+              <br />
+              {territory.id}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+              {statusBadge(territory.status, myTerritoryColor)}
+              {isMostPopular && <span className="badge badge-accent">🔥 Самый популярный</span>}
+            </div>
           </div>
           <div className="page-sub" style={{ marginBottom: 0 }}>
             {KIND_LABEL[territory.kind]}
