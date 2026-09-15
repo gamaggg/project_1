@@ -8,7 +8,7 @@ import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { TerritoryThumbnailMapView } from '@/components/app-shell/TerritoryThumbnailMapView'
 import { BackButton } from '@/components/app-shell/BackButton'
 
-function statusBadge(status: Territory['status'], myTerritoryColor: string) {
+export function statusBadge(status: Territory['status'], myTerritoryColor: string) {
   if (status === 'mine')
     return (
       <span className="badge" style={{ background: withAlpha(myTerritoryColor, 0.16), color: darkenForBadgeText(myTerritoryColor) }}>
@@ -20,7 +20,7 @@ function statusBadge(status: Territory['status'], myTerritoryColor: string) {
   return <span className="badge badge-neutral">Свободна</span>
 }
 
-function OwnerRow({ ownerId, isMine, onOpenUser }: { ownerId: string; isMine: boolean; onOpenUser: (id: string) => void }) {
+export function OwnerRow({ ownerId, isMine, onOpenUser }: { ownerId: string; isMine: boolean; onOpenUser: (id: string) => void }) {
   const { data: profile } = useProfile(ownerId)
   const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
   return (
