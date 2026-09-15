@@ -532,7 +532,7 @@ body{
 /* One size for all four — two of these used to render a couple of px
    larger (a leftover per-item inline override on the numeric-only ones),
    which threw the row's baselines out of line across columns. */
-.sector-stat-strip .value{font-family:var(--font-display),'Manrope',sans-serif; font-size:15.5px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.25;}
+.sector-stat-strip .value{font-size:15.5px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.25;}
 .sector-stat-strip .label{font-size:10.5px; color:var(--ink-soft); font-weight:700; margin-top:3px; text-transform:uppercase; letter-spacing:0.3px;}
 .sector-row-plain{display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line);}
 .sector-row-plain:last-child{border-bottom:none;}
