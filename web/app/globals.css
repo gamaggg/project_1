@@ -489,13 +489,13 @@ body{
    overflow risk as .header-row/.terr-list-item, but here nothing else clips
    it, so it can push the whole screen into horizontal scroll. */
 .owner-row > div:last-child{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
-.owner-row .owner-avatar{
+.owner-avatar{
   width:32px; height:32px; border-radius:50%; flex:0 0 auto;
   background:linear-gradient(160deg,#FF7A38,var(--accent) 70%);
   color:#fff; display:flex; align-items:center; justify-content:center;
   font-weight:800; font-size:12px; overflow:hidden;
 }
-.owner-row .owner-avatar img{width:100%; height:100%; object-fit:cover;}
+.owner-avatar img{width:100%; height:100%; object-fit:cover;}
 .territory-thumb-wrap{position:relative; isolation:isolate; width:100%; height:150px; border-radius:var(--radius-l); overflow:hidden; margin-top:16px; box-shadow:var(--shadow-sm);}
 .territory-thumb-map{width:100%; height:100%; background:#DCE7E9;}
 .territory-thumb-overlay{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:6px; pointer-events:none; z-index:1000;}
@@ -698,6 +698,32 @@ body{
 @keyframes user-location-pulse{
   0%{transform:scale(0.4); opacity:0.8;}
   100%{transform:scale(1.7); opacity:0;}
+}
+/* ---------- Tapped-sector highlight — TEMPORARY 3-way A/B test, see
+   MapScreen's style switcher and LeafletMap's highlightStyle prop. Drop the
+   two unpicked variants once one is chosen. Rendered as a real SVG <path>
+   (not the map's own Canvas layer — see LeafletMap's svgRendererRef), so it
+   can actually be animated with CSS. ---------- */
+.sector-highlight--glow{
+  filter:drop-shadow(0 0 6px rgba(252,82,0,.85));
+  animation:sectorGlowBreathe 1.6s var(--ease-in-out) infinite;
+}
+@keyframes sectorGlowBreathe{
+  0%,100%{filter:drop-shadow(0 0 4px rgba(252,82,0,.6)); opacity:.85;}
+  50%{filter:drop-shadow(0 0 11px rgba(252,82,0,1)); opacity:1;}
+}
+.sector-highlight--dash{
+  stroke-dasharray:9 7;
+  animation:sectorMarchingAnts .6s linear infinite;
+}
+@keyframes sectorMarchingAnts{from{stroke-dashoffset:0;} to{stroke-dashoffset:-16;}}
+.sector-highlight--pop{
+  transform-origin:center;
+  animation:sectorPop .22s var(--ease-out);
+}
+@keyframes sectorPop{from{transform:scale(0.72); opacity:0;} to{transform:scale(1); opacity:1;}}
+@media (prefers-reduced-motion: reduce){
+  .sector-highlight--glow, .sector-highlight--dash, .sector-highlight--pop{animation:none;}
 }
 .leaflet-territory-marker-wrap{background:transparent; border:none; box-shadow:none;}
 .leaflet-territory-marker{display:flex; flex-direction:column; align-items:center; gap:3px; pointer-events:none;}

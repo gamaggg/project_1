@@ -84,9 +84,27 @@ export const LeafletMap = forwardRef<
     onClickEmptyMap?: (lat: number, lng: number) => void
     fallbackCenter?: [number, number]
     fallbackZoom?: number
+    // TEMPORARY — 3-way A/B test of the tapped-sector highlight (see
+    // MapScreen's own switcher). Drop the style prop (keep just one
+    // implementation) once a style is picked.
+    highlightedId?: string | null
+    highlightStyle?: 'glow' | 'dash' | 'pop'
   }
 >(function LeafletMap(
-  { territories, myTerritoryColor, onSelect, selectedIds, onLongPressTerritory, pendingAddDrafts, onLongPressEmptyMap, onClickEmptyMap, fallbackCenter, fallbackZoom },
+  {
+    territories,
+    myTerritoryColor,
+    onSelect,
+    selectedIds,
+    onLongPressTerritory,
+    pendingAddDrafts,
+    onLongPressEmptyMap,
+    onClickEmptyMap,
+    fallbackCenter,
+    fallbackZoom,
+    highlightedId,
+    highlightStyle = 'glow',
+  },
   ref
 ) {
     const containerRef = useRef<HTMLDivElement>(null)
@@ -94,6 +112,13 @@ export const LeafletMap = forwardRef<
     const leafletRef = useRef<typeof import('leaflet') | null>(null)
     const markersLayerRef = useRef<L.LayerGroup | null>(null)
     const labelsLayerRef = useRef<L.LayerGroup | null>(null)
+    // SVG-rendered (not the map's own Canvas renderer — see preferCanvas
+    // below) so the highlight polygon is a real DOM element CSS can animate.
+    // Only ever holds the single currently-tapped sector, so the usual
+    // per-polygon-DOM-node cost that ruled out SVG for the other ~700
+    // sectors doesn't apply here.
+    const highlightLayerRef = useRef<L.LayerGroup | null>(null)
+    const svgRendererRef = useRef<L.Renderer | null>(null)
     const userMarkerRef = useRef<L.Marker | null>(null)
     const onSelectRef = useRef(onSelect)
     onSelectRef.current = onSelect
@@ -319,6 +344,8 @@ export const LeafletMap = forwardRef<
 
         markersLayerRef.current = L.layerGroup().addTo(map)
         labelsLayerRef.current = L.layerGroup()
+        svgRendererRef.current = L.svg({ padding: 0.6 })
+        highlightLayerRef.current = L.layerGroup().addTo(map)
 
         map.setView(fallbackCenter ?? FALLBACK_CENTER, fallbackZoom ?? FALLBACK_ZOOM)
 
@@ -425,6 +452,26 @@ export const LeafletMap = forwardRef<
       draw(territories)
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [territories, myTerritoryColor, selectedIds, pendingAddDrafts])
+
+    // Kept separate from the effect above — retargeting the highlight on
+    // every tap shouldn't re-run a full ~700-polygon canvas redraw.
+    useEffect(() => {
+      const L = leafletRef.current
+      const layer = highlightLayerRef.current
+      const renderer = svgRendererRef.current
+      if (!L || !layer || !renderer) return
+      layer.clearLayers()
+      const t = highlightedId ? territories.find((x) => x.id === highlightedId) : null
+      if (!t) return
+      L.polygon(t.corners, {
+        renderer,
+        className: `sector-highlight sector-highlight--${highlightStyle}`,
+        color: '#FC5200',
+        weight: 3,
+        fill: false,
+        interactive: false,
+      }).addTo(layer)
+    }, [highlightedId, highlightStyle, territories])
 
     return <div id="leafletMap" ref={containerRef} />
   }
