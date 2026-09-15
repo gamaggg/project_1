@@ -809,6 +809,7 @@ export function FishZoneApp() {
             onOpenFollowers={setViewingFollowersFor}
             onOpenSpecies={setViewingSpeciesFor}
             onPostAnnouncement={() => setPostingAnnouncement(true)}
+            onEditPublicId={setEditingPublicIdUserId}
           />
         </Screen>
         <Screen id="screen-user-profile" current={currentScreen} onBack={pop}>

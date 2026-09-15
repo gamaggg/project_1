@@ -311,6 +311,7 @@ export function ProfileScreen({
   onOpenFollowers,
   onOpenSpecies,
   onPostAnnouncement,
+  onEditPublicId,
 }: {
   myTerritories: Territory[]
   allTerritories: Territory[]
@@ -335,6 +336,7 @@ export function ProfileScreen({
   onOpenFollowers: (people: ProfileSummary[]) => void
   onOpenSpecies: (species: SpeciesEntry[]) => void
   onPostAnnouncement: () => void
+  onEditPublicId: (id: string) => void
 }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
@@ -600,6 +602,13 @@ export function ProfileScreen({
               Написать пост
             </button>
           </div>
+          {user && (
+            <div style={{ marginTop: 12 }}>
+              <button className="btn-secondary" onClick={() => onEditPublicId(user.id)}>
+                Изменить ID
+              </button>
+            </div>
+          )}
         </>
       )}
 
