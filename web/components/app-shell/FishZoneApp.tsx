@@ -762,6 +762,7 @@ export function FishZoneApp() {
           {viewingTerritory && (
             <TerritoryScreen
               territory={viewingTerritory}
+              isMostPopular={!!cityTerritories[0]?.catchCount && cityTerritories[0].id === viewingTerritory.id}
               myTerritoryColor={myTerritoryColor}
               onBack={pop}
               onOpenUser={openUserProfile}

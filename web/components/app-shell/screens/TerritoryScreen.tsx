@@ -58,6 +58,7 @@ export function CatcherLabel({ userId, mine, onOpenUser }: { userId: string; min
 // the geolocation gate entirely (see DECISIONS.md, admin bypass).
 export function TerritoryScreen({
   territory,
+  isMostPopular,
   onBack,
   onOpenUser,
   onOpenPhoto,
@@ -68,6 +69,7 @@ export function TerritoryScreen({
   myTerritoryColor,
 }: {
   territory: Territory
+  isMostPopular: boolean
   onBack: () => void
   onOpenUser: (id: string) => void
   onOpenPhoto: (catchId: number) => void
@@ -105,6 +107,11 @@ export function TerritoryScreen({
           <div className="page-sub" style={{ marginBottom: 0 }}>
             {KIND_LABEL[territory.kind]}
           </div>
+          {isMostPopular && (
+            <div style={{ marginTop: 8 }}>
+              <span className="badge badge-accent">🔥 Самый популярный</span>
+            </div>
+          )}
         </div>
         {territory.ownerId && (
           <OwnerRow ownerId={territory.ownerId} isMine={territory.status === 'mine'} onOpenUser={onOpenUser} />
