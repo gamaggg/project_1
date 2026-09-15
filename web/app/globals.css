@@ -77,9 +77,13 @@ body{
 .app-shell{
   max-width:480px;
   margin:0 auto;
-  min-height:100dvh;
+  /* position:fixed + inset:0 anchors directly to the true viewport edges —
+     unlike min-height:100dvh (the previous rule here), this can't fall short
+     of the real safe-area-inclusive screen height on iOS standalone PWA,
+     since it isn't computed from any vh-family unit at all. */
+  position:fixed;
+  inset:0;
   background:var(--bg);
-  position:relative;
   display:flex;
   flex-direction:column;
   overflow:hidden;
