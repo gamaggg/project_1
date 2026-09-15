@@ -4,7 +4,7 @@ import { useCatchesByTerritory, useProfile, useCanAddCatchManually, useIsSuperAd
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import type { Territory } from '@/lib/data/types'
-import { withAlpha, darkenForBadgeText, resolveTerritoryColor } from '@/lib/data/territoryColors'
+import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { TerritoryThumbnailMapView } from '@/components/app-shell/TerritoryThumbnailMapView'
 import { BackButton } from '@/components/app-shell/BackButton'
 
@@ -21,18 +21,16 @@ export function statusBadge(status: Territory['status'], myTerritoryColor: strin
 }
 
 // The one person this whole screen is really about — given its own small
-// "profile card" moment (ring the avatar in the sector's own status color,
-// a caption above naming what they did) rather than folding them into a
+// "profile card" moment (ring the avatar in the brand's own orange, a
+// caption above naming what they did) rather than folding them into a
 // plain nav row like every other "open a profile" link in the app.
 function SectorOwnerCard({
   ownerId,
   isMine,
-  ringColor,
   onOpenUser,
 }: {
   ownerId: string
   isMine: boolean
-  ringColor: string
   onOpenUser: (id: string) => void
 }) {
   const { data: profile } = useProfile(ownerId)
@@ -45,7 +43,7 @@ function SectorOwnerCard({
         onClick={() => onOpenUser(ownerId)}
         disabled={isMine}
       >
-        <div className="sector-owner-highlight-avatar" style={{ '--ring-color': ringColor } as React.CSSProperties}>
+        <div className="sector-owner-highlight-avatar">
           {profile?.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : initials}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -143,25 +141,21 @@ export function TerritoryScreen({
       </div>
       <div style={{ padding: '0 20px 100px' }}>
         <div className="sector-dock-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-            <div className="page-title" style={{ marginTop: 2 }}>
-              Сектор {territory.id}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-              {statusBadge(territory.status, myTerritoryColor)}
-              {isMostPopular && <span className="badge badge-accent">🔥 Самый популярный</span>}
-            </div>
+          {/* Own line for the title, not squeezed against the badges on one
+              row — with both "Занята" and "Самый популярный" showing, that
+              row left too little room and ellipsized the sector id itself. */}
+          <div className="page-title" style={{ marginTop: 2 }}>
+            Сектор {territory.id}
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+            {statusBadge(territory.status, myTerritoryColor)}
+            {isMostPopular && <span className="badge badge-accent">🔥 Самый популярный</span>}
           </div>
           <div className="page-sub" style={{ marginBottom: 0 }}>
             {KIND_LABEL[territory.kind]}
           </div>
           {territory.ownerId && (
-            <SectorOwnerCard
-              ownerId={territory.ownerId}
-              isMine={territory.status === 'mine'}
-              ringColor={resolveTerritoryColor(territory.status, myTerritoryColor)}
-              onOpenUser={onOpenUser}
-            />
+            <SectorOwnerCard ownerId={territory.ownerId} isMine={territory.status === 'mine'} onOpenUser={onOpenUser} />
           )}
           {canAddCatchManually && (
             <button className="btn-secondary" style={{ marginTop: 12 }} onClick={() => onAdminCatch(territory.id)}>
