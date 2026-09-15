@@ -441,6 +441,11 @@ body{
 @media (prefers-reduced-motion: reduce){.profile-hero::before{animation:none;}}
 .profile-hero .icon-btn{background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.16);}
 .profile-hero .icon-back{stroke:#fff;}
+/* The share icon-btn (ProfileScreen/UserProfileScreen header) has no class
+   of its own to hook like .icon-back does — its stroke is a plain "#17181B"
+   presentation attribute on the <svg>, which read as a barely-visible dark
+   smudge against this hero's dark gradient. */
+.profile-hero .icon-btn svg{stroke:#fff;}
 .profile-hero-avatar-ring{position:relative; width:108px; height:108px; margin:14px auto 0;}
 .profile-hero .profile-avatar{box-shadow:none;}
 .profile-hero-avatar-btn{
