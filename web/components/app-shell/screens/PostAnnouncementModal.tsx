@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import { useAdminPostAnnouncement } from '@/lib/supabase/queries'
+import { uploadAnnouncementPhoto } from '@/lib/supabase/storage'
 
 const MAX_LENGTH = 2000
+const MAX_PHOTO_BYTES = 8 * 1024 * 1024
 
 // Rendered by FishZoneApp itself, same reasoning as every other app-shell
 // modal (see DECISIONS.md). Super admin only — admin_post_announcement
@@ -14,6 +16,9 @@ export function PostAnnouncementModal({ onClose }: { onClose: () => void }) {
   const [body, setBody] = useState('')
   const [buttonLabel, setButtonLabel] = useState('')
   const [buttonUrl, setButtonUrl] = useState('')
+  const [broadcastTelegram, setBroadcastTelegram] = useState(false)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [photoStatus, setPhotoStatus] = useState<'idle' | 'uploading' | 'error'>('idle')
   const postAnnouncement = useAdminPostAnnouncement()
   const trimmed = body.trim()
   const trimmedLabel = buttonLabel.trim()
@@ -22,7 +27,25 @@ export function PostAnnouncementModal({ onClose }: { onClose: () => void }) {
   // matches admin_post_announcement's own check, checked here too so the bad
   // combo never reaches the network round trip.
   const buttonHalfFilled = !!trimmedLabel !== !!trimmedUrl
-  const valid = trimmed.length > 0 && trimmed.length <= MAX_LENGTH && !buttonHalfFilled
+  const valid = trimmed.length > 0 && trimmed.length <= MAX_LENGTH && !buttonHalfFilled && photoStatus !== 'uploading'
+
+  async function handlePhotoPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (file.size > MAX_PHOTO_BYTES) {
+      setPhotoStatus('error')
+      return
+    }
+    setPhotoStatus('uploading')
+    try {
+      const url = await uploadAnnouncementPhoto(file)
+      setPhotoUrl(url)
+      setPhotoStatus('idle')
+    } catch {
+      setPhotoStatus('error')
+    }
+  }
 
   async function handlePost() {
     if (!valid) return
@@ -30,6 +53,8 @@ export function PostAnnouncementModal({ onClose }: { onClose: () => void }) {
       body: trimmed,
       buttonLabel: trimmedLabel || undefined,
       buttonUrl: trimmedUrl || undefined,
+      broadcastTelegram,
+      photoUrl: photoUrl || undefined,
     })
     onClose()
   }
@@ -76,6 +101,50 @@ export function PostAnnouncementModal({ onClose }: { onClose: () => void }) {
         {buttonHalfFilled && (
           <div style={{ color: '#D33', fontSize: 12.5, fontWeight: 600, marginTop: -8, marginBottom: 8 }}>
             Заполни и текст кнопки, и ссылку
+          </div>
+        )}
+
+        <div className="perm-switch-row" style={{ marginTop: 4 }}>
+          <div className="perm-switch-label">Отправить также в Telegram-бот</div>
+          <button
+            type="button"
+            className={`perm-switch${broadcastTelegram ? ' on' : ''}`}
+            aria-label="Отправить также в Telegram-бот"
+            aria-pressed={broadcastTelegram}
+            onClick={() => setBroadcastTelegram((v) => !v)}
+          />
+        </div>
+
+        {broadcastTelegram && (
+          <div style={{ marginTop: 4, marginBottom: 8 }}>
+            <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginBottom: 8 }}>
+              Уйдёт сообщением каждому, кто хоть раз запускал бота. Фото — необязательно, но в Telegram оно смотрится
+              заметно живее, чем просто текст.
+            </div>
+            {photoUrl ? (
+              <div style={{ position: 'relative', width: 120 }}>
+                <img src={photoUrl} alt="" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 12 }} />
+                <div
+                  className="modal-close tap-scale"
+                  style={{ position: 'absolute', top: -8, right: -8, width: 26, height: 26 }}
+                  onClick={() => setPhotoUrl(null)}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.6" strokeLinecap="round">
+                    <path d="M6 6l12 12M18 6L6 18" />
+                  </svg>
+                </div>
+              </div>
+            ) : (
+              <label className="btn-secondary tap-scale" style={{ width: 'auto', display: 'inline-flex', padding: '9px 18px', fontSize: 13, cursor: 'pointer' }}>
+                {photoStatus === 'uploading' ? 'Загружаем…' : 'Добавить фото'}
+                <input type="file" accept="image/*" onChange={handlePhotoPick} style={{ display: 'none' }} disabled={photoStatus === 'uploading'} />
+              </label>
+            )}
+            {photoStatus === 'error' && (
+              <div style={{ color: '#D33', fontSize: 12.5, fontWeight: 600, marginTop: 8 }}>
+                Не удалось загрузить фото (максимум 8 МБ), попробуй ещё раз
+              </div>
+            )}
           </div>
         )}
 

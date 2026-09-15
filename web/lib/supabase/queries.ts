@@ -510,12 +510,26 @@ export function useActivity() {
 export function useAdminPostAnnouncement() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ body, buttonLabel, buttonUrl }: { body: string; buttonLabel?: string; buttonUrl?: string }) => {
+    mutationFn: async ({
+      body,
+      buttonLabel,
+      buttonUrl,
+      broadcastTelegram,
+      photoUrl,
+    }: {
+      body: string
+      buttonLabel?: string
+      buttonUrl?: string
+      broadcastTelegram?: boolean
+      photoUrl?: string
+    }) => {
       const supabase = createClient()
       const { error } = await supabase.rpc('admin_post_announcement', {
         p_body: body,
         p_button_label: buttonLabel,
         p_button_url: buttonUrl,
+        p_broadcast_telegram: broadcastTelegram,
+        p_photo_url: photoUrl,
       })
       if (error) throw error
     },

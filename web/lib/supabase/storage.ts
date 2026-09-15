@@ -26,3 +26,17 @@ export async function uploadAvatar(userId: string, blob: Blob): Promise<string> 
   const { data } = supabase.storage.from('avatars').getPublicUrl(path)
   return data.publicUrl
 }
+
+// Not user-folder-scoped like the two above — the bucket's own RLS policy
+// (see migration add_announcement_photos_bucket_and_column) restricts
+// uploads to super admins directly, so any path works here.
+export async function uploadAnnouncementPhoto(blob: Blob): Promise<string> {
+  const supabase = createClient()
+  const path = `${Date.now()}.jpg`
+  const { error } = await supabase.storage.from('announcement-photos').upload(path, blob, {
+    contentType: 'image/jpeg',
+  })
+  if (error) throw error
+  const { data } = supabase.storage.from('announcement-photos').getPublicUrl(path)
+  return data.publicUrl
+}

@@ -171,26 +171,32 @@ export type Database = {
         Row: {
           author_id: string | null
           body: string
+          broadcast_telegram: boolean
           button_label: string | null
           button_url: string | null
           created_at: string
           id: number
+          photo_url: string | null
         }
         Insert: {
           author_id?: string | null
           body: string
+          broadcast_telegram?: boolean
           button_label?: string | null
           button_url?: string | null
           created_at?: string
           id?: never
+          photo_url?: string | null
         }
         Update: {
           author_id?: string | null
           body?: string
+          broadcast_telegram?: boolean
           button_label?: string | null
           button_url?: string | null
           created_at?: string
           id?: never
+          photo_url?: string | null
         }
         Relationships: [
           {
@@ -534,6 +540,35 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_broadcast_queue: {
+        Row: {
+          announcement_id: number
+          chat_id: number
+          id: number
+          sent_at: string | null
+        }
+        Insert: {
+          announcement_id: number
+          chat_id: number
+          id?: never
+          sent_at?: string | null
+        }
+        Update: {
+          announcement_id?: number
+          chat_id?: number
+          id?: never
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_broadcast_queue_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       territories: {
         Row: {
           claimed_at: string | null
@@ -775,7 +810,13 @@ export type Database = {
         Returns: undefined
       }
       admin_post_announcement: {
-        Args: { p_body: string; p_button_label?: string; p_button_url?: string }
+        Args: {
+          p_body: string
+          p_broadcast_telegram?: boolean
+          p_button_label?: string
+          p_button_url?: string
+          p_photo_url?: string
+        }
         Returns: undefined
       }
       admin_set_admin: {
