@@ -86,7 +86,17 @@ body{
   background:var(--bg);
   display:flex;
   flex-direction:column;
-  overflow:hidden;
+  /* y:auto, not hidden — OnboardingFlow/ForgotPasswordFlow/LinkEmailFlow
+     mount their .intro-screen straight into .app-shell (no .screens/.screen
+     wrapper managing scroll for them, see FishZoneApp.tsx), and since this
+     box is now position:fixed at the exact viewport size (see above), any of
+     those whose content is taller than the screen — e.g. ColorStep's 3x3+
+     swatch grid on a short viewport — has nowhere to go but clipped and
+     unreachable. x stays hidden: .screen's position:absolute slide
+     transitions still need their off-screen edges cut off. */
+  overflow-x:hidden;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
 }
 .screens{
   flex:1 1 auto;
