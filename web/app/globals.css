@@ -445,6 +445,11 @@ body{
 .profile-hero .profile-avatar{box-shadow:none;}
 .profile-hero-avatar-btn{
   display:block; background:none; border:none; padding:0; cursor:pointer; border-radius:50%;
+  /* <button> doesn't inherit font-family in WebKit by default — without
+     this, initials inside .profile-avatar fell back to the browser's
+     default UI font instead of the page's, most visible on Cyrillic
+     letters like Р/О whose serifs stand out far more than on Latin ones. */
+  font-family:inherit;
 }
 .profile-hero .avatar-edit-btn,
 .profile-hero .avatar-color-btn{border-color:#17181B;}
