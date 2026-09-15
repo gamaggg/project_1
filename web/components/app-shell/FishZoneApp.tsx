@@ -31,7 +31,6 @@ import { BottomNav } from '@/components/app-shell/BottomNav'
 import { MapScreen } from '@/components/app-shell/screens/MapScreen'
 import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import { TerritoryScreen } from '@/components/app-shell/screens/TerritoryScreen'
-import { TerritoryScreenVariantA, TerritoryScreenVariantB, TerritoryScreenVariantC } from '@/components/app-shell/screens/TerritoryScreenVariants'
 import { TerritoriesListScreen, type Mode as RatingMode } from '@/components/app-shell/screens/TerritoriesListScreen'
 import { LastWeekScreen } from '@/components/app-shell/screens/LastWeekScreen'
 import { WeekTopModal } from '@/components/app-shell/screens/WeekTopModal'
@@ -134,8 +133,6 @@ export function FishZoneApp() {
   // Declared before useAchievementUnlock below since that hook's achievement
   // computation is itself city-aware (see lib/data/achievements).
   const [city, setCity] = useState<CityId>('batumi')
-  // TEMPORARY — see the sector-screen 3-way comparison switcher below.
-  const [sectorScreenVariant, setSectorScreenVariant] = useState<'original' | 'A' | 'B' | 'C'>('original')
   useEffect(() => {
     setCity(loadStoredCity())
   }, [])
@@ -763,38 +760,18 @@ export function FishZoneApp() {
         </Screen>
         <Screen id="screen-territory" current={currentScreen} onBack={pop}>
           {viewingTerritory && (
-            <>
-              {/* TEMPORARY — 3-way redesign comparison, see
-                  TerritoryScreenVariants.tsx. Remove this switcher and the
-                  sectorScreenVariant state once a variant is picked; render
-                  just that one component directly (or fold it back into
-                  TerritoryScreen.tsx as the only implementation). */}
-              <div className="sector-variant-switcher">
-                {(['original', 'A', 'B', 'C'] as const).map((v) => (
-                  <button key={v} className={sectorScreenVariant === v ? 'active' : ''} onClick={() => setSectorScreenVariant(v)}>
-                    {v === 'original' ? 'Сейчас' : v}
-                  </button>
-                ))}
-              </div>
-              {(() => {
-                const props = {
-                  territory: viewingTerritory,
-                  isMostPopular: !!cityTerritories[0]?.catchCount && cityTerritories[0].id === viewingTerritory.id,
-                  myTerritoryColor,
-                  onBack: pop,
-                  onOpenUser: openUserProfile,
-                  onOpenPhoto: openCatchPhoto,
-                  onAdminCatch: startAdminCatch,
-                  onDeleteTerritory: setDeletingTerritoryId,
-                  onShare: () => shareTerritory(viewingTerritory.id),
-                  onOpenAllCatches: () => push({ screen: 'screen-catches', territoryId: viewingTerritory.id }),
-                }
-                if (sectorScreenVariant === 'A') return <TerritoryScreenVariantA {...props} />
-                if (sectorScreenVariant === 'B') return <TerritoryScreenVariantB {...props} />
-                if (sectorScreenVariant === 'C') return <TerritoryScreenVariantC {...props} />
-                return <TerritoryScreen {...props} />
-              })()}
-            </>
+            <TerritoryScreen
+              territory={viewingTerritory}
+              isMostPopular={!!cityTerritories[0]?.catchCount && cityTerritories[0].id === viewingTerritory.id}
+              myTerritoryColor={myTerritoryColor}
+              onBack={pop}
+              onOpenUser={openUserProfile}
+              onOpenPhoto={openCatchPhoto}
+              onAdminCatch={startAdminCatch}
+              onDeleteTerritory={setDeletingTerritoryId}
+              onShare={() => shareTerritory(viewingTerritory.id)}
+              onOpenAllCatches={() => push({ screen: 'screen-catches', territoryId: viewingTerritory.id })}
+            />
           )}
         </Screen>
         <Screen id="screen-territories" current={currentScreen}>
