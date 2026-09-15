@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { createNoise3D } from 'simplex-noise'
 
 // Close port of ui.aceternity.com/components/wavy-background — same
-// algorithm (5 layered noise waves, blur, Safari's ctx.filter-doesn't-blur-
-// canvas workaround) and the same prop shape (waveWidth/blur/speed/
-// waveOpacity/backgroundFill), just:
+// algorithm (5 layered noise waves) and the same prop shape (waveWidth/
+// blur/speed/waveOpacity/backgroundFill), just:
+// - blur is a CSS filter on the canvas element, not ctx.filter inside it —
+//   several WebKit-family WebViews (Safari, Telegram's in-app browser)
+//   silently ignore ctx.filter and draw hard-edged, unblurred waves instead
 // - sized to the parent container instead of the viewport, since this is
 //   mounted inside a fixed-height hero panel, not used as a full page hero
 // - the noise amplitude scales with container height rather than the
@@ -33,11 +35,6 @@ export function WavyBackground({
   waveOpacity?: number
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [isSafari, setIsSafari] = useState(false)
-
-  useEffect(() => {
-    setIsSafari(typeof window !== 'undefined' && navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome'))
-  }, [])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -69,7 +66,6 @@ export function WavyBackground({
       canvas!.width = w * dpr
       canvas!.height = h * dpr
       ctx!.scale(dpr, dpr)
-      if (!isSafari) ctx!.filter = `blur(${blur}px)`
       return true
     }
 
@@ -128,7 +124,7 @@ export function WavyBackground({
       cancelAnimationFrame(frameId)
       ro.disconnect()
     }
-  }, [colors, waveWidth, backgroundFill, blur, speed, waveOpacity, isSafari])
+  }, [colors, waveWidth, backgroundFill, blur, speed, waveOpacity])
 
   // z-index:-1 relies on the parent establishing its own stacking context
   // (isolation:isolate or a real z-index, not just position:relative) —
@@ -144,9 +140,12 @@ export function WavyBackground({
         height: '100%',
         display: 'block',
         zIndex: -1,
-        // Safari doesn't apply ctx.filter blur to canvas drawing reliably —
-        // fall back to a CSS filter on the element itself there instead.
-        ...(isSafari ? { filter: `blur(${blur}px)` } : {}),
+        // Always blurred via a CSS filter on the element itself, not
+        // ctx.filter inside the canvas — WebKit-family WebViews (Safari,
+        // and apparently Telegram's own in-app browser too, which isn't
+        // reliably UA-sniffable as "Safari") draw the canvas fine but just
+        // silently ignore ctx.filter, leaving hard-edged, unblurred waves.
+        filter: `blur(${blur}px)`,
       }}
     />
   )
