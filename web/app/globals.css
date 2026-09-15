@@ -981,7 +981,7 @@ body{
 .hero-stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
 .hero-stat{
   background:var(--surface); border:1px solid var(--line); border-radius:16px;
-  padding:12px 3px; text-align:center; font-family:inherit; cursor:pointer;
+  padding:12px 3px; text-align:center; font-family:inherit; color:var(--ink); cursor:pointer;
   transition:transform .15s var(--ease), box-shadow .15s var(--ease);
 }
 .hero-stat:active{transform:scale(.93);}
