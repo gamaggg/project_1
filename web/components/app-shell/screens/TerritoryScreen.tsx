@@ -98,20 +98,18 @@ export function TerritoryScreen({
       </div>
       <div className="screen-inner">
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
             <div className="page-title" style={{ marginTop: 2 }}>
               Сектор {territory.id}
             </div>
-            {statusBadge(territory.status, myTerritoryColor)}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+              {statusBadge(territory.status, myTerritoryColor)}
+              {isMostPopular && <span className="badge badge-accent">🔥 Самый популярный</span>}
+            </div>
           </div>
           <div className="page-sub" style={{ marginBottom: 0 }}>
             {KIND_LABEL[territory.kind]}
           </div>
-          {isMostPopular && (
-            <div style={{ marginTop: 8 }}>
-              <span className="badge badge-accent">🔥 Самый популярный</span>
-            </div>
-          )}
         </div>
         {territory.ownerId && (
           <OwnerRow ownerId={territory.ownerId} isMine={territory.status === 'mine'} onOpenUser={onOpenUser} />
