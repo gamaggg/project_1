@@ -35,7 +35,13 @@
    still collapsing the Mini App out of fullscreen some of the time. */
 html,body{margin:0;padding:0; overscroll-behavior:none;}
 body{
-  background:#DCDAD3;
+  /* Was a neutral letterbox gray for the desktop-width side margins (see
+     .app-shell's max-width:480px) — but on iOS standalone PWA, .app-shell's
+     100dvh sometimes falls a sliver short of the true safe-area-inclusive
+     screen height, leaving this color visible as a stripe above the home
+     indicator. Matching --bg makes any such gap blend in instead of showing;
+     the desktop letterbox itself is unaffected in spirit, just white now. */
+  background:var(--bg);
   color:var(--ink);
   min-height:100dvh;
 }
