@@ -507,18 +507,29 @@ body{
    over a full-bleed hero map (the "place card" convention from map-first
    apps), a borderless stat strip, and plain hairline catch rows instead of
    nested cards. Picked from a 3-way live comparison. ---------- */
-.sector-hero-map{position:relative; margin:0 -20px; isolation:isolate;}
+/* No negative margin here — .screen-inner already renders with padding:0
+   in TerritoryScreen (see its inline style), so there's no parent padding
+   to cancel out. Adding one anyway pushed this 20px past the true screen
+   edge on each side: horizontal scroll, and the back/share icons (positioned
+   relative to this box) clipped half off-screen. */
+.sector-hero-map{position:relative; isolation:isolate;}
 .sector-hero-map .territory-thumb-wrap{height:230px; border-radius:0; margin-top:0; box-shadow:none;}
 .sector-hero-map-icons{position:absolute; top:calc(env(safe-area-inset-top) + var(--tg-safe-area-top, 0px) + 10px); left:12px; right:12px; display:flex; justify-content:space-between; z-index:10;}
 .sector-dock-card{
   position:relative; z-index:5; margin:-26px 0 0; background:var(--surface);
   border-radius:var(--radius-l) var(--radius-l) 0 0; padding:20px 20px 4px;
   box-shadow:0 -14px 26px rgba(23,24,27,0.07);
+  animation:sectorDockIn .32s var(--ease-out);
 }
+@keyframes sectorDockIn{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+@media (prefers-reduced-motion: reduce){.sector-dock-card{animation:none;}}
 .sector-stat-strip{display:flex; margin-top:18px; border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
 .sector-stat-strip > div{flex:1; padding:13px 4px; text-align:center; border-left:1px solid var(--line);}
 .sector-stat-strip > div:first-child{border-left:none;}
-.sector-stat-strip .value{font-family:var(--font-display),'Manrope',sans-serif; font-size:18px; font-weight:700; font-variant-numeric:tabular-nums;}
+/* One size for all four — two of these used to render a couple of px
+   larger (a leftover per-item inline override on the numeric-only ones),
+   which threw the row's baselines out of line across columns. */
+.sector-stat-strip .value{font-family:var(--font-display),'Manrope',sans-serif; font-size:15.5px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.25;}
 .sector-stat-strip .label{font-size:10.5px; color:var(--ink-soft); font-weight:700; margin-top:3px; text-transform:uppercase; letter-spacing:0.3px;}
 .sector-row-plain{display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line);}
 .sector-row-plain:last-child{border-bottom:none;}

@@ -176,7 +176,7 @@ export function TerritoryScreen({
             <div className="label">Уловов</div>
           </div>
           <div>
-            <div className="value" style={{ fontSize: 14 }}>{territory.lastCatchAt ? formatWhen(territory.lastCatchAt) : '—'}</div>
+            <div className="value">{territory.lastCatchAt ? formatWhen(territory.lastCatchAt) : '—'}</div>
             <div className="label">Последний</div>
           </div>
           <div>
@@ -184,7 +184,7 @@ export function TerritoryScreen({
             <div className="label">Размер</div>
           </div>
           <div>
-            <div className="value" style={{ fontSize: 14 }}>{KIND_LABEL[territory.kind]}</div>
+            <div className="value">{KIND_LABEL[territory.kind]}</div>
             <div className="label">Тип</div>
           </div>
         </div>
