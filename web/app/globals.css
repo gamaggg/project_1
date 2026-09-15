@@ -531,7 +531,14 @@ body{
 @keyframes sectorDockIn{from{opacity:0; transform:translateY(70px);} to{opacity:1; transform:translateY(0);}}
 @media (prefers-reduced-motion: reduce){.sector-dock-card{animation:none;}}
 .sector-stat-strip{display:flex; margin-top:18px; border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
-.sector-stat-strip > div{flex:1; padding:13px 4px; text-align:center; border-left:1px solid var(--line);}
+.sector-stat-strip > div{
+  flex:1; padding:13px 4px; text-align:center; border-left:1px solid var(--line);
+  /* Some values (e.g. "Вчера · 15:19") wrap to 2 lines while their
+     neighbors stay on 1 — center each cell's own content vertically so
+     the labels underneath don't end up sitting at different heights
+     across the row. */
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
 .sector-stat-strip > div:first-child{border-left:none;}
 /* One size for all four — two of these used to render a couple of px
    larger (a leftover per-item inline override on the numeric-only ones),
