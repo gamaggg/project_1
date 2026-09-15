@@ -6,6 +6,7 @@ import { useEffect, useRef } from 'react'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { COLOR_PREVIEW_SECTORS } from '@/lib/data/colorPreviewSectors'
 import { FREE_TERRITORY_COLOR } from '@/lib/data/territoryColors'
+import { applyCurrentLightPreset } from '@/lib/mapbox/lightPreset'
 
 // Same Mapbox basemap as LeafletMap.tsx/TerritoryThumbnailMap.tsx.
 const MAPBOX_STYLE_URL = process.env.NEXT_PUBLIC_MAPBOX_STYLE!
@@ -42,7 +43,13 @@ export function TerritoryColorPreviewMap({ city, myTerritoryColor }: { city: Cit
         preferCanvas: true,
       }).setView(cityInfo.colorPreviewCenter, cityInfo.zoom)
       mapRef.current = map
-      L.mapboxGL({ style: MAPBOX_STYLE_URL, accessToken: MAPBOX_TOKEN }).addTo(map)
+      const glLayer = L.mapboxGL({ style: MAPBOX_STYLE_URL, accessToken: MAPBOX_TOKEN })
+      glLayer.addTo(map)
+      // getMapboxMap() isn't in @types/mapbox-gl-leaflet even though it
+      // exists at runtime — see the `.default` workaround note above for
+      // the same package's other type gap.
+      const mapboxMap = (glLayer as unknown as { getMapboxMap: () => import('mapbox-gl').Map }).getMapboxMap()
+      mapboxMap.once('load', () => applyCurrentLightPreset(mapboxMap))
       context.forEach((s) => {
         L.polygon(s.corners, { color: FREE_TERRITORY_COLOR, weight: 1.2, fillColor: FREE_TERRITORY_COLOR, fillOpacity: 0.14, opacity: 0.6 }).addTo(map)
       })

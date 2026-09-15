@@ -8,6 +8,7 @@ import type { Territory } from '@/lib/data/types'
 import { resolveTerritoryColor } from '@/lib/data/territoryColors'
 import { getCurrentCoords, queryGeolocationPermission } from '@/lib/geolocation'
 import { hapticTap } from '@/lib/telegram/haptics'
+import { applyCurrentLightPreset } from '@/lib/mapbox/lightPreset'
 
 // Trial swap from OpenFreeMap — a custom Mapbox Standard style, hand-tuned to
 // RANGE's brand colors (deep-water blue that's deliberately distinct from the
@@ -118,6 +119,7 @@ export const LeafletMap = forwardRef<
     const highlightLayerRef = useRef<L.LayerGroup | null>(null)
     const svgRendererRef = useRef<L.Renderer | null>(null)
     const userMarkerRef = useRef<L.Marker | null>(null)
+    const cleanupLightPresetRef = useRef<(() => void) | null>(null)
     const onSelectRef = useRef(onSelect)
     onSelectRef.current = onSelect
     const onLongPressRef = useRef(onLongPressTerritory)
@@ -335,7 +337,8 @@ export const LeafletMap = forwardRef<
         // moot regardless, since the bridge (mapbox-gl-leaflet, imported above
         // for its L.mapboxGL side-effect registration) always hardcodes its own
         // internal mapbox-gl instance to attributionControl: false already.
-        L.mapboxGL({ style: MAPBOX_STYLE_URL, accessToken: MAPBOX_TOKEN }).addTo(map)
+        const glLayer = L.mapboxGL({ style: MAPBOX_STYLE_URL, accessToken: MAPBOX_TOKEN })
+        glLayer.addTo(map)
         L.control
           .attribution({ prefix: false })
           .addAttribution(
@@ -350,6 +353,28 @@ export const LeafletMap = forwardRef<
         highlightLayerRef.current = L.layerGroup().addTo(map)
 
         map.setView(fallbackCenter ?? FALLBACK_CENTER, fallbackZoom ?? FALLBACK_ZOOM)
+
+        // getMapboxMap() isn't in @types/mapbox-gl-leaflet even though it
+        // exists at runtime — see the `.default` workaround note above for
+        // the same package's other type gap. Leaflet defers a layer's own
+        // onAdd (which is what actually constructs the mapboxgl.Map) until
+        // the Leaflet map is "ready" — i.e. until setView above runs — so
+        // this has to read the gl layer only now, not right after addTo().
+        const mapboxMap = (glLayer as unknown as { getMapboxMap: () => import('mapbox-gl').Map }).getMapboxMap()
+        mapboxMap.once('load', () => applyCurrentLightPreset(mapboxMap))
+        // The map screen stays mounted for the whole app session, so a long
+        // visit can cross a preset boundary (e.g. open at 17:50, still open
+        // at 18:05) — recheck periodically and whenever the app comes back
+        // to the foreground, rather than only ever applying the preset once.
+        const lightPresetInterval = setInterval(() => applyCurrentLightPreset(mapboxMap), 15 * 60 * 1000)
+        const onVisibilityChange = () => {
+          if (document.visibilityState === 'visible') applyCurrentLightPreset(mapboxMap)
+        }
+        document.addEventListener('visibilitychange', onVisibilityChange)
+        cleanupLightPresetRef.current = () => {
+          clearInterval(lightPresetInterval)
+          document.removeEventListener('visibilitychange', onVisibilityChange)
+        }
 
         // Silently confirm (never prompts — see DECISIONS.md "геолокация
         // только по «+»") whether this origin already has geolocation access
@@ -444,6 +469,8 @@ export const LeafletMap = forwardRef<
       return () => {
         cancelled = true
         resizeObserver?.disconnect()
+        cleanupLightPresetRef.current?.()
+        cleanupLightPresetRef.current = null
         mapRef.current?.remove()
         mapRef.current = null
       }
