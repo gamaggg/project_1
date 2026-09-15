@@ -174,8 +174,14 @@ body{
   box-shadow: 0 -10px 26px rgba(23,24,27,0.06);
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  padding:0 20px calc(env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px));
+  /* space-evenly, not space-between, and no horizontal padding: space-between
+     only distributes the gaps *between* items, leaving whatever fixed
+     padding sits at the two edges — which reads visibly tighter than the
+     flex-distributed inter-item gaps. space-evenly treats the edges as two
+     more gaps in the same pool, so the whitespace before the first icon,
+     between every pair, and after the last icon all come out equal. */
+  justify-content:space-evenly;
+  padding:0 0 calc(env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px));
   z-index:40;
 }
 .navitem{
