@@ -136,8 +136,17 @@ export function WavyBackground({
     <canvas
       ref={canvasRef}
       style={{
+        // Explicit width/height, not just inset offsets: <canvas> is a
+        // replaced element (like <img>), and replaced elements with
+        // width/height left "auto" size themselves off their own intrinsic
+        // bitmap dimensions instead of the inset-implied box — inset alone
+        // silently produced a canvas sized to its raw pixel attributes
+        // (hundreds of px) instead of the swatch/hero it was meant to fill.
         position: 'absolute',
-        inset: -margin,
+        top: -margin,
+        left: -margin,
+        width: `calc(100% + ${margin * 2}px)`,
+        height: `calc(100% + ${margin * 2}px)`,
         display: 'block',
         zIndex: -1,
         // Always blurred via a CSS filter on the element itself, not
