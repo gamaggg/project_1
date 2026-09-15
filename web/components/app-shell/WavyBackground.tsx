@@ -54,13 +54,23 @@ export function WavyBackground({
     let nt = 0
     let frameId = 0
 
+    // Returns whether the container had a real (non-zero) size to measure.
+    // Telegram's in-app browser can run this effect before the hero panel
+    // has actually been laid out — clientWidth/clientHeight read 0 (or some
+    // transient wrong value) at that instant, and a canvas sized off that
+    // then gets stretched by the width:100%/height:100% CSS below into the
+    // blocky, torn-looking mess this was reported as. Regular browser tabs
+    // don't hit this because layout has already settled by the time this
+    // effect runs.
     function resize() {
       w = container!.clientWidth
       h = container!.clientHeight
+      if (w === 0 || h === 0) return false
       canvas!.width = w * dpr
       canvas!.height = h * dpr
       ctx!.scale(dpr, dpr)
       if (!isSafari) ctx!.filter = `blur(${blur}px)`
+      return true
     }
 
     function drawWave(n: number) {
@@ -97,14 +107,21 @@ export function WavyBackground({
       frameId = requestAnimationFrame(render)
     }
 
-    resize()
-    if (reduceMotion) {
-      drawFrame()
-    } else {
-      render()
-    }
-
-    const ro = new ResizeObserver(resize)
+    // Don't draw off a synchronous resize() at all — wait for
+    // ResizeObserver's own first callback (which fires with the container's
+    // real post-layout size, async, typically within a frame or two) to
+    // both size the canvas and kick off the first paint. See resize()'s
+    // comment for why measuring synchronously here isn't safe everywhere.
+    let animating = false
+    const ro = new ResizeObserver(() => {
+      if (!resize()) return
+      if (reduceMotion) {
+        drawFrame()
+      } else if (!animating) {
+        animating = true
+        render()
+      }
+    })
     ro.observe(container)
 
     return () => {
