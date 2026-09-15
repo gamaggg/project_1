@@ -7,11 +7,12 @@ import { AwardsRing } from '@/components/app-shell/AwardsRing'
 import { uploadAvatar } from '@/lib/supabase/storage'
 import { computeAchievements, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
-import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
+import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralFollowers, pluralSpecies, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorPreviewMap'
 import { DEFAULT_TERRITORY_COLOR, TERRITORY_COLORS } from '@/lib/data/territoryColors'
 import { HERO_BACKGROUNDS, DEFAULT_HERO_BG, resolveHeroBackground } from '@/lib/data/heroBackgrounds'
+import { WavyBackground } from '@/components/app-shell/WavyBackground'
 import { CITIES, type CityId } from '@/lib/data/city'
 import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
 import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
@@ -251,17 +252,27 @@ export function ChangeColorModal({ onClose, city }: { onClose: () => void; city:
             <div className="modal-title" style={{ textAlign: 'center' }}>
               Фон профиля
             </div>
-            <div className="herobg-preview" style={{ background: resolveHeroBackground(selectedHeroBg).css }} />
+            <div className="herobg-preview" style={{ background: resolveHeroBackground(selectedHeroBg).base }}>
+              {resolveHeroBackground(selectedHeroBg).animated && (
+                <WavyBackground
+                  waveWidth={22}
+                  blur={5}
+                  colors={resolveHeroBackground(selectedHeroBg).waveColors}
+                  backgroundFill={resolveHeroBackground(selectedHeroBg).waveBackgroundFill}
+                />
+              )}
+            </div>
             <div className="herobg-grid">
               {HERO_BACKGROUNDS.map((b) => (
                 <button
                   key={b.id}
                   type="button"
                   className={`herobg-swatch${selectedHeroBg === b.id ? ' selected' : ''}`}
-                  style={{ background: b.css }}
+                  style={{ background: b.animated ? b.base : b.css }}
                   aria-label={b.label}
                   onClick={() => setSelectedHeroBg(b.id)}
                 >
+                  {b.animated && <WavyBackground waveWidth={13} blur={3} colors={b.waveColors} backgroundFill={b.waveBackgroundFill} />}
                   <span>{b.label}</span>
                 </button>
               ))}
@@ -373,6 +384,12 @@ export function ProfileScreen({
         ref={heroRef}
         style={{ background: resolveHeroBackground(profile?.heroBg).base, '--hero-accent-rgb': resolveHeroBackground(profile?.heroBg).accentRgb } as CSSProperties}
       >
+        {resolveHeroBackground(profile?.heroBg).animated && (
+          <WavyBackground
+            colors={resolveHeroBackground(profile?.heroBg).waveColors}
+            backgroundFill={resolveHeroBackground(profile?.heroBg).waveBackgroundFill}
+          />
+        )}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginTop: 14 }}>
           <div className="icon-btn tap-scale" onClick={handleShareProfile}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -434,22 +451,22 @@ export function ProfileScreen({
       <div className="hero-stat-grid">
         <button className="hero-stat" onClick={onOpenAllTerritories}>
           <b>{myTerritories.length}</b>
-          <span>Территорий</span>
+          <span>{pluralTerritories(myTerritories.length)}</span>
         </button>
         <button className="hero-stat" onClick={onOpenAllCatches}>
           <b>{myCatches.length}</b>
-          <span>Уловов</span>
+          <span>{pluralCatches(myCatches.length)}</span>
         </button>
         <button className="hero-stat" onClick={() => onOpenSpecies(mySpecies)}>
           <b>{speciesCount}</b>
-          <span>Видов рыб</span>
+          <span>{pluralSpecies(speciesCount)} рыб</span>
         </button>
         <button
           className="hero-stat"
           onClick={() => (profile?.followersCount ?? 0) > 0 && onOpenFollowers(followers)}
         >
           <b>{profile?.followersCount ?? 0}</b>
-          <span>Подписчика</span>
+          <span>{pluralFollowers(profile?.followersCount ?? 0)}</span>
         </button>
       </div>
 

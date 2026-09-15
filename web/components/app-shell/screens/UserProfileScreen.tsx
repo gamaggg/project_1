@@ -5,11 +5,12 @@ import { useProfile, useCatchesByUser, useIsFollowing, useSetFollowing, useIsAdm
 import { AwardsRing } from '@/components/app-shell/AwardsRing'
 import { computeAchievements, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
-import { formatCatchMeta, formatJoinedDate, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
+import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralFollowers, pluralSpecies, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
 import { CITIES } from '@/lib/data/city'
 import { resolveHeroBackground } from '@/lib/data/heroBackgrounds'
+import { WavyBackground } from '@/components/app-shell/WavyBackground'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
 
@@ -119,6 +120,12 @@ export function UserProfileScreen({
         ref={heroRef}
         style={{ background: resolveHeroBackground(profile?.heroBg).base, '--hero-accent-rgb': resolveHeroBackground(profile?.heroBg).accentRgb } as CSSProperties}
       >
+        {resolveHeroBackground(profile?.heroBg).animated && (
+          <WavyBackground
+            colors={resolveHeroBackground(profile?.heroBg).waveColors}
+            backgroundFill={resolveHeroBackground(profile?.heroBg).waveBackgroundFill}
+          />
+        )}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
           <BackButton onClick={onBack} registerNative={false} />
           <div className="icon-btn tap-scale" onClick={handleShare}>

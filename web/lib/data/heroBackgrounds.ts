@@ -15,7 +15,22 @@
 // with no radial — the actual hero panel uses this and layers its own
 // *animated* glow on top via .profile-hero::before instead, so the glow can
 // breathe without needing to animate the whole multi-layer background.
-export type HeroBackground = { id: string; label: string; base: string; css: string; accentRgb: string }
+// `animated` marks the presets (see the 4 waves-* entries below) rendered
+// with a live <canvas> (WavyBackground) instead of a plain CSS background —
+// base/css still stay filled in for them as the pre-JS-paint fallback and
+// the static picker preview swatch's own background-image. waveColors/
+// waveBackgroundFill are that canvas's own palette for these — unused by
+// any non-animated preset.
+export type HeroBackground = {
+  id: string
+  label: string
+  base: string
+  css: string
+  accentRgb: string
+  animated?: boolean
+  waveColors?: string[]
+  waveBackgroundFill?: string
+}
 
 export const HERO_BACKGROUNDS: HeroBackground[] = [
   {
@@ -73,6 +88,46 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
     base: 'linear-gradient(180deg,#2A1420,#160A12 82%)',
     css: 'radial-gradient(120% 85% at 50% -15%, rgba(236,72,153,.45), rgba(236,72,153,0) 60%), linear-gradient(180deg,#2A1420,#160A12 82%)',
     accentRgb: '236,72,153',
+  },
+  {
+    id: 'waves',
+    label: 'Волны',
+    base: 'linear-gradient(180deg,#241207,#120901 82%)',
+    css: 'linear-gradient(180deg,#241207,#120901 82%)',
+    accentRgb: '252,82,0',
+    animated: true,
+    waveColors: ['#FC5200', '#FF7A38', '#FF9A52', '#C7430B'],
+    waveBackgroundFill: '#1B0F04',
+  },
+  {
+    id: 'waves-ocean',
+    label: 'Волны (море)',
+    base: 'linear-gradient(180deg,#0A1B2E,#040D17 82%)',
+    css: 'linear-gradient(180deg,#0A1B2E,#040D17 82%)',
+    accentRgb: '62,123,250',
+    animated: true,
+    waveColors: ['#3E7BFA', '#5B9BFF', '#7AB8FF', '#2557C7'],
+    waveBackgroundFill: '#040D17',
+  },
+  {
+    id: 'waves-purple',
+    label: 'Волны (фиолет)',
+    base: 'linear-gradient(180deg,#1C0F30,#0D0718 82%)',
+    css: 'linear-gradient(180deg,#1C0F30,#0D0718 82%)',
+    accentRgb: '168,142,245',
+    animated: true,
+    waveColors: ['#8B5CF6', '#A78BFA', '#C4B5FD', '#6D28D9'],
+    waveBackgroundFill: '#0D0718',
+  },
+  {
+    id: 'waves-pink',
+    label: 'Волны (розовый)',
+    base: 'linear-gradient(180deg,#2A0F22,#180712 82%)',
+    css: 'linear-gradient(180deg,#2A0F22,#180712 82%)',
+    accentRgb: '236,72,153',
+    animated: true,
+    waveColors: ['#EC4899', '#F472B6', '#F9A8D4', '#BE185D'],
+    waveBackgroundFill: '#180712',
   },
 ]
 

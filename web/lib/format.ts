@@ -93,6 +93,8 @@ export function pluralRu(n: number, [one, few, many]: [string, string, string]):
 export const pluralSectors = (n: number) => pluralRu(n, ['сектор', 'сектора', 'секторов'])
 export const pluralCatches = (n: number) => pluralRu(n, ['улов', 'улова', 'уловов'])
 export const pluralTerritories = (n: number) => pluralRu(n, ['территория', 'территории', 'территорий'])
+export const pluralSpecies = (n: number) => pluralRu(n, ['вид', 'вида', 'видов'])
+export const pluralFollowers = (n: number) => pluralRu(n, ['подписчик', 'подписчика', 'подписчиков'])
 
 const RU_MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
 
