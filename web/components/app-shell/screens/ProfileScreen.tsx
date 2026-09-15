@@ -16,6 +16,7 @@ import { WavyBackground } from '@/components/app-shell/WavyBackground'
 import { CITIES, type CityId } from '@/lib/data/city'
 import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
 import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
+import { useTelegramHomeScreen } from '@/lib/telegram/useTelegramHomeScreen'
 
 const MAX_AVATAR_SIZE = 512
 
@@ -372,6 +373,8 @@ export function ProfileScreen({
   // api/auth/telegram/route.ts) — never a real address the person chose, so
   // offering "Link email" only makes sense while it's still this pattern.
   const isTelegramAccount = user?.email?.endsWith('@telegram.catchrange.com') ?? false
+  const { status: homeScreenStatus, promptAdd: promptAddToHomeScreen } = useTelegramHomeScreen()
+  const showAddToHomeScreen = homeScreenStatus === 'unknown' || homeScreenStatus === 'missed'
 
   function handleShareProfile() {
     if (!profile?.publicId) return
@@ -621,7 +624,15 @@ export function ProfileScreen({
         </div>
       )}
 
-      <div style={{ marginTop: isTelegramAccount || canModerateReports || isSuperAdmin ? 12 : 24, paddingBottom: 24 }}>
+      {showAddToHomeScreen && (
+        <div style={{ marginTop: isTelegramAccount || canModerateReports || isSuperAdmin ? 12 : 24 }}>
+          <button className="btn-secondary" onClick={promptAddToHomeScreen}>
+            Добавить RANGE на главный экран
+          </button>
+        </div>
+      )}
+
+      <div style={{ marginTop: showAddToHomeScreen || isTelegramAccount || canModerateReports || isSuperAdmin ? 12 : 24, paddingBottom: 24 }}>
         <button className="btn-secondary" onClick={onSignOut}>
           Выйти
         </button>

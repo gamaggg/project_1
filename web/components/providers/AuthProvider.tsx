@@ -48,6 +48,12 @@ declare global {
           notificationOccurred: (type: 'error' | 'success' | 'warning') => void
           selectionChanged: () => void
         }
+        // Bot API 8.0+ — prompts the OS's own "add to home screen" flow.
+        // checkHomeScreenStatus's callback fires once with the current state;
+        // 'unsupported' covers both an old client and a platform that can't
+        // do this at all (desktop Telegram, most notably).
+        addToHomeScreen?: () => void
+        checkHomeScreenStatus?: (cb: (status: 'unsupported' | 'unknown' | 'added' | 'missed') => void) => void
       }
     }
   }
