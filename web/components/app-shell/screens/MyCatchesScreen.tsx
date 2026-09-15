@@ -48,6 +48,7 @@ export function MyCatchesScreen({
               return (
                 <div
                   key={c.id}
+                  className="tap-scale"
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < catches.length - 1 ? '1px solid var(--line)' : 'none', cursor: 'pointer' }}
                   onClick={() => onOpenPhoto(c.id)}
                 >

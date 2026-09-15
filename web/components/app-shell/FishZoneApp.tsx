@@ -145,13 +145,51 @@ export function FishZoneApp() {
   useRealtimeSync()
 
   // One delegated listener for the whole app instead of wiring a haptic tap
-  // into every individual button — .tap-scale is already the established
-  // "this is a tappable element" marker used throughout app-shell (see its
-  // globals.css definition), so any click landing on/inside one gets the
-  // same light buzz for free.
+  // into every individual button. Deliberately broader than just
+  // `.tap-scale`: an audit found that class only actually landed on a small
+  // minority of real tap targets (icon buttons, mostly) — the bulk of the
+  // app's interactive surface (every .btn-primary/.btn-secondary, list rows,
+  // filter chips, stat tiles, etc.) already reads as "tappable" visually via
+  // its own :active rule but was never given the literal tap-scale class, so
+  // it went silent here. Rather than hand-editing that class onto 100+ call
+  // sites, this lists every such established interactive-component class
+  // directly — one place to keep in sync instead of many. Elements with no
+  // shared class at all (a handful of bare list rows) got `tap-scale` added
+  // directly at the call site instead; Leaflet's Canvas-rendered map sectors
+  // aren't real DOM clicks at all and are haptic'd explicitly in
+  // LeafletMap.tsx's own click handler, not through this listener.
   useEffect(() => {
+    const TAPPABLE_SELECTOR = [
+      '.tap-scale',
+      '.btn-primary',
+      '.btn-secondary',
+      '.btn-danger',
+      '.section-link',
+      '.filter-chip',
+      '.hero-stat',
+      '.terr-list-item',
+      '.ach-card',
+      '.activity-who-btn',
+      '.fish-thumb',
+      '.color-swatch',
+      '.herobg-swatch',
+      '.appearance-row',
+      '.perm-switch',
+      '.rating-tab',
+      '.rating-podium-item',
+      '.city-chip',
+      '.gender-pill',
+      '.intro-cta',
+      '.intro-back',
+      '.otp-resend',
+      '.owner-row',
+      '.onboarding-welcome-link',
+      '.profile-hero-avatar-btn',
+      '.map-selection-bar-btn',
+      '.award-ring-badge',
+    ].join(',')
     function onClick(e: MouseEvent) {
-      if ((e.target as HTMLElement | null)?.closest?.('.tap-scale')) hapticTap()
+      if ((e.target as HTMLElement | null)?.closest?.(TAPPABLE_SELECTOR)) hapticTap()
     }
     document.addEventListener('click', onClick)
     return () => document.removeEventListener('click', onClick)

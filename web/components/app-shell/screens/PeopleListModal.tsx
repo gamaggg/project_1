@@ -13,6 +13,7 @@ function PersonRow({ person, onOpenUser }: { person: ProfileSummary; onOpenUser:
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0' }}>
       <button
+        className="tap-scale"
         onClick={() => onOpenUser(person.userId)}
         style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', font: 'inherit' }}
       >

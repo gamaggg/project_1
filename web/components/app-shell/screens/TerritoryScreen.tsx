@@ -161,6 +161,7 @@ export function TerritoryScreen({
                 // bubbling here, so tapping the name opens the profile.
                 <div
                   key={c.id}
+                  className="tap-scale"
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recent.length - 1 ? '1px solid var(--line)' : 'none', cursor: 'pointer' }}
                   onClick={() => onOpenPhoto(c.id)}
                 >

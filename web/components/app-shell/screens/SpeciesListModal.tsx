@@ -32,6 +32,7 @@ export function SpeciesListModal({
             species.map((s) => (
               <button
                 key={s.key}
+                className="tap-scale"
                 onClick={() => onOpenCatch(s.lastCatchId)}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', width: '100%', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', font: 'inherit' }}
               >

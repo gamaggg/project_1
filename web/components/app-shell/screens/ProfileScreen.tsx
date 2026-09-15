@@ -506,6 +506,7 @@ export function ProfileScreen({
             return (
               <div
                 key={c.id}
+                className="tap-scale"
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recentMine.length - 1 ? '1px solid var(--line)' : 'none', cursor: 'pointer' }}
                 onClick={() => onOpenPhoto(c.id)}
               >
@@ -564,7 +565,7 @@ export function ProfileScreen({
           <div className="section-title" style={{ marginTop: 24 }}>
             Личный рекорд
           </div>
-          <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }} onClick={() => onOpenPhoto(record.id)}>
+          <div className="card tap-scale" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }} onClick={() => onOpenPhoto(record.id)}>
             <div className="fish-thumb" style={{ width: 52, height: 52 }}>
               <img src={record.photoUrl} alt={record.speciesName} />
             </div>

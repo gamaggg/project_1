@@ -7,6 +7,7 @@ import type L from 'leaflet'
 import type { Territory } from '@/lib/data/types'
 import { resolveTerritoryColor } from '@/lib/data/territoryColors'
 import { getCurrentCoords, queryGeolocationPermission } from '@/lib/geolocation'
+import { hapticTap } from '@/lib/telegram/haptics'
 
 // Trial swap from OpenFreeMap — a custom Mapbox Standard style, hand-tuned to
 // RANGE's brand colors (deep-water blue that's deliberately distinct from the
@@ -202,6 +203,10 @@ export const LeafletMap = forwardRef<
             longPressFired = false
             return
           }
+          // Canvas-rendered — never a real bubbling DOM click, so
+          // FishZoneApp's delegated tap-haptic listener structurally can't
+          // see this; call it directly instead.
+          hapticTap()
           onSelectRef.current(t.id)
         })
         const isOccupied = t.status !== 'free' && !!t.ownerId
@@ -410,6 +415,10 @@ export const LeafletMap = forwardRef<
             emptyMapLongPressFiredRef.current = false
             return
           }
+          // Only meaningful (queues a new-sector draft) when this callback
+          // is actually wired — regular users tapping open water shouldn't
+          // buzz for nothing.
+          if (onClickEmptyMapRef.current) hapticTap()
           onClickEmptyMapRef.current?.(e.latlng.lat, e.latlng.lng)
         })
 
