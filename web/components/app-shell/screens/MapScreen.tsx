@@ -143,11 +143,6 @@ export const MapScreen = forwardRef<
   // so it can't double as "which sector is the map border highlighting"
   // for longer than that pulse lasts.
   const [highlightedSectorId, setHighlightedSectorId] = useState<string | null>(null)
-  // TEMPORARY — lets you compare the 3 highlight styles live by tapping a
-  // sector, then tapping 1/2/3 below the map header. Remove this state,
-  // the switcher UI below, and LeafletMap's highlightStyle prop once one
-  // style is picked; wire highlightedId straight through with no style prop.
-  const [highlightStyle, setHighlightStyle] = useState<'glow' | 'dash' | 'pop'>('glow')
   // A plain tap on a sector used to jump straight into its full screen — too
   // heavy for "just checking if there's fish there". The sheet carousel
   // below already shows exactly that summary per sector (id/status/catch
@@ -226,31 +221,7 @@ export const MapScreen = forwardRef<
           fallbackCenter={CITIES[city].center}
           fallbackZoom={CITIES[city].zoom}
           highlightedId={highlightedSectorId}
-          highlightStyle={highlightStyle}
         />
-        {/* TEMPORARY style switcher — tap a sector, then a number here to
-           compare. Delete this block once a style is picked. */}
-        <div style={{ position: 'absolute', top: 64, left: 10, zIndex: 500, display: 'flex', gap: 6 }}>
-          {(['glow', 'dash', 'pop'] as const).map((s, i) => (
-            <button
-              key={s}
-              onClick={() => setHighlightStyle(s)}
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: '50%',
-                border: 'none',
-                fontWeight: 800,
-                fontSize: 13,
-                cursor: 'pointer',
-                background: highlightStyle === s ? '#FC5200' : 'rgba(255,255,255,.9)',
-                color: highlightStyle === s ? '#fff' : '#17181B',
-              }}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
         <div className="map-header">
           {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
           <img src="/brand/logo_2.svg" alt="RANGE" className="map-brandmark" />

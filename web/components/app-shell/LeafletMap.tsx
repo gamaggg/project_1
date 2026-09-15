@@ -84,11 +84,9 @@ export const LeafletMap = forwardRef<
     onClickEmptyMap?: (lat: number, lng: number) => void
     fallbackCenter?: [number, number]
     fallbackZoom?: number
-    // TEMPORARY — 3-way A/B test of the tapped-sector highlight (see
-    // MapScreen's own switcher). Drop the style prop (keep just one
-    // implementation) once a style is picked.
+    // The sector the bottom sheet carousel is currently previewing — drawn
+    // with a pulsing glow outline so a map tap is visibly acknowledged.
     highlightedId?: string | null
-    highlightStyle?: 'glow' | 'dash' | 'pop'
   }
 >(function LeafletMap(
   {
@@ -103,7 +101,6 @@ export const LeafletMap = forwardRef<
     fallbackCenter,
     fallbackZoom,
     highlightedId,
-    highlightStyle = 'glow',
   },
   ref
 ) {
@@ -465,13 +462,13 @@ export const LeafletMap = forwardRef<
       if (!t) return
       L.polygon(t.corners, {
         renderer,
-        className: `sector-highlight sector-highlight--${highlightStyle}`,
+        className: 'sector-highlight',
         color: '#FC5200',
         weight: 3,
         fill: false,
         interactive: false,
       }).addTo(layer)
-    }, [highlightedId, highlightStyle, territories])
+    }, [highlightedId, territories])
 
     return <div id="leafletMap" ref={containerRef} />
   }
