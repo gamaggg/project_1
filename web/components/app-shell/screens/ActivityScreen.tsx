@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useActivity } from '@/lib/supabase/queries'
+import { useEffect, useState } from 'react'
+import { useActivity, useMarkNotificationsRead } from '@/lib/supabase/queries'
 import { CATEGORY_GRADIENT, KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import { FishIcon } from '@/components/app-shell/icons'
@@ -25,21 +25,46 @@ function linkifyBody(text: string) {
 }
 
 export function ActivityScreen({
+  active,
   onOpenUser,
   onOpenTerritory,
   onOpenPhoto,
-  unreadIds,
-  onMarkAllRead,
+  onOpenRating,
 }: {
+  // This screen stays mounted while other tabs are on top of it, so being
+  // rendered says nothing about being looked at — and marking notifications
+  // read is exactly the kind of thing that must only happen when it is.
+  active: boolean
   onOpenUser: (id: string) => void
   onOpenTerritory: (id: string) => void
   onOpenPhoto: (catchId: number) => void
-  unreadIds: Set<string>
-  onMarkAllRead: () => void
+  onOpenRating: () => void
 }) {
-  const { data: activity = [], isLoading } = useActivity()
+  const { data: activity = [], isLoading, isSuccess } = useActivity()
+  const markRead = useMarkNotificationsRead()
   const [filter, setFilter] = useState<Filter>('all')
+  // Opening the screen is what marks things read, but the dots have to stay
+  // visible for this visit or "what's new" would vanish before it could be
+  // read — hence a snapshot taken once, rather than rendering live state.
+  const [unreadIds, setUnreadIds] = useState<Set<string>>(new Set())
+  const [snapshotTaken, setSnapshotTaken] = useState(false)
+
+  useEffect(() => {
+    if (!active || !isSuccess || snapshotTaken) return
+    setSnapshotTaken(true)
+    const unread = activity.filter((a) => a.unread).map((a) => a.id)
+    if (!unread.length) return
+    setUnreadIds(new Set(unread))
+    markRead.mutate()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, isSuccess, snapshotTaken])
+
   const list = activity.filter((a) => (filter === 'mine' ? a.mine : true))
+  // Announcements are global, so the feed is never literally empty — without
+  // this, someone who has never had a single notification would still fall
+  // past the empty state and just see RANGE's own posts with no idea what
+  // this screen is for.
+  const hasPersonal = activity.some((a) => a.kind !== 'announcement')
 
   return (
     <div className="screen-inner">
@@ -52,13 +77,23 @@ export function ActivityScreen({
         <div className={`filter-chip${filter === 'mine' ? ' active' : ''}`} onClick={() => setFilter('mine')}>
           Мои территории
         </div>
-        {unreadIds.size > 0 && (
-          <button className="mark-read-btn tap-scale" onClick={onMarkAllRead}>
-            Прочитать все
-          </button>
-        )}
       </div>
       <div>
+        {!isLoading && !hasPersonal && filter === 'all' && (
+          <div style={{ padding: '22px 20px 26px', textAlign: 'center' }}>
+            <div style={{ fontSize: 14.5, fontWeight: 800 }}>Пока тихо</div>
+            <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 8, lineHeight: 1.5 }}>
+              Здесь появятся уловы рыбаков, на которых ты подписан, и всё, что происходит с твоими секторами.
+            </div>
+            <button
+              className="btn-secondary tap-scale"
+              style={{ width: 'auto', display: 'inline-flex', padding: '10px 20px', fontSize: 13.5, marginTop: 16 }}
+              onClick={onOpenRating}
+            >
+              Найти рыбаков в рейтинге
+            </button>
+          </div>
+        )}
         {isLoading ? (
           <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Загрузка…</div>
         ) : list.length ? (
@@ -126,8 +161,8 @@ export function ActivityScreen({
             }
             const meta = formatCatchMeta(a.lengthCm, a.weightKg)
             const text =
-              a.kind === 'claim'
-                ? `занял территорию ${a.territoryId}`
+              a.kind === 'sector_lost'
+                ? `забрал твою территорию ${a.territoryId}`
                 : a.kind === 'follow'
                   ? 'подписался на тебя'
                   : a.kind === 'like'
@@ -135,18 +170,16 @@ export function ActivityScreen({
                     : `поймал ${a.speciesName?.toLowerCase() ?? 'рыбу'}`
             return (
               <div className="activity-item" key={a.id}>
-                <div className="avatar" style={a.mine ? {} : { background: 'var(--blue)' }}>
+                {/* Every entry is somebody else's doing now, so the name is
+                    always a way through to their profile. */}
+                <div className="avatar" style={{ background: a.kind === 'sector_lost' ? 'var(--accent)' : 'var(--blue)' }}>
                   {a.avatarUrl ? <img src={a.avatarUrl} alt="" /> : a.who.slice(0, 1)}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>
-                    {a.mine ? (
-                      a.who
-                    ) : (
-                      <button className="activity-who-btn" onClick={() => onOpenUser(a.userId)}>
-                        {a.who}
-                      </button>
-                    )}{' '}
+                    <button className="activity-who-btn" onClick={() => onOpenUser(a.userId)}>
+                      {a.who}
+                    </button>{' '}
                     {text}
                   </div>
                   {a.territoryId && a.territoryKind && (
@@ -178,7 +211,9 @@ export function ActivityScreen({
             )
           })
         ) : (
-          <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет активности</div>
+          <div style={{ padding: '26px 22px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5, lineHeight: 1.5 }}>
+            {filter === 'mine' ? 'Твои сектора никто не трогал' : 'Пока нет активности'}
+          </div>
         )}
       </div>
     </div>

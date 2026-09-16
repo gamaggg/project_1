@@ -11,10 +11,11 @@ import {
   useIsSuperAdmin,
   useAllTerritoryIds,
   useFindUserByPublicId,
+  useUnreadNotificationCount,
 } from '@/lib/supabase/queries'
 import { getCurrentCoords, nearestTerritory, queryGeolocationPermission } from '@/lib/geolocation'
 import { uploadCatchPhoto } from '@/lib/supabase/storage'
-import { useActivityReadState, useAdminActionsReadState } from '@/lib/activityRead'
+import { useAdminActionsReadState } from '@/lib/activityRead'
 import { useAchievementUnlock } from '@/lib/achievementUnlock'
 import { useWeekTopModal } from '@/lib/weekTopModal'
 import { formatCooldown, type SpeciesEntry } from '@/lib/format'
@@ -122,7 +123,7 @@ export function FishZoneApp() {
   const confirmCatchMutation = useConfirmCatch()
   const findUserByPublicId = useFindUserByPublicId()
   const mapHandleRef = useRef<LeafletMapHandle>(null)
-  const { unreadIds, unreadCount, markAllRead } = useActivityReadState()
+  const { data: unreadCount = 0 } = useUnreadNotificationCount()
   const { unreadCount: adminLogUnreadCount, markAllRead: markAdminLogRead } = useAdminActionsReadState()
   // Which city's sectors the map/territories tab/rating currently show — the
   // signed-in user's own `profiles.city` (see lib/data/city) once it loads.
@@ -833,7 +834,17 @@ export function FishZoneApp() {
           )}
         </Screen>
         <Screen id="screen-activity" current={currentScreen}>
-          <ActivityScreen onOpenUser={openUserProfile} onOpenTerritory={openTerritory} onOpenPhoto={openCatchPhoto} unreadIds={unreadIds} onMarkAllRead={markAllRead} />
+          {/* Every screen in this shell stays mounted and is shown/hidden by
+              CSS, so ActivityScreen can't treat "I rendered" as "someone is
+              looking at me" — without this it would mark everything read the
+              moment the app opened, on whatever tab. */}
+          <ActivityScreen
+            active={currentScreen === 'screen-activity'}
+            onOpenUser={openUserProfile}
+            onOpenTerritory={openTerritory}
+            onOpenPhoto={openCatchPhoto}
+            onOpenRating={openWeeklyRating}
+          />
         </Screen>
         <Screen id="screen-profile" current={currentScreen}>
           <ProfileScreen

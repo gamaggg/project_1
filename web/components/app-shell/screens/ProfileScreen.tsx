@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useProfile, useMyCatches, useUpdateProfile, useCanModerateReports, useIsSuperAdmin, useReports, useHasClaimedFromOthers, useUserAwards, useFollowers } from '@/lib/supabase/queries'
+import { useProfile, useMyCatches, useUpdateProfile, useCanModerateReports, useIsSuperAdmin, useReports, useHasClaimedFromOthers, useUserAwards, useFollowers, useTelegramNotificationState, useSetTelegramNotifications, useCreateTelegramLink } from '@/lib/supabase/queries'
 import { AwardsRing } from '@/components/app-shell/AwardsRing'
 import { uploadAvatar } from '@/lib/supabase/storage'
 import { computeAchievements, personalRecord, type Achievement } from '@/lib/data/achievements'
@@ -17,6 +17,61 @@ import { CITIES, type CityId } from '@/lib/data/city'
 import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
 import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
 import { useTelegramHomeScreen } from '@/lib/telegram/useTelegramHomeScreen'
+
+// Telegram notifications, as one row rather than a screen of its own —
+// there's a single setting to make so far. Which control it shows depends on
+// whether the bot is actually able to reach this person: being signed in
+// through Telegram isn't enough, a bot may only write to someone who has
+// opened a chat with it first.
+function TelegramNotificationsRow() {
+  const { data: state } = useTelegramNotificationState()
+  const setEnabled = useSetTelegramNotifications()
+  const createLink = useCreateTelegramLink()
+  const [linkError, setLinkError] = useState(false)
+
+  if (!state) return null
+
+  const reachable = state.linked && state.botStarted && !state.unreachable
+
+  if (reachable) {
+    return (
+      <div className="perm-switch-row" style={{ borderBottom: 'none', padding: 0 }}>
+        <div className="perm-switch-label">Уведомления в Telegram</div>
+        <button
+          className={`perm-switch${state.enabled ? ' on' : ''}`}
+          aria-label="Уведомления в Telegram"
+          disabled={setEnabled.isPending}
+          onClick={() => setEnabled.mutate(!state.enabled)}
+        />
+      </div>
+    )
+  }
+
+  async function connect() {
+    setLinkError(false)
+    try {
+      const url = await createLink.mutateAsync()
+      // Inside the Mini App this hands off to Telegram itself; in a plain
+      // browser the t.me link opens the app (or its web version).
+      const webApp = window.Telegram?.WebApp
+      if (webApp?.openTelegramLink) webApp.openTelegramLink(url)
+      else window.open(url, '_blank', 'noopener')
+    } catch {
+      setLinkError(true)
+    }
+  }
+
+  return (
+    <>
+      <button className="btn-secondary" disabled={createLink.isPending} onClick={connect}>
+        {state.unreachable ? 'Подключить Telegram заново' : 'Подключить уведомления в Telegram'}
+      </button>
+      {linkError && (
+        <div style={{ fontSize: 12.5, color: '#D33', marginTop: 6 }}>Не получилось создать ссылку. Попробуй ещё раз.</div>
+      )}
+    </>
+  )
+}
 
 const MAX_AVATAR_SIZE = 512
 
@@ -616,8 +671,12 @@ export function ProfileScreen({
         </>
       )}
 
+      <div style={{ marginTop: canModerateReports || isSuperAdmin ? 12 : 24 }}>
+        <TelegramNotificationsRow />
+      </div>
+
       {isTelegramAccount && (
-        <div style={{ marginTop: canModerateReports || isSuperAdmin ? 12 : 24 }}>
+        <div style={{ marginTop: 12 }}>
           <button className="btn-secondary" onClick={onLinkEmail}>
             Привязать почту
           </button>

@@ -423,6 +423,92 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          catch_id: number | null
+          created_at: string
+          id: number
+          kind: string
+          payload: Json | null
+          read_at: string | null
+          territory_id: string | null
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          catch_id?: number | null
+          created_at?: string
+          id?: never
+          kind: string
+          payload?: Json | null
+          read_at?: string | null
+          territory_id?: string | null
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          catch_id?: number | null
+          created_at?: string
+          id?: never
+          kind?: string
+          payload?: Json | null
+          read_at?: string | null
+          territory_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_catch_id_fkey"
+            columns: ["catch_id"]
+            isOneToOne: false
+            referencedRelation: "catches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_territory_id_fkey"
+            columns: ["territory_id"]
+            isOneToOne: false
+            referencedRelation: "territories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_territory_id_fkey"
+            columns: ["territory_id"]
+            isOneToOne: false
+            referencedRelation: "territories_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -447,6 +533,8 @@ export type Database = {
           public_id: string
           telegram_id: number | null
           territory_color: string | null
+          tg_notifications_enabled: boolean
+          tg_unreachable_at: string | null
           weight_kg: number | null
         }
         Insert: {
@@ -472,6 +560,8 @@ export type Database = {
           public_id: string
           telegram_id?: number | null
           territory_color?: string | null
+          tg_notifications_enabled?: boolean
+          tg_unreachable_at?: string | null
           weight_kg?: number | null
         }
         Update: {
@@ -497,6 +587,8 @@ export type Database = {
           public_id?: string
           telegram_id?: number | null
           territory_color?: string | null
+          tg_notifications_enabled?: boolean
+          tg_unreachable_at?: string | null
           weight_kg?: number | null
         }
         Relationships: []
@@ -565,6 +657,86 @@ export type Database = {
             columns: ["announcement_id"]
             isOneToOne: false
             referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_link_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          token: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          token: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          token?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_link_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telegram_link_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_outbox: {
+        Row: {
+          attempts: number
+          chat_id: number
+          created_at: string
+          deliver_after: string
+          id: number
+          last_error: string | null
+          notification_id: number
+          sent_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          chat_id: number
+          created_at?: string
+          deliver_after?: string
+          id?: never
+          last_error?: string | null
+          notification_id: number
+          sent_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          chat_id?: number
+          created_at?: string
+          deliver_after?: string
+          id?: never
+          last_error?: string | null
+          notification_id?: number
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_outbox_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
             referencedColumns: ["id"]
           },
         ]
@@ -838,6 +1010,18 @@ export type Database = {
         Args: { p_public_id: string; p_user_id: string }
         Returns: undefined
       }
+      create_telegram_link_token: { Args: Record<string, never>; Returns: string }
+      mark_notifications_read: { Args: Record<string, never>; Returns: undefined }
+      my_telegram_notification_state: {
+        Args: Record<string, never>
+        Returns: {
+          linked: boolean
+          bot_started: boolean
+          enabled: boolean
+          unreachable: boolean
+        }[]
+      }
+      set_telegram_notifications: { Args: { p_enabled: boolean }; Returns: undefined }
       confirm_catch: {
         Args: {
           p_bait?: string

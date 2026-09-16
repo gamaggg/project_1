@@ -37,6 +37,10 @@ declare global {
         offEvent?: (type: string, cb: () => void) => void
         enableClosingConfirmation?: () => void
         disableVerticalSwipes?: () => void
+        // Opens a t.me link in Telegram itself rather than a browser tab —
+        // needed for the bot deep link that connects notifications, since a
+        // browser would only bounce back into Telegram anyway.
+        openTelegramLink?: (url: string) => void
         BackButton?: {
           show: () => void
           hide: () => void

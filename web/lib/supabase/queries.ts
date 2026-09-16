@@ -357,17 +357,18 @@ export function useMyCatches() {
   return useCatchesByUser(user?.id ?? null)
 }
 
-// Logged out: unfiltered public feed (no "me" to personalize around — matches
-// the map/territories/profile-view being open to anonymous visitors). Logged
-// in: only your own activity, activity from people you follow (but only from
-// the moment you followed them — following doesn't backfill their past
-// catches, see DECISIONS.md), and "someone else claimed a territory you used
-// to own" (previous_owner_id, set by the confirm_catch RPC at claim time).
-// The user/followee part of the filter is applied server-side, before the
-// limit, so relevant-but-old events aren't crowded out of the top 100 by
-// unrelated global activity once the feed gets busy; the follow-time cutoff
-// is then applied client-side (PostgREST can't express a per-followee
-// threshold in one query).
+// A personal inbox rather than a public timeline: each row was written for
+// this specific person at the moment the event happened (see the
+// fanout_activity_notification trigger), so none of the "is this relevant to
+// me" filtering this used to do client-side is needed any more — and read
+// state lives in the database instead of one browser's localStorage, where it
+// silently reset on every device switch.
+//
+// Your own actions are deliberately absent: unread should mean "someone did
+// something", not "you caught a fish". Announcements stay outside the table
+// because they're identical for everyone — fanning one out into a row per
+// user would multiply writes for no gain — so they're fetched globally and
+// merged back in at the right chronological spot.
 export function useActivity() {
   const { user } = useAuth()
   return useQuery({
@@ -375,98 +376,55 @@ export function useActivity() {
     queryFn: async (): Promise<ActivityEntry[]> => {
       const supabase = createClient()
 
-      // activity_log now has two FKs to profiles (user_id, previous_owner_id) —
-      // the embed must name which one, or PostgREST 300s as ambiguous.
-      let query = supabase
-        .from('activity_log')
-        .select(
-          'id, kind, created_at, user_id, previous_owner_id, territory_id, catch_id, territories(kind), catches(length_cm, weight_kg, photo_url, species_info:species(name, category)), profiles!activity_log_user_id_fkey(display_name, avatar_url)'
-        )
-
-      let followedSince = new Map<string, string>()
+      let notificationEntries: ActivityEntry[] = []
       if (user) {
-        const { data: follows } = await supabase.from('follows').select('followee_id, created_at').eq('follower_id', user.id)
-        followedSince = new Map((follows ?? []).map((f) => [f.followee_id, f.created_at]))
-        const followeeIds = [...followedSince.keys()]
-        const orParts = [`user_id.eq.${user.id}`, `previous_owner_id.eq.${user.id}`]
-        if (followeeIds.length) orParts.push(`user_id.in.(${followeeIds.join(',')})`)
-        query = query.or(orParts.join(','))
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false }).limit(100)
-      if (error) throw error
-
-      // A followed user's activity only counts from the moment you followed
-      // them — following someone doesn't backfill their past catches into your
-      // feed, only "mine" and "someone took my territory" are unconditional.
-      const relevant = data!.filter((row) => {
-        // A 'like' row's user_id is who liked it, not whose activity this is
-        // — unlike catch/claim, the liker isn't meant to see it in their own
-        // feed (only the recipient, via previous_owner_id below), so the
-        // usual "it's mine" shortcut has to be skipped for this kind or a
-        // like on someone else's catch shows up as "Ты лайкнул твой улов"
-        // in the liker's own feed.
-        if (row.kind === 'like' && row.user_id === user?.id) return false
-        if (!user || row.user_id === user.id || row.previous_owner_id === user.id) return true
-        const since = followedSince.get(row.user_id)
-        return !!since && row.created_at > since
-      })
-
-      const catchEntries = relevant.map((row): ActivityEntry => {
-        const territory = Array.isArray(row.territories) ? row.territories[0] : row.territories
-        const c = Array.isArray(row.catches) ? row.catches[0] : row.catches
-        const speciesInfo = c ? (Array.isArray(c.species_info) ? c.species_info[0] : c.species_info) : null
-        const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
-        return {
-          id: `log:${row.id}`,
-          who: row.user_id === user?.id ? 'Ты' : (profile?.display_name ?? 'Рыбак'),
-          userId: row.user_id,
-          avatarUrl: profile?.avatar_url ?? null,
-          mine: row.user_id === user?.id,
-          kind: row.kind as 'catch' | 'claim' | 'like',
-          territoryId: row.territory_id,
-          territoryKind: territory?.kind ?? 'sea',
-          speciesName: speciesInfo?.name ?? null,
-          speciesCategory: (speciesInfo?.category as SpeciesCategory | undefined) ?? null,
-          lengthCm: c?.length_cm ?? null,
-          weightKg: c?.weight_kg ?? null,
-          photoUrl: c?.photo_url ?? null,
-          catchId: row.catch_id,
-          createdAt: row.created_at,
-          body: null,
-          buttonLabel: null,
-          buttonUrl: null,
-        }
-      })
-
-      // "Someone followed you" isn't stored in activity_log (would need a
-      // nullable territory_id and a trigger on follows) — synthesized here
-      // from the follows table instead, merged and re-sorted with the rest.
-      let followEntries: ActivityEntry[] = []
-      if (user) {
-        const { data: followedByRows, error: followedByError } = await supabase
-          .from('follows')
-          .select('follower_id, created_at, profiles!follows_follower_id_fkey(display_name, avatar_url)')
-          .eq('followee_id', user.id)
+        // No user_id filter: row-level security already limits this to the
+        // caller's own notifications, and naming two FKs to profiles means
+        // the actor embed has to say which one it follows.
+        const { data, error } = await supabase
+          .from('notifications')
+          .select(
+            'id, kind, created_at, read_at, actor_id, territory_id, catch_id, territories(kind), catches(length_cm, weight_kg, photo_url, species_info:species(name, category)), actor:profiles!notifications_actor_id_fkey(display_name, avatar_url)'
+          )
           .order('created_at', { ascending: false })
-          .limit(50)
-        if (followedByError) throw followedByError
-        followEntries = (followedByRows ?? []).map((f): ActivityEntry => {
-          const p = Array.isArray(f.profiles) ? f.profiles[0] : f.profiles
+          .limit(100)
+        if (error) throw error
+
+        notificationEntries = (data ?? []).map((row): ActivityEntry => {
+          const territory = Array.isArray(row.territories) ? row.territories[0] : row.territories
+          const c = Array.isArray(row.catches) ? row.catches[0] : row.catches
+          const speciesInfo = c ? (Array.isArray(c.species_info) ? c.species_info[0] : c.species_info) : null
+          const actor = Array.isArray(row.actor) ? row.actor[0] : row.actor
+          const kind: ActivityEntry['kind'] =
+            row.kind === 'sector_lost'
+              ? 'sector_lost'
+              : row.kind === 'catch_liked'
+                ? 'like'
+                : row.kind === 'new_follower'
+                  ? 'follow'
+                  : row.kind === 'moderation'
+                    ? 'moderation'
+                    : 'catch'
           return {
-            id: `follow:${f.follower_id}`,
-            who: p?.display_name ?? 'Рыбак',
-            userId: f.follower_id,
-            avatarUrl: p?.avatar_url ?? null,
-            mine: false,
-            kind: 'follow',
-            speciesName: null,
-            speciesCategory: null,
-            lengthCm: null,
-            weightKg: null,
-            photoUrl: null,
-            catchId: null,
-            createdAt: f.created_at,
+            id: `notif:${row.id}`,
+            who: actor?.display_name ?? 'Рыбак',
+            userId: row.actor_id ?? '',
+            avatarUrl: actor?.avatar_url ?? null,
+            // The one kind that's about a sector of yours rather than about
+            // someone else's activity — what the "Мои территории" filter now
+            // selects on.
+            mine: row.kind === 'sector_lost',
+            kind,
+            territoryId: row.territory_id ?? undefined,
+            territoryKind: territory?.kind ?? undefined,
+            speciesName: speciesInfo?.name ?? null,
+            speciesCategory: (speciesInfo?.category as SpeciesCategory | undefined) ?? null,
+            lengthCm: c?.length_cm ?? null,
+            weightKg: c?.weight_kg ?? null,
+            photoUrl: c?.photo_url ?? null,
+            catchId: row.catch_id,
+            createdAt: row.created_at,
+            unread: row.read_at === null,
             body: null,
             buttonLabel: null,
             buttonUrl: null,
@@ -497,12 +455,49 @@ export function useActivity() {
         photoUrl: null,
         catchId: null,
         createdAt: a.created_at,
+        // Announcements have no per-person row to carry read state, so they
+        // never show an unread dot of their own.
+        unread: false,
         body: a.body,
         buttonLabel: a.button_label,
         buttonUrl: a.button_url,
       }))
 
-      return [...catchEntries, ...followEntries, ...announcementEntries].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+      return [...notificationEntries, ...announcementEntries].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    },
+  })
+}
+
+// Drives the badge on the "Активность" tab. Kept separate from useActivity so
+// the count is available without the feed itself being mounted.
+export function useUnreadNotificationCount() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['unread-notifications', user?.id ?? null],
+    enabled: !!user,
+    queryFn: async (): Promise<number> => {
+      const supabase = createClient()
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .is('read_at', null)
+      if (error) throw error
+      return count ?? 0
+    },
+  })
+}
+
+export function useMarkNotificationsRead() {
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+  return useMutation({
+    mutationFn: async () => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('mark_notifications_read')
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['unread-notifications', user?.id ?? null] })
     },
   })
 }
@@ -910,6 +905,70 @@ export function useUpdateProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export type TelegramNotificationState = {
+  // Do we know who this person is in Telegram at all? Mini App sign-ups do;
+  // people who registered by email through the browser don't until they use
+  // the connect button.
+  linked: boolean
+  // A bot may not message someone who never opened a chat with it, so this
+  // has to be true before any notification can arrive — being linked isn't
+  // enough on its own.
+  botStarted: boolean
+  enabled: boolean
+  // Telegram told us the chat is closed for good (blocked, or the account is
+  // gone). Shown as "reconnect", not as an error.
+  unreachable: boolean
+}
+
+export function useTelegramNotificationState() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['telegram-notification-state', user?.id ?? null],
+    enabled: !!user,
+    queryFn: async (): Promise<TelegramNotificationState> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('my_telegram_notification_state')
+      if (error) throw error
+      const row = data?.[0]
+      return {
+        linked: row?.linked ?? false,
+        botStarted: row?.bot_started ?? false,
+        enabled: row?.enabled ?? false,
+        unreachable: row?.unreachable ?? false,
+      }
+    },
+  })
+}
+
+export function useSetTelegramNotifications() {
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+  return useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('set_telegram_notifications', { p_enabled: enabled })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['telegram-notification-state', user?.id ?? null] })
+    },
+  })
+}
+
+// Mints the one-tap deep link that attaches this account to whichever
+// Telegram opens it. Goes through the API route rather than the RPC directly
+// because the bot's @username has to be read from Telegram server-side.
+export function useCreateTelegramLink() {
+  return useMutation({
+    mutationFn: async (): Promise<string> => {
+      const res = await fetch('/api/telegram/link-token', { method: 'POST' })
+      if (!res.ok) throw new Error('link failed')
+      const body = await res.json()
+      return body.url as string
     },
   })
 }

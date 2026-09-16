@@ -207,8 +207,13 @@ export type ActivityEntry = {
   who: string
   userId: string
   avatarUrl: string | null
+  // "This concerns a sector of mine" — the feed only carries other people's
+  // actions now, so this no longer means "I did it" (see useActivity).
   mine: boolean
-  kind: 'catch' | 'claim' | 'follow' | 'moderation' | 'like' | 'announcement'
+  kind: 'catch' | 'sector_lost' | 'follow' | 'moderation' | 'like' | 'announcement'
+  // Still unread as of the moment the screen loaded. Opening the feed marks
+  // everything read, so this is a snapshot, not live state.
+  unread: boolean
   territoryId?: string
   territoryKind?: TerritoryKind
   speciesName: string | null
