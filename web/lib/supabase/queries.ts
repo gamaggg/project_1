@@ -170,6 +170,21 @@ export function useRealtimeSync() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log' }, () => {
         queryClient.invalidateQueries({ queryKey: ['activity'] })
       })
+      // Own channel filter (not RLS) — a new row here fires for many users at
+      // once (e.g. a claim fans out to one notification per follower), and
+      // without user_id=eq scoping this client would get invalidation pings
+      // for everyone else's notifications too, not just its own. Covers the
+      // unread badge (useUnreadNotificationCount had no realtime source of
+      // its own before this) and also fixes new_follower, which activity_log
+      // alone never carried — follows never had a listener either.
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['activity'] })
+          queryClient.invalidateQueries({ queryKey: ['unread-notifications', user.id] })
+        }
+      )
       .subscribe()
 
     return () => {
