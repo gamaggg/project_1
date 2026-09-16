@@ -432,6 +432,7 @@ export type Database = {
           kind: string
           payload: Json | null
           read_at: string | null
+          telegram_digested_at: string | null
           territory_id: string | null
           user_id: string
         }
@@ -443,6 +444,7 @@ export type Database = {
           kind: string
           payload?: Json | null
           read_at?: string | null
+          telegram_digested_at?: string | null
           territory_id?: string | null
           user_id: string
         }
@@ -454,6 +456,7 @@ export type Database = {
           kind?: string
           payload?: Json | null
           read_at?: string | null
+          telegram_digested_at?: string | null
           territory_id?: string | null
           user_id?: string
         }
@@ -1012,6 +1015,7 @@ export type Database = {
       }
       create_telegram_link_token: { Args: Record<string, never>; Returns: string }
       mark_notifications_read: { Args: Record<string, never>; Returns: undefined }
+      notification_deliver_after_from: { Args: { p_city: string; p_from: string }; Returns: string }
       my_telegram_notification_state: {
         Args: Record<string, never>
         Returns: {
