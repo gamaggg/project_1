@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useActivity, useMarkNotificationsRead } from '@/lib/supabase/queries'
 import { CATEGORY_GRADIENT, KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen, pluralSectors, pluralCatches } from '@/lib/format'
@@ -49,17 +49,27 @@ export function ActivityScreen({
   const [filter, setFilter] = useState<Filter>('all')
   // Opening the screen is what marks things read, but the dots have to stay
   // visible for this visit or "what's new" would vanish before it could be
-  // read — hence a snapshot taken once, rather than rendering live state.
+  // read — hence a snapshot taken once per visit, rather than rendering live
+  // state.
   const [unreadIds, setUnreadIds] = useState<Set<string>>(new Set())
   const [snapshotTaken, setSnapshotTaken] = useState(false)
+  // Every screen in this shell stays mounted for the app's whole lifetime
+  // (see the `active` prop note above), so without this, "once" above would
+  // really mean once ever — leave the tab and come back and the dots from
+  // the very first visit would still be sitting there, never re-snapshotted,
+  // however many times you actually revisit.
+  const wasActiveRef = useRef(active)
+  useEffect(() => {
+    if (active && !wasActiveRef.current) setSnapshotTaken(false)
+    wasActiveRef.current = active
+  }, [active])
 
   useEffect(() => {
     if (!active || !isSuccess || snapshotTaken) return
     setSnapshotTaken(true)
     const unread = activity.filter((a) => a.unread).map((a) => a.id)
-    if (!unread.length) return
     setUnreadIds(new Set(unread))
-    markRead.mutate()
+    if (unread.length) markRead.mutate()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, isSuccess, snapshotTaken])
 
