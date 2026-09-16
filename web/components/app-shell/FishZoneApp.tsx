@@ -701,6 +701,22 @@ export function FishZoneApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
+  // Opens a ?lastweek=1 link (from a weekly_result Telegram notification)
+  // straight into the recap screen — no id to resolve, just needs `city` to
+  // have loaded so LastWeekScreen knows which leaderboard to show.
+  const lastWeekDeepLinkOpened = useRef(false)
+  useEffect(() => {
+    // Waits for the real profile city, not just the 'batumi' default city
+    // starts as — firing before myProfile loads could open the wrong city's
+    // recap for a Moscow user.
+    if (lastWeekDeepLinkOpened.current || !user || myProfileLoading) return
+    if (new URLSearchParams(window.location.search).get('lastweek') !== '1') return
+    lastWeekDeepLinkOpened.current = true
+    openLastWeek()
+    window.history.replaceState(null, '', window.location.pathname)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, myProfileLoading])
+
   if (authLoading || (user && myProfileLoading)) {
     return <LoadingShell />
   }
@@ -844,6 +860,8 @@ export function FishZoneApp() {
             onOpenTerritory={openTerritory}
             onOpenPhoto={openCatchPhoto}
             onOpenRating={openWeeklyRating}
+            onOpenOwnAwards={() => navClick('screen-profile')}
+            onOpenLastWeek={openLastWeek}
           />
         </Screen>
         <Screen id="screen-profile" current={currentScreen}>

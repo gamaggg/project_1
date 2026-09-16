@@ -399,7 +399,7 @@ export function useActivity() {
         const { data, error } = await supabase
           .from('notifications')
           .select(
-            'id, kind, created_at, read_at, actor_id, territory_id, catch_id, territories(kind), catches(length_cm, weight_kg, photo_url, species_info:species(name, category)), actor:profiles!notifications_actor_id_fkey(display_name, avatar_url)'
+            'id, kind, created_at, read_at, actor_id, territory_id, catch_id, payload, territories(kind), catches(length_cm, weight_kg, photo_url, species_info:species(name, category)), actor:profiles!notifications_actor_id_fkey(display_name, avatar_url)'
           )
           .order('created_at', { ascending: false })
           .limit(100)
@@ -410,6 +410,7 @@ export function useActivity() {
           const c = Array.isArray(row.catches) ? row.catches[0] : row.catches
           const speciesInfo = c ? (Array.isArray(c.species_info) ? c.species_info[0] : c.species_info) : null
           const actor = Array.isArray(row.actor) ? row.actor[0] : row.actor
+          const payload = (row.payload ?? {}) as Record<string, unknown>
           const kind: ActivityEntry['kind'] =
             row.kind === 'sector_lost'
               ? 'sector_lost'
@@ -419,7 +420,11 @@ export function useActivity() {
                   ? 'follow'
                   : row.kind === 'moderation'
                     ? 'moderation'
-                    : 'catch'
+                    : row.kind === 'award_granted'
+                      ? 'award'
+                      : row.kind === 'weekly_result'
+                        ? 'weekly_result'
+                        : 'catch'
           return {
             id: `notif:${row.id}`,
             who: actor?.display_name ?? 'Рыбак',
@@ -443,6 +448,11 @@ export function useActivity() {
             body: null,
             buttonLabel: null,
             buttonUrl: null,
+            awardTitle: kind === 'award' ? ((payload.title as string) ?? null) : null,
+            awardSubtitle: kind === 'award' ? ((payload.subtitle as string) ?? null) : null,
+            weeklyRank: kind === 'weekly_result' ? ((payload.rank as number) ?? null) : null,
+            weeklySectors: kind === 'weekly_result' ? ((payload.sectors as number) ?? null) : null,
+            weeklyCatches: kind === 'weekly_result' ? ((payload.catches as number) ?? null) : null,
           }
         })
       }
@@ -476,6 +486,11 @@ export function useActivity() {
         body: a.body,
         buttonLabel: a.button_label,
         buttonUrl: a.button_url,
+        awardTitle: null,
+        awardSubtitle: null,
+        weeklyRank: null,
+        weeklySectors: null,
+        weeklyCatches: null,
       }))
 
       return [...notificationEntries, ...announcementEntries].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))

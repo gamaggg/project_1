@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { SITE_URL } from '@/lib/site'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { pluralFish, pluralAnglers } from '@/lib/format'
+import { pluralFish, pluralAnglers, pluralSectors, pluralCatches } from '@/lib/format'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
@@ -22,6 +22,7 @@ type NotificationRef = {
   catch_id: number | null
   user_id: string
   actor: ActorRef | ActorRef[] | null
+  payload: Record<string, unknown> | null
 }
 type Message = { text: string; buttonLabel: string; url: string }
 
@@ -66,6 +67,22 @@ function renderMessage(notification: NotificationRef): Message | null {
             url: `${SITE_URL}/?territory=${encodeURIComponent(notification.territory_id)}`,
           }
         : { text: 'Один из твоих уловов удалён модератором', buttonLabel: 'Открыть RANGE', url: SITE_URL }
+    case 'award_granted': {
+      const title = notification.payload?.title as string | undefined
+      if (!title) return null
+      return { text: `Новая награда: ${title}`, buttonLabel: 'Открыть профиль', url: SITE_URL }
+    }
+    case 'weekly_result': {
+      const rank = notification.payload?.rank as number | undefined
+      const sectors = (notification.payload?.sectors as number | undefined) ?? 0
+      const catches = (notification.payload?.catches as number | undefined) ?? 0
+      if (!rank) return null
+      return {
+        text: `Итоги недели: ${rank} место — ${sectors} ${pluralSectors(sectors)}, ${catches} ${pluralCatches(catches)}`,
+        buttonLabel: 'Смотреть итоги',
+        url: `${SITE_URL}/?lastweek=1`,
+      }
+    }
     default:
       // Kind that isn't meant for a single-row send (follow_catch goes
       // through buildFollowCatchDigest instead) or isn't wired up yet — the
@@ -138,7 +155,7 @@ export async function GET(req: Request) {
   const { data: due, error } = await admin
     .from('telegram_outbox')
     .select(
-      'id, chat_id, attempts, notifications!inner(kind, territory_id, catch_id, user_id, actor:profiles!notifications_actor_id_fkey(display_name, public_id))'
+      'id, chat_id, attempts, notifications!inner(kind, territory_id, catch_id, user_id, payload, actor:profiles!notifications_actor_id_fkey(display_name, public_id))'
     )
     .is('sent_at', null)
     .lte('deliver_after', new Date().toISOString())

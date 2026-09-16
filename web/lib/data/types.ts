@@ -210,7 +210,7 @@ export type ActivityEntry = {
   // "This concerns a sector of mine" — the feed only carries other people's
   // actions now, so this no longer means "I did it" (see useActivity).
   mine: boolean
-  kind: 'catch' | 'sector_lost' | 'follow' | 'moderation' | 'like' | 'announcement'
+  kind: 'catch' | 'sector_lost' | 'follow' | 'moderation' | 'like' | 'announcement' | 'award' | 'weekly_result'
   // Still unread as of the moment the screen loaded. Opening the feed marks
   // everything read, so this is a snapshot, not live state.
   unread: boolean
@@ -231,4 +231,13 @@ export type ActivityEntry = {
   // or both set together — see admin_post_announcement's check).
   buttonLabel: string | null
   buttonUrl: string | null
+  // 'award' only — copied straight from user_awards at grant time (see
+  // fanout_award_notification), so the feed never needs to join it back.
+  awardTitle: string | null
+  awardSubtitle: string | null
+  // 'weekly_result' only — this person's own place in last week's
+  // leaderboard, computed once by notify_weekly_results.
+  weeklyRank: number | null
+  weeklySectors: number | null
+  weeklyCatches: number | null
 }

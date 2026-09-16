@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useActivity, useMarkNotificationsRead } from '@/lib/supabase/queries'
 import { CATEGORY_GRADIENT, KIND_LABEL } from '@/lib/data/species'
-import { formatCatchMeta, formatWhen } from '@/lib/format'
+import { formatCatchMeta, formatWhen, pluralSectors, pluralCatches } from '@/lib/format'
 import { FishIcon } from '@/components/app-shell/icons'
 
 type Filter = 'all' | 'mine'
@@ -30,6 +30,8 @@ export function ActivityScreen({
   onOpenTerritory,
   onOpenPhoto,
   onOpenRating,
+  onOpenOwnAwards,
+  onOpenLastWeek,
 }: {
   // This screen stays mounted while other tabs are on top of it, so being
   // rendered says nothing about being looked at — and marking notifications
@@ -39,6 +41,8 @@ export function ActivityScreen({
   onOpenTerritory: (id: string) => void
   onOpenPhoto: (catchId: number) => void
   onOpenRating: () => void
+  onOpenOwnAwards: () => void
+  onOpenLastWeek: () => void
 }) {
   const { data: activity = [], isLoading, isSuccess } = useActivity()
   const markRead = useMarkNotificationsRead()
@@ -150,6 +154,40 @@ export function ActivityScreen({
                     </div>
                     <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
                       Нарушены правила площадки. При повторных нарушениях аккаунт будет заблокирован.
+                    </div>
+                    <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {unreadIds.has(a.id) && <span className="unread-dot" />}
+                      {formatWhen(a.createdAt)}
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+            if (a.kind === 'award') {
+              return (
+                <div className="activity-item tap-scale" key={a.id} style={{ cursor: 'pointer' }} onClick={onOpenOwnAwards}>
+                  <div className="avatar" style={{ background: 'var(--accent)' }}>🏆</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>Новая награда: {a.awardTitle}</div>
+                    {a.awardSubtitle && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{a.awardSubtitle}</div>}
+                    <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {unreadIds.has(a.id) && <span className="unread-dot" />}
+                      {formatWhen(a.createdAt)}
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+            if (a.kind === 'weekly_result') {
+              return (
+                <div className="activity-item tap-scale" key={a.id} style={{ cursor: 'pointer' }} onClick={onOpenLastWeek}>
+                  <div className="avatar" style={{ background: 'var(--blue)' }}>📊</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>
+                      Итоги недели: {a.weeklyRank} место
+                    </div>
+                    <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
+                      {a.weeklySectors} {pluralSectors(a.weeklySectors ?? 0)} · {a.weeklyCatches} {pluralCatches(a.weeklyCatches ?? 0)}
                     </div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                       {unreadIds.has(a.id) && <span className="unread-dot" />}
