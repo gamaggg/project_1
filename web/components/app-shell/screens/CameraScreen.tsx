@@ -18,16 +18,24 @@ export function CameraScreen({
   active,
   onBack,
   onCapture,
+  allowGallery,
 }: {
   active: boolean
   onBack: () => void
   onCapture: (blob: Blob) => void
+  // Admin-only escape hatch (see FishZoneApp's startAdminCatch and the
+  // can_add_catch_from_gallery permission) — a regular player's catch must
+  // come from the live camera right there on the water, see the no-skip-past
+  // camera note above, so this stays off unless the caller explicitly
+  // enables it for an admin-initiated catch.
+  allowGallery?: boolean
 }) {
   const [state, setState] = useState<CameraState>('intro')
   const [torchSupported, setTorchSupported] = useState(false)
   const [torchOn, setTorchOn] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
 
   function stopStream() {
     streamRef.current?.getTracks().forEach((t) => t.stop())
@@ -135,6 +143,31 @@ export function CameraScreen({
     canvas.toBlob((blob) => { if (blob) onCapture(blob) }, 'image/jpeg', 0.85)
   }
 
+  // Same resize/encode pass as shoot() above (MAX_PHOTO_WIDTH, jpeg 0.85) —
+  // a gallery pick should look and weigh the same as a live shot once it's
+  // in confirm/upload, not carry through whatever resolution the source
+  // photo happened to be.
+  function handleGalleryPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      const scale = Math.min(1, MAX_PHOTO_WIDTH / img.naturalWidth)
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(img.naturalWidth * scale)
+      canvas.height = Math.round(img.naturalHeight * scale)
+      const ctx = canvas.getContext('2d')
+      URL.revokeObjectURL(url)
+      if (!ctx) return
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      stopStream()
+      canvas.toBlob((blob) => { if (blob) onCapture(blob) }, 'image/jpeg', 0.85)
+    }
+    img.src = url
+  }
+
   const isLive = state === 'live'
 
   return (
@@ -183,15 +216,32 @@ export function CameraScreen({
       </div>
       <div className="camera-controls">
         {isLive ? (
-          <div className="shutter tap-scale" onClick={shoot} />
+          <>
+            <div className="shutter tap-scale" onClick={shoot} />
+            {allowGallery && (
+              <div className="cam-round-btn camera-gallery-btn tap-scale" onClick={() => galleryInputRef.current?.click()} aria-label="Выбрать из галереи">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <circle cx="9" cy="10" r="1.6" fill="#fff" stroke="none" />
+                  <path d="M3 16l5.5-5 4 4 3-3L21 17" />
+                </svg>
+              </div>
+            )}
+          </>
         ) : (
           <div className="camera-controls-btn">
             <button className="btn-primary" disabled={state === 'requesting'} onClick={requestCamera}>
               {state === 'requesting' ? 'Запрашиваем доступ…' : state === 'denied' ? 'Запросить доступ снова' : 'Разрешить доступ к камере'}
             </button>
+            {allowGallery && (
+              <button className="btn-secondary" style={{ marginTop: 10 }} onClick={() => galleryInputRef.current?.click()}>
+                Выбрать фото из галереи
+              </button>
+            )}
           </div>
         )}
       </div>
+      {allowGallery && <input ref={galleryInputRef} type="file" accept="image/*" onChange={handleGalleryPick} style={{ display: 'none' }} />}
     </div>
   )
 }

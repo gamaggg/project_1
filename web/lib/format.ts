@@ -97,6 +97,23 @@ export const pluralSpecies = (n: number) => pluralRu(n, ['вид', 'вида', '
 export const pluralFollowers = (n: number) => pluralRu(n, ['подписчик', 'подписчика', 'подписчиков'])
 export const pluralFish = (n: number) => pluralRu(n, ['рыбу', 'рыбы', 'рыб'])
 export const pluralAnglers = (n: number) => pluralRu(n, ['рыбак', 'рыбака', 'рыбаков'])
+export const pluralDays = (n: number) => pluralRu(n, ['день', 'дня', 'дней'])
+export const pluralHours = (n: number) => pluralRu(n, ['час', 'часа', 'часов'])
+export const pluralMinutes = (n: number) => pluralRu(n, ['минута', 'минуты', 'минут'])
+
+// "1 день 4 часа" once a day or more remains, "14 часов 5 минут" under a
+// day, just "13 минут" under an hour, and "Завершено" past the deadline —
+// see ChallengeCountdown, the one caller.
+export function formatChallengeCountdown(msRemaining: number): { text: string; done: boolean } {
+  if (msRemaining <= 0) return { text: 'Завершено', done: true }
+  const totalMinutes = Math.floor(msRemaining / 60_000)
+  const days = Math.floor(totalMinutes / 1440)
+  const hours = Math.floor((totalMinutes % 1440) / 60)
+  const minutes = totalMinutes % 60
+  if (days >= 1) return { text: `${days} ${pluralDays(days)} ${hours} ${pluralHours(hours)}`, done: false }
+  if (hours >= 1) return { text: `${hours} ${pluralHours(hours)} ${minutes} ${pluralMinutes(minutes)}`, done: false }
+  return { text: `${minutes} ${pluralMinutes(minutes)}`, done: false }
+}
 
 const RU_MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
 

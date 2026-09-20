@@ -8,6 +8,97 @@ export function FishIcon({ size = 20, stroke = '#fff' }: { size?: number; stroke
   )
 }
 
+// Small stat-row icons (see ProfileScreen.tsx's hero-stat-grid) — same
+// hand-drawn stroke style as ACH_ICONS, distinct set since these sit at a
+// smaller size above a number rather than filling a hex badge.
+export const STAT_ICONS: Record<'territory' | 'catch' | 'species' | 'followers', React.ReactNode> = {
+  territory: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8.2 3.5h7.6l4.2 7.3-4.2 7.3H8.2L4 10.8z" />
+    </svg>
+  ),
+  catch: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 3.5v9.5a4.5 4.5 0 0 0 9 0" />
+      <circle cx="9" cy="3.5" r="1.6" />
+    </svg>
+  ),
+  species: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 14c4-6 9-9 13-6-1 3-1 6 0 9-4 3-9 0-13-3z" />
+      <circle cx="7.5" cy="12.2" r="0.8" fill="currentColor" stroke="none" />
+    </svg>
+  ),
+  followers: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 20c0-3.5 2.5-6 6-6s6 2.5 6 6" />
+      <circle cx="17" cy="9" r="2.3" />
+      <path d="M15.5 14c2.7.3 4.5 2.4 4.5 6" />
+    </svg>
+  ),
+}
+
+// Profile CTA row icons (see ProfileScreen.tsx's profile-cta-row) — redrawn
+// as line icons matching the app's own style instead of 🎯/🛍 emoji, which
+// render inconsistently across platforms/fonts.
+export const CTA_ICONS = {
+  target: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="4.5" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  ),
+  bag: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 8h12l-1 12H7z" />
+      <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+    </svg>
+  ),
+}
+
+// Shop category-tab icons (see ShopScreen.tsx's shop-tabs) — redrawn as line
+// icons matching the app's own style instead of 🖼/🎨/✨/🗺/⚡ emoji, which
+// render inconsistently across platforms/fonts.
+export const SHOP_TAB_ICONS = {
+  frame: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="4" />
+    </svg>
+  ),
+  background: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="9" cy="10" r="1.6" fill="currentColor" stroke="none" />
+      <path d="M3 16l5.5-5 4 4 3-3L21 17" />
+    </svg>
+  ),
+  sparkle: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 6c.6 3.4 2.6 5.4 6 6-3.4.6-5.4 2.6-6 6-.6-3.4-2.6-5.4-6-6 3.4-.6 5.4-2.6 6-6z" />
+    </svg>
+  ),
+  skin: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8.2 4.7h7.6l4.2 7.3-4.2 7.3H8.2L4 12z" />
+    </svg>
+  ),
+  bolt: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" />
+    </svg>
+  ),
+  wheel: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 3.5v3.5M12 17v3.5M3.5 12h3.5M17 12h3.5" />
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+    </svg>
+  ),
+}
+
 export const ACH_ICONS: Record<string, React.ReactNode> = {
   first: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">

@@ -10,15 +10,14 @@ import { TerritoryIntroStep } from '@/components/app-shell/onboarding/TerritoryI
 import { CatchIntroStep } from '@/components/app-shell/onboarding/CatchIntroStep'
 import { CityStep } from '@/components/app-shell/onboarding/CityStep'
 import { NameStep } from '@/components/app-shell/onboarding/NameStep'
-import { DetailsStep } from '@/components/app-shell/onboarding/DetailsStep'
 import { ColorStep } from '@/components/app-shell/onboarding/ColorStep'
 import type { CityId } from '@/lib/data/city'
 
-// Listed in actual flow order: welcome -> account -> name -> details -> color
-// -> city -> territory-intro -> catch-intro (which flips onboarding_completed
-// and ends the wizard). signin is a side branch off welcome, not part of the
-// linear sequence.
-type Step = 'welcome' | 'signin' | 'account' | 'name' | 'details' | 'color' | 'city' | 'territory-intro' | 'catch-intro'
+// Listed in actual flow order: welcome -> account -> name -> color -> city ->
+// territory-intro -> catch-intro (which flips onboarding_completed and ends
+// the wizard). signin is a side branch off welcome, not part of the linear
+// sequence.
+type Step = 'welcome' | 'signin' | 'account' | 'name' | 'color' | 'city' | 'territory-intro' | 'catch-intro'
 
 // Rendered by FishZoneApp whenever `!user || !myProfile.onboardingCompleted`
 // (see DECISIONS.md) — self-contained like AchievementDetailScreen, fetches
@@ -45,18 +44,18 @@ export function OnboardingFlow({ onCityChosen, onForgotPassword }: { onCityChose
   // would otherwise recompute 'name' again and trap the user re-submitting
   // it forever. All forward movement after this is local setStep() calls.
   //
-  // Only birthDate/territoryColor are reliable nullable checkpoints (name
-  // always falls back to a default display name server-side, city/
-  // territory-intro/catch-intro persist nothing at all) — so a reload mid
-  // tail just restarts that tail from 'city' rather than trying to guess
-  // exactly which of the 3 unpersisted screens was last seen.
+  // Only territoryColor is a reliable nullable checkpoint (name always falls
+  // back to a default display name server-side, city/territory-intro/
+  // catch-intro persist nothing at all) — so a reload mid tail just restarts
+  // that tail from 'city' rather than trying to guess exactly which of the
+  // unpersisted screens was last seen.
   const resumedRef = useRef(false)
   const resumeTargetRef = useRef<Step>('name')
   useEffect(() => {
     if (!user || resumedRef.current || myProfileLoading || !myProfile) return
     resumedRef.current = true
     if (myProfile.onboardingCompleted) return // defensive; the gate unmounts us shortly anyway
-    const target: Step = myProfile.birthDate === null ? 'name' : myProfile.territoryColor === null ? 'color' : 'city'
+    const target: Step = myProfile.territoryColor === null ? 'name' : 'city'
     // Telegram already silently signed this account in — Welcome still gets
     // shown (see WelcomeStep's onContinue variant below) instead of jumping
     // straight past it, so there's at least one deliberate tap before
@@ -96,7 +95,7 @@ export function OnboardingFlow({ onCityChosen, onForgotPassword }: { onCityChose
         // AccountStep (email signup) makes no sense to land on for a
         // Telegram-authenticated user — send them back to Welcome instead.
         onBack={() => setStep(viaTelegram ? 'welcome' : 'account')}
-        onDone={() => setStep('details')}
+        onDone={() => setStep('color')}
         onSwitchToEmailSignIn={
           viaTelegram
             ? async () => {
@@ -107,8 +106,7 @@ export function OnboardingFlow({ onCityChosen, onForgotPassword }: { onCityChose
         }
       />
     )
-  if (step === 'details') return <DetailsStep onBack={() => setStep('name')} onDone={() => setStep('color')} />
-  if (step === 'color') return <ColorStep onBack={() => setStep('details')} onDone={() => setStep('city')} />
+  if (step === 'color') return <ColorStep onBack={() => setStep('name')} onDone={() => setStep('city')} />
   if (step === 'city')
     return (
       <CityStep

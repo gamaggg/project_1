@@ -2,10 +2,12 @@
 
 import 'leaflet/dist/leaflet.css'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import type L from 'leaflet'
 import type { Territory } from '@/lib/data/types'
 import { resolveTerritoryColor } from '@/lib/data/territoryColors'
+import { resolveTerritorySkin } from '@/lib/data/territorySkins'
+import { useSkinAssetsVersion, useSkinPatterns } from '@/lib/map/skinPattern'
 import { getCurrentCoords, queryGeolocationPermission } from '@/lib/geolocation'
 import { hapticTap } from '@/lib/telegram/haptics'
 import { applyCurrentLightPreset } from '@/lib/mapbox/lightPreset'
@@ -109,6 +111,15 @@ export const LeafletMap = forwardRef<
     const containerRef = useRef<HTMLDivElement>(null)
     const mapRef = useRef<L.Map | null>(null)
     const leafletRef = useRef<typeof import('leaflet') | null>(null)
+    const getSkinPattern = useSkinPatterns()
+    // Skin SVGs load async — this ticks once a given skin's file lands, so
+    // sectors using it repaint with the real pattern instead of staying on
+    // the flat-color fallback they render with while it's still loading.
+    const skinAssetsVersion = useSkinAssetsVersion()
+    // A hex sector's on-screen size changes with zoom — ticked on 'zoomend'
+    // so the redraw effect below rebuilds skin patterns sized to match (see
+    // hexTileHeight() and skinPattern.ts's tileHeight param).
+    const [zoomTick, setZoomTick] = useState(0)
     const markersLayerRef = useRef<L.LayerGroup | null>(null)
     const labelsLayerRef = useRef<L.LayerGroup | null>(null)
     // SVG-rendered (not the map's own Canvas renderer — see preferCanvas
@@ -139,6 +150,7 @@ export const LeafletMap = forwardRef<
 
     function draw(territories: Territory[]) {
       const L = leafletRef.current
+      const map = mapRef.current
       const markersLayer = markersLayerRef.current
       const labelsLayer = labelsLayerRef.current
       if (!L || !markersLayer || !labelsLayer) return
@@ -160,11 +172,40 @@ export const LeafletMap = forwardRef<
       })
       territories.forEach((t) => {
         const isSelectedForDeletion = selectedIds?.has(t.id) ?? false
+        const skin = t.status !== 'free' && t.ownerEquippedSkin ? resolveTerritorySkin(t.ownerEquippedSkin) : null
         const color = isSelectedForDeletion ? '#D33' : resolveTerritoryColor(t.status, myTerritoryColor)
+        // Tinted with this same `color` — whatever the sector already renders
+        // in (the owner's own color if it's their own, the fixed "other"
+        // color otherwise) — so a skin never clashes with it (see
+        // territorySkins.ts).
+        let pattern: CanvasPattern | null = null
+        if (skin && map) {
+          // Both the tile's position AND its size are measured from this
+          // specific sector's own corners, not a shared sample from
+          // wherever in `territories` — sectors are the same real-world
+          // hex, but Mercator projection still renders that hex at
+          // different PIXEL sizes depending on latitude, so a size sampled
+          // from one sector (especially one in a different city entirely)
+          // could be visibly wrong for another, leaving the tile short of
+          // the sector's true bounding box on one edge. The position also
+          // has to be in the exact same coordinate space Leaflet's canvas
+          // renderer draws this polygon's own points in (layer points, not
+          // container points) — see useSkinPatterns' getSkinPattern for why.
+          const layerPoints = t.corners.map(([lat, lng]) => map.latLngToLayerPoint([lat, lng]))
+          const xs = layerPoints.map((p) => p.x)
+          const ys = layerPoints.map((p) => p.y)
+          const offsetX = Math.min(...xs)
+          const offsetY = Math.min(...ys)
+          const hexTileWidth = Math.max(...xs) - offsetX
+          const hexTileHeight = Math.max(...ys) - offsetY
+          pattern = getSkinPattern(skin.id, color, offsetX, offsetY, hexTileHeight, hexTileWidth)
+        }
         const poly = L.polygon(t.corners, {
           color,
           weight: isSelectedForDeletion ? 2.5 : 1.5,
-          fillColor: color,
+          // A CanvasPattern is a spec-legal fillStyle value right alongside a
+          // plain color string — Leaflet's types just don't know that.
+          fillColor: (pattern ?? color) as unknown as string,
           fillOpacity: isSelectedForDeletion ? 0.5 : t.status === 'free' ? 0.22 : 0.32,
           opacity: 0.9,
         }).addTo(markersLayer)
@@ -397,6 +438,7 @@ export const LeafletMap = forwardRef<
           if (!show && map.hasLayer(labelsLayerRef.current!)) map.removeLayer(labelsLayerRef.current!)
         }
         map.on('zoomend', updateLabelVisibility)
+        map.on('zoomend', () => setZoomTick((v) => v + 1))
         // A drag can start with a mousedown on a polygon — don't let that
         // turn into a long-press selection once the map actually starts
         // moving under it.
@@ -484,7 +526,7 @@ export const LeafletMap = forwardRef<
       if (!mapRef.current) return
       draw(territories)
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [territories, myTerritoryColor, selectedIds, pendingAddDrafts])
+    }, [territories, myTerritoryColor, selectedIds, pendingAddDrafts, skinAssetsVersion, zoomTick])
 
     // Kept separate from the effect above — retargeting the highlight on
     // every tap shouldn't re-run a full ~700-polygon canvas redraw.

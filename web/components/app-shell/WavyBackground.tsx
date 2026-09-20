@@ -131,7 +131,7 @@ export function WavyBackground({
   // z-index:-1 relies on the parent establishing its own stacking context
   // (isolation:isolate or a real z-index, not just position:relative) —
   // otherwise it escapes past the parent's own background into whatever
-  // ancestor does form one. See .herobg-preview/.herobg-swatch/.profile-hero.
+  // ancestor does form one. See .shop-card-bg-preview/.profile-hero.
   return (
     <canvas
       ref={canvasRef}

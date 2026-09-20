@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { SITE_URL } from '@/lib/site'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { pluralFish, pluralAnglers, pluralSectors, pluralCatches } from '@/lib/format'
+import { pluralSectors, pluralCatches } from '@/lib/format'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
@@ -14,7 +14,6 @@ const BATCH_SIZE = 30
 // left alone rather than re-attempted every minute forever.
 const MAX_ATTEMPTS = 3
 
-type Admin = ReturnType<typeof createAdminClient>
 type ActorRef = { display_name: string | null; public_id: string | null }
 type NotificationRef = {
   kind: string
@@ -59,14 +58,24 @@ function renderMessage(notification: NotificationRef): Message | null {
         buttonLabel: 'Посмотреть улов',
         url: `${SITE_URL}/?catch=${notification.catch_id}`,
       }
-    case 'moderation':
+    case 'follow_catch':
+      if (!notification.catch_id) return null
+      return {
+        text: notification.territory_id ? `${actorName} поймал рыбу на секторе ${notification.territory_id}` : `${actorName} поймал рыбу`,
+        buttonLabel: 'Посмотреть улов',
+        url: `${SITE_URL}/?catch=${notification.catch_id}`,
+      }
+    case 'moderation': {
+      const coinsRemoved = notification.payload?.coinsRemoved as number | undefined
+      const coinsSuffix = coinsRemoved ? ` — списано ${coinsRemoved} монет` : ''
       return notification.territory_id
         ? {
-            text: `Улов на территории ${notification.territory_id} удалён модератором`,
+            text: `Улов на территории ${notification.territory_id} удалён модератором${coinsSuffix}`,
             buttonLabel: 'Открыть сектор',
             url: `${SITE_URL}/?territory=${encodeURIComponent(notification.territory_id)}`,
           }
-        : { text: 'Один из твоих уловов удалён модератором', buttonLabel: 'Открыть RANGE', url: SITE_URL }
+        : { text: `Один из твоих уловов удалён модератором${coinsSuffix}`, buttonLabel: 'Открыть RANGE', url: SITE_URL }
+    }
     case 'award_granted': {
       const title = notification.payload?.title as string | undefined
       if (!title) return null
@@ -83,59 +92,37 @@ function renderMessage(notification: NotificationRef): Message | null {
         url: `${SITE_URL}/?lastweek=1`,
       }
     }
+    case 'challenge_completed': {
+      const title = notification.payload?.title as string | undefined
+      const coins = notification.payload?.coins as number | undefined
+      if (!title) return null
+      return {
+        text: `Выполнен челлендж: ${title}${coins ? ` — +${coins} монет` : ''}`,
+        buttonLabel: 'Открыть челленджи',
+        url: `${SITE_URL}/?challenges=1`,
+      }
+    }
+    case 'challenges_week_done': {
+      const coins = notification.payload?.coins as number | undefined
+      return {
+        text: `Все челленджи недели выполнены!${coins ? ` +${coins} монет` : ''}`,
+        buttonLabel: 'Открыть челленджи',
+        url: `${SITE_URL}/?challenges=1`,
+      }
+    }
+    case 'challenge_deadline_soon': {
+      const hours = (notification.payload?.hours as number | undefined) ?? 48
+      return {
+        text: `Челленджи недели закончатся через ${hours} часов — не все ещё выполнены. Успей забрать монеты, пока неделя не закрылась`,
+        buttonLabel: 'Открыть челленджи',
+        url: `${SITE_URL}/?challenges=1`,
+      }
+    }
     default:
-      // Kind that isn't meant for a single-row send (follow_catch goes
-      // through buildFollowCatchDigest instead) or isn't wired up yet — the
-      // queueing trigger already filters these out, so reaching here means
-      // the two lists drifted apart; drop the row rather than send nothing
-      // in a loop.
+      // Kind that isn't wired up yet — the queueing trigger already filters
+      // these out, so reaching here means the two lists drifted apart; drop
+      // the row rather than send nothing in a loop.
       return null
-  }
-}
-
-// follow_catch is the one kind that can arrive in a burst — several
-// followees catching within the same evening — so it's collapsed into a
-// single Telegram message per open digest window (see queue_telegram_
-// notification's "only the first catch opens an outbox row" logic) rather
-// than sent one-for-one. This is what the eventual send actually reads: every
-// still-undigested follow_catch notification for the recipient, not just the
-// one notification_id the outbox row happens to point at.
-async function buildFollowCatchDigest(admin: Admin, recipientUserId: string): Promise<(Message & { notificationIds: number[] }) | null> {
-  const { data } = await admin
-    .from('notifications')
-    .select('id, actor_id, actor:profiles!notifications_actor_id_fkey(display_name, public_id)')
-    .eq('user_id', recipientUserId)
-    .eq('kind', 'follow_catch')
-    .is('telegram_digested_at', null)
-    // The leading name in the digest should be whoever caught first, not
-    // whatever order Postgres happens to return rows in.
-    .order('id', { ascending: true })
-
-  if (!data?.length) return null
-
-  const actors = new Map<string, { name: string; publicId: string | null }>()
-  for (const row of data) {
-    if (!row.actor_id) continue
-    const a = first(row.actor as ActorRef | ActorRef[] | null)
-    actors.set(row.actor_id, { name: a?.display_name ?? 'Рыбак', publicId: a?.public_id ?? null })
-  }
-  const names = [...actors.values()]
-  const totalCatches = data.length
-  const solo = names[0]?.name ?? 'Рыбак'
-
-  const text =
-    names.length <= 1
-      ? totalCatches <= 1
-        ? `${solo} поймал рыбу`
-        : `${solo} поймал ${totalCatches} ${pluralFish(totalCatches)}`
-      : `${solo} и ещё ${names.length - 1} ${pluralAnglers(names.length - 1)} поймали ${totalCatches} ${pluralFish(totalCatches)}`
-
-  const soloPublicId = names.length === 1 ? names[0].publicId : null
-  return {
-    text,
-    buttonLabel: soloPublicId ? 'Открыть профиль' : 'Открыть RANGE',
-    url: soloPublicId ? `${SITE_URL}/?user=${encodeURIComponent(soloPublicId)}` : SITE_URL,
-    notificationIds: data.map((r) => r.id),
   }
 }
 
@@ -143,8 +130,9 @@ async function buildFollowCatchDigest(admin: Admin, recipientUserId: string): Pr
 // send-broadcasts/send-followups — Vercel Cron can't run per-minute on the
 // Hobby plan). Only picks up rows whose deliver_after has passed, which is
 // what holds messages raised overnight until 08:00 local (see
-// notification_deliver_after) and what holds a follow_catch digest open for
-// its first hour.
+// notification_deliver_after) — every kind, including follow_catch, is sent
+// as its own message as soon as that allows, one row in means one message
+// out.
 export async function GET(req: Request) {
   const auth = req.headers.get('authorization')
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -175,22 +163,10 @@ export async function GET(req: Request) {
       continue
     }
 
-    const isDigest = notification.kind === 'follow_catch'
-    const digest = isDigest ? await buildFollowCatchDigest(admin, notification.user_id) : null
-    const message: Message | null = isDigest ? digest : renderMessage(notification)
-
-    // Giving up on this row — for a digest, also releases its batch so a
-    // later re-enable starts fresh instead of resurrecting a stale mix of
-    // old and new catches in one confusing message.
-    async function markDigestGivenUp() {
-      if (isDigest && digest) {
-        await admin.from('notifications').update({ telegram_digested_at: new Date().toISOString() }).in('id', digest.notificationIds)
-      }
-    }
+    const message = renderMessage(notification)
 
     if (!message) {
       await admin.from('telegram_outbox').update({ sent_at: new Date().toISOString(), last_error: 'nothing to render' }).eq('id', row.id)
-      await markDigestGivenUp()
       continue
     }
 
@@ -208,9 +184,6 @@ export async function GET(req: Request) {
 
     if (res.ok) {
       await admin.from('telegram_outbox').update({ sent_at: new Date().toISOString() }).eq('id', row.id)
-      if (isDigest && digest) {
-        await admin.from('notifications').update({ telegram_digested_at: new Date().toISOString() }).in('id', digest.notificationIds)
-      }
       sent++
       continue
     }
@@ -227,7 +200,6 @@ export async function GET(req: Request) {
         .update({ tg_unreachable_at: new Date().toISOString(), tg_notifications_enabled: false })
         .eq('id', notification.user_id)
       await admin.from('telegram_outbox').update({ sent_at: new Date().toISOString(), last_error: body.slice(0, 500) }).eq('id', row.id)
-      await markDigestGivenUp()
       blocked++
       continue
     }
@@ -259,7 +231,6 @@ export async function GET(req: Request) {
         ...(givingUp ? { sent_at: new Date().toISOString() } : {}),
       })
       .eq('id', row.id)
-    if (givingUp) await markDigestGivenUp()
   }
 
   return NextResponse.json({ sent, blocked })

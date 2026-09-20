@@ -102,7 +102,13 @@ body{
   flex:1 1 auto;
   position:relative;
   overflow:hidden;
-  min-height:100dvh;
+  /* No min-height:100dvh here — .app-shell is already position:fixed;inset:0
+     (a stable pixel box, see its own comment), so flex:1 1 auto alone fills
+     it exactly. A dvh min-height on top of that re-introduces the mobile
+     address-bar resize jump the fixed .app-shell was built to avoid: dvh can
+     briefly resolve larger than the fixed box right after navigation, so
+     full-bleed content sized off .screens (e.g. AchievementDetailScreen's
+     photo background) visibly grows a moment after it first paints. */
 }
 .screen{
   position:absolute;
@@ -261,6 +267,7 @@ body{
 .badge-blue{background:var(--blue-soft); color:var(--blue);}
 .badge-accent{background:var(--accent-soft); color:var(--accent);}
 .badge-neutral{background:#EFEEEA; color:var(--ink-soft);}
+.badge-shield{background:#DCF3EF; color:#0E8074;}
 .btn-primary{
   background:linear-gradient(160deg,#FF6A1F,var(--accent) 65%);
   color:#fff; border:none;
@@ -369,19 +376,6 @@ body{
   cursor:pointer;
 }
 
-/* ---------- Profile appearance menu (ChangeColorModal's "menu" step) ---------- */
-.appearance-row{
-  display:flex; align-items:center; gap:14px; width:100%;
-  padding:14px; border-radius:16px; border:1px solid var(--line); background:var(--surface);
-  cursor:pointer; text-align:left; font-family:inherit;
-  transition:transform .15s var(--ease), background .15s var(--ease);
-}
-.appearance-row:active{transform:scale(.98); background:#F6F4EF;}
-.appearance-row-preview{width:48px; height:48px; border-radius:14px; flex:0 0 auto; box-shadow:inset 0 0 0 1px rgba(255,255,255,0.12);}
-.appearance-row-text{flex:1; min-width:0;}
-.appearance-row-title{font-size:14.5px; font-weight:800;}
-.appearance-row-sub{font-size:12px; color:var(--ink-soft); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-
 .lightbox-overlay{
   position:absolute; inset:0;
   background:rgba(6,10,14,0.92);
@@ -439,13 +433,335 @@ body{
   50%{opacity:1; transform:scale(1.14);}
 }
 @media (prefers-reduced-motion: reduce){.profile-hero::before{animation:none;}}
-.profile-hero .icon-btn{background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.16);}
-.profile-hero .icon-back{stroke:#fff;}
+/* --hero-text-rgb is "R,G,B", set inline per preset (heroBackgrounds.ts's
+   textRgb) alongside --hero-accent-rgb — defaults to white here via the
+   var()'s own fallback since every preset but aurora-light is dark. */
+.profile-hero .icon-btn{background:rgba(var(--hero-text-rgb,255,255,255),.14); border-color:rgba(var(--hero-text-rgb,255,255,255),.16);}
+.profile-hero .icon-back{stroke:rgb(var(--hero-text-rgb,255,255,255));}
 /* The share icon-btn (ProfileScreen/UserProfileScreen header) has no class
    of its own to hook like .icon-back does — its stroke is a plain "#17181B"
    presentation attribute on the <svg>, which read as a barely-visible dark
-   smudge against this hero's dark gradient. */
-.profile-hero .icon-btn svg{stroke:#fff;}
+   smudge against this hero's dark gradient (and, on aurora-light, needs to
+   flip back to that same dark ink instead). */
+.profile-hero .icon-btn svg{stroke:rgb(var(--hero-text-rgb,255,255,255));}
+/* Tapping the balance opens the shop directly — the same "tap your currency
+   to spend it" convention most games use, so the shop needs no separate
+   entry point competing for space in the already-full hero-stat-grid. */
+.coin-pill{
+  display:inline-flex; align-items:center; gap:6px;
+  background:rgba(var(--hero-text-rgb,255,255,255),.14); border:1px solid rgba(var(--hero-text-rgb,255,255,255),.16);
+  border-radius:20px; padding:8px 14px 8px 10px; height:37px;
+  color:rgb(var(--hero-text-rgb,255,255,255)); font-family:var(--font-display),'Manrope',sans-serif;
+  font-weight:700; font-size:15px; font-variant-numeric:tabular-nums;
+}
+.coin-pill-icon{font-size:16px; line-height:1;}
+
+/* ---- Shop ---- */
+/* Balance + category tabs pinned to the top of the scroll — see ShopScreen's
+   own comment on why the header row rides along in the same sticky block.
+   .screen (the actual scrolling element, see its own rule) gives this a
+   real containing block to stick within. */
+.shop-sticky-top{
+  position:sticky; top:0; z-index:5;
+  background:var(--bg);
+  padding:0 20px 10px;
+}
+.shop-sticky-top .header-row{padding:6px 0 4px;}
+.shop-hero{
+  position:relative; overflow:hidden;
+  display:flex; align-items:center; gap:14px;
+  background:linear-gradient(135deg,#FFF6E2,#FFE9BC); border:1px solid #F3D999;
+  border-radius:20px; padding:16px; box-shadow:var(--shadow-sm);
+}
+.shop-hero > *:not(.shop-hero-shine){position:relative; z-index:1;}
+.shop-hero-shine{
+  position:absolute; inset:0; z-index:0; pointer-events:none;
+  background:linear-gradient(115deg, transparent 40%, rgba(255,255,255,.55) 50%, transparent 60%);
+  background-repeat:no-repeat; background-size:250% 250%;
+  animation:shopHeroShine 4.5s ease-in-out infinite;
+}
+@keyframes shopHeroShine{
+  0%{background-position:160% 0;}
+  16%{background-position:-60% 0;}
+  100%{background-position:-60% 0;}
+}
+@media (prefers-reduced-motion: reduce){.shop-hero-shine{animation:none; display:none;}}
+.shop-hero-balance{
+  font-family:var(--font-display),'Manrope',sans-serif; font-weight:800; font-size:28px;
+  color:#8A5A0C; font-variant-numeric:tabular-nums; line-height:1;
+}
+.shop-hero-label{font-size:12.5px; color:#A9760F; font-weight:700; margin-top:4px;}
+.shop-hero-history-btn{
+  flex:0 0 auto; background:rgba(255,255,255,.55); border:1px solid rgba(138,90,12,.22);
+  border-radius:14px; padding:8px 12px; font:inherit; font-size:12px; font-weight:700;
+  color:#8A5A0C; cursor:pointer;
+}
+
+/* ---- Terms of use modal (see TermsOfUseModal.tsx) ---- */
+.terms-modal-card{max-height:80vh; display:flex; flex-direction:column;}
+.terms-modal-updated{font-size:12px; color:var(--ink-faint); margin-top:2px;}
+.terms-modal-body{overflow-y:auto; margin-top:14px; padding-right:2px;}
+.terms-section{margin-bottom:16px;}
+.terms-section:last-child{margin-bottom:0;}
+.terms-section-title{font-size:13.5px; font-weight:800; margin-bottom:4px;}
+.terms-section p{font-size:13.5px; color:var(--ink-soft); line-height:1.5; margin:0 0 6px;}
+.terms-section p:last-child{margin-bottom:0;}
+.terms-link{color:var(--accent); font-weight:700; text-decoration:underline; text-underline-offset:2px; cursor:pointer;}
+
+/* ---- Coin history modal (see CoinHistoryModal.tsx) ---- */
+.coin-history-card{max-height:70vh; display:flex; flex-direction:column;}
+.coin-history-list{overflow-y:auto; margin-top:12px; display:flex; flex-direction:column; gap:2px;}
+.coin-history-empty{padding:24px 0; text-align:center; font-size:13.5px; color:var(--ink-faint);}
+.coin-history-row{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:11px 2px; border-bottom:1px solid var(--line);
+}
+.coin-history-row:last-child{border-bottom:none;}
+.coin-history-row-main{min-width:0;}
+.coin-history-label{font-size:13.5px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.coin-history-when{font-size:11.5px; color:var(--ink-faint); margin-top:2px;}
+.coin-history-amount{
+  flex:0 0 auto; display:inline-flex; align-items:center; gap:4px;
+  font-size:14px; font-weight:800; color:var(--ink-soft); font-variant-numeric:tabular-nums;
+}
+.coin-history-amount.positive{color:#2FA84F;}
+
+.shop-tabs{display:flex; gap:8px; margin-top:16px; overflow-x:auto; padding-bottom:2px; -webkit-overflow-scrolling:touch;}
+.shop-tabs::-webkit-scrollbar{display:none;}
+.shop-tab{
+  flex:0 0 auto; display:flex; align-items:center; gap:6px;
+  background:var(--surface); border:1.5px solid var(--line); border-radius:20px;
+  padding:9px 14px; font:inherit; font-size:13px; font-weight:700; color:var(--ink-soft); cursor:pointer;
+  transition:background .15s var(--ease), border-color .15s var(--ease), color .15s var(--ease);
+}
+.shop-tab.active{background:var(--ink); border-color:var(--ink); color:#fff;}
+.shop-tab svg{display:block;}
+.shop-section-caption{font-size:12px; color:var(--ink-faint); font-weight:600; margin-top:12px; line-height:1.4;}
+
+.shop-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px;}
+.shop-card{
+  position:relative; background:var(--surface); border:1.5px solid var(--line); border-radius:18px;
+  padding:14px; display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center;
+}
+.shop-card-rare{border-color:#9FB7E8; box-shadow:0 0 0 1px rgba(80,120,220,0.1);}
+.shop-card-epic{
+  border-color:#D8A6F2; box-shadow:0 0 0 1px rgba(180,90,230,0.14), 0 4px 16px rgba(180,90,230,0.14);
+}
+.shop-card-epic::before{
+  content:'✦'; position:absolute; top:10px; right:12px; color:#B45AE6; font-size:13px;
+}
+.shop-price-btn{display:inline-flex; align-items:center; justify-content:center; gap:5px;}
+.shop-card-preview{width:76px; height:76px; position:relative; margin-top:4px;}
+.shop-card-avatar{position:relative; width:76px; height:76px;}
+.shop-card-avatar .avatar-frame-ring{inset:-5px;}
+.shop-card-avatar-inner{
+  width:100%; height:100%; border-radius:50%;
+  background:linear-gradient(160deg,#FF7A38,var(--accent) 70%);
+}
+.shop-card-bg-preview{
+  width:100%; height:64px; border-radius:12px; overflow:hidden; position:relative; isolation:isolate;
+}
+.shop-card-name-preview{
+  width:100%; height:64px; border-radius:12px; background:var(--bg);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-display),'Manrope',sans-serif; font-weight:800; font-size:15px;
+}
+.shop-card-skin-preview{
+  max-width:100%; margin-top:4px;
+}
+.shop-card-name{font-size:13px; font-weight:700; line-height:1.3;}
+.shop-card .btn-primary,.shop-card .btn-secondary{
+  width:100%; padding:9px 0; font-size:13px; margin-top:0;
+}
+.shop-card .shop-equipped{background:var(--accent-soft); border-color:transparent; color:var(--accent);}
+.buff-row{
+  display:flex; align-items:center; gap:12px;
+  background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:13px 14px;
+}
+.buff-row-name{font-size:14.5px; font-weight:800;}
+.buff-row-desc{font-size:12.5px; color:var(--ink-soft); margin-top:2px; line-height:1.35;}
+.buff-row .btn-secondary{margin-top:0; padding:9px 14px; font-size:13px; width:auto;}
+.buff-row .badge{flex:0 0 auto; white-space:nowrap;}
+
+/* ---- ДЭП (Shop's wheel-of-fortune tab, see WheelScreen.tsx) ---- */
+.wheel-screen{display:flex; flex-direction:column; align-items:center; padding:20px 0 8px;}
+.wheel-stage{position:relative; width:272px; height:272px; margin:0 auto; max-width:100%;}
+.wheel-pointer{
+  position:absolute; top:-6px; left:50%; transform:translateX(-50%);
+  width:0; height:0; z-index:2;
+  border-left:11px solid transparent; border-right:11px solid transparent; border-top:18px solid var(--ink);
+  filter:drop-shadow(0 2px 3px rgba(23,24,27,0.25));
+}
+/* Same 12 slots/order as spin_wheel's v_segments — colour is purely
+   cosmetic (zebra neutrals for the losing slots, accent for x2, gold for
+   the single x3) but the ANGLES must stay in lockstep with the backend
+   array, since angleForSlot() rotates this to land on whichever index the
+   server returns. */
+.wheel-dial{
+  position:absolute; inset:6px; border-radius:50%;
+  background:conic-gradient(from 0deg,
+    #F1EDE3 0deg 30deg, #E4DFD1 30deg 60deg, var(--accent) 60deg 90deg,
+    #F1EDE3 90deg 120deg, #E4DFD1 120deg 150deg, var(--accent) 150deg 180deg,
+    #F1EDE3 180deg 210deg, #E4DFD1 210deg 240deg, var(--accent) 240deg 270deg,
+    #F1EDE3 270deg 300deg, #E4DFD1 300deg 330deg, #E8B923 330deg 360deg);
+  box-shadow:0 0 26px rgba(23,24,27,0.10), inset 0 0 0 5px #fff, inset 0 0 0 6px var(--line);
+  transition-property:transform; transition-timing-function:var(--ease-out);
+}
+.wheel-peg{
+  position:absolute; top:50%; left:50%; width:7px; height:7px; border-radius:50%;
+  background:linear-gradient(180deg,#F5D68A,#B8860B); box-shadow:0 1px 1px rgba(0,0,0,0.3);
+}
+.wheel-label{position:absolute; top:50%; left:50%; font-size:15px; font-weight:800; color:var(--ink); font-variant-numeric:tabular-nums;}
+.wheel-label-zero{color:rgba(23,24,27,0.38); font-weight:700;}
+.wheel-label-x2{color:#fff;}
+.wheel-label-jackpot{color:#fff; font-size:16px;}
+.wheel-hub{
+  position:absolute; inset:0; margin:auto; width:52px; height:52px; border-radius:50%;
+  background:#fff; box-shadow:0 2px 8px rgba(23,24,27,0.18), inset 0 0 0 1px var(--line);
+  display:flex; align-items:center; justify-content:center;
+}
+
+.wheel-bet-panel{width:100%; max-width:320px; margin-top:22px; display:flex; flex-direction:column; gap:10px;}
+.wheel-bet-label{font-size:12.5px; font-weight:700; color:var(--ink-soft);}
+.wheel-bet-row{
+  display:flex; align-items:center; gap:8px;
+  background:var(--surface); border:1.5px solid var(--line); border-radius:14px; padding:12px 14px;
+}
+.wheel-bet-input{flex:1; min-width:0; border:none; background:none; font:inherit; font-size:20px; font-weight:800; color:var(--ink); font-variant-numeric:tabular-nums;}
+.wheel-bet-input:focus{outline:none;}
+.wheel-quick-row{display:flex; gap:8px;}
+.wheel-quick-btn{
+  flex:1; padding:9px 0; border-radius:12px; border:1.5px solid var(--line); background:var(--surface);
+  font:inherit; font-size:13px; font-weight:700; color:var(--ink-soft); cursor:pointer;
+  transition:background .15s var(--ease), border-color .15s var(--ease), color .15s var(--ease);
+}
+.wheel-quick-btn:active{transform:scale(.96);}
+.wheel-spin-btn{margin-top:2px;}
+.wheel-balance{text-align:center; font-size:12.5px; color:var(--ink-faint); font-weight:600; display:flex; align-items:center; justify-content:center; gap:4px;}
+
+.wheel-result-card{text-align:center;}
+.wheel-result-mult{font-size:40px; font-weight:900; color:var(--accent); line-height:1;}
+.wheel-result-mult-zero{color:var(--ink-faint);}
+.wheel-result-coins{display:flex; justify-content:center; margin-top:10px;}
+.wheel-result-sub{font-size:13.5px; color:var(--ink-soft); margin-top:6px;}
+
+/* ---- Species collection ---- */
+.species-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px;}
+.species-cell{
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  padding:12px 6px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:6px;
+}
+.species-cell-icon{
+  width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:19px;
+}
+.species-cell.locked{opacity:0.45;}
+.species-cell.locked .species-cell-icon{background:var(--bg); filter:grayscale(1);}
+.species-cell-name{font-size:11.5px; font-weight:700; line-height:1.25;}
+.species-cell-count{font-size:10.5px; color:var(--ink-faint); font-weight:600;}
+
+/* ---- Challenges ---- */
+.challenges-week-card{
+  position:relative; overflow:hidden; margin-bottom:20px;
+  display:flex; align-items:center; gap:10px; background:#17181B; border:1px solid #17181B;
+  border-radius:20px; padding:16px; box-shadow:var(--shadow-sm);
+}
+.challenges-week-pattern{
+  position:absolute; inset:0; opacity:0.5; pointer-events:none;
+  background-image:repeating-radial-gradient(circle at 100% 0%, transparent 0 9px, rgba(255,255,255,.06) 9px 10px);
+}
+.challenges-week-card > *:not(.challenges-week-pattern){position:relative; z-index:1;}
+.challenges-week-body{flex:1; min-width:0; display:flex; flex-direction:column; gap:10px;}
+/* Beats the generic > *:not() rule above on specificity + source order, so
+   this stays absolute instead of inheriting position:relative from it. */
+.challenges-week-card > .challenge-countdown{
+  position:absolute; top:29px; right:14px; z-index:2;
+  display:flex; align-items:center; gap:5px;
+  background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18);
+  border-radius:20px; padding:5px 10px 5px 8px;
+  font-size:11px; font-weight:700; color:#fff; letter-spacing:.01em; white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.challenges-week-card > .challenge-countdown-done{background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.08); color:rgba(255,255,255,.5);}
+.challenges-week-top{display:flex; align-items:center; gap:14px;}
+.challenges-week-ring-wrap{position:relative; width:76px; height:76px; flex:0 0 auto;}
+.challenges-week-ring-fill{transition:stroke-dashoffset .6s var(--ease);}
+.challenges-week-ring-label{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:16px; font-weight:800; font-variant-numeric:tabular-nums; color:#fff;
+}
+.challenges-week-info{flex:1; min-width:0;}
+.challenges-week-title{font-size:15px; font-weight:800; color:#fff; text-transform:uppercase; letter-spacing:.02em;}
+.challenges-week-reward{display:flex; align-items:center; gap:5px; margin-top:6px; font-size:13px; font-weight:700; color:rgba(255,255,255,.72);}
+.challenges-week-note{font-size:12px; line-height:1.4; color:rgba(255,255,255,.5);}
+.challenges-week-glow-panel{
+  flex:0 0 92px; align-self:stretch; margin:-16px -16px -16px 0; position:relative;
+  pointer-events:none;
+}
+.challenges-week-glow-panel::before{
+  /* left:-160px (not inset:0) — the panel itself is only 92px wide, and a
+     radial-gradient with no explicit size defaults to farthest-corner,
+     which in a box this narrow-but-tall never actually reaches 0 alpha
+     before hitting the panel's own edge; clipping there (the panel had
+     overflow:hidden) cut it off mid-fade as a hard vertical seam. A fixed
+     260px circle radius fades all the way to transparent on its own, and
+     the wider box (no overflow:hidden here — .challenges-week-card's own
+     overflow:hidden still clips the card itself) gives it room to do that
+     before anything clips it. */
+  content:''; position:absolute; top:0; right:0; bottom:0; left:-160px;
+  background:radial-gradient(circle 110px at 100% 0%, rgba(252,82,0,.55), rgba(252,82,0,0) 100%);
+  transform-origin:100% 0%;
+  animation:challengesWeekGlowBreathe 7s var(--ease-in-out) infinite;
+}
+@keyframes challengesWeekGlowBreathe{
+  0%,100%{opacity:.5; transform:scale(0.9);}
+  50%{opacity:1; transform:scale(1.1);}
+}
+@media (prefers-reduced-motion: reduce){.challenges-week-glow-panel::before{animation:none;}}
+
+.challenge-card{
+  position:relative; overflow:hidden; background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  padding:16px; margin-top:12px;
+  transition:border-color .2s var(--ease), background .3s var(--ease);
+  opacity:0; animation:challengeCardIn .4s var(--ease) both;
+}
+@keyframes challengeCardIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+.challenge-card.challenge-done{border-color:var(--tier-color);}
+.challenge-done-badge{
+  position:absolute; top:10px; right:10px; width:26px; height:26px; border-radius:50%;
+  background:var(--tier-color); color:#fff; font-size:14px; font-weight:800;
+  display:flex; align-items:center; justify-content:center;
+  animation:challengeDoneBadgeIn .4s .05s cubic-bezier(.3,1.7,.4,1) both;
+}
+@keyframes challengeDoneBadgeIn{0%{opacity:0; transform:scale(1.8) rotate(-18deg);} 70%{opacity:1;} 100%{opacity:1; transform:scale(1) rotate(0deg);}}
+.challenge-tier-row{display:flex; align-items:center; gap:7px;}
+.challenge-tier-dot{width:8px; height:8px; border-radius:50%; flex:0 0 auto;}
+.challenge-tier-label{font-size:11.5px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.3px; flex:1;}
+.challenge-reward{display:inline-flex; align-items:center; gap:4px; font-size:14px; font-weight:800; color:#B77B12; font-variant-numeric:tabular-nums; white-space:nowrap;}
+.challenge-name{font-size:15.5px; font-weight:800; margin-top:10px;}
+.challenge-desc{font-size:13.5px; color:var(--ink-soft); margin-top:3px; line-height:1.4;}
+.challenge-progress-track{height:6px; border-radius:3px; background:var(--bg); margin-top:12px; overflow:hidden;}
+.challenge-progress-fill{height:100%; width:100%; border-radius:3px; transform-origin:left center; transition:transform .4s var(--ease);}
+.challenge-progress-label{font-size:11.5px; font-weight:700; color:var(--ink-faint); font-variant-numeric:tabular-nums;}
+.challenge-swap-btn{
+  background:none; border:none; font:inherit; cursor:pointer; padding:0;
+  font-size:11.5px; font-weight:700; color:var(--ink-soft); text-decoration:underline; text-underline-offset:2px;
+}
+.challenge-swap-btn:disabled{opacity:0.5; cursor:default;}
+.challenge-extra-btn{
+  width:100%; margin-top:12px; padding:14px 16px; border-radius:16px;
+  border:1.5px dashed var(--accent); background:var(--accent-soft); font:inherit;
+  font-size:13.5px; font-weight:700; color:var(--ink); cursor:pointer;
+  display:flex; align-items:center; gap:10px;
+}
+.challenge-extra-btn:disabled{opacity:0.5; cursor:default;}
+.challenge-extra-lock{font-size:16px;}
+.challenge-extra-btn > span:nth-child(2){flex:1; text-align:left;}
+.challenge-extra-price{display:inline-flex; align-items:center; gap:4px; font-weight:800;}
+@media (prefers-reduced-motion: reduce){
+  .challenge-card{animation:none; opacity:1;}
+  .challenge-done-badge{animation:none; opacity:1; transform:none;}
+}
 .profile-hero-avatar-ring{position:relative; width:108px; height:108px; margin:14px auto 0;}
 .profile-hero .profile-avatar{box-shadow:none;}
 .profile-hero-avatar-btn{
@@ -460,10 +776,10 @@ body{
 .profile-hero .avatar-color-btn{border-color:#17181B;}
 .profile-hero-name{
   font-family:var(--font-display),'Manrope',sans-serif; text-transform:uppercase;
-  color:#fff; font-size:22px; letter-spacing:.01em; text-align:center; margin-top:14px;
+  color:rgb(var(--hero-text-rgb,255,255,255)); font-size:22px; letter-spacing:.01em; text-align:center; margin-top:14px;
 }
-.profile-hero-meta{font-size:12.5px; color:rgba(255,255,255,.58); text-align:center; margin-top:5px; line-height:1.5;}
-.profile-hero-meta b{color:rgba(255,255,255,.92); font-weight:700;}
+.profile-hero-meta{font-size:12.5px; color:rgba(var(--hero-text-rgb,255,255,255),.58); text-align:center; margin-top:5px; line-height:1.5;}
+.profile-hero-meta b{color:rgba(var(--hero-text-rgb,255,255,255),.92); font-weight:700;}
 .profile-hero-badge{margin-top:6px; display:flex; justify-content:center;}
 .profile-body{
   background:var(--bg); border-radius:24px 24px 0 0; margin:-40px -20px 0; padding:20px 20px 0;
@@ -846,6 +1162,7 @@ body{
 .shutter:active::after{width:50px; height:50px;}
 .camera-live-video{width:100%; height:100%; object-fit:cover;}
 .camera-controls-btn{width:100%; padding:0 20px;}
+.camera-gallery-btn{position:absolute; right:28px; top:50%; transform:translateY(-50%);}
 
 /* Confirm / success */
 .confirm-photo{
@@ -950,6 +1267,17 @@ body{
   opacity:0; animation:trophyFadeUp .5s 1.2s ease both;
 }
 @keyframes trophyFadeUp{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+.catch-trophy-reward{
+  display:flex; flex-direction:column; gap:6px; align-items:center; margin:-8px 0 18px;
+  opacity:0; animation:trophyFadeUp .5s 1.25s ease both;
+}
+.catch-trophy-reward-row{
+  display:flex; align-items:center; gap:10px; font-size:13.5px; color:rgba(255,255,255,.75);
+}
+.catch-trophy-reward-amount{
+  display:inline-flex; align-items:center; gap:5px; font-size:15px; font-weight:800; color:#fff;
+  font-variant-numeric:tabular-nums;
+}
 .catch-trophy-ctas{width:100%; max-width:320px; opacity:0; animation:trophyFadeUp .5s 1.3s ease both; position:relative; z-index:1;}
 .catch-trophy-scene .btn-secondary{background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.22); color:#fff;}
 .catch-trophy-scene .btn-secondary:active{background:rgba(255,255,255,.14);}
@@ -995,6 +1323,30 @@ body{
   background:none; border:none; color:var(--ink-soft); font-weight:700; font-size:13.5px;
   font-family:inherit; padding:14px 6px 6px; cursor:pointer; width:100%;
 }
+
+/* ---------- All-challenges-done card (see ChallengeCompletionModal's
+   allDone branch) — the single-challenge nudge stays on the plain
+   .unlock-modal-card look; this is the bigger "you actually cleared the
+   whole week" moment, so it earns its own warm gold treatment instead of
+   reusing the achievement hex badge verbatim. ---------- */
+.challenge-complete-card-all{
+  background:radial-gradient(140% 90% at 50% -14%, rgba(252,82,0,.14), transparent 62%), var(--surface);
+  box-shadow:var(--shadow-lg), 0 0 0 1px rgba(252,82,0,.08);
+}
+.challenge-medal-outer{width:88px; height:88px; margin:0 auto 16px; position:relative;}
+.challenge-medal-glow{
+  position:absolute; inset:-26%; z-index:-1; border-radius:50%;
+  background:radial-gradient(circle, rgba(252,82,0,.45), transparent 70%);
+  filter:blur(14px); opacity:0; animation:unlockGlowIn .5s .25s ease both;
+}
+.challenge-medal{
+  width:100%; height:100%; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff;
+  background:linear-gradient(155deg,#FFD87A,#E8951C);
+  box-shadow:0 8px 20px rgba(196,120,0,.35), inset 0 0 0 3px rgba(255,255,255,.35), inset 0 -6px 10px rgba(140,70,0,.25);
+  animation:unlockBadgeIn .6s .1s cubic-bezier(.34,1.56,.64,1) both;
+}
+.challenge-complete-title-all{font-size:21px; margin-top:2px;}
+.challenge-complete-sub{font-size:13.5px; color:var(--ink-soft); margin-top:7px; line-height:1.45; max-width:250px; margin-left:auto; margin-right:auto;}
 
 /* ---------- AwardsRing (see AwardsRing.tsx / awardIcons.tsx) ---------- */
 .award-ring-stage{position:relative; display:flex; align-items:center; justify-content:center; margin:0 auto;}
@@ -1091,6 +1443,18 @@ body{
   box-shadow:0 14px 28px rgba(252,82,0,0.3);
   letter-spacing:0.5px;
 }
+/* Sits behind .profile-hero-avatar-ring's avatar (first child in DOM, no
+   z-index needed — later siblings stack on top by default), 5px larger on
+   each side so only its edge shows as a ring. Bought/equipped via the shop
+   (see lib/data/shopItems.ts) — pointer-events:none so it never intercepts
+   the avatar's own tap targets (edit/color buttons, open-photo). */
+.avatar-frame-ring{position:absolute; inset:-5px; border-radius:50%; pointer-events:none;}
+.avatar-frame-ring.avatar-frame-glow{animation:avatarFrameGlow 2.6s var(--ease-in-out) infinite;}
+@keyframes avatarFrameGlow{
+  0%,100%{box-shadow:0 0 10px 1px rgba(255,215,0,.35);}
+  50%{box-shadow:0 0 18px 4px rgba(255,215,0,.6);}
+}
+@media (prefers-reduced-motion: reduce){.avatar-frame-ring.avatar-frame-glow{animation:none;}}
 .hero-stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
 .hero-stat{
   background:var(--surface); border:1px solid var(--line); border-radius:16px;
@@ -1098,8 +1462,9 @@ body{
   transition:transform .15s var(--ease), box-shadow .15s var(--ease);
 }
 .hero-stat:active{transform:scale(.93);}
+.hero-stat-icon{display:flex; justify-content:center; color:var(--ink-faint); margin-bottom:6px;}
 .hero-stat b{display:block; font-family:var(--font-display),'Manrope',sans-serif; font-size:19px; font-weight:700;}
-.hero-stat span{display:block; font-size:10px; color:var(--ink-faint); font-weight:700; text-transform:uppercase; letter-spacing:.03em; margin-top:3px;}
+.hero-stat span:not(.hero-stat-icon){display:block; font-size:10px; color:var(--ink-faint); font-weight:700; text-transform:uppercase; letter-spacing:.03em; margin-top:3px;}
 .terr-list-item{display:flex; align-items:center; gap:12px; padding:15px 14px; cursor:pointer; width:100%; background:none; border:none; text-align:left; font-family:inherit; overflow:hidden;}
 /* A long unbroken display name (no spaces allowed, see NameStep) can't wrap —
    without this it forces flex children apart instead of shrinking, squeezing
@@ -1205,20 +1570,50 @@ body{
 .ach-card{
   background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m);
   padding:16px 14px; display:flex; flex-direction:column; gap:12px;
-  box-shadow:var(--shadow-sm); transition:opacity .2s var(--ease);
+  box-shadow:var(--shadow-sm); transition:opacity .2s var(--ease), transform .15s var(--ease);
   cursor:pointer; text-align:left; width:100%; font-family:inherit;
+  opacity:0; animation:achCardIn .4s var(--ease) both;
 }
-.ach-card.locked{opacity:0.5;}
+.ach-card:active{transform:scale(0.97);}
+@keyframes achCardIn{from{opacity:0; transform:translateY(10px) scale(0.97);} to{opacity:1; transform:translateY(0) scale(1);}}
+.ach-card.locked{animation:achCardInLocked .4s var(--ease) both;}
+@keyframes achCardInLocked{from{opacity:0; transform:translateY(10px) scale(0.97);} to{opacity:0.5; transform:translateY(0) scale(1);}}
 .ach-icon{
   width:38px;
   display:flex; align-items:center; justify-content:center;
   flex:0 0 auto;
 }
-.ach-icon.on{background:var(--accent-soft); color:var(--accent);}
+.ach-icon.on{background:linear-gradient(150deg,var(--accent-soft),#FFD9A8); color:var(--accent);}
 .ach-icon.off{background:#EFEEEA; color:var(--ink-faint);}
+@media (prefers-reduced-motion: reduce){
+  .ach-card, .ach-card.locked{animation:none; opacity:1;}
+}
 .ach-title{font-size:13.5px; font-weight:800; letter-spacing:-0.1px;}
 .ach-desc{font-size:11.5px; color:var(--ink-soft); line-height:1.45; font-weight:500; margin-top:4px;}
 .ach-progress{font-size:11px; color:var(--ink-faint); font-weight:700; margin-top:6px;}
+
+/* ---- Profile CTA row: Challenges + Shop (see ProfileScreen.tsx) ---- */
+.profile-cta-row{display:flex; gap:10px; margin-top:14px;}
+.profile-cta-btn{
+  position:relative; overflow:hidden; flex:1;
+  display:flex; flex-direction:column; align-items:flex-start; gap:2px;
+  padding:16px 38px 14px 14px; border-radius:var(--radius-m); border:1.5px solid transparent;
+  font:inherit; text-align:left; cursor:pointer;
+}
+.profile-cta-pattern{position:absolute; inset:0; opacity:0.45; pointer-events:none;}
+.profile-cta-challenges .profile-cta-pattern{background-image:repeating-radial-gradient(circle at 100% 0%, transparent 0 7px, rgba(252,82,0,0.06) 7px 8px);}
+.profile-cta-shop .profile-cta-pattern{background-image:repeating-radial-gradient(circle at 100% 0%, transparent 0 7px, rgba(29,111,201,0.06) 7px 8px);}
+.profile-cta-arrow{
+  position:absolute; top:10px; right:10px; width:24px; height:24px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; z-index:1;
+}
+.profile-cta-challenges .profile-cta-arrow{background:var(--accent);}
+.profile-cta-shop .profile-cta-arrow{background:#1D6FC9;}
+.profile-cta-icon{display:inline-flex; position:relative; z-index:1;}
+.profile-cta-title{position:relative; z-index:1; font-size:13.5px; font-weight:800; margin-top:4px;}
+.profile-cta-sub{position:relative; z-index:1; font-size:11px; font-weight:600; opacity:0.75;}
+.profile-cta-challenges{background:#FFF6F1; color:var(--accent); border-color:rgba(252,82,0,0.18);}
+.profile-cta-shop{background:#F4F9FF; color:#1D6FC9; border-color:rgba(29,111,201,0.16);}
 
 /* Achievement detail screen — a single achievement, full-screen (see the
    "Apple Fitness" award-detail layout the user pointed at): a sector-shaped
@@ -1230,10 +1625,21 @@ body{
    visits; tying it to the active-class transition makes it replay every
    time you navigate back into this screen. */
 .ach-detail-inner{
+  position:relative; overflow:hidden;
   flex:1 1 auto; display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
+  align-items:center; justify-content:center; padding-top:10px;
 }
-.ach-detail-badge-outer{position:relative; isolation:isolate; width:288px; margin:0 auto 26px;}
+.ach-detail-photo-bg{
+  position:absolute; inset:0; z-index:-1;
+  pointer-events:none; overflow:hidden;
+}
+.ach-detail-photo-bg img{width:100%; height:100%; display:block; object-fit:cover; object-position:50% 78%; transition:filter .3s var(--ease);}
+.ach-detail-photo-bg.locked img{filter:grayscale(1) contrast(0.95);}
+.ach-detail-photo-bg::after{
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(180deg, rgba(255,255,255,.5) 0%, rgba(255,255,255,.62) 35%, rgba(255,255,255,.5) 65%, rgba(255,255,255,.7) 100%);
+}
+.ach-detail-badge-outer{position:relative; isolation:isolate; width:300px; margin:0 auto 22px;}
 /* Glow is a separate static (non-transformed) layer — filter:drop-shadow
    combined with an animated transform on the same element renders the
    shadow clipped to a rectangular pre-transform layer on iOS Safari once
@@ -1252,9 +1658,17 @@ body{
   transition:transform .55s cubic-bezier(.34,1.56,.64,1), opacity .4s ease;
 }
 .screen.active .ach-detail-badge{transform:scale(1) rotate(0deg); opacity:1;}
+.spin-badge{width:100%; height:100%; perspective:600px; cursor:grab; touch-action:none;}
+.spin-badge:active{cursor:grabbing;}
+.spin-badge-inner{width:100%; height:100%; transform-style:preserve-3d; will-change:transform;}
 .ach-detail-title{font-size:21px; font-weight:800; letter-spacing:-0.2px; text-align:center;}
 .ach-detail-desc{font-size:14.5px; color:var(--ink-soft); line-height:1.5; margin:10px auto 0; text-align:center; max-width:280px;}
 .ach-detail-progress{font-size:13px; color:var(--ink-faint); font-weight:700; margin-top:16px; text-align:center;}
+.ach-detail-flavor{
+  margin:20px auto 0; max-width:300px; width:100%; background:rgba(255,255,255,.78); backdrop-filter:blur(6px); border:1px solid var(--line);
+  border-radius:16px; padding:14px 18px; text-align:center;
+  font-size:13.5px; color:var(--ink-soft); line-height:1.5;
+}
 
 /* ---------- Form fields (auth form + catch-logging form share this) ---------- */
 .auth-card{width:100%; max-width:360px; margin:0 auto;}
@@ -1370,10 +1784,6 @@ body{
   flex:1 1 auto; display:flex; flex-direction:column; min-height:100dvh; background:var(--bg);
   padding:calc(20px + env(safe-area-inset-top) + var(--tg-safe-area-top, 0px)) 20px calc(24px + env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px));
 }
-
-.gender-pill-row{display:flex; gap:10px;}
-.gender-pill{flex:1; padding:13px; border-radius:14px; border:1.5px solid #EAD9C4; background:#FFFDF9; color:var(--ink); font-weight:700; font-size:14.5px; font-family:inherit; cursor:pointer; transition:background .15s, color .15s, border-color .15s;}
-.gender-pill.active{background:var(--ink); color:#FFF3E7; border-color:var(--ink);}
 
 .onboarding-checkbox-row{display:flex; align-items:flex-start; gap:10px; margin:4px 0 18px;}
 .onboarding-checkbox-row input[type=checkbox]{width:20px; height:20px; accent-color:var(--accent); margin-top:1px; flex:0 0 auto;}
@@ -1592,19 +2002,6 @@ body{
 }
 .wizard-field input:focus{border-color:var(--accent); box-shadow:0 0 0 4px rgba(252,82,0,.12);}
 .wizard-field input:disabled{color:var(--ink-faint); background:var(--bg); cursor:not-allowed;}
-/* type=date needs appearance:none for consistent sizing (see git history —
-   left native once, it both went fully blank AND overflowed the screen on
-   iOS Safari, two separate WebKit quirks). But appearance:none also means
-   an EMPTY date input shows nothing at all on iOS (no icon, no "day/month/
-   year" placeholder — unlike Chrome, which keeps drawing its own segmented
-   placeholder regardless), so DetailsStep renders its own placeholder text
-   here, absolutely positioned over the real input and hidden the moment a
-   value is picked (see wizard-date-wrap usage there). */
-.wizard-date-wrap{position:relative;}
-.wizard-date-placeholder{
-  position:absolute; left:14px; top:50%; transform:translateY(-50%);
-  font-size:16px; color:var(--ink-faint); pointer-events:none;
-}
 .wizard-hint{font-size:11.5px; color:var(--ink-faint); margin:-6px 0 12px;}
 
 @media (prefers-reduced-motion: reduce){
@@ -1621,7 +2018,7 @@ body{
   .intro-photocard{opacity:1; transform:translate(-50%,-132%) scale(1) rotate(-4deg);}
   .intro-badge{opacity:1; transform:translate(-50%,0) scale(1);}
 
-  .catch-trophy-card, .catch-trophy-title, .catch-trophy-ctas{animation:none !important; opacity:1 !important; transform:none !important;}
+  .catch-trophy-card, .catch-trophy-title, .catch-trophy-reward, .catch-trophy-ctas{animation:none !important; opacity:1 !important; transform:none !important;}
   .catch-trophy-shine, .catch-trophy-stamp-ring{display:none !important;}
   .catch-trophy-stamp{animation:none !important; opacity:1 !important; transform:none !important;}
   .unlock-confetti-piece{display:none !important;}
@@ -1663,24 +2060,73 @@ body{
   box-shadow:0 6px 14px rgba(9,25,32,0.18), inset 0 0 0 1px rgba(255,255,255,0.15), 0 0 0 4px var(--bg), 0 0 22px 6px var(--swatch-color);
 }
 
-/* ---------- Profile hero background picker (ChangeColorModal) ---------- */
-.herobg-preview{
-  height:64px; border-radius:16px; margin:16px 0 4px;
-  position:relative; overflow:hidden; isolation:isolate;
-  transition:background .2s var(--ease);
+/* Aurora hero background (see AuroraBackground.tsx) — the animated part is
+   just this element's own background-position, so unlike the canvas-based
+   live backgrounds (WavyBackground/CirclesBackground/HalftoneBackground)
+   there's no per-frame JS draw loop. Relies on the same parent stacking
+   context (isolation:isolate / a real z-index) as those. */
+.hero-aurora-layer{
+  position:absolute; inset:-20px; z-index:-1; pointer-events:none;
+  background-size:300% 300%;
+  filter:blur(18px);
+  opacity:.65;
+  mix-blend-mode:screen;
+  animation:heroAurora 24s linear infinite;
 }
-.herobg-grid{display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin:16px 0 24px;}
-.herobg-swatch{
-  aspect-ratio:1; border-radius:14px; border:none; cursor:pointer; position:relative; overflow:hidden; isolation:isolate;
-  font-family:inherit;
-  box-shadow:0 4px 10px rgba(9,25,32,0.16), inset 0 0 0 1px rgba(255,255,255,0.1);
-  transition:transform .15s var(--ease), box-shadow .2s var(--ease);
+.hero-aurora-layer--light{
+  /* screen only ever brightens — over the near-white base aurora-light
+     uses, that washes everything out to white. aurora-light's own gradient
+     already carries real transparent gaps (see heroBackgrounds.ts) rather
+     than wall-to-wall colour, so plain alpha compositing is enough to let
+     the white ground show through — no blend-mode trick needed here. */
+  opacity:.9;
+  mix-blend-mode:normal;
+  filter:blur(14px);
 }
-.herobg-swatch.selected{
-  transform:scale(1.06);
-  box-shadow:0 4px 10px rgba(9,25,32,0.16), inset 0 0 0 1px rgba(255,255,255,0.15), 0 0 0 3px var(--bg), 0 0 0 5px var(--ink);
+@keyframes heroAurora{
+  /* background-size is 300% — for a repeating gradient, a position shift
+     only loops seamlessly (no visible snap back at 0%/100%) when it's an
+     exact multiple of the tile period, which for a 300%-sized background
+     works out to 150% (see the on-screen offset formula: 100% of
+     background-position maps to (size-1)×the element's width, so
+     150% × 2 = 300%, exactly one full tile). Any other end value — 200%
+     was the bug here — lands mid-tile and jumps on every loop. */
+  0%{background-position:0% 50%;}
+  100%{background-position:150% 50%;}
 }
-.herobg-swatch span{
-  position:absolute; left:0; right:0; bottom:6px; text-align:center;
-  font-size:9.5px; font-weight:700; color:rgba(255,255,255,.85); letter-spacing:0.2px;
+@media (prefers-reduced-motion: reduce){
+  .hero-aurora-layer{animation:none;}
 }
+
+/* ---------- CoinIcon / CoinCountUp (see CoinIcon.tsx) ---------- */
+.coin-icon{
+  display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto;
+  vertical-align:middle; position:relative; perspective:240px;
+}
+.coin-icon img{display:block; filter:drop-shadow(0 1px 1px rgba(120,64,0,0.25));}
+.coin-icon-bounce img{animation:coinBounce 1.4s ease-in-out infinite;}
+@keyframes coinBounce{0%,100%{transform:translateY(0);} 50%{transform:translateY(-26%);}}
+.coin-icon-shadow{
+  position:absolute; left:50%; bottom:-5px; width:70%; height:5px; border-radius:50%;
+  background:rgba(0,0,0,0.28); transform:translateX(-50%); filter:blur(1px);
+  animation:coinShadow 1.4s ease-in-out infinite;
+}
+@keyframes coinShadow{0%,100%{transform:translateX(-50%) scale(1); opacity:0.28;} 50%{transform:translateX(-50%) scale(0.6); opacity:0.14;}}
+.coin-icon-spin img{animation:coinSpin 0.8s cubic-bezier(.34,1.2,.64,1) 1;}
+@keyframes coinSpin{from{transform:rotateY(0deg);} to{transform:rotateY(360deg);}}
+@media (prefers-reduced-motion: reduce){
+  .coin-icon-bounce img, .coin-icon-spin img{animation:none;}
+  .coin-icon-shadow{animation:none;}
+}
+
+.coin-count-up{display:inline-flex; align-items:center; gap:8px; font-variant-numeric:tabular-nums;}
+.coin-count-up b{font-size:26px; font-weight:800; color:var(--ink);}
+
+/* ---------- PurchaseConfirmModal (see PurchaseConfirmModal.tsx) ---------- */
+.purchase-confirm-price{
+  display:flex; align-items:center; justify-content:center; gap:8px; margin-top:16px;
+  font-size:24px; font-weight:800; color:var(--ink); font-variant-numeric:tabular-nums;
+}
+
+/* ---------- ChallengeCompletionModal (see ChallengeCompletionModal.tsx) ---------- */
+.challenge-complete-reward{display:flex; justify-content:center; margin-top:6px;}

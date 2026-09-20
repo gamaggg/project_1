@@ -9,9 +9,11 @@ import {
   useUpdateProfile,
   useRealtimeSync,
   useIsSuperAdmin,
+  useCanAddCatchFromGallery,
   useAllTerritoryIds,
   useFindUserByPublicId,
   useUnreadNotificationCount,
+  logChallengeEvent,
 } from '@/lib/supabase/queries'
 import { getCurrentCoords, nearestTerritory, queryGeolocationPermission } from '@/lib/geolocation'
 import { uploadCatchPhoto } from '@/lib/supabase/storage'
@@ -34,6 +36,8 @@ import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import { TerritoryScreen } from '@/components/app-shell/screens/TerritoryScreen'
 import { TerritoriesListScreen, type Mode as RatingMode } from '@/components/app-shell/screens/TerritoriesListScreen'
 import { LastWeekScreen } from '@/components/app-shell/screens/LastWeekScreen'
+import { ShopScreen } from '@/components/app-shell/screens/ShopScreen'
+import { ChallengesScreen } from '@/components/app-shell/screens/ChallengesScreen'
 import { WeekTopModal } from '@/components/app-shell/screens/WeekTopModal'
 import { MyCatchesScreen } from '@/components/app-shell/screens/MyCatchesScreen'
 import { UsersListScreen } from '@/components/app-shell/screens/UsersListScreen'
@@ -52,6 +56,7 @@ import { BulkDeleteTerritoriesModal } from '@/components/app-shell/screens/BulkD
 import { BulkAddTerritoriesModal } from '@/components/app-shell/screens/BulkAddTerritoriesModal'
 import { DeleteUserModal } from '@/components/app-shell/screens/DeleteUserModal'
 import { ChangeUserIdModal } from '@/components/app-shell/screens/ChangeUserIdModal'
+import { GrantCoinsModal } from '@/components/app-shell/screens/GrantCoinsModal'
 import { CatchPhotoScreen } from '@/components/app-shell/screens/CatchPhotoScreen'
 import { PeopleListModal } from '@/components/app-shell/screens/PeopleListModal'
 import type { ProfileSummary } from '@/lib/data/types'
@@ -85,6 +90,8 @@ export type ScreenId =
   | 'screen-achievements'
   | 'screen-achievement-detail'
   | 'screen-last-week'
+  | 'screen-shop'
+  | 'screen-challenges'
 
 export type TabScreenId = 'screen-map' | 'screen-territories' | 'screen-activity' | 'screen-profile'
 const NAV_SCREENS: ScreenId[] = ['screen-map', 'screen-territories', 'screen-activity', 'screen-profile']
@@ -113,12 +120,15 @@ type StackEntry =
   | { screen: 'screen-achievements'; userId: string }
   | { screen: 'screen-achievement-detail'; userId: string; icon: Achievement['icon'] }
   | { screen: 'screen-last-week' }
+  | { screen: 'screen-shop' }
+  | { screen: 'screen-challenges' }
 
 export function FishZoneApp() {
   const { user, loading: authLoading, signOut } = useAuth()
   const { data: myProfile, isLoading: myProfileLoading } = useProfile(user?.id ?? null)
   const { data: territories = [], isLoading: territoriesLoading, isSuccess: territoriesReady } = useTerritories()
   const isSuperAdmin = useIsSuperAdmin()
+  const canAddCatchFromGallery = useCanAddCatchFromGallery()
   const { data: allTerritoryIds = [] } = useAllTerritoryIds()
   const confirmCatchMutation = useConfirmCatch()
   const findUserByPublicId = useFindUserByPublicId()
@@ -144,6 +154,18 @@ export function FishZoneApp() {
   const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories, territoriesReady, city)
   const { show: showWeekTop, entry: weekTopEntry, dismiss: dismissWeekTop } = useWeekTopModal(city)
   useRealtimeSync()
+
+  // Achievement detail photos are full-bleed JPGs (~80-110KB each) fetched
+  // cold on the first tap — without this the background pops in a beat after
+  // AchievementDetailScreen mounts instead of being there immediately.
+  // Warming the browser's HTTP cache for all of them once per session means
+  // every open is instant, including the very first.
+  useEffect(() => {
+    for (const icon of Object.keys(ACH_ICONS)) {
+      const img = new window.Image()
+      img.src = `/achievements/${icon}.jpg`
+    }
+  }, [])
 
   // One delegated listener for the whole app instead of wiring a haptic tap
   // into every individual button. Deliberately broader than just
@@ -173,13 +195,11 @@ export function FishZoneApp() {
       '.activity-who-btn',
       '.fish-thumb',
       '.color-swatch',
-      '.herobg-swatch',
-      '.appearance-row',
+      '.wheel-quick-btn',
       '.perm-switch',
       '.rating-tab',
       '.rating-podium-item',
       '.city-chip',
-      '.gender-pill',
       '.intro-cta',
       '.intro-back',
       '.otp-resend',
@@ -210,6 +230,13 @@ export function FishZoneApp() {
   const cityTerritories = useMemo(() => territories.filter((t) => cityForSectorId(t.id) === city), [territories, city])
 
   const [stack, setStack] = useState<StackEntry[]>([{ screen: 'screen-map' }])
+  // push/pop/resetTo below read this instead of `stack` directly so the
+  // popstate listener (registered once, see the effect further down) always
+  // sees the latest stack without needing to re-subscribe on every change.
+  const stackRef = useRef(stack)
+  useEffect(() => {
+    stackRef.current = stack
+  }, [stack])
   const [navScreen, setNavScreen] = useState<TabScreenId>('screen-map')
   const [viewingTerritoryId, setViewingTerritoryId] = useState<string | null>(null)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
@@ -220,6 +247,11 @@ export function FishZoneApp() {
   // conflating the two used to mean pressing "+" while browsing a territory
   // could clobber the one you were looking at (see DECISIONS.md).
   const [catchTerritoryId, setCatchTerritoryId] = useState<string | null>(null)
+  // Only the admin-initiated catch flow (startAdminCatch) may skip the live
+  // camera for a gallery pick — see can_add_catch_from_gallery. A regular
+  // player's own "+" catch (handlePlus) always leaves this false, so
+  // CameraScreen's allowGallery prop below never opens up for it.
+  const [isAdminCatchFlow, setIsAdminCatchFlow] = useState(false)
   const [viewingCatchId, setViewingCatchId] = useState<number | null>(null)
   const [editingProfile, setEditingProfile] = useState(false)
   const [changingColor, setChangingColor] = useState(false)
@@ -253,16 +285,20 @@ export function FishZoneApp() {
   const [confirmingBulkAdd, setConfirmingBulkAdd] = useState(false)
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
   const [editingPublicIdUserId, setEditingPublicIdUserId] = useState<string | null>(null)
+  const [grantingCoinsUserId, setGrantingCoinsUserId] = useState<string | null>(null)
   const [viewingLikersFor, setViewingLikersFor] = useState<ProfileSummary[] | null>(null)
   const [viewingFollowersFor, setViewingFollowersFor] = useState<ProfileSummary[] | null>(null)
   const [viewingAvatarUrl, setViewingAvatarUrl] = useState<string | null>(null)
   const [viewingSpeciesFor, setViewingSpeciesFor] = useState<SpeciesEntry[] | null>(null)
   const [postingAnnouncement, setPostingAnnouncement] = useState(false)
   const { data: editingPublicIdProfile } = useProfile(editingPublicIdUserId)
+  const { data: grantingCoinsProfile } = useProfile(grantingCoinsUserId)
   const { data: deletingUserProfile } = useProfile(deletingUserId)
   const [pendingCatch, setPendingCatch] = useState<PendingCatch | null>(null)
   const [confirmStep, setConfirmStep] = useState<'form' | 'success'>('form')
   const [wasFree, setWasFree] = useState(false)
+  const [catchSpeciesCoins, setCatchSpeciesCoins] = useState(0)
+  const [catchCaptureCoins, setCatchCaptureCoins] = useState(0)
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null)
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [photoStatus, setPhotoStatus] = useState<PhotoStatus>('uploading')
@@ -293,18 +329,15 @@ export function FishZoneApp() {
   // both the nav and any achievement popup stay off it, see below.
   const showingTrophyScene = currentScreen === 'screen-confirm' && confirmStep === 'success'
 
-  // Drill-in navigation (territory, camera, confirm, someone's profile) — push
-  // onto the stack so the eventual back button unwinds to exactly this point.
-  function push(entry: StackEntry) {
-    setStack((s) => [...s, entry])
-  }
-  // Generic back button target for every screen below — pops one level and,
-  // if that reveals a territory/user-profile entry, restores which one it was
-  // (see StackEntry comment above).
-  function pop() {
+  // Reveals whichever entry a pop landed on, restoring its territory/user-id
+  // (see StackEntry comment above) — shared by the in-app pop() (below) and
+  // the hardware/gesture back button (via the popstate listener further
+  // down), since both ultimately need to do the same "slice the stack, sync
+  // the viewing-id" work.
+  function applyPopTo(targetLen: number) {
     setStack((s) => {
-      if (s.length <= 1) return s
-      const next = s.slice(0, -1)
+      if (targetLen >= s.length) return s
+      const next = s.slice(0, Math.max(1, targetLen))
       const top = next[next.length - 1]
       if (top.screen === 'screen-territory') setViewingTerritoryId(top.territoryId)
       if (top.screen === 'screen-user-profile') setViewingUserId(top.userId)
@@ -313,11 +346,76 @@ export function FishZoneApp() {
       return next
     })
   }
+  // Drill-in navigation (territory, camera, confirm, someone's profile) —
+  // push onto the stack AND onto real browser/History-API history, so the
+  // phone's own hardware/gesture back button (which the Telegram BackButton
+  // API doesn't cover — that's a WebApp-chrome button, not the OS one) closes
+  // this screen instead of leaving the page entirely. See the popstate
+  // listener below for the other half of this.
+  function push(entry: StackEntry) {
+    window.history.pushState({ rangeDepth: stackRef.current.length }, '')
+    setStack((s) => [...s, entry])
+  }
+  // Generic back button target for every screen below — pops the stack
+  // directly, synchronously, the same way it always did.
+  //
+  // This used to go through window.history.back() instead (relying on the
+  // resulting popstate event to call applyPopTo), so an in-app tap and a
+  // hardware back press would unwind identically. That turned out to be
+  // unreliable in exactly the environment this needs to work in: calling
+  // history.back() from inside a *trusted* click handler (a real tap/click,
+  // not a script-dispatched one) reproducibly forced a full page reload
+  // instead of the same-document popstate transition it's supposed to be —
+  // confirmed with a plain test element whose only handler was
+  // history.back(), with Telegram's SDK object deleted first, and even via
+  // this pane's own "navigate back" action, so it isn't specific to
+  // anything above. A script-triggered or synthetic-event-triggered
+  // history.back() never showed the problem — only ones stemming from a
+  // real tap did.
+  //
+  // Going back to a direct, synchronous pop for the in-app path sidesteps
+  // that entirely: it never calls history.back()/go(), so it can't hit
+  // whatever this is. replaceState still re-tags the *current* history
+  // entry with the new depth so a *later* hardware back stays reasonably
+  // in sync — it just can't collapse the now-stale pushed entries below it
+  // the way a real back-traversal would, so a hardware back right after a
+  // run of in-app taps may take a couple of extra presses before it does
+  // anything visible. That's a minor, non-crashing rough edge; it beats the
+  // alternative of reliably reloading on every single in-app back tap.
+  function pop() {
+    if (stackRef.current.length <= 1) return
+    const targetLen = stackRef.current.length - 1
+    window.history.replaceState({ rangeDepth: targetLen - 1 }, '')
+    applyPopTo(targetLen)
+  }
   // Bottom-nav taps replace the whole stack — each tab starts its own fresh
   // drill-down, it doesn't resume wherever you left off inside another tab.
+  // replaceState (not pushState) re-tags the current history entry as the
+  // new depth-0 baseline instead of growing history — a tab switch isn't
+  // something the back button should have to unwind separately.
   function resetTo(entry: StackEntry) {
+    window.history.replaceState({ rangeDepth: 0 }, '')
     setStack([entry])
   }
+  // Makes the phone's own hardware/gesture back button close a drilled-into
+  // screen (sector popup, someone's profile, catch photo, …) instead of
+  // navigating off the page — without this, Android's back button just runs
+  // the browser's default history.back(), and since none of our screens ever
+  // corresponded to a real history entry, that immediately leaves the app.
+  // rangeDepth tags each entry *we* pushed; landing on one with a lower (or
+  // missing/foreign) depth means the user went back past something of ours,
+  // so we unwind the in-app stack to match instead of doing nothing.
+  useEffect(() => {
+    window.history.replaceState({ rangeDepth: 0 }, '')
+    function onPopState(e: PopStateEvent) {
+      const targetDepth = typeof e.state?.rangeDepth === 'number' ? e.state.rangeDepth : 0
+      const targetLen = targetDepth + 1
+      if (targetLen < stackRef.current.length) applyPopTo(targetLen)
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   function navClick(id: TabScreenId) {
     resetTo({ screen: id })
     setNavScreen(id)
@@ -342,6 +440,12 @@ export function FishZoneApp() {
   function openLastWeek() {
     push({ screen: 'screen-last-week' })
   }
+  function openShop() {
+    push({ screen: 'screen-shop' })
+  }
+  function openChallenges() {
+    push({ screen: 'screen-challenges' })
+  }
   function openTerritory(id: string) {
     // A "Последние действия"/activity link can point at a sector a super
     // admin has since deleted (admin_delete_territory) — it's gone from
@@ -353,6 +457,10 @@ export function FishZoneApp() {
     }
     setViewingTerritoryId(id)
     push({ screen: 'screen-territory', territoryId: id })
+    // Fire-and-forget: feeds the "Разведка"/"Картограф" soft challenges,
+    // which read this back as count(distinct territory_id)/count(distinct
+    // kind) — a re-visit costs nothing since both are already deduping.
+    logChallengeEvent({ eventType: 'territory_viewed', territoryId: id })
   }
   // A real stack entry, not a bare overlay (see the removed PhotoLightbox) —
   // so both the in-app back button and Telegram's native one pop just the
@@ -361,6 +469,9 @@ export function FishZoneApp() {
   function openCatchPhoto(id: number) {
     setViewingCatchId(id)
     push({ screen: 'screen-catch-photo', catchId: id })
+    // Feeds "Наблюдатель" — own-catch views are logged too but don't count
+    // toward it (sync_my_challenges' query already excludes them).
+    logChallengeEvent({ eventType: 'catch_viewed', catchId: id })
   }
   function toggleTerritorySelection(id: string) {
     setSelectedTerritoryIds((prev) => {
@@ -454,6 +565,7 @@ export function FishZoneApp() {
   // see DECISIONS.md, confirm_catch never checked location server-side anyway.
   function startAdminCatch(territoryId: string) {
     setCatchTerritoryId(territoryId)
+    setIsAdminCatchFlow(true)
     setCameraSessionId((n) => n + 1)
     push({ screen: 'screen-camera' })
   }
@@ -489,6 +601,7 @@ export function FishZoneApp() {
     if (found) {
       mapHandleRef.current?.flyToTerritory(found.id)
       setCatchTerritoryId(found.id)
+      setIsAdminCatchFlow(false)
       setCameraSessionId((n) => n + 1)
       push({ screen: 'screen-camera' })
       return
@@ -540,8 +653,10 @@ export function FishZoneApp() {
     const t = territories.find((x) => x.id === catchTerritoryId)
     const payload: PendingCatch = { territoryId: catchTerritoryId, photoUrl, ...form }
     try {
-      await confirmCatchMutation.mutateAsync(payload)
+      const result = await confirmCatchMutation.mutateAsync(payload)
       setWasFree(t?.status !== 'mine')
+      setCatchSpeciesCoins(result.speciesCoins)
+      setCatchCaptureCoins(result.captureCoins)
       setPendingCatch(payload)
       setConfirmStep('success')
       hapticBuildUp()
@@ -550,9 +665,14 @@ export function FishZoneApp() {
       // message instead of `instanceof Error` (see confirm_catch's
       // COOLDOWN: exception, surfaced verbatim as error.message).
       const message = typeof err === 'object' && err !== null && 'message' in err ? String((err as { message: unknown }).message) : ''
-      const match = /COOLDOWN:(\d+)/.exec(message)
-      if (match) {
-        setCooldownSeconds(Number(match[1]))
+      const cooldownMatch = /COOLDOWN:(\d+)/.exec(message)
+      const shieldedMatch = /SHIELDED:(\d+)/.exec(message)
+      if (cooldownMatch) {
+        setCooldownSeconds(Number(cooldownMatch[1]))
+      } else if (shieldedMatch) {
+        const until = new Date(Number(shieldedMatch[1]) * 1000)
+        showToast(`Сектор под щитом до ${until.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })} — нельзя забрать`)
+        backToCamera()
       } else if (message === 'account blocked') {
         showToast('Аккаунт заблокирован, добавлять уловы нельзя')
       } else {
@@ -717,6 +837,18 @@ export function FishZoneApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, myProfileLoading])
 
+  // Opens a ?challenges=1 link (from a challenge_completed/challenges_week_done
+  // Telegram notification) straight into the weekly challenges screen.
+  const challengesDeepLinkOpened = useRef(false)
+  useEffect(() => {
+    if (challengesDeepLinkOpened.current || !user) return
+    if (new URLSearchParams(window.location.search).get('challenges') !== '1') return
+    challengesDeepLinkOpened.current = true
+    openChallenges()
+    window.history.replaceState(null, '', window.location.pathname)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
   if (authLoading || (user && myProfileLoading)) {
     return <LoadingShell />
   }
@@ -806,6 +938,12 @@ export function FishZoneApp() {
         <Screen id="screen-last-week" current={currentScreen} onBack={pop}>
           <LastWeekScreen city={city} onBack={pop} onOpenUser={openUserProfile} onOpenCurrentRating={openWeeklyRating} />
         </Screen>
+        <Screen id="screen-shop" current={currentScreen} onBack={pop}>
+          <ShopScreen city={city} onBack={pop} />
+        </Screen>
+        <Screen id="screen-challenges" current={currentScreen} onBack={pop}>
+          <ChallengesScreen city={city} onBack={pop} active={currentScreen === 'screen-challenges'} />
+        </Screen>
         <Screen id="screen-catches" current={currentScreen} onBack={pop}>
           {(catchesUserId || catchesTerritoryId) && (
             <MyCatchesScreen userId={catchesUserId} territoryId={catchesTerritoryId} onBack={pop} onOpenPhoto={openCatchPhoto} onOpenUser={openUserProfile} />
@@ -829,7 +967,13 @@ export function FishZoneApp() {
           <UsersListScreen onBack={pop} onOpenUser={openUserProfile} />
         </Screen>
         <Screen id="screen-camera" current={currentScreen}>
-          <CameraScreen key={cameraSessionId} active={currentScreen === 'screen-camera'} onBack={pop} onCapture={handleCapture} />
+          <CameraScreen
+            key={cameraSessionId}
+            active={currentScreen === 'screen-camera'}
+            onBack={pop}
+            onCapture={handleCapture}
+            allowGallery={isAdminCatchFlow && canAddCatchFromGallery}
+          />
         </Screen>
         <Screen id="screen-confirm" current={currentScreen} onBack={backToCamera}>
           {catchTerritory && capturedPhoto && (confirmStep === 'form' || pendingCatch) && (
@@ -837,6 +981,8 @@ export function FishZoneApp() {
               territory={catchTerritory}
               pendingCatch={pendingCatch}
               wasFree={wasFree}
+              speciesCoins={catchSpeciesCoins}
+              captureCoins={catchCaptureCoins}
               step={confirmStep}
               pending={confirmCatchMutation.isPending}
               capturedPhoto={capturedPhoto}
@@ -862,6 +1008,7 @@ export function FishZoneApp() {
             onOpenRating={openWeeklyRating}
             onOpenOwnAwards={() => navClick('screen-profile')}
             onOpenLastWeek={openLastWeek}
+            onOpenChallenges={openChallenges}
           />
         </Screen>
         <Screen id="screen-profile" current={currentScreen}>
@@ -893,6 +1040,9 @@ export function FishZoneApp() {
             onOpenSpecies={setViewingSpeciesFor}
             onPostAnnouncement={() => setPostingAnnouncement(true)}
             onEditPublicId={setEditingPublicIdUserId}
+            onGrantCoins={setGrantingCoinsUserId}
+            onOpenShop={openShop}
+            onOpenChallenges={openChallenges}
           />
         </Screen>
         <Screen id="screen-user-profile" current={currentScreen} onBack={pop}>
@@ -911,6 +1061,7 @@ export function FishZoneApp() {
               onOpenAward={setOpenAward}
               onEditAdminAccess={setEditingAdminAccessId}
               onEditPublicId={setEditingPublicIdUserId}
+              onGrantCoins={setGrantingCoinsUserId}
               onShareProfile={shareProfile}
               onOpenFollowers={setViewingFollowersFor}
               onOpenAvatarPreview={setViewingAvatarUrl}
@@ -1085,6 +1236,14 @@ export function FishZoneApp() {
           userId={editingPublicIdUserId}
           currentPublicId={editingPublicIdProfile.publicId}
           onClose={() => setEditingPublicIdUserId(null)}
+        />
+      )}
+      {grantingCoinsUserId !== null && grantingCoinsProfile && (
+        <GrantCoinsModal
+          userId={grantingCoinsUserId}
+          displayName={grantingCoinsProfile.displayName}
+          currentCoins={grantingCoinsProfile.coins ?? 0}
+          onClose={() => setGrantingCoinsUserId(null)}
         />
       )}
       {viewingLikersFor !== null && (

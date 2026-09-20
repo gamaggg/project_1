@@ -1,12 +1,16 @@
 'use client'
 
-import { useCatchesByTerritory, useProfile, useCanAddCatchManually, useIsSuperAdmin } from '@/lib/supabase/queries'
+import { useState } from 'react'
+import { useCatchesByTerritory, useProfile, useCanAddCatchManually, useIsSuperAdmin, useBuffs, useBuyShield } from '@/lib/supabase/queries'
+import { useAuth } from '@/components/providers/AuthProvider'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import type { Territory } from '@/lib/data/types'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { TerritoryThumbnailMapView } from '@/components/app-shell/TerritoryThumbnailMapView'
 import { BackButton } from '@/components/app-shell/BackButton'
+import { InsufficientCoinsModal } from '@/components/app-shell/InsufficientCoinsModal'
+import { CoinIcon } from '@/components/app-shell/CoinIcon'
 
 export function statusBadge(status: Territory['status'], myTerritoryColor: string) {
   if (status === 'mine')
@@ -18,6 +22,19 @@ export function statusBadge(status: Territory['status'], myTerritoryColor: strin
     )
   if (status === 'other') return <span className="badge badge-blue">Занята</span>
   return <span className="badge badge-neutral">Свободна</span>
+}
+
+// Щит/Прилив — shown next to statusBadge wherever it renders, since a
+// protected sector being visibly protected is the whole point (a deterrent
+// other players need to see, not just the owner).
+export function shieldBadge(shieldUntil: string | null) {
+  if (!shieldUntil || new Date(shieldUntil) <= new Date()) return null
+  return (
+    <span className="badge badge-shield">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l8 3v6c0 5-3.4 8.7-8 11-4.6-2.3-8-6-8-11V5l8-3z" /></svg>
+      Под щитом
+    </span>
+  )
 }
 
 // The one person this whole screen is really about — given its own small
@@ -57,6 +74,43 @@ function SectorOwnerCard({
         )}
       </button>
     </div>
+  )
+}
+
+// Bought right when you're worried about a specific sector, not from the
+// general Shop grid — it needs a target, and this screen already is one.
+function ShieldButton({ territory }: { territory: Territory }) {
+  const { user } = useAuth()
+  const { data: myProfile } = useProfile(user?.id ?? null)
+  const { data: buffs = [] } = useBuffs()
+  const buyShield = useBuyShield()
+  const [showInsufficient, setShowInsufficient] = useState(false)
+  const price = buffs.find((b) => b.id === 'shield')?.price ?? 80
+  const coins = myProfile?.coins ?? 0
+  const active = territory.shieldUntil && new Date(territory.shieldUntil) > new Date()
+
+  function handleClick() {
+    if (coins < price) setShowInsufficient(true)
+    else buyShield.mutate(territory.id)
+  }
+
+  return (
+    <>
+      <button className="btn-secondary shop-price-btn" style={{ marginTop: 12 }} disabled={buyShield.isPending} onClick={handleClick}>
+        {buyShield.isPending ? (
+          'Покупаем…'
+        ) : active ? (
+          <>
+            Продлить щит · {price} <CoinIcon size={16} />
+          </>
+        ) : (
+          <>
+            Защитить сектор · {price} <CoinIcon size={16} />, 24ч
+          </>
+        )}
+      </button>
+      {showInsufficient && <InsufficientCoinsModal price={price} coins={coins} onClose={() => setShowInsufficient(false)} />}
+    </>
   )
 }
 
@@ -152,6 +206,7 @@ export function TerritoryScreen({
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
               {statusBadge(territory.status, myTerritoryColor)}
+              {shieldBadge(territory.shieldUntil)}
               {isMostPopular && <span className="badge badge-accent">🔥 Самый популярный</span>}
             </div>
           </div>
@@ -166,6 +221,7 @@ export function TerritoryScreen({
               Добавить улов (админ)
             </button>
           )}
+          {territory.status === 'mine' && <ShieldButton territory={territory} />}
         </div>
 
         <div className="sector-stat-strip">

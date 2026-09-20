@@ -62,6 +62,40 @@
         ],
         "createdAt": "2026-09-13T07:50:59.434Z",
         "reason": "weekly-leaderboard podium item reveal — intentional celebratory overshoot, predates this session"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "coinbounce",
+        "createdAt": "2026-09-17T22:24:49.396Z"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.34, 1.2, .64, 1)",
+        "createdAt": "2026-09-17T22:24:49.422Z"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "coinbounce",
+        "files": [
+          "web/app/globals.css"
+        ],
+        "createdAt": "2026-09-17T22:30:52.531Z"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.34,1.2,.64,1)",
+        "files": [
+          "web/app/globals.css"
+        ],
+        "createdAt": "2026-09-17T22:30:52.554Z"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.3,1.7,.4,1)",
+        "files": [
+          "web/app/globals.css"
+        ],
+        "createdAt": "2026-09-17T22:30:52.577Z"
       }
     ]
   }

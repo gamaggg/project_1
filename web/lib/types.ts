@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      coin_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: number
+          label: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: never
+          label: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: never
+          label?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coin_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coin_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activity_log: {
         Row: {
           catch_id: number | null
@@ -305,6 +347,7 @@ export type Database = {
         Row: {
           bait: string | null
           caught_at: string
+          echo: boolean
           id: number
           length_cm: number | null
           method: string | null
@@ -317,6 +360,7 @@ export type Database = {
         Insert: {
           bait?: string | null
           caught_at?: string
+          echo?: boolean
           id?: never
           length_cm?: number | null
           method?: string | null
@@ -329,6 +373,7 @@ export type Database = {
         Update: {
           bait?: string | null
           caught_at?: string
+          echo?: boolean
           id?: never
           length_cm?: number | null
           method?: string | null
@@ -517,13 +562,18 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           birth_date: string | null
+          can_add_catch_from_gallery: boolean
           can_add_catch_manually: boolean
           can_block_users: boolean
           can_moderate_reports: boolean
           can_view_all_users: boolean
           city: string
+          coins: number
           created_at: string
           display_name: string
+          equipped_frame: string | null
+          equipped_name_style: string | null
+          equipped_skin: string | null
           gender: string | null
           height_cm: number | null
           hero_bg: string | null
@@ -544,13 +594,18 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birth_date?: string | null
+          can_add_catch_from_gallery?: boolean
           can_add_catch_manually?: boolean
           can_block_users?: boolean
           can_moderate_reports?: boolean
           can_view_all_users?: boolean
           city?: string
+          coins?: number
           created_at?: string
           display_name?: string
+          equipped_frame?: string | null
+          equipped_name_style?: string | null
+          equipped_skin?: string | null
           gender?: string | null
           height_cm?: number | null
           hero_bg?: string | null
@@ -571,13 +626,18 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birth_date?: string | null
+          can_add_catch_from_gallery?: boolean
           can_add_catch_manually?: boolean
           can_block_users?: boolean
           can_moderate_reports?: boolean
           can_view_all_users?: boolean
           city?: string
+          coins?: number
           created_at?: string
           display_name?: string
+          equipped_frame?: string | null
+          equipped_name_style?: string | null
+          equipped_skin?: string | null
           gender?: string | null
           height_cm?: number | null
           hero_bg?: string | null
@@ -595,6 +655,285 @@ export type Database = {
           weight_kg?: number | null
         }
         Relationships: []
+      }
+      buffs: {
+        Row: {
+          description: string
+          duration_hours: number | null
+          id: string
+          name: string
+          price: number
+          sort_order: number
+        }
+        Insert: {
+          description: string
+          duration_hours?: number | null
+          id: string
+          name: string
+          price: number
+          sort_order?: number
+        }
+        Update: {
+          description?: string
+          duration_hours?: number | null
+          id?: string
+          name?: string
+          price?: number
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      active_buffs: {
+        Row: {
+          activated_at: string
+          buff_id: string
+          consumed: boolean
+          expires_at: string
+          id: number
+          user_id: string
+        }
+        Insert: {
+          activated_at?: string
+          buff_id: string
+          consumed?: boolean
+          expires_at: string
+          id?: number
+          user_id: string
+        }
+        Update: {
+          activated_at?: string
+          buff_id?: string
+          consumed?: boolean
+          expires_at?: string
+          id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "active_buffs_buff_id_fkey"
+            columns: ["buff_id"]
+            isOneToOne: false
+            referencedRelation: "buffs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "active_buffs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_challenge_weeks: {
+        Row: {
+          extra_slot_bought: boolean
+          swap_used: boolean
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          extra_slot_bought?: boolean
+          swap_used?: boolean
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          extra_slot_bought?: boolean
+          swap_used?: boolean
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_challenge_weeks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          city_scope: string | null
+          coin_reward: number
+          description: string
+          id: string
+          metric: string
+          name: string
+          params: Json
+          sort_order: number
+          target: number
+          tier: string
+        }
+        Insert: {
+          city_scope?: string | null
+          coin_reward?: number
+          description: string
+          id: string
+          metric: string
+          name: string
+          params?: Json
+          sort_order?: number
+          target?: number
+          tier: string
+        }
+        Update: {
+          city_scope?: string | null
+          coin_reward?: number
+          description?: string
+          id?: string
+          metric?: string
+          name?: string
+          params?: Json
+          sort_order?: number
+          target?: number
+          tier?: string
+        }
+        Relationships: []
+      }
+      challenge_events: {
+        Row: {
+          catch_id: number | null
+          created_at: string
+          event_type: string
+          id: number
+          territory_id: string | null
+          user_id: string
+        }
+        Insert: {
+          catch_id?: number | null
+          created_at?: string
+          event_type: string
+          id?: number
+          territory_id?: string | null
+          user_id: string
+        }
+        Update: {
+          catch_id?: number | null
+          created_at?: string
+          event_type?: string
+          id?: number
+          territory_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_challenges: {
+        Row: {
+          challenge_id: string
+          coin_reward: number
+          completed_at: string | null
+          created_at: string
+          id: number
+          settled: boolean
+          target: number
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          challenge_id: string
+          coin_reward: number
+          completed_at?: string | null
+          created_at?: string
+          id?: number
+          settled?: boolean
+          target: number
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          challenge_id?: string
+          coin_reward?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: number
+          settled?: boolean
+          target?: number
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_challenges_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_challenges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_items: {
+        Row: {
+          category: string
+          id: string
+          name: string
+          price: number
+          sort_order: number
+        }
+        Insert: {
+          category: string
+          id: string
+          name: string
+          price: number
+          sort_order?: number
+        }
+        Update: {
+          category?: string
+          id?: string
+          name?: string
+          price?: number
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      user_inventory: {
+        Row: {
+          item_id: string
+          purchased_at: string
+          user_id: string
+        }
+        Insert: {
+          item_id: string
+          purchased_at?: string
+          user_id: string
+        }
+        Update: {
+          item_id?: string
+          purchased_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_inventory_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "shop_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_inventory_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_inventory_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       species: {
         Row: {
@@ -755,6 +1094,7 @@ export type Database = {
           lat: number | null
           lng: number | null
           owner_id: string | null
+          shield_until: string | null
         }
         Insert: {
           claimed_at?: string | null
@@ -766,6 +1106,7 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           owner_id?: string | null
+          shield_until?: string | null
         }
         Update: {
           claimed_at?: string | null
@@ -777,6 +1118,7 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           owner_id?: string | null
+          shield_until?: string | null
         }
         Relationships: [
           {
@@ -847,14 +1189,19 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           birth_date: string | null
+          can_add_catch_from_gallery: boolean | null
           can_add_catch_manually: boolean | null
           can_block_users: boolean | null
           can_moderate_reports: boolean | null
           can_view_all_users: boolean | null
           catches_count: number | null
           city: string | null
+          coins: number | null
           created_at: string | null
           display_name: string | null
+          equipped_frame: string | null
+          equipped_name_style: string | null
+          equipped_skin: string | null
           followers_count: number | null
           following_count: number | null
           gender: string | null
@@ -875,14 +1222,19 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birth_date?: never
+          can_add_catch_from_gallery?: never
           can_add_catch_manually?: never
           can_block_users?: never
           can_moderate_reports?: never
           can_view_all_users?: never
           catches_count?: never
           city?: string | null
+          coins?: never
           created_at?: string | null
           display_name?: string | null
+          equipped_frame?: string | null
+          equipped_name_style?: string | null
+          equipped_skin?: string | null
           followers_count?: never
           following_count?: never
           gender?: never
@@ -903,14 +1255,19 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birth_date?: never
+          can_add_catch_from_gallery?: never
           can_add_catch_manually?: never
           can_block_users?: never
           can_moderate_reports?: never
           can_view_all_users?: never
           catches_count?: never
           city?: string | null
+          coins?: never
           created_at?: string | null
           display_name?: string | null
+          equipped_frame?: string | null
+          equipped_name_style?: string | null
+          equipped_skin?: string | null
           followers_count?: never
           following_count?: never
           gender?: never
@@ -944,6 +1301,8 @@ export type Database = {
           owner_avatar_url: string | null
           owner_display_name: string | null
           owner_id: string | null
+          shield_until: string | null
+          owner_equipped_skin: string | null
         }
         Relationships: [
           {
@@ -996,6 +1355,7 @@ export type Database = {
       }
       admin_set_admin: {
         Args: {
+          p_can_add_catch_from_gallery?: boolean
           p_can_add_catch_manually?: boolean
           p_can_block_users?: boolean
           p_can_moderate_reports?: boolean
@@ -1012,6 +1372,61 @@ export type Database = {
       admin_set_public_id: {
         Args: { p_public_id: string; p_user_id: string }
         Returns: undefined
+      }
+      admin_grant_coins: {
+        Args: { p_user_id: string; p_amount: number }
+        Returns: undefined
+      }
+      admin_get_user_inventory: {
+        Args: { p_user_id: string }
+        Returns: {
+          kind: string
+          item_id: string
+          active_buff_id: number | null
+          label: string
+          price: number
+          expires_at: string | null
+        }[]
+      }
+      admin_refund_shop_item: {
+        Args: { p_user_id: string; p_item_id: string }
+        Returns: undefined
+      }
+      admin_refund_buff: {
+        Args: { p_user_id: string; p_active_buff_id: number }
+        Returns: undefined
+      }
+      buy_shop_item: { Args: { p_item_id: string }; Returns: undefined }
+      equip_shop_item: { Args: { p_item_id: string | null; p_category?: string }; Returns: undefined }
+      log_challenge_event: {
+        Args: { p_catch_id?: number | null; p_event_type: string; p_territory_id?: string | null }
+        Returns: undefined
+      }
+      sync_my_challenges: {
+        Args: { p_city: string; p_timezone: string }
+        Returns: {
+          id: number
+          challenge_id: string
+          name: string
+          description: string
+          tier: string
+          coin_reward: number
+          target: number
+          progress: number
+          completed_at: string | null
+        }[]
+      }
+      get_my_challenge_week_state: {
+        Args: { p_timezone: string }
+        Returns: { swap_used: boolean; extra_slot_bought: boolean; slot_count: number; week_ends_at: string }[]
+      }
+      swap_challenge: { Args: { p_user_challenge_id: number; p_city: string }; Returns: undefined }
+      buy_extra_challenge: { Args: { p_city: string; p_timezone: string }; Returns: undefined }
+      buy_shield: { Args: { p_territory_id: string }; Returns: undefined }
+      activate_buff: { Args: { p_buff_id: string }; Returns: undefined }
+      spin_wheel: {
+        Args: { p_bet: number }
+        Returns: { segment_index: number; multiplier: number; payout: number; new_balance: number }[]
       }
       create_telegram_link_token: { Args: Record<string, never>; Returns: string }
       mark_notifications_read: { Args: Record<string, never>; Returns: undefined }
@@ -1036,28 +1451,12 @@ export type Database = {
           p_territory_id: string
           p_weight_kg?: number
         }
-        Returns: {
-          bait: string | null
-          caught_at: string
-          id: number
-          length_cm: number | null
-          method: string | null
-          photo_url: string
-          species: string
-          territory_id: string
-          user_id: string
-          weight_kg: number | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "catches"
-          isOneToOne: true
-          isSetofReturn: false
-        }
+        Returns: { species_coins: number; capture_coins: number }[]
       }
       get_admin_permissions: {
         Args: { p_user_id: string }
         Returns: {
+          can_add_catch_from_gallery: boolean
           can_add_catch_manually: boolean
           can_block_users: boolean
           can_moderate_reports: boolean

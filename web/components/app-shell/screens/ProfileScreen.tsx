@@ -2,17 +2,33 @@
 
 import { useState, type CSSProperties } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useProfile, useMyCatches, useUpdateProfile, useCanModerateReports, useIsSuperAdmin, useReports, useHasClaimedFromOthers, useUserAwards, useFollowers, useTelegramNotificationState, useSetTelegramNotifications, useCreateTelegramLink } from '@/lib/supabase/queries'
+import {
+  useProfile,
+  useMyCatches,
+  useUpdateProfile,
+  useCanModerateReports,
+  useIsSuperAdmin,
+  useReports,
+  useHasClaimedFromOthers,
+  useUserAwards,
+  useFollowers,
+  useTelegramNotificationState,
+  useSetTelegramNotifications,
+  useCreateTelegramLink,
+} from '@/lib/supabase/queries'
 import { AwardsRing } from '@/components/app-shell/AwardsRing'
 import { uploadAvatar } from '@/lib/supabase/storage'
 import { computeAchievements, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralFollowers, pluralSpecies, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
-import { ACH_ICONS } from '@/components/app-shell/icons'
+import { ACH_ICONS, CTA_ICONS } from '@/components/app-shell/icons'
 import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorPreviewMap'
 import { DEFAULT_TERRITORY_COLOR, TERRITORY_COLORS } from '@/lib/data/territoryColors'
-import { HERO_BACKGROUNDS, DEFAULT_HERO_BG, resolveHeroBackground } from '@/lib/data/heroBackgrounds'
-import { WavyBackground } from '@/components/app-shell/WavyBackground'
+import { resolveHeroBackground } from '@/lib/data/heroBackgrounds'
+import { resolveAvatarFrame } from '@/lib/data/shopItems'
+import { StyledName } from '@/components/app-shell/StyledName'
+import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { CITIES, type CityId } from '@/lib/data/city'
 import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
 import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
@@ -210,134 +226,54 @@ export function EditProfileModal({ onClose }: { onClose: () => void }) {
 // offset). Live preview centers on that city's colorPreviewCenter (a real,
 // recognizably busy landmark — see city.ts) rather than the viewer's own
 // first sector, which could be anywhere or not exist yet for a brand-new
-// account with zero territories.
+// account with zero territories. Profile background used to live behind a
+// menu step here too, but it's now chosen from the Shop (where all
+// backgrounds live and show their live animation) — this modal is territory
+// color only, so the avatar's palette icon opens straight to it.
 export function ChangeColorModal({ onClose, city }: { onClose: () => void; city: CityId }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   const updateProfile = useUpdateProfile()
-  const [view, setView] = useState<'menu' | 'color' | 'background'>('menu')
   const [selected, setSelected] = useState<string | null>(profile?.territoryColor ?? null)
-  const [selectedHeroBg, setSelectedHeroBg] = useState<string>(profile?.heroBg ?? DEFAULT_HERO_BG)
-
-  const currentColor = profile?.territoryColor ?? DEFAULT_TERRITORY_COLOR
-  const currentBg = resolveHeroBackground(profile?.heroBg)
 
   async function handleSaveColor() {
     if (!selected) return
     await updateProfile.mutateAsync({ territoryColor: selected })
-    setView('menu')
-  }
-
-  async function handleSaveBg() {
-    await updateProfile.mutateAsync({ heroBg: selectedHeroBg })
-    setView('menu')
+    onClose()
   }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card modal-card-wide" onClick={(e) => e.stopPropagation()}>
-        {view !== 'menu' && (
-          <div className="modal-back tap-scale" onClick={() => setView('menu')}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </div>
-        )}
         <div className="modal-close tap-scale" onClick={onClose}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round">
             <path d="M6 6l12 12M18 6L6 18" />
           </svg>
         </div>
 
-        {view === 'menu' && (
-          <>
-            <div className="modal-title" style={{ textAlign: 'center' }}>
-              Оформление профиля
-            </div>
-            <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <button className="appearance-row" onClick={() => setView('color')}>
-                <div className="appearance-row-preview" style={{ background: currentColor, borderRadius: '50%' }} />
-                <div className="appearance-row-text">
-                  <div className="appearance-row-title">Цвет территории</div>
-                  <div className="appearance-row-sub">Как выглядят твои сектора на карте</div>
-                </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A9AE" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 6l6 6-6 6" />
-                </svg>
-              </button>
-              <button className="appearance-row" onClick={() => setView('background')}>
-                <div className="appearance-row-preview" style={{ background: currentBg.css }} />
-                <div className="appearance-row-text">
-                  <div className="appearance-row-title">Фон профиля</div>
-                  <div className="appearance-row-sub">{currentBg.label} · виден всем в профиле</div>
-                </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A9AE" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 6l6 6-6 6" />
-                </svg>
-              </button>
-            </div>
-          </>
-        )}
-
-        {view === 'color' && (
-          <>
-            <div className="modal-title" style={{ textAlign: 'center' }}>
-              Цвет территории
-            </div>
-            <TerritoryColorPreviewMap city={city} myTerritoryColor={selected ?? profile?.territoryColor ?? DEFAULT_TERRITORY_COLOR} />
-            <div className="color-row">
-              {TERRITORY_COLORS.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  className={`color-swatch${selected === c.hex ? ' selected' : ''}`}
-                  style={{ '--swatch-color': c.hex } as CSSProperties}
-                  aria-label={c.label}
-                  onClick={() => setSelected(c.hex)}
-                />
-              ))}
-            </div>
-            <button className="btn-primary" onClick={handleSaveColor} disabled={!selected || updateProfile.isPending}>
-              {updateProfile.isPending ? 'Сохраняем…' : 'Сохранить'}
-            </button>
-          </>
-        )}
-
-        {view === 'background' && (
-          <>
-            <div className="modal-title" style={{ textAlign: 'center' }}>
-              Фон профиля
-            </div>
-            <div className="herobg-preview" style={{ background: resolveHeroBackground(selectedHeroBg).base }}>
-              {resolveHeroBackground(selectedHeroBg).animated && (
-                <WavyBackground
-                  waveWidth={22}
-                  blur={5}
-                  colors={resolveHeroBackground(selectedHeroBg).waveColors}
-                  backgroundFill={resolveHeroBackground(selectedHeroBg).waveBackgroundFill}
-                />
-              )}
-            </div>
-            <div className="herobg-grid">
-              {HERO_BACKGROUNDS.map((b) => (
-                <button
-                  key={b.id}
-                  type="button"
-                  className={`herobg-swatch${selectedHeroBg === b.id ? ' selected' : ''}`}
-                  style={{ background: b.animated ? b.base : b.css }}
-                  aria-label={b.label}
-                  onClick={() => setSelectedHeroBg(b.id)}
-                >
-                  {b.animated && <WavyBackground waveWidth={13} blur={3} colors={b.waveColors} backgroundFill={b.waveBackgroundFill} />}
-                  <span>{b.label}</span>
-                </button>
-              ))}
-            </div>
-            <button className="btn-primary" onClick={handleSaveBg} disabled={updateProfile.isPending}>
-              {updateProfile.isPending ? 'Сохраняем…' : 'Сохранить'}
-            </button>
-          </>
-        )}
+        <div className="modal-title" style={{ textAlign: 'center' }}>
+          Цвет территории
+        </div>
+        <TerritoryColorPreviewMap
+          city={city}
+          myTerritoryColor={selected ?? profile?.territoryColor ?? DEFAULT_TERRITORY_COLOR}
+          equippedSkin={profile?.equippedSkin}
+        />
+        <div className="color-row">
+          {TERRITORY_COLORS.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              className={`color-swatch${selected === c.hex ? ' selected' : ''}`}
+              style={{ '--swatch-color': c.hex } as CSSProperties}
+              aria-label={c.label}
+              onClick={() => setSelected(c.hex)}
+            />
+          ))}
+        </div>
+        <button className="btn-primary" onClick={handleSaveColor} disabled={!selected || updateProfile.isPending}>
+          {updateProfile.isPending ? 'Сохраняем…' : 'Сохранить'}
+        </button>
       </div>
     </div>
   )
@@ -368,6 +304,9 @@ export function ProfileScreen({
   onOpenSpecies,
   onPostAnnouncement,
   onEditPublicId,
+  onGrantCoins,
+  onOpenShop,
+  onOpenChallenges,
 }: {
   myTerritories: Territory[]
   allTerritories: Territory[]
@@ -393,6 +332,9 @@ export function ProfileScreen({
   onOpenSpecies: (species: SpeciesEntry[]) => void
   onPostAnnouncement: () => void
   onEditPublicId: (id: string) => void
+  onGrantCoins: (id: string) => void
+  onOpenShop: () => void
+  onOpenChallenges: () => void
 }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
@@ -403,6 +345,7 @@ export function ProfileScreen({
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(user?.id ?? null)
   const { data: awards = [] } = useUserAwards(user?.id ?? null)
   const { data: followers = [] } = useFollowers(user?.id ?? null)
+  const equippedFrame = resolveAvatarFrame(profile?.equippedFrame)
 
   // `!user` never reaches this screen anymore — FishZoneApp's onboarding gate
   // intercepts before ProfileScreen (or any other screen) can mount. See
@@ -442,15 +385,20 @@ export function ProfileScreen({
       <div
         className="profile-hero"
         ref={heroRef}
-        style={{ background: resolveHeroBackground(profile?.heroBg).base, '--hero-accent-rgb': resolveHeroBackground(profile?.heroBg).accentRgb } as CSSProperties}
+        style={
+          {
+            background: resolveHeroBackground(profile?.heroBg).base,
+            '--hero-accent-rgb': resolveHeroBackground(profile?.heroBg).accentRgb,
+            '--hero-text-rgb': resolveHeroBackground(profile?.heroBg).textRgb ?? '255,255,255',
+          } as CSSProperties
+        }
       >
-        {resolveHeroBackground(profile?.heroBg).animated && (
-          <WavyBackground
-            colors={resolveHeroBackground(profile?.heroBg).waveColors}
-            backgroundFill={resolveHeroBackground(profile?.heroBg).waveBackgroundFill}
-          />
-        )}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginTop: 14 }}>
+        <HeroBgLive bg={resolveHeroBackground(profile?.heroBg)} variant="hero" />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
+          <button className="coin-pill tap-scale" onClick={onOpenShop}>
+            <CoinIcon size={16} className="coin-pill-icon" />
+            {profile?.coins ?? 0}
+          </button>
           <div className="icon-btn tap-scale" onClick={handleShareProfile}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 15V4M12 4 8 8M12 4l4 4" />
@@ -460,6 +408,9 @@ export function ProfileScreen({
         </div>
         <AwardsRing awards={awards} onOpenAward={onOpenAward}>
           <div className="profile-hero-avatar-ring">
+            {equippedFrame && (
+              <div className={`avatar-frame-ring${equippedFrame.glow ? ' avatar-frame-glow' : ''}`} style={{ background: equippedFrame.ring }} />
+            )}
             <div className="avatar-edit-wrap">
               <div className="profile-avatar">
                 {profile?.avatarUrl ? (
@@ -485,7 +436,9 @@ export function ProfileScreen({
             </div>
           </div>
         </AwardsRing>
-        <div className="profile-hero-name">{profile?.displayName ?? 'Профиль'}</div>
+        <div className="profile-hero-name">
+          <StyledName name={profile?.displayName ?? 'Профиль'} styleId={profile?.equippedNameStyle} />
+        </div>
         <div className="profile-hero-meta">
           {profile?.createdAt && <>В RANGE с <b>{formatJoinedDate(profile.createdAt)}</b></>}
           {profile?.publicId && <> · ID {profile.publicId}</>}
@@ -493,7 +446,7 @@ export function ProfileScreen({
         <div className="profile-hero-badge">
           <button
             className="section-link"
-            style={{ color: 'rgba(255,255,255,.75)', display: 'inline-flex', alignItems: 'center', gap: 5 }}
+            style={{ color: 'rgba(var(--hero-text-rgb,255,255,255),.75)', display: 'inline-flex', alignItems: 'center', gap: 5 }}
             onClick={onOpenCityPicker}
           >
             Город: {CITIES[city].name}
@@ -504,7 +457,7 @@ export function ProfileScreen({
           </button>
         </div>
         {profile?.bio && (
-          <div style={{ fontSize: 13.5, color: 'rgba(255,255,255,.85)', marginTop: 10, lineHeight: 1.4, textAlign: 'center' }}>{profile.bio}</div>
+          <div style={{ fontSize: 13.5, color: 'rgba(var(--hero-text-rgb,255,255,255),.85)', marginTop: 10, lineHeight: 1.4, textAlign: 'center' }}>{profile.bio}</div>
         )}
       </div>
       <div className="profile-body">
@@ -530,6 +483,31 @@ export function ProfileScreen({
         </button>
       </div>
 
+      <div className="profile-cta-row" style={{ marginTop: 24 }}>
+        <button className="profile-cta-btn profile-cta-challenges tap-scale" onClick={onOpenChallenges}>
+          <div className="profile-cta-pattern" />
+          <span className="profile-cta-arrow">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+          <span className="profile-cta-icon">{CTA_ICONS.target}</span>
+          <span className="profile-cta-title">Челленджи недели</span>
+          <span className="profile-cta-sub">Выполняй и получай награды</span>
+        </button>
+        <button className="profile-cta-btn profile-cta-shop tap-scale" onClick={onOpenShop}>
+          <div className="profile-cta-pattern" />
+          <span className="profile-cta-arrow">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+          <span className="profile-cta-icon">{CTA_ICONS.bag}</span>
+          <span className="profile-cta-title">Магазин</span>
+          <span className="profile-cta-sub">Рамки, фоны, скины</span>
+        </button>
+      </div>
+
       <div className="section-title-row" style={{ marginTop: 24 }}>
         <div className="section-title">Достижения</div>
         <button className="section-link" onClick={onOpenAchievements}>
@@ -537,8 +515,13 @@ export function ProfileScreen({
         </button>
       </div>
       <div className="ach-grid">
-        {achievements.slice(0, 4).map((a) => (
-          <div className={`ach-card${a.unlocked ? '' : ' locked'}`} key={a.icon} onClick={() => onOpenAchievementDetail(a.icon)}>
+        {achievements.slice(0, 4).map((a, i) => (
+          <div
+            className={`ach-card${a.unlocked ? '' : ' locked'}`}
+            key={a.icon}
+            onClick={() => onOpenAchievementDetail(a.icon)}
+            style={{ animationDelay: `${i * 50}ms` }}
+          >
             <div className={`ach-icon hex-aspect hex-shape ${a.unlocked ? 'on' : 'off'}`}>{ACH_ICONS[a.icon]}</div>
             <div>
               <div className="ach-title">{a.title}</div>
@@ -668,10 +651,17 @@ export function ProfileScreen({
               </button>
             </div>
           )}
+          {user && (
+            <div style={{ marginTop: 12 }}>
+              <button className="btn-secondary shop-price-btn" onClick={() => onGrantCoins(user.id)}>
+                Монеты: <CoinIcon size={16} /> {profile?.coins ?? 0}
+              </button>
+            </div>
+          )}
         </>
       )}
 
-      <div style={{ marginTop: canModerateReports || isSuperAdmin ? 12 : 24 }}>
+      <div style={{ marginTop: 12 }}>
         <TelegramNotificationsRow />
       </div>
 

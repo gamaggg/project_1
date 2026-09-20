@@ -23,6 +23,10 @@ export type Achievement = {
     | 'conqueror'
   title: string
   desc: string
+  // One evocative line for the detail screen's flavor card — always shown
+  // regardless of locked/unlocked state (the existing `progress` string
+  // already covers "how close", so this doesn't need two variants).
+  flavor: string
   unlocked: boolean
   progress?: string
 }
@@ -94,24 +98,74 @@ export function computeAchievements(myCatches: Catch[], ctx: AchievementContext,
   const maxSameSpecies = Math.max(0, ...speciesCounts.values())
 
   const list: Achievement[] = [
-    { icon: 'first', title: 'Первый улов', desc: 'Зафиксирован первый улов в приложении', unlocked: myCatches.length >= 1 },
-    { icon: 'territory', title: 'Три территории', desc: 'Заняты три береговые территории', unlocked: myTerritories.length >= 3, progress: `${myTerritories.length}/3` },
+    {
+      icon: 'first',
+      title: 'Первый улов',
+      desc: 'Зафиксирован первый улов в приложении',
+      flavor: 'Первая рыба в блокноте — начало твоей истории в RANGE.',
+      unlocked: myCatches.length >= 1,
+    },
+    {
+      icon: 'territory',
+      title: 'Три территории',
+      desc: 'Заняты три береговые территории',
+      flavor: 'Побережье не ждёт слабых — расширяй владения.',
+      unlocked: myTerritories.length >= 3,
+      progress: `${myTerritories.length}/3`,
+    },
     {
       icon: 'species',
       title: 'Коллекционер видов',
       desc: isMoscow ? `Поймано ${SPECIES_COLLECTOR_TARGET} разных видов рыбы` : `Поймано ${SPECIES_COLLECTOR_TARGET} разных видов морской рыбы`,
+      flavor: 'Каждый новый вид — ещё один трофей в коллекции.',
       unlocked: speciesCollectorCount >= SPECIES_COLLECTOR_TARGET,
       progress: `${speciesCollectorCount}/${SPECIES_COLLECTOR_TARGET}`,
     },
-    { icon: 'sunrise', title: 'Ранний рыбак', desc: 'Улов зафиксирован до 7 утра', unlocked: earlyCatch },
-    { icon: 'record', title: 'Личный рекорд 40 см', desc: 'Поймана рыба длиной от 40 см', unlocked: !!(record && record.lengthCm !== null && record.lengthCm >= 40) },
-    { icon: 'ten', title: 'Десять уловов', desc: 'Зафиксировано десять уловов', unlocked: myCatches.length >= 10, progress: `${Math.min(myCatches.length, 10)}/10` },
-    { icon: 'nightowl', title: 'Ночной клёв', desc: 'Улов зафиксирован после полуночи', unlocked: nightCatch },
-    ...(isMoscow ? [] : [{ icon: 'universal' as const, title: 'Универсал', desc: 'Поймана и морская, и пресноводная рыба', unlocked: hasMarine && hasFreshwater }]),
+    {
+      icon: 'sunrise',
+      title: 'Ранний рыбак',
+      desc: 'Улов зафиксирован до 7 утра',
+      flavor: 'Лучший клёв достаётся тем, кто встаёт до рассвета.',
+      unlocked: earlyCatch,
+    },
+    {
+      icon: 'record',
+      title: 'Личный рекорд 40 см',
+      desc: 'Поймана рыба длиной от 40 см',
+      flavor: 'Крупная рыба — крупная репутация.',
+      unlocked: !!(record && record.lengthCm !== null && record.lengthCm >= 40),
+    },
+    {
+      icon: 'ten',
+      title: 'Десять уловов',
+      desc: 'Зафиксировано десять уловов',
+      flavor: 'Десятый улов — не случайность, а мастерство.',
+      unlocked: myCatches.length >= 10,
+      progress: `${Math.min(myCatches.length, 10)}/10`,
+    },
+    {
+      icon: 'nightowl',
+      title: 'Ночной клёв',
+      desc: 'Улов зафиксирован после полуночи',
+      flavor: 'Пока все спят, ты на воде.',
+      unlocked: nightCatch,
+    },
+    ...(isMoscow
+      ? []
+      : [
+          {
+            icon: 'universal' as const,
+            title: 'Универсал',
+            desc: 'Поймана и морская, и пресноводная рыба',
+            flavor: 'Морская или пресная — тебе без разницы.',
+            unlocked: hasMarine && hasFreshwater,
+          },
+        ]),
     {
       icon: 'allmethods',
       title: 'Всеядный',
       desc: 'Испробованы все способы ловли',
+      flavor: 'Освоил каждый способ ловли — от поплавка до спиннинга.',
       unlocked: methodsUsed >= METHODS.length,
       progress: `${methodsUsed}/${METHODS.length}`,
     },
@@ -119,6 +173,7 @@ export function computeAchievements(myCatches: Catch[], ctx: AchievementContext,
       icon: 'allbaits',
       title: 'Экспериментатор',
       desc: 'Испробованы все виды приманок',
+      flavor: 'Перепробовал всё — рыба такого не ожидала.',
       unlocked: baitsUsed >= ALL_BAITS.length,
       progress: `${baitsUsed}/${ALL_BAITS.length}`,
     },
@@ -126,15 +181,29 @@ export function computeAchievements(myCatches: Catch[], ctx: AchievementContext,
       icon: 'allwaters',
       title: 'Обошёл всё побережье',
       desc: isMoscow ? 'Улов в каждом типе водоёма: река, ручей, озеро, пруд' : 'Улов в каждом типе водоёма: море, река, ручей, озеро',
+      flavor: 'Море, река, ручей, озеро — нигде не прошёл мимо.',
       unlocked: waterKindsCaught.size >= requiredWaterKinds.length,
       progress: `${waterKindsCaught.size}/${requiredWaterKinds.length}`,
     },
-    { icon: 'heavy', title: 'Тяжеловес', desc: `Поймана рыба весом от ${HEAVY_TARGET_KG * 1000} г`, unlocked: heaviestKg >= HEAVY_TARGET_KG },
-    { icon: 'giant', title: 'Гигант', desc: `Поймана рыба длиной от ${GIANT_TARGET_CM} см`, unlocked: !!(record && record.lengthCm !== null && record.lengthCm >= GIANT_TARGET_CM) },
+    {
+      icon: 'heavy',
+      title: 'Тяжеловес',
+      desc: `Поймана рыба весом от ${HEAVY_TARGET_KG * 1000} г`,
+      flavor: 'Килограмм в руках — тяжело не улыбнуться.',
+      unlocked: heaviestKg >= HEAVY_TARGET_KG,
+    },
+    {
+      icon: 'giant',
+      title: 'Гигант',
+      desc: `Поймана рыба длиной от ${GIANT_TARGET_CM} см`,
+      flavor: 'Такую рыбу одной рукой не удержишь.',
+      unlocked: !!(record && record.lengthCm !== null && record.lengthCm >= GIANT_TARGET_CM),
+    },
     {
       icon: 'loyal',
       title: 'Постоянный клиент',
       desc: `Один вид пойман ${LOYAL_TARGET} раз`,
+      flavor: 'Нашёл своего фаворита среди рыб — и не изменяешь ему.',
       unlocked: maxSameSpecies >= LOYAL_TARGET,
       progress: `${maxSameSpecies}/${LOYAL_TARGET}`,
     },
@@ -142,6 +211,7 @@ export function computeAchievements(myCatches: Catch[], ctx: AchievementContext,
       icon: 'landlord',
       title: 'Хозяин побережья',
       desc: `Заняты ${LANDLORD_TARGET} территорий одновременно`,
+      flavor: 'Десять секторов под твоим флагом.',
       unlocked: myTerritories.length >= LANDLORD_TARGET,
       progress: `${Math.min(myTerritories.length, LANDLORD_TARGET)}/${LANDLORD_TARGET}`,
     },
@@ -149,10 +219,17 @@ export function computeAchievements(myCatches: Catch[], ctx: AchievementContext,
       icon: 'popular',
       title: 'Известный рыбак',
       desc: `${POPULAR_TARGET}+ подписчиков`,
+      flavor: 'Твой контент нравится другим. Продолжай делиться уловами и захватывать новые территории!',
       unlocked: followersCount >= POPULAR_TARGET,
       progress: `${Math.min(followersCount, POPULAR_TARGET)}/${POPULAR_TARGET}`,
     },
-    { icon: 'conqueror', title: 'Отбил территорию', desc: 'Занял сектор, который раньше принадлежал другому', unlocked: claimedFromOthers },
+    {
+      icon: 'conqueror',
+      title: 'Отбил территорию',
+      desc: 'Занял сектор, который раньше принадлежал другому',
+      flavor: 'Забрал чужой сектор — теперь он твой по праву сильного.',
+      unlocked: claimedFromOthers,
+    },
   ]
   return list.sort((a, b) => Number(b.unlocked) - Number(a.unlocked)) // unlocked first, stable otherwise
 }

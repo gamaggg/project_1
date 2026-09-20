@@ -8,6 +8,7 @@ import { cityForSectorId } from '@/lib/data/city'
 import { formatWeightGrams } from '@/lib/format'
 import { HexBadge } from '@/components/app-shell/HexBadge'
 import { BackButton } from '@/components/app-shell/BackButton'
+import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import type { PendingCatch, Territory } from '@/lib/data/types'
 
 export type CatchFormData = {
@@ -24,6 +25,8 @@ export function ConfirmScreen({
   territory,
   pendingCatch,
   wasFree,
+  speciesCoins,
+  captureCoins,
   step,
   pending,
   capturedPhoto,
@@ -37,6 +40,8 @@ export function ConfirmScreen({
   territory: Territory
   pendingCatch: PendingCatch | null
   wasFree: boolean
+  speciesCoins: number
+  captureCoins: number
   step: 'form' | 'success'
   pending: boolean
   capturedPhoto: Blob
@@ -148,6 +153,26 @@ export function ConfirmScreen({
           </div>
         </div>
         <div className="catch-trophy-title">{wasFree ? 'Теперь это твоя территория' : 'Улов зафиксирован'}</div>
+        {(speciesCoins > 0 || captureCoins > 0) && (
+          <div className="catch-trophy-reward">
+            {speciesCoins > 0 && (
+              <div className="catch-trophy-reward-row">
+                <span>{caughtSpeciesName ?? pendingCatch?.species}</span>
+                <span className="catch-trophy-reward-amount">
+                  +{speciesCoins} <CoinIcon size={16} />
+                </span>
+              </div>
+            )}
+            {captureCoins > 0 && (
+              <div className="catch-trophy-reward-row">
+                <span>Захват сектора</span>
+                <span className="catch-trophy-reward-amount">
+                  +{captureCoins} <CoinIcon size={16} />
+                </span>
+              </div>
+            )}
+          </div>
+        )}
         <div className="catch-trophy-ctas" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <button className="btn-primary" onClick={onShare}>
             Поделиться уловом

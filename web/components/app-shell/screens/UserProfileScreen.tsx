@@ -1,7 +1,21 @@
 'use client'
 
 import { useRef, type CSSProperties } from 'react'
-import { useProfile, useCatchesByUser, useIsFollowing, useSetFollowing, useIsAdmin, useIsSuperAdmin, useCanBlockUsers, useSetBlocked, useHasClaimedFromOthers, useReportDeletionCount, useUserAwards, useFollowers } from '@/lib/supabase/queries'
+import {
+  useProfile,
+  useCatchesByUser,
+  useIsFollowing,
+  useSetFollowing,
+  useIsAdmin,
+  useIsSuperAdmin,
+  useCanBlockUsers,
+  useSetBlocked,
+  useHasClaimedFromOthers,
+  useReportDeletionCount,
+  useUserAwards,
+  useFollowers,
+} from '@/lib/supabase/queries'
+import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { AwardsRing } from '@/components/app-shell/AwardsRing'
 import { computeAchievements, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
@@ -10,7 +24,9 @@ import { ACH_ICONS } from '@/components/app-shell/icons'
 import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
 import { CITIES } from '@/lib/data/city'
 import { resolveHeroBackground } from '@/lib/data/heroBackgrounds'
-import { WavyBackground } from '@/components/app-shell/WavyBackground'
+import { resolveAvatarFrame } from '@/lib/data/shopItems'
+import { StyledName } from '@/components/app-shell/StyledName'
+import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
 
@@ -52,6 +68,7 @@ export function UserProfileScreen({
   onOpenAward,
   onEditAdminAccess,
   onEditPublicId,
+  onGrantCoins,
   onShareProfile,
   onOpenFollowers,
   onOpenAvatarPreview,
@@ -70,12 +87,14 @@ export function UserProfileScreen({
   onOpenAward: (award: UserAward) => void
   onEditAdminAccess: (id: string) => void
   onEditPublicId: (id: string) => void
+  onGrantCoins: (id: string) => void
   onShareProfile: (publicId: string, text: string) => void
   onOpenFollowers: (people: ProfileSummary[]) => void
   onOpenAvatarPreview: (url: string) => void
   onOpenSpecies: (species: SpeciesEntry[]) => void
 }) {
   const { data: profile } = useProfile(userId)
+  const equippedFrame = resolveAvatarFrame(profile?.equippedFrame)
   const { data: catches = [] } = useCatchesByUser(userId)
   const { data: isFollowing, isLoading: followLoading } = useIsFollowing(userId)
   const setFollowing = useSetFollowing()
@@ -118,14 +137,15 @@ export function UserProfileScreen({
       <div
         className="profile-hero"
         ref={heroRef}
-        style={{ background: resolveHeroBackground(profile?.heroBg).base, '--hero-accent-rgb': resolveHeroBackground(profile?.heroBg).accentRgb } as CSSProperties}
+        style={
+          {
+            background: resolveHeroBackground(profile?.heroBg).base,
+            '--hero-accent-rgb': resolveHeroBackground(profile?.heroBg).accentRgb,
+            '--hero-text-rgb': resolveHeroBackground(profile?.heroBg).textRgb ?? '255,255,255',
+          } as CSSProperties
+        }
       >
-        {resolveHeroBackground(profile?.heroBg).animated && (
-          <WavyBackground
-            colors={resolveHeroBackground(profile?.heroBg).waveColors}
-            backgroundFill={resolveHeroBackground(profile?.heroBg).waveBackgroundFill}
-          />
-        )}
+        <HeroBgLive bg={resolveHeroBackground(profile?.heroBg)} variant="hero" />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
           <BackButton onClick={onBack} registerNative={false} />
           <div className="icon-btn tap-scale" onClick={handleShare}>
@@ -137,6 +157,9 @@ export function UserProfileScreen({
         </div>
         <AwardsRing awards={awards} onOpenAward={onOpenAward}>
           <div className="profile-hero-avatar-ring">
+            {equippedFrame && (
+              <div className={`avatar-frame-ring${equippedFrame.glow ? ' avatar-frame-glow' : ''}`} style={{ background: equippedFrame.ring }} />
+            )}
             <button
               className="profile-hero-avatar-btn"
               style={{ cursor: profile?.avatarUrl ? 'pointer' : 'default' }}
@@ -153,7 +176,9 @@ export function UserProfileScreen({
             </button>
           </div>
         </AwardsRing>
-        <div className="profile-hero-name">{profile?.displayName ?? 'Профиль'}</div>
+        <div className="profile-hero-name">
+          <StyledName name={profile?.displayName ?? 'Профиль'} styleId={profile?.equippedNameStyle} />
+        </div>
         {profile?.isBlocked && (
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
             <span className="badge" style={{ background: '#FDE2E2', color: '#D33' }}>Заблокирован</span>
@@ -164,12 +189,12 @@ export function UserProfileScreen({
           {profile?.publicId && <> · ID {profile.publicId}</>}
         </div>
         <div className="profile-hero-badge">
-          <span className="section-link" style={{ color: 'rgba(255,255,255,.75)', cursor: 'default' }}>
+          <span className="section-link" style={{ color: 'rgba(var(--hero-text-rgb,255,255,255),.75)', cursor: 'default' }}>
             Город: {CITIES[viewedCity].name}
           </span>
         </div>
         {profile?.bio && (
-          <div style={{ fontSize: 13.5, color: 'rgba(255,255,255,.85)', marginTop: 10, lineHeight: 1.4, textAlign: 'center' }}>{profile.bio}</div>
+          <div style={{ fontSize: 13.5, color: 'rgba(var(--hero-text-rgb,255,255,255),.85)', marginTop: 10, lineHeight: 1.4, textAlign: 'center' }}>{profile.bio}</div>
         )}
       </div>
       <div className="profile-body">
@@ -221,6 +246,12 @@ export function UserProfileScreen({
         {isSuperAdmin && (
           <button className="btn-secondary" style={{ marginTop: 8 }} onClick={() => onEditPublicId(userId)}>
             Изменить ID
+          </button>
+        )}
+
+        {isSuperAdmin && (
+          <button className="btn-secondary shop-price-btn" style={{ marginTop: 8 }} onClick={() => onGrantCoins(userId)}>
+            Монеты: <CoinIcon size={16} /> {profile?.coins ?? 0}
           </button>
         )}
 

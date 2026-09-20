@@ -9,9 +9,10 @@ const PERMISSIONS: { key: keyof Omit<AdminPermissions, 'isAdmin'>; label: string
   { key: 'canBlockUsers', label: 'Блокировка пользователей' },
   { key: 'canAddCatchManually', label: 'Добавление улова без геолокации' },
   { key: 'canViewAllUsers', label: 'Список «Все пользователи»' },
+  { key: 'canAddCatchFromGallery', label: 'Добавление улова фото из галереи' },
 ]
 
-const EMPTY_PERMS = { canModerateReports: false, canBlockUsers: false, canAddCatchManually: false, canViewAllUsers: false }
+const EMPTY_PERMS = { canModerateReports: false, canBlockUsers: false, canAddCatchManually: false, canViewAllUsers: false, canAddCatchFromGallery: false }
 
 // Rendered by FishZoneApp itself, not nested inside a screen's scrolling
 // `.screen-inner` — same reason as EditProfileModal/ChangeColorModal (a
@@ -29,7 +30,14 @@ export function AdminPermissionsModal({ userId, onClose }: { userId: string; onC
   // grant (profile isn't an admin yet) has nothing to prefill, so it just
   // keeps everything off until the super admin picks what to grant.
   useEffect(() => {
-    if (perms) setToggles({ canModerateReports: perms.canModerateReports, canBlockUsers: perms.canBlockUsers, canAddCatchManually: perms.canAddCatchManually, canViewAllUsers: perms.canViewAllUsers })
+    if (perms)
+      setToggles({
+        canModerateReports: perms.canModerateReports,
+        canBlockUsers: perms.canBlockUsers,
+        canAddCatchManually: perms.canAddCatchManually,
+        canViewAllUsers: perms.canViewAllUsers,
+        canAddCatchFromGallery: perms.canAddCatchFromGallery,
+      })
   }, [perms])
 
   const isNewGrant = !profile?.isAdmin

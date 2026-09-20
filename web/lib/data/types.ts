@@ -20,6 +20,13 @@ export type Territory = {
   ownerDisplayName: string | null
   catchCount: number
   lastCatchAt: string | null
+  // Set by the Щит/Прилив buffs — null or in the past means unprotected.
+  // Public: a deterrent other players need to see, not just the owner.
+  shieldUntil: string | null
+  // The owner's equipped territory_skin item (see lib/data/territorySkins.ts)
+  // — public, drives the sector's fill pattern on the map for everyone, not
+  // just the owner.
+  ownerEquippedSkin: string | null
 }
 
 export type Species = {
@@ -73,6 +80,20 @@ export type Profile = {
   canBlockUsers: boolean | null
   canAddCatchManually: boolean | null
   canViewAllUsers: boolean | null
+  canAddCatchFromGallery: boolean | null
+  // Owned avatar frame (see lib/data/shopItems.ts), shown to every viewer
+  // like heroBg — null means no frame equipped.
+  equippedFrame: string | null
+  // Wallet balance — masked to non-owners at the view level, same reasoning
+  // as birthDate/gender/etc above. Always null on someone else's profile,
+  // except for a super admin viewing it (see profiles_with_stats).
+  coins: number | null
+  // Owned name_style item (see lib/data/nameStyles.ts) — public, like
+  // equippedFrame/heroBg, shown wherever this profile's display name renders.
+  equippedNameStyle: string | null
+  // Owned territory_skin item (see lib/data/territorySkins.ts) — public,
+  // applied to every sector this profile owns (see Territory.ownerEquippedSkin).
+  equippedSkin: string | null
 }
 
 // The real, unmasked permission set for one admin — only a super admin can
@@ -84,6 +105,7 @@ export type AdminPermissions = {
   canBlockUsers: boolean
   canAddCatchManually: boolean
   canViewAllUsers: boolean
+  canAddCatchFromGallery: boolean
 }
 
 // One row from profiles_with_stats for the admin "Все пользователи" list —
@@ -210,7 +232,7 @@ export type ActivityEntry = {
   // "This concerns a sector of mine" — the feed only carries other people's
   // actions now, so this no longer means "I did it" (see useActivity).
   mine: boolean
-  kind: 'catch' | 'sector_lost' | 'follow' | 'moderation' | 'like' | 'announcement' | 'award' | 'weekly_result'
+  kind: 'catch' | 'sector_lost' | 'follow' | 'moderation' | 'like' | 'announcement' | 'award' | 'weekly_result' | 'challenge' | 'challenges_week_done' | 'challenge_deadline'
   // Still unread as of the moment the screen loaded. Opening the feed marks
   // everything read, so this is a snapshot, not live state.
   unread: boolean
@@ -240,4 +262,20 @@ export type ActivityEntry = {
   weeklyRank: number | null
   weeklySectors: number | null
   weeklyCatches: number | null
+  // 'challenge' only — which one just got settled, copied at grant time same
+  // as awardTitle (see sync_my_challenges). Null for 'challenges_week_done',
+  // since that one isn't about a single challenge.
+  challengeTitle: string | null
+  // 'challenge' and 'challenges_week_done' both carry this — the payout for
+  // that one challenge, or the whole week's total once every slot is done.
+  challengeCoins: number | null
+  // 'challenge_deadline' only — how many hours were left when this fired
+  // (see notify_challenge_deadline_approaching's cron schedule).
+  challengeHours: number | null
+  // 'moderation' only — set when the removed catch had already paid out
+  // coins, so admin_delete_catch clawed them back (see that function). Both
+  // null for a moderated catch that never earned anything in the first
+  // place (e.g. an unrecognized species).
+  moderationSpecies: string | null
+  moderationCoinsRemoved: number | null
 }

@@ -5,6 +5,7 @@ import { useActivity, useMarkNotificationsRead } from '@/lib/supabase/queries'
 import { CATEGORY_GRADIENT, KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen, pluralSectors, pluralCatches } from '@/lib/format'
 import { FishIcon } from '@/components/app-shell/icons'
+import { CoinIcon } from '@/components/app-shell/CoinIcon'
 
 type Filter = 'all' | 'mine'
 
@@ -32,6 +33,7 @@ export function ActivityScreen({
   onOpenRating,
   onOpenOwnAwards,
   onOpenLastWeek,
+  onOpenChallenges,
 }: {
   // This screen stays mounted while other tabs are on top of it, so being
   // rendered says nothing about being looked at — and marking notifications
@@ -43,6 +45,7 @@ export function ActivityScreen({
   onOpenRating: () => void
   onOpenOwnAwards: () => void
   onOpenLastWeek: () => void
+  onOpenChallenges: () => void
 }) {
   const { data: activity = [], isLoading, isSuccess } = useActivity()
   const markRead = useMarkNotificationsRead()
@@ -156,7 +159,7 @@ export function ActivityScreen({
                   <div className="avatar" style={{ background: '#D33' }}>!</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>
-                      Улов на территории{' '}
+                      Улов{a.moderationSpecies ? ` (${a.moderationSpecies})` : ''} на территории{' '}
                       <button className="activity-who-btn" onClick={() => onOpenTerritory(a.territoryId!)}>
                         {a.territoryId}
                       </button>{' '}
@@ -165,6 +168,11 @@ export function ActivityScreen({
                     <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
                       Нарушены правила площадки. При повторных нарушениях аккаунт будет заблокирован.
                     </div>
+                    {a.moderationCoinsRemoved != null && a.moderationCoinsRemoved > 0 && (
+                      <div style={{ fontSize: 12.5, color: '#D33', marginTop: 4, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        Списано {a.moderationCoinsRemoved} <CoinIcon size={16} />
+                      </div>
+                    )}
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                       {unreadIds.has(a.id) && <span className="unread-dot" />}
                       {formatWhen(a.createdAt)}
@@ -180,6 +188,69 @@ export function ActivityScreen({
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>Новая награда: {a.awardTitle}</div>
                     {a.awardSubtitle && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{a.awardSubtitle}</div>}
+                    <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {unreadIds.has(a.id) && <span className="unread-dot" />}
+                      {formatWhen(a.createdAt)}
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+            if (a.kind === 'challenge') {
+              return (
+                <div className="activity-item tap-scale" key={a.id} style={{ cursor: 'pointer' }} onClick={onOpenChallenges}>
+                  <div className="avatar" style={{ background: 'var(--accent)', padding: 5 }}>
+                    <img
+                      src="/brand/logo_2.svg"
+                      alt="RANGE"
+                      style={{ width: '100%', height: 'auto', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>Выполнен челлендж: {a.challengeTitle}</div>
+                    {a.challengeCoins != null && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>+{a.challengeCoins} монет</div>}
+                    <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {unreadIds.has(a.id) && <span className="unread-dot" />}
+                      {formatWhen(a.createdAt)}
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+            if (a.kind === 'challenges_week_done') {
+              return (
+                <div className="activity-item tap-scale" key={a.id} style={{ cursor: 'pointer' }} onClick={onOpenChallenges}>
+                  <div className="avatar" style={{ background: 'var(--accent)', padding: 5 }}>
+                    <img
+                      src="/brand/logo_2.svg"
+                      alt="RANGE"
+                      style={{ width: '100%', height: 'auto', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>Все челленджи недели выполнены!</div>
+                    {a.challengeCoins != null && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>+{a.challengeCoins} монет за неделю</div>}
+                    <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {unreadIds.has(a.id) && <span className="unread-dot" />}
+                      {formatWhen(a.createdAt)}
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+            if (a.kind === 'challenge_deadline') {
+              return (
+                <div className="activity-item tap-scale" key={a.id} style={{ cursor: 'pointer' }} onClick={onOpenChallenges}>
+                  <div className="avatar" style={{ background: 'var(--accent)', padding: 5 }}>
+                    <img
+                      src="/brand/logo_2.svg"
+                      alt="RANGE"
+                      style={{ width: '100%', height: 'auto', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>Челленджи недели закончатся через {a.challengeHours ?? 48} часов</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>Не всё ещё выполнено — успей забрать монеты, пока неделя не закрылась</div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                       {unreadIds.has(a.id) && <span className="unread-dot" />}
                       {formatWhen(a.createdAt)}

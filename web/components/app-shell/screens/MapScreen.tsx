@@ -43,6 +43,16 @@ function statusBadge(status: Territory['status'], myTerritoryColor: string) {
   return <span className="badge badge-neutral">Свободна</span>
 }
 
+function shieldBadge(shieldUntil: string | null) {
+  if (!shieldUntil || new Date(shieldUntil) <= new Date()) return null
+  return (
+    <span className="badge badge-shield">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l8 3v6c0 5-3.4 8.7-8 11-4.6-2.3-8-6-8-11V5l8-3z" /></svg>
+      Под щитом
+    </span>
+  )
+}
+
 // forwardRef so FishZoneApp can fly the map to a geolocated sector (from the
 // "+" handler) even while the camera screen is showing — the map stays
 // mounted the whole time, it's just visually hidden (see .screen CSS).
@@ -292,9 +302,20 @@ export const MapScreen = forwardRef<
                 onAnimationEnd={() => setJustSelectedId((cur) => (cur === t.id ? null : cur))}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ fontSize: 21, fontWeight: 800 }}>{t.id}</div>
-                  {statusBadge(t.status, myTerritoryColor)}
+                  <div style={{ fontSize: 21, fontWeight: 800, flex: '0 0 auto' }}>{t.id}</div>
+                  {t.status !== 'free' && t.ownerDisplayName && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: '1 1 auto' }}>
+                      <div className="avatar" style={{ width: 24, height: 24, fontSize: 10 }}>
+                        {t.ownerAvatarUrl ? <img src={t.ownerAvatarUrl} alt="" /> : t.ownerDisplayName.slice(0, 2).toUpperCase()}
+                      </div>
+                      <span style={{ fontSize: 13.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {t.ownerDisplayName}
+                      </span>
+                    </div>
+                  )}
+                  {shieldBadge(t.shieldUntil)}
                   {t.id === mostPopularId && <span className="badge badge-accent">🔥 Самый популярный</span>}
+                  <div style={{ marginLeft: 'auto', flex: '0 0 auto' }}>{statusBadge(t.status, myTerritoryColor)}</div>
                 </div>
                 <div style={{ display: 'flex', gap: 18, fontSize: 13, color: 'var(--ink-soft)', fontWeight: 600 }}>
                   <span>Уловов {t.catchCount}</span>

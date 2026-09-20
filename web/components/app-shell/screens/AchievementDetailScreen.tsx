@@ -4,7 +4,7 @@ import { cloneElement, type ReactElement } from 'react'
 import { useCatchesByUser, useProfile, useHasClaimedFromOthers } from '@/lib/supabase/queries'
 import { computeAchievements, type Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
-import { HexBadge } from '@/components/app-shell/HexBadge'
+import { SpinBadge } from '@/components/app-shell/SpinBadge'
 import { BackButton } from '@/components/app-shell/BackButton'
 import type { Territory } from '@/lib/data/types'
 
@@ -54,6 +54,10 @@ export function AchievementDetailScreen({
 
   return (
     <>
+      <div className={`ach-detail-photo-bg${achievement.unlocked ? '' : ' locked'}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
+        <img src={`/achievements/${achievement.icon}.jpg`} alt="" />
+      </div>
       <div className="header-row">
         <BackButton onClick={onBack} registerNative={false} />
         {achievement.unlocked ? (
@@ -71,7 +75,7 @@ export function AchievementDetailScreen({
         <div className="ach-detail-badge-outer hex-aspect">
           <div className={`ach-detail-badge-glow ${achievement.unlocked ? 'on' : 'off'}`} />
           <div className="ach-detail-badge">
-            <HexBadge
+            <SpinBadge
               unlocked={achievement.unlocked}
               strokeWidth={7}
               icon={cloneElement(ACH_ICONS[achievement.icon] as ReactElement<{ width: number; height: number }>, { width: 100, height: 100 })}
@@ -81,6 +85,7 @@ export function AchievementDetailScreen({
         <div className="ach-detail-title">{achievement.title}</div>
         <div className="ach-detail-desc">{achievement.desc}</div>
         {!achievement.unlocked && achievement.progress && <div className="ach-detail-progress">{achievement.progress}</div>}
+        <div className="ach-detail-flavor">{achievement.flavor}</div>
       </div>
     </>
   )

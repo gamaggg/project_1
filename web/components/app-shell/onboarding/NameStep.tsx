@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useUpdateProfile } from '@/lib/supabase/queries'
 import { BackButton } from '@/components/app-shell/BackButton'
+import { TermsOfUseModal } from '@/components/app-shell/TermsOfUseModal'
 
 const NAME_RE = /^[\p{L}\p{N}]{2,}$/u
 
@@ -18,8 +19,10 @@ export function NameStep({
   onSwitchToEmailSignIn?: () => void
 }) {
   const [name, setName] = useState(initialName)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [termsOpen, setTermsOpen] = useState(false)
   const updateProfile = useUpdateProfile()
-  const valid = NAME_RE.test(name)
+  const valid = NAME_RE.test(name) && acceptedTerms
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -51,6 +54,22 @@ export function NameStep({
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Введите имя" maxLength={40} />
         </div>
         <div className="wizard-hint">От 2 символов · без пробелов и спецсимволов</div>
+        <div className="onboarding-checkbox-row">
+          <input id="accept-terms" type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} />
+          <label htmlFor="accept-terms">
+            Я принимаю{' '}
+            <span
+              className="terms-link"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setTermsOpen(true)
+              }}
+            >
+              условия использования
+            </span>
+          </label>
+        </div>
         <div style={{ flex: 1 }} />
         {onSwitchToEmailSignIn && (
           <button type="button" className="otp-resend" style={{ marginBottom: 14 }} onClick={onSwitchToEmailSignIn}>
@@ -66,6 +85,7 @@ export function NameStep({
           {updateProfile.isPending ? 'Сохраняем…' : 'Далее'}
         </button>
       </form>
+      {termsOpen && <TermsOfUseModal onClose={() => setTermsOpen(false)} />}
     </div>
   )
 }

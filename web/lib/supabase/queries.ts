@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/AuthProvider'
 import type { Territory, TerritoryStatus, Catch, ProfileSummary, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, WeeklyLeaderboardEntry, UserAward, AwardKind } from '@/lib/data/types'
 import type { SpeciesCategory } from '@/lib/data/species'
-import type { CityId } from '@/lib/data/city'
+import { CITIES, type CityId } from '@/lib/data/city'
 
 type SectorGeometry = {
   id: string
@@ -40,7 +40,7 @@ export function useTerritories() {
     queryKey: ['territories', user?.id ?? null],
     queryFn: async (): Promise<Territory[]> => {
       const supabase = createClient()
-      const columns = 'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted'
+      const columns = 'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted, shield_until, owner_equipped_skin'
       // PostgREST caps a single response at 1000 rows by default and stays
       // silent about it (no error, just a truncated array) — the table
       // crossed that count once admin-added sectors piled up, which is how
@@ -78,6 +78,8 @@ export function useTerritories() {
           status,
           catchCount: row?.catch_count ?? 0,
           lastCatchAt: row?.last_catch_at ?? null,
+          shieldUntil: row?.shield_until ?? null,
+          ownerEquippedSkin: row?.owner_equipped_skin ?? null,
         }
       }
 
@@ -424,7 +426,13 @@ export function useActivity() {
                       ? 'award'
                       : row.kind === 'weekly_result'
                         ? 'weekly_result'
-                        : 'catch'
+                        : row.kind === 'challenge_completed'
+                          ? 'challenge'
+                          : row.kind === 'challenges_week_done'
+                            ? 'challenges_week_done'
+                            : row.kind === 'challenge_deadline_soon'
+                              ? 'challenge_deadline'
+                              : 'catch'
           return {
             id: `notif:${row.id}`,
             who: actor?.display_name ?? 'Рыбак',
@@ -453,6 +461,11 @@ export function useActivity() {
             weeklyRank: kind === 'weekly_result' ? ((payload.rank as number) ?? null) : null,
             weeklySectors: kind === 'weekly_result' ? ((payload.sectors as number) ?? null) : null,
             weeklyCatches: kind === 'weekly_result' ? ((payload.catches as number) ?? null) : null,
+            challengeTitle: kind === 'challenge' ? ((payload.title as string) ?? null) : null,
+            challengeCoins: kind === 'challenge' || kind === 'challenges_week_done' ? ((payload.coins as number) ?? null) : null,
+            challengeHours: kind === 'challenge_deadline' ? ((payload.hours as number) ?? null) : null,
+            moderationSpecies: kind === 'moderation' ? ((payload.species as string) ?? null) : null,
+            moderationCoinsRemoved: kind === 'moderation' ? ((payload.coinsRemoved as number) ?? null) : null,
           }
         })
       }
@@ -491,6 +504,11 @@ export function useActivity() {
         weeklyRank: null,
         weeklySectors: null,
         weeklyCatches: null,
+        challengeTitle: null,
+        challengeCoins: null,
+        challengeHours: null,
+        moderationSpecies: null,
+        moderationCoinsRemoved: null,
       }))
 
       return [...notificationEntries, ...announcementEntries].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
@@ -596,6 +614,11 @@ export function useProfile(userId: string | null) {
         canBlockUsers: data.can_block_users ?? null,
         canAddCatchManually: data.can_add_catch_manually ?? null,
         canViewAllUsers: data.can_view_all_users ?? null,
+        canAddCatchFromGallery: data.can_add_catch_from_gallery ?? null,
+        equippedFrame: data.equipped_frame ?? null,
+        coins: data.coins ?? null,
+        equippedNameStyle: data.equipped_name_style ?? null,
+        equippedSkin: data.equipped_skin ?? null,
       }
     },
     enabled: !!userId,
@@ -740,7 +763,7 @@ export function useIsSuperAdmin() {
 // Gates one of the 4 delegable admin actions on the *viewer's own* account —
 // a super admin always passes (they're not limited by the granular flags),
 // a plain admin needs is_admin plus the specific permission column.
-function useAdminFlag(flag: 'canModerateReports' | 'canBlockUsers' | 'canAddCatchManually' | 'canViewAllUsers') {
+function useAdminFlag(flag: 'canModerateReports' | 'canBlockUsers' | 'canAddCatchManually' | 'canViewAllUsers' | 'canAddCatchFromGallery') {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   return !!profile?.isSuperAdmin || (!!profile?.isAdmin && !!profile?.[flag])
@@ -756,6 +779,9 @@ export function useCanAddCatchManually() {
 }
 export function useCanViewAllUsers() {
   return useAdminFlag('canViewAllUsers')
+}
+export function useCanAddCatchFromGallery() {
+  return useAdminFlag('canAddCatchFromGallery')
 }
 
 // The real, unmasked permission set for one admin (profiles_with_stats masks
@@ -778,6 +804,7 @@ export function useAdminPermissions(userId: string | null) {
         canBlockUsers: row?.can_block_users ?? false,
         canAddCatchManually: row?.can_add_catch_manually ?? false,
         canViewAllUsers: row?.can_view_all_users ?? false,
+        canAddCatchFromGallery: row?.can_add_catch_from_gallery ?? false,
       }
     },
   })
@@ -798,6 +825,7 @@ export function useSetAdminPermissions() {
       canBlockUsers: boolean
       canAddCatchManually: boolean
       canViewAllUsers: boolean
+      canAddCatchFromGallery: boolean
     }) => {
       const supabase = createClient()
       const { error } = await supabase.rpc('admin_set_admin', {
@@ -807,6 +835,7 @@ export function useSetAdminPermissions() {
         p_can_block_users: args.canBlockUsers,
         p_can_add_catch_manually: args.canAddCatchManually,
         p_can_view_all_users: args.canViewAllUsers,
+        p_can_add_catch_from_gallery: args.canAddCatchFromGallery,
       })
       if (error) throw error
     },
@@ -999,6 +1028,76 @@ export function useCreateTelegramLink() {
       if (!res.ok) throw new Error('link failed')
       const body = await res.json()
       return body.url as string
+    },
+  })
+}
+
+export type ShopItem = {
+  id: string
+  category: 'hero_bg' | 'avatar_frame' | 'name_style' | 'territory_skin'
+  name: string
+  price: number
+}
+
+// The catalog rarely changes (a handful of rows, hand-curated) — cached like
+// species/sectors-geometry rather than refetched per screen visit.
+export function useShopItems() {
+  return useQuery({
+    queryKey: ['shop-items'],
+    queryFn: async (): Promise<ShopItem[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.from('shop_items').select('id, category, name, price').order('category').order('sort_order')
+      if (error) throw error
+      return data.map((r) => ({ id: r.id, category: r.category as ShopItem['category'], name: r.name, price: r.price }))
+    },
+  })
+}
+
+// Which item ids the signed-in user owns — a flat id set is all the Shop
+// screen and the equip buttons need (RLS already scopes this to the caller).
+export function useMyInventory() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['my-inventory', user?.id ?? null],
+    enabled: !!user,
+    queryFn: async (): Promise<Set<string>> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.from('user_inventory').select('item_id')
+      if (error) throw error
+      return new Set(data.map((r) => r.item_id))
+    },
+  })
+}
+
+export function useBuyShopItem() {
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+  return useMutation({
+    mutationFn: async (itemId: string) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('buy_shop_item', { p_item_id: itemId })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-inventory', user?.id ?? null] })
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
+    },
+  })
+}
+
+// itemId null unequips the current avatar frame — see equip_shop_item.
+export function useEquipShopItem() {
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+  return useMutation({
+    mutationFn: async ({ itemId, category }: { itemId: string | null; category?: 'avatar_frame' | 'name_style' | 'territory_skin' }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('equip_shop_item', { p_item_id: itemId, p_category: category ?? 'avatar_frame' })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['territories'] })
     },
   })
 }
@@ -1237,6 +1336,96 @@ export function useAdminSetPublicId() {
   })
 }
 
+// Positive amount grants, negative deducts (clamped to 0 server-side —
+// never goes below). Visible only to the caller here because coins itself
+// is self-only masked in profiles_with_stats, except for a super admin
+// viewing someone else — see that view's own coins CASE.
+export function useAdminGrantCoins() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ userId, amount }: { userId: string; amount: number }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_grant_coins', { p_user_id: userId, p_amount: amount })
+      if (error) throw error
+    },
+    onSuccess: (_data, { userId }) => {
+      queryClient.invalidateQueries({ queryKey: ['profile', userId] })
+      queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
+    },
+  })
+}
+
+export type AdminInventoryEntry = {
+  kind: 'item' | 'buff'
+  itemId: string
+  activeBuffId: number | null
+  label: string
+  price: number
+  expiresAt: string | null
+}
+
+// Super-admin-only view of another player's purchases (owned shop_items +
+// still-active, unconsumed buffs) — powers the "Вернуть" refund UI on
+// UserProfileScreen. Not used for the viewer's own inventory (that's
+// useMyInventory, a plain id set for cheap owned-item lookups).
+export function useAdminUserInventory(userId: string | null) {
+  return useQuery({
+    queryKey: ['admin-user-inventory', userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<AdminInventoryEntry[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('admin_get_user_inventory', { p_user_id: userId! })
+      if (error) throw error
+      return (data ?? []).map((r) => ({
+        kind: r.kind as 'item' | 'buff',
+        itemId: r.item_id,
+        activeBuffId: r.active_buff_id,
+        label: r.label,
+        price: r.price,
+        expiresAt: r.expires_at,
+      }))
+    },
+  })
+}
+
+export function useAdminRefundItem() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ userId, itemId }: { userId: string; itemId: string }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_refund_shop_item', { p_user_id: userId, p_item_id: itemId })
+      if (error) throw error
+    },
+    // Refunding is now specifically a super-admin self-service tool (see
+    // ProfileScreen.tsx's own "Инвентарь" section) — userId is always the
+    // caller's own id in practice, so my-inventory needs invalidating too
+    // for the Shop grid to drop the refunded item immediately.
+    onSuccess: (_data, { userId }) => {
+      queryClient.invalidateQueries({ queryKey: ['profile', userId] })
+      queryClient.invalidateQueries({ queryKey: ['admin-user-inventory', userId] })
+      queryClient.invalidateQueries({ queryKey: ['my-inventory', userId] })
+      queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
+    },
+  })
+}
+
+export function useAdminRefundBuff() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ userId, activeBuffId }: { userId: string; activeBuffId: number }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_refund_buff', { p_user_id: userId, p_active_buff_id: activeBuffId })
+      if (error) throw error
+    },
+    onSuccess: (_data, { userId }) => {
+      queryClient.invalidateQueries({ queryKey: ['profile', userId] })
+      queryClient.invalidateQueries({ queryKey: ['admin-user-inventory', userId] })
+      queryClient.invalidateQueries({ queryKey: ['my-active-buffs', userId] })
+      queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
+    },
+  })
+}
+
 export function useDismissReport() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -1286,22 +1475,286 @@ export function useConfirmCatch() {
       bait: string | null
     }) => {
       const supabase = createClient()
-      const { data, error } = await supabase.rpc('confirm_catch', {
-        p_territory_id: args.territoryId,
-        p_species: args.species,
-        p_photo_url: args.photoUrl,
-        p_length_cm: args.lengthCm ?? undefined,
-        p_weight_kg: args.weightKg ?? undefined,
-        p_method: args.method ?? undefined,
-        p_bait: args.bait ?? undefined,
-      })
+      const { data, error } = await supabase
+        .rpc('confirm_catch', {
+          p_territory_id: args.territoryId,
+          p_species: args.species,
+          p_photo_url: args.photoUrl,
+          p_length_cm: args.lengthCm ?? undefined,
+          p_weight_kg: args.weightKg ?? undefined,
+          p_method: args.method ?? undefined,
+          p_bait: args.bait ?? undefined,
+        })
+        .single()
       if (error) throw error
-      return data
+      return { speciesCoins: data.species_coins, captureCoins: data.capture_coins }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['territories'] })
       queryClient.invalidateQueries({ queryKey: ['catches'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export type WeeklyChallenge = {
+  id: number
+  challengeId: string
+  name: string
+  description: string
+  tier: 'soft' | 'light' | 'medium' | 'hard'
+  coinReward: number
+  target: number
+  progress: number
+  completedAt: string | null
+}
+
+// Settles any of the caller's past unfinished weeks (full or partial coin
+// payout — see sync_my_challenges) and assigns this week's trio the first
+// time it's opened, so this is safe — required, even — to call every time
+// the Challenges screen mounts, not just once.
+export function useMyChallenges(city: CityId) {
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+  const cityInfo = CITIES[city]
+  return useQuery({
+    queryKey: ['my-challenges', user?.id ?? null, city],
+    enabled: !!user,
+    queryFn: async (): Promise<WeeklyChallenge[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('sync_my_challenges', { p_city: city, p_timezone: cityInfo.timezone })
+      if (error) throw error
+      const rows = (data ?? []).map((r) => ({
+        id: r.id,
+        challengeId: r.challenge_id,
+        name: r.name,
+        description: r.description,
+        tier: r.tier as WeeklyChallenge['tier'],
+        coinReward: r.coin_reward,
+        target: r.target,
+        progress: r.progress,
+        completedAt: r.completed_at,
+      }))
+      // A challenge can settle (and pay out) as a side effect of this same
+      // call — the coin pill elsewhere on screen needs to catch up too.
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
+      return rows
+    },
+  })
+}
+
+// Fire-and-forget view tracking for the two soft challenges that need it
+// (Разведка/Картограф via territory, Наблюдатель via catch) — never awaited
+// by its caller and never allowed to throw, so a failed log can't break the
+// navigation it's riding along with.
+export function logChallengeEvent(args: { eventType: 'territory_viewed' | 'catch_viewed'; territoryId?: string; catchId?: number }) {
+  const supabase = createClient()
+  supabase
+    .rpc('log_challenge_event', { p_event_type: args.eventType, p_territory_id: args.territoryId ?? null, p_catch_id: args.catchId ?? null })
+    .then(() => {}, () => {})
+}
+
+export function useChallengeWeekState(city: CityId) {
+  const { user } = useAuth()
+  const cityInfo = CITIES[city]
+  return useQuery({
+    queryKey: ['challenge-week-state', user?.id ?? null, city],
+    enabled: !!user,
+    queryFn: async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_my_challenge_week_state', { p_timezone: cityInfo.timezone })
+      if (error) throw error
+      const row = data?.[0]
+      return {
+        swapUsed: row?.swap_used ?? false,
+        extraSlotBought: row?.extra_slot_bought ?? false,
+        slotCount: row?.slot_count ?? 0,
+        weekEndsAt: row?.week_ends_at ?? null,
+      }
+    },
+  })
+}
+
+export function useSwapChallenge(city: CityId) {
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+  return useMutation({
+    mutationFn: async (userChallengeId: number) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('swap_challenge', { p_user_challenge_id: userChallengeId, p_city: city })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-challenges', user?.id ?? null, city] })
+      queryClient.invalidateQueries({ queryKey: ['challenge-week-state', user?.id ?? null, city] })
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
+    },
+  })
+}
+
+export function useBuyExtraChallenge(city: CityId) {
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+  const cityInfo = CITIES[city]
+  return useMutation({
+    mutationFn: async () => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('buy_extra_challenge', { p_city: city, p_timezone: cityInfo.timezone })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-challenges', user?.id ?? null, city] })
+      queryClient.invalidateQueries({ queryKey: ['challenge-week-state', user?.id ?? null, city] })
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
+    },
+  })
+}
+
+export type Buff = {
+  id: string
+  name: string
+  description: string
+  price: number
+  durationHours: number | null
+}
+
+// Catalog is a handful of hand-curated rows — cached like shop_items/species
+// rather than refetched per screen visit.
+export function useBuffs() {
+  return useQuery({
+    queryKey: ['buffs'],
+    queryFn: async (): Promise<Buff[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.from('buffs').select('id, name, description, price, duration_hours').order('sort_order')
+      if (error) throw error
+      return data.map((r) => ({ id: r.id, name: r.name, description: r.description, price: r.price, durationHours: r.duration_hours }))
+    },
+    staleTime: Infinity,
+    gcTime: Infinity,
+  })
+}
+
+export type ActiveBuff = {
+  id: number
+  buffId: string
+  activatedAt: string
+  expiresAt: string
+  consumed: boolean
+}
+
+// Everything the caller has bought that hasn't expired — the duration buff
+// (double_coins) shows a countdown, armed-but-unconsumed ones (tide/echo)
+// show "ready, waiting for your next catch".
+export function useMyActiveBuffs() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['my-active-buffs', user?.id ?? null],
+    enabled: !!user,
+    queryFn: async (): Promise<ActiveBuff[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('active_buffs')
+        .select('id, buff_id, activated_at, expires_at, consumed')
+        .gt('expires_at', new Date().toISOString())
+        .order('activated_at', { ascending: false })
+      if (error) throw error
+      return data.map((r) => ({ id: r.id, buffId: r.buff_id, activatedAt: r.activated_at, expiresAt: r.expires_at, consumed: r.consumed }))
+    },
+  })
+}
+
+export type CoinTransaction = {
+  id: number
+  amount: number
+  reason: string
+  label: string
+  createdAt: string
+}
+
+// Every coin-mutating RPC (buy_shop_item, activate_buff, buy_shield,
+// swap_challenge, buy_extra_challenge, sync_my_challenges' payouts,
+// admin_grant_coins, admin_refund_*) logs one row here — see the
+// coin_transactions_ledger migration. RLS scopes this to the caller's own
+// rows, so no p_user_id param is needed. Refetches on every mount rather
+// than being wired into every mutation's onSuccess (nine call sites across
+// four screens) — the history is opened on demand, not shown live, so a
+// fresh fetch each time it opens is simpler and just as correct.
+export function useMyCoinTransactions() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['my-coin-transactions', user?.id ?? null],
+    enabled: !!user,
+    queryFn: async (): Promise<CoinTransaction[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('coin_transactions')
+        .select('id, amount, reason, label, created_at')
+        .order('created_at', { ascending: false })
+        .limit(100)
+      if (error) throw error
+      return data.map((r) => ({ id: r.id, amount: r.amount, reason: r.reason, label: r.label, createdAt: r.created_at }))
+    },
+  })
+}
+
+// tide/echo/double_coins — the three buffs with no purchase-time target
+// (see buy_shield for the fourth, which needs a sector).
+export function useActivateBuff() {
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+  return useMutation({
+    mutationFn: async (buffId: string) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('activate_buff', { p_buff_id: buffId })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-active-buffs', user?.id ?? null] })
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
+    },
+  })
+}
+
+export type WheelSpinResult = {
+  segmentIndex: number
+  multiplier: number
+  payout: number
+  newBalance: number
+}
+
+// ДЭП (Shop's wheel-of-fortune tab) — the RNG and payout live entirely in
+// spin_wheel itself (client can't influence or predict the roll), this just
+// forwards the bet and hands back which slot it landed on so WheelScreen can
+// spin the dial to the right angle before showing the result. Deliberately
+// does NOT invalidate the profile/coins query on its own success: the RPC
+// resolves almost instantly, well before the multi-second spin animation
+// finishes, so refetching here would flash the new balance in the header
+// while the dial is still spinning — spoiling the reveal by telegraphing
+// the outcome early. WheelScreen invalidates it itself once the dial
+// actually stops, see its onSpinEnd.
+export function useSpinWheel() {
+  return useMutation({
+    mutationFn: async (bet: number): Promise<WheelSpinResult> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('spin_wheel', { p_bet: bet }).single()
+      if (error) throw error
+      return { segmentIndex: data.segment_index, multiplier: data.multiplier, payout: data.payout, newBalance: data.new_balance }
+    },
+  })
+}
+
+export function useBuyShield() {
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+  return useMutation({
+    mutationFn: async (territoryId: string) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('buy_shield', { p_territory_id: territoryId })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['territories'] })
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
     },
   })
 }
