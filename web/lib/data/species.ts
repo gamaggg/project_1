@@ -40,7 +40,7 @@ export function categoryForKind(kind: Database['public']['Enums']['territory_kin
   return kind === 'sea' ? 'marine' : 'freshwater'
 }
 
-export const METHODS = ['Спиннинг', 'Донная снасть', 'Поплавочная удочка', 'Нахлыст']
+export const METHODS = ['Спиннинг', 'Донная снасть', 'Поплавочная удочка', 'Нахлыст', 'Тенкара']
 
 export const BAITS_BY_CITY: Record<CityId, string[]> = {
   batumi: ['Микроджиг', 'Силикон', 'Блесна', 'Воблер', 'Креветка', 'Морской червь', 'Вертушка', 'Бомбарда', 'Пилькер', 'Булер', 'Мормышка'],
