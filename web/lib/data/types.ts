@@ -257,6 +257,10 @@ export type ActivityEntry = {
   // fanout_award_notification), so the feed never needs to join it back.
   awardTitle: string | null
   awardSubtitle: string | null
+  // 'award' only — the coin payout for this award/achievement, when the
+  // grant carried one (fanout_award_notification and
+  // _sync_achievements_for_user both include it in the payload).
+  awardCoins: number | null
   // 'weekly_result' only — this person's own place in last week's
   // leaderboard, computed once by notify_weekly_results.
   weeklyRank: number | null

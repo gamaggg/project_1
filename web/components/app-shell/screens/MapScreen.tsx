@@ -314,7 +314,11 @@ export const MapScreen = forwardRef<
                     </div>
                   )}
                   {shieldBadge(t.shieldUntil)}
-                  {t.id === mostPopularId && <span className="badge badge-accent">🔥 Самый популярный</span>}
+                  {t.id === mostPopularId && (
+                    <span className="badge badge-accent" title="Самый популярный сектор" style={{ flex: '0 0 auto' }}>
+                      🔥
+                    </span>
+                  )}
                   <div style={{ marginLeft: 'auto', flex: '0 0 auto' }}>{statusBadge(t.status, myTerritoryColor)}</div>
                 </div>
                 <div style={{ display: 'flex', gap: 18, fontSize: 13, color: 'var(--ink-soft)', fontWeight: 600 }}>

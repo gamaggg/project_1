@@ -78,8 +78,9 @@ function renderMessage(notification: NotificationRef): Message | null {
     }
     case 'award_granted': {
       const title = notification.payload?.title as string | undefined
+      const coins = notification.payload?.coins as number | undefined
       if (!title) return null
-      return { text: `Новая награда: ${title}`, buttonLabel: 'Открыть профиль', url: SITE_URL }
+      return { text: `Новая награда: ${title}${coins ? ` — +${coins} монет` : ''}`, buttonLabel: 'Открыть профиль', url: SITE_URL }
     }
     case 'weekly_result': {
       const rank = notification.payload?.rank as number | undefined

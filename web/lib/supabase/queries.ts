@@ -458,6 +458,7 @@ export function useActivity() {
             buttonUrl: null,
             awardTitle: kind === 'award' ? ((payload.title as string) ?? null) : null,
             awardSubtitle: kind === 'award' ? ((payload.subtitle as string) ?? null) : null,
+            awardCoins: kind === 'award' ? ((payload.coins as number) ?? null) : null,
             weeklyRank: kind === 'weekly_result' ? ((payload.rank as number) ?? null) : null,
             weeklySectors: kind === 'weekly_result' ? ((payload.sectors as number) ?? null) : null,
             weeklyCatches: kind === 'weekly_result' ? ((payload.catches as number) ?? null) : null,
@@ -501,6 +502,7 @@ export function useActivity() {
         buttonUrl: a.button_url,
         awardTitle: null,
         awardSubtitle: null,
+        awardCoins: null,
         weeklyRank: null,
         weeklySectors: null,
         weeklyCatches: null,
@@ -1543,6 +1545,29 @@ export function useMyChallenges(city: CityId) {
   })
 }
 
+// Recomputes the caller's own achievement milestones server-side and pays
+// out coins for any newly-crossed one (see _sync_achievements_for_user) —
+// same reasoning as useMyChallenges/sync_my_challenges: safe, idempotent,
+// meant to be called every time the Achievements screen mounts rather than
+// once. `enabled` lets AchievementsScreen skip this when it's showing
+// someone ELSE's achievements (the RPC only ever acts on auth.uid(), so
+// syncing there would just be a wasted call, not wrong).
+export function useSyncMyAchievements(enabled: boolean) {
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+  return useQuery({
+    queryKey: ['sync-my-achievements', user?.id ?? null],
+    enabled: !!user && enabled,
+    queryFn: async () => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('sync_my_achievements')
+      if (error) throw error
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
+      return true
+    },
+  })
+}
+
 // Fire-and-forget view tracking for the two soft challenges that need it
 // (Разведка/Картограф via territory, Наблюдатель via catch) — never awaited
 // by its caller and never allowed to throw, so a failed log can't break the
@@ -1691,6 +1716,23 @@ export function useMyCoinTransactions() {
         .select('id, amount, reason, label, created_at')
         .order('created_at', { ascending: false })
         .limit(100)
+      if (error) throw error
+      return data.map((r) => ({ id: r.id, amount: r.amount, reason: r.reason, label: r.label, createdAt: r.created_at }))
+    },
+  })
+}
+
+// Super-admin-only view of another player's coin history (GrantCoinsModal's
+// "История" section) — same shape as useMyCoinTransactions but goes through
+// admin_get_user_coin_transactions since coin_transactions' RLS only exposes
+// the caller's own rows (see that policy).
+export function useAdminUserCoinTransactions(userId: string | null) {
+  return useQuery({
+    queryKey: ['admin-user-coin-transactions', userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<CoinTransaction[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('admin_get_user_coin_transactions', { p_user_id: userId! })
       if (error) throw error
       return data.map((r) => ({ id: r.id, amount: r.amount, reason: r.reason, label: r.label, createdAt: r.created_at }))
     },

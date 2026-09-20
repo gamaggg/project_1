@@ -1388,6 +1388,16 @@ export type Database = {
           expires_at: string | null
         }[]
       }
+      admin_get_user_coin_transactions: {
+        Args: { p_user_id: string }
+        Returns: {
+          id: number
+          amount: number
+          reason: string
+          label: string
+          created_at: string
+        }[]
+      }
       admin_refund_shop_item: {
         Args: { p_user_id: string; p_item_id: string }
         Returns: undefined
@@ -1398,6 +1408,7 @@ export type Database = {
       }
       buy_shop_item: { Args: { p_item_id: string }; Returns: undefined }
       equip_shop_item: { Args: { p_item_id: string | null; p_category?: string }; Returns: undefined }
+      sync_my_achievements: { Args: Record<string, never>; Returns: undefined }
       log_challenge_event: {
         Args: { p_catch_id?: number | null; p_event_type: string; p_territory_id?: string | null }
         Returns: undefined

@@ -1,6 +1,7 @@
 'use client'
 
-import { useCatchesByUser, useProfile, useHasClaimedFromOthers } from '@/lib/supabase/queries'
+import { useCatchesByUser, useProfile, useHasClaimedFromOthers, useSyncMyAchievements } from '@/lib/supabase/queries'
+import { useAuth } from '@/components/providers/AuthProvider'
 import { computeAchievements, type Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import { BackButton } from '@/components/app-shell/BackButton'
@@ -23,9 +24,11 @@ export function AchievementsScreen({
   onBack: () => void
   onOpenDetail: (icon: Achievement['icon']) => void
 }) {
+  const { user } = useAuth()
   const { data: profile } = useProfile(userId)
   const { data: catches = [] } = useCatchesByUser(userId)
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(userId)
+  useSyncMyAchievements(userId === user?.id)
   const myTerritories = territories.filter((t) => t.ownerId === userId)
   const achievements = computeAchievements(
     catches,

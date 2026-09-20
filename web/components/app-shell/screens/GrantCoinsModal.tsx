@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { CoinHistoryModal } from '@/components/app-shell/CoinHistoryModal'
 import { useAdminGrantCoins } from '@/lib/supabase/queries'
 
 // Rendered by FishZoneApp itself, same reasoning as ChangeUserIdModal —
@@ -20,6 +21,7 @@ export function GrantCoinsModal({
   onClose: () => void
 }) {
   const [amount, setAmount] = useState('')
+  const [historyOpen, setHistoryOpen] = useState(false)
   const grantCoins = useAdminGrantCoins()
   const parsed = Number(amount)
   const valid = amount.trim() !== '' && Number.isInteger(parsed) && parsed !== 0
@@ -61,7 +63,11 @@ export function GrantCoinsModal({
         <button className="btn-secondary" style={{ marginTop: 8 }} disabled={grantCoins.isPending} onClick={onClose}>
           Отмена
         </button>
+        <button className="btn-secondary" style={{ marginTop: 8 }} onClick={() => setHistoryOpen(true)}>
+          История начислений и списаний
+        </button>
       </div>
+      {historyOpen && <CoinHistoryModal userId={userId} displayName={displayName} onClose={() => setHistoryOpen(false)} />}
     </div>
   )
 }
