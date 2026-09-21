@@ -8,7 +8,6 @@ import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { usePurchaseFlow } from '@/components/app-shell/usePurchaseFlow'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useMyChallenges, useChallengeWeekState, useSwapChallenge, useBuyExtraChallenge, useBuffs, useProfile, type WeeklyChallenge } from '@/lib/supabase/queries'
-import type { CityId } from '@/lib/data/city'
 
 const TIER_LABEL: Record<WeeklyChallenge['tier'], string> = {
   soft: 'Простое',
@@ -33,9 +32,18 @@ const TIER_TINT: Record<WeeklyChallenge['tier'], string> = {
 
 type Completion = { doneCount: number; total: number; coinsEarned: number; coinsBefore: number; allDone: boolean }
 
-export function ChallengesScreen({ city, onBack, active }: { city: CityId; onBack: () => void; active: boolean }) {
+// Not city-prop-driven: challenges are the account's own, real weekly
+// progress with real coin payouts, so they're scoped to profile.city (the
+// stored, account-level city) rather than whichever map tab happens to be
+// showing — that's just a same-device browsing lens (see lib/data/city),
+// and keying a reward-bearing week off it let a player rack up a second,
+// parallel challenge week (and a second payout) just by switching city tabs
+// mid-week (found via a live "Картограф" completion nobody could find in
+// the visible set — it belonged to the other city's week).
+export function ChallengesScreen({ onBack, active }: { onBack: () => void; active: boolean }) {
   const { user } = useAuth()
   const { data: myProfile } = useProfile(user?.id ?? null)
+  const city = myProfile?.city ?? 'batumi'
   const { data: challenges = [], isLoading, refetch } = useMyChallenges(city)
   const { data: weekState, refetch: refetchWeekState } = useChallengeWeekState(city)
   const { data: buffs = [] } = useBuffs()

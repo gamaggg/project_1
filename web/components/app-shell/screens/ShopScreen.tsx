@@ -61,9 +61,14 @@ const CATEGORIES: { id: Category; label: string; icon: React.ReactNode }[] = [
   { id: 'wheel', label: 'ДЭП', icon: SHOP_TAB_ICONS.wheel },
 ]
 
-export function ShopScreen({ city, onBack }: { city: CityId; onBack: () => void }) {
+export function ShopScreen({ onBack }: { onBack: () => void }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
+  // The 4th-challenge slot bought here is the account's own real weekly
+  // challenge state, so it's scoped to profile.city like ChallengesScreen —
+  // not the map-tab lens a `city` prop would have meant (see that screen's
+  // comment for the duplicate-week bug this avoids).
+  const city = profile?.city ?? 'batumi'
   const { data: items = [] } = useShopItems()
   const { data: owned = new Set<string>() } = useMyInventory()
   const buyItem = useBuyShopItem()

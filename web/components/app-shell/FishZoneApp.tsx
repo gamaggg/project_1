@@ -939,10 +939,10 @@ export function FishZoneApp() {
           <LastWeekScreen city={city} onBack={pop} onOpenUser={openUserProfile} onOpenCurrentRating={openWeeklyRating} />
         </Screen>
         <Screen id="screen-shop" current={currentScreen} onBack={pop}>
-          <ShopScreen city={city} onBack={pop} />
+          <ShopScreen onBack={pop} />
         </Screen>
         <Screen id="screen-challenges" current={currentScreen} onBack={pop}>
-          <ChallengesScreen city={city} onBack={pop} active={currentScreen === 'screen-challenges'} />
+          <ChallengesScreen onBack={pop} active={currentScreen === 'screen-challenges'} />
         </Screen>
         <Screen id="screen-catches" current={currentScreen} onBack={pop}>
           {(catchesUserId || catchesTerritoryId) && (
