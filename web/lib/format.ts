@@ -110,7 +110,13 @@ export function formatChallengeCountdown(msRemaining: number): { text: string; d
   const days = Math.floor(totalMinutes / 1440)
   const hours = Math.floor((totalMinutes % 1440) / 60)
   const minutes = totalMinutes % 60
-  if (days >= 1) return { text: `${days} ${pluralDays(days)} ${hours} ${pluralHours(hours)}`, done: false }
+  if (days >= 1) {
+    // Right at a day boundary hours can be 0 while minutes aren't — "6 дней
+    // 0 часов" reads like a stuck timer even though it's correct (6 days and
+    // a few minutes), so fall back to minutes for that sliver instead.
+    if (hours === 0) return { text: `${days} ${pluralDays(days)} ${minutes} ${pluralMinutes(minutes)}`, done: false }
+    return { text: `${days} ${pluralDays(days)} ${hours} ${pluralHours(hours)}`, done: false }
+  }
   if (hours >= 1) return { text: `${hours} ${pluralHours(hours)} ${minutes} ${pluralMinutes(minutes)}`, done: false }
   return { text: `${minutes} ${pluralMinutes(minutes)}`, done: false }
 }
