@@ -2,6 +2,7 @@
 
 import { useState, type CSSProperties } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
+import { createClient } from '@/lib/supabase/client'
 import {
   useProfile,
   useMyCatches,
@@ -117,6 +118,84 @@ function downscaleImage(file: File): Promise<Blob> {
   })
 }
 
+// Standalone modal, same reasoning as the coin-history button in
+// GrantCoinsModal — a security-sensitive action with its own validation/submit
+// state gets its own layer rather than expanding inline. No "current
+// password" field: this app's only other password-set flow (ForgotPasswordFlow,
+// after OTP verification) doesn't ask for one either, and Supabase's
+// updateUser() doesn't require it for an already-authenticated session.
+function ChangePasswordModal({ onClose }: { onClose: () => void }) {
+  const [password, setPassword] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [done, setDone] = useState(false)
+  const mismatch = passwordConfirm.length > 0 && password !== passwordConfirm
+  const valid = password.length >= 6 && passwordConfirm.length >= 6 && !mismatch
+
+  async function handleSubmit() {
+    if (!valid) return
+    setError(null)
+    setPending(true)
+    const supabase = createClient()
+    const { error } = await supabase.auth.updateUser({ password })
+    setPending(false)
+    if (error) setError(error.message)
+    else setDone(true)
+  }
+
+  return (
+    <div className="modal-overlay" onClick={pending ? undefined : onClose}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-title">Изменить пароль</div>
+        {done ? (
+          <>
+            <div style={{ marginTop: 10, fontSize: 13.5, color: 'var(--ink-soft)' }}>Пароль обновлён.</div>
+            <button className="btn-primary" style={{ marginTop: 14 }} onClick={onClose}>
+              Готово
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="auth-field" style={{ marginTop: 12 }}>
+              <label htmlFor="change-password-new">Новый пароль</label>
+              <input
+                id="change-password-new"
+                type="password"
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Минимум 6 символов"
+              />
+            </div>
+            <div className="auth-field">
+              <label htmlFor="change-password-confirm">Повторите пароль</label>
+              <input
+                id="change-password-confirm"
+                type="password"
+                minLength={6}
+                value={passwordConfirm}
+                onChange={(e) => setPasswordConfirm(e.target.value)}
+                placeholder="Ещё раз пароль"
+              />
+              {mismatch && <div style={{ fontSize: 12.5, color: '#D33', marginTop: 4 }}>Пароли не совпадают</div>}
+            </div>
+            {error && (
+              <div style={{ color: '#D33', fontSize: 12.5, fontWeight: 600, marginTop: 4 }}>{error}</div>
+            )}
+            <button className="btn-primary" style={{ marginTop: 10 }} disabled={!valid || pending} onClick={handleSubmit}>
+              {pending ? 'Сохраняем…' : 'Сохранить пароль'}
+            </button>
+            <button className="btn-secondary" style={{ marginTop: 8 }} disabled={pending} onClick={onClose}>
+              Отмена
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // Rendered by FishZoneApp itself, not nested inside this screen's scrolling
 // `.screen-inner` — a position:absolute overlay nested inside a scrolled
 // container inherits that scroll offset (see DECISIONS.md, same bug as
@@ -129,6 +208,7 @@ export function EditProfileModal({ onClose }: { onClose: () => void }) {
   const [bio, setBio] = useState(profile?.bio ?? '')
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatarUrl ?? null)
   const [avatarStatus, setAvatarStatus] = useState<'idle' | 'uploading' | 'error'>('idle')
+  const [changingPassword, setChangingPassword] = useState(false)
 
   async function handleAvatarPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -217,7 +297,11 @@ export function EditProfileModal({ onClose }: { onClose: () => void }) {
         <button className="btn-primary" style={{ marginTop: 6 }} onClick={handleSave} disabled={!displayName.trim() || updateProfile.isPending}>
           {updateProfile.isPending ? 'Сохраняем…' : 'Сохранить'}
         </button>
+        <button className="btn-secondary" style={{ marginTop: 8 }} onClick={() => setChangingPassword(true)}>
+          Изменить пароль
+        </button>
       </div>
+      {changingPassword && <ChangePasswordModal onClose={() => setChangingPassword(false)} />}
     </div>
   )
 }
