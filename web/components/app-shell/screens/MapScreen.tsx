@@ -43,6 +43,12 @@ function statusBadge(status: Territory['status'], myTerritoryColor: string) {
   return <span className="badge badge-neutral">Свободна</span>
 }
 
+// How many cards either side of the centered one get their contents rendered.
+// Only one is ever on screen (cards are full-row width), so this is purely
+// headroom for a fast flick landing a few cards over before the next scroll
+// event fires.
+const SHEET_WINDOW = 3
+
 function shieldBadge(shieldUntil: string | null) {
   if (!shieldUntil || new Date(shieldUntil) <= new Date()) return null
   return (
@@ -167,6 +173,10 @@ export const MapScreen = forwardRef<
       onOpenTerritory(id)
       return
     }
+    // Ahead of the scroll, not as a result of it: the card has to have its
+    // contents by the time the animation lands on it.
+    const targetIndex = territories.findIndex((t) => t.id === id)
+    if (targetIndex >= 0) setCenterIndex(targetIndex)
     const row = sheetRowRef.current
     const card = row?.querySelector<HTMLElement>(`[data-id="${id}"]`)
     if (row && card) scrollToCardFast(row, card)
@@ -174,8 +184,31 @@ export const MapScreen = forwardRef<
     setHighlightedSectorId(id)
   }
 
+  // Which carousel card's contents are actually rendered (see the sheet's
+  // own comment below). Updated synchronously on every scroll event, unlike
+  // the debounced fly-to below — a card has to be filled in *before* it
+  // scrolls into view, not 120ms after.
+  const [centerIndex, setCenterIndex] = useState(0)
+  const cardPitchRef = useRef(0)
+
+  // Arithmetic rather than measuring every card: they're all `flex:0 0 100%`,
+  // so one pitch (card width + row gap) describes the whole strip, and this
+  // runs on each scroll event where a 560-card measuring loop would not.
+  function updateCenterIndex(wrap: HTMLDivElement) {
+    if (!cardPitchRef.current) {
+      const first = wrap.querySelector<HTMLElement>('.map-sheet-card')
+      const second = first?.nextElementSibling as HTMLElement | null
+      cardPitchRef.current = first && second ? second.offsetLeft - first.offsetLeft : (first?.offsetWidth ?? 0)
+    }
+    const pitch = cardPitchRef.current
+    if (!pitch) return
+    const idx = Math.max(0, Math.min(territories.length - 1, Math.round(wrap.scrollLeft / pitch)))
+    setCenterIndex((cur) => (cur === idx ? cur : idx))
+  }
+
   function handleScroll(e: React.UIEvent<HTMLDivElement>) {
     const wrap = e.currentTarget
+    updateCenterIndex(wrap)
     if (scrollTimer.current) clearTimeout(scrollTimer.current)
     scrollTimer.current = setTimeout(() => {
       const wasUserScroll = userScrollRef.current
@@ -294,13 +327,22 @@ export const MapScreen = forwardRef<
         </div>
         <div className="map-sheet-container">
           <div className="map-sheet-row" ref={sheetRowRef} onScroll={handleScroll} onPointerDown={markUserScroll} onWheel={markUserScroll}>
-            {territories.map((t) => (
+            {territories.map((t, i) => (
               <div
                 className={`map-sheet-card${t.id === justSelectedId ? ' map-sheet-card-pulse' : ''}`}
                 key={t.id}
                 data-id={t.id}
                 onAnimationEnd={() => setJustSelectedId((cur) => (cur === t.id ? null : cur))}
               >
+                {/* Every card keeps its wrapper (fixed `flex:0 0 100%` width),
+                    so scroll offsets, snap points and the [data-id] lookup in
+                    handlePolygonSelect are exactly what they'd be with all of
+                    them filled in — only the contents are windowed. Filling
+                    all ~560 cost ~5000 DOM nodes on the home screen for one
+                    visible card, which is what made the map jank (and, in
+                    Telegram's iOS WebView, crash) on phones. */}
+                {Math.abs(i - centerIndex) <= SHEET_WINDOW && (
+                <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ fontSize: 21, fontWeight: 800, flex: '0 0 auto' }}>{t.id}</div>
                   {t.status !== 'free' && t.ownerDisplayName && (
@@ -328,6 +370,8 @@ export const MapScreen = forwardRef<
                 <button className="btn-primary" style={{ marginTop: 'auto' }} onClick={() => onOpenTerritory(t.id)}>
                   Подробнее о секторе
                 </button>
+                </>
+                )}
               </div>
             ))}
           </div>

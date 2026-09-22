@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Territory, TerritoryStatus } from '@/lib/data/types'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatWhen, pluralSectors } from '@/lib/format'
@@ -11,6 +11,11 @@ import { WeeklyLeaderboard } from '@/components/app-shell/screens/WeeklyLeaderbo
 
 type Filter = 'all' | TerritoryStatus
 export type Mode = 'territories' | 'rating'
+
+// How many sector rows are added each time the end of the list comes into
+// view. Comfortably more than one screenful, so scrolling never catches up
+// with the loader.
+const TERRITORY_PAGE = 40
 
 export function TerritoriesListScreen({
   territories,
@@ -48,6 +53,33 @@ export function TerritoriesListScreen({
   const list = territories.filter((t) => (filter === 'all' ? true : t.status === filter))
   const canViewAllUsers = useCanViewAllUsers()
 
+  // Rendered in pages rather than all at once: this screen stays mounted for
+  // the whole session (see the note above), so the full ~660-sector list was
+  // ~4000 permanently live DOM nodes for a list you scroll a few rows of.
+  // The sentinel below pulls the next page in as it comes into view — while
+  // the screen is hidden it can't intersect, so nothing grows in the
+  // background.
+  const [visibleCount, setVisibleCount] = useState(TERRITORY_PAGE)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const listLengthRef = useRef(list.length)
+  listLengthRef.current = list.length
+  useEffect(() => {
+    setVisibleCount(TERRITORY_PAGE)
+  }, [filter, mode])
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return
+        setVisibleCount((c) => (c < listLengthRef.current ? c + TERRITORY_PAGE : c))
+      },
+      { rootMargin: '300px' }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
   return (
     <div className="screen-inner">
       <div className="page-title">Территории</div>
@@ -84,7 +116,7 @@ export function TerritoriesListScreen({
           </div>
           <div className="card" style={{ overflow: 'hidden' }}>
             {list.length ? (
-              list.map((t, i) => (
+              list.slice(0, visibleCount).map((t, i) => (
                 <button
                   key={t.id}
                   className="terr-list-item"
@@ -116,6 +148,7 @@ export function TerritoriesListScreen({
               <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Нет территорий в этой категории</div>
             )}
           </div>
+          <div ref={sentinelRef} aria-hidden />
         </>
       )}
     </div>

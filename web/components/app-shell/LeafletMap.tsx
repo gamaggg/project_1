@@ -122,6 +122,9 @@ export const LeafletMap = forwardRef<
     const [zoomTick, setZoomTick] = useState(0)
     const markersLayerRef = useRef<L.LayerGroup | null>(null)
     const labelsLayerRef = useRef<L.LayerGroup | null>(null)
+    // Last set `draw` was given, so the viewport-driven label rebuild below
+    // can run from a map event without re-running the whole polygon pass.
+    const territoriesRef = useRef<Territory[]>([])
     // SVG-rendered (not the map's own Canvas renderer — see preferCanvas
     // below) so the highlight polygon is a real DOM element CSS can animate.
     // Only ever holds the single currently-tapped sector, so the usual
@@ -154,6 +157,7 @@ export const LeafletMap = forwardRef<
       const markersLayer = markersLayerRef.current
       const labelsLayer = labelsLayerRef.current
       if (!L || !markersLayer || !labelsLayer) return
+      territoriesRef.current = territories
       markersLayer.clearLayers()
       labelsLayer.clearLayers()
       // Preview of sectors an admin is about to create (see
@@ -252,6 +256,31 @@ export const LeafletMap = forwardRef<
           hapticTap()
           onSelectRef.current(t.id)
         })
+      })
+      drawLabels()
+    }
+
+    // Only the sectors actually on screen get a label marker. Each one is a
+    // real DOM divIcon (avatar pill + id) that Leaflet repositions on every
+    // move tick, so building all ~560 of them up front cost ~1700 nodes and
+    // made panning/zooming visibly janky on phones — and in Telegram's iOS
+    // WebView, alongside the rest of the app's DOM, it was enough to get the
+    // view killed and reloaded. Rebuilt on moveend (see the init effect), so
+    // what's off screen simply doesn't exist. Reads everything from refs:
+    // the map listener binds this once, on first render.
+    function drawLabels() {
+      const L = leafletRef.current
+      const map = mapRef.current
+      const labelsLayer = labelsLayerRef.current
+      if (!L || !map || !labelsLayer) return
+      labelsLayer.clearLayers()
+      if (map.getZoom() < LABEL_MIN_ZOOM) return
+      // Padded so a marker isn't created/destroyed right as it crosses the
+      // edge — the strip just outside the viewport is already built by the
+      // time a drag brings it in.
+      const bounds = map.getBounds().pad(0.3)
+      territoriesRef.current.forEach((t) => {
+        if (!bounds.contains([t.lat, t.lng])) return
         const isOccupied = t.status !== 'free' && !!t.ownerId
         L.marker([t.lat, t.lng], {
           icon: L.divIcon({
@@ -438,6 +467,9 @@ export const LeafletMap = forwardRef<
           if (!show && map.hasLayer(labelsLayerRef.current!)) map.removeLayer(labelsLayerRef.current!)
         }
         map.on('zoomend', updateLabelVisibility)
+        // Labels only exist for the current viewport (see drawLabels), so
+        // every settled pan/zoom rebuilds them for wherever the map landed.
+        map.on('moveend', drawLabels)
         map.on('zoomend', () => setZoomTick((v) => v + 1))
         // A drag can start with a mousedown on a polygon — don't let that
         // turn into a long-press selection once the map actually starts
