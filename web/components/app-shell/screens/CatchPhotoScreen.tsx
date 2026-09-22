@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useCatchById, useCatchesByTerritory, useCatchLikes, useToggleCatchLike, useIsSuperAdmin } from '@/lib/supabase/queries'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
@@ -249,7 +250,7 @@ export function CatchPhotoScreen({
                       flex: '0 0 auto',
                     }}
                   >
-                    {l.avatarUrl ? <img src={l.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : l.displayName.slice(0, 1).toUpperCase()}
+                    {l.avatarUrl ? <img src={thumbUrl(l.avatarUrl, 96)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" decoding="async" /> : l.displayName.slice(0, 1).toUpperCase()}
                   </div>
                 ))}
               </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useProfile, useAdminPermissions, useSetAdminPermissions } from '@/lib/supabase/queries'
 import type { AdminPermissions } from '@/lib/data/types'
 
@@ -67,7 +68,7 @@ export function AdminPermissionsModal({ userId, onClose }: { userId: string; onC
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
-          <div className="owner-avatar">{profile?.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : initials}</div>
+          <div className="owner-avatar">{profile?.avatarUrl ? <img src={thumbUrl(profile.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : initials}</div>
           <div style={{ fontWeight: 700, fontSize: 14.5 }}>{profile?.displayName ?? '…'}</div>
         </div>
 

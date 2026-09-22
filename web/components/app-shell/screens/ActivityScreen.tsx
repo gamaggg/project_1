@@ -6,6 +6,7 @@ import { CATEGORY_GRADIENT, KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen, pluralSectors, pluralCatches } from '@/lib/format'
 import { FishIcon } from '@/components/app-shell/icons'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { thumbUrl } from '@/lib/supabase/imageUrl'
 
 type Filter = 'all' | 'mine'
 
@@ -293,7 +294,7 @@ export function ActivityScreen({
                 {/* Every entry is somebody else's doing now, so the name is
                     always a way through to their profile. */}
                 <div className="avatar" style={{ background: a.kind === 'sector_lost' ? 'var(--accent)' : 'var(--blue)' }}>
-                  {a.avatarUrl ? <img src={a.avatarUrl} alt="" /> : a.who.slice(0, 1)}
+                  {a.avatarUrl ? <img src={thumbUrl(a.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : a.who.slice(0, 1)}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>
@@ -324,7 +325,7 @@ export function ActivityScreen({
                     style={{ width: 44, height: 44, cursor: a.catchId ? 'pointer' : undefined, background: a.photoUrl ? undefined : CATEGORY_GRADIENT[a.speciesCategory ?? 'marine'] }}
                     onClick={() => a.catchId && onOpenPhoto(a.catchId)}
                   >
-                    {a.photoUrl ? <img src={a.photoUrl} alt={a.speciesName} /> : <FishIcon size={18} />}
+                    {a.photoUrl ? <img src={thumbUrl(a.photoUrl, 160)} alt={a.speciesName} loading="lazy" decoding="async" /> : <FishIcon size={18} />}
                   </div>
                 )}
               </div>

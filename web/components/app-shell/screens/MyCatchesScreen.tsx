@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/components/providers/AuthProvider'
+import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useCatchesByUser, useCatchesByTerritory, useProfile } from '@/lib/supabase/queries'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import { CatcherLabel } from '@/components/app-shell/screens/TerritoryScreen'
@@ -53,7 +54,7 @@ export function MyCatchesScreen({
                   onClick={() => onOpenPhoto(c.id)}
                 >
                   <div className="fish-thumb" style={{ width: 46, height: 46 }}>
-                    <img src={c.photoUrl} alt={c.speciesName} />
+                    <img src={thumbUrl(c.photoUrl, 160)} alt={c.speciesName} loading="lazy" decoding="async" />
                   </div>
                   <div style={{ flex: 1 }}>
                     {territoryId && <CatcherLabel userId={c.userId} mine={c.mine} onOpenUser={onOpenUser} />}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useCatchesByTerritory, useProfile, useCanAddCatchManually, useIsSuperAdmin, useBuffs, useBuyShield } from '@/lib/supabase/queries'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { KIND_LABEL } from '@/lib/data/species'
@@ -61,7 +62,7 @@ function SectorOwnerCard({
         disabled={isMine}
       >
         <div className="sector-owner-highlight-avatar">
-          {profile?.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : initials}
+          {profile?.avatarUrl ? <img src={thumbUrl(profile.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : initials}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="sector-owner-highlight-name">{isMine ? 'Ты' : profile?.displayName ?? '…'}</div>
@@ -263,7 +264,7 @@ export function TerritoryScreen({
               // bubbling here, so tapping the name opens the profile.
               <div key={c.id} className="sector-row-plain tap-scale" style={{ cursor: 'pointer' }} onClick={() => onOpenPhoto(c.id)}>
                 <div className="fish-thumb" style={{ width: 46, height: 46 }}>
-                  <img src={c.photoUrl} alt={c.speciesName} />
+                  <img src={thumbUrl(c.photoUrl, 160)} alt={c.speciesName} loading="lazy" decoding="async" />
                 </div>
                 <div style={{ flex: 1 }}>
                   <CatcherLabel userId={c.userId} mine={c.mine} onOpenUser={onOpenUser} />

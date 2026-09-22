@@ -1,6 +1,7 @@
 'use client'
 
 import 'leaflet/dist/leaflet.css'
+import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useEffect, useRef } from 'react'
 import type { Territory } from '@/lib/data/types'
 import { resolveTerritoryColor } from '@/lib/data/territoryColors'
@@ -67,7 +68,7 @@ export function TerritoryThumbnailMap({
       <div className="territory-thumb-overlay">
         {territory.ownerId && (
           <div className="territory-thumb-avatar">
-            {ownerAvatarUrl ? <img src={ownerAvatarUrl} alt="" /> : ownerInitials}
+            {ownerAvatarUrl ? <img src={thumbUrl(ownerAvatarUrl, 96)} alt="" decoding="async" /> : ownerInitials}
           </div>
         )}
         <div className="territory-thumb-label">{territory.id}</div>

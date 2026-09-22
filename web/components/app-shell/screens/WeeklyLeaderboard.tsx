@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useWeeklyLeaderboard } from '@/lib/supabase/queries'
 import type { WeeklyLeaderboardEntry } from '@/lib/data/types'
 import { CITIES, type CityId } from '@/lib/data/city'
@@ -37,7 +38,7 @@ function PodiumAvatar({ entry, rank }: { entry: WeeklyLeaderboardEntry; rank: 1 
         <div className="rating-podium-glow" style={{ background: MEDAL_COLOR[rank] }} />
         {rank === 1 && <Crown />}
         <div className="avatar" style={{ width: size, height: size, fontSize: rank === 1 ? 24 : 19, border: '3px solid var(--surface)', position: 'relative', zIndex: 2 }}>
-          {entry.avatarUrl ? <img src={entry.avatarUrl} alt="" /> : initials}
+          {entry.avatarUrl ? <img src={thumbUrl(entry.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : initials}
         </div>
         <div className="rating-podium-medal" style={{ background: `linear-gradient(160deg, ${MEDAL_COLOR[rank]}, ${MEDAL_COLOR[rank]}CC)` }}>
           {rank}
@@ -125,7 +126,7 @@ export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUs
                   >
                     <div className="rating-list-rank">{entry.rank}</div>
                     <div className="avatar" style={{ width: 36, height: 36, fontSize: 12.5 }}>
-                      {entry.avatarUrl ? <img src={entry.avatarUrl} alt="" /> : initials}
+                      {entry.avatarUrl ? <img src={thumbUrl(entry.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : initials}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 700, fontSize: 14.5 }}>{entry.displayName}</div>

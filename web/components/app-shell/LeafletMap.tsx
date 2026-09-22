@@ -6,6 +6,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 're
 import type L from 'leaflet'
 import type { Territory } from '@/lib/data/types'
 import { resolveTerritoryColor } from '@/lib/data/territoryColors'
+import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { resolveTerritorySkin } from '@/lib/data/territorySkins'
 import { useSkinAssetsVersion, useSkinPatterns } from '@/lib/map/skinPattern'
 import { getCurrentCoords, queryGeolocationPermission } from '@/lib/geolocation'
@@ -50,7 +51,7 @@ function territoryMarkerHtml(t: Territory): string {
   if (t.status === 'free' || !t.ownerId) return `<div class="leaflet-territory-marker">${label}</div>`
   const initials = escapeHtml((t.ownerDisplayName ?? 'Рыбак').slice(0, 2).toUpperCase())
   const avatar = t.ownerAvatarUrl
-    ? `<img src="${escapeHtml(t.ownerAvatarUrl)}" alt="" />`
+    ? `<img src="${escapeHtml(thumbUrl(t.ownerAvatarUrl, 48))}" alt="" decoding="async" />`
     : initials
   return `<div class="leaflet-territory-marker"><div class="leaflet-territory-avatar">${avatar}</div>${label}</div>`
 }

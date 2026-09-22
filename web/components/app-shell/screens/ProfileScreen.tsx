@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, type CSSProperties } from 'react'
+import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -498,7 +499,7 @@ export function ProfileScreen({
             <div className="avatar-edit-wrap">
               <div className="profile-avatar">
                 {profile?.avatarUrl ? (
-                  <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                  <img src={thumbUrl(profile.avatarUrl, 240)} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                 ) : (
                   initials
                 )}
@@ -636,7 +637,7 @@ export function ProfileScreen({
                 onClick={() => onOpenPhoto(c.id)}
               >
                 <div className="fish-thumb" style={{ width: 46, height: 46 }}>
-                  <img src={c.photoUrl} alt={c.speciesName} />
+                  <img src={thumbUrl(c.photoUrl, 240)} alt={c.speciesName} loading="lazy" decoding="async" />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, fontSize: 14.5 }}>{c.speciesName}</div>
@@ -692,7 +693,7 @@ export function ProfileScreen({
           </div>
           <div className="card tap-scale" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }} onClick={() => onOpenPhoto(record.id)}>
             <div className="fish-thumb" style={{ width: 52, height: 52 }}>
-              <img src={record.photoUrl} alt={record.speciesName} />
+              <img src={thumbUrl(record.photoUrl, 720)} alt={record.speciesName} loading="lazy" decoding="async" />
             </div>
             <div>
               <div style={{ fontWeight: 800, fontSize: 16 }}>{record.speciesName}</div>

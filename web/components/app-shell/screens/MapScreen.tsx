@@ -1,6 +1,7 @@
 'use client'
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { MapView } from '@/components/app-shell/MapView'
 import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import type { Territory } from '@/lib/data/types'
@@ -348,7 +349,7 @@ export const MapScreen = forwardRef<
                   {t.status !== 'free' && t.ownerDisplayName && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: '1 1 auto' }}>
                       <div className="avatar" style={{ width: 24, height: 24, fontSize: 10 }}>
-                        {t.ownerAvatarUrl ? <img src={t.ownerAvatarUrl} alt="" /> : t.ownerDisplayName.slice(0, 2).toUpperCase()}
+                        {t.ownerAvatarUrl ? <img src={thumbUrl(t.ownerAvatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : t.ownerDisplayName.slice(0, 2).toUpperCase()}
                       </div>
                       <span style={{ fontSize: 13.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {t.ownerDisplayName}

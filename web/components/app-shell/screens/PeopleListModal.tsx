@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useIsFollowing, useSetFollowing } from '@/lib/supabase/queries'
 import type { ProfileSummary } from '@/lib/data/types'
@@ -18,7 +19,7 @@ function PersonRow({ person, onOpenUser }: { person: ProfileSummary; onOpenUser:
         style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', font: 'inherit' }}
       >
         <div className="avatar" style={{ width: 40, height: 40, fontSize: 13, flex: '0 0 auto' }}>
-          {person.avatarUrl ? <img src={person.avatarUrl} alt="" /> : person.displayName.slice(0, 1).toUpperCase()}
+          {person.avatarUrl ? <img src={thumbUrl(person.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : person.displayName.slice(0, 1).toUpperCase()}
         </div>
         <span style={{ fontSize: 14, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{person.displayName}</span>
       </button>

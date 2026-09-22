@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useWeeklyLeaderboard } from '@/lib/supabase/queries'
 import { PodiumItem } from '@/components/app-shell/screens/WeeklyLeaderboard'
 import { CITIES, type CityId } from '@/lib/data/city'
@@ -86,7 +87,7 @@ export function LastWeekScreen({
                 >
                   <div className="rating-list-rank">{entry.rank}</div>
                   <div className="avatar" style={{ width: 36, height: 36, fontSize: 12.5 }}>
-                    {entry.avatarUrl ? <img src={entry.avatarUrl} alt="" /> : initials}
+                    {entry.avatarUrl ? <img src={thumbUrl(entry.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : initials}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, fontSize: 14.5 }}>{entry.displayName}</div>

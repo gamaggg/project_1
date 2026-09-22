@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useCanViewAllUsers, useAllUsers, useFindUserByPublicId } from '@/lib/supabase/queries'
 import { formatWhen } from '@/lib/format'
 import type { UserListEntry } from '@/lib/data/types'
@@ -106,7 +107,7 @@ export function UsersListScreen({
                   onClick={() => onOpenUser(u.id)}
                 >
                   <div className="avatar" style={{ width: 36, height: 36, fontSize: 12.5 }}>
-                    {u.avatarUrl ? <img src={u.avatarUrl} alt="" /> : initials}
+                    {u.avatarUrl ? <img src={thumbUrl(u.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : initials}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, fontSize: 14.5 }}>{u.displayName}</div>
