@@ -938,11 +938,16 @@ export function FishZoneApp() {
         <Screen id="screen-last-week" current={currentScreen} onBack={pop}>
           <LastWeekScreen city={city} onBack={pop} onOpenUser={openUserProfile} onOpenCurrentRating={openWeeklyRating} />
         </Screen>
+        {/* Both gated on the profile being loaded: they scope the caller's
+            real weekly-challenge state to profiles.city, and mounting them
+            before it resolves would fire sync_my_challenges under the
+            'batumi' default first — creating a throwaway week in the wrong
+            city for every Moscow account on every boot. */}
         <Screen id="screen-shop" current={currentScreen} onBack={pop}>
-          <ShopScreen onBack={pop} />
+          {myProfile && <ShopScreen onBack={pop} />}
         </Screen>
         <Screen id="screen-challenges" current={currentScreen} onBack={pop}>
-          <ChallengesScreen onBack={pop} active={currentScreen === 'screen-challenges'} />
+          {myProfile && <ChallengesScreen onBack={pop} active={currentScreen === 'screen-challenges'} />}
         </Screen>
         <Screen id="screen-catches" current={currentScreen} onBack={pop}>
           {(catchesUserId || catchesTerritoryId) && (

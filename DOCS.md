@@ -25,7 +25,6 @@ web/
 │   ├── layout.tsx        — шрифт (next/font/google Manrope), QueryProvider + AuthProvider
 │   ├── globals.css       — дизайн-токены и компонентные классы, перенесённые из fishzone-app.html
 │   └── page.tsx           — рендерит <FishZoneApp/> (публично, без гейта на вход); отдельного роута /auth нет — см. ниже
-├── proxy.ts               — обновляет cookie сессии Supabase на каждый запрос (Next.js 16: бывший middleware.ts, см. ниже). Не гейтит роуты — карта публична, запись проверяется в самих экранах/RPC.
 ├── components/
 │   ├── providers/{QueryProvider,AuthProvider}.tsx  — react-query + подписка на сессию Supabase
 │   └── app-shell/
@@ -45,8 +44,10 @@ web/
 └── supabase/ — не используется (миграции применены напрямую через Supabase MCP, см. «База данных» ниже); каталог можно завести под `supabase db` / CLI-миграции позже, если появится локальная разработка без MCP.
 ```
 
-### Next.js 16: `proxy.ts`, не `middleware.ts`
+### Next.js 16: `proxy.ts`, не `middleware.ts` — и почему его здесь нет
 В Next.js 16 файл-конвенция `middleware.ts` переименована в `proxy.ts` (экспорт функции `proxy` вместо `middleware`), механика (cookies, `NextResponse`, matcher) не изменилась. Это узнали из `node_modules/next/dist/docs/` (версия в проекте новее тренировочных данных модели — см. `AGENTS.md`, который Next.js сам кладёт в свежий проект и просит свериться с локальными доксами перед тем как писать код).
+
+Самого файла в проекте больше нет: стандартный для Supabase SSR middleware, обновляющий сессию на каждом запросе, выбивал пользователей из аккаунта — см. DECISIONS.md, «`proxy.ts` удалён». Не возвращать.
 
 ### База данных (Supabase Postgres)
 Проект `yhgdcdkfkerzuhnzjzrz` («Project 1», см. `mcp__…__list_projects`). Схема применена через Supabase MCP (`apply_migration`), не через файлы в репозитории — если нужно посмотреть точный DDL, он в истории миграций проекта в Supabase, а актуальная схема получается через `list_tables`/`generate_typescript_types`.
