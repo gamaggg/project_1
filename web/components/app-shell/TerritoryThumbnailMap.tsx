@@ -1,16 +1,10 @@
 'use client'
 
 import 'leaflet/dist/leaflet.css'
-import 'mapbox-gl/dist/mapbox-gl.css'
 import { useEffect, useRef } from 'react'
 import type { Territory } from '@/lib/data/types'
 import { resolveTerritoryColor } from '@/lib/data/territoryColors'
-import { applyCurrentLightPreset } from '@/lib/mapbox/lightPreset'
-
-// Same Mapbox basemap as LeafletMap.tsx — see that file for the trial-swap
-// rationale and rollback plan.
-const MAPBOX_STYLE_URL = process.env.NEXT_PUBLIC_MAPBOX_STYLE!
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
+import { previewTileUrl } from '@/lib/mapbox/rasterTiles'
 
 // A static, single-sector preview for TerritoryScreen — not the interactive
 // multi-sector LeafletMap. The number/avatar overlay is plain HTML, not a
@@ -33,11 +27,8 @@ export function TerritoryThumbnailMap({
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([import('leaflet'), import('mapbox-gl-leaflet')]).then(([LModule]) => {
+    import('leaflet').then((LModule) => {
       if (cancelled || !containerRef.current) return
-      // See LeafletMap.tsx's init effect for why `.default` — mapbox-gl-leaflet
-      // mutates the real CJS exports object, which Turbopack's ESM namespace
-      // for this import doesn't reflect.
       const L = (LModule as unknown as { default?: typeof LModule }).default ?? LModule
       const map = L.map(containerRef.current, {
         dragging: false,
@@ -51,8 +42,7 @@ export function TerritoryThumbnailMap({
         preferCanvas: true,
       })
       mapRef.current = map
-      const glLayer = L.mapboxGL({ style: MAPBOX_STYLE_URL, accessToken: MAPBOX_TOKEN })
-      glLayer.addTo(map)
+      L.tileLayer(previewTileUrl(), { tileSize: 256 }).addTo(map)
       const color = resolveTerritoryColor(territory.status, myTerritoryColor)
       const poly = L.polygon(territory.corners, {
         color,
@@ -62,18 +52,6 @@ export function TerritoryThumbnailMap({
         opacity: 0.9,
       }).addTo(map)
       map.fitBounds(poly.getBounds(), { padding: [10, 10] })
-      // getMapboxMap() isn't in @types/mapbox-gl-leaflet even though it
-      // exists at runtime — see the `.default` workaround note above for the
-      // same package's other type gap. Leaflet defers the gl layer's own
-      // onAdd (which is what actually constructs the mapboxgl.Map) until the
-      // Leaflet map is "ready" — this map has no center/zoom until fitBounds
-      // above runs, so getMapboxMap() has to be read only after that, not
-      // right after addTo().
-      const mapboxMap = (glLayer as unknown as { getMapboxMap: () => import('mapbox-gl').Map }).getMapboxMap()
-      // This thumbnail remounts per sector view rather than staying open for
-      // a long session, so a one-time apply on load is enough — no need for
-      // LeafletMap.tsx's periodic recheck/visibilitychange handling.
-      mapboxMap.once('load', () => applyCurrentLightPreset(mapboxMap))
     })
     return () => {
       cancelled = true

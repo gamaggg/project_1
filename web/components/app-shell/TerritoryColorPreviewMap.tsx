@@ -1,17 +1,12 @@
 'use client'
 
 import 'leaflet/dist/leaflet.css'
-import 'mapbox-gl/dist/mapbox-gl.css'
 import { useEffect, useRef } from 'react'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { COLOR_PREVIEW_SECTORS } from '@/lib/data/colorPreviewSectors'
 import { FREE_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { useSkinAssetsVersion, useSkinPatterns } from '@/lib/map/skinPattern'
-import { applyCurrentLightPreset } from '@/lib/mapbox/lightPreset'
-
-// Same Mapbox basemap as LeafletMap.tsx/TerritoryThumbnailMap.tsx.
-const MAPBOX_STYLE_URL = process.env.NEXT_PUBLIC_MAPBOX_STYLE!
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
+import { previewTileUrl } from '@/lib/mapbox/rasterTiles'
 
 // For ChangeColorModal: judging a color needs to see it on real sector shapes
 // next to real neighbors, at the same zoom the app itself uses to show a
@@ -62,7 +57,7 @@ export function TerritoryColorPreviewMap({
     let cancelled = false
     const cityInfo = CITIES[city]
     const { demo, context } = COLOR_PREVIEW_SECTORS[city]
-    Promise.all([import('leaflet'), import('mapbox-gl-leaflet')]).then(([LModule]) => {
+    import('leaflet').then((LModule) => {
       if (cancelled || !containerRef.current) return
       // See LeafletMap.tsx's init effect for why `.default`.
       const L = (LModule as unknown as { default?: typeof LModule }).default ?? LModule
@@ -78,13 +73,7 @@ export function TerritoryColorPreviewMap({
         preferCanvas: true,
       }).setView(cityInfo.colorPreviewCenter, cityInfo.zoom)
       mapRef.current = map
-      const glLayer = L.mapboxGL({ style: MAPBOX_STYLE_URL, accessToken: MAPBOX_TOKEN })
-      glLayer.addTo(map)
-      // getMapboxMap() isn't in @types/mapbox-gl-leaflet even though it
-      // exists at runtime — see the `.default` workaround note above for
-      // the same package's other type gap.
-      const mapboxMap = (glLayer as unknown as { getMapboxMap: () => import('mapbox-gl').Map }).getMapboxMap()
-      mapboxMap.once('load', () => applyCurrentLightPreset(mapboxMap))
+      L.tileLayer(previewTileUrl(), { tileSize: 256 }).addTo(map)
       context.forEach((s) => {
         L.polygon(s.corners, { color: FREE_TERRITORY_COLOR, weight: 1.2, fillColor: FREE_TERRITORY_COLOR, fillOpacity: 0.14, opacity: 0.6 }).addTo(map)
       })
