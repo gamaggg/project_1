@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useSpecies } from '@/lib/supabase/queries'
+import { useSpecies, useLastCatchChoices } from '@/lib/supabase/queries'
 import { CATEGORY_LABEL, CATEGORIES_BY_CITY, KIND_LABEL, METHODS, BAITS_BY_CITY, categoryForKind, type SpeciesCategory } from '@/lib/data/species'
 import { matchFishialSpecies } from '@/lib/data/fishSpeciesMatch'
 import { cityForSectorId } from '@/lib/data/city'
@@ -65,6 +65,21 @@ export function ConfirmScreen({
   const [bait, setBait] = useState('')
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const touchedSpeciesRef = useRef(false)
+
+  // Opens on whatever method/bait this person used last (see
+  // useLastCatchChoices) — most people fish the same way catch after catch.
+  // Once only, and never over a choice they already made while this was
+  // still loading.
+  const { data: lastChoices } = useLastCatchChoices()
+  const prefilledRef = useRef(false)
+  useEffect(() => {
+    if (prefilledRef.current || !lastChoices) return
+    prefilledRef.current = true
+    const lastMethod = lastChoices.methods.find((m) => METHODS.includes(m))
+    const lastBait = lastChoices.baits.find((b) => baits.includes(b))
+    if (lastMethod) setMethod((cur) => cur || lastMethod)
+    if (lastBait) setBait((cur) => cur || lastBait)
+  }, [lastChoices, baits])
 
   useEffect(() => {
     const url = URL.createObjectURL(capturedPhoto)

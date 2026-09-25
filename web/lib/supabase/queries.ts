@@ -374,6 +374,43 @@ export function useMyCatches() {
   return useCatchesByUser(user?.id ?? null)
 }
 
+export type LastCatchChoices = { methods: string[]; baits: string[] }
+
+// The caller's recently used methods and baits, newest first, so the catch
+// form can open on what they picked last. Read back from their own catches
+// rather than a separate "preference" stored per device: it follows the
+// account across Telegram and the browser, and needs nothing new saved.
+// Lists (not just the latest value) because baits are per city — the form
+// takes the newest one that exists in the current sector's city list, so a
+// Batumi-only bait doesn't get prefilled on a Moscow catch. Under the
+// 'catches' key prefix, so the existing invalidations after a confirmed
+// catch refresh it too.
+export function useLastCatchChoices() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['catches', 'last-choices', user?.id ?? null],
+    enabled: !!user,
+    queryFn: async (): Promise<LastCatchChoices> => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('catches')
+        .select('method, bait')
+        .eq('user_id', user!.id)
+        .or('method.not.is.null,bait.not.is.null')
+        .order('caught_at', { ascending: false })
+        .limit(30)
+      if (error) throw error
+      const methods: string[] = []
+      const baits: string[] = []
+      for (const row of data) {
+        if (row.method && !methods.includes(row.method)) methods.push(row.method)
+        if (row.bait && !baits.includes(row.bait)) baits.push(row.bait)
+      }
+      return { methods, baits }
+    },
+  })
+}
+
 // A personal inbox rather than a public timeline: each row was written for
 // this specific person at the moment the event happened (see the
 // fanout_activity_notification trigger), so none of the "is this relevant to
