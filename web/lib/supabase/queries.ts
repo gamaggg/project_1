@@ -1052,6 +1052,8 @@ export function useShopItems() {
       if (error) throw error
       return data.map((r) => ({ id: r.id, category: r.category as ShopItem['category'], name: r.name, price: r.price }))
     },
+    staleTime: Infinity,
+    gcTime: Infinity,
   })
 }
 

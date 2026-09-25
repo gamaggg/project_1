@@ -889,7 +889,7 @@ export function FishZoneApp() {
   return (
     <div className="app-shell">
       <div className="screens">
-        <Screen id="screen-map" current={currentScreen}>
+        <Screen id="screen-map" current={currentScreen} eager>
           <MapScreen
             ref={mapHandleRef}
             territories={cityTerritories}
@@ -946,7 +946,11 @@ export function FishZoneApp() {
         <Screen id="screen-shop" current={currentScreen} onBack={pop}>
           {myProfile && <ShopScreen onBack={pop} />}
         </Screen>
-        <Screen id="screen-challenges" current={currentScreen} onBack={pop}>
+        {/* Eager: sync_my_challenges runs on mount and is what settles
+            finished challenges, pays their coins and sends the
+            "Выполнен челлендж" notification — on every launch, whether
+            or not this screen is ever opened. */}
+        <Screen id="screen-challenges" current={currentScreen} onBack={pop} eager>
           {myProfile && <ChallengesScreen onBack={pop} active={currentScreen === 'screen-challenges'} />}
         </Screen>
         <Screen id="screen-catches" current={currentScreen} onBack={pop}>
@@ -1322,11 +1326,36 @@ export function FishZoneApp() {
 // BackButton's registerNative doc) — gated on `current === id` so only the
 // actually-visible screen ever holds it, regardless of how many earlier
 // screens are still mounted underneath.
-function Screen({ id, current, onBack, children }: { id: ScreenId; current: ScreenId; onBack?: () => void; children: React.ReactNode }) {
+// A screen's contents are built the first time it's opened and kept from
+// then on (screens never unmount — see DECISIONS.md). Building all of them
+// at launch meant rendering, and firing the queries of, screens most
+// sessions never open — shop, last week's podium, and for admins a
+// ~5000-node action log plus the full user list — which is what slowed
+// startup on older phones. The .screen wrapper itself always exists, so
+// the CSS fade still runs on first open. `eager` is for a screen that has
+// to be live from launch whether or not it's opened.
+function Screen({
+  id,
+  current,
+  onBack,
+  eager,
+  children,
+}: {
+  id: ScreenId
+  current: ScreenId
+  onBack?: () => void
+  eager?: boolean
+  children: React.ReactNode
+}) {
   useTelegramBackButton(current === id ? onBack : undefined)
+  const isCurrent = current === id
+  const [visited, setVisited] = useState(isCurrent)
+  // Set during render, not in an effect, so the first open renders the
+  // contents in the same pass instead of flashing an empty screen first.
+  if (isCurrent && !visited) setVisited(true)
   return (
-    <div className={`screen${current === id ? ' active' : ''}`} id={id}>
-      {children}
+    <div className={`screen${isCurrent ? ' active' : ''}`} id={id}>
+      {(eager || visited) && children}
     </div>
   )
 }
