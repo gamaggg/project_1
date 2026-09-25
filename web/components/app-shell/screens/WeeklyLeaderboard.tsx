@@ -51,6 +51,15 @@ function PodiumAvatar({ entry, rank }: { entry: WeeklyLeaderboardEntry; rank: 1 
 // enterDelayMs: undefined renders at rest instantly (the live current-week
 // podium). Passing a number adds the ceremony pop-in, delayed by that much —
 // used by LastWeekScreen to reveal 3rd -> 2nd -> 1st in sequence.
+// Left-to-right podium slots with #1 always in the middle: 2–1–3. With two
+// finishers the third slot comes back empty (null) instead of being dropped —
+// the podium row centers its items as a group, so dropping it centered the
+// pair and pushed #1 left of center. Rank numbers stay tied to each entry.
+export function podiumSlots<T>(podium: T[]): (T | null)[] {
+  if (podium.length < 2) return podium
+  return [podium[1], podium[0], podium[2] ?? null]
+}
+
 export function PodiumItem({
   entry,
   rank,
@@ -83,9 +92,7 @@ export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUs
 
   const podium = entries.slice(0, 3)
   const rest = entries.slice(3, 10)
-  // Reference screenshot puts #1 in the middle: reorder the podium row
-  // without touching rank numbers, which stay tied to each entry.
-  const podiumOrder = podium.length === 3 ? [podium[1], podium[0], podium[2]] : podium
+  const slots = podiumSlots(podium)
 
   return (
     <>
@@ -108,9 +115,13 @@ export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUs
       ) : (
         <>
           <div className="rating-podium">
-            {podiumOrder.map((entry) => (
-              <PodiumItem key={entry.userId} entry={entry} rank={entry.rank as 1 | 2 | 3} onOpenUser={onOpenUser} />
-            ))}
+            {slots.map((entry, i) =>
+              entry ? (
+                <PodiumItem key={entry.userId} entry={entry} rank={entry.rank as 1 | 2 | 3} onOpenUser={onOpenUser} />
+              ) : (
+                <div key={`empty-${i}`} className="rating-podium-item" aria-hidden />
+              )
+            )}
           </div>
 
           {rest.length > 0 && (

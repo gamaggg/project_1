@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useWeeklyLeaderboard } from '@/lib/supabase/queries'
-import { PodiumItem } from '@/components/app-shell/screens/WeeklyLeaderboard'
+import { PodiumItem, podiumSlots } from '@/components/app-shell/screens/WeeklyLeaderboard'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { formatWeekOfMonth, pluralCatches, pluralSectors } from '@/lib/format'
 import { BackButton } from '@/components/app-shell/BackButton'
@@ -27,7 +27,7 @@ export function LastWeekScreen({
   const { data: entries = [], isLoading } = useWeeklyLeaderboard(false, -1, cityInfo.idPrefix, cityInfo.timezone)
   const podium = entries.slice(0, 3)
   const rest = entries.slice(3, 10)
-  const podiumOrder = podium.length === 3 ? [podium[1], podium[0], podium[2]] : podium
+  const slots = podiumSlots(podium)
   const weekLabel = useMemo(() => formatWeekOfMonth(-1, cityInfo.timezone), [cityInfo.timezone])
 
   const confetti = useMemo(
@@ -67,9 +67,13 @@ export function LastWeekScreen({
             <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>На прошлой неделе никто не захватил сектор</div>
           ) : (
             <div className="rating-podium">
-              {podiumOrder.map((entry) => (
-                <PodiumItem key={entry.userId} entry={entry} rank={entry.rank as 1 | 2 | 3} onOpenUser={onOpenUser} enterDelayMs={STAGGER_DELAY_MS[entry.rank as 1 | 2 | 3]} />
-              ))}
+              {slots.map((entry, i) =>
+                entry ? (
+                  <PodiumItem key={entry.userId} entry={entry} rank={entry.rank as 1 | 2 | 3} onOpenUser={onOpenUser} enterDelayMs={STAGGER_DELAY_MS[entry.rank as 1 | 2 | 3]} />
+                ) : (
+                  <div key={`empty-${i}`} className="rating-podium-item" aria-hidden />
+                )
+              )}
             </div>
           )}
         </div>
