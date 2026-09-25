@@ -398,7 +398,12 @@ export const LeafletMap = forwardRef<
           // the real redraw fires at gesture end, reading as "sectors pop in
           // after you let go." A wider buffer covers normal gesture speeds; the
           // trade-off is a bigger canvas to redraw on every real update.
-          renderer: L.canvas({ padding: 0.6 }),
+          // Was 0.6: a canvas 2.2× the viewport per side is ~4.8× its area —
+          // ~30 MB of backing store for the polygons alone, all ~660 of them
+          // redrawn into it on every settled move. 0.3 (~2.6× area) still
+          // covers an ordinary swipe and roughly halves both costs, which
+          // matters on phones where this sat next to the GL map's own buffers.
+          renderer: L.canvas({ padding: 0.3 }),
         })
         mapRef.current = map
 
@@ -420,7 +425,10 @@ export const LeafletMap = forwardRef<
 
         markersLayerRef.current = L.layerGroup().addTo(map)
         labelsLayerRef.current = L.layerGroup()
-        svgRendererRef.current = L.svg({ padding: 0.6 })
+        // Only ever holds the one highlighted sector, so it doesn't need the
+        // polygon canvas's wide swipe buffer — at 0.6 this <svg> (and the
+        // compositing layer its glow filter gets) was 2.2× the viewport.
+        svgRendererRef.current = L.svg({ padding: 0.2 })
         highlightLayerRef.current = L.layerGroup().addTo(map)
 
         map.setView(fallbackCenter ?? FALLBACK_CENTER, fallbackZoom ?? FALLBACK_ZOOM)

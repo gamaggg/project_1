@@ -1083,9 +1083,14 @@ body{
 /* Tapped-sector highlight (see MapScreen's highlightedSectorId) — rendered
    as a real SVG <path>, not the map's own Canvas layer (see LeafletMap's
    svgRendererRef), so it can actually be animated with CSS. */
+/* A few breaths, then a steady glow. It used to breathe forever, and the
+   last tapped sector stays highlighted for as long as the map is open —
+   animating `filter` can't run on the compositor, so that was a full repaint
+   of the highlight layer at 60fps for the whole session, draining battery
+   and adding to the memory pressure on phones. */
 .sector-highlight{
   filter:drop-shadow(0 0 6px rgba(252,82,0,.85));
-  animation:sectorGlowBreathe 1.6s var(--ease-in-out) infinite;
+  animation:sectorGlowBreathe 1.6s var(--ease-in-out) 3;
 }
 @keyframes sectorGlowBreathe{
   0%,100%{filter:drop-shadow(0 0 4px rgba(252,82,0,.6)); opacity:.85;}

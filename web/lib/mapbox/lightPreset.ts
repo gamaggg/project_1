@@ -19,9 +19,22 @@ export function currentLightPreset(): MapLightPreset {
   return lightPresetForHour(new Date().getHours())
 }
 
+const appliedPreset = new WeakMap<MapboxMap, MapLightPreset>()
+
 // mapboxgl-leaflet's getMapboxMap() isn't in its (community) type
 // declarations even though the method exists at runtime — see the `.default`
 // workaround note in LeafletMap.tsx's init effect for the same package.
+//
+// Only touches the map when the preset actually changed. setConfigProperty
+// makes Standard re-evaluate every layer that reads the basemap config and
+// redraw, and the caller rechecks on every return to the foreground — so
+// re-applying an unchanged preset put that whole rebuild right at the moment
+// iOS is shortest on memory (the WebView resuming from background), which is
+// where the app was being killed.
 export function applyCurrentLightPreset(mapboxMap: MapboxMap | null | undefined) {
-  mapboxMap?.setConfigProperty('basemap', 'lightPreset', currentLightPreset())
+  if (!mapboxMap) return
+  const next = currentLightPreset()
+  if (appliedPreset.get(mapboxMap) === next) return
+  mapboxMap.setConfigProperty('basemap', 'lightPreset', next)
+  appliedPreset.set(mapboxMap, next)
 }
