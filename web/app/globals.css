@@ -128,11 +128,29 @@ body{
   opacity:0;
   pointer-events:none;
   transform:translateY(10px);
-  transition:opacity .3s var(--ease), transform .3s var(--ease);
+  /* Screens never unmount (see DECISIONS.md), and opacity:0 alone doesn't
+     stop the browser from painting and compositing one — so all ~19 of them
+     were being drawn stacked on top of each other, every frame something in
+     any of them animated. On iPhones that was a steady GPU/memory drain and
+     part of why the WebView got killed. visibility:hidden takes an inactive
+     screen out of painting entirely while keeping its layout (scroll
+     position, the map's measured size) intact. It flips only once the
+     fade-out has finished (the 0s-duration .3s-delay transition), and
+     immediately on the way in (see .screen.active). */
+  visibility:hidden;
+  transition:opacity .3s var(--ease), transform .3s var(--ease), visibility 0s linear .3s;
   z-index:1;
 }
 .screen::-webkit-scrollbar{display:none;}
-.screen.active{opacity:1; pointer-events:auto; transform:none; z-index:2;}
+.screen.active{opacity:1; pointer-events:auto; transform:none; z-index:2; visibility:visible; transition:opacity .3s var(--ease), transform .3s var(--ease), visibility 0s;}
+/* Not painted anyway (visibility above), but a running animation still
+   costs a style update every frame — and a few of these (the hero aurora,
+   shop/rating glows) animate paint-only properties like filter and
+   background-position. Resumes where it left off when the screen comes back. */
+.screen:not(.active),
+.screen:not(.active) *,
+.screen:not(.active) *::before,
+.screen:not(.active) *::after{animation-play-state:paused !important;}
 .screen-inner{padding:6px 20px 100px;}
 .page-title{
   font-size:30px;

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { observeScreenActive } from '@/lib/observeScreenActive'
 
 // A dot grid whose radius follows a slow-orbiting focal point — the classic
 // newsprint halftone look, animated by moving the "light source" instead of
@@ -56,26 +57,44 @@ export function HalftoneBackground({ color = '#FC5200' }: { color?: string }) {
     }
 
     function render() {
+      if (!running) return
       t += 0.012
       drawFrame()
       frameId = requestAnimationFrame(render)
     }
 
-    let animating = false
+    // Only while sized AND on the visible screen — see observeScreenActive;
+    // this loop used to keep drawing forever on hidden profile/shop screens.
+    let sized = false
+    let screenActive = false
+    let running = false
+    function start() {
+      if (running || !sized || !screenActive || reduceMotion) return
+      running = true
+      render()
+    }
+    function stop() {
+      running = false
+      cancelAnimationFrame(frameId)
+    }
+
     const ro = new ResizeObserver(() => {
       if (!resize()) return
-      if (reduceMotion) {
-        drawFrame()
-      } else if (!animating) {
-        animating = true
-        render()
-      }
+      sized = true
+      drawFrame()
+      start()
     })
     ro.observe(container)
+    const stopWatching = observeScreenActive(canvas, (active) => {
+      screenActive = active
+      if (active) start()
+      else stop()
+    })
 
     return () => {
-      cancelAnimationFrame(frameId)
+      stop()
       ro.disconnect()
+      stopWatching()
     }
   }, [color])
 

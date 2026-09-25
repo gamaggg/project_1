@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { createNoise3D } from 'simplex-noise'
+import { observeScreenActive } from '@/lib/observeScreenActive'
 
 // Close port of ui.aceternity.com/components/wavy-background — same
 // algorithm (5 layered noise waves) and the same prop shape (waveWidth/
@@ -100,9 +101,27 @@ export function WavyBackground({
       drawWave(5)
     }
 
+    // Runs only while the canvas is sized AND its screen is the visible one —
+    // this redraws five noise waves under a CSS blur every frame, and it
+    // used to keep doing that forever on whichever hidden profile/shop
+    // screen last showed it (see observeScreenActive).
+    let sized = false
+    let screenActive = false
+    let running = false
+
     function render() {
+      if (!running) return
       drawFrame()
       frameId = requestAnimationFrame(render)
+    }
+    function start() {
+      if (running || !sized || !screenActive || reduceMotion) return
+      running = true
+      render()
+    }
+    function stop() {
+      running = false
+      cancelAnimationFrame(frameId)
     }
 
     // Don't draw off a synchronous resize() at all — wait for
@@ -110,21 +129,23 @@ export function WavyBackground({
     // real post-layout size, async, typically within a frame or two) to
     // both size the canvas and kick off the first paint. See resize()'s
     // comment for why measuring synchronously here isn't safe everywhere.
-    let animating = false
     const ro = new ResizeObserver(() => {
       if (!resize()) return
-      if (reduceMotion) {
-        drawFrame()
-      } else if (!animating) {
-        animating = true
-        render()
-      }
+      sized = true
+      drawFrame()
+      start()
     })
     ro.observe(container)
+    const stopWatching = observeScreenActive(canvas, (active) => {
+      screenActive = active
+      if (active) start()
+      else stop()
+    })
 
     return () => {
-      cancelAnimationFrame(frameId)
+      stop()
       ro.disconnect()
+      stopWatching()
     }
   }, [colors, waveWidth, backgroundFill, blur, speed, waveOpacity])
 
