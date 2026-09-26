@@ -83,7 +83,7 @@ export function computeAchievements(myCatches: Catch[], ctx: AchievementContext,
   const baitsUsed = new Set(myCatches.map((c) => c.bait).filter((b): b is string => !!b)).size
 
   const territoryKindById = new Map(allTerritories.map((t) => [t.id, t.kind]))
-  const requiredWaterKinds: TerritoryKind[] = isMoscow ? ['river', 'stream', 'lake', 'pond'] : ['sea', 'river', 'stream', 'lake']
+  const requiredWaterKinds: TerritoryKind[] = isMoscow ? ['river', 'lake', 'pond'] : ['sea', 'river', 'lake', 'pond']
   const waterKindsCaught = new Set(
     myCatches
       .filter((c) => cityForSectorId(c.territoryId) === city)
@@ -180,8 +180,8 @@ export function computeAchievements(myCatches: Catch[], ctx: AchievementContext,
     {
       icon: 'allwaters',
       title: 'Обошёл всё побережье',
-      desc: isMoscow ? 'Улов в каждом типе водоёма: река, ручей, озеро, пруд' : 'Улов в каждом типе водоёма: море, река, ручей, озеро',
-      flavor: 'Море, река, ручей, озеро — нигде не прошёл мимо.',
+      desc: isMoscow ? 'Улов в каждом типе водоёма: река, озеро, пруд' : 'Улов в каждом типе водоёма: море, река, озеро, пруд',
+      flavor: 'Море, река, озеро, пруд — нигде не прошёл мимо.',
       unlocked: waterKindsCaught.size >= requiredWaterKinds.length,
       progress: `${waterKindsCaught.size}/${requiredWaterKinds.length}`,
     },
