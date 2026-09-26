@@ -1339,6 +1339,10 @@ export type Database = {
         Returns: undefined
       }
       admin_delete_user: { Args: { p_user_id: string }; Returns: undefined }
+      admin_set_territory_kind: {
+        Args: { p_territory_id: string; p_kind: string; p_lat?: number; p_lng?: number }
+        Returns: undefined
+      }
       admin_dismiss_report: {
         Args: { p_report_id: number }
         Returns: undefined

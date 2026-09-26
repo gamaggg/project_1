@@ -3,11 +3,10 @@
 import { useState } from 'react'
 import { useAdminAddTerritory } from '@/lib/supabase/queries'
 import { nextSectorId } from '@/lib/data/hexGrid'
-import { KIND_LABEL } from '@/lib/data/species'
+import { KIND_LABEL, WATER_KINDS_BY_CITY } from '@/lib/data/species'
 import type { TerritoryKind } from '@/lib/data/types'
 import { CITIES, type CityId } from '@/lib/data/city'
 
-const KINDS: TerritoryKind[] = ['sea', 'river', 'lake', 'pond']
 
 // Rendered by FishZoneApp, same reasoning as BulkDeleteTerritoriesModal — one
 // admin_add_territory call per drafted sector rather than a batch RPC, each
@@ -28,7 +27,9 @@ export function BulkAddTerritoriesModal({
   onAdded: () => void
 }) {
   const addTerritory = useAdminAddTerritory()
-  const [kind, setKind] = useState<TerritoryKind>('sea')
+  // First of the city's own types — Moscow has no sea, so a fixed 'sea'
+  // default would add sea sectors there with no chip showing it.
+  const [kind, setKind] = useState<TerritoryKind>(WATER_KINDS_BY_CITY[city][0])
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -63,7 +64,7 @@ export function BulkAddTerritoriesModal({
         <div className="modal-title">Создать {drafts.length} {drafts.length === 1 ? 'сектор' : 'сектора'}?</div>
         <div className="modal-body">{ids.join(', ')}</div>
         <div className="filter-row" style={{ margin: '14px 0' }}>
-          {KINDS.map((k) => (
+          {WATER_KINDS_BY_CITY[city].map((k) => (
             <div key={k} className={`filter-chip${kind === k ? ' active' : ''}`} onClick={() => setKind(k)}>
               {KIND_LABEL[k]}
             </div>

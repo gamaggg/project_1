@@ -88,7 +88,11 @@ export function useTerritories() {
         // super admin deleted (admin_delete_territory) stays in that file,
         // so it's dropped here based on the DB row's is_deleted flag instead.
         .filter((g) => !byId.get(g.id)?.is_deleted)
-        .map((g) => toTerritory(g.id, g.kind, g.lat, g.lng, g.corners))
+        // The water type in the DB wins over the static file's: a super
+        // admin can change it (admin_set_territory_kind), and streams were
+        // merged into rivers there. The file only fills in for sectors that
+        // never got a DB row, or whose row has no kind.
+        .map((g) => toTerritory(g.id, byId.get(g.id)?.kind ?? g.kind, g.lat, g.lng, g.corners))
 
       // Sectors a super admin placed on the map (admin_add_territory) live
       // only in the DB — the static file is generated once offline (see
@@ -1315,6 +1319,31 @@ export function useAdminDeleteCatch() {
       queryClient.invalidateQueries({ queryKey: ['territories'] })
       queryClient.invalidateQueries({ queryKey: ['catches'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+// Static-file sectors with no DB row yet get one created by the RPC, which
+// is why lat/lng travel along.
+export function useAdminSetTerritoryKind() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ territory, kind }: { territory: Territory; kind: TerritoryKind }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_set_territory_kind', {
+        p_territory_id: territory.id,
+        p_kind: kind,
+        p_lat: territory.lat,
+        p_lng: territory.lng,
+      })
+      if (error) throw error
+    },
+    // Returned so the mutation stays pending until the map has the new
+    // kind — otherwise the picker flashes back to the old one in between.
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-challenges'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
+      return queryClient.invalidateQueries({ queryKey: ['territories'] })
     },
   })
 }

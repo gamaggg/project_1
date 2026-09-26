@@ -52,6 +52,14 @@ export const BAITS_BY_CITY: Record<CityId, string[]> = {
 // achievements.ts).
 export const ALL_BAITS = Array.from(new Set(Object.values(BAITS_BY_CITY).flat()))
 
+// Water types each city's map actually has — streams were merged into rivers,
+// and Moscow has no sea. 'stream' stays in the DB enum only so old rows and
+// KIND_LABEL still type-check; nothing offers it any more.
+export const WATER_KINDS_BY_CITY: Record<CityId, Database['public']['Enums']['territory_kind'][]> = {
+  batumi: ['sea', 'river', 'lake', 'pond'],
+  moscow: ['river', 'lake', 'pond'],
+}
+
 export const KIND_LABEL: Record<Database['public']['Enums']['territory_kind'], string> = {
   sea: 'Море',
   river: 'Река',

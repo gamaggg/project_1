@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
-import { useCatchesByTerritory, useProfile, useCanAddCatchManually, useIsSuperAdmin, useBuffs, useBuyShield } from '@/lib/supabase/queries'
+import { useCatchesByTerritory, useProfile, useCanAddCatchManually, useIsSuperAdmin, useBuffs, useBuyShield, useAdminSetTerritoryKind } from '@/lib/supabase/queries'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { KIND_LABEL } from '@/lib/data/species'
+import { KIND_LABEL, WATER_KINDS_BY_CITY } from '@/lib/data/species'
+import { cityForSectorId } from '@/lib/data/city'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import type { Territory } from '@/lib/data/types'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
@@ -141,6 +142,34 @@ export function CatcherLabel({ userId, mine, onOpenUser }: { userId: string; min
 // one exception is the admin-only "Добавить улов" button below, which skips
 // the geolocation gate entirely (see DECISIONS.md, admin bypass).
 //
+// Super admin only: fixes a sector's water type in place. The chip of the
+// type being saved lights up right away and the row stays locked until the
+// map has reloaded with it.
+function AdminKindPicker({ territory }: { territory: Territory }) {
+  const setKind = useAdminSetTerritoryKind()
+  const shownKind = setKind.isPending ? setKind.variables.kind : territory.kind
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-soft)', marginBottom: 8 }}>Тип водоёма (админ)</div>
+      <div className="filter-row" style={{ marginBottom: 0 }}>
+        {WATER_KINDS_BY_CITY[cityForSectorId(territory.id)].map((k) => (
+          <button
+            key={k}
+            type="button"
+            className={`filter-chip${shownKind === k ? ' active' : ''}`}
+            aria-pressed={shownKind === k}
+            disabled={setKind.isPending}
+            onClick={() => k !== territory.kind && setKind.mutate({ territory, kind: k })}
+          >
+            {KIND_LABEL[k]}
+          </button>
+        ))}
+      </div>
+      {setKind.isError && <div style={{ fontSize: 12.5, color: '#D33', marginTop: 8 }}>Не удалось сменить тип — попробуй ещё раз</div>}
+    </div>
+  )
+}
+
 // Map-led composition: a full-bleed hero map with the identity card docked
 // over its bottom edge (the "place card" convention from map-first apps),
 // stats as a borderless divided strip, catches as plain hairline rows — no
@@ -223,6 +252,7 @@ export function TerritoryScreen({
             </button>
           )}
           {territory.status === 'mine' && <ShieldButton territory={territory} />}
+          {isSuperAdmin && <AdminKindPicker territory={territory} />}
         </div>
 
         <div className="sector-stat-strip">

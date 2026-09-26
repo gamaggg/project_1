@@ -1,5 +1,5 @@
 import type { Catch, Territory, TerritoryKind } from '@/lib/data/types'
-import { METHODS, ALL_BAITS } from '@/lib/data/species'
+import { METHODS, ALL_BAITS, WATER_KINDS_BY_CITY } from '@/lib/data/species'
 import { cityForSectorId, type CityId } from '@/lib/data/city'
 
 export type Achievement = {
@@ -83,7 +83,7 @@ export function computeAchievements(myCatches: Catch[], ctx: AchievementContext,
   const baitsUsed = new Set(myCatches.map((c) => c.bait).filter((b): b is string => !!b)).size
 
   const territoryKindById = new Map(allTerritories.map((t) => [t.id, t.kind]))
-  const requiredWaterKinds: TerritoryKind[] = isMoscow ? ['river', 'lake', 'pond'] : ['sea', 'river', 'lake', 'pond']
+  const requiredWaterKinds: TerritoryKind[] = WATER_KINDS_BY_CITY[city]
   const waterKindsCaught = new Set(
     myCatches
       .filter((c) => cityForSectorId(c.territoryId) === city)
