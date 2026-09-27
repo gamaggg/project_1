@@ -1323,6 +1323,27 @@ export function useAdminDeleteCatch() {
   })
 }
 
+// Super admin fixes a catch that GPS put in the wrong sector — ownership of
+// both sectors is recomputed server-side (see admin_move_catch).
+export function useAdminMoveCatch() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ catchId, territoryId }: { catchId: number; territoryId: string }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_move_catch', { p_catch_id: catchId, p_territory_id: territoryId })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['territories'] })
+      queryClient.invalidateQueries({ queryKey: ['catches'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+      queryClient.invalidateQueries({ queryKey: ['weekly-leaderboard'] })
+      queryClient.invalidateQueries({ queryKey: ['my-challenges'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
+    },
+  })
+}
+
 // Static-file sectors with no DB row yet get one created by the RPC, which
 // is why lat/lng travel along.
 export function useAdminSetTerritoryKind() {

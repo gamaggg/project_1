@@ -7,6 +7,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import { CatcherLabel } from '@/components/app-shell/screens/TerritoryScreen'
 import { BackButton } from '@/components/app-shell/BackButton'
+import { MoveCatchSheet } from '@/components/app-shell/MoveCatchSheet'
 import type { ProfileSummary } from '@/lib/data/types'
 
 // "Иван" / "Иван и Мария" / "Иван, Мария и ещё 5" — sidesteps gender-correct
@@ -65,6 +66,7 @@ export function CatchPhotoScreen({
   // is optimistic (see useToggleCatchLike) so this fires on the tap itself,
   // not once the network round-trip resolves.
   const [justLiked, setJustLiked] = useState(false)
+  const [moving, setMoving] = useState(false)
 
   const sectorIndex = sectorCatches.findIndex((sc) => sc.id === activeId)
   const prevCatch = sectorIndex > 0 ? sectorCatches[sectorIndex - 1] : null
@@ -132,17 +134,20 @@ export function CatchPhotoScreen({
             <BackButton onClick={onBack} registerNative={false} />
           </div>
           {isSuperAdmin && (
-            <div
-              className="icon-btn tap-scale"
-              style={{ position: 'absolute', top: 12, right: 12 }}
-              onClick={() => onDeleteCatch(c.id)}
-              title="Удалить улов"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D33" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M10 11v6M14 11v6M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" />
-              </svg>
+            <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 8 }}>
+              <div className="icon-btn tap-scale" onClick={() => setMoving(true)} title="Перенести в другой сектор">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M7 4 3 8l4 4M3 8h13a5 5 0 0 1 0 10h-3" />
+                </svg>
+              </div>
+              <div className="icon-btn tap-scale" onClick={() => onDeleteCatch(c.id)} title="Удалить улов">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D33" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M10 11v6M14 11v6M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" />
+                </svg>
+              </div>
             </div>
           )}
+          {moving && <MoveCatchSheet c={c} onClose={() => setMoving(false)} />}
           {prevCatch && (
             <div className="icon-btn tap-scale" style={{ position: 'absolute', top: '50%', left: 12, transform: 'translateY(-50%)' }} onClick={() => goTo(prevCatch.id)} title="Предыдущий улов">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">

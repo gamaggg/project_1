@@ -1334,6 +1334,7 @@ export type Database = {
         Returns: undefined
       }
       admin_delete_catch: { Args: { p_catch_id: number }; Returns: undefined }
+      admin_move_catch: { Args: { p_catch_id: number; p_territory_id: string }; Returns: Json }
       admin_delete_territory: {
         Args: { p_territory_id: string }
         Returns: undefined
