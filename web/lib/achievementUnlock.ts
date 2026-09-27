@@ -20,6 +20,11 @@ function writeSeen(userId: string, seen: Set<Achievement['icon']>) {
   localStorage.setItem(storageKey(userId), JSON.stringify([...seen]))
 }
 
+// Which city "seen" was last reconciled against — see the effect below.
+function cityKey(userId: string) {
+  return `fishzone:seenAchievementsCity:${userId}`
+}
+
 // Watches this user's achievements and queues a one-time popup for each newly
 // unlocked one. "Unlocked" itself has no DB column (computeAchievements derives
 // it fresh from catches/territories/etc. every time — see achievements.ts), so
@@ -41,6 +46,15 @@ export function useAchievementUnlock(territories: Territory[], territoriesReady:
   // re-popping the modal once real data arrives (see DECISIONS.md).
   const ready = catchesQ.isSuccess && profileQ.isSuccess && claimedQ.isSuccess && territoriesReady
 
+  // The account's own city, not the map's city lens: the lens starts from
+  // this device's localStorage and only catches up with the profile one
+  // render later, and several achievements mean something different per city
+  // («Коллекционер видов» counts sea fish in Batumi, Moscow-caught species in
+  // Moscow). When the profile happened to load last, that one render computed
+  // the wrong city, the prune below wiped the real city's achievements from
+  // "seen", and the modal re-popped on every launch.
+  const achievementCity: CityId = profileQ.data?.city ?? city
+
   const myTerritories = territories.filter((t) => t.ownerId === user?.id)
   const achievements = computeAchievements(
     catchesQ.data ?? [],
@@ -50,18 +64,23 @@ export function useAchievementUnlock(territories: Territory[], territoriesReady:
       followersCount: profileQ.data?.followersCount ?? 0,
       claimedFromOthers: claimedQ.data ?? false,
     },
-    city
+    achievementCity
   )
   const unlockedIcons = achievements.filter((a) => a.unlocked).map((a) => a.icon)
   const unlockedKey = unlockedIcons.join(',')
 
-  const [queue, setQueue] = useState<Achievement['icon'][]>([])
+  const [queue, setQueue] = useState<{ icon: Achievement['icon']; city: CityId }[]>([])
 
   useEffect(() => {
     if (!user || !ready) return
     const seen = readSeen(user.id)
-    if (seen === null) {
-      writeSeen(user.id, new Set(unlockedIcons))
+    // First run, or the account switched city since "seen" was last
+    // reconciled (a super admin hopping to Moscow and back, say): whatever is
+    // unlocked there is existing progress, not news — record it silently, and
+    // prune nothing, since the other city's achievements weren't lost.
+    if (seen === null || localStorage.getItem(cityKey(user.id)) !== achievementCity) {
+      writeSeen(user.id, new Set([...(seen ?? []), ...unlockedIcons]))
+      localStorage.setItem(cityKey(user.id), achievementCity)
       return
     }
     // Prune anything no longer unlocked (e.g. a moderator deleted the catches
@@ -73,12 +92,12 @@ export function useAchievementUnlock(territories: Territory[], territoriesReady:
     if (pruned.size !== seen.size) writeSeen(user.id, pruned)
     const fresh = unlockedIcons.filter((icon) => !pruned.has(icon))
     if (fresh.length === 0) return
-    setQueue((q) => [...q, ...fresh.filter((icon) => !q.includes(icon))])
+    setQueue((q) => [...q, ...fresh.filter((icon) => !q.some((e) => e.icon === icon)).map((icon) => ({ icon, city: achievementCity }))])
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, ready, unlockedKey])
+  }, [user?.id, ready, unlockedKey, achievementCity])
 
   function dismiss() {
-    const icon = queue[0]
+    const icon = queue[0]?.icon
     if (icon && user) {
       const seen = readSeen(user.id) ?? new Set<Achievement['icon']>()
       seen.add(icon)
@@ -87,7 +106,9 @@ export function useAchievementUnlock(territories: Territory[], territoriesReady:
     setQueue((q) => q.slice(1))
   }
 
-  const current = queue[0] ? achievements.find((a) => a.icon === queue[0]) ?? null : null
+  // An entry queued for another city (the account just switched) is dropped
+  // rather than shown with this city's meaning of the same icon.
+  const current = queue[0] && queue[0].city === achievementCity ? achievements.find((a) => a.icon === queue[0].icon) ?? null : null
 
   return { current, dismiss }
 }
