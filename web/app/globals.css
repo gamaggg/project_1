@@ -848,7 +848,10 @@ body{
    relative to this box) clipped half off-screen. */
 .sector-hero-map{position:relative; isolation:isolate;}
 .sector-hero-map .territory-thumb-wrap{height:230px; border-radius:0; margin-top:0; box-shadow:none;}
-.sector-hero-map-icons{position:absolute; top:calc(env(safe-area-inset-top) + var(--tg-safe-area-top, 0px) + 10px); left:12px; right:12px; display:flex; justify-content:space-between; z-index:10;}
+/* Just 10px: .screen already pads its top by the notch + Telegram header
+   (--tg-safe-area-top), and this hero sits inside that padding — adding the
+   insets again pushed the share button halfway down the map in the Mini App. */
+.sector-hero-map-icons{position:absolute; top:10px; left:12px; right:12px; display:flex; justify-content:space-between; z-index:10;}
 .sector-dock-card{
   position:relative; z-index:5; margin:-26px 0 0; background:var(--surface);
   border-radius:var(--radius-l) var(--radius-l) 0 0; padding:12px 20px 4px;
