@@ -48,12 +48,15 @@ export function useTerritories() {
       // database yet never reach the map. Page through with .range() so the
       // table can keep growing past 1000 without this recurring.
       const pageSize = 1000
-      const first = await supabase.from('territories_with_stats').select(columns).range(0, pageSize - 1)
+      // Pages need a fixed order: without one, two separate requests may
+      // come back in different orders and overlap — some sectors twice,
+      // others (up to hundreds) missing from the map.
+      const first = await supabase.from('territories_with_stats').select(columns).order('id').range(0, pageSize - 1)
       if (first.error) throw first.error
       const data = first.data
       let lastPageLength = data.length
       for (let from = pageSize; lastPageLength === pageSize; from += pageSize) {
-        const page = await supabase.from('territories_with_stats').select(columns).range(from, from + pageSize - 1)
+        const page = await supabase.from('territories_with_stats').select(columns).order('id').range(from, from + pageSize - 1)
         if (page.error) throw page.error
         data.push(...page.data)
         lastPageLength = page.data.length
@@ -140,7 +143,7 @@ export function useAllTerritoryIds() {
       const ids: string[] = []
       let lastPageLength = 0
       for (let from = 0; from === 0 || lastPageLength === pageSize; from += pageSize) {
-        const { data, error } = await supabase.from('territories').select('id').range(from, from + pageSize - 1)
+        const { data, error } = await supabase.from('territories').select('id').order('id').range(from, from + pageSize - 1)
         if (error) throw error
         ids.push(...data.map((row) => row.id))
         lastPageLength = data.length
