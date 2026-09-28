@@ -63,11 +63,15 @@ function shieldBadge(shieldUntil: string | null) {
   )
 }
 
+// showTerritory: fly to a sector and bring its carousel card up, exactly as
+// a tap on it on the map would — for «open on the map» from a sector screen.
+export type MapScreenHandle = LeafletMapHandle & { showTerritory: (id: string) => void }
+
 // forwardRef so FishZoneApp can fly the map to a geolocated sector (from the
 // "+" handler) even while the camera screen is showing — the map stays
 // mounted the whole time, it's just visually hidden (see .screen CSS).
 export const MapScreen = forwardRef<
-  LeafletMapHandle,
+  MapScreenHandle,
   {
     territories: Territory[]
     myTerritoryColor: string
@@ -142,6 +146,10 @@ export const MapScreen = forwardRef<
     flyToCity: (center: [number, number], zoom: number) => mapRef.current?.flyToCity(center, zoom),
     zoomIn: () => mapRef.current?.zoomIn(),
     zoomOut: () => mapRef.current?.zoomOut(),
+    showTerritory: (id: string) => {
+      handlePolygonSelect(id)
+      mapRef.current?.flyToTerritory(id)
+    },
   }))
   // Skips the fly-over on the very first render — the map already opens
   // straight at CITIES[city]'s own center/zoom (see the init effect below,

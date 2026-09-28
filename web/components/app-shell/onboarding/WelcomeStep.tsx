@@ -1,13 +1,18 @@
 'use client'
 
+import { CoinIcon } from '@/components/app-shell/CoinIcon'
+
 export function WelcomeStep({
   onCapture,
   onSignIn,
   onContinue,
+  invited,
 }: {
   onCapture?: () => void
   onSignIn?: () => void
   onContinue?: () => void
+  // From a friend's invite link: the +100 start bonus (claim_referral) shown up front.
+  invited?: boolean
 }) {
   return (
     <div className="onboarding-welcome">
@@ -27,6 +32,12 @@ export function WelcomeStep({
         </div>
       </div>
       <div className="onboarding-welcome-card">
+        {invited && (
+          <div className="onboarding-welcome-invite">
+            <CoinIcon size={16} />
+            Друг пригласил тебя · +100 монет на старт
+          </div>
+        )}
         <div className="onboarding-welcome-title">
           <span>Лови</span>
           <span className="onboarding-welcome-title-accent">Занимай</span>

@@ -27,7 +27,8 @@ import { useAchievementUnlock } from '@/lib/achievementUnlock'
 import { useWeekTopModal } from '@/lib/weekTopModal'
 import { useClanBattleCeremony } from '@/lib/clanBattleCeremony'
 import { hasVisibleTypedText, useAppUpdate } from '@/lib/appUpdate'
-import { parseGuestShare, refParam, rememberClanInvite, rememberRef, takeRememberedRef, type ClanInvite } from '@/lib/guestShare'
+import { insideTelegram } from '@/lib/openExternal'
+import { inviteLink, parseGuestShare, refParam, rememberClanInvite, rememberRef, takeRememberedRef, type ClanInvite } from '@/lib/guestShare'
 import { GuestShareScreen } from '@/components/app-shell/GuestShareScreen'
 import { formatCooldown, type SpeciesEntry } from '@/lib/format'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
@@ -65,8 +66,7 @@ import {
   preloadLazyScreens,
 } from '@/components/app-shell/lazyScreens'
 import { CommentsSheet } from '@/components/app-shell/CommentsSheet'
-import { MapScreen } from '@/components/app-shell/screens/MapScreen'
-import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
+import { MapScreen, type MapScreenHandle } from '@/components/app-shell/screens/MapScreen'
 import { TerritoryScreen } from '@/components/app-shell/screens/TerritoryScreen'
 import { TerritoriesListScreen, type Mode as RatingMode } from '@/components/app-shell/screens/TerritoriesListScreen'
 import { ShopScreen } from '@/components/app-shell/screens/ShopScreen'
@@ -161,7 +161,7 @@ export function FishZoneApp() {
   const { data: allTerritoryIds = [] } = useAllTerritoryIds()
   const confirmCatchMutation = useConfirmCatch()
   const findUserByPublicId = useFindUserByPublicId()
-  const mapHandleRef = useRef<LeafletMapHandle>(null)
+  const mapHandleRef = useRef<MapScreenHandle>(null)
   const { data: unreadCount = 0 } = useUnreadNotificationCount()
   const { unreadCount: adminLogUnreadCount, markAllRead: markAdminLogRead } = useAdminActionsReadState()
   // Which city's sectors the map/territories tab/rating currently show — the
@@ -486,6 +486,13 @@ export function FishZoneApp() {
     resetTo({ screen: id })
     setNavScreen(id)
   }
+  // «На карте» on a sector screen: back to the map tab with that sector
+  // flown to and its card up, as if it had been tapped there. A frame later
+  // so the map screen is the visible one when the carousel scrolls.
+  function showTerritoryOnMap(id: string) {
+    navClick('screen-map')
+    requestAnimationFrame(() => mapHandleRef.current?.showTerritory(id))
+  }
   // "Все мои территории" from the profile — jumps to the same Территории tab
   // (pre-filtered to "Мои"), same as tapping the tab itself, not a drill-in
   // (see DECISIONS.md: TerritoriesListScreen has no back button, it's a tab).
@@ -524,7 +531,8 @@ export function FishZoneApp() {
     push({ screen: 'screen-clan-chat', clanId: id })
   }
   function openClanEditor(mode: 'create' | 'edit', clanId: number | null) {
-    setClanEditor({ mode, clanId, session: Date.now() })
+    // A fresh session number remounts the editor with clean state each open.
+    setClanEditor((prev) => ({ mode, clanId, session: (prev?.session ?? 0) + 1 }))
     push({ screen: 'screen-clan-editor', mode, clanId })
   }
   // Invites land best as a Telegram share (the Mini App's own share sheet,
@@ -536,7 +544,7 @@ export function FishZoneApp() {
     const url = `${window.location.origin}${window.location.pathname}?clan=${clanId}${invite}${refParam(myProfile?.publicId)}`
     const text = `Вступай в клан «${name}» в RANGE`
     const webApp = window.Telegram?.WebApp
-    if (webApp?.openTelegramLink) {
+    if (insideTelegram() && webApp?.openTelegramLink) {
       webApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`)
       return
     }
@@ -814,6 +822,26 @@ export function FishZoneApp() {
   // their own "ID: 12345" — the ?user=<id> deep-link effect below resolves
   // it back via the same lookup the admin/territories "find by ID" search
   // already uses (useFindUserByPublicId).
+  // «Пригласи друзей» in the profile: the app link credited to you — the
+  // friend gets +100 on sign-up, you +100 on their first catch (claim_referral
+  // and the catches_referral_reward trigger). Telegram's own share sheet in
+  // the Mini App, the clipboard elsewhere — same as shareClan.
+  async function inviteFriends() {
+    if (!myProfile?.publicId) return
+    const url = inviteLink(myProfile.publicId)
+    const text = 'Лови рыбу и захватывай сектора в RANGE — по моей ссылке +100 монет на старт'
+    const webApp = window.Telegram?.WebApp
+    if (insideTelegram() && webApp?.openTelegramLink) {
+      webApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`)
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`)
+      showToast('Ссылка-приглашение скопирована — отправь её друзьям')
+    } catch {
+      showToast('Не удалось скопировать ссылку')
+    }
+  }
   async function shareProfile(publicId: string, text: string) {
     const url = `${window.location.origin}${window.location.pathname}?user=${publicId}${refParam(myProfile?.publicId)}`
     try {
@@ -1022,9 +1050,12 @@ export function FishZoneApp() {
   // Development only: «&guest=1» shows the guest view in a signed-in session,
   // to check it without signing out.
   const forceGuest = process.env.NODE_ENV !== 'production' && new URLSearchParams(launchSearch).has('guest')
+  // Any launch link with a ref counts — a shared screen or the profile's
+  // plain «Пригласить друзей» link (?ref= alone, which opens Welcome).
+  const launchRef = useMemo(() => new URLSearchParams(launchSearch).get('ref'), [launchSearch])
   useEffect(() => {
-    if (!user && guestShare?.ref) rememberRef(guestShare.ref, guestShare.kind)
-  }, [user, guestShare])
+    if (!user && launchRef) rememberRef(launchRef, guestShare?.kind ?? 'invite')
+  }, [user, launchRef, guestShare])
   // An invite link's code (?clan=<id>&invite=<code>) — or one remembered from
   // an earlier launch — for that clan's join button.
   const [clanInvite, setClanInvite] = useState<ClanInvite | null>(null)
@@ -1044,7 +1075,9 @@ export function FishZoneApp() {
       !linkingEmail &&
       !guestAuth &&
       !hasVisibleTypedText(),
-    () => resumeUrlFor(topEntry, viewingUserProfile?.publicId ?? null),
+    // Without an account (a guest on a shared screen, or mid-signup) the
+    // launch link is what brings the same screen back.
+    () => (user ? resumeUrlFor(topEntry, viewingUserProfile?.publicId ?? null) : window.location.pathname + launchSearch),
   )
   // Signed up from a link: +100 coins once the wizard is done (the server
   // only pays a brand-new account, once — see claim_referral).
@@ -1104,6 +1137,7 @@ export function FishZoneApp() {
           onForgotPassword={() => setRecoveryMode(true)}
           initialStep={!user && guestAuth ? guestAuth : undefined}
           onBackToShare={!user && guestShare ? () => setGuestAuth(null) : undefined}
+          invited={!!launchRef}
         />
       </div>
     )
@@ -1153,6 +1187,7 @@ export function FishZoneApp() {
               onOpenAllCatches={() => push({ screen: 'screen-catches', territoryId: viewingTerritory.id })}
               onOpenClan={openClan}
               onToast={showToast}
+              onShowOnMap={cityForSectorId(viewingTerritory.id) === city ? showTerritoryOnMap : undefined}
             />
           )}
         </Screen>
@@ -1329,6 +1364,7 @@ export function FishZoneApp() {
             onOpenAchievementDetail={(icon) => user && openAchievementDetail(user.id, icon)}
             onOpenAward={setOpenAward}
             onShareProfile={shareProfile}
+            onInviteFriends={inviteFriends}
             onOpenFollowers={setViewingFollowersFor}
             onOpenSpecies={setViewingSpeciesFor}
             onPostAnnouncement={() => setPostingAnnouncement(true)}

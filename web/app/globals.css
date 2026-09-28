@@ -866,6 +866,13 @@ body{
    (--tg-safe-area-top), and this hero sits inside that padding — adding the
    insets again pushed the share button halfway down the map in the Mini App. */
 .sector-hero-map-icons{position:absolute; top:10px; left:12px; right:12px; display:flex; justify-content:space-between; z-index:10;}
+/* Tapping the hero map opens this sector on the main map; the chip sits
+   above the dock card's 26px overlap so it stays visible. */
+.sector-hero-map-open{position:absolute; inset:0; z-index:4; background:none; border:none; padding:0; font:inherit; cursor:pointer; display:flex; align-items:flex-end; justify-content:flex-end;}
+.sector-hero-map-chip{margin:0 12px 38px 0; display:inline-flex; align-items:center; gap:6px; padding:7px 11px; border-radius:999px; background:rgba(255,255,255,0.94); color:var(--ink); font-size:12.5px; font-weight:700; box-shadow:0 4px 14px rgba(0,0,0,0.18); transition:transform .15s var(--ease);}
+.sector-hero-map-open:active .sector-hero-map-chip{transform:scale(0.95);}
+.sector-hero-map-open:focus-visible{outline:none;}
+.sector-hero-map-open:focus-visible .sector-hero-map-chip{box-shadow:0 0 0 3px var(--accent);}
 .sector-dock-card{
   position:relative; z-index:5; margin:-26px 0 0; background:var(--surface);
   border-radius:var(--radius-l) var(--radius-l) 0 0; padding:12px 20px 4px;
@@ -1402,6 +1409,10 @@ body{
 
 /* ---------- AwardsRing (see AwardsRing.tsx / awardIcons.tsx) ---------- */
 .award-ring-stage{position:relative; display:flex; align-items:center; justify-content:center; margin:0 auto;}
+/* The medals circle the stage's centre, so the avatar has to sit exactly
+   there — its own top margin (spacing when there's no ring) pushed it 7px
+   down, leaving the top medal far off and the bottom one against the avatar. */
+.award-ring-stage > .profile-hero-avatar-ring{margin:0;}
 .award-ring-badge{
   position:absolute; width:40px; height:40px; border-radius:50%; cursor:pointer;
   display:flex; align-items:center; justify-content:center; color:#fff; padding:0;
@@ -1833,6 +1844,12 @@ body{
   opacity:0; transform:translateY(10px); animation:onboardingCardIn .5s var(--ease-out) 1.02s both;
 }
 @keyframes onboardingCardIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+.onboarding-welcome-invite{
+  align-self:flex-start; display:inline-flex; align-items:center; gap:7px;
+  padding:7px 12px 7px 9px; border-radius:999px; background:var(--accent-soft, #FFF0E6); color:var(--accent);
+  font-size:13px; font-weight:800;
+  opacity:0; transform:translateY(10px); animation:onboardingCardIn .5s var(--ease-out) .55s both;
+}
 
 .onboarding-step{
   flex:1 1 auto; display:flex; flex-direction:column; min-height:100dvh; background:var(--bg);
@@ -2078,7 +2095,7 @@ body{
   .unlock-confetti-piece{display:none !important;}
   .unlock-modal-badge, .unlock-modal-badge-glow{animation:none !important; opacity:1 !important; transform:none !important;}
 
-  .onboarding-welcome-mark-wrap, .onboarding-welcome-title span, .onboarding-welcome-sub, .onboarding-welcome-card .btn-primary, .onboarding-welcome-link{
+  .onboarding-welcome-mark-wrap, .onboarding-welcome-invite, .onboarding-welcome-title span, .onboarding-welcome-sub, .onboarding-welcome-card .btn-primary, .onboarding-welcome-link{
     animation:none !important; opacity:1 !important; transform:none !important;
   }
   .onboarding-welcome-splash{animation:none !important; opacity:1 !important; transform:translateY(-50%) !important;}
@@ -2457,6 +2474,13 @@ body{
 .profile-clan-kicker{font-size:11px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:rgba(255,255,255,.66);}
 .profile-clan-name{font-family:var(--font-display),'Oswald',sans-serif; font-weight:700; font-size:20px; line-height:1.15; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .profile-clan-card-empty .profile-clan-name{font-family:inherit; font-size:15px; font-weight:800; white-space:normal;}
+.profile-invite-card{position:relative; display:flex; align-items:center; gap:14px; width:100%; margin-top:10px; border:none; border-radius:20px; padding:14px 16px; font:inherit; text-align:left; cursor:pointer; overflow:hidden; color:#fff; box-shadow:var(--shadow);
+  background:radial-gradient(120% 110% at 0% 0%, rgba(255,214,102,.55), rgba(255,214,102,0) 55%), linear-gradient(150deg,#FF7A2E,#E04400);}
+.profile-invite-coins{position:relative; flex:0 0 auto; width:52px; height:44px;}
+.profile-invite-coins > :first-child{position:absolute; left:2px; top:2px; filter:drop-shadow(0 3px 6px rgba(80,20,0,.35));}
+.profile-invite-coins > :last-child{position:absolute; right:0; bottom:0; filter:drop-shadow(0 3px 6px rgba(80,20,0,.35));}
+.profile-invite-title{font-size:16px; font-weight:800; line-height:1.2;}
+.profile-invite-sub{font-size:12.5px; font-weight:600; line-height:1.35; color:rgba(255,255,255,.86);}
 .profile-clan-stack{display:flex; align-items:center; flex:0 0 auto;}
 .profile-clan-stack .clan-crest + .clan-crest{margin-left:-10px;}
 .profile-clan-pill{display:inline-flex; align-items:center; gap:7px; border:none; background:rgba(255,255,255,.16); color:rgb(var(--hero-text-rgb,255,255,255)); font:inherit; font-size:13px; font-weight:800; padding:4px 12px 4px 5px; border-radius:14px; cursor:pointer;}

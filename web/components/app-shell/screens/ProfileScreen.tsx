@@ -34,6 +34,7 @@ import { resolveHeroBackground } from '@/lib/data/heroBackgrounds'
 import { resolveAvatarFrame } from '@/lib/data/shopItems'
 import { StyledName } from '@/components/app-shell/StyledName'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { insideTelegram } from '@/lib/openExternal'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { CITIES, type CityId } from '@/lib/data/city'
 import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
@@ -76,7 +77,7 @@ function TelegramNotificationsRow() {
       // Inside the Mini App this hands off to Telegram itself; in a plain
       // browser the t.me link opens the app (or its web version).
       const webApp = window.Telegram?.WebApp
-      if (webApp?.openTelegramLink) webApp.openTelegramLink(url)
+      if (insideTelegram() && webApp?.openTelegramLink) webApp.openTelegramLink(url)
       else window.open(url, '_blank', 'noopener')
     } catch {
       setLinkError(true)
@@ -389,6 +390,7 @@ export function ProfileScreen({
   onOpenAchievementDetail,
   onOpenAward,
   onShareProfile,
+  onInviteFriends,
   onOpenFollowers,
   onOpenSpecies,
   onPostAnnouncement,
@@ -419,6 +421,8 @@ export function ProfileScreen({
   onOpenAchievementDetail: (icon: Achievement['icon']) => void
   onOpenAward: (award: UserAward) => void
   onShareProfile: (publicId: string, text: string) => void
+  // «Пригласи друзей» — the plain referral link (+100 coins each side).
+  onInviteFriends: () => void
   onOpenFollowers: (people: ProfileSummary[]) => void
   onOpenSpecies: (species: SpeciesEntry[]) => void
   onPostAnnouncement: () => void
@@ -645,6 +649,22 @@ export function ProfileScreen({
           </span>
         </button>
       )}
+
+      <button className="profile-invite-card tap-scale" onClick={onInviteFriends}>
+        <span className="profile-invite-coins" aria-hidden>
+          <CoinIcon size={28} />
+          <CoinIcon size={20} />
+        </span>
+        <span className="profile-clan-text">
+          <span className="profile-invite-title">Пригласи друзей</span>
+          <span className="profile-invite-sub">+100 монет другу на старт и тебе — когда он поймает первую рыбу</span>
+        </span>
+        <span className="profile-cta-arrow" style={{ position: 'static' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 5l7 7-7 7" />
+          </svg>
+        </span>
+      </button>
 
       <div className="section-title-row" style={{ marginTop: 24 }}>
         <div className="section-title">Достижения</div>

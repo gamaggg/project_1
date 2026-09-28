@@ -280,7 +280,9 @@ export function ClanChatScreen({
     const body = text.trim()
     if (!user || !body || post.isPending) return
     if (muted) return fail(chatMutedMessage(mutedUntil))
-    const quick = quickCheck(body, CLAN_CHAT_MAX_LENGTH)
+    // A member's «@Имя» is a mention, not a Telegram handle — dropped before
+    // the link check, exactly as post_clan_message does on the server.
+    const quick = quickCheck(mentionRe ? body.replace(mentionRe, '$1') : body, CLAN_CHAT_MAX_LENGTH)
     if (quick) return fail(quick === 'too_long' ? 'Слишком длинно — до 500 символов' : moderationMessage(quick))
 
     const tempId = -Date.now()

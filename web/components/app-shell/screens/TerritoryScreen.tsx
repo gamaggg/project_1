@@ -270,6 +270,7 @@ export function TerritoryScreen({
   myTerritoryColor,
   onOpenClan,
   onToast,
+  onShowOnMap,
 }: {
   territory: Territory
   isMostPopular: boolean
@@ -283,6 +284,8 @@ export function TerritoryScreen({
   myTerritoryColor: string
   onOpenClan: (id: number) => void
   onToast: (message: string) => void
+  // Absent for a sector outside the city the map is showing.
+  onShowOnMap?: (id: string) => void
 }) {
   const canAddCatchManually = useCanAddCatchManually()
   const isSuperAdmin = useIsSuperAdmin()
@@ -299,6 +302,18 @@ export function TerritoryScreen({
           ownerAvatarUrl={ownerProfile?.avatarUrl ?? null}
           ownerInitials={(ownerProfile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()}
         />
+        {onShowOnMap && (
+          // The whole hero map is the tap target; the chip just says so.
+          <button type="button" className="sector-hero-map-open" aria-label="Показать сектор на карте" onClick={() => onShowOnMap(territory.id)}>
+            <span className="sector-hero-map-chip">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4z" />
+                <path d="M9 4v13M15 6.5v13" />
+              </svg>
+              На карте
+            </span>
+          </button>
+        )}
         <div className="sector-hero-map-icons">
           <BackButton onClick={onBack} registerNative={false} />
           <div className="icon-btn tap-scale" onClick={onShare}>

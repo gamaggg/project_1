@@ -1,3 +1,11 @@
+// Really running as the Telegram Mini App. The SDK (layout.tsx) loads on
+// every page and defines WebApp in a plain browser too — there its
+// openTelegramLink just navigates the tab away to t.me, so share sheets and
+// bot links check this first.
+export function insideTelegram(): boolean {
+  return typeof window !== 'undefined' && !!window.Telegram?.WebApp?.initData
+}
+
 // A link that leaves RANGE (a maps app, a website). Inside the Telegram Mini
 // App a plain window.open is swallowed, so it goes through Telegram's own
 // openLink; in a browser it's a new tab.

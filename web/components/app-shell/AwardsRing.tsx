@@ -15,7 +15,7 @@ import { AWARD_ICONS, AWARD_COLOR, isKnownAward } from '@/components/app-shell/a
 // the app-shell root, clipping the modal to a ~240px box instead of the full
 // screen. Every other modal in this app is rendered as a FishZoneApp-level
 // sibling for the same reason (see DECISIONS.md) — this one follows suit.
-export function AwardsRing({ awards: allAwards, radius = 92, onOpenAward, children }: { awards: UserAward[]; radius?: number; onOpenAward: (award: UserAward) => void; children: React.ReactNode }) {
+export function AwardsRing({ awards: allAwards, radius = 96, onOpenAward, children }: { awards: UserAward[]; radius?: number; onOpenAward: (award: UserAward) => void; children: React.ReactNode }) {
   const listed = allAwards.filter((a) => isKnownAward(a.kind))
   // Each medal counts once (user_awards_once in the database); repeats
   // granted before that rule collapse into the earliest one.
@@ -46,10 +46,12 @@ export function AwardsRing({ awards: allAwards, radius = 92, onOpenAward, childr
         // lockstep — no Math.random() here, this re-renders on every parent
         // update and random values would make the drift jitter instead of flow.
         const seed = award.id
-        const dx1 = ((seed * 37) % 11) - 5
-        const dy1 = ((seed * 53) % 11) - 5
-        const dx2 = ((seed * 71) % 11) - 5
-        const dy2 = ((seed * 89) % 11) - 5
+        // ±3px: enough to feel alive, small enough that the gap to the
+        // avatar stays even all round (±5 read as lopsided top vs bottom).
+        const dx1 = ((seed * 37) % 7) - 3
+        const dy1 = ((seed * 53) % 7) - 3
+        const dx2 = ((seed * 71) % 7) - 3
+        const dy2 = ((seed * 89) % 7) - 3
         return (
           <button
             key={award.id}

@@ -32,6 +32,7 @@ export function OnboardingFlow({
   onForgotPassword,
   initialStep,
   onBackToShare,
+  invited,
 }: {
   onCityChosen?: (city: CityId) => void
   onForgotPassword: () => void
@@ -39,6 +40,8 @@ export function OnboardingFlow({
   // sign-up or sign-in, and «back» returns to that screen, not to Welcome.
   initialStep?: 'account' | 'signin'
   onBackToShare?: () => void
+  // Opened from a friend's invite link — Welcome mentions the start bonus.
+  invited?: boolean
 }) {
   const { user, signOut, signInWithTelegram } = useAuth()
   // Only true for an account that just got silently created by the Telegram
@@ -84,6 +87,7 @@ export function OnboardingFlow({
     if (viaTelegram)
       return (
         <WelcomeStep
+          invited={invited}
           onContinue={async () => {
             if (!user) {
               // Signed out earlier this Mini App session — re-run the handshake;
@@ -98,7 +102,7 @@ export function OnboardingFlow({
           }}
         />
       )
-    return <WelcomeStep onCapture={() => setStep('account')} onSignIn={() => setStep('signin')} />
+    return <WelcomeStep invited={invited} onCapture={() => setStep('account')} onSignIn={() => setStep('signin')} />
   }
   const backFromAuth = () => (onBackToShare ? onBackToShare() : setStep('welcome'))
   if (step === 'signin') return <SignInStep onBack={backFromAuth} onForgotPassword={onForgotPassword} />

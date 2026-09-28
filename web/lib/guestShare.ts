@@ -28,7 +28,9 @@ export function parseGuestShare(search: string): GuestShare | null {
   )
 }
 
-export function rememberRef(ref: string, source: ShareKind) {
+// source: which shared screen the link pointed at, or 'invite' for the
+// profile's plain «Пригласить друзей» link (?ref= alone).
+export function rememberRef(ref: string, source: ShareKind | 'invite') {
   try {
     localStorage.setItem(REF_KEY, JSON.stringify({ ref, source, at: Date.now() }))
   } catch {}
@@ -45,6 +47,11 @@ export function takeRememberedRef(): { ref: string; source: string } | null {
   } catch {
     return null
   }
+}
+
+// The profile's «Пригласить друзей» link — the app itself, credited to you.
+export function inviteLink(publicId: string): string {
+  return `${window.location.origin}/?ref=${encodeURIComponent(publicId)}`
 }
 
 // «&ref=<public id>» for share links, when the sharer's id is known.
