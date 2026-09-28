@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useActivity, useCityFeed, useMarkNotificationsRead } from '@/lib/supabase/queries'
 import type { CityId } from '@/lib/data/city'
 import type { ActivityEntry } from '@/lib/data/types'
@@ -220,36 +220,51 @@ export function ActivityScreen({
   // state.
   const [unreadIds, setUnreadIds] = useState<Set<string>>(new Set())
   const [snapshotTaken, setSnapshotTaken] = useState(false)
+  // Bumped whenever something unread was just shown — the effect below
+  // marks it read on the server once per bump.
+  const [markRound, setMarkRound] = useState(0)
   // Every screen in this shell stays mounted for the app's whole lifetime
   // (see the `active` prop note above), so without this, "once" above would
   // really mean once ever — leave the tab and come back and the dots from
   // the very first visit would still be sitting there, never re-snapshotted,
   // however many times you actually revisit.
-  // Both adjusted during render rather than in effects: a new visit resets
-  // the snapshot, and the snapshot is taken in the same pass the feed
-  // becomes visible — no frame with stale dots in between.
+  // Adjusted during render rather than in effects: a new visit resets the
+  // snapshot, and the snapshot is taken in the same pass the feed becomes
+  // visible — no frame with stale dots in between. `needsSnapshot` carries
+  // the reset into this same pass (the state itself only updates next pass).
   const [prevActive, setPrevActive] = useState(active)
+  let needsSnapshot = !snapshotTaken
   if (active !== prevActive) {
     setPrevActive(active)
-    if (active) setSnapshotTaken(false)
-  }
-  if (active && isSuccess && !snapshotTaken) {
-    setSnapshotTaken(true)
-    setUnreadIds(new Set(activity.filter((a) => a.unread).map((a) => a.id)))
-  }
-  // Marking read talks to the server, so that part stays an effect — once
-  // per snapshot.
-  const markedRef = useRef(false)
-  useEffect(() => {
-    if (!snapshotTaken) {
-      markedRef.current = false
-      return
+    if (active) {
+      setSnapshotTaken(false)
+      needsSnapshot = true
     }
-    if (markedRef.current) return
-    markedRef.current = true
-    if (unreadIds.size) markRead.mutate()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [snapshotTaken, unreadIds])
+  }
+  if (active && isSuccess) {
+    if (needsSnapshot) {
+      const unread = activity.filter((a) => a.unread).map((a) => a.id)
+      setSnapshotTaken(true)
+      setUnreadIds(new Set(unread))
+      if (unread.length) setMarkRound((r) => r + 1)
+    } else {
+      // Arrived while the screen is open (realtime): it gets its dot and is
+      // marked read too, or the tab badge would keep counting it.
+      const fresh = activity.filter((a) => a.unread && !unreadIds.has(a.id)).map((a) => a.id)
+      if (fresh.length) {
+        setUnreadIds(new Set([...unreadIds, ...fresh]))
+        setMarkRound((r) => r + 1)
+      }
+    }
+  }
+  // Marking read talks to the server, so that part stays an effect. Keyed on
+  // the round, not on a "done" flag: an earlier version kept such a flag in a
+  // ref that the render-phase reset never cleared, so only the first visit of
+  // a session ever marked anything read and the tab badge stuck.
+  useEffect(() => {
+    if (markRound) markRead.mutate()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per round; markRead is a new object every render
+  }, [markRound])
 
   const list = useMemo(() => {
     if (filter === 'mine') return activity.filter((a) => a.mine)
