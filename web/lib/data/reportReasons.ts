@@ -7,3 +7,7 @@ export const REPORT_REASONS = [
   'На фото нет рыбы/улова',
   'Оскорбительное или неприемлемое содержание',
 ]
+
+// Comments are text, not photos — none of the photo-specific reasons above
+// apply, so they get their own short list (see CommentsSheet).
+export const COMMENT_REPORT_REASONS = ['Оскорбление', 'Спам или реклама', 'Другое']

@@ -4,6 +4,7 @@ import { cloneElement, useEffect, useMemo, type ReactElement } from 'react'
 import { CoinCountUp } from '@/components/app-shell/CoinCountUp'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import { hapticSuccess } from '@/lib/telegram/haptics'
+import { seededRandom, seedFrom } from '@/lib/seededRandom'
 
 const CONFETTI_COLORS = ['#FF6B6B', '#FB6A16', '#B5E254', '#4CC9F0', '#E63946', '#7EF5A0', '#EEAAE3', '#A88EF5', '#FFD60A']
 
@@ -32,21 +33,20 @@ export function ChallengeCompletionModal({
   allDone: boolean
   onClose: () => void
 }) {
-  const confetti = useMemo(
-    () =>
-      Array.from({ length: allDone ? 24 : 14 }, (_, i) => {
-        const angle = Math.random() * Math.PI * 2
-        const dist = 70 + Math.random() * 90
-        return {
-          color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-          tx: Math.cos(angle) * dist,
-          ty: Math.sin(angle) * dist - 10 + Math.random() * 40,
-          rot: Math.random() * 480 - 240,
-          delay: Math.random() * 0.2,
-        }
-      }),
-    [allDone]
-  )
+  const confetti = useMemo(() => {
+    const rand = seededRandom(seedFrom(`challenge:${allDone}`))
+    return Array.from({ length: allDone ? 24 : 14 }, (_, i) => {
+      const angle = rand() * Math.PI * 2
+      const dist = 70 + rand() * 90
+      return {
+        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+        tx: Math.cos(angle) * dist,
+        ty: Math.sin(angle) * dist - 10 + rand() * 40,
+        rot: rand() * 480 - 240,
+        delay: rand() * 0.2,
+      }
+    })
+  }, [allDone])
 
   useEffect(() => {
     hapticSuccess()

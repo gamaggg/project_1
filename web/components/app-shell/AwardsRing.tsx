@@ -1,7 +1,7 @@
 'use client'
 
 import type { UserAward } from '@/lib/data/types'
-import { AWARD_ICONS, AWARD_COLOR } from '@/components/app-shell/awardIcons'
+import { AWARD_ICONS, AWARD_COLOR, isKnownAward } from '@/components/app-shell/awardIcons'
 
 // Wraps an avatar with its earned medals floating in a ring around it (see
 // the awards proposal) — collapses to just the avatar when there are none,
@@ -15,7 +15,8 @@ import { AWARD_ICONS, AWARD_COLOR } from '@/components/app-shell/awardIcons'
 // the app-shell root, clipping the modal to a ~240px box instead of the full
 // screen. Every other modal in this app is rendered as a FishZoneApp-level
 // sibling for the same reason (see DECISIONS.md) — this one follows suit.
-export function AwardsRing({ awards: listed, radius = 92, onOpenAward, children }: { awards: UserAward[]; radius?: number; onOpenAward: (award: UserAward) => void; children: React.ReactNode }) {
+export function AwardsRing({ awards: allAwards, radius = 92, onOpenAward, children }: { awards: UserAward[]; radius?: number; onOpenAward: (award: UserAward) => void; children: React.ReactNode }) {
+  const listed = allAwards.filter((a) => isKnownAward(a.kind))
   // Each medal counts once (user_awards_once in the database); repeats
   // granted before that rule collapse into the earliest one.
   const seenMedals = new Set<string>()

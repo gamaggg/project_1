@@ -26,17 +26,15 @@ export function CoinCountUp({
   const startRef = useRef<number | null>(null)
 
   useEffect(() => {
+    // Every update lands on an animation frame: the first frame (t = 0)
+    // resets to `from`, reduced motion jumps straight to `to` on it — never
+    // a synchronous setState in the effect.
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduced) {
-      setValue(to)
-      return
-    }
-    setValue(from)
     startRef.current = null
     let raf = requestAnimationFrame(tick)
     function tick(ts: number) {
       if (startRef.current === null) startRef.current = ts
-      const t = Math.min(1, (ts - startRef.current) / durationMs)
+      const t = reduced ? 1 : Math.min(1, (ts - startRef.current) / durationMs)
       const eased = 1 - (1 - t) ** 3
       setValue(Math.round(from + (to - from) * eased))
       if (t < 1) raf = requestAnimationFrame(tick)
@@ -68,17 +66,14 @@ export function LiveCoinBalance({ value, durationMs = 600 }: { value: number; du
     const from = displayRef.current
     const to = value
     if (from === to) return
+    // Every update lands on an animation frame (reduced motion: straight to
+    // the new value on the first one) — never synchronously in the effect.
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduced) {
-      displayRef.current = to
-      setDisplay(to)
-      return
-    }
     let start: number | null = null
     let raf = requestAnimationFrame(tick)
     function tick(ts: number) {
       if (start === null) start = ts
-      const t = Math.min(1, (ts - start) / durationMs)
+      const t = reduced ? 1 : Math.min(1, (ts - start) / durationMs)
       const eased = 1 - (1 - t) ** 3
       const next = Math.round(from + (to - from) * eased)
       displayRef.current = next

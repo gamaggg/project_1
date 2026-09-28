@@ -297,6 +297,42 @@ export type Database = {
           },
         ]
       }
+      catch_comments: {
+        Row: {
+          body: string
+          catch_id: number
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          id: number
+          parent_id: number | null
+          reply_to_user_id: string | null
+          user_id: string
+        }
+        Insert: {
+          body: string
+          catch_id: number
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: never
+          parent_id?: number | null
+          reply_to_user_id?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string
+          catch_id?: number
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: never
+          parent_id?: number | null
+          reply_to_user_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       catch_reports: {
         Row: {
           catch_id: number
@@ -1196,6 +1232,10 @@ export type Database = {
           can_view_all_users: boolean | null
           catches_count: number | null
           city: string | null
+          clan_crest: Json | null
+          clan_id: number | null
+          clan_name: string | null
+          clan_role: string | null
           coins: number | null
           created_at: string | null
           display_name: string | null
@@ -1298,6 +1338,10 @@ export type Database = {
           last_catch_at: string | null
           lat: number | null
           lng: number | null
+          co_holders: Json | null
+          owner_clan_crest: Json | null
+          owner_clan_id: number | null
+          owner_clan_name: string | null
           owner_avatar_url: string | null
           owner_display_name: string | null
           owner_id: string | null
@@ -1323,6 +1367,149 @@ export type Database = {
       }
     }
     Functions: {
+      report_client_error: { Args: { p_context: string; p_message: string }; Returns: undefined }
+      get_clan_chest: { Args: { p_clan_id: number }; Returns: Json }
+      get_clan_race: { Args: { p_city: string }; Returns: Json }
+      get_clan_eligibility: { Args: Record<string, never>; Returns: Json }
+      check_clan_name: { Args: { p_name: string }; Returns: string | null }
+      create_clan: {
+        Args: { p_name: string; p_motto: string | null; p_crest: Json; p_background: string; p_join_type: string; p_min_sectors: number }
+        Returns: number
+      }
+      join_clan: { Args: { p_clan_id: number }; Returns: string }
+      cancel_clan_join_request: { Args: { p_clan_id: number }; Returns: undefined }
+      leave_clan: { Args: { p_clan_id?: number | null }; Returns: undefined }
+      kick_clan_member: { Args: { p_user_id: string; p_clan_id?: number | null }; Returns: undefined }
+      set_clan_member_role: { Args: { p_user_id: string; p_role: string; p_clan_id?: number | null }; Returns: undefined }
+      respond_clan_join_request: { Args: { p_user_id: string; p_accept: boolean; p_clan_id?: number | null }; Returns: undefined }
+      invite_to_clan: { Args: { p_user_id: string; p_clan_id?: number | null }; Returns: undefined }
+      get_clan_badges: { Args: { p_city: string }; Returns: { user_id: string; clan_id: number; clan_name: string; crest: Json }[] }
+      get_clan_chat: {
+        Args: { p_clan_id: number; p_before_id?: number | null; p_limit?: number }
+        Returns: {
+          id: number
+          user_id: string | null
+          display_name: string | null
+          avatar_url: string | null
+          name_style: string | null
+          role: string | null
+          body: string
+          created_at: string
+        }[]
+      }
+      post_clan_message: { Args: { p_clan_id: number; p_body: string }; Returns: Json }
+      admin_get_text_moderation_log: {
+        Args: { p_limit?: number; p_before_id?: number | null }
+        Returns: {
+          id: number
+          user_id: string
+          display_name: string | null
+          avatar_url: string | null
+          context: string
+          reason: string
+          body: string | null
+          created_at: string
+          muted_until: string | null
+        }[]
+      }
+      admin_unmute_user: { Args: { p_user_id: string }; Returns: undefined }
+      get_share_preview: { Args: { p_kind: string; p_key: string }; Returns: Json }
+      claim_referral: { Args: { p_ref: string; p_source?: string | null }; Returns: Json }
+      get_city_feed: {
+        Args: { p_city: string; p_limit?: number }
+        Returns: {
+          catch_id: number
+          user_id: string
+          display_name: string | null
+          avatar_url: string | null
+          territory_id: string
+          territory_kind: Database['public']['Enums']['territory_kind'] | null
+          species_name: string | null
+          species_category: string | null
+          length_cm: number | null
+          weight_kg: number | null
+          photo_url: string | null
+          caught_at: string
+          claimed: boolean
+        }[]
+      }
+      delete_clan_message: { Args: { p_message_id: number }; Returns: undefined }
+      mark_clan_chat_read: { Args: { p_clan_id: number }; Returns: undefined }
+      get_clan_chat_summary: { Args: { p_clan_id: number }; Returns: Json }
+      decline_clan_invite: { Args: { p_clan_id: number }; Returns: undefined }
+      update_clan: {
+        Args: {
+          p_name: string | null
+          p_motto: string | null
+          p_announcement: string | null
+          p_crest: Json
+          p_background: string
+          p_join_type: string
+          p_min_sectors: number
+          p_clan_id?: number | null
+        }
+        Returns: undefined
+      }
+      list_clans: {
+        Args: { p_city: string; p_query?: string | null }
+        Returns: {
+          id: number
+          name: string
+          motto: string | null
+          crest: Json
+          background: string
+          level: number
+          trophies: number
+          members: number
+          capacity: number
+          join_type: string
+          min_sectors: number
+          sectors_held: number
+        }[]
+      }
+      get_clan: { Args: { p_clan_id: number }; Returns: Json }
+      get_my_clan_invites: {
+        Args: Record<string, never>
+        Returns: { clan_id: number; name: string; crest: Json; invited_by_name: string | null; created_at: string }[]
+      }
+      post_comment: {
+        Args: { p_catch_id: number; p_body: string; p_parent_id?: number | null }
+        Returns: Json
+      }
+      delete_comment: { Args: { p_comment_id: number }; Returns: undefined }
+      report_comment: { Args: { p_comment_id: number; p_reason: string }; Returns: undefined }
+      get_catch_comments: {
+        Args: { p_catch_id: number }
+        Returns: {
+          id: number
+          parent_id: number | null
+          user_id: string
+          display_name: string
+          avatar_url: string | null
+          equipped_name_style: string | null
+          reply_to_user_id: string | null
+          reply_to_name: string | null
+          body: string | null
+          created_at: string
+          deleted: boolean
+          clan_crest: Json | null
+          clan_name: string | null
+        }[]
+      }
+      admin_get_comment_reports: {
+        Args: Record<string, never>
+        Returns: {
+          comment_id: number
+          catch_id: number
+          body: string
+          author_id: string
+          author_name: string
+          report_count: number
+          reasons: string[]
+          last_reported_at: string
+        }[]
+      }
+      admin_dismiss_comment_reports: { Args: { p_comment_id: number }; Returns: undefined }
       admin_add_territory: {
         Args: {
           p_corners: Json
@@ -1340,6 +1527,10 @@ export type Database = {
         Returns: undefined
       }
       admin_delete_user: { Args: { p_user_id: string }; Returns: undefined }
+      admin_moderate_clan: {
+        Args: { p_clan_id: number; p_action: string }
+        Returns: undefined
+      }
       admin_set_territory_kind: {
         Args: { p_territory_id: string; p_kind: string; p_lat?: number; p_lng?: number }
         Returns: undefined
@@ -1467,7 +1658,7 @@ export type Database = {
           p_territory_id: string
           p_weight_kg?: number
         }
-        Returns: { species_coins: number; capture_coins: number }[]
+        Returns: { species_coins: number; capture_coins: number; clan_support: boolean }[]
       }
       get_admin_permissions: {
         Args: { p_user_id: string }

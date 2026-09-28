@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useProfile, useUpdateProfile } from '@/lib/supabase/queries'
 import { WelcomeStep } from '@/components/app-shell/onboarding/WelcomeStep'
@@ -27,7 +27,19 @@ type Step = 'welcome' | 'signin' | 'account' | 'name' | 'color' | 'city' | 'terr
 // CityStep's onDone fires here, since this whole flow renders *inside*
 // FishZoneApp rather than replacing it — writing to localStorage alone
 // wouldn't be re-read, so the pick has to reach that live state directly.
-export function OnboardingFlow({ onCityChosen, onForgotPassword }: { onCityChosen?: (city: CityId) => void; onForgotPassword: () => void }) {
+export function OnboardingFlow({
+  onCityChosen,
+  onForgotPassword,
+  initialStep,
+  onBackToShare,
+}: {
+  onCityChosen?: (city: CityId) => void
+  onForgotPassword: () => void
+  // Opened from a guest's shared screen (GuestShareScreen): straight to
+  // sign-up or sign-in, and «back» returns to that screen, not to Welcome.
+  initialStep?: 'account' | 'signin'
+  onBackToShare?: () => void
+}) {
   const { user, signOut, signInWithTelegram } = useAuth()
   // Only true for an account that just got silently created by the Telegram
   // auto-sign-in (see AuthProvider) — offers a way out for someone who
@@ -36,7 +48,7 @@ export function OnboardingFlow({ onCityChosen, onForgotPassword }: { onCityChose
   // matters (NameStep) the WebApp object is already populated.
   const [viaTelegram] = useState(() => typeof window !== 'undefined' && !!window.Telegram?.WebApp?.initData)
   const { data: myProfile, isLoading: myProfileLoading } = useProfile(user?.id ?? null)
-  const [step, setStep] = useState<Step>('welcome')
+  const [step, setStep] = useState<Step>(initialStep ?? 'welcome')
   const updateProfile = useUpdateProfile()
 
   // Resumes an in-progress account exactly once per mount. Deliberately NOT
@@ -49,20 +61,22 @@ export function OnboardingFlow({ onCityChosen, onForgotPassword }: { onCityChose
   // catch-intro persist nothing at all) — so a reload mid tail just restarts
   // that tail from 'city' rather than trying to guess exactly which of the
   // unpersisted screens was last seen.
-  const resumedRef = useRef(false)
-  const resumeTargetRef = useRef<Step>('name')
-  useEffect(() => {
-    if (!user || resumedRef.current || myProfileLoading || !myProfile) return
-    resumedRef.current = true
-    if (myProfile.onboardingCompleted) return // defensive; the gate unmounts us shortly anyway
-    const target: Step = myProfile.territoryColor === null ? 'name' : 'city'
-    // Telegram already silently signed this account in — Welcome still gets
-    // shown (see WelcomeStep's onContinue variant below) instead of jumping
-    // straight past it, so there's at least one deliberate tap before
-    // landing in the wizard. A resumed *web* session skips it as before.
-    if (viaTelegram) resumeTargetRef.current = target
-    else setStep(target)
-  }, [user, myProfile, myProfileLoading, viaTelegram])
+  // Decided once, during render, as soon as the profile is in.
+  const [resumed, setResumed] = useState(false)
+  const [resumeTarget, setResumeTarget] = useState<Step>('name')
+  if (user && !resumed && !myProfileLoading && myProfile) {
+    setResumed(true)
+    // Already finished: nothing to resume (defensive; the gate unmounts us shortly anyway).
+    if (!myProfile.onboardingCompleted) {
+      const target: Step = myProfile.territoryColor === null ? 'name' : 'city'
+      // Telegram already silently signed this account in — Welcome still gets
+      // shown (see WelcomeStep's onContinue variant below) instead of jumping
+      // straight past it, so there's at least one deliberate tap before
+      // landing in the wizard. A resumed *web* session skips it as before.
+      if (viaTelegram) setResumeTarget(target)
+      else setStep(target)
+    }
+  }
 
   if (user && myProfileLoading) return null
 
@@ -80,14 +94,15 @@ export function OnboardingFlow({ onCityChosen, onForgotPassword }: { onCityChose
               await signInWithTelegram()
               return
             }
-            setStep(resumeTargetRef.current)
+            setStep(resumeTarget)
           }}
         />
       )
     return <WelcomeStep onCapture={() => setStep('account')} onSignIn={() => setStep('signin')} />
   }
-  if (step === 'signin') return <SignInStep onBack={() => setStep('welcome')} onForgotPassword={onForgotPassword} />
-  if (step === 'account') return <AccountStep onBack={() => setStep('welcome')} />
+  const backFromAuth = () => (onBackToShare ? onBackToShare() : setStep('welcome'))
+  if (step === 'signin') return <SignInStep onBack={backFromAuth} onForgotPassword={onForgotPassword} />
+  if (step === 'account') return <AccountStep onBack={backFromAuth} />
   if (step === 'name')
     return (
       <NameStep

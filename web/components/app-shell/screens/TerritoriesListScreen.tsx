@@ -8,9 +8,10 @@ import { useCanViewAllUsers } from '@/lib/supabase/queries'
 import { resolveTerritoryColor } from '@/lib/data/territoryColors'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { WeeklyLeaderboard } from '@/components/app-shell/screens/WeeklyLeaderboard'
+import { ClanRating } from '@/components/app-shell/screens/ClanRating'
 
 type Filter = 'all' | TerritoryStatus
-export type Mode = 'territories' | 'rating'
+export type Mode = 'territories' | 'rating' | 'clans'
 
 // How many sector rows are added each time the end of the list comes into
 // view. Comfortably more than one screenful, so scrolling never catches up
@@ -26,6 +27,8 @@ export function TerritoriesListScreen({
   onOpenTerritory,
   onOpenUsersList,
   onOpenUser,
+  onOpenClan,
+  onOpenClans,
 }: {
   territories: Territory[]
   myTerritoryColor: string
@@ -35,6 +38,8 @@ export function TerritoriesListScreen({
   onOpenTerritory: (id: string) => void
   onOpenUsersList: () => void
   onOpenUser: (id: string) => void
+  onOpenClan: (id: number) => void
+  onOpenClans: () => void
 }) {
   const [mode, setMode] = useState<Mode>('territories')
   const [filter, setFilter] = useState<Filter>(initialFilter ?? 'all')
@@ -44,12 +49,13 @@ export function TerritoriesListScreen({
   // initialFilter/initialMode comes in (e.g. "Все мои территории" from the
   // profile, or "Перейти к текущему рейтингу" from the last-week recap), so
   // it isn't stuck showing whatever was picked last time.
-  useEffect(() => {
-    if (initialFilter) setFilter(initialFilter)
-  }, [initialFilter])
-  useEffect(() => {
-    if (initialMode) setMode(initialMode)
-  }, [initialMode])
+  // Adjusted during render, the moment a new value arrives.
+  const [syncedInitial, setSyncedInitial] = useState({ filter: initialFilter, mode: initialMode })
+  if (initialFilter !== syncedInitial.filter || initialMode !== syncedInitial.mode) {
+    setSyncedInitial({ filter: initialFilter, mode: initialMode })
+    if (initialFilter && initialFilter !== syncedInitial.filter) setFilter(initialFilter)
+    if (initialMode && initialMode !== syncedInitial.mode) setMode(initialMode)
+  }
   const list = territories.filter((t) => (filter === 'all' ? true : t.status === filter))
   const canViewAllUsers = useCanViewAllUsers()
 
@@ -62,10 +68,15 @@ export function TerritoriesListScreen({
   const [visibleCount, setVisibleCount] = useState(TERRITORY_PAGE)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const listLengthRef = useRef(list.length)
-  listLengthRef.current = list.length
   useEffect(() => {
+    listLengthRef.current = list.length
+  })
+  // A new filter or mode starts from the first page again.
+  const [pagedFor, setPagedFor] = useState(`${filter}|${mode}`)
+  if (pagedFor !== `${filter}|${mode}`) {
+    setPagedFor(`${filter}|${mode}`)
     setVisibleCount(TERRITORY_PAGE)
-  }, [filter, mode])
+  }
   useEffect(() => {
     const el = sentinelRef.current
     if (!el) return
@@ -92,9 +103,14 @@ export function TerritoriesListScreen({
         <button className={`rating-tab${mode === 'rating' ? ' active' : ''}`} onClick={() => setMode('rating')}>
           Рейтинг
         </button>
+        <button className={`rating-tab${mode === 'clans' ? ' active' : ''}`} onClick={() => setMode('clans')}>
+          Кланы
+        </button>
       </div>
 
-      {mode === 'rating' ? (
+      {mode === 'clans' ? (
+        <ClanRating city={city} onOpenClan={onOpenClan} onOpenClans={onOpenClans} />
+      ) : mode === 'rating' ? (
         <WeeklyLeaderboard city={city} onOpenUser={onOpenUser} />
       ) : (
         <>

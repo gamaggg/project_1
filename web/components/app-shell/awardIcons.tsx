@@ -38,6 +38,15 @@ export const AWARD_ICONS: Record<AwardKind, React.ReactNode> = {
       <path d="M5 5l14 14M19 5L5 19" />
     </svg>
   ),
+  // The clan's boat crossing first — same sail silhouette as the map's
+  // regatta pill (see ClanRace.tsx).
+  clan_race_winner: (
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <path d="M12.6 3.2c3.9 2.4 5.9 6.3 6.1 11.3h-6.1Z" />
+      <path d="M11 6.2 6 14.5h5Z" opacity=".75" />
+      <path d="M3 16.8h18l-2.3 3.2H5.3Z" />
+    </svg>
+  ),
 }
 
 export const AWARD_COLOR: Record<AwardKind, { color: string; colorHi: string }> = {
@@ -48,4 +57,11 @@ export const AWARD_COLOR: Record<AwardKind, { color: string; colorHi: string }> 
   season_legend: { color: '#FC5200', colorHi: '#FFD3B8' },
   night_watch: { color: '#3B4B9E', colorHi: '#C9D0F2' },
   duelist: { color: '#E0483E', colorHi: '#FFD3CF' },
+  clan_race_winner: { color: '#1E8FB5', colorHi: '#BFEAF7' },
+}
+
+// A medal kind this build doesn't know yet (added server-side before the
+// client that draws it shipped) is skipped rather than crashing the ring.
+export function isKnownAward(kind: string): kind is AwardKind {
+  return kind in AWARD_COLOR
 }

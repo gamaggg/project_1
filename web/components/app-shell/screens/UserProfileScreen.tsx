@@ -1,12 +1,13 @@
 'use client'
 
-import { useRef, type CSSProperties } from 'react'
+import { useRef, useState, type CSSProperties } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import {
   useProfile,
   useCatchesByUser,
   useIsFollowing,
   useSetFollowing,
+  useInviteToClan,
   useIsAdmin,
   useIsSuperAdmin,
   useCanBlockUsers,
@@ -27,6 +28,9 @@ import { CITIES } from '@/lib/data/city'
 import { resolveHeroBackground } from '@/lib/data/heroBackgrounds'
 import { resolveAvatarFrame } from '@/lib/data/shopItems'
 import { StyledName } from '@/components/app-shell/StyledName'
+import { ClanCrest } from '@/components/app-shell/ClanCrest'
+import { clanErrorMessage } from '@/lib/data/clanLevels'
+import { useAuth } from '@/components/providers/AuthProvider'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
@@ -74,6 +78,7 @@ export function UserProfileScreen({
   onOpenFollowers,
   onOpenAvatarPreview,
   onOpenSpecies,
+  onOpenClan,
 }: {
   userId: string
   territories: Territory[]
@@ -93,6 +98,7 @@ export function UserProfileScreen({
   onOpenFollowers: (people: ProfileSummary[]) => void
   onOpenAvatarPreview: (url: string) => void
   onOpenSpecies: (species: SpeciesEntry[]) => void
+  onOpenClan: (id: number) => void
 }) {
   const { data: profile } = useProfile(userId)
   const equippedFrame = resolveAvatarFrame(profile?.equippedFrame)
@@ -107,6 +113,14 @@ export function UserProfileScreen({
   const { data: reportDeletionCount } = useReportDeletionCount(userId)
   const { data: awards = [] } = useUserAwards(userId)
   const { data: followers = [] } = useFollowers(userId)
+  const { user } = useAuth()
+  const { data: me } = useProfile(user?.id ?? null)
+  const inviteToClan = useInviteToClan()
+  const [inviteState, setInviteState] = useState<'idle' | 'sent' | string>('idle')
+  // Elders and up can invite someone from their own city who isn't in a
+  // clan yet — the server re-checks all of this in invite_to_clan.
+  const canInvite =
+    !!me?.clanId && !!me.clanRole && me.clanRole !== 'member' && !profile?.clanId && !!profile && profile.city === me.city && user?.id !== userId
 
   const catchSpecies = speciesBreakdown(catches)
   const speciesCount = catchSpecies.length
@@ -180,6 +194,14 @@ export function UserProfileScreen({
         <div className="profile-hero-name">
           <StyledName name={profile?.displayName ?? 'Профиль'} styleId={profile?.equippedNameStyle} />
         </div>
+        {profile?.clanId && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
+            <button className="profile-clan-pill tap-scale" onClick={() => onOpenClan(profile.clanId!)}>
+              <ClanCrest crest={profile.clanCrest} size={22} />
+              {profile.clanName}
+            </button>
+          </div>
+        )}
         {profile?.isBlocked && (
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
             <span className="badge" style={{ background: '#FDE2E2', color: '#D33' }}>Заблокирован</span>
@@ -219,6 +241,24 @@ export function UserProfileScreen({
             </button>
           )}
         </div>
+
+        {canInvite && (
+          <button
+            className="btn-secondary"
+            style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+            disabled={inviteToClan.isPending || inviteState === 'sent'}
+            onClick={() =>
+              inviteToClan.mutate({ userId, clanId: me!.clanId! }, {
+                onSuccess: () => setInviteState('sent'),
+                onError: (e) => setInviteState(clanErrorMessage(e)),
+              })
+            }
+          >
+            <ClanCrest crest={me?.clanCrest} size={20} />
+            {inviteState === 'sent' ? 'Приглашение отправлено' : `Пригласить в «${me?.clanName}»`}
+          </button>
+        )}
+        {inviteState !== 'idle' && inviteState !== 'sent' && <div className="clan-error" style={{ marginTop: 6 }}>{inviteState}</div>}
 
         {(isAdmin || isSuperAdmin) && reportDeletionCount !== undefined && (
           <div style={{ marginTop: 8, fontSize: 12, fontWeight: 700, color: reportDeletionCount > 0 ? '#D33' : 'var(--ink-faint)' }}>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useProfile, useAdminPermissions, useSetAdminPermissions } from '@/lib/supabase/queries'
 import type { AdminPermissions } from '@/lib/data/types'
@@ -30,16 +30,18 @@ export function AdminPermissionsModal({ userId, onClose }: { userId: string; onC
   // Pre-fill from the real (unmasked) permission set once it loads — a fresh
   // grant (profile isn't an admin yet) has nothing to prefill, so it just
   // keeps everything off until the super admin picks what to grant.
-  useEffect(() => {
-    if (perms)
-      setToggles({
-        canModerateReports: perms.canModerateReports,
-        canBlockUsers: perms.canBlockUsers,
-        canAddCatchManually: perms.canAddCatchManually,
-        canViewAllUsers: perms.canViewAllUsers,
-        canAddCatchFromGallery: perms.canAddCatchFromGallery,
-      })
-  }, [perms])
+  // Adjusted during render whenever a (re)loaded permission set arrives.
+  const [prefilledFrom, setPrefilledFrom] = useState<typeof perms>(undefined)
+  if (perms && perms !== prefilledFrom) {
+    setPrefilledFrom(perms)
+    setToggles({
+      canModerateReports: perms.canModerateReports,
+      canBlockUsers: perms.canBlockUsers,
+      canAddCatchManually: perms.canAddCatchManually,
+      canViewAllUsers: perms.canViewAllUsers,
+      canAddCatchFromGallery: perms.canAddCatchFromGallery,
+    })
+  }
 
   const isNewGrant = !profile?.isAdmin
 

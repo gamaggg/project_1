@@ -7,6 +7,11 @@ import { createClient } from '@/lib/supabase/client'
 type AuthState = {
   user: User | null
   loading: boolean
+  // The stored session has been read (onAuthStateChange's first event), so
+  // `user` is already the real one — well before `loading` clears, which
+  // also waits on getUser()'s round trip to the auth server. For queries
+  // keyed on the user that shouldn't fire once for "nobody" first.
+  sessionReady: boolean
   signOut: () => Promise<void>
   // Re-runs the Telegram handshake on demand — used by WelcomeStep's
   // "Продолжить" when someone signed out mid-session (see NameStep's
@@ -17,7 +22,7 @@ type AuthState = {
   signInWithTelegram: () => Promise<boolean>
 }
 
-const AuthContext = createContext<AuthState>({ user: null, loading: true, signOut: async () => {}, signInWithTelegram: async () => false })
+const AuthContext = createContext<AuthState>({ user: null, loading: true, sessionReady: false, signOut: async () => {}, signInWithTelegram: async () => false })
 
 type TelegramSafeAreaInset = { top: number; bottom: number; left: number; right: number }
 
@@ -41,6 +46,9 @@ declare global {
         // needed for the bot deep link that connects notifications, since a
         // browser would only bounce back into Telegram anyway.
         openTelegramLink?: (url: string) => void
+        // Opens an outside link (a maps app, a website) in the system
+        // browser — a plain window.open is swallowed inside the Mini App.
+        openLink?: (url: string) => void
         BackButton?: {
           show: () => void
           hide: () => void
@@ -105,6 +113,7 @@ async function trySignInWithTelegram(supabase: ReturnType<typeof createClient>) 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [sessionReady, setSessionReady] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -148,10 +157,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(data.user)
       }
       setLoading(false)
+      setSessionReady(true)
     })
 
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      setSessionReady(true)
     })
 
     return () => {
@@ -178,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return ok
   }
 
-  return <AuthContext.Provider value={{ user, loading, signOut, signInWithTelegram }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, loading, sessionReady, signOut, signInWithTelegram }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

@@ -9,6 +9,8 @@ import { CITIES, type CityId } from '@/lib/data/city'
 import { formatWhen } from '@/lib/format'
 import { getCurrentCoords, useGeolocationPermission } from '@/lib/geolocation'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
+import { ClanCrest } from '@/components/app-shell/ClanCrest'
+import { MapRacePill } from '@/components/app-shell/ClanRace'
 
 // Native scrollIntoView({behavior:'smooth'}) paces itself by distance, not
 // time — fine for the carousel's own drag-driven scrolling, but a map tap
@@ -32,12 +34,13 @@ function scrollToCardFast(row: HTMLElement, card: HTMLElement, duration = 280) {
   requestAnimationFrame(step)
 }
 
-function statusBadge(status: Territory['status'], myTerritoryColor: string) {
-  if (status === 'mine')
+function statusBadge(status: Territory['status'], myTerritoryColor: string, myShare = false) {
+  // myShare: a clan-mate's sector the viewer holds a part of.
+  if (status === 'mine' || myShare)
     return (
       <span className="badge" style={{ background: withAlpha(myTerritoryColor, 0.16), color: darkenForBadgeText(myTerritoryColor) }}>
         <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4 3 5-6 5 6 4-3-2 11H5L3 8z" /></svg>
-        Моя
+        {status === 'mine' ? 'Моя' : 'Моя доля'}
       </span>
     )
   if (status === 'other') return <span className="badge badge-blue">Занята</span>
@@ -79,6 +82,9 @@ export const MapScreen = forwardRef<
     onConfirmAdd?: () => void
     onCancelAdd?: () => void
     city: CityId
+    onOpenClan?: (id: number) => void
+    // Regatta plaque — only passed for someone in a clan (see MapRacePill).
+    race?: { city: CityId; clanId: number; onOpen: () => void } | null
   }
 >(function MapScreen(
   {
@@ -95,9 +101,38 @@ export const MapScreen = forwardRef<
     onConfirmAdd,
     onCancelAdd,
     city,
+    onOpenClan,
+    race,
   },
   forwardedRef
 ) {
+  // «Кланы» layer toggle — remembered per device, a pure viewing preference.
+  const [clanLayer, setClanLayer] = useState(() => {
+    try {
+      return typeof window !== 'undefined' && window.localStorage.getItem('range:map-clan-layer') === '1'
+    } catch {
+      return false
+    }
+  })
+  function setLayer(on: boolean) {
+    setClanLayer(on)
+    try {
+      window.localStorage.setItem('range:map-clan-layer', on ? '1' : '0')
+    } catch {}
+  }
+  // Clans holding sectors in this city, biggest first — the clan legend.
+  const clanStandings = (() => {
+    if (!clanLayer) return []
+    const byClan = new Map<number, { id: number; name: string; crest: unknown; count: number }>()
+    for (const t of territories) {
+      if (!t.ownerClanId || t.status === 'free') continue
+      const entry = byClan.get(t.ownerClanId) ?? { id: t.ownerClanId, name: t.ownerClanName ?? 'Клан', crest: t.ownerClanCrest, count: 0 }
+      entry.count++
+      byClan.set(t.ownerClanId, entry)
+    }
+    return [...byClan.values()].sort((a, b) => b.count - a.count)
+  })()
+  const soloCount = clanLayer ? territories.filter((t) => t.status !== 'free' && t.ownerId && !t.ownerClanId).length : 0
   const mapRef = useRef<LeafletMapHandle>(null)
   const geoPermission = useGeolocationPermission()
   useImperativeHandle(forwardedRef, () => ({
@@ -265,10 +300,61 @@ export const MapScreen = forwardRef<
           fallbackCenter={CITIES[city].center}
           fallbackZoom={CITIES[city].zoom}
           highlightedId={highlightedSectorId}
+          clanLayer={clanLayer}
         />
-        <div className="map-header">
-          {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
-          <img src="/brand/logo_2.svg" alt="RANGE" className="map-brandmark" />
+        {/* Map chrome, top: ONE panel on a single edge instead of pieces
+            floating at different sizes — brand + «Игроки | Кланы» on the
+            first line, what the colours mean right under it, and for clan
+            members the clan battle as the panel's own orange footer. */}
+        <div className="map-hud">
+          <div className="map-hud-bar">
+            {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
+            <img src="/brand/logo_2.svg" alt="RANGE" className="map-hud-logo" />
+            <div className="map-layer-switch" role="radiogroup" aria-label="Раскраска карты">
+              <button type="button" role="radio" aria-checked={!clanLayer} className={`map-layer-opt${!clanLayer ? ' on' : ''}`} onClick={() => setLayer(false)}>
+                Игроки
+              </button>
+              <button type="button" role="radio" aria-checked={clanLayer} className={`map-layer-opt${clanLayer ? ' on' : ''}`} onClick={() => setLayer(true)}>
+                Кланы
+              </button>
+            </div>
+          </div>
+          {/* One line either way, so the panel keeps its height when the
+              layer flips. Clans show as their crests — the same crests the
+              sectors carry on that layer. */}
+          <div className="map-legend-row">
+            {clanLayer ? (
+              <>
+                {clanStandings.slice(0, 3).map((c) => (
+                  <button key={c.id} className="map-legend-item map-legend-clan" onClick={() => onOpenClan?.(c.id)} title={c.name} aria-label={`${c.name}: секторов ${c.count}`}>
+                    <ClanCrest crest={c.crest} size={16} />
+                    <b>{c.count}</b>
+                  </button>
+                ))}
+                {clanStandings.length === 0 && <span className="map-legend-item">Кланов пока нет</span>}
+                <span className="map-legend-item">
+                  <span className="legend-dot hex-aspect hex-shape" style={{ background: '#9A9CA3' }} />
+                  Без клана {soloCount}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="map-legend-item">
+                  <span className="legend-dot hex-aspect hex-shape" style={{ background: myTerritoryColor }} />
+                  Мои
+                </span>
+                <span className="map-legend-item">
+                  <span className="legend-dot hex-aspect hex-shape" style={{ background: 'var(--blue)' }} />
+                  Чужие
+                </span>
+                <span className="map-legend-item">
+                  <span className="legend-dot hex-aspect hex-shape" style={{ background: '#B9BBC2' }} />
+                  Свободные
+                </span>
+              </>
+            )}
+          </div>
+          {race && !selectedIds?.size && !pendingAddDrafts?.length && <MapRacePill city={race.city} clanId={race.clanId} onOpen={race.onOpen} />}
         </div>
         {selectedIds && selectedIds.size > 0 && (
           <div className="map-selection-bar">
@@ -292,20 +378,6 @@ export const MapScreen = forwardRef<
             </button>
           </div>
         )}
-        <div className="map-legend">
-          <span>
-            <span className="legend-dot hex-aspect hex-shape" style={{ background: myTerritoryColor }} />
-            Моя территория
-          </span>
-          <span>
-            <span className="legend-dot hex-aspect hex-shape" style={{ background: 'var(--blue)' }} />
-            Занята другим
-          </span>
-          <span>
-            <span className="legend-dot hex-aspect hex-shape" style={{ background: '#B9BBC2' }} />
-            Свободна
-          </span>
-        </div>
         <div className="map-controls">
           <div className="map-control-group">
             <button className="map-control-btn tap-scale" onClick={() => mapRef.current?.zoomIn()} aria-label="Приблизить">
@@ -348,12 +420,28 @@ export const MapScreen = forwardRef<
                   <div style={{ fontSize: 21, fontWeight: 800, flex: '0 0 auto' }}>{t.id}</div>
                   {t.status !== 'free' && t.ownerDisplayName && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: '1 1 auto' }}>
-                      <div className="avatar" style={{ width: 24, height: 24, fontSize: 10 }}>
-                        {t.ownerAvatarUrl ? <img src={thumbUrl(t.ownerAvatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : t.ownerDisplayName.slice(0, 2).toUpperCase()}
+                      {/* Shared by clan-mates: every holder's face, stacked, in
+                          place of the name — four avatars and a name don't
+                          fit a phone-width row (names are on the sector screen). */}
+                      <div
+                        className="avatar-stack"
+                        title={t.coHolders.length ? [t.ownerDisplayName, ...t.coHolders.map((h) => h.displayName ?? 'Рыбак')].join(', ') : undefined}
+                      >
+                        <div className="avatar" style={{ width: 24, height: 24, fontSize: 10 }}>
+                          {t.ownerAvatarUrl ? <img src={thumbUrl(t.ownerAvatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : t.ownerDisplayName.slice(0, 2).toUpperCase()}
+                        </div>
+                        {t.coHolders.map((h) => (
+                          <div key={h.id} className="avatar" style={{ width: 24, height: 24, fontSize: 10 }}>
+                            {h.avatarUrl ? <img src={thumbUrl(h.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : (h.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()}
+                          </div>
+                        ))}
                       </div>
-                      <span style={{ fontSize: 13.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {t.ownerDisplayName}
-                      </span>
+                      {t.coHolders.length === 0 && (
+                        <span style={{ fontSize: 13.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {t.ownerDisplayName}
+                        </span>
+                      )}
+                      {t.ownerClanCrest != null && <ClanCrest crest={t.ownerClanCrest} size={16} title={t.ownerClanName ?? undefined} />}
                     </div>
                   )}
                   {shieldBadge(t.shieldUntil)}
@@ -362,7 +450,7 @@ export const MapScreen = forwardRef<
                       🔥
                     </span>
                   )}
-                  <div style={{ marginLeft: 'auto', flex: '0 0 auto' }}>{statusBadge(t.status, myTerritoryColor)}</div>
+                  <div style={{ marginLeft: 'auto', flex: '0 0 auto' }}>{statusBadge(t.status, myTerritoryColor, t.coHolders.some((h) => h.isMe))}</div>
                 </div>
                 <div style={{ display: 'flex', gap: 18, fontSize: 13, color: 'var(--ink-soft)', fontWeight: 600 }}>
                   <span>Уловов {t.catchCount}</span>

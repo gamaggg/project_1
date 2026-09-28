@@ -14,33 +14,65 @@ import {
   useFindUserByPublicId,
   useUnreadNotificationCount,
   logChallengeEvent,
+  useClan,
+  useClanChatLive,
+  useClanChatSummary,
+  useClaimReferral,
+  reportClientError,
 } from '@/lib/supabase/queries'
 import { getCurrentCoords, nearestTerritory, queryGeolocationPermission } from '@/lib/geolocation'
 import { uploadCatchPhoto } from '@/lib/supabase/storage'
 import { useAdminActionsReadState } from '@/lib/activityRead'
 import { useAchievementUnlock } from '@/lib/achievementUnlock'
 import { useWeekTopModal } from '@/lib/weekTopModal'
+import { useClanBattleCeremony } from '@/lib/clanBattleCeremony'
+import { parseGuestShare, refParam, rememberRef, takeRememberedRef } from '@/lib/guestShare'
+import { GuestShareScreen } from '@/components/app-shell/GuestShareScreen'
 import { formatCooldown, type SpeciesEntry } from '@/lib/format'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { draftHexAt } from '@/lib/data/hexGrid'
 import { cityForSectorId, loadStoredCity, storeCity, type CityId } from '@/lib/data/city'
 import type { PendingCatch, TerritoryStatus } from '@/lib/data/types'
 import { OnboardingFlow } from '@/components/app-shell/onboarding/OnboardingFlow'
-import { ForgotPasswordFlow } from '@/components/app-shell/onboarding/ForgotPasswordFlow'
-import { LinkEmailFlow } from '@/components/app-shell/onboarding/LinkEmailFlow'
 import { useTelegramBackButton } from '@/lib/telegram/useTelegramBackButton'
 import { hapticBuildUp, hapticTap } from '@/lib/telegram/haptics'
 import { BottomNav } from '@/components/app-shell/BottomNav'
+import {
+  ClanBattleCeremony,
+  ForgotPasswordFlow,
+  LinkEmailFlow,
+  LastWeekScreen,
+  ClanRaceScreen,
+  ClanChatScreen,
+  ClanEditorScreen,
+  WeekTopModal,
+  UsersListScreen,
+  PostAnnouncementModal,
+  DeleteTerritoryModal,
+  BulkDeleteTerritoriesModal,
+  BulkAddTerritoriesModal,
+  DeleteUserModal,
+  ChangeUserIdModal,
+  GrantCoinsModal,
+  AchievementUnlockedModal,
+  AdminReportsScreen,
+  AdminActionsScreen,
+  AdminAccessScreen,
+  AdminPermissionsModal,
+  AchievementsScreen,
+  AchievementDetailScreen,
+  preloadLazyScreens,
+} from '@/components/app-shell/lazyScreens'
+import { CommentsSheet } from '@/components/app-shell/CommentsSheet'
 import { MapScreen } from '@/components/app-shell/screens/MapScreen'
 import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import { TerritoryScreen } from '@/components/app-shell/screens/TerritoryScreen'
 import { TerritoriesListScreen, type Mode as RatingMode } from '@/components/app-shell/screens/TerritoriesListScreen'
-import { LastWeekScreen } from '@/components/app-shell/screens/LastWeekScreen'
 import { ShopScreen } from '@/components/app-shell/screens/ShopScreen'
 import { ChallengesScreen } from '@/components/app-shell/screens/ChallengesScreen'
-import { WeekTopModal } from '@/components/app-shell/screens/WeekTopModal'
+import { ClanListScreen } from '@/components/app-shell/screens/ClanListScreen'
+import { ClanScreen } from '@/components/app-shell/screens/ClanScreen'
 import { MyCatchesScreen } from '@/components/app-shell/screens/MyCatchesScreen'
-import { UsersListScreen } from '@/components/app-shell/screens/UsersListScreen'
 import { CameraScreen } from '@/components/app-shell/screens/CameraScreen'
 import { ConfirmScreen, type CatchFormData, type PhotoStatus } from '@/components/app-shell/screens/ConfirmScreen'
 import { ActivityScreen } from '@/components/app-shell/screens/ActivityScreen'
@@ -48,27 +80,13 @@ import { ProfileScreen, EditProfileModal, ChangeColorModal } from '@/components/
 import { CityPickerModal } from '@/components/app-shell/CityPickerModal'
 import { UserProfileScreen, AvatarPreviewModal } from '@/components/app-shell/screens/UserProfileScreen'
 import { SpeciesListModal } from '@/components/app-shell/screens/SpeciesListModal'
-import { PostAnnouncementModal } from '@/components/app-shell/screens/PostAnnouncementModal'
 import { ReportPhotoModal } from '@/components/app-shell/screens/ReportPhotoModal'
 import { DeleteCatchModal } from '@/components/app-shell/screens/DeleteCatchModal'
-import { DeleteTerritoryModal } from '@/components/app-shell/screens/DeleteTerritoryModal'
-import { BulkDeleteTerritoriesModal } from '@/components/app-shell/screens/BulkDeleteTerritoriesModal'
-import { BulkAddTerritoriesModal } from '@/components/app-shell/screens/BulkAddTerritoriesModal'
-import { DeleteUserModal } from '@/components/app-shell/screens/DeleteUserModal'
-import { ChangeUserIdModal } from '@/components/app-shell/screens/ChangeUserIdModal'
-import { GrantCoinsModal } from '@/components/app-shell/screens/GrantCoinsModal'
 import { CatchPhotoScreen } from '@/components/app-shell/screens/CatchPhotoScreen'
 import { PeopleListModal } from '@/components/app-shell/screens/PeopleListModal'
 import type { ProfileSummary } from '@/lib/data/types'
-import { AchievementUnlockedModal } from '@/components/app-shell/screens/AchievementUnlockedModal'
 import { AwardDetailModal } from '@/components/app-shell/AwardDetailModal'
 import type { UserAward } from '@/lib/data/types'
-import { AdminReportsScreen } from '@/components/app-shell/screens/AdminReportsScreen'
-import { AdminActionsScreen } from '@/components/app-shell/screens/AdminActionsScreen'
-import { AdminAccessScreen } from '@/components/app-shell/screens/AdminAccessScreen'
-import { AdminPermissionsModal } from '@/components/app-shell/AdminPermissionsModal'
-import { AchievementsScreen } from '@/components/app-shell/screens/AchievementsScreen'
-import { AchievementDetailScreen } from '@/components/app-shell/screens/AchievementDetailScreen'
 import type { Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 
@@ -92,6 +110,11 @@ export type ScreenId =
   | 'screen-last-week'
   | 'screen-shop'
   | 'screen-challenges'
+  | 'screen-clans'
+  | 'screen-clan'
+  | 'screen-clan-editor'
+  | 'screen-clan-race'
+  | 'screen-clan-chat'
 
 export type TabScreenId = 'screen-map' | 'screen-territories' | 'screen-activity' | 'screen-profile'
 const NAV_SCREENS: ScreenId[] = ['screen-map', 'screen-territories', 'screen-activity', 'screen-profile']
@@ -122,6 +145,11 @@ type StackEntry =
   | { screen: 'screen-last-week' }
   | { screen: 'screen-shop' }
   | { screen: 'screen-challenges' }
+  | { screen: 'screen-clans' }
+  | { screen: 'screen-clan'; clanId: number }
+  | { screen: 'screen-clan-editor'; mode: 'create' | 'edit'; clanId: number | null }
+  | { screen: 'screen-clan-race' }
+  | { screen: 'screen-clan-chat'; clanId: number }
 
 export function FishZoneApp() {
   const { user, loading: authLoading, signOut } = useAuth()
@@ -145,15 +173,23 @@ export function FishZoneApp() {
   // computation is itself city-aware (see lib/data/achievements).
   const [city, setCity] = useState<CityId>('batumi')
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads browser storage, only available after mount
     setCity(loadStoredCity())
   }, [])
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the profile city (a fetched value) overrides the stored one
     if (myProfile?.city) setCity(myProfile.city)
   }, [myProfile?.city])
   const updateProfile = useUpdateProfile()
   const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories, territoriesReady, city)
   const { show: showWeekTop, entry: weekTopEntry, dismiss: dismissWeekTop } = useWeekTopModal(city)
+  const clanCeremony = useClanBattleCeremony(city, myProfile?.clanId ?? null)
   useRealtimeSync()
+  // Your clan's chat, live for the whole session — keeps the unread badges
+  // on the clan and profile cards (and an open chat) current.
+  useClanChatLive(myProfile?.clanId ?? null)
+  // Only clan members make this request — it feeds the profile tab's badge.
+  const { data: clanChatSummary } = useClanChatSummary(myProfile?.clanId ?? null)
 
   // Achievement detail photos are full-bleed JPGs (~80-110KB each) fetched
   // cold on the first tap — without this the background pops in a beat after
@@ -166,6 +202,22 @@ export function FishZoneApp() {
       img.src = `/achievements/${icon}.jpg`
     }
   }, [])
+
+  // Rare screens live in their own chunks (see lazyScreens) — fetched once
+  // the map's data is in and the page is idle, so opening one later is as
+  // instant as before without competing with startup.
+  const hasAdminTools = isSuperAdmin || !!myProfile?.isAdmin
+  const signedIn = !!myProfile
+  useEffect(() => {
+    if (!signedIn || !territoriesReady) return
+    const run = () => void preloadLazyScreens(hasAdminTools)
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(run, { timeout: 5000 })
+      return () => window.cancelIdleCallback(id)
+    }
+    const id = setTimeout(run, 3000)
+    return () => clearTimeout(id)
+  }, [signedIn, territoriesReady, hasAdminTools])
 
   // One delegated listener for the whole app instead of wiring a haptic tap
   // into every individual button. Deliberately broader than just
@@ -240,6 +292,11 @@ export function FishZoneApp() {
   const [navScreen, setNavScreen] = useState<TabScreenId>('screen-map')
   const [viewingTerritoryId, setViewingTerritoryId] = useState<string | null>(null)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
+  const [viewingClanId, setViewingClanId] = useState<number | null>(null)
+  const [chatClanId, setChatClanId] = useState<number | null>(null)
+  // Bumped on every open so the editor starts from fresh state each time,
+  // instead of keeping a half-finished draft on a never-unmounted screen.
+  const [clanEditor, setClanEditor] = useState<{ mode: 'create' | 'edit'; clanId: number | null; session: number } | null>(null)
   const [viewingAchievementsUserId, setViewingAchievementsUserId] = useState<string | null>(null)
   const [viewingAchievementDetail, setViewingAchievementDetail] = useState<{ userId: string; icon: Achievement['icon'] } | null>(null)
   // Separate from viewingTerritoryId on purpose: this is which territory the
@@ -287,6 +344,7 @@ export function FishZoneApp() {
   const [editingPublicIdUserId, setEditingPublicIdUserId] = useState<string | null>(null)
   const [grantingCoinsUserId, setGrantingCoinsUserId] = useState<string | null>(null)
   const [viewingLikersFor, setViewingLikersFor] = useState<ProfileSummary[] | null>(null)
+  const [viewingCommentsFor, setViewingCommentsFor] = useState<{ catchId: number; highlightId: number | null } | null>(null)
   const [viewingFollowersFor, setViewingFollowersFor] = useState<ProfileSummary[] | null>(null)
   const [viewingAvatarUrl, setViewingAvatarUrl] = useState<string | null>(null)
   const [viewingSpeciesFor, setViewingSpeciesFor] = useState<SpeciesEntry[] | null>(null)
@@ -299,6 +357,11 @@ export function FishZoneApp() {
   const [wasFree, setWasFree] = useState(false)
   const [catchSpeciesCoins, setCatchSpeciesCoins] = useState(0)
   const [catchCaptureCoins, setCatchCaptureCoins] = useState(0)
+  // A catch on a clan-mate's sector: it stays theirs (see confirm_catch).
+  const [catchClanSupport, setCatchClanSupport] = useState(false)
+  // A clan-mate's sector with a free part (up to 4 holders) — the catch
+  // joined its share (see territory_shares), not just supported it.
+  const [catchClanShare, setCatchClanShare] = useState(false)
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null)
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [photoStatus, setPhotoStatus] = useState<PhotoStatus>('uploading')
@@ -341,6 +404,8 @@ export function FishZoneApp() {
       const top = next[next.length - 1]
       if (top.screen === 'screen-territory') setViewingTerritoryId(top.territoryId)
       if (top.screen === 'screen-user-profile') setViewingUserId(top.userId)
+      if (top.screen === 'screen-clan') setViewingClanId(top.clanId)
+      if (top.screen === 'screen-clan-chat') setChatClanId(top.clanId)
       if (top.screen === 'screen-achievements') setViewingAchievementsUserId(top.userId)
       if (top.screen === 'screen-achievement-detail') setViewingAchievementDetail({ userId: top.userId, icon: top.icon })
       return next
@@ -443,6 +508,41 @@ export function FishZoneApp() {
   function openShop() {
     push({ screen: 'screen-shop' })
   }
+  function openClans() {
+    push({ screen: 'screen-clans' })
+  }
+  function openClan(id: number) {
+    setViewingClanId(id)
+    push({ screen: 'screen-clan', clanId: id })
+  }
+  function openClanRace() {
+    push({ screen: 'screen-clan-race' })
+  }
+  function openClanChat(id: number) {
+    setChatClanId(id)
+    push({ screen: 'screen-clan-chat', clanId: id })
+  }
+  function openClanEditor(mode: 'create' | 'edit', clanId: number | null) {
+    setClanEditor({ mode, clanId, session: Date.now() })
+    push({ screen: 'screen-clan-editor', mode, clanId })
+  }
+  // Invites land best as a Telegram share (the Mini App's own share sheet,
+  // straight to a chat); a plain browser copies the link instead.
+  async function shareClan(clanId: number, name: string) {
+    const url = `${window.location.origin}${window.location.pathname}?clan=${clanId}${refParam(myProfile?.publicId)}`
+    const text = `Вступай в клан «${name}» в RANGE`
+    const webApp = window.Telegram?.WebApp
+    if (webApp?.openTelegramLink) {
+      webApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`)
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`)
+      showToast('Ссылка на клан скопирована — отправь её друзьям')
+    } catch {
+      showToast('Не удалось скопировать ссылку')
+    }
+  }
   function openChallenges() {
     push({ screen: 'screen-challenges' })
   }
@@ -466,9 +566,12 @@ export function FishZoneApp() {
   // so both the in-app back button and Telegram's native one pop just the
   // photo, and the screen underneath is never left showing through a photo
   // that back button didn't actually close (see DECISIONS.md).
-  function openCatchPhoto(id: number) {
+  // commentId comes from a comment notification or a ?comment= link — the
+  // sheet opens on top of the catch with that comment flashed.
+  function openCatchPhoto(id: number, commentId?: number | null) {
     setViewingCatchId(id)
     push({ screen: 'screen-catch-photo', catchId: id })
+    if (commentId) setViewingCommentsFor({ catchId: id, highlightId: commentId })
     // Feeds "Наблюдатель" — own-catch views are logged too but don't count
     // toward it (sync_my_challenges' query already excludes them).
     logChallengeEvent({ eventType: 'catch_viewed', catchId: id })
@@ -621,9 +724,10 @@ export function FishZoneApp() {
       if (uploadSeqRef.current !== seq) return
       setPhotoUrl(url)
       setPhotoStatus('success')
-    } catch {
+    } catch (err) {
       if (uploadSeqRef.current !== seq) return
       setPhotoStatus('error')
+      reportClientError('photo_upload', err)
     }
   }
   // Upload starts right after the shutter fires, not at form submit — the user
@@ -654,9 +758,11 @@ export function FishZoneApp() {
     const payload: PendingCatch = { territoryId: catchTerritoryId, photoUrl, ...form }
     try {
       const result = await confirmCatchMutation.mutateAsync(payload)
-      setWasFree(t?.status !== 'mine')
+      setWasFree(t?.status !== 'mine' && !result.clanSupport)
       setCatchSpeciesCoins(result.speciesCoins)
       setCatchCaptureCoins(result.captureCoins)
+      setCatchClanSupport(result.clanSupport)
+      setCatchClanShare(result.clanSupport && !!t && (t.coHolders.some((h) => h.isMe) || t.coHolders.length < 3))
       setPendingCatch(payload)
       setConfirmStep('success')
       hapticBuildUp()
@@ -676,6 +782,7 @@ export function FishZoneApp() {
       } else if (message === 'account blocked') {
         showToast('Аккаунт заблокирован, добавлять уловы нельзя')
       } else {
+        reportClientError('confirm_catch', err)
         showToast('Не удалось сохранить улов, попробуй ещё раз')
       }
     }
@@ -690,7 +797,7 @@ export function FishZoneApp() {
   // Real clipboard write, not a fake toast — the link round-trips through the
   // deep-link effect below, which opens screen-territory straight from it.
   async function shareTerritory(territoryId: string) {
-    const url = `${window.location.origin}${window.location.pathname}?territory=${territoryId}`
+    const url = `${window.location.origin}${window.location.pathname}?territory=${territoryId}${refParam(myProfile?.publicId)}`
     try {
       await navigator.clipboard.writeText(url)
       showToast('Ссылка на территорию скопирована')
@@ -704,7 +811,7 @@ export function FishZoneApp() {
   // it back via the same lookup the admin/territories "find by ID" search
   // already uses (useFindUserByPublicId).
   async function shareProfile(publicId: string, text: string) {
-    const url = `${window.location.origin}${window.location.pathname}?user=${publicId}`
+    const url = `${window.location.origin}${window.location.pathname}?user=${publicId}${refParam(myProfile?.publicId)}`
     try {
       await navigator.clipboard.writeText(`${text}\n${url}`)
       showToast('Ссылка на профиль скопирована')
@@ -718,7 +825,7 @@ export function FishZoneApp() {
   // ?achievement= deep-link effect below splits on the first ':' and
   // resolves publicId the same way the ?user= one does.
   async function shareAchievement(publicId: string, icon: string, text: string) {
-    const url = `${window.location.origin}${window.location.pathname}?achievement=${publicId}:${icon}`
+    const url = `${window.location.origin}${window.location.pathname}?achievement=${publicId}:${icon}${refParam(myProfile?.publicId)}`
     try {
       await navigator.clipboard.writeText(`${text}\n${url}`)
       showToast('Ссылка на достижение скопирована')
@@ -731,7 +838,7 @@ export function FishZoneApp() {
   // the public, stable identifier (no short-id resolve step needed), so the
   // ?catch= deep-link effect below can open it straight away.
   async function shareCatch(catchId: number, text: string) {
-    const url = `${window.location.origin}${window.location.pathname}?catch=${catchId}`
+    const url = `${window.location.origin}${window.location.pathname}?catch=${catchId}${refParam(myProfile?.publicId)}`
     try {
       await navigator.clipboard.writeText(`${text}\n${url}`)
       showToast('Ссылка на улов скопирована')
@@ -755,6 +862,7 @@ export function FishZoneApp() {
     const id = new URLSearchParams(window.location.search).get('territory')
     if (id && territories.some((t) => t.id === id)) {
       deepLinkOpened.current = true
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- opens a screen once from the launch URL (external input)
       openTerritory(id)
       window.history.replaceState(null, '', window.location.pathname)
     }
@@ -789,12 +897,31 @@ export function FishZoneApp() {
   const catchDeepLinkOpened = useRef(false)
   useEffect(() => {
     if (catchDeepLinkOpened.current || !user) return
-    const raw = new URLSearchParams(window.location.search).get('catch')
+    const params = new URLSearchParams(window.location.search)
+    const raw = params.get('catch')
     if (!raw) return
     const id = Number(raw)
     if (!Number.isFinite(id)) return
+    const commentId = Number(params.get('comment'))
     catchDeepLinkOpened.current = true
-    openCatchPhoto(id)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens a screen once from the launch URL (external input)
+    openCatchPhoto(id, Number.isFinite(commentId) && commentId > 0 ? commentId : null)
+    window.history.replaceState(null, '', window.location.pathname)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
+  // Opens a ?clan=<id> link (from shareClan — an invite sent to a chat)
+  // straight into that clan, where the join/request button is.
+  const clanDeepLinkOpened = useRef(false)
+  useEffect(() => {
+    if (clanDeepLinkOpened.current || !user) return
+    const raw = new URLSearchParams(window.location.search).get('clan')
+    if (!raw) return
+    const id = Number(raw)
+    if (!Number.isFinite(id) || id <= 0) return
+    clanDeepLinkOpened.current = true
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens a screen once from the launch URL (external input)
+    openClan(id)
     window.history.replaceState(null, '', window.location.pathname)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
@@ -832,6 +959,7 @@ export function FishZoneApp() {
     if (lastWeekDeepLinkOpened.current || !user || myProfileLoading) return
     if (new URLSearchParams(window.location.search).get('lastweek') !== '1') return
     lastWeekDeepLinkOpened.current = true
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens a screen once from the launch URL (external input)
     openLastWeek()
     window.history.replaceState(null, '', window.location.pathname)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -844,10 +972,71 @@ export function FishZoneApp() {
     if (challengesDeepLinkOpened.current || !user) return
     if (new URLSearchParams(window.location.search).get('challenges') !== '1') return
     challengesDeepLinkOpened.current = true
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens a screen once from the launch URL (external input)
     openChallenges()
     window.history.replaceState(null, '', window.location.pathname)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
+
+  // Opens a ?clanchat=<id> link (from a clan_chat_mention Telegram
+  // notification) straight into that clan's chat.
+  const clanChatDeepLinkOpened = useRef(false)
+  useEffect(() => {
+    if (clanChatDeepLinkOpened.current || !user) return
+    const raw = new URLSearchParams(window.location.search).get('clanchat')
+    if (!raw) return
+    const id = Number(raw)
+    if (!Number.isFinite(id) || id <= 0) return
+    clanChatDeepLinkOpened.current = true
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens a screen once from the launch URL (external input)
+    openClanChat(id)
+    window.history.replaceState(null, '', window.location.pathname)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
+  // Opens a ?race=1 link (from a clan_race_* Telegram notification) straight
+  // into the regatta — it's per city, so it waits for the real profile.
+  const raceDeepLinkOpened = useRef(false)
+  useEffect(() => {
+    if (raceDeepLinkOpened.current || !user || myProfileLoading) return
+    if (new URLSearchParams(window.location.search).get('race') !== '1') return
+    raceDeepLinkOpened.current = true
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens a screen once from the launch URL (external input)
+    openClanRace()
+    window.history.replaceState(null, '', window.location.pathname)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, myProfileLoading])
+
+  // Someone else's «Поделиться» link, opened without an account: they see
+  // that screen (GuestShareScreen) instead of Welcome, and the link's ref is
+  // kept so signing up pays the invite bonus (claim_referral below).
+  // Read once at launch: the deep-link effects below clear the query string
+  // after opening their screen, but the guest view must keep what it was opened with.
+  const [launchSearch] = useState(() => (typeof window === 'undefined' ? '' : window.location.search))
+  const guestShare = useMemo(() => parseGuestShare(launchSearch), [launchSearch])
+  const [guestAuth, setGuestAuth] = useState<'account' | 'signin' | null>(null)
+  // Development only: «&guest=1» shows the guest view in a signed-in session,
+  // to check it without signing out.
+  const forceGuest = process.env.NODE_ENV !== 'production' && new URLSearchParams(launchSearch).has('guest')
+  useEffect(() => {
+    if (!user && guestShare?.ref) rememberRef(guestShare.ref, guestShare.kind)
+  }, [user, guestShare])
+  // Signed up from a link: +100 coins once the wizard is done (the server
+  // only pays a brand-new account, once — see claim_referral).
+  const claimReferral = useClaimReferral()
+  const referralChecked = useRef(false)
+  useEffect(() => {
+    if (!user || !myProfile?.onboardingCompleted || referralChecked.current) return
+    referralChecked.current = true
+    const remembered = takeRememberedRef()
+    if (!remembered) return
+    claimReferral.mutate(remembered, {
+      onSuccess: (r) => {
+        if (r.ok) showToast(`+${r.coins} монет — бонус за приглашение${r.referrerName ? ` от ${r.referrerName}` : ''}`)
+      },
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, myProfile?.onboardingCompleted])
 
   if (authLoading || (user && myProfileLoading)) {
     return <LoadingShell />
@@ -872,10 +1061,25 @@ export function FishZoneApp() {
   // Onboarding gate: no account, or an account that hasn't finished the
   // wizard (onboarding_completed=false) — never render the real map/screens
   // in either case. See DECISIONS.md.
+  // A guest on a shared screen stays there until they choose to sign up or
+  // sign in — nothing else of the app (map, other screens) is reachable.
+  if ((!user || forceGuest) && guestShare && !guestAuth) {
+    return (
+      <div className="app-shell">
+        <GuestShareScreen share={guestShare} onSignUp={() => setGuestAuth('account')} onSignIn={() => setGuestAuth('signin')} />
+      </div>
+    )
+  }
+
   if (!user || (myProfile && !myProfile.onboardingCompleted)) {
     return (
       <div className="app-shell">
-        <OnboardingFlow onCityChosen={changeCity} onForgotPassword={() => setRecoveryMode(true)} />
+        <OnboardingFlow
+          onCityChosen={changeCity}
+          onForgotPassword={() => setRecoveryMode(true)}
+          initialStep={!user && guestAuth ? guestAuth : undefined}
+          onBackToShare={!user && guestShare ? () => setGuestAuth(null) : undefined}
+        />
       </div>
     )
   }
@@ -905,6 +1109,8 @@ export function FishZoneApp() {
             onConfirmAdd={() => setConfirmingBulkAdd(true)}
             onCancelAdd={cancelAddDrafts}
             city={city}
+            onOpenClan={openClan}
+            race={myProfile?.clanId ? { city: myProfile.city, clanId: myProfile.clanId, onOpen: openClanRace } : null}
           />
         </Screen>
         <Screen id="screen-territory" current={currentScreen} onBack={pop}>
@@ -920,6 +1126,8 @@ export function FishZoneApp() {
               onDeleteTerritory={setDeletingTerritoryId}
               onShare={() => shareTerritory(viewingTerritory.id)}
               onOpenAllCatches={() => push({ screen: 'screen-catches', territoryId: viewingTerritory.id })}
+              onOpenClan={openClan}
+              onToast={showToast}
             />
           )}
         </Screen>
@@ -933,6 +1141,8 @@ export function FishZoneApp() {
             onOpenTerritory={openTerritory}
             onOpenUsersList={() => push({ screen: 'screen-users' })}
             onOpenUser={openUserProfile}
+            onOpenClan={openClan}
+            onOpenClans={openClans}
           />
         </Screen>
         <Screen id="screen-last-week" current={currentScreen} onBack={pop}>
@@ -953,6 +1163,47 @@ export function FishZoneApp() {
         <Screen id="screen-challenges" current={currentScreen} onBack={pop} eager>
           {myProfile && <ChallengesScreen onBack={pop} active={currentScreen === 'screen-challenges'} />}
         </Screen>
+        <Screen id="screen-clans" current={currentScreen} onBack={pop}>
+          {myProfile && <ClanListScreen city={myProfile.city} onBack={pop} onOpenClan={openClan} onCreate={() => openClanEditor('create', null)} />}
+        </Screen>
+        <Screen id="screen-clan" current={currentScreen} onBack={pop}>
+          {viewingClanId && (
+            <ClanScreen
+              clanId={viewingClanId}
+              onBack={pop}
+              onOpenUser={openUserProfile}
+              onEdit={(clan) => openClanEditor('edit', clan.id)}
+              onShareClan={shareClan}
+              onOpenRace={openClanRace}
+              onOpenChat={openClanChat}
+            />
+          )}
+        </Screen>
+        <Screen id="screen-clan-chat" current={currentScreen} onBack={pop}>
+          {chatClanId && (
+            <ClanChatScreen clanId={chatClanId} active={currentScreen === 'screen-clan-chat'} onBack={pop} onOpenUser={openUserProfile} />
+          )}
+        </Screen>
+        <Screen id="screen-clan-race" current={currentScreen} onBack={pop}>
+          {myProfile && <ClanRaceScreen city={myProfile.city} onBack={pop} onOpenClan={openClan} onOpenUser={openUserProfile} onOpenClans={openClans} />}
+        </Screen>
+        <Screen id="screen-clan-editor" current={currentScreen} onBack={pop}>
+          {clanEditor && (
+            <ClanEditorHost
+              key={clanEditor.session}
+              mode={clanEditor.mode}
+              clanId={clanEditor.clanId}
+              onBack={pop}
+              onShareClan={shareClan}
+              onDone={(id) => {
+                // Replaces the editor with the clan itself — back from the clan
+                // shouldn't land on a finished creation form.
+                pop()
+                if (clanEditor.mode === 'create') openClan(id)
+              }}
+            />
+          )}
+        </Screen>
         <Screen id="screen-catches" current={currentScreen} onBack={pop}>
           {(catchesUserId || catchesTerritoryId) && (
             <MyCatchesScreen userId={catchesUserId} territoryId={catchesTerritoryId} onBack={pop} onOpenPhoto={openCatchPhoto} onOpenUser={openUserProfile} />
@@ -969,6 +1220,7 @@ export function FishZoneApp() {
               onReportPhoto={openReportModal}
               onDeleteCatch={setDeletingCatchId}
               onOpenLikers={setViewingLikersFor}
+              onOpenComments={(id) => setViewingCommentsFor({ catchId: id, highlightId: null })}
             />
           )}
         </Screen>
@@ -992,6 +1244,8 @@ export function FishZoneApp() {
               wasFree={wasFree}
               speciesCoins={catchSpeciesCoins}
               captureCoins={catchCaptureCoins}
+              clanSupport={catchClanSupport}
+              clanShare={catchClanShare}
               step={confirmStep}
               pending={confirmCatchMutation.isPending}
               capturedPhoto={capturedPhoto}
@@ -1011,6 +1265,7 @@ export function FishZoneApp() {
               moment the app opened, on whatever tab. */}
           <ActivityScreen
             active={currentScreen === 'screen-activity'}
+            city={city}
             onOpenUser={openUserProfile}
             onOpenTerritory={openTerritory}
             onOpenPhoto={openCatchPhoto}
@@ -1018,6 +1273,9 @@ export function FishZoneApp() {
             onOpenOwnAwards={() => navClick('screen-profile')}
             onOpenLastWeek={openLastWeek}
             onOpenChallenges={openChallenges}
+            onOpenClan={openClan}
+            onOpenRace={openClanRace}
+            onOpenClanChat={openClanChat}
           />
         </Screen>
         <Screen id="screen-profile" current={currentScreen}>
@@ -1052,6 +1310,8 @@ export function FishZoneApp() {
             onGrantCoins={setGrantingCoinsUserId}
             onOpenShop={openShop}
             onOpenChallenges={openChallenges}
+            onOpenClans={openClans}
+            onOpenClan={openClan}
           />
         </Screen>
         <Screen id="screen-user-profile" current={currentScreen} onBack={pop}>
@@ -1075,6 +1335,7 @@ export function FishZoneApp() {
               onOpenFollowers={setViewingFollowersFor}
               onOpenAvatarPreview={setViewingAvatarUrl}
               onOpenSpecies={setViewingSpeciesFor}
+              onOpenClan={openClan}
             />
           )}
         </Screen>
@@ -1255,6 +1516,15 @@ export function FishZoneApp() {
           onClose={() => setGrantingCoinsUserId(null)}
         />
       )}
+      {viewingCommentsFor !== null && (
+        <CommentsSheet
+          key={viewingCommentsFor.catchId}
+          catchId={viewingCommentsFor.catchId}
+          highlightCommentId={viewingCommentsFor.highlightId}
+          onClose={() => setViewingCommentsFor(null)}
+          onOpenUser={openUserProfile}
+        />
+      )}
       {viewingLikersFor !== null && (
         <PeopleListModal
           title="Отметки «Нравится»"
@@ -1308,14 +1578,28 @@ export function FishZoneApp() {
           onClose={dismissWeekTop}
         />
       )}
+      {/* The clan battle's results wait their turn behind the personal week
+          recap and the achievement modal — one celebration at a time. */}
+      {clanCeremony.show && clanCeremony.race && clanCeremony.clanId && !showWeekTop && !unlockedAchievement && !showingTrophyScene && (
+        <ClanBattleCeremony
+          race={clanCeremony.race}
+          clanId={clanCeremony.clanId}
+          onOpenRace={() => {
+            clanCeremony.dismiss()
+            openClanRace()
+          }}
+          onClose={clanCeremony.dismiss}
+        />
+      )}
 
-      {currentScreen !== 'screen-camera' && !showingTrophyScene && (
+      {currentScreen !== 'screen-camera' && currentScreen !== 'screen-clan-editor' && currentScreen !== 'screen-clan-chat' && !showingTrophyScene && (
         <BottomNav
           active={NAV_SCREENS.includes(currentScreen) ? (currentScreen as TabScreenId) : navScreen}
           onNavigate={navClick}
           onPlus={handlePlus}
           plusPending={locating}
           unreadCount={unreadCount}
+          clanChatUnread={clanChatSummary?.unread ?? 0}
         />
       )}
     </div>
@@ -1368,4 +1652,24 @@ function LoadingShell() {
       <div className="spinner" />
     </div>
   )
+}
+
+// Edit mode needs the clan's current settings before the editor can seed its
+// state from them — this waits for useClan, then mounts the editor once.
+function ClanEditorHost({
+  mode,
+  clanId,
+  onBack,
+  onDone,
+  onShareClan,
+}: {
+  mode: 'create' | 'edit'
+  clanId: number | null
+  onBack: () => void
+  onDone: (clanId: number) => void
+  onShareClan: (clanId: number, name: string) => void
+}) {
+  const { data: clan } = useClan(mode === 'edit' ? clanId : null)
+  if (mode === 'edit' && !clan) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Загрузка…</div>
+  return <ClanEditorScreen mode={mode} clan={clan ?? null} onBack={onBack} onDone={onDone} onShareClan={onShareClan} />
 }

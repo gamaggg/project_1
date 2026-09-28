@@ -21,6 +21,7 @@ export function useAdminActionsReadState() {
 
   useEffect(() => {
     if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- mirrors browser storage for the signed-in user (external)
       setLastReadAt(null)
       return
     }

@@ -146,3 +146,15 @@ export function formatWeekOfMonth(offsetWeeks: number, timezone: string = 'Asia/
   const weekOfMonth = Math.floor((monday.getTime() - firstOfMonthUTC) / (7 * 86_400_000)) + 1
   return `${RU_MONTHS[monday.getUTCMonth()]}, ${weekOfMonth} неделя`
 }
+
+// Compact relative time for dense rows like comments: «сейчас», «5 мин»,
+// «3 ч», «2 д», then a short date — formatWhen's «Сегодня · 14:05» is too
+// wide to sit next to a name on one line.
+export function formatShortAgo(iso: string): string {
+  const diffSec = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000)
+  if (diffSec < 60) return 'сейчас'
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)} мин`
+  if (diffSec < 86_400) return `${Math.floor(diffSec / 3600)} ч`
+  if (diffSec < 7 * 86_400) return `${Math.floor(diffSec / 86_400)} д`
+  return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+}

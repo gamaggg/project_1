@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
-import { useCatchById, useCatchesByTerritory, useCatchLikes, useToggleCatchLike, useIsSuperAdmin } from '@/lib/supabase/queries'
+import { useCatchById, useCatchesByTerritory, useCatchLikes, useToggleCatchLike, useIsSuperAdmin, useCatchComments } from '@/lib/supabase/queries'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import { CatcherLabel } from '@/components/app-shell/screens/TerritoryScreen'
 import { BackButton } from '@/components/app-shell/BackButton'
-import { MoveCatchSheet } from '@/components/app-shell/MoveCatchSheet'
+import { MoveCatchSheet } from '@/components/app-shell/lazyScreens'
 import type { ProfileSummary } from '@/lib/data/types'
 
 // "Иван" / "Иван и Мария" / "Иван, Мария и ещё 5" — sidesteps gender-correct
@@ -36,6 +36,7 @@ export function CatchPhotoScreen({
   onReportPhoto,
   onDeleteCatch,
   onOpenLikers,
+  onOpenComments,
 }: {
   catchId: number
   onBack: () => void
@@ -45,6 +46,7 @@ export function CatchPhotoScreen({
   onReportPhoto: (catchId: number) => void
   onDeleteCatch: (catchId: number) => void
   onOpenLikers: (likers: ProfileSummary[]) => void
+  onOpenComments: (catchId: number) => void
 }) {
   const { user } = useAuth()
   const isSuperAdmin = useIsSuperAdmin()
@@ -55,10 +57,15 @@ export function CatchPhotoScreen({
   // openCatchPhoto/deep-link while this screen is still mounted — Screen
   // never unmounts, see DECISIONS.md) resyncs it.
   const [activeId, setActiveId] = useState(catchId)
-  useEffect(() => setActiveId(catchId), [catchId])
+  const [syncedCatchId, setSyncedCatchId] = useState(catchId)
+  if (catchId !== syncedCatchId) {
+    setSyncedCatchId(catchId)
+    setActiveId(catchId)
+  }
 
   const { data: c } = useCatchById(activeId)
   const { data: likes } = useCatchLikes(activeId)
+  const { data: comments = [] } = useCatchComments(activeId)
   const { data: sectorCatches = [] } = useCatchesByTerritory(c?.territoryId ?? null)
   const toggleLike = useToggleCatchLike()
   // Only the tap that ADDS a like plays the pop — matches Twitter/Instagram
@@ -97,6 +104,10 @@ export function CatchPhotoScreen({
   if (!c) return null
   const meta = formatCatchMeta(c.lengthCm, c.weightKg)
   const likedByMe = likes?.likedByMe ?? false
+  const commentCount = comments.filter((cm) => !cm.deleted).length
+  // The two latest live comments, replies included — a thread whose root
+  // was deleted would otherwise leave the preview empty under a non-zero count.
+  const commentPreview = comments.filter((cm) => !cm.deleted).slice(-2)
 
   function handleToggleLike() {
     if (!user) return
@@ -226,6 +237,22 @@ export function CatchPhotoScreen({
               >
                 {likes?.count ?? 0}
               </div>
+              <div
+                className="icon-btn tap-scale"
+                style={{ width: 32, height: 32, marginLeft: 6 }}
+                onClick={() => onOpenComments(c.id)}
+                aria-label="Комментарии"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-4-.9L3 20l1.1-4a8.4 8.4 0 0 1-1.1-4.5A8.5 8.5 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5z" />
+                </svg>
+              </div>
+              <div
+                style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-soft)', minWidth: 12, cursor: 'pointer' }}
+                onClick={() => onOpenComments(c.id)}
+              >
+                {commentCount}
+              </div>
             </div>
           </div>
 
@@ -270,6 +297,15 @@ export function CatchPhotoScreen({
               Сектор {c.territoryId}
             </button>
             <span>· {formatWhen(c.caughtAt)}</span>
+          </div>
+
+          <div className="catch-comments-preview tap-scale" onClick={() => onOpenComments(c.id)}>
+            {commentPreview.map((cm) => (
+              <div key={cm.id} className="catch-comments-preview-line">
+                <b>{cm.displayName}</b> {cm.body}
+              </div>
+            ))}
+            <div className="catch-comments-preview-more">{commentCount ? `Все комментарии (${commentCount})` : 'Написать комментарий'}</div>
           </div>
 
           <div style={{ height: 1, background: 'var(--line)', margin: '16px 0' }} />

@@ -7,6 +7,7 @@ import { PodiumItem, podiumSlots } from '@/components/app-shell/screens/WeeklyLe
 import { CITIES, type CityId } from '@/lib/data/city'
 import { formatWeekOfMonth, pluralCatches, pluralSectors } from '@/lib/format'
 import { BackButton } from '@/components/app-shell/BackButton'
+import { seededRandom, seedFrom } from '@/lib/seededRandom'
 
 const CONFETTI_COLORS = ['#FC5200', '#F0A93E', '#B8C0CC', '#B06B36']
 // Reveal 3rd -> 2nd -> 1st, slowest for 1st so the ceremony builds toward it.
@@ -30,15 +31,14 @@ export function LastWeekScreen({
   const slots = podiumSlots(podium)
   const weekLabel = useMemo(() => formatWeekOfMonth(-1, cityInfo.timezone), [cityInfo.timezone])
 
-  const confetti = useMemo(
-    () =>
-      Array.from({ length: 12 }, (_, i) => ({
-        left: 6 + Math.random() * 88,
-        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-        delay: 0.5 + Math.random() * 0.4,
-      })),
-    []
-  )
+  const confetti = useMemo(() => {
+    const rand = seededRandom(seedFrom(`lastweek:${weekLabel}`))
+    return Array.from({ length: 12 }, (_, i) => ({
+      left: 6 + rand() * 88,
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      delay: 0.5 + rand() * 0.4,
+    }))
+  }, [weekLabel])
 
   return (
     <>

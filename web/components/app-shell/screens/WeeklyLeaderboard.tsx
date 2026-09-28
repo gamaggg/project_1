@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
-import { useWeeklyLeaderboard } from '@/lib/supabase/queries'
+import { useClanBadges, useWeeklyLeaderboard } from '@/lib/supabase/queries'
+import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import type { WeeklyLeaderboardEntry } from '@/lib/data/types'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { formatWeekOfMonth, pluralCatches, pluralSectors } from '@/lib/format'
@@ -65,11 +66,13 @@ export function PodiumItem({
   rank,
   onOpenUser,
   enterDelayMs,
+  clanCrest,
 }: {
   entry: WeeklyLeaderboardEntry
   rank: 1 | 2 | 3
   onOpenUser: (id: string) => void
   enterDelayMs?: number
+  clanCrest?: unknown
 }) {
   return (
     <button
@@ -78,7 +81,10 @@ export function PodiumItem({
       onClick={() => onOpenUser(entry.userId)}
     >
       <PodiumAvatar entry={entry} rank={rank} />
-      <div className="rating-podium-name">{entry.displayName}</div>
+      <div className="rating-podium-name">
+        {clanCrest != null && <ClanCrest crest={clanCrest} size={16} className="rating-name-crest" />}
+        {entry.displayName}
+      </div>
       <div className="rating-podium-stat-main">{entry.sectorsThisWeek} {pluralSectors(entry.sectorsThisWeek)}</div>
       <div className="rating-podium-stat-sub">{entry.catchesThisWeek} {pluralCatches(entry.catchesThisWeek)}</div>
     </button>
@@ -89,6 +95,7 @@ export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUs
   const [scope, setScope] = useState<Scope>('all')
   const cityInfo = CITIES[city]
   const { data: entries = [], isLoading } = useWeeklyLeaderboard(scope === 'friends', 0, cityInfo.idPrefix, cityInfo.timezone)
+  const { data: badges } = useClanBadges(city, entries.length > 0)
 
   const podium = entries.slice(0, 3)
   const rest = entries.slice(3, 10)
@@ -117,7 +124,7 @@ export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUs
           <div className="rating-podium">
             {slots.map((entry, i) =>
               entry ? (
-                <PodiumItem key={entry.userId} entry={entry} rank={entry.rank as 1 | 2 | 3} onOpenUser={onOpenUser} />
+                <PodiumItem key={entry.userId} entry={entry} rank={entry.rank as 1 | 2 | 3} onOpenUser={onOpenUser} clanCrest={badges?.get(entry.userId)?.crest} />
               ) : (
                 <div key={`empty-${i}`} className="rating-podium-item" aria-hidden />
               )
@@ -140,7 +147,10 @@ export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUs
                       {entry.avatarUrl ? <img src={thumbUrl(entry.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : initials}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700, fontSize: 14.5 }}>{entry.displayName}</div>
+                      <div style={{ fontWeight: 700, fontSize: 14.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {badges?.get(entry.userId) && <ClanCrest crest={badges.get(entry.userId)!.crest} size={16} />}
+                        {entry.displayName}
+                      </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontWeight: 800, fontSize: 13.5, color: 'var(--accent)' }}>{entry.sectorsThisWeek} {pluralSectors(entry.sectorsThisWeek)}</div>

@@ -27,6 +27,8 @@ export function ConfirmScreen({
   wasFree,
   speciesCoins,
   captureCoins,
+  clanSupport,
+  clanShare,
   step,
   pending,
   capturedPhoto,
@@ -42,6 +44,8 @@ export function ConfirmScreen({
   wasFree: boolean
   speciesCoins: number
   captureCoins: number
+  clanSupport?: boolean
+  clanShare?: boolean
   step: 'form' | 'success'
   pending: boolean
   capturedPhoto: Blob
@@ -71,18 +75,22 @@ export function ConfirmScreen({
   // Once only, and never over a choice they already made while this was
   // still loading.
   const { data: lastChoices } = useLastCatchChoices()
-  const prefilledRef = useRef(false)
-  useEffect(() => {
-    if (prefilledRef.current || !lastChoices) return
-    prefilledRef.current = true
+  // Adjusted during render (not in an effect) the moment the choices arrive,
+  // so the form never paints a frame with empty fields first.
+  const [prefilled, setPrefilled] = useState(false)
+  if (!prefilled && lastChoices) {
+    setPrefilled(true)
     const lastMethod = lastChoices.methods.find((m) => METHODS.includes(m))
     const lastBait = lastChoices.baits.find((b) => baits.includes(b))
-    if (lastMethod) setMethod((cur) => cur || lastMethod)
-    if (lastBait) setBait((cur) => cur || lastBait)
-  }, [lastChoices, baits])
+    if (lastMethod && !method) setMethod(lastMethod)
+    if (lastBait && !bait) setBait(lastBait)
+  }
 
+  // The blob URL is an external resource: it's created and revoked by the
+  // same effect so React's dev double-mount can't revoke one still on screen.
   useEffect(() => {
     const url = URL.createObjectURL(capturedPhoto)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- mirrors an external resource (see above)
     setPreviewUrl(url)
     return () => URL.revokeObjectURL(url)
   }, [capturedPhoto])
@@ -168,6 +176,13 @@ export function ConfirmScreen({
           </div>
         </div>
         <div className="catch-trophy-title">{wasFree ? 'Теперь это твоя территория' : 'Улов зафиксирован'}</div>
+        {clanSupport && (
+          <div className="catch-trophy-support">
+            {clanShare
+              ? 'Ты в доле сектора соклановца — теперь он поделён между вами'
+              : 'У сектора уже 4 владельца — улов засчитан как поддержка клана'}
+          </div>
+        )}
         {(speciesCoins > 0 || captureCoins > 0) && (
           <div className="catch-trophy-reward">
             {speciesCoins > 0 && (

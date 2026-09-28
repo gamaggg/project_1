@@ -92,6 +92,7 @@ export function useAchievementUnlock(territories: Territory[], territoriesReady:
     if (pruned.size !== seen.size) writeSeen(user.id, pruned)
     const fresh = unlockedIcons.filter((icon) => !pruned.has(icon))
     if (fresh.length === 0) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- compares against "seen" in browser storage (external), only readable after mount
     setQueue((q) => [...q, ...fresh.filter((icon) => !q.some((e) => e.icon === icon)).map((icon) => ({ icon, city: achievementCity }))])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, ready, unlockedKey, achievementCity])

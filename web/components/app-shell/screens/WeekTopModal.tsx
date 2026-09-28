@@ -5,6 +5,7 @@ import { HexBadge } from '@/components/app-shell/HexBadge'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import type { WeeklyLeaderboardEntry } from '@/lib/data/types'
 import { pluralCatches, pluralSectors } from '@/lib/format'
+import { seededRandom, seedFrom } from '@/lib/seededRandom'
 
 const CONFETTI_COLORS = ['#FC5200', '#F0A93E', '#B8C0CC', '#B06B36', '#FFD60A']
 
@@ -20,21 +21,20 @@ export function WeekTopModal({
   onViewRecap: () => void
   onClose: () => void
 }) {
-  const confetti = useMemo(
-    () =>
-      Array.from({ length: 16 }, (_, i) => {
-        const angle = Math.random() * Math.PI * 2
-        const dist = 70 + Math.random() * 90
-        return {
-          color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-          tx: Math.cos(angle) * dist,
-          ty: Math.sin(angle) * dist - 10 + Math.random() * 40,
-          rot: Math.random() * 480 - 240,
-          delay: Math.random() * 0.2,
-        }
-      }),
-    [entry.userId]
-  )
+  const confetti = useMemo(() => {
+    const rand = seededRandom(seedFrom(entry.userId))
+    return Array.from({ length: 16 }, (_, i) => {
+      const angle = rand() * Math.PI * 2
+      const dist = 70 + rand() * 90
+      return {
+        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+        tx: Math.cos(angle) * dist,
+        ty: Math.sin(angle) * dist - 10 + rand() * 40,
+        rot: rand() * 480 - 240,
+        delay: rand() * 0.2,
+      }
+    })
+  }, [entry.userId])
 
   return (
     <div className="modal-overlay" onClick={onClose}>

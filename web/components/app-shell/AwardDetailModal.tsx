@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import type { UserAward } from '@/lib/data/types'
 import { AWARD_ICONS, AWARD_COLOR } from '@/components/app-shell/awardIcons'
+import { seededRandom, seedFrom } from '@/lib/seededRandom'
 
 const CONFETTI_EXTRA = '#FC5200'
 
@@ -10,23 +11,22 @@ const CONFETTI_EXTRA = '#FC5200'
 // idea as AchievementUnlockedModal, but this one's purely a viewer (any
 // visitor can open it, not just the owner, and it doesn't track "seen").
 export function AwardDetailModal({ award, onClose }: { award: UserAward; onClose: () => void }) {
-  const { color, colorHi } = AWARD_COLOR[award.kind]
+  const { color, colorHi } = AWARD_COLOR[award.kind] ?? AWARD_COLOR.weekly_rank
 
-  const confetti = useMemo(
-    () =>
-      Array.from({ length: 14 }, (_, i) => {
-        const angle = Math.random() * Math.PI * 2
-        const dist = 60 + Math.random() * 70
-        return {
-          color: i % 3 === 0 ? color : i % 3 === 1 ? colorHi : CONFETTI_EXTRA,
-          tx: Math.cos(angle) * dist,
-          ty: Math.sin(angle) * dist - 10,
-          rot: Math.random() * 400 - 200,
-          delay: Math.random() * 0.15,
-        }
-      }),
-    [award.id, color, colorHi]
-  )
+  const confetti = useMemo(() => {
+    const rand = seededRandom(seedFrom(award.id))
+    return Array.from({ length: 14 }, (_, i) => {
+      const angle = rand() * Math.PI * 2
+      const dist = 60 + rand() * 70
+      return {
+        color: i % 3 === 0 ? color : i % 3 === 1 ? colorHi : CONFETTI_EXTRA,
+        tx: Math.cos(angle) * dist,
+        ty: Math.sin(angle) * dist - 10,
+        rot: rand() * 400 - 200,
+        delay: rand() * 0.15,
+      }
+    })
+  }, [award.id, color, colorHi])
 
   return (
     <div className="modal-overlay" onClick={onClose}>

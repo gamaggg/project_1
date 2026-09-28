@@ -25,6 +25,7 @@ export function useWeekTopModal(city: CityId) {
 
   useEffect(() => {
     if (!user) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads browser storage, only available after mount
     setDismissedKey(localStorage.getItem(storageKey(user.id, city)))
   }, [user?.id, city])
 

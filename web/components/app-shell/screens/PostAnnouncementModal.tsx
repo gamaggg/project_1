@@ -71,7 +71,7 @@ export function PostAnnouncementModal({ onClose }: { onClose: () => void }) {
           Новый пост
         </div>
         <div className="modal-body" style={{ textAlign: 'center', margin: '4px 0 16px' }}>
-          Увидят все пользователи в ленте "Активность". Ссылки (http/https) станут кликабельными автоматически.
+          Увидят все пользователи в ленте «Активность». Ссылки (http/https) станут кликабельными автоматически.
         </div>
         <div className="auth-field">
           <textarea

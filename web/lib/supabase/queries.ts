@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useQuery, useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type InfiniteData, type QueryKey } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/AuthProvider'
-import type { Territory, TerritoryStatus, Catch, ProfileSummary, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, WeeklyLeaderboardEntry, UserAward, AwardKind } from '@/lib/data/types'
+import type { Territory, TerritoryCoHolder, TerritoryStatus, Catch, ProfileSummary, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, WeeklyLeaderboardEntry, UserAward, AwardKind, CatchComment, ClanSummary, ClanDetail, ClanMember, ClanEligibility, ClanInvite, ClanChest, ClanRace, ClanChatMessage, ClanChatSummary, ClanRoleId } from '@/lib/data/types'
 import type { SpeciesCategory } from '@/lib/data/species'
 import { CITIES, type CityId } from '@/lib/data/city'
+import type { ShareKind } from '@/lib/guestShare'
 
 type SectorGeometry = {
   id: string
@@ -18,52 +19,81 @@ type SectorGeometry = {
 
 // Geometry never changes at runtime (see tools/fishing-hex) — fetched once from the
 // static asset and cached for the life of the tab, independent of ownership state.
-function useSectorsGeometry() {
-  return useQuery({
-    queryKey: ['sectors-geometry'],
-    queryFn: async () => {
-      const res = await fetch('/data/sectors.json')
-      return (await res.json()) as SectorGeometry[]
-    },
-    staleTime: Infinity,
-    gcTime: Infinity,
-  })
+const sectorsGeometryQuery = {
+  queryKey: ['sectors-geometry'],
+  queryFn: async () => {
+    const res = await fetch('/data/sectors.json')
+    return (await res.json()) as SectorGeometry[]
+  },
+  staleTime: Infinity,
+  gcTime: Infinity,
+}
+
+export function useSectorsGeometry() {
+  return useQuery(sectorsGeometryQuery)
+}
+
+// territories_with_stats had ~1.9k rows in Sept 2026 — two pages. Those are
+// requested together instead of one after the other; a table that outgrows
+// them still loads in full, the extra pages just follow sequentially.
+const TERRITORY_PAGE_SIZE = 1000
+const TERRITORY_PARALLEL_PAGES = 2
+
+// territories_with_stats.co_holders is a jsonb array of {id, avatar_url,
+// display_name}, oldest share first — null when nobody shares the sector.
+function toCoHolders(raw: unknown, myId: string | undefined): TerritoryCoHolder[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .filter((h): h is { id: string; avatar_url?: string | null; display_name?: string | null } => typeof h?.id === 'string')
+    .map((h) => ({ id: h.id, avatarUrl: h.avatar_url ?? null, displayName: h.display_name ?? null, isMe: h.id === myId }))
 }
 
 // Merges static geometry with live Supabase ownership (territories_with_stats) —
 // see DECISIONS.md for why geometry stays a static asset instead of DB rows.
 export function useTerritories() {
-  const { user } = useAuth()
-  const geometry = useSectorsGeometry()
+  const { user, sessionReady } = useAuth()
+  const queryClient = useQueryClient()
 
   return useQuery({
     queryKey: ['territories', user?.id ?? null],
     queryFn: async (): Promise<Territory[]> => {
       const supabase = createClient()
-      const columns = 'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted, shield_until, owner_equipped_skin'
+      const columns =
+        'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted, shield_until, owner_equipped_skin, owner_clan_id, owner_clan_name, owner_clan_crest, co_holders'
       // PostgREST caps a single response at 1000 rows by default and stays
       // silent about it (no error, just a truncated array) — the table
       // crossed that count once admin-added sectors piled up, which is how
       // a whole batch of newly created territories could exist in the
       // database yet never reach the map. Page through with .range() so the
       // table can keep growing past 1000 without this recurring.
-      const pageSize = 1000
+      const pageSize = TERRITORY_PAGE_SIZE
       // Pages need a fixed order: without one, two separate requests may
       // come back in different orders and overlap — some sectors twice,
       // others (up to hundreds) missing from the map.
-      const first = await supabase.from('territories_with_stats').select(columns).order('id').range(0, pageSize - 1)
-      if (first.error) throw first.error
-      const data = first.data
-      let lastPageLength = data.length
-      for (let from = pageSize; lastPageLength === pageSize; from += pageSize) {
-        const page = await supabase.from('territories_with_stats').select(columns).order('id').range(from, from + pageSize - 1)
+      const fetchPage = (from: number) =>
+        supabase.from('territories_with_stats').select(columns).order('id').range(from, from + pageSize - 1)
+      // The static geometry and the first pages are fetched side by side —
+      // the rows don't need the geometry until the merge below, so waiting
+      // for sectors.json before asking the database only delayed the map.
+      const [geometry, pages] = await Promise.all([
+        queryClient.ensureQueryData(sectorsGeometryQuery),
+        Promise.all(Array.from({ length: TERRITORY_PARALLEL_PAGES }, (_, i) => fetchPage(i * pageSize))),
+      ])
+      const data: NonNullable<(typeof pages)[number]['data']> = []
+      for (const page of pages) {
+        if (page.error) throw page.error
+        data.push(...page.data)
+      }
+      let lastPageLength = pages[pages.length - 1].data?.length ?? 0
+      for (let from = TERRITORY_PARALLEL_PAGES * pageSize; lastPageLength === pageSize; from += pageSize) {
+        const page = await fetchPage(from)
         if (page.error) throw page.error
         data.push(...page.data)
         lastPageLength = page.data.length
       }
 
       const byId = new Map(data.map((row) => [row.id, row]))
-      const staticIds = new Set(geometry.data!.map((g) => g.id))
+      const staticIds = new Set(geometry.map((g) => g.id))
 
       function toTerritory(id: string, kind: TerritoryKind, lat: number, lng: number, corners: [number, number][]): Territory {
         const row = byId.get(id)
@@ -83,10 +113,14 @@ export function useTerritories() {
           lastCatchAt: row?.last_catch_at ?? null,
           shieldUntil: row?.shield_until ?? null,
           ownerEquippedSkin: row?.owner_equipped_skin ?? null,
+          ownerClanId: row?.owner_clan_id ?? null,
+          ownerClanName: row?.owner_clan_name ?? null,
+          ownerClanCrest: row?.owner_clan_crest ?? null,
+          coHolders: toCoHolders(row?.co_holders, user?.id),
         }
       }
 
-      const fromStatic = geometry.data!
+      const fromStatic = geometry
         // Geometry is a static asset (see useSectorsGeometry) — a sector a
         // super admin deleted (admin_delete_territory) stays in that file,
         // so it's dropped here based on the DB row's is_deleted flag instead.
@@ -118,7 +152,10 @@ export function useTerritories() {
         // ascending-by-number order for free.
         .sort((a, b) => b.catchCount - a.catchCount || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
     },
-    enabled: geometry.isSuccess,
+    // Until the stored session is read the key would say "no user" and the
+    // whole table would be fetched once for nobody, then again for the real
+    // user.
+    enabled: sessionReady,
   })
 }
 
@@ -332,6 +369,202 @@ export function useCatchById(id: number | null) {
 // most-recent-first (so the facepile's leading avatars are whoever just
 // liked it), since a catch's like count is small enough that paginating
 // separately from the preview isn't worth the extra round trip.
+// One request per opened catch: the card's count and preview and the
+// comments sheet all read this same cache entry (see CommentsSheet).
+export function useCatchComments(catchId: number | null) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['catch-comments', catchId],
+    enabled: !!catchId,
+    queryFn: async (): Promise<CatchComment[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_catch_comments', { p_catch_id: catchId! })
+      if (error) throw error
+      return (data ?? []).map((r) => ({
+        id: r.id,
+        parentId: r.parent_id,
+        userId: r.user_id,
+        displayName: r.display_name ?? 'Рыбак',
+        avatarUrl: r.avatar_url,
+        nameStyle: r.equipped_name_style,
+        replyToUserId: r.reply_to_user_id,
+        replyToName: r.reply_to_name,
+        body: r.body,
+        createdAt: r.created_at,
+        deleted: r.deleted,
+        mine: r.user_id === user?.id,
+        clanCrest: r.clan_crest,
+        clanName: r.clan_name,
+      }))
+    },
+  })
+}
+
+// post_comment never raises for a rejected comment — the rejection has to
+// commit (it feeds the mute escalation), so it comes back as a reason code
+// instead (see lib/moderation.ts for the texts).
+export type PostCommentResult = { ok: true } | { ok: false; reason: string; retryAfter: number | null; mutedUntil: string | null }
+
+export function usePostComment() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ catchId, body, parentId }: { catchId: number; body: string; parentId: number | null }): Promise<PostCommentResult> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('post_comment', { p_catch_id: catchId, p_body: body, p_parent_id: parentId })
+      if (error) throw error
+      const r = data as { ok: boolean; reason?: string; retry_after?: number; muted_until?: string | null }
+      if (r.ok) return { ok: true }
+      return { ok: false, reason: r.reason ?? 'error', retryAfter: r.retry_after ?? null, mutedUntil: r.muted_until ?? null }
+    },
+    onSettled: (_data, _error, vars) => queryClient.invalidateQueries({ queryKey: ['catch-comments', vars.catchId] }),
+  })
+}
+
+export function useDeleteComment() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ commentId }: { commentId: number; catchId: number }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('delete_comment', { p_comment_id: commentId })
+      if (error) throw error
+    },
+    // Optimistic, mirroring get_catch_comments: a deleted root with live
+    // replies stays as a placeholder, anything else just disappears.
+    onMutate: ({ commentId, catchId }) => {
+      const key = ['catch-comments', catchId]
+      const previous = queryClient.getQueryData<CatchComment[]>(key)
+      if (previous) {
+        const next = previous.map((c) => (c.id === commentId ? { ...c, deleted: true, body: null } : c))
+        queryClient.setQueryData<CatchComment[]>(
+          key,
+          next.filter((c) => !c.deleted || (c.parentId === null && next.some((r) => r.parentId === c.id && !r.deleted)))
+        )
+      }
+      return { previous }
+    },
+    onError: (_error, { catchId }, context) => {
+      if (context?.previous) queryClient.setQueryData(['catch-comments', catchId], context.previous)
+    },
+    onSettled: (_data, _error, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['catch-comments', vars.catchId] })
+      queryClient.invalidateQueries({ queryKey: ['admin-comment-reports'] })
+    },
+  })
+}
+
+export function useReportComment() {
+  return useMutation({
+    mutationFn: async ({ commentId, reason }: { commentId: number; reason: string }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('report_comment', { p_comment_id: commentId, p_reason: reason })
+      if (error) throw error
+    },
+  })
+}
+
+// Live comments, but only while a sheet is actually open on this catch —
+// one filtered channel, torn down on close, so nothing extra runs for
+// everyone else (see useRealtimeSync for the app-wide channel).
+export function useCatchCommentsLive(catchId: number | null) {
+  const queryClient = useQueryClient()
+  useEffect(() => {
+    if (!catchId) return
+    const supabase = createClient()
+    const channel = supabase
+      .channel(`catch-comments:${catchId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'catch_comments', filter: `catch_id=eq.${catchId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['catch-comments', catchId] })
+      })
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [catchId, queryClient])
+}
+
+export function useAdminCommentReports(enabled: boolean) {
+  return useQuery({
+    queryKey: ['admin-comment-reports'],
+    enabled,
+    queryFn: async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('admin_get_comment_reports')
+      if (error) throw error
+      return (data ?? []).map((r) => ({
+        commentId: r.comment_id,
+        catchId: r.catch_id,
+        body: r.body,
+        authorId: r.author_id,
+        authorName: r.author_name,
+        reportCount: Number(r.report_count),
+        reasons: r.reasons ?? [],
+        lastReportedAt: r.last_reported_at,
+      }))
+    },
+  })
+}
+
+export function useAdminDismissCommentReports() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (commentId: number) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_dismiss_comment_reports', { p_comment_id: commentId })
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-comment-reports'] }),
+  })
+}
+
+// What the text filter turned down (moderate_text), newest first, and who is
+// muted right now — the «Фильтр» tab of the reports screen.
+export type TextModerationLogEntry = {
+  id: number
+  userId: string
+  displayName: string
+  avatarUrl: string | null
+  context: string
+  reason: string
+  body: string | null
+  createdAt: string
+  mutedUntil: string | null
+}
+
+export function useAdminTextModerationLog(enabled: boolean) {
+  return useQuery({
+    queryKey: ['admin-text-moderation-log'],
+    enabled,
+    queryFn: async (): Promise<TextModerationLogEntry[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('admin_get_text_moderation_log', { p_limit: 150 })
+      if (error) throw error
+      return (data ?? []).map((r) => ({
+        id: r.id,
+        userId: r.user_id,
+        displayName: r.display_name ?? 'Рыбак',
+        avatarUrl: r.avatar_url,
+        context: r.context,
+        reason: r.reason,
+        body: r.body,
+        createdAt: r.created_at,
+        mutedUntil: r.muted_until,
+      }))
+    },
+  })
+}
+
+export function useAdminUnmuteUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_unmute_user', { p_user_id: userId })
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-text-moderation-log'] }),
+  })
+}
+
 export function useCatchLikes(catchId: number | null) {
   const { user } = useAuth()
   return useQuery({
@@ -494,7 +727,28 @@ export function useActivity() {
                             ? 'challenges_week_done'
                             : row.kind === 'challenge_deadline_soon'
                               ? 'challenge_deadline'
-                              : 'catch'
+                              : row.kind === 'catch_comment'
+                                ? 'comment'
+                                : row.kind === 'comment_reply'
+                                  ? 'comment_reply'
+                                  : row.kind === 'comment_removed'
+                                    ? 'comment_removed'
+                                    : row.kind === 'clan_invite' ||
+                                        row.kind === 'clan_join_request' ||
+                                        row.kind === 'clan_join_accepted' ||
+                                        row.kind === 'clan_role_changed' ||
+                                        row.kind === 'clan_kicked' ||
+                                        row.kind === 'clan_disbanded' ||
+                                        row.kind === 'clan_chest_reward' ||
+                                        row.kind === 'clan_race_result' ||
+                                        row.kind === 'clan_race_overtaken' ||
+                                        row.kind === 'clan_race_finished' ||
+                                        row.kind === 'clan_chat_mention' ||
+                                        row.kind === 'referral_joined' ||
+                                        row.kind === 'referral_reward' ||
+                                        row.kind === 'system_alert'
+                                      ? (row.kind as ActivityEntry['kind'])
+                                      : 'catch'
           return {
             id: `notif:${row.id}`,
             who: actor?.display_name ?? 'Рыбак',
@@ -529,6 +783,24 @@ export function useActivity() {
             challengeHours: kind === 'challenge_deadline' ? ((payload.hours as number) ?? null) : null,
             moderationSpecies: kind === 'moderation' ? ((payload.species as string) ?? null) : null,
             moderationCoinsRemoved: kind === 'moderation' ? ((payload.coinsRemoved as number) ?? null) : null,
+            commentText: kind === 'comment' || kind === 'comment_reply' || kind === 'clan_chat_mention' ? ((payload.text as string) ?? null) : null,
+            commentId: (payload.comment_id as number | undefined) ?? null,
+            clanId: (payload.clan_id as number | undefined) ?? null,
+            clanName: (payload.clan_name as string | undefined) ?? null,
+            clanCrest: payload.crest ?? null,
+            clanRole: (payload.role as string | undefined) ?? null,
+            clanWeek:
+              kind === 'clan_chest_reward' || kind === 'clan_race_result' || kind === 'clan_race_overtaken' || kind === 'clan_race_finished'
+                ? {
+                    tier: (payload.tier as number | undefined) ?? null,
+                    coins: (payload.coins as number | undefined) ?? null,
+                    place: ((payload.place ?? payload.rank) as number | undefined) ?? null,
+                    finished: !!payload.finished,
+                    ahead: (payload.ahead as string | undefined) ?? null,
+                    trophies: (payload.trophies as number | undefined) ?? null,
+                  }
+                : null,
+            alertText: kind === 'system_alert' ? ((payload.text as string) ?? null) : null,
           }
         })
       }
@@ -573,9 +845,117 @@ export function useActivity() {
         challengeHours: null,
         moderationSpecies: null,
         moderationCoinsRemoved: null,
+        commentText: null,
+        commentId: null,
+        clanId: null,
+        clanName: null,
+        clanCrest: null,
+        clanRole: null,
+        clanWeek: null,
+        alertText: null,
       }))
 
       return [...notificationEntries, ...announcementEntries].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    },
+  })
+}
+
+// The «Все» tab's public half: recent catches by everyone in the player's
+// city, followed or not (get_city_feed — never your own). Plain reading, no
+// read state: these are never notifications. Under the 'catches' key prefix
+// so the realtime catch listener (useRealtimeSync) keeps it fresh.
+export function useCityFeed(city: CityId, enabled = true) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['catches', 'city-feed', city, user?.id ?? null],
+    enabled: enabled && !!user,
+    queryFn: async (): Promise<ActivityEntry[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_city_feed', { p_city: city, p_limit: 60 })
+      if (error) throw error
+      return (data ?? []).map(
+        (r): ActivityEntry => ({
+          id: `city:${r.catch_id}`,
+          who: r.display_name ?? 'Рыбак',
+          userId: r.user_id,
+          avatarUrl: r.avatar_url,
+          mine: false,
+          kind: 'catch',
+          unread: false,
+          fromCity: true,
+          claimed: r.claimed,
+          territoryId: r.territory_id,
+          territoryKind: r.territory_kind ?? undefined,
+          speciesName: r.species_name,
+          speciesCategory: (r.species_category as SpeciesCategory | null) ?? null,
+          lengthCm: r.length_cm,
+          weightKg: r.weight_kg,
+          photoUrl: r.photo_url,
+          catchId: r.catch_id,
+          createdAt: r.caught_at,
+          body: null,
+          buttonLabel: null,
+          buttonUrl: null,
+          awardTitle: null,
+          awardSubtitle: null,
+          awardCoins: null,
+          weeklyRank: null,
+          weeklySectors: null,
+          weeklyCatches: null,
+          challengeTitle: null,
+          challengeCoins: null,
+          challengeHours: null,
+          moderationSpecies: null,
+          moderationCoinsRemoved: null,
+          commentText: null,
+          commentId: null,
+          clanId: null,
+          clanName: null,
+          clanCrest: null,
+          clanRole: null,
+          clanWeek: null,
+          alertText: null,
+        })
+      )
+    },
+  })
+}
+
+// A shared screen for a guest (no account): get_share_preview works without
+// signing in and returns only what any player can already see — no sector
+// coordinates. null — nothing to show (deleted, blocked, wrong link).
+export function useSharePreview(kind: ShareKind | null, key: string | null) {
+  return useQuery({
+    queryKey: ['share-preview', kind, key],
+    enabled: !!kind && !!key,
+    staleTime: 60_000,
+    queryFn: async (): Promise<unknown> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_share_preview', { p_kind: kind!, p_key: key! })
+      if (error) throw error
+      return data ?? null
+    },
+  })
+}
+
+// Signed up from someone's link: 100 coins now (only a brand-new account,
+// once — see claim_referral), and the one who shared gets theirs after
+// this player's first catch.
+export type ClaimReferralResult = { ok: true; coins: number; referrerName: string | null } | { ok: false; reason: string }
+
+export function useClaimReferral() {
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+  return useMutation({
+    mutationFn: async ({ ref, source }: { ref: string; source: string }): Promise<ClaimReferralResult> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('claim_referral', { p_ref: ref, p_source: source })
+      if (error) throw error
+      const r = data as { ok: boolean; reason?: string; coins?: number; referrer_name?: string | null }
+      return r.ok ? { ok: true, coins: r.coins ?? 0, referrerName: r.referrer_name ?? null } : { ok: false, reason: r.reason ?? 'error' }
+    },
+    onSuccess: (r) => {
+      if (r.ok) queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
     },
   })
 }
@@ -683,6 +1063,10 @@ export function useProfile(userId: string | null) {
         coins: data.coins ?? null,
         equippedNameStyle: data.equipped_name_style ?? null,
         equippedSkin: data.equipped_skin ?? null,
+        clanId: data.clan_id ?? null,
+        clanName: data.clan_name ?? null,
+        clanCrest: data.clan_crest ?? null,
+        clanRole: (data.clan_role as Profile['clanRole']) ?? null,
       }
     },
     enabled: !!userId,
@@ -1326,6 +1710,27 @@ export function useAdminDeleteCatch() {
   })
 }
 
+// Static-file sectors with no DB row yet get one created by the RPC, which
+// is why lat/lng travel along.
+export type ClanModerationAction = 'reset_name' | 'reset_motto' | 'reset_announcement' | 'reset_crest' | 'void_race' | 'disband'
+
+// Super admin only (checked server-side too) — see admin_moderate_clan.
+export function useAdminModerateClan() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ clanId, action }: { clanId: number; action: ClanModerationAction }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_moderate_clan', { p_clan_id: clanId, p_action: action })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      invalidateClanMembership(queryClient)
+      queryClient.invalidateQueries({ queryKey: ['clan-race'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
+    },
+  })
+}
+
 // Super admin fixes a catch that GPS put in the wrong sector — ownership of
 // both sectors is recomputed server-side (see admin_move_catch).
 export function useAdminMoveCatch() {
@@ -1347,8 +1752,6 @@ export function useAdminMoveCatch() {
   })
 }
 
-// Static-file sectors with no DB row yet get one created by the RPC, which
-// is why lat/lng travel along.
 export function useAdminSetTerritoryKind() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -1599,7 +2002,7 @@ export function useConfirmCatch() {
         })
         .single()
       if (error) throw error
-      return { speciesCoins: data.species_coins, captureCoins: data.capture_coins }
+      return { speciesCoins: data.species_coins, captureCoins: data.capture_coins, clanSupport: !!data.clan_support }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['territories'] })
@@ -1909,4 +2312,506 @@ export function useBuyShield() {
       queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
     },
   })
+}
+
+// ---------- Clans (see DECISIONS.md «Кланы», clans_core migration) ----------
+
+// Anything that changes who's in which clan also changes the map's «Кланы»
+// layer (territories_with_stats carries the owner's clan) and every profile
+// that shows a clan badge — so membership changes refresh all three.
+function invalidateClanMembership(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: ['clan'] })
+  queryClient.invalidateQueries({ queryKey: ['clan-badges'] })
+  queryClient.invalidateQueries({ queryKey: ['clans'] })
+  queryClient.invalidateQueries({ queryKey: ['profile'] })
+  queryClient.invalidateQueries({ queryKey: ['territories'] })
+  queryClient.invalidateQueries({ queryKey: ['clan-eligibility'] })
+  queryClient.invalidateQueries({ queryKey: ['my-clan-invites'] })
+}
+
+export function useClanEligibility(enabled: boolean) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['clan-eligibility', user?.id ?? null],
+    enabled: enabled && !!user,
+    queryFn: async (): Promise<ClanEligibility> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_clan_eligibility')
+      if (error) throw error
+      const r = data as Record<string, unknown>
+      return {
+        sectors: Number(r.sectors ?? 0),
+        sectorsNeeded: Number(r.sectors_needed ?? 3),
+        coins: Number(r.coins ?? 0),
+        price: Number(r.price ?? 1000),
+        inClan: !!r.in_clan,
+        cooldownUntil: (r.cooldown_until as string | null) ?? null,
+      }
+    },
+  })
+}
+
+export function useClanList(city: CityId, query: string) {
+  return useQuery({
+    queryKey: ['clans', city, query.trim().toLowerCase()],
+    queryFn: async (): Promise<ClanSummary[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('list_clans', { p_city: city, p_query: query.trim() || null })
+      if (error) throw error
+      return (data ?? []).map((r) => ({
+        id: r.id,
+        name: r.name,
+        motto: r.motto,
+        crest: r.crest,
+        background: r.background,
+        level: r.level,
+        trophies: r.trophies,
+        members: r.members,
+        capacity: r.capacity,
+        joinType: r.join_type as ClanSummary['joinType'],
+        minSectors: r.min_sectors,
+        sectorsHeld: r.sectors_held,
+      }))
+    },
+  })
+}
+
+export function useClan(clanId: number | null) {
+  return useQuery({
+    queryKey: ['clan', clanId],
+    enabled: !!clanId,
+    queryFn: async (): Promise<ClanDetail | null> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_clan', { p_clan_id: clanId! })
+      if (error) throw error
+      if (!data) return null
+      const r = data as Record<string, unknown>
+      const members = (r.members as Record<string, unknown>[]) ?? []
+      const requests = r.requests as Record<string, unknown>[] | null
+      const events = (r.events as Record<string, unknown>[]) ?? []
+      return {
+        id: Number(r.id),
+        city: r.city as ClanDetail['city'],
+        name: String(r.name),
+        motto: (r.motto as string | null) ?? null,
+        announcement: (r.announcement as string | null) ?? null,
+        crest: r.crest,
+        background: String(r.background),
+        joinType: r.join_type as ClanDetail['joinType'],
+        minSectors: Number(r.min_sectors),
+        xp: Number(r.xp),
+        level: Number(r.level),
+        capacity: Number(r.capacity),
+        trophies: Number(r.trophies),
+        createdAt: String(r.created_at),
+        renamedAt: (r.renamed_at as string | null) ?? null,
+        disbanded: !!r.disbanded,
+        myRole: (r.my_role as ClanDetail['myRole']) ?? null,
+        myRequestPending: !!r.my_request_pending,
+        myInvite: !!r.my_invite,
+        raceWins: Number(r.race_wins ?? 0),
+        wonLastWeek: !!r.won_last_week,
+        sectorsHeld: Number(r.sectors_held ?? 0),
+        members: members.map((m) => ({
+          userId: String(m.user_id),
+          displayName: String(m.display_name ?? 'Рыбак'),
+          avatarUrl: (m.avatar_url as string | null) ?? null,
+          nameStyle: (m.name_style as string | null) ?? null,
+          role: m.role as ClanMember['role'],
+          joinedAt: String(m.joined_at),
+          weekCatches: Number(m.week_catches ?? 0),
+          sectors: Number(m.sectors ?? 0),
+        })),
+        requests: requests
+          ? requests.map((q) => ({
+              userId: String(q.user_id),
+              displayName: String(q.display_name ?? 'Рыбак'),
+              avatarUrl: (q.avatar_url as string | null) ?? null,
+              sectors: Number(q.sectors ?? 0),
+              createdAt: String(q.created_at),
+            }))
+          : null,
+        events: events.map((e) => ({
+          kind: String(e.kind),
+          actorName: (e.actor_name as string | null) ?? null,
+          targetName: (e.target_name as string | null) ?? null,
+          payload: (e.payload as Record<string, unknown> | null) ?? null,
+          createdAt: String(e.created_at),
+        })),
+      }
+    },
+  })
+}
+
+// ---- Clan chat (see DECISIONS.md «Чат клана») ----
+
+const CLAN_CHAT_PAGE = 50
+
+// Pages come newest first (get_clan_chat); the next page asks for messages
+// older than the last one of the previous page. The screen flattens and
+// reverses them into reading order. A refetch walks the pages again from
+// the newest, re-deriving every cursor, so new messages never leave a gap.
+export function useClanChat(clanId: number | null) {
+  const { user } = useAuth()
+  return useInfiniteQuery({
+    queryKey: ['clan-chat', clanId],
+    enabled: !!clanId && !!user,
+    initialPageParam: null as number | null,
+    queryFn: async ({ pageParam }): Promise<ClanChatMessage[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_clan_chat', { p_clan_id: clanId!, p_before_id: pageParam, p_limit: CLAN_CHAT_PAGE })
+      if (error) throw error
+      return (data ?? []).map((r) => ({
+        id: r.id,
+        userId: r.user_id,
+        displayName: r.display_name ?? 'Рыбак',
+        avatarUrl: r.avatar_url,
+        nameStyle: r.name_style,
+        role: (r.role as ClanRoleId | null) ?? null,
+        body: r.body,
+        createdAt: r.created_at,
+        mine: !!user && r.user_id === user.id,
+      }))
+    },
+    getNextPageParam: (last) => (last.length === CLAN_CHAT_PAGE ? last[last.length - 1].id : undefined),
+  })
+}
+
+export function useClanChatSummary(clanId: number | null) {
+  return useQuery({
+    queryKey: ['clan-chat-summary', clanId],
+    enabled: !!clanId,
+    staleTime: 30_000,
+    queryFn: async (): Promise<ClanChatSummary | null> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_clan_chat_summary', { p_clan_id: clanId! })
+      if (error) throw error
+      if (!data) return null
+      const r = data as { unread?: number; last?: { id: number; body: string; created_at: string; author: string; mine: boolean } | null }
+      return {
+        unread: r.unread ?? 0,
+        last: r.last ? { id: r.last.id, body: r.last.body, createdAt: r.last.created_at, author: r.last.author, mine: !!r.last.mine } : null,
+      }
+    },
+  })
+}
+
+// post_clan_message never raises for a rejected text — like post_comment,
+// the rejection has to commit (it feeds the shared mute), so it comes back
+// as a reason code instead (see lib/moderation.ts).
+export type PostClanMessageResult = { ok: true } | { ok: false; reason: string; retryAfter: number | null; mutedUntil: string | null }
+
+export function usePostClanMessage() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ clanId, body }: { clanId: number; body: string }): Promise<PostClanMessageResult> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('post_clan_message', { p_clan_id: clanId, p_body: body })
+      if (error) throw error
+      const r = data as { ok: boolean; reason?: string; retry_after?: number; muted_until?: string | null }
+      if (r.ok) return { ok: true }
+      return { ok: false, reason: r.reason ?? 'error', retryAfter: r.retry_after ?? null, mutedUntil: r.muted_until ?? null }
+    },
+    onSettled: (_data, _error, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['clan-chat', vars.clanId] })
+      queryClient.invalidateQueries({ queryKey: ['clan-chat-summary', vars.clanId] })
+    },
+  })
+}
+
+export function useDeleteClanMessage() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ messageId }: { messageId: number; clanId: number }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('delete_clan_message', { p_message_id: messageId })
+      if (error) throw error
+    },
+    onMutate: ({ messageId, clanId }) => {
+      const key = ['clan-chat', clanId]
+      const previous = queryClient.getQueryData<InfiniteData<ClanChatMessage[], number | null>>(key)
+      if (previous) {
+        queryClient.setQueryData<InfiniteData<ClanChatMessage[], number | null>>(key, {
+          ...previous,
+          pages: previous.pages.map((page) => page.filter((m) => m.id !== messageId)),
+        })
+      }
+      return { previous }
+    },
+    onError: (_error, { clanId }, context) => {
+      if (context?.previous) queryClient.setQueryData(['clan-chat', clanId], context.previous)
+    },
+    onSettled: (_data, _error, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['clan-chat', vars.clanId] })
+      queryClient.invalidateQueries({ queryKey: ['clan-chat-summary', vars.clanId] })
+    },
+  })
+}
+
+// Opening the chat (and every new message while it's open) reads it up to
+// now; the card's badge drops to zero without waiting for a refetch.
+export function useMarkClanChatRead() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (clanId: number) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('mark_clan_chat_read', { p_clan_id: clanId })
+      if (error) throw error
+    },
+    onMutate: (clanId) => {
+      queryClient.setQueryData<ClanChatSummary | null>(['clan-chat-summary', clanId], (s) => (s ? { ...s, unread: 0 } : s))
+    },
+  })
+}
+
+// One channel per clan the player is in, for the app's whole session: a new
+// message refreshes the open chat and the unread badges on the clan and
+// profile cards. Row-level security keeps it to that clan's members.
+// Deletions can't be filtered by clan (their payload carries only the id),
+// so any deletion refreshes — they're rare.
+export function useClanChatLive(clanId: number | null) {
+  const queryClient = useQueryClient()
+  useEffect(() => {
+    if (!clanId) return
+    const supabase = createClient()
+    const refresh = () => {
+      queryClient.invalidateQueries({ queryKey: ['clan-chat', clanId] })
+      queryClient.invalidateQueries({ queryKey: ['clan-chat-summary', clanId] })
+    }
+    const channel = supabase
+      .channel(`clan-chat:${clanId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'clan_messages', filter: `clan_id=eq.${clanId}` }, refresh)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'clan_messages' }, refresh)
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [clanId, queryClient])
+}
+
+export function useMyClanInvites(enabled: boolean) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['my-clan-invites', user?.id ?? null],
+    enabled: enabled && !!user,
+    queryFn: async (): Promise<ClanInvite[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_my_clan_invites')
+      if (error) throw error
+      return (data ?? []).map((r) => ({ clanId: r.clan_id, name: r.name, crest: r.crest, invitedByName: r.invited_by_name, createdAt: r.created_at }))
+    },
+  })
+}
+
+// Live name check while typing in the clan constructor — same rules the
+// server applies again inside create_clan/update_clan.
+export function useClanNameCheck(name: string, enabled: boolean) {
+  const trimmed = name.trim()
+  return useQuery({
+    queryKey: ['clan-name-check', trimmed.toLowerCase()],
+    enabled: enabled && trimmed.length >= 3,
+    staleTime: 30_000,
+    queryFn: async (): Promise<string | null> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('check_clan_name', { p_name: trimmed })
+      if (error) throw error
+      return data ?? null
+    },
+  })
+}
+
+export type ClanSettingsInput = {
+  name: string
+  motto: string
+  crest: { shape: string; symbol: string; primary: string; secondary: string }
+  background: string
+  joinType: 'open' | 'request' | 'invite'
+  minSectors: number
+}
+
+export function useCreateClan() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: ClanSettingsInput): Promise<number> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('create_clan', {
+        p_name: input.name.trim(),
+        p_motto: input.motto.trim() || null,
+        p_crest: input.crest,
+        p_background: input.background,
+        p_join_type: input.joinType,
+        p_min_sectors: input.minSectors,
+      })
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => invalidateClanMembership(queryClient),
+  })
+}
+
+export function useUpdateClan() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: ClanSettingsInput & { announcement: string; rename: boolean; clanId: number }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('update_clan', {
+        p_name: input.rename ? input.name.trim() : null,
+        p_motto: input.motto.trim() || null,
+        p_announcement: input.announcement.trim() || null,
+        p_crest: input.crest,
+        p_background: input.background,
+        p_join_type: input.joinType,
+        p_min_sectors: input.minSectors,
+        p_clan_id: input.clanId,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => invalidateClanMembership(queryClient),
+  })
+}
+
+function useClanAction<TVars>(run: (supabase: ReturnType<typeof createClient>, vars: TVars) => PromiseLike<{ error: unknown; data?: unknown }>) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (vars: TVars) => {
+      const { error, data } = await run(createClient(), vars)
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => invalidateClanMembership(queryClient),
+  })
+}
+
+export const useJoinClan = () => useClanAction<number>((s, clanId) => s.rpc('join_clan', { p_clan_id: clanId }))
+export const useCancelClanJoinRequest = () => useClanAction<number>((s, clanId) => s.rpc('cancel_clan_join_request', { p_clan_id: clanId }))
+// A player can be in one clan per city, so every action names its clan —
+// otherwise, while in Moscow, a Batumi clan's request could land in the
+// Moscow one (see _clan_membership).
+export const useLeaveClan = () => useClanAction<number>((s, clanId) => s.rpc('leave_clan', { p_clan_id: clanId }))
+export const useKickClanMember = () =>
+  useClanAction<{ userId: string; clanId: number }>((s, v) => s.rpc('kick_clan_member', { p_user_id: v.userId, p_clan_id: v.clanId }))
+export const useSetClanMemberRole = () =>
+  useClanAction<{ userId: string; role: string; clanId: number }>((s, v) =>
+    s.rpc('set_clan_member_role', { p_user_id: v.userId, p_role: v.role, p_clan_id: v.clanId })
+  )
+export const useRespondClanJoinRequest = () =>
+  useClanAction<{ userId: string; accept: boolean; clanId: number }>((s, v) =>
+    s.rpc('respond_clan_join_request', { p_user_id: v.userId, p_accept: v.accept, p_clan_id: v.clanId })
+  )
+export const useInviteToClan = () =>
+  useClanAction<{ userId: string; clanId: number }>((s, v) => s.rpc('invite_to_clan', { p_user_id: v.userId, p_clan_id: v.clanId }))
+export const useDeclineClanInvite = () => useClanAction<number>((s, clanId) => s.rpc('decline_clan_invite', { p_clan_id: clanId }))
+
+// Who's in which clan in a city — for the crest next to names in the weekly
+// rating. One small request, only while the rating is on screen.
+export function useClanBadges(city: CityId, enabled: boolean) {
+  return useQuery({
+    queryKey: ['clan-badges', city],
+    enabled,
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<Map<string, { clanId: number; name: string; crest: unknown }>> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_clan_badges', { p_city: city })
+      if (error) throw error
+      return new Map((data ?? []).map((r) => [r.user_id, { clanId: r.clan_id, name: r.clan_name, crest: r.crest }]))
+    },
+  })
+}
+
+export function useClanChest(clanId: number | null) {
+  return useQuery({
+    queryKey: ['clan-chest', clanId],
+    enabled: !!clanId,
+    queryFn: async (): Promise<ClanChest | null> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_clan_chest', { p_clan_id: clanId! })
+      if (error) throw error
+      if (!data) return null
+      const r = data as Record<string, unknown>
+      const contributors = (r.contributors as Record<string, unknown>[]) ?? []
+      const last = r.last_week as Record<string, unknown> | null
+      return {
+        weekStart: String(r.week_start),
+        weekEnd: String(r.week_end),
+        points: Number(r.points ?? 0),
+        tier: Number(r.tier ?? 0),
+        thresholds: (r.thresholds as number[]) ?? [],
+        rewards: (r.rewards as number[]) ?? [20, 45, 80, 120, 170],
+        contributors: contributors.map((c) => ({
+          userId: String(c.user_id),
+          displayName: String(c.display_name ?? 'Рыбак'),
+          avatarUrl: (c.avatar_url as string | null) ?? null,
+          points: Number(c.points ?? 0),
+        })),
+        lastWeek: last ? { tier: Number(last.tier ?? 0), points: Number(last.points ?? 0) } : null,
+      }
+    },
+  })
+}
+
+// The whole city's regatta in one call. Only fetched where it's shown (the
+// clan screen's tab, the regatta screen, the map pill for clan members), so
+// nobody outside a clan pays for it at launch.
+export function useClanRace(city: CityId, enabled: boolean) {
+  return useQuery({
+    queryKey: ['clan-race', city],
+    enabled,
+    staleTime: 60_000,
+    queryFn: async (): Promise<ClanRace> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_clan_race', { p_city: city })
+      if (error) throw error
+      const r = (data ?? {}) as Record<string, unknown>
+      const clans = (r.clans as Record<string, unknown>[]) ?? []
+      const last = (r.last_week as Record<string, unknown>[]) ?? []
+      return {
+        weekStart: String(r.week_start),
+        weekEnd: String(r.week_end),
+        myClanId: (r.my_clan_id as number | null) ?? null,
+        myToday: Number(r.my_today ?? 0),
+        dailyCap: Number(r.daily_cap ?? 150),
+        myRowers: ((r.my_rowers as Record<string, unknown>[]) ?? []).map((w) => ({
+          userId: String(w.user_id),
+          displayName: String(w.display_name ?? 'Рыбак'),
+          avatarUrl: (w.avatar_url as string | null) ?? null,
+          meters: Number(w.meters ?? 0),
+        })),
+        clans: clans.map((c) => ({
+          id: Number(c.id),
+          name: String(c.name),
+          crest: c.crest,
+          meters: Number(c.meters ?? 0),
+          finish: Number(c.finish ?? 600),
+          finishedAt: (c.finished_at as string | null) ?? null,
+          members: Number(c.members ?? 0),
+          rank: Number(c.rank ?? 0),
+        })),
+        lastWeek: last.map((c) => ({
+          id: Number(c.id),
+          name: String(c.name),
+          crest: c.crest,
+          place: Number(c.place),
+          finished: !!c.finished,
+          meters: Number(c.meters ?? 0),
+          finish: Number(c.finish ?? 0),
+        })),
+      }
+    },
+  })
+}
+
+// Tells the super admins something is broken for real players: the server
+// logs it and system_health_tick turns it into a system_alert (in-app +
+// Telegram, at most hourly per problem). Network drops are recorded but never
+// alert. Fire-and-forget — reporting must never get in the way of the flow
+// that just failed.
+export function reportClientError(context: string, error: unknown) {
+  const e = (error ?? {}) as { code?: unknown; message?: unknown }
+  const message = [e.code, e.message ?? String(error)].filter(Boolean).join(': ')
+  void createClient()
+    .rpc('report_client_error', { p_context: context, p_message: message.slice(0, 500) })
+    .then(
+      () => {},
+      () => {}
+    )
 }

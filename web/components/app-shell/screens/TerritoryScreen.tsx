@@ -1,25 +1,29 @@
 'use client'
 
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
+import { formatCoords, mapsLinks, openExternal } from '@/lib/openExternal'
 import { useCatchesByTerritory, useProfile, useCanAddCatchManually, useIsSuperAdmin, useBuffs, useBuyShield, useAdminSetTerritoryKind } from '@/lib/supabase/queries'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { KIND_LABEL, WATER_KINDS_BY_CITY } from '@/lib/data/species'
 import { cityForSectorId } from '@/lib/data/city'
+import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
-import type { Territory } from '@/lib/data/types'
+import type { Territory, TerritoryCoHolder } from '@/lib/data/types'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { TerritoryThumbnailMapView } from '@/components/app-shell/TerritoryThumbnailMapView'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { InsufficientCoinsModal } from '@/components/app-shell/InsufficientCoinsModal'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 
-export function statusBadge(status: Territory['status'], myTerritoryColor: string) {
-  if (status === 'mine')
+export function statusBadge(status: Territory['status'], myTerritoryColor: string, myShare = false) {
+  // myShare: a clan-mate's sector the viewer holds a part of.
+  if (status === 'mine' || myShare)
     return (
       <span className="badge" style={{ background: withAlpha(myTerritoryColor, 0.16), color: darkenForBadgeText(myTerritoryColor) }}>
         <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4 3 5-6 5 6 4-3-2 11H5L3 8z" /></svg>
-        Моя
+        {status === 'mine' ? 'Моя' : 'Моя доля'}
       </span>
     )
   if (status === 'other') return <span className="badge badge-blue">Занята</span>
@@ -46,10 +50,12 @@ export function shieldBadge(shieldUntil: string | null) {
 function SectorOwnerCard({
   ownerId,
   isMine,
+  coHolders,
   onOpenUser,
 }: {
   ownerId: string
   isMine: boolean
+  coHolders: TerritoryCoHolder[]
   onOpenUser: (id: string) => void
 }) {
   const { data: profile } = useProfile(ownerId)
@@ -75,6 +81,82 @@ function SectorOwnerCard({
           </svg>
         )}
       </button>
+      {coHolders.length > 0 && (
+        <>
+          <div className="sector-owner-highlight-label sector-coholders-label">
+            Совладельцы · {coHolders.length} из 3
+          </div>
+          <div className="sector-coholders">
+            {coHolders.map((h) => (
+              <button key={h.id} className="sector-coholder tap-scale" onClick={() => onOpenUser(h.id)} disabled={h.isMe}>
+                <span className="sector-coholder-avatar">
+                  {h.avatarUrl ? <img src={thumbUrl(h.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : (h.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()}
+                </span>
+                <span className="sector-coholder-name">{h.isMe ? 'Ты' : h.displayName ?? 'Рыбак'}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// The sector's centre as plain coordinates — copy them into any maps app, or
+// jump straight to a route there — so you can actually get to the water.
+function SectorCoords({ lat, lng, onToast }: { lat: number; lng: number; onToast: (message: string) => void }) {
+  const [mapsOpen, setMapsOpen] = useState(false)
+  const coords = formatCoords(lat, lng)
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(coords)
+      onToast('Координаты скопированы')
+    } catch {
+      onToast('Не удалось скопировать')
+    }
+  }
+
+  return (
+    <div className="sector-coords">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z" />
+        <circle cx="12" cy="9.5" r="2.5" />
+      </svg>
+      <span className="sector-coords-value">{coords}</span>
+      <button className="sector-coords-btn tap-scale" onClick={() => void copy()}>
+        Скопировать
+      </button>
+      <button className="sector-coords-btn primary tap-scale" onClick={() => setMapsOpen(true)}>
+        Маршрут
+      </button>
+      {mapsOpen &&
+        createPortal(
+          <div className="modal-overlay" onClick={() => setMapsOpen(false)}>
+            <div className="modal-card sector-maps-card" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-title">Маршрут до сектора</div>
+              <div className="modal-body" style={{ margin: '6px 0 14px' }}>
+                {coords}
+              </div>
+              {mapsLinks(lat, lng).map((m) => (
+                <button
+                  key={m.id}
+                  className="sector-maps-option tap-scale"
+                  onClick={() => {
+                    setMapsOpen(false)
+                    openExternal(m.url)
+                  }}
+                >
+                  {m.label}
+                </button>
+              ))}
+              <button className="comments-dialog-cancel" onClick={() => setMapsOpen(false)}>
+                Отмена
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   )
 }
@@ -186,6 +268,8 @@ export function TerritoryScreen({
   onShare,
   onOpenAllCatches,
   myTerritoryColor,
+  onOpenClan,
+  onToast,
 }: {
   territory: Territory
   isMostPopular: boolean
@@ -197,10 +281,12 @@ export function TerritoryScreen({
   onShare: () => void
   onOpenAllCatches: () => void
   myTerritoryColor: string
+  onOpenClan: (id: number) => void
+  onToast: (message: string) => void
 }) {
   const canAddCatchManually = useCanAddCatchManually()
   const isSuperAdmin = useIsSuperAdmin()
-  const { data: catches = [] } = useCatchesByTerritory(territory.id)
+  const { data: catches = [], isPending: catchesPending } = useCatchesByTerritory(territory.id)
   const { data: ownerProfile } = useProfile(territory.ownerId ?? null)
   const recent = catches.slice(0, 3)
 
@@ -235,7 +321,7 @@ export function TerritoryScreen({
               {territory.id}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-              {statusBadge(territory.status, myTerritoryColor)}
+              {statusBadge(territory.status, myTerritoryColor, territory.coHolders.some((h) => h.isMe))}
               {shieldBadge(territory.shieldUntil)}
               {isMostPopular && <span className="badge badge-accent">🔥 Самый популярный</span>}
             </div>
@@ -243,8 +329,20 @@ export function TerritoryScreen({
           <div className="page-sub" style={{ marginBottom: 0 }}>
             {KIND_LABEL[territory.kind]}
           </div>
+          <SectorCoords lat={territory.lat} lng={territory.lng} onToast={onToast} />
           {territory.ownerId && (
-            <SectorOwnerCard ownerId={territory.ownerId} isMine={territory.status === 'mine'} onOpenUser={onOpenUser} />
+            <SectorOwnerCard ownerId={territory.ownerId} isMine={territory.status === 'mine'} coHolders={territory.coHolders} onOpenUser={onOpenUser} />
+          )}
+          {territory.ownerId && territory.ownerClanId && (
+            <button className="sector-clan-line tap-scale" onClick={() => onOpenClan(territory.ownerClanId!)}>
+              <ClanCrest crest={territory.ownerClanCrest} size={26} />
+              <span className="sector-clan-line-text">
+                Сектор клана <b>«{territory.ownerClanName}»</b>
+              </span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M9 6l6 6-6 6" />
+              </svg>
+            </button>
           )}
           {canAddCatchManually && (
             <button className="btn-secondary" style={{ marginTop: 12 }} onClick={() => onAdminCatch(territory.id)}>
@@ -306,7 +404,11 @@ export function TerritoryScreen({
             )
           })
         ) : (
-          <div style={{ padding: '22px 0', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет уловов в этом секторе</div>
+          // While the list is still loading, "no catches" would contradict the
+          // catch count right above it — same box, neutral text instead.
+          <div style={{ padding: '22px 0', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>
+            {catchesPending ? 'Загрузка…' : 'Пока нет уловов в этом секторе'}
+          </div>
         )}
 
         {isSuperAdmin && (

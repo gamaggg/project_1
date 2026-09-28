@@ -20,6 +20,8 @@ const AWARD_BY_TITLE: Record<string, string> = {
   'Легенда сезона': 'season_legend',
   'Ночной страж': 'night_watch',
   'Дуэлянт': 'duelist',
+  'Победитель битвы кланов': 'clan_race_winner',
+  // The weekly race's earlier name — medals already issued keep it.
   'Победитель регаты': 'clan_race_winner',
 }
 

@@ -8,12 +8,16 @@ export function BottomNav({
   onPlus,
   plusPending,
   unreadCount = 0,
+  clanChatUnread = 0,
 }: {
   active: TabScreenId
   onNavigate: (id: TabScreenId) => void
   onPlus: () => void
   plusPending?: boolean
   unreadCount?: number
+  // Unread messages in the player's clan chat — the chat is reached through
+  // the profile's clan card, so its count rides on the profile tab.
+  clanChatUnread?: number
 }) {
   return (
     <div className="bottomnav">
@@ -55,10 +59,17 @@ export function BottomNav({
         <span>Активность</span>
       </NavItem>
       <NavItem id="screen-profile" active={active === 'screen-profile'} onClick={onNavigate}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="8" r="3.6" />
-          <path d="M4.5 20c1.6-3.8 4.6-5.7 7.5-5.7s5.9 1.9 7.5 5.7" />
-        </svg>
+        <span className="navitem-icon-wrap">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="8" r="3.6" />
+            <path d="M4.5 20c1.6-3.8 4.6-5.7 7.5-5.7s5.9 1.9 7.5 5.7" />
+          </svg>
+          {clanChatUnread > 0 && (
+            <span className="nav-badge" aria-label={`Непрочитанных в чате клана: ${clanChatUnread}`}>
+              {clanChatUnread > 9 ? '9+' : clanChatUnread}
+            </span>
+          )}
+        </span>
         <span>Профиль</span>
       </NavItem>
     </div>

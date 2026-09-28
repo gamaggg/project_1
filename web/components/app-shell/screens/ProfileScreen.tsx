@@ -17,11 +17,15 @@ import {
   useTelegramNotificationState,
   useSetTelegramNotifications,
   useCreateTelegramLink,
+  useClanChatSummary,
 } from '@/lib/supabase/queries'
 import { AwardsRing } from '@/components/app-shell/AwardsRing'
 import { uploadAvatar } from '@/lib/supabase/storage'
 import { computeAchievements, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
+import { ClanCrest } from '@/components/app-shell/ClanCrest'
+import { resolveClanBackground } from '@/lib/data/clanBackgrounds'
+import { CLAN_ROLE_LABEL } from '@/lib/data/clanLevels'
 import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralFollowers, pluralSpecies, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
 import { ACH_ICONS, CTA_ICONS } from '@/components/app-shell/icons'
 import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorPreviewMap'
@@ -392,6 +396,8 @@ export function ProfileScreen({
   onGrantCoins,
   onOpenShop,
   onOpenChallenges,
+  onOpenClans,
+  onOpenClan,
 }: {
   myTerritories: Territory[]
   allTerritories: Territory[]
@@ -420,9 +426,12 @@ export function ProfileScreen({
   onGrantCoins: (id: string) => void
   onOpenShop: () => void
   onOpenChallenges: () => void
+  onOpenClans: () => void
+  onOpenClan: (id: number) => void
 }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
+  const { data: clanChat } = useClanChatSummary(profile?.clanId ?? null)
   const { data: myCatches = [] } = useMyCatches()
   const canModerateReports = useCanModerateReports()
   const isSuperAdmin = useIsSuperAdmin()
@@ -592,6 +601,50 @@ export function ProfileScreen({
           <span className="profile-cta-sub">Рамки, фоны, скины</span>
         </button>
       </div>
+
+      {profile?.clanId ? (
+        <button
+          className="profile-clan-card tap-scale"
+          style={{ background: resolveClanBackground(null).css }}
+          onClick={() => onOpenClan(profile.clanId!)}
+        >
+          <ClanCrest crest={profile.clanCrest} size={52} />
+          <span className="profile-clan-text">
+            <span className="profile-clan-kicker">{profile.clanRole ? CLAN_ROLE_LABEL[profile.clanRole] : 'Клан'}</span>
+            <span className="profile-clan-name">{profile.clanName}</span>
+          </span>
+          {(clanChat?.unread ?? 0) > 0 && (
+            <span className="profile-clan-unread" aria-label={`Непрочитанных сообщений в чате: ${clanChat!.unread}`}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12Z" />
+              </svg>
+              {clanChat!.unread > 99 ? '99+' : clanChat!.unread}
+            </span>
+          )}
+          <span className="profile-cta-arrow" style={{ position: 'static' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+        </button>
+      ) : (
+        <button className="profile-clan-card profile-clan-card-empty tap-scale" onClick={onOpenClans}>
+          <span className="profile-clan-stack" aria-hidden>
+            <ClanCrest crest={{ shape: 'shield', symbol: 'anchor', primary: '#1D6FC9', secondary: '#FFFFFF' }} size={34} />
+            <ClanCrest crest={{ shape: 'hex', symbol: 'pike', primary: '#FC5200', secondary: '#FFE7C2' }} size={42} />
+            <ClanCrest crest={{ shape: 'round', symbol: 'flame', primary: '#1F8A5B', secondary: '#FFFFFF' }} size={34} />
+          </span>
+          <span className="profile-clan-text">
+            <span className="profile-clan-kicker">Кланы</span>
+            <span className="profile-clan-name">Вступи в клан или создай свой</span>
+          </span>
+          <span className="profile-cta-arrow" style={{ position: 'static' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+        </button>
+      )}
 
       <div className="section-title-row" style={{ marginTop: 24 }}>
         <div className="section-title">Достижения</div>

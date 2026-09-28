@@ -65,6 +65,96 @@ function renderMessage(notification: NotificationRef): Message | null {
         buttonLabel: 'Посмотреть улов',
         url: `${SITE_URL}/?catch=${notification.catch_id}`,
       }
+    case 'catch_comment':
+    case 'comment_reply': {
+      if (!notification.catch_id) return null
+      const text = notification.payload?.text as string | undefined
+      const commentId = notification.payload?.comment_id as number | undefined
+      const lead = notification.kind === 'catch_comment' ? `${actorName} прокомментировал твой улов` : `${actorName} ответил на твой комментарий`
+      return {
+        text: text ? `${lead}: «${text}»` : lead,
+        buttonLabel: 'Открыть комментарии',
+        url: `${SITE_URL}/?catch=${notification.catch_id}${commentId ? `&comment=${commentId}` : ''}`,
+      }
+    }
+    case 'system_alert': {
+      const text = notification.payload?.text as string | undefined
+      if (!text) return null
+      return { text: `⚠️ RANGE — тревога\n${text}`, buttonLabel: 'Открыть RANGE', url: SITE_URL }
+    }
+    case 'clan_invite':
+    case 'clan_join_request':
+    case 'clan_join_accepted':
+    case 'clan_kicked':
+    case 'clan_disbanded': {
+      const clanName = notification.payload?.clan_name as string | undefined
+      const clanId = notification.payload?.clan_id as number | undefined
+      if (!clanName || !clanId) return null
+      const text =
+        notification.kind === 'clan_invite'
+          ? `${actorName} зовёт тебя в клан «${clanName}»`
+          : notification.kind === 'clan_join_request'
+            ? `${actorName} хочет вступить в твой клан «${clanName}»`
+            : notification.kind === 'clan_join_accepted'
+              ? `Тебя приняли в клан «${clanName}»`
+              : notification.kind === 'clan_disbanded'
+                ? `Клан «${clanName}» распущен модератором`
+                : `Тебя исключили из клана «${clanName}»`
+      const gone = notification.kind === 'clan_kicked' || notification.kind === 'clan_disbanded'
+      return {
+        text,
+        buttonLabel: gone ? 'Открыть RANGE' : 'Открыть клан',
+        url: gone ? SITE_URL : `${SITE_URL}/?clan=${clanId}`,
+      }
+    }
+    case 'referral_joined':
+      return {
+        text: `${actorName} зарегистрировался по твоей ссылке. Когда сделает первый улов — тебе +100 монет`,
+        buttonLabel: 'Открыть RANGE',
+        url: SITE_URL,
+      }
+    case 'referral_reward':
+      return {
+        text: `${actorName} сделал первый улов — тебе +100 монет за приглашение`,
+        buttonLabel: notification.catch_id ? 'Посмотреть улов' : 'Открыть RANGE',
+        url: notification.catch_id ? `${SITE_URL}/?catch=${notification.catch_id}` : SITE_URL,
+      }
+    case 'clan_chat_mention': {
+      const clanName = notification.payload?.clan_name as string | undefined
+      const clanId = notification.payload?.clan_id as number | undefined
+      const text = notification.payload?.text as string | undefined
+      if (!clanName || !clanId) return null
+      const lead = `${actorName} упомянул тебя в чате клана «${clanName}»`
+      return { text: text ? `${lead}: «${text}»` : lead, buttonLabel: 'Открыть чат', url: `${SITE_URL}/?clanchat=${clanId}` }
+    }
+    case 'clan_chest_reward': {
+      const clanName = notification.payload?.clan_name as string | undefined
+      const clanId = notification.payload?.clan_id as number | undefined
+      const tier = notification.payload?.tier as number | undefined
+      const coins = notification.payload?.coins as number | undefined
+      if (!clanName || !clanId || !tier) return null
+      return {
+        text: `Сундук ${['I', 'II', 'III', 'IV', 'V'][tier - 1] ?? tier} клана «${clanName}» открыт${coins ? ` — +${coins} монет` : ''}`,
+        buttonLabel: 'Открыть клан',
+        url: `${SITE_URL}/?clan=${clanId}`,
+      }
+    }
+    case 'clan_race_result':
+    case 'clan_race_overtaken':
+    case 'clan_race_finished': {
+      const clanName = notification.payload?.clan_name as string | undefined
+      const place = (notification.payload?.place ?? notification.payload?.rank) as number | undefined
+      if (!clanName) return null
+      const coins = notification.payload?.coins as number | undefined
+      const ahead = notification.payload?.ahead as string | undefined
+      const text =
+        notification.kind === 'clan_race_result'
+          ? `Итоги битвы кланов: «${clanName}» — ${place ?? '?'}-е место${notification.payload?.finished ? ', доплыли до финиша' : ''}${coins ? `. +${coins} монет` : ''}`
+          : notification.kind === 'clan_race_overtaken'
+            ? `«${clanName}» обогнали в битве кланов — теперь ${place ?? '?'}-е место${ahead ? `, впереди «${ahead}»` : ''}`
+            : `Лодка клана «${clanName}» доплыла до финиша в битве кланов!`
+      return { text, buttonLabel: 'Открыть битву кланов', url: `${SITE_URL}/?race=1` }
+    }
     case 'moderation': {
       const coinsRemoved = notification.payload?.coinsRemoved as number | undefined
       const coinsSuffix = coinsRemoved ? ` — списано ${coinsRemoved} монет` : ''

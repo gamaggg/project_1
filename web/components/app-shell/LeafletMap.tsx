@@ -5,7 +5,12 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import type L from 'leaflet'
 import type { Territory } from '@/lib/data/types'
-import { resolveTerritoryColor } from '@/lib/data/territoryColors'
+import { resolveTerritoryColor, FREE_TERRITORY_COLOR, OTHER_TERRITORY_COLOR } from '@/lib/data/territoryColors'
+import { crestSvgMarkup, resolveCrest } from '@/lib/data/clanCrests'
+import { splitSector } from '@/lib/map/sectorParts'
+
+// Clan layer: a sector held by someone outside any clan.
+const SOLO_OWNER_COLOR = '#9A9CA3'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { resolveTerritorySkin } from '@/lib/data/territorySkins'
 import { useSkinAssetsVersion, useSkinPatterns } from '@/lib/map/skinPattern'
@@ -46,14 +51,33 @@ function escapeHtml(s: string): string {
 // Matches TerritoryThumbnailMap's pill-label + avatar treatment (see that
 // file) so a sector reads the same whether you're looking at the full map or
 // its own screen's mini-map.
-function territoryMarkerHtml(t: Territory): string {
+function avatarInnerHtml(avatarUrl: string | null, displayName: string | null): string {
+  return avatarUrl
+    ? `<img src="${escapeHtml(thumbUrl(avatarUrl, 48))}" alt="" decoding="async" />`
+    : escapeHtml((displayName ?? 'Рыбак').slice(0, 2).toUpperCase())
+}
+
+function territoryMarkerHtml(t: Territory, clanLayer: boolean): string {
   const label = `<div class="leaflet-territory-label">${escapeHtml(t.id)}</div>`
   if (t.status === 'free' || !t.ownerId) return `<div class="leaflet-territory-marker">${label}</div>`
-  const initials = escapeHtml((t.ownerDisplayName ?? 'Рыбак').slice(0, 2).toUpperCase())
-  const avatar = t.ownerAvatarUrl
-    ? `<img src="${escapeHtml(thumbUrl(t.ownerAvatarUrl, 48))}" alt="" decoding="async" />`
-    : initials
-  return `<div class="leaflet-territory-marker"><div class="leaflet-territory-avatar">${avatar}</div>${label}</div>`
+  // Clan layer: the owner's clan crest takes the avatar's place.
+  if (clanLayer && t.ownerClanCrest) {
+    return `<div class="leaflet-territory-marker"><div class="leaflet-territory-crest">${crestSvgMarkup(t.ownerClanCrest, 30)}</div>${label}</div>`
+  }
+  return `<div class="leaflet-territory-marker"><div class="leaflet-territory-avatar">${avatarInnerHtml(t.ownerAvatarUrl, t.ownerDisplayName)}</div>${label}</div>`
+}
+
+// A shared sector's cut (see lib/map/sectorParts.ts) — null when it's held
+// whole, or while it's marked for deletion (drawn plain red then).
+function sectorSplit(t: Territory) {
+  if (!t.ownerId || t.coHolders.length === 0) return null
+  return splitSector(t.corners, t.coHolders.length + 1)
+}
+
+// Owner first, then clan-mates in the order they joined — the same order
+// splitSector hands the parts out in.
+function sectorHolders(t: Territory) {
+  return [{ avatarUrl: t.ownerAvatarUrl, displayName: t.ownerDisplayName, isMe: t.status === 'mine' }, ...t.coHolders]
 }
 
 // Default fallback view for a visitor whose real position isn't known yet (no
@@ -92,6 +116,9 @@ export const LeafletMap = forwardRef<
     // The sector the bottom sheet carousel is currently previewing — drawn
     // with a pulsing glow outline so a map tap is visibly acknowledged.
     highlightedId?: string | null
+    // «Кланы» layer: sectors take their owner's clan colour, solo owners go
+    // grey, and labels show the clan crest instead of the avatar.
+    clanLayer?: boolean
   }
 >(function LeafletMap(
   {
@@ -106,9 +133,12 @@ export const LeafletMap = forwardRef<
     fallbackCenter,
     fallbackZoom,
     highlightedId,
+    clanLayer = false,
   },
   ref
 ) {
+    const clanLayerRef = useRef(clanLayer)
+    clanLayerRef.current = clanLayer
     const containerRef = useRef<HTMLDivElement>(null)
     const mapRef = useRef<L.Map | null>(null)
     const leafletRef = useRef<typeof import('leaflet') | null>(null)
@@ -137,6 +167,8 @@ export const LeafletMap = forwardRef<
     const cleanupLightPresetRef = useRef<(() => void) | null>(null)
     const onSelectRef = useRef(onSelect)
     onSelectRef.current = onSelect
+    const selectedIdsRef = useRef(selectedIds)
+    selectedIdsRef.current = selectedIds
     const onLongPressRef = useRef(onLongPressTerritory)
     onLongPressRef.current = onLongPressTerritory
     const onLongPressEmptyMapRef = useRef(onLongPressEmptyMap)
@@ -177,8 +209,17 @@ export const LeafletMap = forwardRef<
       })
       territories.forEach((t) => {
         const isSelectedForDeletion = selectedIds?.has(t.id) ?? false
-        const skin = t.status !== 'free' && t.ownerEquippedSkin ? resolveTerritorySkin(t.ownerEquippedSkin) : null
-        const color = isSelectedForDeletion ? '#D33' : resolveTerritoryColor(t.status, myTerritoryColor)
+        const inClanView = clanLayerRef.current
+        const skin = !inClanView && t.status !== 'free' && t.ownerEquippedSkin ? resolveTerritorySkin(t.ownerEquippedSkin) : null
+        const color = isSelectedForDeletion
+          ? '#D33'
+          : inClanView
+            ? t.status === 'free' || !t.ownerId
+              ? FREE_TERRITORY_COLOR
+              : t.ownerClanCrest
+                ? resolveCrest(t.ownerClanCrest).primary
+                : SOLO_OWNER_COLOR
+            : resolveTerritoryColor(t.status, myTerritoryColor)
         // Tinted with this same `color` — whatever the sector already renders
         // in (the owner's own color if it's their own, the fixed "other"
         // color otherwise) — so a skin never clashes with it (see
@@ -205,15 +246,40 @@ export const LeafletMap = forwardRef<
           const hexTileHeight = Math.max(...ys) - offsetY
           pattern = getSkinPattern(skin.id, color, offsetX, offsetY, hexTileHeight, hexTileWidth)
         }
+        const fillOpacity = isSelectedForDeletion ? 0.5 : t.status === 'free' ? 0.22 : inClanView && t.ownerClanCrest ? 0.5 : 0.32
+        // Shared by clan-mates: each holder's part gets its own fill (the
+        // viewer's own part in their colour, everyone else's in the usual
+        // "someone else's" blue; one clan colour on the «Кланы» layer),
+        // drawn under the sector's outline. The whole sector below still
+        // takes the clicks — parts are decoration only.
+        const split = isSelectedForDeletion ? null : sectorSplit(t)
+        if (split) {
+          const holders = sectorHolders(t)
+          split.parts.forEach((part, i) => {
+            const partColor = inClanView ? color : i === 0 ? color : holders[i].isMe ? myTerritoryColor : OTHER_TERRITORY_COLOR
+            L.polygon(part, {
+              stroke: false,
+              fillColor: (i === 0 && pattern ? pattern : partColor) as unknown as string,
+              fillOpacity,
+              interactive: false,
+            }).addTo(markersLayer)
+          })
+        }
         const poly = L.polygon(t.corners, {
           color,
           weight: isSelectedForDeletion ? 2.5 : 1.5,
           // A CanvasPattern is a spec-legal fillStyle value right alongside a
           // plain color string — Leaflet's types just don't know that.
           fillColor: (pattern ?? color) as unknown as string,
-          fillOpacity: isSelectedForDeletion ? 0.5 : t.status === 'free' ? 0.22 : 0.32,
+          fillOpacity: split ? 0 : fillOpacity,
           opacity: 0.9,
         }).addTo(markersLayer)
+        if (split) {
+          L.polyline(
+            split.cuts.map((cut) => [split.center, cut]),
+            { color: '#FFFFFF', weight: 1.5, opacity: 0.9, interactive: false }
+          ).addTo(markersLayer)
+        }
         // Long-press (super admin only — onLongPressTerritory is only ever
         // passed down when the caller already checked) starts/extends a
         // multi-select for bulk deletion; a plain click on the SAME sector
@@ -283,10 +349,39 @@ export const LeafletMap = forwardRef<
       territoriesRef.current.forEach((t) => {
         if (!bounds.contains([t.lat, t.lng])) return
         const isOccupied = t.status !== 'free' && !!t.ownerId
+        // Shared sector: the id stays at the center, and every holder's
+        // avatar sits in the middle of their own part — sized to the part,
+        // so four still fit at the zoom labels first appear. The «Кланы»
+        // layer keeps the single crest: the holders are one clan anyway.
+        const split = !clanLayerRef.current && !selectedIdsRef.current?.has(t.id) ? sectorSplit(t) : null
+        if (split) {
+          L.marker([t.lat, t.lng], {
+            icon: L.divIcon({
+              className: 'leaflet-territory-marker-wrap',
+              html: `<div class="leaflet-territory-marker"><div class="leaflet-territory-label">${escapeHtml(t.id)}</div></div>`,
+              iconSize: [40, 18],
+            }),
+            interactive: false,
+          }).addTo(labelsLayer)
+          const width = map.latLngToContainerPoint(t.corners[0]).distanceTo(map.latLngToContainerPoint(t.corners[3]))
+          const factor = split.parts.length === 2 ? 0.26 : split.parts.length === 3 ? 0.22 : 0.2
+          const size = Math.round(Math.min(26, Math.max(16, width * factor)))
+          sectorHolders(t).forEach((h, i) => {
+            L.marker(split.centroids[i], {
+              icon: L.divIcon({
+                className: 'leaflet-territory-marker-wrap',
+                html: `<div class="leaflet-territory-avatar" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.4)}px">${avatarInnerHtml(h.avatarUrl, h.displayName)}</div>`,
+                iconSize: [size, size],
+              }),
+              interactive: false,
+            }).addTo(labelsLayer)
+          })
+          return
+        }
         L.marker([t.lat, t.lng], {
           icon: L.divIcon({
             className: 'leaflet-territory-marker-wrap',
-            html: territoryMarkerHtml(t),
+            html: territoryMarkerHtml(t, clanLayerRef.current),
             iconSize: isOccupied ? [40, 40] : [40, 18],
           }),
           interactive: false,
@@ -554,6 +649,10 @@ export const LeafletMap = forwardRef<
         resizeObserver?.disconnect()
         cleanupLightPresetRef.current?.()
         cleanupLightPresetRef.current = null
+        // A flyTo still in flight would otherwise fire one more zoom frame
+        // into the mapbox-gl bridge after the map is gone ("Cannot read
+        // properties of null (reading 'getZoom')").
+        mapRef.current?.stop()
         mapRef.current?.remove()
         mapRef.current = null
       }
@@ -567,7 +666,7 @@ export const LeafletMap = forwardRef<
       if (!mapRef.current) return
       draw(territories)
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [territories, myTerritoryColor, selectedIds, pendingAddDrafts, skinAssetsVersion, zoomTick])
+    }, [territories, myTerritoryColor, selectedIds, pendingAddDrafts, skinAssetsVersion, zoomTick, clanLayer])
 
     // Kept separate from the effect above — retargeting the highlight on
     // every tap shouldn't re-run a full ~700-polygon canvas redraw.
