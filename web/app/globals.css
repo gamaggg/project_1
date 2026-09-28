@@ -2210,3 +2210,10 @@ body{
 .move-done-title{font-size:18px; font-weight:800; margin-top:14px;}
 .move-done-sub{font-size:13px; color:var(--ink-soft); margin-top:6px; line-height:1.45;}
 @media (prefers-reduced-motion: reduce){.move-sheet-overlay, .move-sheet, .move-done-icon{animation:none;}}
+
+/* Activity feed: icons for the app's own entries (see ActivityIcons.tsx) */
+.feed-icon{display:flex; align-items:center; justify-content:center; color:#fff; flex:0 0 auto;}
+.feed-icon svg{width:22px; height:22px; filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.28));}
+.feed-icon-accent{background:linear-gradient(160deg,#FF7A38,var(--accent) 70%);}
+.feed-icon-blue{background:linear-gradient(160deg,#6F9BFF,var(--blue) 70%);}
+.feed-icon-red{background:linear-gradient(160deg,#F2726A,#D33 70%);}

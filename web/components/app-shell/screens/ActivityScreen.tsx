@@ -6,6 +6,7 @@ import { CATEGORY_GRADIENT, KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen, pluralSectors, pluralCatches } from '@/lib/format'
 import { FishIcon } from '@/components/app-shell/icons'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { AwardFeedIcon, FeedIcon, FEED_ICONS } from '@/components/app-shell/ActivityIcons'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 
 type Filter = 'all' | 'mine'
@@ -157,7 +158,7 @@ export function ActivityScreen({
             if (a.kind === 'moderation') {
               return (
                 <div className="activity-item" key={a.id}>
-                  <div className="avatar" style={{ background: '#D33' }}>!</div>
+                  <FeedIcon tone="red" icon={FEED_ICONS.shield} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>
                       Улов{a.moderationSpecies ? ` (${a.moderationSpecies})` : ''} на территории{' '}
@@ -185,7 +186,7 @@ export function ActivityScreen({
             if (a.kind === 'award') {
               return (
                 <div className="activity-item tap-scale" key={a.id} style={{ cursor: 'pointer' }} onClick={onOpenOwnAwards}>
-                  <div className="avatar" style={{ background: 'var(--accent)' }}>🏆</div>
+                  <AwardFeedIcon title={a.awardTitle} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>Новая награда: {a.awardTitle}</div>
                     {a.awardSubtitle && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{a.awardSubtitle}</div>}
@@ -201,13 +202,7 @@ export function ActivityScreen({
             if (a.kind === 'challenge') {
               return (
                 <div className="activity-item tap-scale" key={a.id} style={{ cursor: 'pointer' }} onClick={onOpenChallenges}>
-                  <div className="avatar" style={{ background: 'var(--accent)', padding: 5 }}>
-                    <img
-                      src="/brand/logo_2.svg"
-                      alt="RANGE"
-                      style={{ width: '100%', height: 'auto', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
-                    />
-                  </div>
+                  <FeedIcon tone="accent" icon={FEED_ICONS.target} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>Выполнен челлендж: {a.challengeTitle}</div>
                     {a.challengeCoins != null && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>+{a.challengeCoins} монет</div>}
@@ -222,13 +217,7 @@ export function ActivityScreen({
             if (a.kind === 'challenges_week_done') {
               return (
                 <div className="activity-item tap-scale" key={a.id} style={{ cursor: 'pointer' }} onClick={onOpenChallenges}>
-                  <div className="avatar" style={{ background: 'var(--accent)', padding: 5 }}>
-                    <img
-                      src="/brand/logo_2.svg"
-                      alt="RANGE"
-                      style={{ width: '100%', height: 'auto', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
-                    />
-                  </div>
+                  <FeedIcon tone="accent" icon={FEED_ICONS.targetDone} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>Все челленджи недели выполнены!</div>
                     {a.challengeCoins != null && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>+{a.challengeCoins} монет за неделю</div>}
@@ -243,13 +232,7 @@ export function ActivityScreen({
             if (a.kind === 'challenge_deadline') {
               return (
                 <div className="activity-item tap-scale" key={a.id} style={{ cursor: 'pointer' }} onClick={onOpenChallenges}>
-                  <div className="avatar" style={{ background: 'var(--accent)', padding: 5 }}>
-                    <img
-                      src="/brand/logo_2.svg"
-                      alt="RANGE"
-                      style={{ width: '100%', height: 'auto', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
-                    />
-                  </div>
+                  <FeedIcon tone="accent" icon={FEED_ICONS.clock} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>Челленджи недели закончатся через {a.challengeHours ?? 48} часов</div>
                     <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>Не всё ещё выполнено — успей забрать монеты, пока неделя не закрылась</div>
@@ -264,7 +247,7 @@ export function ActivityScreen({
             if (a.kind === 'weekly_result') {
               return (
                 <div className="activity-item tap-scale" key={a.id} style={{ cursor: 'pointer' }} onClick={onOpenLastWeek}>
-                  <div className="avatar" style={{ background: 'var(--blue)' }}>📊</div>
+                  <FeedIcon tone="blue" icon={FEED_ICONS.podium} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>
                       Итоги недели: {a.weeklyRank} место
