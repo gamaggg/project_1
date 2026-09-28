@@ -26,6 +26,7 @@ import { useAdminActionsReadState } from '@/lib/activityRead'
 import { useAchievementUnlock } from '@/lib/achievementUnlock'
 import { useWeekTopModal } from '@/lib/weekTopModal'
 import { useClanBattleCeremony } from '@/lib/clanBattleCeremony'
+import { hasVisibleTypedText, useAppUpdate } from '@/lib/appUpdate'
 import { parseGuestShare, refParam, rememberClanInvite, rememberRef, takeRememberedRef, type ClanInvite } from '@/lib/guestShare'
 import { GuestShareScreen } from '@/components/app-shell/GuestShareScreen'
 import { formatCooldown, type SpeciesEntry } from '@/lib/format'
@@ -1031,6 +1032,20 @@ export function FishZoneApp() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reads the launch URL and browser storage, only available after mount
     setClanInvite(rememberClanInvite(launchSearch))
   }, [launchSearch])
+  // Coming back to an open app after a new deploy reloads it onto the live
+  // version (see lib/appUpdate) — never mid-catch, in the clan editor, in an
+  // auth flow or with anything typed, and it reopens the screen that was up.
+  const { data: viewingUserProfile } = useProfile(viewingUserId)
+  useAppUpdate(
+    () =>
+      !UPDATE_BUSY_SCREENS.includes(currentScreen) &&
+      !confirmCatchMutation.isPending &&
+      !recoveryMode &&
+      !linkingEmail &&
+      !guestAuth &&
+      !hasVisibleTypedText(),
+    () => resumeUrlFor(topEntry, viewingUserProfile?.publicId ?? null),
+  )
   // Signed up from a link: +100 coins once the wizard is done (the server
   // only pays a brand-new account, once — see claim_referral).
   const claimReferral = useClaimReferral()
@@ -1653,6 +1668,37 @@ function Screen({
       {(eager || visited) && children}
     </div>
   )
+}
+
+// Screens where a reload would lose work in progress: the catch being made
+// and the clan being built or edited.
+const UPDATE_BUSY_SCREENS: ScreenId[] = ['screen-camera', 'screen-confirm', 'screen-clan-editor']
+
+// The launch link (the same params the deep-link effects above open) that
+// brings back the screen on top after an update reload. Tabs and screens
+// without such a link start from the map, like a fresh launch.
+function resumeUrlFor(entry: StackEntry, userPublicId: string | null): string {
+  const path = window.location.pathname
+  switch (entry.screen) {
+    case 'screen-territory':
+      return `${path}?territory=${encodeURIComponent(entry.territoryId)}`
+    case 'screen-catch-photo':
+      return `${path}?catch=${entry.catchId}`
+    case 'screen-user-profile':
+      return userPublicId ? `${path}?user=${encodeURIComponent(userPublicId)}` : path
+    case 'screen-clan':
+      return `${path}?clan=${entry.clanId}`
+    case 'screen-clan-chat':
+      return `${path}?clanchat=${entry.clanId}`
+    case 'screen-clan-race':
+      return `${path}?race=1`
+    case 'screen-last-week':
+      return `${path}?lastweek=1`
+    case 'screen-challenges':
+      return `${path}?challenges=1`
+    default:
+      return path
+  }
 }
 
 function LoadingShell() {
