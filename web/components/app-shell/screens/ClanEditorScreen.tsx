@@ -6,7 +6,7 @@ import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { ClanHero } from '@/components/app-shell/ClanHero'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
-import { useClanEligibility, useClanNameCheck, useCreateClan, useUpdateClan } from '@/lib/supabase/queries'
+import { useClanEligibility, useClanInviteCode, useClanNameCheck, useCreateClan, useUpdateClan } from '@/lib/supabase/queries'
 import { CREST_COLORS, CREST_SECONDARY_COLORS, CREST_SHAPES, CREST_SYMBOLS, resolveCrest, type ClanCrest as CrestValue } from '@/lib/data/clanCrests'
 import { CLAN_BACKGROUNDS } from '@/lib/data/clanBackgrounds'
 import { CLAN_PRICE, JOIN_TYPE_LABEL, MIN_SECTORS_OPTIONS, clanErrorMessage, type ClanJoinType } from '@/lib/data/clanLevels'
@@ -68,7 +68,7 @@ export function ClanEditorScreen({
   clan: ClanDetail | null
   onBack: () => void
   onDone: (clanId: number) => void
-  onShareClan: (clanId: number, name: string) => void
+  onShareClan: (clanId: number, name: string, inviteCode?: string | null) => void
 }) {
   const isEdit = mode === 'edit'
   const level = clan?.level ?? 1
@@ -92,6 +92,9 @@ export function ClanEditorScreen({
   const [minSectors, setMinSectors] = useState(clan?.minSectors ?? 0)
   const [error, setError] = useState<string | null>(null)
   const [created, setCreated] = useState<{ id: number; name: string } | null>(null)
+  // The founder shares straight from the final step — the link should already
+  // be an invitation (see useClanInviteCode).
+  const { data: createdInviteCode } = useClanInviteCode(created?.id ?? null, !!created)
 
   const trimmed = name.trim()
   const debouncedName = useDebounced(trimmed, 450)
@@ -152,7 +155,7 @@ export function ClanEditorScreen({
   else if (trimmed.length >= 3) nameStatus = { text: 'Название свободно', ok: true }
 
   if (created) {
-    return <ClanFounded crest={crest} name={created.name} background={background} onOpen={() => onDone(created.id)} onShare={() => onShareClan(created.id, created.name)} />
+    return <ClanFounded crest={crest} name={created.name} background={background} onOpen={() => onDone(created.id)} onShare={() => onShareClan(created.id, created.name, createdInviteCode)} />
   }
 
   return (

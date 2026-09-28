@@ -98,7 +98,7 @@ export function GuestShareScreen({ share, onSignUp, onSignIn }: { share: GuestSh
   } else if (share.kind === 'clan') {
     const c = data as ClanPreview
     body = <ClanBody c={c} onLocked={locked} />
-    lead = `Вступай в клан «${c.name}»`
+    lead = share.invite ? `Тебя пригласили в клан «${c.name}»` : `Вступай в клан «${c.name}»`
     sub = bonus ? `Зарегистрируйся — и получи ${BONUS} монет на старт` : 'Зарегистрируйся — и вступай'
   } else if (share.kind === 'achievement') {
     const a = data as AchievementPreview

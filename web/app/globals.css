@@ -2396,6 +2396,7 @@ body{
 .clan-actions{display:flex; gap:10px;}
 .clan-join-box{display:flex; flex-direction:column; gap:8px;}
 .clan-join-note{font-size:13.5px; font-weight:700; color:var(--ink-soft); text-align:center;}
+.clan-join-hint{margin-top:4px; font-size:12.5px; font-weight:600; color:var(--ink-faint);}
 .clan-join-meta{font-size:12.5px; color:var(--ink-faint); text-align:center;}
 .clan-join-warn{font-size:12.5px; font-weight:700; color:#C0561E; text-align:center;}
 .clan-note{text-align:center; color:var(--ink-soft); font-weight:700; padding:12px;}

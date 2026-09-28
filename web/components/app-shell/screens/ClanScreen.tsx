@@ -18,8 +18,10 @@ import {
   useIsSuperAdmin,
   useAdminModerateClan,
   useClanChatSummary,
+  useClanInviteCode,
   type ClanModerationAction,
 } from '@/lib/supabase/queries'
+import { forgetClanInvite } from '@/lib/guestShare'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { ClanHero } from '@/components/app-shell/ClanHero'
 import { ClanChestPanel } from '@/components/app-shell/ClanChestPanel'
@@ -148,6 +150,7 @@ function ClanChatCard({ clanId, onOpen }: { clanId: number; onOpen: () => void }
 
 export function ClanScreen({
   clanId,
+  inviteCode,
   onBack,
   onOpenUser,
   onEdit,
@@ -156,10 +159,12 @@ export function ClanScreen({
   onOpenChat,
 }: {
   clanId: number
+  // From an invite link (?clan=<id>&invite=<code>) — counts as an invitation.
+  inviteCode?: string | null
   onBack: () => void
   onOpenUser: (id: string) => void
   onEdit: (clan: ClanDetail) => void
-  onShareClan: (clanId: number, name: string) => void
+  onShareClan: (clanId: number, name: string, inviteCode?: string | null) => void
   onOpenRace: () => void
   onOpenChat: (clanId: number) => void
 }) {
@@ -177,6 +182,9 @@ export function ClanScreen({
   const declineInvite = useDeclineClanInvite()
   const isSuperAdmin = useIsSuperAdmin()
   const moderate = useAdminModerateClan()
+  // Leaders, co-leaders and elders share a link that is itself an invitation.
+  const canInvite = !!clan?.myRole && CLAN_ROLE_RANK[clan.myRole] >= 2
+  const { data: shareInviteCode } = useClanInviteCode(clan?.id ?? null, canInvite)
 
   const [tab, setTab] = useState<Tab>('members')
   const [menuFor, setMenuFor] = useState<string | null>(null)
@@ -208,9 +216,24 @@ export function ClanScreen({
   const progress = clanLevelProgress(clan.xp)
   const otherCity = !!me && me.city !== clan.city
   const inOtherClan = !!me?.clanId && me.clanId !== clan.id
-  const lacksSectors = !!eligibility && eligibility.sectors < clan.minSectors && !clan.myInvite
-  const onCooldown = !!eligibility?.cooldownUntil && new Date(eligibility.cooldownUntil) > new Date()
+  const linkInvite = !!inviteCode && !isMember
+  // An invitation (personal or by link) skips the clan's sector minimum.
+  const lacksSectors = !!eligibility && eligibility.sectors < clan.minSectors && !clan.myInvite && !linkInvite
+  const cooldownUntil = eligibility?.cooldownUntil ? new Date(eligibility.cooldownUntil) : null
+  const onCooldown = !!cooldownUntil && cooldownUntil > new Date()
   const full = clan.members.length >= clan.capacity
+  const joinBlocked = join.isPending || otherCity || inOtherClan || onCooldown || full
+
+  function joinClan(code: string | null) {
+    if (!clan) return
+    run(
+      join.mutateAsync({ clanId: clan.id, inviteCode: code }).then((r) => {
+        if (r === 'requested') setToast('Заявка отправлена')
+        else forgetClanInvite()
+      }),
+      clan.joinType === 'open' || code ? 'Добро пожаловать в клан!' : undefined
+    )
+  }
 
   function run(p: Promise<unknown>, done?: string) {
     setError(null)
@@ -259,7 +282,7 @@ export function ClanScreen({
             </svg>
           </button>
         )}
-        <button className="icon-btn tap-scale" aria-label="Поделиться кланом" onClick={() => onShareClan(clan.id, clan.name)}>
+        <button className="icon-btn tap-scale" aria-label="Поделиться кланом" onClick={() => onShareClan(clan.id, clan.name, shareInviteCode)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <path d="M12 15V4M12 4 8 8M12 4l4 4" />
             <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
@@ -315,7 +338,7 @@ export function ClanScreen({
           <div className="clan-note">Клан распущен</div>
         ) : isMember ? (
           <div className="clan-actions">
-            <button className="btn-primary" onClick={() => onShareClan(clan.id, clan.name)}>
+            <button className="btn-primary" onClick={() => onShareClan(clan.id, clan.name, shareInviteCode)}>
               Пригласить в клан
             </button>
             <button
@@ -344,7 +367,7 @@ export function ClanScreen({
               <>
                 <div className="clan-join-note">Тебя пригласили в этот клан</div>
                 <div className="clan-actions">
-                  <button className="btn-primary" disabled={join.isPending || inOtherClan} onClick={() => run(join.mutateAsync(clan.id), 'Добро пожаловать в клан!')}>
+                  <button className="btn-primary" disabled={joinBlocked} onClick={() => joinClan(null)}>
                     Принять приглашение
                   </button>
                   <button className="btn-secondary" style={{ flex: '0 0 auto', width: 'auto', padding: '0 16px' }} onClick={() => run(declineInvite.mutateAsync(clan.id))}>
@@ -361,28 +384,29 @@ export function ClanScreen({
                   Отменить
                 </button>
               </div>
+            ) : linkInvite ? (
+              <>
+                {clan.joinType !== 'open' && <div className="clan-join-note">Тебя пригласили в этот клан</div>}
+                <button className="btn-primary" disabled={joinBlocked || lacksSectors} onClick={() => joinClan(inviteCode ?? null)}>
+                  Вступить в клан
+                </button>
+              </>
             ) : clan.joinType === 'invite' ? (
-              <div className="clan-join-note">В этот клан вступают только по приглашению</div>
+              <div className="clan-join-note">
+                В этот клан вступают только по приглашению
+                <div className="clan-join-hint">Попроси главу или старейшину прислать ссылку-приглашение</div>
+              </div>
             ) : (
-              <button
-                className="btn-primary"
-                disabled={join.isPending || otherCity || inOtherClan || lacksSectors || onCooldown || full}
-                onClick={() =>
-                  run(
-                    join.mutateAsync(clan.id).then((r) => {
-                      if (r === 'requested') setToast('Заявка отправлена')
-                    }),
-                    clan.joinType === 'open' ? 'Добро пожаловать в клан!' : undefined
-                  )
-                }
-              >
+              <button className="btn-primary" disabled={joinBlocked || lacksSectors} onClick={() => joinClan(null)}>
                 {clan.joinType === 'open' ? 'Вступить в клан' : 'Подать заявку'}
               </button>
             )}
-            <div className="clan-join-meta">
-              {JOIN_TYPE_LABEL[clan.joinType]}
-              {clan.minSectors > 0 && ` · от ${clan.minSectors} захваченных секторов`}
-            </div>
+            {clan.joinType !== 'invite' && !linkInvite && !clan.myInvite && (
+              <div className="clan-join-meta">
+                {JOIN_TYPE_LABEL[clan.joinType]}
+                {clan.minSectors > 0 && ` · от ${clan.minSectors} захваченных секторов`}
+              </div>
+            )}
             {otherCity && <div className="clan-join-warn">Клан из другого города</div>}
             {inOtherClan && <div className="clan-join-warn">Ты уже в клане «{me?.clanName}»</div>}
             {!otherCity && !inOtherClan && lacksSectors && (
@@ -390,7 +414,12 @@ export function ClanScreen({
                 Нужно захватить {clan.minSectors} сект. — у тебя {eligibility?.sectors ?? 0}
               </div>
             )}
-            {!otherCity && !inOtherClan && onCooldown && <div className="clan-join-warn">После выхода из клана нужно подождать сутки</div>}
+            {!otherCity && !inOtherClan && onCooldown && cooldownUntil && (
+              <div className="clan-join-warn">
+                После выхода из клана — сутки паузы. Вступить можно с{' '}
+                {cooldownUntil.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+              </div>
+            )}
             {!otherCity && !inOtherClan && full && <div className="clan-join-warn">Свободных мест нет</div>}
           </div>
         )}

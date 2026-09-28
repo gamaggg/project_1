@@ -26,7 +26,7 @@ import { useAdminActionsReadState } from '@/lib/activityRead'
 import { useAchievementUnlock } from '@/lib/achievementUnlock'
 import { useWeekTopModal } from '@/lib/weekTopModal'
 import { useClanBattleCeremony } from '@/lib/clanBattleCeremony'
-import { parseGuestShare, refParam, rememberRef, takeRememberedRef } from '@/lib/guestShare'
+import { parseGuestShare, refParam, rememberClanInvite, rememberRef, takeRememberedRef, type ClanInvite } from '@/lib/guestShare'
 import { GuestShareScreen } from '@/components/app-shell/GuestShareScreen'
 import { formatCooldown, type SpeciesEntry } from '@/lib/format'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
@@ -527,9 +527,12 @@ export function FishZoneApp() {
     push({ screen: 'screen-clan-editor', mode, clanId })
   }
   // Invites land best as a Telegram share (the Mini App's own share sheet,
-  // straight to a chat); a plain browser copies the link instead.
-  async function shareClan(clanId: number, name: string) {
-    const url = `${window.location.origin}${window.location.pathname}?clan=${clanId}${refParam(myProfile?.publicId)}`
+  // straight to a chat); a plain browser copies the link instead. With the
+  // clan's invite code (leaders, co-leaders, elders) the link itself is the
+  // invitation — it opens the clan with a working «Вступить».
+  async function shareClan(clanId: number, name: string, inviteCode?: string | null) {
+    const invite = inviteCode ? `&invite=${encodeURIComponent(inviteCode)}` : ''
+    const url = `${window.location.origin}${window.location.pathname}?clan=${clanId}${invite}${refParam(myProfile?.publicId)}`
     const text = `Вступай в клан «${name}» в RANGE`
     const webApp = window.Telegram?.WebApp
     if (webApp?.openTelegramLink) {
@@ -1021,6 +1024,13 @@ export function FishZoneApp() {
   useEffect(() => {
     if (!user && guestShare?.ref) rememberRef(guestShare.ref, guestShare.kind)
   }, [user, guestShare])
+  // An invite link's code (?clan=<id>&invite=<code>) — or one remembered from
+  // an earlier launch — for that clan's join button.
+  const [clanInvite, setClanInvite] = useState<ClanInvite | null>(null)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads the launch URL and browser storage, only available after mount
+    setClanInvite(rememberClanInvite(launchSearch))
+  }, [launchSearch])
   // Signed up from a link: +100 coins once the wizard is done (the server
   // only pays a brand-new account, once — see claim_referral).
   const claimReferral = useClaimReferral()
@@ -1170,6 +1180,7 @@ export function FishZoneApp() {
           {viewingClanId && (
             <ClanScreen
               clanId={viewingClanId}
+              inviteCode={clanInvite?.clanId === viewingClanId ? clanInvite.code : null}
               onBack={pop}
               onOpenUser={openUserProfile}
               onEdit={(clan) => openClanEditor('edit', clan.id)}
@@ -1667,7 +1678,7 @@ function ClanEditorHost({
   clanId: number | null
   onBack: () => void
   onDone: (clanId: number) => void
-  onShareClan: (clanId: number, name: string) => void
+  onShareClan: (clanId: number, name: string, inviteCode?: string | null) => void
 }) {
   const { data: clan } = useClan(mode === 'edit' ? clanId : null)
   if (mode === 'edit' && !clan) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Загрузка…</div>

@@ -2682,7 +2682,29 @@ function useClanAction<TVars>(run: (supabase: ReturnType<typeof createClient>, v
   })
 }
 
-export const useJoinClan = () => useClanAction<number>((s, clanId) => s.rpc('join_clan', { p_clan_id: clanId }))
+// The code from an invite link (see get_clan_invite_code) counts as an
+// invitation. Sent only when there is one, so a plain join keeps the call
+// every published version makes.
+export const useJoinClan = () =>
+  useClanAction<{ clanId: number; inviteCode?: string | null }>((s, v) =>
+    v.inviteCode ? s.rpc('join_clan', { p_clan_id: v.clanId, p_invite_code: v.inviteCode }) : s.rpc('join_clan', { p_clan_id: v.clanId }),
+  )
+// The clan's invite-link code — only leaders, co-leaders and elders get one
+// (null for anyone else). Fetched ahead of the share tap: a clipboard write
+// has to happen right in the tap, with no request in between.
+export function useClanInviteCode(clanId: number | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ['clan-invite-code', clanId],
+    enabled: enabled && clanId !== null,
+    staleTime: Infinity,
+    queryFn: async (): Promise<string | null> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_clan_invite_code', { p_clan_id: clanId! })
+      if (error) throw error
+      return data ?? null
+    },
+  })
+}
 export const useCancelClanJoinRequest = () => useClanAction<number>((s, clanId) => s.rpc('cancel_clan_join_request', { p_clan_id: clanId }))
 // A player can be in one clan per city, so every action names its clan —
 // otherwise, while in Moscow, a Batumi clan's request could land in the
