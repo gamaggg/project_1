@@ -581,9 +581,12 @@ body{
 .shop-card-avatar{position:relative; width:76px; height:76px;}
 .shop-card-avatar .avatar-frame-ring{inset:-5px;}
 .shop-card-avatar-inner{
-  width:100%; height:100%; border-radius:50%;
+  width:100%; height:100%; border-radius:50%; overflow:hidden;
   background:linear-gradient(160deg,#FF7A38,var(--accent) 70%);
+  display:flex; align-items:center; justify-content:center;
+  color:#fff; font-weight:800; font-size:24px; letter-spacing:.5px;
 }
+.shop-card-avatar-inner img{width:100%; height:100%; object-fit:cover; display:block;}
 .shop-card-bg-preview{
   width:100%; height:64px; border-radius:12px; overflow:hidden; position:relative; isolation:isolate;
 }

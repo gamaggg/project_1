@@ -11,6 +11,7 @@ import { SHOP_TAB_ICONS } from '@/components/app-shell/icons'
 import { usePurchaseFlow } from '@/components/app-shell/usePurchaseFlow'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { AVATAR_FRAMES } from '@/lib/data/shopItems'
+import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { HERO_BACKGROUNDS, PREMIUM_HERO_BG_IDS } from '@/lib/data/heroBackgrounds'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { NAME_STYLES } from '@/lib/data/nameStyles'
@@ -147,6 +148,8 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
               <FrameCard
                 key={item.id}
                 item={item}
+                avatarUrl={profile?.avatarUrl ?? null}
+                initials={(profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()}
                 owned={owned.has(item.id)}
                 equipped={profile?.equippedFrame === item.id}
                 onBuy={() => request(item.price, item.name, () => buyItem.mutate(item.id))}
@@ -350,6 +353,8 @@ function BuffRow({
 
 function FrameCard({
   item,
+  avatarUrl,
+  initials,
   owned,
   equipped,
   onBuy,
@@ -359,6 +364,10 @@ function FrameCard({
   onRefund,
 }: {
   item: ShopItem
+  // The player's own avatar inside the frame — they're choosing how *they*
+  // will look; initials on the default orange when there's no photo.
+  avatarUrl: string | null
+  initials: string
   owned: boolean
   equipped: boolean
   onBuy: () => void
@@ -374,7 +383,10 @@ function FrameCard({
       <div className="shop-card-preview">
         <div className="shop-card-avatar">
           <div className={`avatar-frame-ring${frame?.glow ? ' avatar-frame-glow' : ''}`} style={{ background: frame?.ring }} />
-          <div className="shop-card-avatar-inner" />
+          <div className="shop-card-avatar-inner">
+            {/* eslint-disable-next-line @next/next/no-img-element -- Supabase thumbnail URL, same as the profile avatar */}
+            {avatarUrl ? <img src={thumbUrl(avatarUrl, 160)} alt="" loading="lazy" decoding="async" /> : initials}
+          </div>
         </div>
       </div>
       <div className="shop-card-name">{item.name}</div>
