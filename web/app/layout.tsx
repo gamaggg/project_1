@@ -64,7 +64,17 @@ export const metadata: Metadata = {
 // on .screen/.bottomnav in globals.css, that guarantees the app's own
 // background (not <body>'s #DCDAD3 desktop-letterbox gray, and not
 // whatever default Safari would otherwise show) fills those strips.
+//
+// maximumScale:1 stops iOS (Safari and Telegram's in-app view) zooming the
+// whole page in when a text field with a font under 16px gets focus — the
+// clan chat, comments, clan editor and search fields all are, and the page
+// stayed zoomed with its right edge cut off. Only the auth fields used to be
+// bumped to 16px for this; one page-wide setting covers every field, present
+// and future. The map zooms with its own gestures, unaffected.
 export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
   themeColor: '#FFFFFF',
   viewportFit: 'cover',
 }
