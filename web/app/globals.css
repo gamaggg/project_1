@@ -1508,12 +1508,16 @@ body{
   box-shadow:0 14px 28px rgba(252,82,0,0.3);
   letter-spacing:0.5px;
 }
-/* Sits behind .profile-hero-avatar-ring's avatar (first child in DOM, no
-   z-index needed — later siblings stack on top by default), 5px larger on
-   each side so only its edge shows as a ring. Bought/equipped via the shop
-   (see lib/data/shopItems.ts) — pointer-events:none so it never intercepts
-   the avatar's own tap targets (edit/color buttons, open-photo). */
+/* Sits behind the avatar, 5px larger on each side so only its edge shows as
+   a ring. Bought/equipped via the shop (see lib/data/shopItems.ts) —
+   pointer-events:none so it never intercepts the avatar's own tap targets
+   (edit/color buttons, open-photo). */
 .avatar-frame-ring{position:absolute; inset:-5px; border-radius:50%; pointer-events:none;}
+/* "Behind" needs the avatar itself positioned: an absolute element paints
+   over static siblings whatever the DOM order. Only the own-profile avatar
+   happened to be (.avatar-edit-wrap), so on someone else's profile and in the
+   shop preview the frame covered the whole photo as a solid disc. */
+.avatar-frame-ring ~ *{position:relative;}
 .avatar-frame-ring.avatar-frame-glow{animation:avatarFrameGlow 2.6s var(--ease-in-out) infinite;}
 @keyframes avatarFrameGlow{
   0%,100%{box-shadow:0 0 10px 1px rgba(255,215,0,.35);}

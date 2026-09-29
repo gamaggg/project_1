@@ -650,22 +650,6 @@ export function ProfileScreen({
         </button>
       )}
 
-      <button className="profile-invite-card tap-scale" onClick={onInviteFriends}>
-        <span className="profile-invite-coins" aria-hidden>
-          <CoinIcon size={28} />
-          <CoinIcon size={20} />
-        </span>
-        <span className="profile-clan-text">
-          <span className="profile-invite-title">Пригласи друзей</span>
-          <span className="profile-invite-sub">+100 монет другу на старт и тебе — когда он поймает первую рыбу</span>
-        </span>
-        <span className="profile-cta-arrow" style={{ position: 'static' }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 5l7 7-7 7" />
-          </svg>
-        </span>
-      </button>
-
       <div className="section-title-row" style={{ marginTop: 24 }}>
         <div className="section-title">Достижения</div>
         <button className="section-link" onClick={onOpenAchievements}>
@@ -818,6 +802,22 @@ export function ProfileScreen({
           )}
         </>
       )}
+
+      <button className="profile-invite-card tap-scale" style={{ marginTop: 24 }} onClick={onInviteFriends}>
+        <span className="profile-invite-coins" aria-hidden>
+          <CoinIcon size={28} />
+          <CoinIcon size={20} />
+        </span>
+        <span className="profile-clan-text">
+          <span className="profile-invite-title">Пригласи друзей</span>
+          <span className="profile-invite-sub">+100 монет другу на старт и тебе — когда он поймает первую рыбу</span>
+        </span>
+        <span className="profile-cta-arrow" style={{ position: 'static' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 5l7 7-7 7" />
+          </svg>
+        </span>
+      </button>
 
       <div style={{ marginTop: 12 }}>
         <TelegramNotificationsRow />
