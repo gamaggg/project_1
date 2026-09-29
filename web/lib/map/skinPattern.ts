@@ -58,8 +58,11 @@ function buildSkinCanvas(skinId: string, color: string, tileHeight: number, tile
   if (!resolveTerritorySkin(skinId)) return null
   const img = getSkinImage(skinId)
   if (!img) return null
-  const height = tileHeight
-  const width = tileWidth ?? Math.round(height * SVG_ASPECT)
+  const height = Math.round(tileHeight)
+  const width = Math.round(tileWidth ?? height * SVG_ASPECT)
+  // createPattern throws on a 0-sized canvas (InvalidStateError), which
+  // aborted drawing every sector after it on the map.
+  if (width < 1 || height < 1) return null
   const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height
@@ -138,8 +141,11 @@ export function useSkinPatterns() {
     // Bucketed so a fractional pinch-zoom doesn't rebuild the raster on
     // every frame — a sector's own on-screen size only actually needs to
     // win a redraw once it's moved by more than this much.
-    const bucketedHeight = Math.round(tileHeight / 20) * 20
-    const bucketedWidth = tileWidth !== undefined ? Math.round(tileWidth / 20) * 20 : undefined
+    // Never below one bucket: a sector under ~10px on screen (the map zoomed
+    // well out) rounded to 0 here, and a 0-sized canvas made createPattern
+    // throw mid-draw.
+    const bucketedHeight = Math.max(20, Math.round(tileHeight / 20) * 20)
+    const bucketedWidth = tileWidth !== undefined ? Math.max(20, Math.round(tileWidth / 20) * 20) : undefined
     const key = `${skinId}:${color}:${bucketedHeight}:${bucketedWidth ?? 'auto'}`
     let canvas = canvasCacheRef.current.get(key)
     if (canvas === undefined) {
