@@ -51,7 +51,9 @@ export function OnboardingFlow({
   // matters (NameStep) the WebApp object is already populated.
   const [viaTelegram] = useState(() => typeof window !== 'undefined' && !!window.Telegram?.WebApp?.initData)
   const { data: myProfile, isLoading: myProfileLoading } = useProfile(user?.id ?? null)
-  const [step, setStep] = useState<Step>(initialStep ?? 'welcome')
+  // Inside Telegram an account is made by Telegram, not by email sign-up —
+  // «Создать аккаунт» on a shared screen lands on the Telegram Welcome.
+  const [step, setStep] = useState<Step>(viaTelegram && initialStep === 'account' ? 'welcome' : (initialStep ?? 'welcome'))
   const updateProfile = useUpdateProfile()
 
   // Resumes an in-progress account exactly once per mount. Deliberately NOT
@@ -67,6 +69,10 @@ export function OnboardingFlow({
   // Decided once, during render, as soon as the profile is in.
   const [resumed, setResumed] = useState(false)
   const [resumeTarget, setResumeTarget] = useState<Step>('name')
+  // Set when the account was just made by Welcome's own «start» button in
+  // Telegram — that tap already was the deliberate one, so the wizard opens
+  // straight away instead of asking for «Продолжить» again.
+  const [startedHere, setStartedHere] = useState(false)
   if (user && !resumed && !myProfileLoading && myProfile) {
     setResumed(true)
     // Already finished: nothing to resume (defensive; the gate unmounts us shortly anyway).
@@ -76,7 +82,7 @@ export function OnboardingFlow({
       // shown (see WelcomeStep's onContinue variant below) instead of jumping
       // straight past it, so there's at least one deliberate tap before
       // landing in the wizard. A resumed *web* session skips it as before.
-      if (viaTelegram) setResumeTarget(target)
+      if (viaTelegram && !startedHere) setResumeTarget(target)
       else setStep(target)
     }
   }
@@ -84,22 +90,23 @@ export function OnboardingFlow({
   if (user && myProfileLoading) return null
 
   if (step === 'welcome') {
+    // Signed in by Telegram already (its account exists): one tap onward.
+    if (viaTelegram && user) return <WelcomeStep invited={invited} onContinue={() => setStep(resumeTarget)} />
+    // Inside Telegram with no account tied to it yet — nothing was created
+    // at launch (see AuthProvider). «Start» makes the Telegram account now;
+    // «I already have one» signs in by email, and that account then takes
+    // this Telegram over (app/api/auth/telegram/link).
     if (viaTelegram)
       return (
         <WelcomeStep
           invited={invited}
-          onContinue={async () => {
-            if (!user) {
-              // Signed out earlier this Mini App session — re-run the handshake;
-              // once it resolves, the resume effect above (keyed on `user`) and
-              // FishZoneApp's own gate take over from here, so there's nothing
-              // left to do in this branch — setting a step now would only race
-              // ahead of the profile fetch it depends on.
-              await signInWithTelegram()
-              return
-            }
-            setStep(resumeTarget)
+          onCapture={async () => {
+            setStartedHere(true)
+            // Once it resolves, the resume logic above (keyed on `user`) and
+            // FishZoneApp's own gate take over.
+            await signInWithTelegram()
           }}
+          onSignIn={() => setStep('signin')}
         />
       )
     return <WelcomeStep invited={invited} onCapture={() => setStep('account')} onSignIn={() => setStep('signin')} />

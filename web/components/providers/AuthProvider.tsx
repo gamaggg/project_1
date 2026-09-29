@@ -92,22 +92,41 @@ function applyTelegramChrome() {
 // present when this page is actually running inside Telegram's WebView, so
 // this is a no-op everywhere else (regular web, PWA). See
 // app/api/auth/telegram/route.ts for the server side of this handshake.
-async function trySignInWithTelegram(supabase: ReturnType<typeof createClient>) {
+// `create`: false for the silent check at launch — only an account this
+// Telegram already belongs to is signed in, none is made (someone who plays
+// on the web must not get a second, empty account just by opening the Mini
+// App). True only for Welcome's explicit «start».
+async function trySignInWithTelegram(supabase: ReturnType<typeof createClient>, create: boolean) {
   const initData = window.Telegram?.WebApp?.initData
   if (!initData) return false
   try {
     const res = await fetch('/api/auth/telegram', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ initData }),
+      body: JSON.stringify({ initData, create }),
     })
     if (!res.ok) return false
-    const { email, token } = await res.json()
-    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'magiclink' })
+    const body = (await res.json()) as { status?: string; email?: string; token?: string }
+    if (body.status === 'no_account' || !body.email || !body.token) return false
+    const { error } = await supabase.auth.verifyOtp({ email: body.email, token: body.token, type: 'magiclink' })
     return !error
   } catch {
     return false
   }
+}
+
+// Signed in to a real (email) account inside the Mini App: tie this Telegram
+// to it (app/api/auth/telegram/link), so the next launch opens that account
+// directly and the empty one the Mini App may once have made lets go.
+// Fire-and-forget — the server decides whether a link is safe to make.
+function linkTelegramToAccount(accessToken: string) {
+  const initData = window.Telegram?.WebApp?.initData
+  if (!initData) return
+  fetch('/api/auth/telegram/link', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ initData }),
+  }).catch(() => {})
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -150,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     webApp?.onEvent?.('fullscreenChanged', applyTelegramChrome)
 
     supabase.auth.getUser().then(async ({ data }) => {
-      if (!data.user && (await trySignInWithTelegram(supabase))) {
+      if (!data.user && (await trySignInWithTelegram(supabase, false))) {
         const { data: refreshed } = await supabase.auth.getUser()
         setUser(refreshed.user)
       } else {
@@ -160,9 +179,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSessionReady(true)
     })
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+    let linkTried = false
+    const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
       setSessionReady(true)
+      if (
+        !linkTried &&
+        session &&
+        (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') &&
+        !session.user.email?.endsWith('@telegram.catchrange.com')
+      ) {
+        linkTried = true
+        linkTelegramToAccount(session.access_token)
+      }
     })
 
     return () => {
@@ -179,9 +208,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
+  // Welcome's «start» inside Telegram: signs in, making the account if this
+  // Telegram has none yet.
   async function signInWithTelegram() {
     const supabase = createClient()
-    const ok = await trySignInWithTelegram(supabase)
+    const ok = await trySignInWithTelegram(supabase, true)
     if (ok) {
       const { data } = await supabase.auth.getUser()
       setUser(data.user)

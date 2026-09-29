@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { SITE_URL } from '@/lib/site'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { isEmptyTelegramAccount } from '@/lib/telegram/accounts'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
@@ -41,14 +42,31 @@ async function linkAccount(token: string, message: { chat: { id: number }; from?
   // make "who is this" ambiguous at login.
   const { data: taken } = await admin
     .from('profiles')
-    .select('id')
+    .select('id, display_name')
     .eq('telegram_id', telegramId)
     .neq('id', row.user_id)
     .maybeSingle()
 
   if (taken) {
-    await sendText(chatId, 'Этот Telegram уже привязан к другому аккаунту RANGE.')
-    return
+    // Most often the other account is the one the Mini App made by itself
+    // the first time this person opened it signed out (see
+    // /api/auth/telegram) — before they signed in to their real, email
+    // account. The token proves they own the account asking, and /start
+    // proves they own this Telegram, so an empty auto-made account (never
+    // caught anything, in no clan) just hands the link over. One with real
+    // play stays put — that needs a person to sort out.
+    if (!(await isEmptyTelegramAccount(admin, taken.id))) {
+      await sendText(
+        chatId,
+        `Этот Telegram уже привязан к другому аккаунту RANGE${taken.display_name ? ` — «${taken.display_name}»` : ''}. Войди в него через Telegram или напиши администратору.`,
+      )
+      return
+    }
+    const { error: releaseError } = await admin.from('profiles').update({ telegram_id: null, tg_notifications_enabled: false }).eq('id', taken.id)
+    if (releaseError) {
+      await sendText(chatId, 'Не получилось подключить уведомления. Попробуй ещё раз из профиля.')
+      return
+    }
   }
 
   const { error } = await admin
@@ -57,6 +75,8 @@ async function linkAccount(token: string, message: { chat: { id: number }; from?
     .eq('id', row.user_id)
 
   if (error) {
+    // Put a released link back, so the empty account still opens in the Mini App.
+    if (taken) await admin.from('profiles').update({ telegram_id: telegramId }).eq('id', taken.id)
     await sendText(chatId, 'Не получилось подключить уведомления. Попробуй ещё раз из профиля.')
     return
   }
