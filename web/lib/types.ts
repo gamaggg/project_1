@@ -1378,6 +1378,7 @@ export type Database = {
       }
       join_clan: { Args: { p_clan_id: number; p_invite_code?: string }; Returns: string }
       get_clan_invite_code: { Args: { p_clan_id: number }; Returns: string | null }
+      admin_set_clan_extra_slots: { Args: { p_clan_id: number; p_extra: number }; Returns: number }
       cancel_clan_join_request: { Args: { p_clan_id: number }; Returns: undefined }
       leave_clan: { Args: { p_clan_id?: number | null }; Returns: undefined }
       kick_clan_member: { Args: { p_user_id: string; p_clan_id?: number | null }; Returns: undefined }

@@ -429,6 +429,9 @@ export type ClanDetail = {
   xp: number
   level: number
   capacity: number
+  // Bonus member slots a super admin granted on top of the level's own;
+  // undefined until the server sends it (older database).
+  extraSlots?: number
   trophies: number
   createdAt: string
   renamedAt: string | null

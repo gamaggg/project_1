@@ -19,9 +19,11 @@ import {
   useAdminModerateClan,
   useClanChatSummary,
   useClanInviteCode,
+  useAdminSetClanExtraSlots,
   type ClanModerationAction,
 } from '@/lib/supabase/queries'
 import { forgetClanInvite } from '@/lib/guestShare'
+import { ClanInfoSheet, type ClanInfoKind } from '@/components/app-shell/ClanInfoSheet'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { ClanHero } from '@/components/app-shell/ClanHero'
 import { ClanChestPanel } from '@/components/app-shell/ClanChestPanel'
@@ -89,8 +91,13 @@ export function eventText(e: ClanEvent): string {
       return `${actor} переименовал клан в «${String(e.payload?.to ?? '')}»`
     case 'settings':
       return `${actor} обновил настройки клана`
-    case 'moderated':
+    case 'moderated': {
+      if (e.payload?.what === 'slots') {
+        const extra = Number(e.payload?.extra ?? 0)
+        return extra > 0 ? `Модератор дал клану дополнительные места: +${extra}` : 'Модератор убрал дополнительные места клана'
+      }
       return MODERATED_TEXT[String(e.payload?.what ?? '')] ?? 'Модератор изменил клан'
+    }
     case 'week_result': {
       const place = Number(e.payload?.place ?? 0)
       const tier = Number(e.payload?.tier ?? 0)
@@ -157,6 +164,7 @@ export function ClanScreen({
   onShareClan,
   onOpenRace,
   onOpenChat,
+  onOpenTerritory,
 }: {
   clanId: number
   // From an invite link (?clan=<id>&invite=<code>) — counts as an invitation.
@@ -167,6 +175,7 @@ export function ClanScreen({
   onShareClan: (clanId: number, name: string, inviteCode?: string | null) => void
   onOpenRace: () => void
   onOpenChat: (clanId: number) => void
+  onOpenTerritory: (id: string) => void
 }) {
   const { user } = useAuth()
   const { data: clan, isLoading } = useClan(clanId)
@@ -182,6 +191,9 @@ export function ClanScreen({
   const declineInvite = useDeclineClanInvite()
   const isSuperAdmin = useIsSuperAdmin()
   const moderate = useAdminModerateClan()
+  const setExtraSlots = useAdminSetClanExtraSlots()
+  // Which hero chip's explanation is open (level / league / sectors).
+  const [info, setInfo] = useState<ClanInfoKind | null>(null)
   // Leaders, co-leaders and elders share a link that is itself an invitation.
   const canInvite = !!clan?.myRole && CLAN_ROLE_RANK[clan.myRole] >= 2
   const { data: shareInviteCode } = useClanInviteCode(clan?.id ?? null, canInvite)
@@ -296,18 +308,33 @@ export function ClanScreen({
     <div className="clan-screen" onClick={() => menuFor && setMenuFor(null)}>
       <ClanHero crest={clan.crest} name={clan.name} motto={clan.motto} background={clan.background} golden={clan.level >= 10} top={headerTop}>
         <div className="clan-chips">
-          <span className="clan-chip">Ур. {clan.level}</span>
-          <span className="clan-chip clan-chip-league">
+          <button type="button" className="clan-chip tap-scale" onClick={() => setInfo('level')} aria-label="Уровень клана и бонусы">
+            Ур. {clan.level}
+          </button>
+          <button type="button" className="clan-chip clan-chip-league tap-scale" onClick={() => setInfo('league')} aria-label="Лиги кланов">
             <span className="clan-league-dot" style={{ background: league.color }} />
             {league.label} · {clan.trophies}
-          </span>
-          <span className="clan-chip">
+          </button>
+          {/* Capacity grows with the level — its explanation is the level sheet. */}
+          <button type="button" className="clan-chip tap-scale" onClick={() => setInfo('level')} aria-label="Сколько мест в клане">
             {clan.members.length}/{clan.capacity}
-          </span>
-          <span className="clan-chip">{clan.sectorsHeld} сект.</span>
-          <span className="clan-chip" title="Номер клана — по нему клан находится в поиске">
+          </button>
+          <button type="button" className="clan-chip tap-scale" onClick={() => setInfo('sectors')} aria-label="Сектора клана">
+            {clan.sectorsHeld} сект.
+          </button>
+          <button
+            type="button"
+            className="clan-chip tap-scale"
+            title="Номер клана — по нему клан находится в поиске"
+            onClick={() => {
+              navigator.clipboard
+                ?.writeText(String(clan.id))
+                .then(() => setToast(`ID ${clan.id} скопирован — по нему клан находится в поиске`))
+                .catch(() => {})
+            }}
+          >
             ID {clan.id}
-          </span>
+          </button>
           {clan.raceWins > 0 && (
             <span className={`clan-chip clan-chip-race${clan.wonLastWeek ? ' fresh' : ''}`} title="Побед в битве кланов">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -556,6 +583,30 @@ export function ClanScreen({
         {isSuperAdmin && !clan.disbanded && (
           <div className="clan-card clan-admin">
             <div className="clan-card-title">Модерация · супер-админ</div>
+            {clan.extraSlots !== undefined && (
+              <div className="clan-admin-slots">
+                <div className="clan-admin-slots-text">
+                  <b>Мест: {clan.capacity}</b>
+                  <span>
+                    {clan.capacity - clan.extraSlots} по уровню{clan.extraSlots > 0 ? ` + ${clan.extraSlots} дополнительно` : ''}
+                  </span>
+                </div>
+                <button
+                  className="clan-mini-btn"
+                  disabled={setExtraSlots.isPending || clan.extraSlots === 0}
+                  onClick={() => run(setExtraSlots.mutateAsync({ clanId: clan.id, extra: Math.max(0, clan.extraSlots! - 5) }), 'Места обновлены')}
+                >
+                  −5
+                </button>
+                <button
+                  className="clan-mini-btn"
+                  disabled={setExtraSlots.isPending || clan.extraSlots >= 100}
+                  onClick={() => run(setExtraSlots.mutateAsync({ clanId: clan.id, extra: Math.min(100, clan.extraSlots! + 5) }), 'Места обновлены')}
+                >
+                  +5
+                </button>
+              </div>
+            )}
             <div className="clan-admin-grid">
               {ADMIN_CLAN_ACTIONS.map((a) => (
                 <button
@@ -578,6 +629,8 @@ export function ClanScreen({
           </div>
         )}
       </div>
+
+      {info && <ClanInfoSheet kind={info} clan={clan} onClose={() => setInfo(null)} onOpenTerritory={onOpenTerritory} />}
 
       {confirm &&
         createPortal(

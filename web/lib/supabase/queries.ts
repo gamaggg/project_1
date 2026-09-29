@@ -1731,6 +1731,22 @@ export function useAdminModerateClan() {
   })
 }
 
+// Super admin: extra member slots for a clan on top of its level's capacity.
+export function useAdminSetClanExtraSlots() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ clanId, extra }: { clanId: number; extra: number }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('admin_set_clan_extra_slots', { p_clan_id: clanId, p_extra: extra })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      invalidateClanMembership(queryClient)
+      queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
+    },
+  })
+}
+
 // Super admin fixes a catch that GPS put in the wrong sector — ownership of
 // both sectors is recomputed server-side (see admin_move_catch).
 export function useAdminMoveCatch() {
@@ -2402,6 +2418,7 @@ export function useClan(clanId: number | null) {
         xp: Number(r.xp),
         level: Number(r.level),
         capacity: Number(r.capacity),
+        extraSlots: r.extra_slots === undefined ? undefined : Number(r.extra_slots),
         trophies: Number(r.trophies),
         createdAt: String(r.created_at),
         renamedAt: (r.renamed_at as string | null) ?? null,

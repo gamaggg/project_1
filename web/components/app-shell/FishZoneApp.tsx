@@ -1237,6 +1237,7 @@ export function FishZoneApp() {
               onShareClan={shareClan}
               onOpenRace={openClanRace}
               onOpenChat={openClanChat}
+              onOpenTerritory={openTerritory}
             />
           )}
         </Screen>
