@@ -32,13 +32,15 @@ export type HeroBackground = {
   css: string
   accentRgb: string
   animated?: boolean
-  kind?: 'waves' | 'aurora' | 'circles' | 'halftone'
+  kind?: 'waves' | 'aurora' | 'circles' | 'halftone' | 'bubbles' | 'fireflies'
   waveColors?: string[]
   waveBackgroundFill?: string
   auroraGradient?: string
   auroraLight?: boolean
   ringColor?: string
   dotColor?: string
+  bubbleColor?: string
+  fireflyColor?: string
   // "R,G,B" like accentRgb, consumed as rgb(var(--hero-text-rgb)) /
   // rgba(var(--hero-text-rgb), alpha) by every hero text/icon rule in
   // globals.css. Omitted almost everywhere — .profile-hero's own base rule

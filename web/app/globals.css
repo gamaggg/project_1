@@ -2172,6 +2172,16 @@ body{
   0%{background-position:0% 50%;}
   100%{background-position:150% 50%;}
 }
+/* Small previews (shop and clan-editor swatches): a 150% background shows
+   two thirds of the pattern at once, so a light preset's colour band is in
+   frame most of the loop. Same rule as above for a seamless loop — shift by
+   size/(size-1) = 150%/50% = 300% — and the same 24s, so swatches stay in
+   phase with each other (AuroraBackground locks the phase to the clock). */
+.hero-aurora-layer--swatch{background-size:150% 150%; animation-name:heroAuroraSwatch;}
+@keyframes heroAuroraSwatch{
+  0%{background-position:0% 50%;}
+  100%{background-position:300% 50%;}
+}
 @media (prefers-reduced-motion: reduce){
   .hero-aurora-layer{animation:none;}
 }
@@ -2313,7 +2323,7 @@ body{
 /* ---------- Clan hero (see ClanHero.tsx) ---------- */
 .clan-hero{
   position:relative; z-index:0; isolation:isolate; overflow:hidden;
-  border-radius:22px; padding:22px 16px 18px; color:#fff; text-align:center;
+  border-radius:22px; padding:22px 16px 18px; color:rgb(var(--hero-text-rgb,255,255,255)); text-align:center;
 }
 .clan-hero-compact{padding:16px 14px 14px; border-radius:20px;}
 .clan-hero-body{position:relative; display:flex; flex-direction:column; align-items:center;}
@@ -2324,19 +2334,21 @@ body{
 .clan-hero-crest::after{content:''; position:absolute; left:50%; bottom:-7px; width:72%; height:14px; transform:translateX(-50%); background:rgba(0,0,0,.4); filter:blur(8px); border-radius:50%; z-index:-1;}
 .clan-hero-name{font-family:var(--font-display),'Oswald',sans-serif; font-weight:700; font-size:28px; line-height:1.08; letter-spacing:.01em; margin-top:12px; text-shadow:0 2px 12px rgba(0,0,0,.28); max-width:100%; overflow-wrap:anywhere;}
 .clan-hero-compact .clan-hero-name{font-size:22px; margin-top:10px;}
-.clan-hero-motto{font-size:13px; line-height:1.4; color:rgba(255,255,255,.74); margin-top:4px; max-width:290px;}
+.clan-hero-motto{font-size:13px; line-height:1.4; color:rgba(var(--hero-text-rgb,255,255,255),.74); margin-top:4px; max-width:290px;}
+.clan-hero-light .clan-hero-name{text-shadow:none;}
 .clan-chips{display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-top:12px;}
-.clan-chip{display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,.14); color:#fff; font-size:12px; font-weight:800; padding:5px 10px; border-radius:11px; white-space:nowrap;}
+.clan-chip{display:inline-flex; align-items:center; gap:5px; background:rgba(var(--hero-text-rgb,255,255,255),.14); color:rgb(var(--hero-text-rgb,255,255,255)); font-size:12px; font-weight:800; padding:5px 10px; border-radius:11px; white-space:nowrap;}
 /* The hero chips open what's behind their number (ClanInfoSheet). */
 button.clan-chip{border:none; font-family:inherit; cursor:pointer;}
-button.clan-chip:focus-visible{outline:2px solid #fff; outline-offset:2px;}
+button.clan-chip:focus-visible{outline:2px solid rgb(var(--hero-text-rgb,255,255,255)); outline-offset:2px;}
 .clan-chip-league{background:rgba(255,255,255,.95); color:#17181B;}
-.clan-chip-race{background:rgba(143,225,245,.22); color:#fff;}
+.clan-chip-race{background:rgba(143,225,245,.22); color:rgb(var(--hero-text-rgb,255,255,255));}
 .clan-chip-race.fresh{background:linear-gradient(160deg,#FFE08A,#E0A63A); color:#3B2600; box-shadow:0 2px 10px rgba(224,166,58,.45);}
 .clan-xp{width:100%; max-width:260px; margin-top:12px;}
-.clan-xp-bar{height:6px; border-radius:6px; background:rgba(255,255,255,.18); overflow:hidden;}
+.clan-xp-bar{height:6px; border-radius:6px; background:rgba(var(--hero-text-rgb,255,255,255),.18); overflow:hidden;}
 .clan-xp-fill{height:100%; border-radius:6px; background:#FFD08A; transform-origin:left; animation:clan-bar-grow 1.1s var(--ease-out) both;}
-.clan-xp-label{display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:rgba(255,255,255,.7); margin-top:5px;}
+.clan-xp-label{display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:rgba(var(--hero-text-rgb,255,255,255),.7); margin-top:5px;}
+.clan-hero-light .clan-xp-fill{background:#E0A63A;}
 @keyframes clan-bar-grow{from{transform:scaleX(0);}}
 
 /* ---------- Clan editor (see ClanEditorScreen.tsx) ---------- */
@@ -2379,6 +2391,8 @@ button.clan-chip:focus-visible{outline:2px solid #fff; outline-offset:2px;}
 .clan-bg-tile.locked{opacity:.55; cursor:not-allowed;}
 .clan-bg-label{position:relative; color:#fff; font-weight:800; font-size:13px; padding:10px 12px; text-shadow:0 1px 6px rgba(0,0,0,.35);}
 .clan-bg-live{position:absolute; top:8px; left:10px; font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:#fff; background:rgba(255,255,255,.18); padding:2px 6px; border-radius:6px;}
+.clan-bg-tile.light .clan-bg-label{color:#17181B; text-shadow:none;}
+.clan-bg-tile.light .clan-bg-live{color:#17181B; background:rgba(23,24,27,.08);}
 .clan-join-card{display:flex; gap:12px; align-items:flex-start; width:100%; border:1.5px solid var(--line); border-radius:16px; padding:12px 14px; text-align:left; background:var(--surface); cursor:pointer; font:inherit; color:var(--ink); transition:border-color .15s, background .15s;}
 .clan-join-card.on{border-color:var(--accent); background:#FFF4EE;}
 .clan-radio{flex:0 0 auto; width:20px; height:20px; border-radius:50%; border:2px solid #CFCCC5; margin-top:1px; position:relative; transition:border-color .15s;}

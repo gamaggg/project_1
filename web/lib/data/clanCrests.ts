@@ -69,9 +69,12 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
     label: 'Щука',
     level: 1,
     parts: [
-      { d: 'M3 24C9 19 21 17 33 20c3 .8 5 1.8 6 2.6L45 18l-1 6 1 6-6-4.6c-1 .8-3 1.8-6 2.6C21 31 9 29 3 24Z', mode: 'fill' },
-      { d: 'M23 18.6 27 13.5l2.4 5.6Z', mode: 'fill' },
-      { circle: [9.5, 23, 1.6], mode: 'fill-bg' },
+      // Long and slender, pointed snout, the dorsal fin far back by the tail.
+      { d: 'M3 24C8 20.4 18 19 30 20.4c3.5.4 5.5 1.4 7 2.4l7-4.3-1.5 5.5 1.5 5.5-7-4.3c-1.5 1-3.5 2-7 2.4C18 29 8 27.6 3 24Z', mode: 'fill' },
+      { d: 'M28.5 20.6 32 15.8l2.6 5.4Z', mode: 'fill' },
+      { d: 'M28.5 27.4 31.6 32l2.6-4.9Z', mode: 'fill' },
+      { circle: [8.6, 22.9, 1.5], mode: 'fill-bg' },
+      { d: 'M13.2 21.2q-1.6 2.8 0 5.6', mode: 'stroke-bg', w: 1.4 },
     ],
   },
   {
@@ -79,10 +82,12 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
     label: 'Карп',
     level: 1,
     parts: [
-      { d: 'M5 24c3-9 14-13 24-10 5 1.5 8 5 9 7l6-5-1 8 1 8-6-5c-1 2-4 5.5-9 7C19 37 8 33 5 24Z', mode: 'fill' },
-      { d: 'M17 13.4 23 8l6 5.6Z', mode: 'fill' },
-      { circle: [11.5, 22.5, 1.8], mode: 'fill-bg' },
-      { d: 'M16 30c3 1.6 7 2 11 1', mode: 'stroke-bg', w: 1.6 },
+      // Deep, round-backed body with a long dorsal fin.
+      { d: 'M6 25c0-8 8-12.5 17-12.5 7 0 12 3.5 14.5 8.5l7-5.5-1.5 9 1.5 8.5-7-4.5C35 33 30 36 23 36 14 36 6 32 6 25Z', mode: 'fill' },
+      { d: 'M16.5 13.8C20.5 9.4 27 8.8 31.5 14Z', mode: 'fill' },
+      { d: 'M21 35.6l2.5 4 3.5-4.1Z', mode: 'fill' },
+      { circle: [12.2, 22.2, 1.8], mode: 'fill-bg' },
+      { d: 'M17.2 17q-2.6 7.6 0 15', mode: 'stroke-bg', w: 1.6 },
     ],
   },
   {
@@ -90,10 +95,11 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
     label: 'Окунь',
     level: 1,
     parts: [
-      { d: 'M4 25c4-8 15-11 26-8 4 1 7 3.5 8.5 5.5L45 18l-1 7 1 7-6.5-4.5c-1.5 2-4.5 4.5-8.5 5.5C19 36 8 33 4 25Z', mode: 'fill' },
-      { d: 'M13 17.6 15 10l3 6 3-7 3 6.5 3-5.5 2.5 6.6Z', mode: 'fill' },
-      { d: 'M19 19v12M25 18.3v13.4M31 19v11', mode: 'stroke-bg', w: 2.2 },
-      { circle: [9.5, 23.5, 1.6], mode: 'fill-bg' },
+      // Humped back, spiny dorsal fin, dark vertical bands.
+      { d: 'M4 25.5C5 19 12 15 21 15c8 0 13 3.5 16 7l7.5-5-1.5 8 1.5 8-7.5-5c-3 4-9 7-17 7-9 0-15-4-16-9.5Z', mode: 'fill' },
+      { d: 'M12.5 16.4 14 9.5l2.6 5.2 2-6.2 2.4 5.6 2.2-5.2 2 5.4 2-4 1.8 6.2Z', mode: 'fill' },
+      { d: 'M18.5 17.4v15.4M24.5 16v18M30.5 18v14', mode: 'stroke-bg', w: 2.4 },
+      { circle: [9.5, 23.4, 1.7], mode: 'fill-bg' },
     ],
   },
   {
@@ -101,9 +107,10 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
     label: 'Крючок',
     level: 1,
     parts: [
-      { circle: [28, 7.5, 3.2], mode: 'stroke', w: 3 },
-      { d: 'M28 11v19c0 9-12 10.5-14 3', mode: 'stroke', w: 3.6 },
-      { d: 'M13.5 33.5 19 30.5', mode: 'stroke', w: 3.2 },
+      // The classic hook icon in one line: eye, shank, round bend, and the
+      // point turning into the barb.
+      { circle: [32, 13.5, 3.8], mode: 'stroke', w: 3.2 },
+      { d: 'M32 17.4V30a10 10 0 0 1-20 0v-8l6 6', mode: 'stroke', w: 3.6 },
     ],
   },
   {
@@ -168,8 +175,10 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
     label: 'Луна',
     level: 1,
     parts: [
-      { d: 'M29 5C19 7 12 15.5 12 25.5 12 36 20.5 43.5 31 43.5c4 0 7.5-1.2 10-3.5-1.5.5-3 .6-4.5.6-9.5 0-16.5-7.3-16.5-16.3C20 16.4 24 9 29 5Z', mode: 'fill' },
-      { d: 'M36 9l1.3 3 3 1.3-3 1.3-1.3 3-1.3-3-3-1.3 3-1.3Z', mode: 'fill' },
+      // Crescent cut from a circle centred in the box, so it sits in the
+      // middle of the crest; a small star in the hollow.
+      { d: 'M22.41 7.07A17 17 0 1 0 40.43 28.37A14 14 0 1 1 22.41 7.07Z', mode: 'fill' },
+      { d: 'M34.5 12.5l1.4 3.3 3.3 1.4-3.3 1.4-1.4 3.3-1.4-3.3-3.3-1.4 3.3-1.4Z', mode: 'fill' },
     ],
   },
   {
@@ -177,10 +186,15 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
     label: 'Удочки',
     level: 1,
     parts: [
-      { d: 'M7 41 39 7M41 41 9 7', mode: 'stroke', w: 3.4 },
-      { circle: [14.5, 33.5, 3.8], mode: 'fill' },
-      { circle: [33.5, 33.5, 3.8], mode: 'fill' },
-      { d: 'M39 7q3.5 6 2 13M9 7Q5.5 13 7 20', mode: 'stroke', w: 1.8 },
+      // Two rods crossed: thick cork handles, reels, thin tips with line.
+      { d: 'M15.5 32.5 40 8M32.5 32.5 8 8', mode: 'stroke', w: 2.4 },
+      { d: 'M7 41l8.5-8.5M41 41l-8.5-8.5', mode: 'stroke', w: 4.6 },
+      { circle: [19, 35, 3.6], mode: 'fill' },
+      { circle: [29, 35, 3.6], mode: 'fill' },
+      { circle: [19, 35, 1.3], mode: 'fill-bg' },
+      { circle: [29, 35, 1.3], mode: 'fill-bg' },
+      { d: 'M40 8q4.5 5 3.5 13.5M8 8Q3.5 13 4.5 21.5', mode: 'stroke', w: 1.3 },
+      { d: 'M43.5 21.5c0 2.6-2.6 2.6-2.8.6M4.5 21.5c0 2.6 2.6 2.6 2.8.6', mode: 'stroke', w: 1.5 },
     ],
   },
   {
@@ -202,11 +216,14 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
     label: 'Воблер',
     level: 2,
     parts: [
-      { d: 'M11 24c0-7 10-11 22-8 6 1.5 9 5 9 8s-3 6.5-9 8c-12 3-22-1-22-8Z', mode: 'fill' },
-      { d: 'M11 24 3 20.5l1 7.5Z', mode: 'fill' },
-      { d: 'M22 32.5v5c0 2.5-3 2.5-3.5.5M34 31v5c0 2.5-3 2.5-3.5.5', mode: 'stroke', w: 2.4 },
-      { circle: [16, 22.5, 2.2], mode: 'fill-bg' },
-      { d: 'M24 19.5c3-1 7-1 10 .5', mode: 'stroke-bg', w: 1.6 },
+      // A wobbler: fish-shaped hard body, solid diving lip under the nose,
+      // double hooks under the belly and the tail.
+      { d: 'M9 21.5c0-5 6.5-8 15-8 8 0 14 3.5 18 8-4 4.5-10 8-18 8-8.5 0-15-3-15-8Z', mode: 'fill' },
+      { d: 'M9.8 23.6 3.2 30.4l2.6 2.4 6.8-6.6Z', mode: 'fill' },
+      { circle: [14.4, 20.2, 2.2], mode: 'fill-bg' },
+      { d: 'M19 15.2q-2.2 6.3 0 12.6', mode: 'stroke-bg', w: 1.5 },
+      { d: 'M24 29.6v4M24 33.6c0 3.2-4.6 3.2-4.6 0M24 33.6c0 3.2 4.6 3.2 4.6 0', mode: 'stroke', w: 2.2 },
+      { d: 'M39 25.6v4M39 29.6c0 3.2-4.6 3.2-4.6 0M39 29.6c0 3.2 4.6 3.2 4.6 0', mode: 'stroke', w: 2.2 },
     ],
   },
   {
@@ -214,9 +231,11 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
     label: 'Сом',
     level: 4,
     parts: [
-      { d: 'M4 26c2-8 12-11 24-9 7 1 11 4 12 6l5-4-1 6 1 6-5-4c-2 3-6 6-14 6.5C14 34 5 32 4 26Z', mode: 'fill' },
-      { d: 'M7 27c-4 3-5 7-4 10M9.5 28c-1 4 0 7 2 9M7 22c-4-2-6-5-6-8', mode: 'stroke', w: 1.8 },
-      { circle: [11.5, 23.5, 1.6], mode: 'fill-bg' },
+      // Wide flat head with a broad mouth, long tapering body, rounded tail.
+      { d: 'M3.5 24c0-5 4.5-7.5 11.5-7 9 .5 16 3 22 5.5l7.5-3.5c2 3.6 2 7.4 0 11L37 26.5c-7 3-15 5-23 4.5C7.5 30.6 3.5 28.5 3.5 24Z', mode: 'fill' },
+      { d: 'M17 17.3l3-3.8 2.5 4.3Z', mode: 'fill' },
+      { circle: [9.2, 21.6, 1.4], mode: 'fill-bg' },
+      { d: 'M3.8 25.4H9.5', mode: 'stroke-bg', w: 1.4 },
     ],
   },
   {
@@ -235,11 +254,13 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
     label: 'Компас',
     level: 4,
     parts: [
-      { circle: [24, 24, 18], mode: 'stroke', w: 3 },
-      { d: 'M24 9l4.5 15h-9Z', mode: 'fill' },
-      { d: 'M24 39l-4.5-15h9Z', mode: 'fill-bg' },
-      { d: 'M24 39l-4.5-15h9Z', mode: 'stroke', w: 1.6 },
-      { circle: [24, 24, 2.2], mode: 'fill' },
+      // A compass rose, no ring (a ring inside a round crest reads as a
+      // target): long north–south points, shorter east–west, small diagonal
+      // points behind them, and a pivot in the middle.
+      { d: 'M24 20.6 32.2 15.8 27.4 24 32.2 32.2 24 27.4 15.8 32.2 20.6 24 15.8 15.8Z', mode: 'fill' },
+      { d: 'M24 5.5 27.2 20.8 39 24 27.2 27.2 24 42.5 20.8 27.2 9 24 20.8 20.8Z', mode: 'fill' },
+      { d: 'M24 5.5 27.2 20.8 39 24 27.2 27.2 24 42.5 20.8 27.2 9 24 20.8 20.8Z', mode: 'stroke-bg', w: 1.3 },
+      { circle: [24, 24, 2.4], mode: 'fill-bg' },
     ],
   },
   { id: 'helm', label: 'Штурвал', level: 4, parts: helmParts() },
@@ -270,8 +291,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
     label: 'Чайка',
     level: 6,
     parts: [
-      { d: 'M3 22c6-6 13-6 21 2 8-8 15-8 21-2', mode: 'stroke', w: 3.8 },
-      { d: 'M26 34c3-3 6-3 9 1 3-4 6-4 8-2', mode: 'stroke', w: 2.6 },
+      // Two gulls in flight: crescent wings, the far one smaller.
+      { d: 'M4 21c6-6 13-6 20 1.5C31 15 38 15 44 21c-6-2.4-13-1.4-20 6.5C17 19.6 10 18.6 4 21Z', mode: 'fill' },
+      { d: 'M24 34c3.2-3.2 6.6-3.2 9.6.6 3-3.8 6.4-3.8 9.6-.6-3-1-6.2-.4-9.6 3.6-3.4-4-6.6-4.6-9.6-3.6Z', mode: 'fill' },
     ],
   },
   {

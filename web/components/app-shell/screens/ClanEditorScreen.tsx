@@ -8,7 +8,7 @@ import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { useClanEligibility, useClanInviteCode, useClanNameCheck, useCreateClan, useUpdateClan } from '@/lib/supabase/queries'
 import { CREST_COLORS, CREST_SECONDARY_COLORS, CREST_SHAPES, CREST_SYMBOLS, resolveCrest, type ClanCrest as CrestValue } from '@/lib/data/clanCrests'
-import { CLAN_BACKGROUNDS } from '@/lib/data/clanBackgrounds'
+import { CLAN_BACKGROUNDS, isLightClanBackground } from '@/lib/data/clanBackgrounds'
 import { CLAN_PRICE, JOIN_TYPE_LABEL, MIN_SECTORS_OPTIONS, clanErrorMessage, type ClanJoinType } from '@/lib/data/clanLevels'
 import { hapticSuccess } from '@/lib/telegram/haptics'
 import type { ClanDetail } from '@/lib/data/types'
@@ -220,7 +220,17 @@ export function ClanEditorScreen({
                     title={s.label}
                     onClick={() => setCrest((c) => ({ ...c, symbol: s.id }))}
                   >
-                    <ClanCrest crest={{ shape: 'round', symbol: s.id, primary: crest.symbol === s.id ? crest.primary : '#9C9A94', secondary: '#FFFFFF' }} size={36} />
+                    {/* In the crest's own shape, so picking a symbol shows how it
+                        actually sits in the chosen shield/hex/diamond. */}
+                    <ClanCrest
+                      crest={{
+                        shape: crest.shape,
+                        symbol: s.id,
+                        primary: crest.symbol === s.id ? crest.primary : '#9C9A94',
+                        secondary: crest.symbol === s.id ? crest.secondary : '#FFFFFF',
+                      }}
+                      size={36}
+                    />
                     {locked && <LockTag level={s.level} />}
                   </button>
                 )
@@ -312,12 +322,14 @@ export function ClanEditorScreen({
               return (
                 <button
                   key={b.id}
-                  className={`clan-bg-tile${background === b.id ? ' on' : ''}${locked ? ' locked' : ''}`}
+                  className={`clan-bg-tile${background === b.id ? ' on' : ''}${locked ? ' locked' : ''}${isLightClanBackground(b) ? ' light' : ''}`}
                   style={{ background: b.animated ? b.base : b.css }}
                   disabled={locked}
                   onClick={() => setBackground(b.id)}
                 >
-                  {background === b.id && b.animated && <HeroBgLive bg={b} variant="swatch" />}
+                  {/* Every live tile plays, like the shop's swatches — the
+                      loops stop on their own once this screen is hidden. */}
+                  {b.animated && <HeroBgLive bg={b} variant="swatch" />}
                   <span className="clan-bg-label">{b.label}</span>
                   {b.animated && <span className="clan-bg-live">живой</span>}
                   {locked && <LockTag level={b.level} />}

@@ -3,7 +3,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
-import { resolveClanBackground } from '@/lib/data/clanBackgrounds'
+import { isLightClanBackground, resolveClanBackground } from '@/lib/data/clanBackgrounds'
 
 // The clan's banner: its chosen background, the big crest (with the shine)
 // and name/motto. Shared by the clan screen and the constructor's live
@@ -32,8 +32,8 @@ export function ClanHero({
   const bg = resolveClanBackground(background)
   return (
     <div
-      className={`clan-hero${compact ? ' clan-hero-compact' : ''}`}
-      style={{ background: bg.animated ? bg.base : bg.css, '--clan-accent-rgb': bg.accentRgb } as CSSProperties}
+      className={`clan-hero${compact ? ' clan-hero-compact' : ''}${isLightClanBackground(bg) ? ' clan-hero-light' : ''}`}
+      style={{ background: bg.animated ? bg.base : bg.css, '--clan-accent-rgb': bg.accentRgb, '--hero-text-rgb': bg.textRgb ?? '255,255,255' } as CSSProperties}
     >
       <HeroBgLive bg={bg} variant={compact ? 'preview' : 'hero'} />
       {top}
