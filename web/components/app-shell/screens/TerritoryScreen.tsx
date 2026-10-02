@@ -11,6 +11,7 @@ import { cityForSectorId } from '@/lib/data/city'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import type { Territory, TerritoryCoHolder } from '@/lib/data/types'
+import { sectorCapturer, sectorOtherHolders } from '@/lib/data/sectorHolders'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { TerritoryThumbnailMapView } from '@/components/app-shell/TerritoryThumbnailMapView'
 import { BackButton } from '@/components/app-shell/BackButton'
@@ -47,32 +48,33 @@ export function shieldBadge(shieldUntil: string | null) {
 // "profile card" moment (ring the avatar in the brand's own orange, a
 // caption above naming what they did) rather than folding them into a
 // plain nav row like every other "open a profile" link in the app.
+// On a sector clan-mates share that's whoever captured it last.
 function SectorOwnerCard({
-  ownerId,
-  isMine,
+  capturer,
   coHolders,
   onOpenUser,
 }: {
-  ownerId: string
-  isMine: boolean
+  capturer: TerritoryCoHolder
   coHolders: TerritoryCoHolder[]
   onOpenUser: (id: string) => void
 }) {
-  const { data: profile } = useProfile(ownerId)
-  const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
+  const { data: fresh } = useProfile(capturer.id)
+  const profile = fresh ?? capturer
+  const isMine = capturer.isMe
+  const initials = (profile.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
   return (
     <div className="sector-owner-highlight">
       <div className="sector-owner-highlight-label">Захватил сектор</div>
       <button
         className="sector-owner-highlight-row tap-scale"
-        onClick={() => onOpenUser(ownerId)}
+        onClick={() => onOpenUser(capturer.id)}
         disabled={isMine}
       >
         <div className="sector-owner-highlight-avatar">
-          {profile?.avatarUrl ? <img src={thumbUrl(profile.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : initials}
+          {profile.avatarUrl ? <img src={thumbUrl(profile.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : initials}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="sector-owner-highlight-name">{isMine ? 'Ты' : profile?.displayName ?? '…'}</div>
+          <div className="sector-owner-highlight-name">{isMine ? 'Ты' : profile.displayName ?? '…'}</div>
           {!isMine && <div className="sector-owner-highlight-sub">Смотреть профиль</div>}
         </div>
         {!isMine && (
@@ -345,8 +347,8 @@ export function TerritoryScreen({
             {KIND_LABEL[territory.kind]}
           </div>
           <SectorCoords lat={territory.lat} lng={territory.lng} onToast={onToast} />
-          {territory.ownerId && (
-            <SectorOwnerCard ownerId={territory.ownerId} isMine={territory.status === 'mine'} coHolders={territory.coHolders} onOpenUser={onOpenUser} />
+          {sectorCapturer(territory) && (
+            <SectorOwnerCard capturer={sectorCapturer(territory)!} coHolders={sectorOtherHolders(territory)} onOpenUser={onOpenUser} />
           )}
           {territory.ownerId && territory.ownerClanId && (
             <button className="sector-clan-line tap-scale" onClick={() => onOpenClan(territory.ownerClanId!)}>

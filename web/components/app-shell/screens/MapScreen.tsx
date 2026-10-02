@@ -10,6 +10,7 @@ import { formatWhen } from '@/lib/format'
 import { getCurrentCoords, useGeolocationPermission } from '@/lib/geolocation'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
+import { sectorHoldersCapturerFirst } from '@/lib/data/sectorHolders'
 import { MapRacePill } from '@/components/app-shell/ClanRace'
 
 // Native scrollIntoView({behavior:'smooth'}) paces itself by distance, not
@@ -430,15 +431,13 @@ export const MapScreen = forwardRef<
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: '1 1 auto' }}>
                       {/* Shared by clan-mates: every holder's face, stacked, in
                           place of the name — four avatars and a name don't
-                          fit a phone-width row (names are on the sector screen). */}
+                          fit a phone-width row (names are on the sector screen).
+                          Whoever captured it last comes first. */}
                       <div
                         className="avatar-stack"
-                        title={t.coHolders.length ? [t.ownerDisplayName, ...t.coHolders.map((h) => h.displayName ?? 'Рыбак')].join(', ') : undefined}
+                        title={t.coHolders.length ? sectorHoldersCapturerFirst(t).map((h) => h.displayName ?? 'Рыбак').join(', ') : undefined}
                       >
-                        <div className="avatar" style={{ width: 24, height: 24, fontSize: 10 }}>
-                          {t.ownerAvatarUrl ? <img src={thumbUrl(t.ownerAvatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : t.ownerDisplayName.slice(0, 2).toUpperCase()}
-                        </div>
-                        {t.coHolders.map((h) => (
+                        {sectorHoldersCapturerFirst(t).map((h) => (
                           <div key={h.id} className="avatar" style={{ width: 24, height: 24, fontSize: 10 }}>
                             {h.avatarUrl ? <img src={thumbUrl(h.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : (h.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()}
                           </div>

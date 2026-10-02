@@ -6,6 +6,7 @@ import { CLAN_LEVEL_XP, LEAGUES, clanCapacity, clanLevelProgress, leagueFor } fr
 import { CREST_SHAPES, CREST_SYMBOLS } from '@/lib/data/clanCrests'
 import { CLAN_BACKGROUNDS } from '@/lib/data/clanBackgrounds'
 import { KIND_LABEL } from '@/lib/data/species'
+import { sectorCapturer } from '@/lib/data/sectorHolders'
 import type { ClanDetail } from '@/lib/data/types'
 
 export type ClanInfoKind = 'level' | 'league' | 'sectors'
@@ -145,8 +146,8 @@ function SectorsInfo({ clan, onOpenTerritory }: { clan: ClanDetail; onOpenTerrit
             <button key={t.id} className="clan-info-sector tap-scale" onClick={() => onOpenTerritory(t.id)}>
               <span className="clan-info-sector-id">{t.id}</span>
               <span className="clan-info-sector-meta">
-                {KIND_LABEL[t.kind]} · {t.ownerDisplayName ?? 'Рыбак'}
-                {t.coHolders.length > 1 ? ` и ещё ${t.coHolders.length - 1}` : ''}
+                {KIND_LABEL[t.kind]} · {sectorCapturer(t)?.displayName ?? 'Рыбак'}
+                {t.coHolders.length > 0 ? ` и ещё ${t.coHolders.length}` : ''}
               </span>
               <span className="clan-info-sector-count">{t.catchCount} ул.</span>
             </button>
