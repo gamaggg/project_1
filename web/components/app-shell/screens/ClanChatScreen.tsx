@@ -7,6 +7,9 @@ import { BackButton } from '@/components/app-shell/BackButton'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { StyledName } from '@/components/app-shell/StyledName'
 import { eventText } from '@/components/app-shell/screens/ClanScreen'
+import { renderWithAppLinks } from '@/components/app-shell/AppLinkText'
+import { EmojiPanel } from '@/components/app-shell/EmojiPanel'
+import { bigEmojiCount } from '@/lib/data/emoji'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { CLAN_ROLE_LABEL } from '@/lib/data/clanLevels'
 import { CLAN_CHAT_MAX_LENGTH, chatModerationMessage, chatMutedMessage, moderationMessage, quickCheck } from '@/lib/moderation'
@@ -130,6 +133,10 @@ export function ClanChatScreen({
 
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  // The emoji panel replaces the phone keyboard (Telegram-style); the caret
+  // is remembered on blur so a picked emoji lands where the cursor was.
+  const [emojiOpen, setEmojiOpen] = useState(false)
+  const caretRef = useRef<{ start: number; end: number } | null>(null)
   const nearBottomRef = useRef(true)
   const initialScrollDone = useRef(false)
   const olderAnchor = useRef<{ height: number; top: number } | null>(null)
@@ -178,7 +185,13 @@ export function ClanChatScreen({
   }
 
   // Message text with members' «@Имя» picked out — yours in the accent.
+  // Links to RANGE become chips that open in the app; the text between them
+  // gets the @mention highlighting.
   function renderBody(body: string) {
+    return renderWithAppLinks(body, (part, key) => <span key={key}>{renderMentions(part)}</span>)
+  }
+
+  function renderMentions(body: string) {
     if (!mentionRe) return body
     const parts: ReactNode[] = []
     let last = 0
@@ -274,6 +287,33 @@ export function ClanChatScreen({
   function autosize(el: HTMLTextAreaElement) {
     el.style.height = 'auto'
     el.style.height = `${Math.min(el.scrollHeight, 110)}px`
+  }
+
+  function rememberCaret(el: HTMLTextAreaElement) {
+    caretRef.current = { start: el.selectionStart, end: el.selectionEnd }
+  }
+
+  function toggleEmoji() {
+    if (emojiOpen) {
+      setEmojiOpen(false)
+      inputRef.current?.focus()
+    } else {
+      if (inputRef.current) rememberCaret(inputRef.current)
+      inputRef.current?.blur()
+      setEmojiOpen(true)
+    }
+  }
+
+  function insertEmoji(emoji: string) {
+    const at = caretRef.current ?? { start: text.length, end: text.length }
+    const next = text.slice(0, at.start) + emoji + text.slice(at.end)
+    if (next.length > CLAN_CHAT_MAX_LENGTH + 50) return
+    setText(next)
+    caretRef.current = { start: at.start + emoji.length, end: at.start + emoji.length }
+    if (error) setError(null)
+    requestAnimationFrame(() => {
+      if (inputRef.current) autosize(inputRef.current)
+    })
   }
 
   async function send() {
@@ -389,6 +429,8 @@ export function ClanChatScreen({
               if (item.type === 'event') return <div key={item.key} className="clan-chat-event">{item.text}</div>
               const m = item.message
               const role = m.role && m.role !== 'member' ? CLAN_ROLE_LABEL[m.role] : null
+              // Only 1–3 emoji: shown big, without a bubble (Telegram-style).
+              const big = bigEmojiCount(m.body)
               return (
                 <div key={item.key} className={`clan-chat-row${m.mine ? ' mine' : ''}${item.first ? ' first' : ''}${item.last ? ' last' : ''}`}>
                   {!m.mine && (
@@ -401,7 +443,7 @@ export function ClanChatScreen({
                     </div>
                   )}
                   <div
-                    className={`clan-chat-bubble${m.pending ? ' pending' : ''}${!m.mine && mentionsMe(m.body) ? ' mentions-me' : ''}`}
+                    className={`clan-chat-bubble${m.pending ? ' pending' : ''}${!m.mine && mentionsMe(m.body) ? ' mentions-me' : ''}${big ? ' big-emoji' : ''}`}
                     onPointerDown={() => pressStart(m)}
                     onPointerUp={pressEnd}
                     onPointerLeave={pressEnd}
@@ -417,10 +459,17 @@ export function ClanChatScreen({
                         {role && <span className={`clan-chat-role role-${m.role}`}>{role}</span>}
                       </div>
                     )}
-                    <div className="clan-chat-text">
-                      {renderBody(m.body)}
-                      <span className="clan-chat-time">{m.pending ? '···' : timeLabel(m.createdAt)}</span>
-                    </div>
+                    {big ? (
+                      <div className={`clan-chat-emoji-big n${big}`}>
+                        <span className="clan-chat-emoji-glyphs">{m.body.trim()}</span>
+                        <span className="clan-chat-time">{m.pending ? '···' : timeLabel(m.createdAt)}</span>
+                      </div>
+                    ) : (
+                      <div className="clan-chat-text">
+                        {renderBody(m.body)}
+                        <span className="clan-chat-time">{m.pending ? '···' : timeLabel(m.createdAt)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )
@@ -480,8 +529,15 @@ export function ClanChatScreen({
                   autosize(e.target)
                   updateMention(e.target)
                 }}
-                onSelect={(e) => updateMention(e.currentTarget)}
-                onBlur={() => setMention(null)}
+                onSelect={(e) => {
+                  updateMention(e.currentTarget)
+                  rememberCaret(e.currentTarget)
+                }}
+                onFocus={() => setEmojiOpen(false)}
+                onBlur={(e) => {
+                  setMention(null)
+                  rememberCaret(e.currentTarget)
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && window.matchMedia('(hover: hover)').matches) {
                     e.preventDefault()
@@ -489,6 +545,25 @@ export function ClanChatScreen({
                   }
                 }}
               />
+              <button
+                className={`clan-chat-emoji-toggle tap-scale${emojiOpen ? ' on' : ''}`}
+                // mousedown: keeps focus where it is until we move it ourselves
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={toggleEmoji}
+                aria-label={emojiOpen ? 'Клавиатура' : 'Эмодзи'}
+              >
+                {emojiOpen ? (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <rect x="2.5" y="6" width="19" height="12" rx="2.5" />
+                    <path d="M6.5 10h.01M10 10h.01M14 10h.01M17.5 10h.01M8 14h8" />
+                  </svg>
+                ) : (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <circle cx="12" cy="12" r="9.5" />
+                    <path d="M8 14.2c1 1.5 2.4 2.3 4 2.3s3-.8 4-2.3M9 9.6h.01M15 9.6h.01" />
+                  </svg>
+                )}
+              </button>
               {text.length > CLAN_CHAT_MAX_LENGTH - 100 && (
                 <span className={`clan-chat-counter${text.length > CLAN_CHAT_MAX_LENGTH ? ' over' : ''}`}>{CLAN_CHAT_MAX_LENGTH - text.length}</span>
               )}
@@ -499,6 +574,7 @@ export function ClanChatScreen({
               </button>
             </div>
           )}
+          {emojiOpen && !muted && <EmojiPanel onPick={insertEmoji} />}
         </div>
       )}
 

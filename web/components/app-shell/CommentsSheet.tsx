@@ -18,6 +18,7 @@ import { StyledName } from '@/components/app-shell/StyledName'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { formatShortAgo } from '@/lib/format'
 import { COMMENT_MAX_LENGTH, moderationMessage, mutedMessage, quickCheck } from '@/lib/moderation'
+import { renderWithAppLinks } from '@/components/app-shell/AppLinkText'
 import { COMMENT_REPORT_REASONS } from '@/lib/data/reportReasons'
 import type { CatchComment } from '@/lib/data/types'
 
@@ -287,7 +288,7 @@ export function CommentsSheet({
           </div>
           <div className="comment-body">
             {isReply && c.replyToName && <span className="comment-mention">@{c.replyToName} </span>}
-            {c.body}
+            {c.body ? renderWithAppLinks(c.body) : null}
           </div>
           {!c.pending && user && (
             <div className="comment-actions">

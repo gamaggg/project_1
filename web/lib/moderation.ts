@@ -60,12 +60,19 @@ export function chatMutedMessage(mutedUntil: string | null): string {
   return `Чат недоступен до ${time} за нарушения правил`
 }
 
+// Links to RANGE itself (a sector, catch, clan, profile, invite) are allowed
+// in comments and the clan chat — only outside links are blocked. The exact
+// domain only: «fakecatchrange.com» or «catchrange.com.evil.ru» still count
+// as outside links. moderate_text does the same on the server.
+export const APP_LINK_RE = /(?<![\w.-])(?:https?:\/\/)?(?:www\.)?catchrange\.com(?![\w-])(?:\/\S*)?/gi
+
 // Mirrors the link/phone/caps/repeat branches of moderate_text — never the
 // only line of defence, just instant feedback while typing.
 export function quickCheck(text: string, maxLength = COMMENT_MAX_LENGTH): string | null {
-  const t = text.trim()
+  if (!text.trim()) return null
+  if (text.trim().length > maxLength) return 'too_long'
+  const t = text.replace(APP_LINK_RE, ' ').trim()
   if (!t) return null
-  if (t.length > maxLength) return 'too_long'
   if (/(https?:\/\/|www\.|t\.me\/|@[a-z0-9_]{4,}|\b[a-z0-9-]+\.(ru|com|net|org|io|me|ge|рф)\b)/i.test(t)) return 'link'
   if (/\d([\s\-().]?\d){6,}/.test(t)) return 'phone'
   const letters = t.match(/[A-Za-zА-Яа-яЁё]/g)?.length ?? 0

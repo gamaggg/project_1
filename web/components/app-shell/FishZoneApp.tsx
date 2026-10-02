@@ -24,6 +24,7 @@ import { getCurrentCoords, nearestTerritory, queryGeolocationPermission } from '
 import { uploadCatchPhoto } from '@/lib/supabase/storage'
 import { useAdminActionsReadState } from '@/lib/activityRead'
 import { useAchievementUnlock } from '@/lib/achievementUnlock'
+import { APP_LINK_EVENT } from '@/components/app-shell/AppLinkText'
 import { useWeekTopModal } from '@/lib/weekTopModal'
 import { useClanBattleCeremony } from '@/lib/clanBattleCeremony'
 import { hasVisibleTypedText, useAppUpdate } from '@/lib/appUpdate'
@@ -957,6 +958,34 @@ export function FishZoneApp() {
     window.history.replaceState(null, '', window.location.pathname)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
+
+  // A tap on a RANGE link inside the clan chat or comments (AppLinkText) —
+  // routed in place to the same targets as the launch-URL deep links above,
+  // without reloading the app. Re-subscribed every render so it always sees
+  // the current open* functions.
+  useEffect(() => {
+    function onAppLink(e: Event) {
+      const href = (e as CustomEvent<string>).detail
+      let params: URLSearchParams
+      try {
+        params = new URL(/^https?:\/\//i.test(href) ? href : `https://${href}`).searchParams
+      } catch {
+        return
+      }
+      const territory = params.get('territory')
+      const catchId = Number(params.get('catch'))
+      const clanId = Number(params.get('clan'))
+      const publicId = params.get('user')
+      if (territory) openTerritory(territory)
+      else if (catchId > 0) {
+        const commentId = Number(params.get('comment'))
+        openCatchPhoto(catchId, commentId > 0 ? commentId : null)
+      } else if (clanId > 0) openClan(clanId)
+      else if (publicId) findUserByPublicId.mutate(publicId, { onSuccess: (id) => id && openUserProfile(id) })
+    }
+    window.addEventListener(APP_LINK_EVENT, onAppLink)
+    return () => window.removeEventListener(APP_LINK_EVENT, onAppLink)
+  })
 
   // Opens a ?achievement=<publicId>:<icon> link (from shareAchievement
   // above) straight into that achievement on first load — same resolve-
