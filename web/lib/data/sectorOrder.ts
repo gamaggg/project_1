@@ -4,16 +4,11 @@ import type { Territory } from '@/lib/data/types'
 // and the default on «Территории»), or most caught first.
 export type SectorSort = 'lastCatch' | 'popular'
 
+// The same words on the pill and in its list — the pill shares a row with
+// the filter chips, so they're kept to one word.
 export const SECTOR_SORT_LABEL: Record<SectorSort, string> = {
-  lastCatch: 'По последнему улову',
-  popular: 'По популярности',
-}
-
-// On the pill itself, which shares a row with the filter chips — short
-// enough for that row to stay one line on a 360px phone.
-export const SECTOR_SORT_SHORT: Record<SectorSort, string> = {
   lastCatch: 'Свежие',
-  popular: 'Топ',
+  popular: 'Популярные',
 }
 
 const byId = (a: Territory, b: Territory) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)

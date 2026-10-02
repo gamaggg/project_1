@@ -9,7 +9,7 @@ import { resolveTerritoryColor } from '@/lib/data/territoryColors'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { WeeklyLeaderboard } from '@/components/app-shell/screens/WeeklyLeaderboard'
 import { ClanRating } from '@/components/app-shell/screens/ClanRating'
-import { compareSectors, SECTOR_SORT_LABEL, SECTOR_SORT_SHORT, type SectorSort } from '@/lib/data/sectorOrder'
+import { compareSectors, SECTOR_SORT_LABEL, type SectorSort } from '@/lib/data/sectorOrder'
 import { SortMenu } from '@/components/app-shell/SortMenu'
 
 type Filter = 'all' | TerritoryStatus
@@ -136,7 +136,7 @@ export function TerritoriesListScreen({
             <div className={`filter-chip${filter === 'free' ? ' active' : ''}`} onClick={() => setFilter('free')}>
               Свободные
             </div>
-            <SortMenu value={sort} options={SECTOR_SORT_LABEL} shortLabels={SECTOR_SORT_SHORT} onChange={setSort} label="Порядок секторов" />
+            <SortMenu value={sort} options={SECTOR_SORT_LABEL} onChange={setSort} label="Порядок секторов" />
           </div>
           <div className="card" style={{ overflow: 'hidden' }}>
             {list.length ? (

@@ -1484,10 +1484,14 @@ body{
    filter chips' row — chip-sized, pushed to the right edge. A pill that opens
    a small card of options under it; the picked one in the accent. */
 .sort-menu{position:relative; display:inline-block; margin-left:auto;}
-/* A row that also holds a SortMenu is a little tighter, so chips + pill fit one line at 360px. */
+/* A row that also holds a SortMenu is a little tighter, so the chips and
+   «Популярные ⌄» stay one line down to a 360px phone. */
 .filter-row.with-sort{gap:6px;}
-.filter-row.with-sort .filter-chip{padding:8px 12px;}
-.sort-menu-btn{display:inline-flex; align-items:center; gap:4px; border:1.5px solid transparent; background:#F0EEEA; color:var(--ink); font:inherit; font-size:13px; font-weight:800; padding:8px 8px 8px 12px; border-radius:20px; cursor:pointer; white-space:nowrap;}
+.filter-row.with-sort .filter-chip{padding:8px 10px;}
+@media (max-width:370px){
+  .filter-row.with-sort .filter-chip, .filter-row.with-sort .sort-menu-btn{font-size:12px;}
+}
+.sort-menu-btn{display:inline-flex; align-items:center; gap:3px; border:1.5px solid transparent; background:#F0EEEA; color:var(--ink); font:inherit; font-size:13px; font-weight:800; padding:8px 6px 8px 10px; border-radius:20px; cursor:pointer; white-space:nowrap;}
 .sort-menu-chevron{color:var(--ink-soft); transition:transform .2s var(--ease);}
 .sort-menu-btn[aria-expanded="true"] .sort-menu-chevron{transform:rotate(180deg);}
 .sort-menu-list{position:absolute; top:calc(100% + 6px); right:0; z-index:20; min-width:100%; display:flex; flex-direction:column; padding:6px; background:var(--surface); border-radius:16px; box-shadow:0 10px 30px rgba(23,24,27,.14), 0 1px 2px rgba(23,24,27,.06); transform-origin:top right; animation:sortMenuIn .16s var(--ease) both;}
