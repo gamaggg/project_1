@@ -207,7 +207,14 @@ export const LeafletMap = forwardRef<
           interactive: false,
         }).addTo(markersLayer)
       })
-      territories.forEach((t) => {
+      // Free sectors first, then other players', then the viewer's own (and
+      // an admin's picks for deletion on top): the canvas paints in order, so
+      // where two sectors share an edge the later outline covers the earlier
+      // one — a taken sector's coloured edge mustn't vanish under a free
+      // neighbour's grey. sort() is stable, so each group keeps its order.
+      const drawRank = (t: Territory) => (selectedIds?.has(t.id) ? 3 : t.status === 'mine' ? 2 : t.status === 'free' ? 0 : 1)
+      const drawOrder = [...territories].sort((a, b) => drawRank(a) - drawRank(b))
+      drawOrder.forEach((t) => {
         const isSelectedForDeletion = selectedIds?.has(t.id) ?? false
         const inClanView = clanLayerRef.current
         const skin = !inClanView && t.status !== 'free' && t.ownerEquippedSkin ? resolveTerritorySkin(t.ownerEquippedSkin) : null
