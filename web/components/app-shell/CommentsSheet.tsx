@@ -19,6 +19,7 @@ import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { formatShortAgo } from '@/lib/format'
 import { COMMENT_MAX_LENGTH, moderationMessage, mutedMessage, quickCheck } from '@/lib/moderation'
 import { renderWithAppLinks } from '@/components/app-shell/AppLinkText'
+import { useKeyboardInset } from '@/lib/useKeyboardInset'
 import { COMMENT_REPORT_REASONS } from '@/lib/data/reportReasons'
 import type { CatchComment } from '@/lib/data/types'
 
@@ -70,7 +71,9 @@ export function CommentsSheet({
   const [closing, setClosing] = useState(false)
   const [dragY, setDragY] = useState(0)
   const [dragging, setDragging] = useState(false)
-  const [keyboardInset, setKeyboardInset] = useState(0)
+  // Lifts the input bar above the on-screen keyboard.
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const keyboardInset = useKeyboardInset(overlayRef)
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const dragStartY = useRef<number | null>(null)
@@ -78,22 +81,6 @@ export function CommentsSheet({
   // after that play the slide-in, not the whole list at once.
   const [initialIds, setInitialIds] = useState<Set<number> | null>(null)
   if (initialIds === null && !isLoading) setInitialIds(new Set(comments.map((c) => c.id)))
-
-  // iOS keeps position:fixed/absolute pinned to the layout viewport while
-  // the keyboard shrinks only the visual one — without this the input bar
-  // sits under the keyboard in Safari and Telegram's WebView.
-  useEffect(() => {
-    const vv = window.visualViewport
-    if (!vv) return
-    const update = () => setKeyboardInset(Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)))
-    vv.addEventListener('resize', update)
-    vv.addEventListener('scroll', update)
-    update()
-    return () => {
-      vv.removeEventListener('resize', update)
-      vv.removeEventListener('scroll', update)
-    }
-  }, [])
 
   // Opened from a notification: that comment's thread renders open (see
   // highlightRootId below), it flashes once, and this scrolls it into view.
@@ -304,7 +291,7 @@ export function CommentsSheet({
   const over = text.length > COMMENT_MAX_LENGTH
 
   return (
-    <div className={`comments-overlay${closing ? ' is-closing' : ''}`} onClick={close}>
+    <div ref={overlayRef} className={`comments-overlay${closing ? ' is-closing' : ''}`} onClick={close}>
       <div
         className={`comments-sheet${closing ? ' is-closing' : ''}`}
         style={{

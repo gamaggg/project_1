@@ -10,6 +10,7 @@ import { eventText } from '@/components/app-shell/screens/ClanScreen'
 import { renderWithAppLinks } from '@/components/app-shell/AppLinkText'
 import { EmojiPanel } from '@/components/app-shell/EmojiPanel'
 import { bigEmojiCount } from '@/lib/data/emoji'
+import { useKeyboardInset } from '@/lib/useKeyboardInset'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { CLAN_ROLE_LABEL } from '@/lib/data/clanLevels'
 import { CLAN_CHAT_MAX_LENGTH, chatModerationMessage, chatMutedMessage, moderationMessage, quickCheck } from '@/lib/moderation'
@@ -127,7 +128,8 @@ export function ClanChatScreen({
   const [confirmDelete, setConfirmDelete] = useState<ClanChatMessage | null>(null)
   const [pinnedOpen, setPinnedOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
-  const [keyboardInset, setKeyboardInset] = useState(0)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const keyboardInset = useKeyboardInset(rootRef)
   // The «@…» being typed right before the caret — drives the member picker.
   const [mention, setMention] = useState<{ start: number; query: string } | null>(null)
 
@@ -215,21 +217,6 @@ export function ClanChatScreen({
     return new RegExp(`@${escapeRegex(myName)}(?![\\p{L}\\p{N}_])`, 'iu').test(body)
   }
   const notMember = chat.isError || (!!clan && !clan.myRole)
-
-  // iOS keeps the layout viewport under the keyboard — lift the composer by
-  // the part the keyboard covers (same approach as CommentsSheet).
-  useEffect(() => {
-    const vv = window.visualViewport
-    if (!vv) return
-    const update = () => setKeyboardInset(Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)))
-    vv.addEventListener('resize', update)
-    vv.addEventListener('scroll', update)
-    update()
-    return () => {
-      vv.removeEventListener('resize', update)
-      vv.removeEventListener('scroll', update)
-    }
-  }, [])
 
   useEffect(() => {
     if (!toast) return
@@ -391,7 +378,7 @@ export function ClanChatScreen({
   const memberCount = clan?.members.length ?? 0
 
   return (
-    <div className="clan-chat">
+    <div className="clan-chat" ref={rootRef}>
       <div className="clan-chat-header">
         <BackButton onClick={onBack} registerNative={false} />
         <div className="clan-chat-title">
