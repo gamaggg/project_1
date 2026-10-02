@@ -1682,8 +1682,8 @@ body{
 .profile-cta-challenges .profile-cta-arrow{background:var(--accent);}
 .profile-cta-shop .profile-cta-arrow{background:#1D6FC9;}
 .profile-cta-icon{display:inline-flex; position:relative; z-index:1;}
-.profile-cta-title{position:relative; z-index:1; font-size:13.5px; font-weight:800; margin-top:4px;}
-.profile-cta-sub{position:relative; z-index:1; font-size:11px; font-weight:600; opacity:0.75;}
+.profile-cta-title{position:relative; z-index:1; font-size:13.5px; font-weight:800; line-height:1.15; margin-top:4px;}
+.profile-cta-sub{position:relative; z-index:1; font-size:11px; font-weight:600; line-height:1.3; opacity:0.75;}
 .profile-cta-challenges{background:#FFF6F1; color:var(--accent); border-color:rgba(252,82,0,0.18);}
 .profile-cta-shop{background:#F4F9FF; color:#1D6FC9; border-color:rgba(29,111,201,0.16);}
 
