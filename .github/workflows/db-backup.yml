@@ -1,0 +1,88 @@
+# Nightly off-site copy of the production database. RANGE is on Supabase's
+# Free plan, which keeps no backups of its own. The repository is public, so
+# the copy is encrypted before it is stored: anyone signed in to GitHub can
+# download this repository's artifacts and read its logs.
+# Setup and restore: DOCS.md → «Резервные копии базы».
+name: Database backup
+
+on:
+  schedule:
+    # 00:30 UTC — 03:30 in Moscow, 04:30 in Batumi: the quietest hour.
+    - cron: '30 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check secrets
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          missing=0
+          [ -n "$SUPABASE_DB_URL" ] || { echo "::error::Repository secret SUPABASE_DB_URL is not set"; missing=1; }
+          [ ${#BACKUP_PASSPHRASE} -ge 20 ] || { echo "::error::Repository secret BACKUP_PASSPHRASE is missing or shorter than 20 characters"; missing=1; }
+          exit $missing
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # The three files Supabase's own guide uses to restore a project:
+      # https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore
+      # Accounts (auth.users) are in data.sql; Storage files (photos) are not.
+      - name: Dump roles, schema and data
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          mkdir dump
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f dump/roles.sql --role-only
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f dump/schema.sql
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f dump/data.sql --use-copy --data-only -x "storage.buckets_vectors" -x "storage.vector_indexes"
+
+      # Row counts only (no data) of the tables that matter most, so a run
+      # that dumped an empty or broken database fails instead of looking fine.
+      - name: Check the dump
+        run: |
+          set -euo pipefail
+          for f in roles schema data; do
+            [ -s "dump/$f.sql" ] || { echo "::error::dump/$f.sql is empty"; exit 1; }
+          done
+          ls -l dump
+          awk '/^COPY / { t = $2; n = 0; next }
+               /^\\\.$/ { if (t ~ /"(auth|public)"\."(users|profiles|catches|territories|clans)"/) print t, n; t = ""; next }
+               t { n++ }' dump/data.sql | tee counts.txt
+          grep -q '"public"."catches" [1-9]' counts.txt || { echo "::error::no catches in the data dump"; exit 1; }
+          grep -q '"auth"."users" [1-9]' counts.txt || { echo "::error::no accounts in the data dump"; exit 1; }
+
+      - name: Encrypt
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          name="range-db-$(date -u +%Y-%m-%d-%H%M)"
+          echo "BACKUP_NAME=$name" >> "$GITHUB_ENV"
+          tar -czf - -C dump . \
+            | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 3 --symmetric --cipher-algo AES256 -o "$name.tar.gz.gpg" 3<<<"$BACKUP_PASSPHRASE"
+          rm -rf dump counts.txt
+          # Kept only once it opens again with the same passphrase.
+          gpg --batch --quiet --pinentry-mode loopback --passphrase-fd 3 -d "$name.tar.gz.gpg" 3<<<"$BACKUP_PASSPHRASE" | tar -tzvf -
+          ls -l "$name.tar.gz.gpg"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BACKUP_NAME }}
+          path: ${{ env.BACKUP_NAME }}.tar.gz.gpg
+          retention-days: 30
+          compression-level: 0
+          if-no-files-found: error
