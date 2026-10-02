@@ -2,7 +2,7 @@
 
 import { cloneElement, type ReactElement } from 'react'
 import { useCatchesByUser, useProfile, useHasClaimedFromOthers } from '@/lib/supabase/queries'
-import { computeAchievements, type Achievement } from '@/lib/data/achievements'
+import { computeAchievements, heldTerritories, type Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import { SpinBadge } from '@/components/app-shell/SpinBadge'
 import { BackButton } from '@/components/app-shell/BackButton'
@@ -31,7 +31,7 @@ export function AchievementDetailScreen({
   const { data: profile } = useProfile(userId)
   const { data: catches = [] } = useCatchesByUser(userId)
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(userId)
-  const myTerritories = territories.filter((t) => t.ownerId === userId)
+  const myTerritories = heldTerritories(territories, userId)
   const achievements = computeAchievements(
     catches,
     {

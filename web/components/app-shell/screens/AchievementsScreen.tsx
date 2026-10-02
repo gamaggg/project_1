@@ -2,7 +2,7 @@
 
 import { useCatchesByUser, useProfile, useHasClaimedFromOthers, useSyncMyAchievements } from '@/lib/supabase/queries'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { computeAchievements, type Achievement } from '@/lib/data/achievements'
+import { computeAchievements, heldTerritories, type Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import { BackButton } from '@/components/app-shell/BackButton'
 import type { Territory } from '@/lib/data/types'
@@ -29,7 +29,7 @@ export function AchievementsScreen({
   const { data: catches = [] } = useCatchesByUser(userId)
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(userId)
   useSyncMyAchievements(userId === user?.id)
-  const myTerritories = territories.filter((t) => t.ownerId === userId)
+  const myTerritories = heldTerritories(territories, userId)
   const achievements = computeAchievements(
     catches,
     {

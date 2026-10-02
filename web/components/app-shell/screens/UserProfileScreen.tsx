@@ -19,7 +19,7 @@ import {
 } from '@/lib/supabase/queries'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { AwardsRing } from '@/components/app-shell/AwardsRing'
-import { computeAchievements, personalRecord, type Achievement } from '@/lib/data/achievements'
+import { computeAchievements, heldTerritories, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralFollowers, pluralSpecies, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
 import { ACH_ICONS } from '@/components/app-shell/icons'
@@ -129,7 +129,7 @@ export function UserProfileScreen({
   const achievements = computeAchievements(
     catches,
     {
-      myTerritories: territories,
+      myTerritories: heldTerritories(allTerritories, userId),
       allTerritories,
       followersCount: profile?.followersCount ?? 0,
       claimedFromOthers,

@@ -21,7 +21,7 @@ import {
 } from '@/lib/supabase/queries'
 import { AwardsRing } from '@/components/app-shell/AwardsRing'
 import { uploadAvatar } from '@/lib/supabase/storage'
-import { computeAchievements, personalRecord, type Achievement } from '@/lib/data/achievements'
+import { computeAchievements, heldTerritories, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { resolveClanBackground } from '@/lib/data/clanBackgrounds'
@@ -455,7 +455,7 @@ export function ProfileScreen({
   const achievements = computeAchievements(
     myCatches,
     {
-      myTerritories,
+      myTerritories: heldTerritories(allTerritories, user?.id),
       allTerritories,
       followersCount: profile?.followersCount ?? 0,
       claimedFromOthers,

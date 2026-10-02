@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useCatchesByUser, useProfile, useHasClaimedFromOthers } from '@/lib/supabase/queries'
-import { computeAchievements, type Achievement } from '@/lib/data/achievements'
+import { computeAchievements, heldTerritories, type Achievement } from '@/lib/data/achievements'
 import type { Territory } from '@/lib/data/types'
 import type { CityId } from '@/lib/data/city'
 
@@ -55,7 +55,7 @@ export function useAchievementUnlock(territories: Territory[], territoriesReady:
   // "seen", and the modal re-popped on every launch.
   const achievementCity: CityId = profileQ.data?.city ?? city
 
-  const myTerritories = territories.filter((t) => t.ownerId === user?.id)
+  const myTerritories = heldTerritories(territories, user?.id)
   const achievements = computeAchievements(
     catchesQ.data ?? [],
     {

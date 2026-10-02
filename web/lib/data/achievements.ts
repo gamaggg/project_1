@@ -38,9 +38,18 @@ const LOYAL_TARGET = 5
 const LANDLORD_TARGET = 10
 const POPULAR_TARGET = 10
 
+// Sectors a player holds for achievements: owned ones plus shares in a
+// clan-mate's sector (Territory.coHolders). Inside a clan a sector is shared
+// rather than taken over, so a share counts as a whole sector — same rule as
+// the server's _sync_achievements_for_user and the weekly rating.
+export function heldTerritories(territories: Territory[], userId: string | null | undefined): Territory[] {
+  if (!userId) return []
+  return territories.filter((t) => t.ownerId === userId || t.coHolders.some((h) => h.id === userId))
+}
+
 export type AchievementContext = {
-  // Territories this profile currently owns — same set ProfileScreen/
-  // UserProfileScreen already render under "Мои/чужие территории".
+  // Territories this profile currently holds — owned plus clan shares, see
+  // heldTerritories above.
   myTerritories: Territory[]
   // The full board, needed only to look up which kind (sea/river/stream/lake)
   // each of this profile's catches happened in — myCatches only carries a
