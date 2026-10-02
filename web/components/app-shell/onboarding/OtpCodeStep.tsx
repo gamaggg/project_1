@@ -5,7 +5,9 @@ import { createClient } from '@/lib/supabase/client'
 import { BackButton } from '@/components/app-shell/BackButton'
 import type { EmailOtpType } from '@supabase/supabase-js'
 
-const RESEND_COOLDOWN_S = 30
+// Supabase Auth sends at most one email per address per 60 seconds; a
+// shorter countdown let people press «ещё раз» straight into a 429.
+const RESEND_COOLDOWN_S = 60
 
 // Shared by AccountStep's signup confirmation and ForgotPasswordFlow's
 // recovery code — same envelope-drop animation, same verify/resend/cooldown
