@@ -1,6 +1,6 @@
 'use client'
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { MapView } from '@/components/app-shell/MapView'
 import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
@@ -11,6 +11,7 @@ import { getCurrentCoords, useGeolocationPermission } from '@/lib/geolocation'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { sectorHoldersCapturerFirst } from '@/lib/data/sectorHolders'
+import { mostPopularSectorId } from '@/lib/data/sectorOrder'
 import { MapRacePill } from '@/components/app-shell/ClanRace'
 
 // Native scrollIntoView({behavior:'smooth'}) paces itself by distance, not
@@ -274,12 +275,10 @@ export const MapScreen = forwardRef<
     }, 120)
   }
 
-  // territories arrives already sorted by catch count (see useTerritories),
-  // so index 0 is exactly the sector shown first on open — labeling it here
-  // makes that ordering visible instead of just an unexplained first card.
-  // Guarded on catchCount so an empty city (everyone at 0) doesn't call some
-  // arbitrary sector "most popular".
-  const mostPopularId = territories[0]?.catchCount ? territories[0].id : null
+  // The cards come freshest catch first (see useTerritories), so the most
+  // caught sector is looked up rather than taken from the front. Null in an
+  // empty city, so no arbitrary sector is called "most popular".
+  const mostPopularId = useMemo(() => mostPopularSectorId(territories), [territories])
 
   return (
     <div className="screen-inner" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}>

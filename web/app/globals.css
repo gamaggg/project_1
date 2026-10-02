@@ -1480,6 +1480,23 @@ body{
 .activity-item{display:flex; gap:13px; padding:16px 0; border-bottom:1px solid var(--line);}
 .announcement-link{color:var(--accent); font-weight:700; word-break:break-word;}
 .filter-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;}
+/* SortMenu: the order of a list (e.g. «Территории»), at the end of its
+   filter chips' row — chip-sized, pushed to the right edge. A pill that opens
+   a small card of options under it; the picked one in the accent. */
+.sort-menu{position:relative; display:inline-block; margin-left:auto;}
+/* A row that also holds a SortMenu is a little tighter, so chips + pill fit one line at 360px. */
+.filter-row.with-sort{gap:6px;}
+.filter-row.with-sort .filter-chip{padding:8px 12px;}
+.sort-menu-btn{display:inline-flex; align-items:center; gap:4px; border:1.5px solid transparent; background:#F0EEEA; color:var(--ink); font:inherit; font-size:13px; font-weight:800; padding:8px 8px 8px 12px; border-radius:20px; cursor:pointer; white-space:nowrap;}
+.sort-menu-chevron{color:var(--ink-soft); transition:transform .2s var(--ease);}
+.sort-menu-btn[aria-expanded="true"] .sort-menu-chevron{transform:rotate(180deg);}
+.sort-menu-list{position:absolute; top:calc(100% + 6px); right:0; z-index:20; min-width:100%; display:flex; flex-direction:column; padding:6px; background:var(--surface); border-radius:16px; box-shadow:0 10px 30px rgba(23,24,27,.14), 0 1px 2px rgba(23,24,27,.06); transform-origin:top right; animation:sortMenuIn .16s var(--ease) both;}
+.sort-menu-opt{border:none; background:none; font:inherit; font-size:14px; font-weight:700; color:var(--ink); text-align:left; white-space:nowrap; padding:10px 12px; border-radius:10px; cursor:pointer;}
+.sort-menu-opt:hover{background:#F6F5F2;}
+.sort-menu-opt.on{color:var(--accent);}
+.sort-menu-btn:focus-visible, .sort-menu-opt:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
+@keyframes sortMenuIn{from{opacity:0; transform:translateY(-4px) scale(.98);} to{opacity:1; transform:none;}}
+@media (prefers-reduced-motion: reduce){.sort-menu-list{animation:none;} .sort-menu-chevron{transition:none;}}
 .filter-chip{
   padding:8px 15px; border-radius:20px; font-size:13px; font-weight:700; font-family:inherit;
   border:1.5px solid var(--line); color:var(--ink-soft); background:var(--surface); cursor:pointer;

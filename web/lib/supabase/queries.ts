@@ -7,6 +7,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import type { Territory, TerritoryCoHolder, TerritoryStatus, Catch, ProfileSummary, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, WeeklyLeaderboardEntry, UserAward, AwardKind, CatchComment, ClanSummary, ClanDetail, ClanMember, ClanEligibility, ClanInvite, ClanChest, ClanRace, ClanChatMessage, ClanChatSummary, ClanRoleId } from '@/lib/data/types'
 import type { SpeciesCategory } from '@/lib/data/species'
 import { CITIES, type CityId } from '@/lib/data/city'
+import { compareSectors } from '@/lib/data/sectorOrder'
 import type { ShareKind } from '@/lib/guestShare'
 
 type SectorGeometry = {
@@ -145,12 +146,12 @@ export function useTerritories() {
         .map((row) => toTerritory(row.id!, row.kind!, row.lat!, row.lng!, row.corners as unknown as [number, number][]))
 
       return [...fromStatic, ...fromDb]
-        // Most-caught sectors first everywhere that lists territories (map
-        // carousel, territories tab) — a single sort here instead of one per
-        // screen, since every consumer shares this same array. Zero-catch
-        // sectors tie on the primary key, so the id fallback alone gives them
-        // ascending-by-number order for free.
-        .sort((a, b) => b.catchCount - a.catchCount || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+        // Freshest catch first everywhere that lists territories (the map's
+        // first card, the territories tab) — a single sort here instead of
+        // one per screen, since every consumer shares this same array; the
+        // tab re-sorts only when another order is picked there. Never-fished
+        // sectors follow in number order (see compareSectors).
+        .sort(compareSectors('lastCatch'))
     },
     // Until the stored session is read the key would say "no user" and the
     // whole table would be fetched once for nobody, then again for the real

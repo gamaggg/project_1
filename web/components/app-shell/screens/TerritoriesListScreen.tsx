@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Territory, TerritoryStatus } from '@/lib/data/types'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatWhen, pluralSectors } from '@/lib/format'
@@ -9,6 +9,8 @@ import { resolveTerritoryColor } from '@/lib/data/territoryColors'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { WeeklyLeaderboard } from '@/components/app-shell/screens/WeeklyLeaderboard'
 import { ClanRating } from '@/components/app-shell/screens/ClanRating'
+import { compareSectors, SECTOR_SORT_LABEL, SECTOR_SORT_SHORT, type SectorSort } from '@/lib/data/sectorOrder'
+import { SortMenu } from '@/components/app-shell/SortMenu'
 
 type Filter = 'all' | TerritoryStatus
 export type Mode = 'territories' | 'rating' | 'clans'
@@ -56,7 +58,12 @@ export function TerritoriesListScreen({
     if (initialFilter && initialFilter !== syncedInitial.filter) setFilter(initialFilter)
     if (initialMode && initialMode !== syncedInitial.mode) setMode(initialMode)
   }
-  const list = territories.filter((t) => (filter === 'all' ? true : t.status === filter))
+  const [sort, setSort] = useState<SectorSort>('lastCatch')
+  const list = useMemo(() => {
+    const filtered = territories.filter((t) => (filter === 'all' ? true : t.status === filter))
+    // territories already comes freshest catch first (see useTerritories).
+    return sort === 'lastCatch' ? filtered : [...filtered].sort(compareSectors(sort))
+  }, [territories, filter, sort])
   const canViewAllUsers = useCanViewAllUsers()
 
   // Rendered in pages rather than all at once: this screen stays mounted for
@@ -71,10 +78,10 @@ export function TerritoriesListScreen({
   useEffect(() => {
     listLengthRef.current = list.length
   })
-  // A new filter or mode starts from the first page again.
-  const [pagedFor, setPagedFor] = useState(`${filter}|${mode}`)
-  if (pagedFor !== `${filter}|${mode}`) {
-    setPagedFor(`${filter}|${mode}`)
+  // A new filter, order or mode starts from the first page again.
+  const [pagedFor, setPagedFor] = useState(`${filter}|${sort}|${mode}`)
+  if (pagedFor !== `${filter}|${sort}|${mode}`) {
+    setPagedFor(`${filter}|${sort}|${mode}`)
     setVisibleCount(TERRITORY_PAGE)
   }
   useEffect(() => {
@@ -119,7 +126,7 @@ export function TerritoriesListScreen({
               Все пользователи
             </button>
           )}
-          <div className="filter-row">
+          <div className="filter-row with-sort">
             <div className={`filter-chip${filter === 'all' ? ' active' : ''}`} onClick={() => setFilter('all')}>
               Все
             </div>
@@ -129,6 +136,7 @@ export function TerritoriesListScreen({
             <div className={`filter-chip${filter === 'free' ? ' active' : ''}`} onClick={() => setFilter('free')}>
               Свободные
             </div>
+            <SortMenu value={sort} options={SECTOR_SORT_LABEL} shortLabels={SECTOR_SORT_SHORT} onChange={setSort} label="Порядок секторов" />
           </div>
           <div className="card" style={{ overflow: 'hidden' }}>
             {list.length ? (

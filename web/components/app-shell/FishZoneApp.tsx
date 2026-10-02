@@ -35,6 +35,7 @@ import { formatCooldown, type SpeciesEntry } from '@/lib/format'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { draftHexAt } from '@/lib/data/hexGrid'
 import { cityForSectorId, loadStoredCity, storeCity, type CityId } from '@/lib/data/city'
+import { mostPopularSectorId } from '@/lib/data/sectorOrder'
 import type { PendingCatch, TerritoryStatus } from '@/lib/data/types'
 import { OnboardingFlow } from '@/components/app-shell/onboarding/OnboardingFlow'
 import { useTelegramBackButton } from '@/lib/telegram/useTelegramBackButton'
@@ -282,6 +283,7 @@ export function FishZoneApp() {
   }
   const [changingCity, setChangingCity] = useState(false)
   const cityTerritories = useMemo(() => territories.filter((t) => cityForSectorId(t.id) === city), [territories, city])
+  const mostPopularId = useMemo(() => mostPopularSectorId(cityTerritories), [cityTerritories])
 
   const [stack, setStack] = useState<StackEntry[]>([{ screen: 'screen-map' }])
   // push/pop/resetTo below read this instead of `stack` directly so the
@@ -1205,7 +1207,7 @@ export function FishZoneApp() {
           {viewingTerritory && (
             <TerritoryScreen
               territory={viewingTerritory}
-              isMostPopular={!!cityTerritories[0]?.catchCount && cityTerritories[0].id === viewingTerritory.id}
+              isMostPopular={mostPopularId === viewingTerritory.id}
               myTerritoryColor={myTerritoryColor}
               onBack={pop}
               onOpenUser={openUserProfile}
