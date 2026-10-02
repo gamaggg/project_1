@@ -7,19 +7,19 @@
         "rule": "bounce-easing",
         "value": "cubic-bezier(.3, 1.7, .4, 1)",
         "createdAt": "2026-09-12T08:56:29.089Z",
-        "reason": "catch-trophy-stamp: territory-claim stamp landing, a rare per-catch celebration moment — earned bounce per animate skill's playful-interaction exception"
+        "reason": "User confirmed: overshoot on rewards/trophies/coins is intentional, part of the game feel"
       },
       {
         "rule": "bounce-easing",
         "value": "cubic-bezier(.34, 1.56, .64, 1)",
         "createdAt": "2026-09-12T08:56:29.113Z",
-        "reason": "achievement-unlock badge / achievement-detail badge / city-pin drop: reused reward-reveal bounce across 3 rare first-time-per-event moments (unlock modal, detail screen, city onboarding pin) — same sanctioned playful-interaction exception, not accidental drift"
+        "reason": "User confirmed: overshoot on rewards/trophies/coins is intentional, part of the game feel"
       },
       {
         "rule": "bounce-easing",
         "value": "cubic-bezier(.22, 1.4, .36, 1)",
         "createdAt": "2026-09-12T08:56:29.135Z",
-        "reason": "award-detail-card: medal/award detail screen pop-in, a rare celebratory reveal — earned bounce"
+        "reason": "User confirmed: overshoot on rewards/trophies/coins is intentional, part of the game feel"
       },
       {
         "rule": "bounce-easing",
@@ -66,12 +66,14 @@
       {
         "rule": "bounce-easing",
         "value": "coinbounce",
-        "createdAt": "2026-09-17T22:24:49.396Z"
+        "createdAt": "2026-09-17T22:24:49.396Z",
+        "reason": "User confirmed: overshoot on rewards/trophies/coins is intentional, part of the game feel"
       },
       {
         "rule": "bounce-easing",
         "value": "cubic-bezier(.34, 1.2, .64, 1)",
-        "createdAt": "2026-09-17T22:24:49.422Z"
+        "createdAt": "2026-09-17T22:24:49.422Z",
+        "reason": "User confirmed: overshoot on rewards/trophies/coins is intentional, part of the game feel"
       },
       {
         "rule": "bounce-easing",
@@ -96,6 +98,24 @@
           "web/app/globals.css"
         ],
         "createdAt": "2026-09-17T22:30:52.577Z"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.2, .9, .3, 1.3)",
+        "createdAt": "2026-09-30T10:11:09.260Z",
+        "reason": "User confirmed (2026-09-27): overshoot on rewards/ceremonies/avatar pop-ins is intentional game feel — clan battle podium ceremony, sector thumbnail avatar pop"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.2, .9, .3, 1.15)",
+        "createdAt": "2026-09-30T10:11:09.285Z",
+        "reason": "User confirmed (2026-09-27): overshoot on rewards/ceremonies/avatar pop-ins is intentional game feel — clan battle podium ceremony, sector thumbnail avatar pop"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.2, .9, .3, 1.25)",
+        "createdAt": "2026-09-30T10:11:09.313Z",
+        "reason": "User confirmed (2026-09-27): overshoot on rewards/ceremonies/avatar pop-ins is intentional game feel — clan battle podium ceremony, sector thumbnail avatar pop"
       }
     ]
   }

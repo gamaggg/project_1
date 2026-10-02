@@ -12,9 +12,14 @@
       "runtimeExecutable": "bash",
       "runtimeArgs": [
         "-c",
-        "cd '/Users/mag/Workspace/Project 1/web' && PATH='/Users/mag/Workspace/Project 1/.tools/node/bin':\"$PATH\" npm run dev -- --port 3300"
+        "cd '/Users/mag/Workspace/Project 1/web' && PATH='/Users/mag/Workspace/Project 1/.tools/node/bin':\"$PATH\" npm run dev"
       ],
-      "port": 3300
+      "port": 3300,
+      "autoPort": true
+    },
+    {
+      "name": "fishzone-web-running",
+      "url": "http://localhost:3300"
     }
   ]
 }
