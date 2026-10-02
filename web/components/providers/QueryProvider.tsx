@@ -9,7 +9,12 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 15_000,
+            // Sectors, catches and notifications are refreshed the moment they
+            // change (useRealtimeSync in lib/supabase/queries.ts), so returning
+            // to the app only needs to refetch what's been sitting for a while.
+            // At 15s every hop back from a Telegram chat refetched ~15 queries,
+            // the bulk of the project's API requests and log ingest.
+            staleTime: 2 * 60_000,
             refetchOnWindowFocus: true,
           },
         },
