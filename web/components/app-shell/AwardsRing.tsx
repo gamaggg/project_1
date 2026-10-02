@@ -15,6 +15,11 @@ import { AWARD_ICONS, AWARD_COLOR, isKnownAward } from '@/components/app-shell/a
 // the app-shell root, clipping the modal to a ~240px box instead of the full
 // screen. Every other modal in this app is rendered as a FishZoneApp-level
 // sibling for the same reason (see DECISIONS.md) — this one follows suit.
+// How far below its centre the avatar (108px .profile-hero-avatar-ring plus
+// the 5px frame ring) and a medal (40px, ±3px drift) reach.
+const AVATAR_REACH = 59
+const BADGE_REACH = 23
+
 export function AwardsRing({ awards: allAwards, radius = 96, onOpenAward, children }: { awards: UserAward[]; radius?: number; onOpenAward: (award: UserAward) => void; children: React.ReactNode }) {
   const listed = allAwards.filter((a) => isKnownAward(a.kind))
   // Each medal counts once (user_awards_once in the database); repeats
@@ -32,9 +37,18 @@ export function AwardsRing({ awards: allAwards, radius = 96, onOpenAward, childr
   if (awards.length === 0) return <>{children}</>
 
   const stageSize = (radius + 29) * 2
+  // The stage is a square around the avatar, but the medals rarely reach its
+  // bottom: three of them sit level with the avatar's lower half, one sits
+  // only on top. Pull what follows (the name) up over the empty part, or it
+  // sits ~70px under the avatar.
+  const lowest = Math.max(
+    AVATAR_REACH,
+    ...awards.map((_, i) => Math.sin((i / awards.length) * Math.PI * 2 - Math.PI / 2) * radius + BADGE_REACH)
+  )
+  const emptyBelow = Math.max(0, Math.floor(stageSize / 2 - lowest))
 
   return (
-    <div className="award-ring-stage" style={{ width: stageSize, height: stageSize }}>
+    <div className="award-ring-stage" style={{ width: stageSize, height: stageSize, marginBottom: -emptyBelow }}>
       {children}
       {awards.map((award, i) => {
         const angle = (i / awards.length) * Math.PI * 2 - Math.PI / 2
