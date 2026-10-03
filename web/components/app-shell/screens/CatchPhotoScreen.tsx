@@ -7,7 +7,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import { CatcherLabel } from '@/components/app-shell/screens/TerritoryScreen'
 import { BackButton } from '@/components/app-shell/BackButton'
-import { MoveCatchSheet } from '@/components/app-shell/lazyScreens'
+import { EditCatchSheet, MoveCatchSheet } from '@/components/app-shell/lazyScreens'
 import type { ProfileSummary } from '@/lib/data/types'
 
 // "Иван" / "Иван и Мария" / "Иван, Мария и ещё 5" — sidesteps gender-correct
@@ -74,6 +74,7 @@ export function CatchPhotoScreen({
   // not once the network round-trip resolves.
   const [justLiked, setJustLiked] = useState(false)
   const [moving, setMoving] = useState(false)
+  const [editing, setEditing] = useState(false)
 
   const sectorIndex = sectorCatches.findIndex((sc) => sc.id === activeId)
   const prevCatch = sectorIndex > 0 ? sectorCatches[sectorIndex - 1] : null
@@ -146,6 +147,12 @@ export function CatchPhotoScreen({
           </div>
           {isSuperAdmin && (
             <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 8 }}>
+              <div className="icon-btn tap-scale" onClick={() => setEditing(true)} title="Исправить вид, размер и вес">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+                </svg>
+              </div>
               <div className="icon-btn tap-scale" onClick={() => setMoving(true)} title="Перенести в другой сектор">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M7 4 3 8l4 4M3 8h13a5 5 0 0 1 0 10h-3" />
@@ -159,6 +166,7 @@ export function CatchPhotoScreen({
             </div>
           )}
           {moving && <MoveCatchSheet c={c} onClose={() => setMoving(false)} />}
+          {editing && <EditCatchSheet c={c} onClose={() => setEditing(false)} />}
           {prevCatch && (
             <div className="icon-btn tap-scale" style={{ position: 'absolute', top: '50%', left: 12, transform: 'translateY(-50%)' }} onClick={() => goTo(prevCatch.id)} title="Предыдущий улов">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">

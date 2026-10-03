@@ -1769,6 +1769,36 @@ export function useAdminMoveCatch() {
   })
 }
 
+// Super admin: correct a catch's species, length and weight (see
+// admin_edit_catch). Coins already paid for it stay as they were; the
+// angler's achievements are re-synced server-side. Resolves with what
+// changed, in the words the admin journal uses.
+export function useAdminEditCatch() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ catchId, species, lengthCm, weightKg }: { catchId: number; species: string; lengthCm: number | null; weightKg: number | null }) => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('admin_edit_catch', {
+        p_catch_id: catchId,
+        p_species: species,
+        p_length_cm: lengthCm,
+        p_weight_kg: weightKg,
+      })
+      if (error) throw error
+      return (data as { changes?: string[] } | null)?.changes ?? []
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['catches'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
+      queryClient.invalidateQueries({ queryKey: ['weekly-leaderboard'] })
+      queryClient.invalidateQueries({ queryKey: ['my-challenges'] })
+      queryClient.invalidateQueries({ queryKey: ['challenge-week-state'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
+    },
+  })
+}
+
 export function useAdminSetTerritoryKind() {
   const queryClient = useQueryClient()
   return useMutation({

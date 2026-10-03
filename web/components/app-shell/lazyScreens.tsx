@@ -57,6 +57,7 @@ export const PostAnnouncementModal = lazyComponent(() =>
   import('@/components/app-shell/screens/PostAnnouncementModal').then((m) => m.PostAnnouncementModal),
 )
 export const MoveCatchSheet = lazyComponent(() => import('@/components/app-shell/MoveCatchSheet').then((m) => m.MoveCatchSheet))
+export const EditCatchSheet = lazyComponent(() => import('@/components/app-shell/EditCatchSheet').then((m) => m.EditCatchSheet))
 
 const everyone = [
   ForgotPasswordFlow,
@@ -86,6 +87,7 @@ const adminOnly = [
   GrantCoinsModal,
   PostAnnouncementModal,
   MoveCatchSheet,
+  EditCatchSheet,
 ]
 
 // Fetched one after another rather than all at once, so they never compete
