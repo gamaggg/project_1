@@ -69,9 +69,11 @@ async function linkAccount(token: string, message: { chat: { id: number }; from?
     }
   }
 
+  // Asking for notifications from the profile is a choice like the switch:
+  // tg_choice_at keeps them from being switched back on by default later.
   const { error } = await admin
     .from('profiles')
-    .update({ telegram_id: telegramId, tg_notifications_enabled: true, tg_unreachable_at: null })
+    .update({ telegram_id: telegramId, tg_notifications_enabled: true, tg_unreachable_at: null, tg_choice_at: new Date().toISOString() })
     .eq('id', row.user_id)
 
   if (error) {
@@ -85,6 +87,28 @@ async function linkAccount(token: string, message: { chat: { id: number }; from?
   await sendText(chatId, 'Готово. Теперь я напишу, когда у тебя отнимут сектор.')
 }
 
+// "/stop": game notifications off, remembered as the person's choice so
+// they're never switched back on by default (see profiles.tg_choice_at).
+// The first message to anyone whose notifications were turned on for them
+// points here (see send-notifications). Announcements aren't covered — they
+// go to every chat that pressed /start (admin_post_announcement).
+async function stopNotifications(message: { chat: { id: number }; from?: { id: number } }) {
+  const telegramId = message.from?.id ?? message.chat.id
+  const { data, error } = await createAdminClient()
+    .from('profiles')
+    .update({ tg_notifications_enabled: false, tg_choice_at: new Date().toISOString() })
+    .eq('telegram_id', telegramId)
+    .select('id')
+  await sendText(
+    message.chat.id,
+    error
+      ? 'Не получилось выключить уведомления. Попробуй ещё раз или выключи их в профиле RANGE.'
+      : data.length
+        ? 'Уведомления из игры выключены. Включить снова — «Уведомления в Telegram» в профиле RANGE.'
+        : 'Этот Telegram не привязан к аккаунту RANGE, уведомления из игры сюда не приходят.',
+  )
+}
+
 const WELCOME_CAPTION = `Добро пожаловать в RANGE 🎣
 
 Здесь каждый улов меняет карту. Захватывай береговые сектора, следи за соперниками и поднимайся в рейтинге недели.
@@ -92,8 +116,8 @@ const WELCOME_CAPTION = `Добро пожаловать в RANGE 🎣
 Нажми «Открыть RANGE», чтобы начать.`
 
 // Telegram POSTs every update here once the webhook is registered (see
-// scripts/setTelegramWebhook.sh) — the only one handled is a /start command,
-// answered with a welcome message plus a `web_app` button that opens the
+// scripts/setTelegramWebhook.sh) — handled are /stop (see stopNotifications)
+// and /start, answered with a welcome message plus a `web_app` button that opens the
 // Mini App directly (same mechanism as BotFather's Menu Button, just
 // triggered from a chat message instead). The secret-token header (set at
 // registration time, see setWebhook's `secret_token` param) is Telegram's
@@ -107,6 +131,10 @@ export async function POST(req: Request) {
 
   const update = await req.json()
   const message = update.message
+  if (typeof message?.text === 'string' && /^\/stop(@\w+)?$/i.test(message.text.trim())) {
+    await stopNotifications(message)
+    return NextResponse.json({ ok: true })
+  }
   if (typeof message?.text === 'string' && message.text.startsWith('/start')) {
     // "/start link_<token>" comes from the "Подключить Telegram" button in
     // the profile (see create_telegram_link_token) — the only way to attach a

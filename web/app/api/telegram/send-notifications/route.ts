@@ -14,13 +14,20 @@ const BATCH_SIZE = 30
 // left alone rather than re-attempted every minute forever.
 const MAX_ATTEMPTS = 3
 
+// Goes once, under the first message to someone whose notifications were
+// switched on for them — they'd pressed /start in the bot but never chose
+// (profiles.tg_auto_enabled_at): what these messages are and how to stop them.
+const AUTO_ON_NOTICE = 'Теперь RANGE пишет сюда о важном в игре. Выключить — команда /stop или «Уведомления в Telegram» в профиле.'
+
 type ActorRef = { display_name: string | null; public_id: string | null }
+type OwnerRef = { tg_auto_enabled_at: string | null; tg_auto_notice_at: string | null }
 type NotificationRef = {
   kind: string
   territory_id: string | null
   catch_id: number | null
   user_id: string
   actor: ActorRef | ActorRef[] | null
+  owner: OwnerRef | OwnerRef[] | null
   payload: Record<string, unknown> | null
 }
 type Message = { text: string; buttonLabel: string; url: string }
@@ -223,7 +230,8 @@ function renderMessage(notification: NotificationRef): Message | null {
 // what holds messages raised overnight until 08:00 local (see
 // notification_deliver_after) — every kind, including follow_catch, is sent
 // as its own message as soon as that allows, one row in means one message
-// out.
+// out. (A run of catches by the same angler is already one row: the queueing
+// trigger skips a follow_catch within 3 hours of the previous one.)
 export async function GET(req: Request) {
   const auth = req.headers.get('authorization')
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -234,7 +242,7 @@ export async function GET(req: Request) {
   const { data: due, error } = await admin
     .from('telegram_outbox')
     .select(
-      'id, chat_id, attempts, notifications!inner(kind, territory_id, catch_id, user_id, payload, actor:profiles!notifications_actor_id_fkey(display_name, public_id))'
+      'id, chat_id, attempts, notifications!inner(kind, territory_id, catch_id, user_id, payload, actor:profiles!notifications_actor_id_fkey(display_name, public_id), owner:profiles!notifications_user_id_fkey(tg_auto_enabled_at, tg_auto_notice_at))'
     )
     .is('sent_at', null)
     .lte('deliver_after', new Date().toISOString())
@@ -246,6 +254,9 @@ export async function GET(req: Request) {
 
   let sent = 0
   let blocked = 0
+  // One batch can hold several rows for the same person — the notice goes
+  // under the first of them only.
+  const noticed = new Set<string>()
 
   for (const row of due) {
     const notification = first(row.notifications as NotificationRef | NotificationRef[])
@@ -261,12 +272,15 @@ export async function GET(req: Request) {
       continue
     }
 
+    const owner = first(notification.owner)
+    const explain = !!owner?.tg_auto_enabled_at && !owner.tg_auto_notice_at && !noticed.has(notification.user_id)
+
     const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: row.chat_id,
-        text: message.text,
+        text: explain ? `${message.text}\n\n${AUTO_ON_NOTICE}` : message.text,
         reply_markup: {
           inline_keyboard: [[{ text: message.buttonLabel, web_app: { url: message.url } }]],
         },
@@ -275,6 +289,10 @@ export async function GET(req: Request) {
 
     if (res.ok) {
       await admin.from('telegram_outbox').update({ sent_at: new Date().toISOString() }).eq('id', row.id)
+      if (explain) {
+        noticed.add(notification.user_id)
+        await admin.from('profiles').update({ tg_auto_notice_at: new Date().toISOString() }).eq('id', notification.user_id)
+      }
       sent++
       continue
     }

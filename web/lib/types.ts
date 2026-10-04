@@ -622,6 +622,9 @@ export type Database = {
           public_id: string
           telegram_id: number | null
           territory_color: string | null
+          tg_auto_enabled_at: string | null
+          tg_auto_notice_at: string | null
+          tg_choice_at: string | null
           tg_notifications_enabled: boolean
           tg_unreachable_at: string | null
           weight_kg: number | null
@@ -654,6 +657,9 @@ export type Database = {
           public_id: string
           telegram_id?: number | null
           territory_color?: string | null
+          tg_auto_enabled_at?: string | null
+          tg_auto_notice_at?: string | null
+          tg_choice_at?: string | null
           tg_notifications_enabled?: boolean
           tg_unreachable_at?: string | null
           weight_kg?: number | null
@@ -686,6 +692,9 @@ export type Database = {
           public_id?: string
           telegram_id?: number | null
           territory_color?: string | null
+          tg_auto_enabled_at?: string | null
+          tg_auto_notice_at?: string | null
+          tg_choice_at?: string | null
           tg_notifications_enabled?: boolean
           tg_unreachable_at?: string | null
           weight_kg?: number | null
