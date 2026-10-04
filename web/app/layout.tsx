@@ -4,6 +4,7 @@ import Script from 'next/script'
 import { Analytics } from '@vercel/analytics/next'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
+import { I18nProvider } from '@/lib/i18n'
 import { SITE_URL } from '@/lib/site'
 import './globals.css'
 
@@ -90,7 +91,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             AuthProvider's effect checks for it — harmless no-op outside Telegram. */}
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
         <QueryProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <I18nProvider>{children}</I18nProvider>
+          </AuthProvider>
         </QueryProvider>
         <Analytics />
       </body>

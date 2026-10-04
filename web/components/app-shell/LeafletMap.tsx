@@ -8,9 +8,11 @@ import type { Territory } from '@/lib/data/types'
 import { resolveTerritoryColor, FREE_TERRITORY_COLOR, OTHER_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { crestSvgMarkup, resolveCrest } from '@/lib/data/clanCrests'
 import { splitSector } from '@/lib/map/sectorParts'
+import { HOT_FLAME_SVG } from '@/lib/map/hotFlame'
 
 // Clan layer: a sector held by someone outside any clan.
 const SOLO_OWNER_COLOR = '#9A9CA3'
+const HOT_COLOR = '#FC5200'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { resolveTerritorySkin } from '@/lib/data/territorySkins'
 import { useSkinAssetsVersion, useSkinPatterns } from '@/lib/map/skinPattern'
@@ -334,6 +336,22 @@ export const LeafletMap = forwardRef<
           onSelectRef.current(t.id)
         })
       })
+      // The week's hot sectors (at most two per city): a brand-orange outline
+      // over everything, with a soft wider stroke under it for the glow, and
+      // a flame at the centre that shows at every zoom. Static — the map
+      // itself stays free of animation.
+      const now = Date.now()
+      territories
+        .filter((t) => t.hotUntil && new Date(t.hotUntil).getTime() > now)
+        .forEach((t) => {
+          L.polygon(t.corners, { color: HOT_COLOR, weight: 9, opacity: 0.22, fill: false, interactive: false }).addTo(markersLayer)
+          L.polygon(t.corners, { color: HOT_COLOR, weight: 3, opacity: 1, fill: false, interactive: false }).addTo(markersLayer)
+          L.marker([t.lat, t.lng], {
+            icon: L.divIcon({ className: 'hot-sector-marker', html: HOT_FLAME_SVG, iconSize: [26, 26], iconAnchor: [13, 13] }),
+            interactive: false,
+            keyboard: false,
+          }).addTo(markersLayer)
+        })
       drawLabels()
     }
 

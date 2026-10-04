@@ -41,6 +41,9 @@ export type Territory = {
   // (territories_with_stats.capturer_id) — shown as «Захватил сектор».
   // Null for an unshared sector.
   capturerId: string | null
+  // Until when this is one of the week's hot sectors (×2 coins for catches,
+  // ×3 Казна; territories_with_stats.hot_until). Null when it isn't.
+  hotUntil: string | null
 }
 
 export type TerritoryCoHolder = {

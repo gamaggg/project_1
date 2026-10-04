@@ -175,6 +175,7 @@ function TerritoryBody({ t, onLocked }: { t: TerritoryPreview; onLocked: (what: 
         ownerClanCrest: t.clan?.crest ?? null,
         coHolders: (t.co_holders ?? []).map((h) => ({ id: h.id, avatarUrl: h.avatar_url, displayName: h.display_name, isMe: false })),
         capturerId: null,
+        hotUntil: null,
       }
     : null
 

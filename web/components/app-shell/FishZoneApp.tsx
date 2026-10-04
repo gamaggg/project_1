@@ -17,6 +17,7 @@ import {
   useClan,
   useClanChatLive,
   useClanChatSummary,
+  useDailyRewardState,
   useClaimReferral,
   reportClientError,
 } from '@/lib/supabase/queries'
@@ -193,6 +194,7 @@ export function FishZoneApp() {
   useClanChatLive(myProfile?.clanId ?? null)
   // Only clan members make this request — it feeds the profile tab's badge.
   const { data: clanChatSummary } = useClanChatSummary(myProfile?.clanId ?? null)
+  const { data: dailyReward } = useDailyRewardState()
 
   // Achievement detail photos are full-bleed JPGs (~80-110KB each) fetched
   // cold on the first tap — without this the background pops in a beat after
@@ -1201,6 +1203,7 @@ export function FishZoneApp() {
             city={city}
             onOpenClan={openClan}
             race={myProfile?.clanId ? { city: myProfile.city, clanId: myProfile.clanId, onOpen: openClanRace } : null}
+            onToast={showToast}
           />
         </Screen>
         <Screen id="screen-territory" current={currentScreen} onBack={pop}>
@@ -1694,6 +1697,7 @@ export function FishZoneApp() {
           plusPending={locating}
           unreadCount={unreadCount}
           clanChatUnread={clanChatSummary?.unread ?? 0}
+          rewardReady={!!dailyReward && !dailyReward.claimedToday}
         />
       )}
     </div>

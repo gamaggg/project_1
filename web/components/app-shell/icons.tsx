@@ -90,11 +90,11 @@ export const SHOP_TAB_ICONS = {
       <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" />
     </svg>
   ),
-  wheel: (
+  slots: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="8.5" />
-      <path d="M12 3.5v3.5M12 17v3.5M3.5 12h3.5M17 12h3.5" />
-      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+      <rect x="3" y="5" width="18" height="14" rx="3" />
+      <path d="M9 5v14M15 5v14" />
+      <path d="M5.5 12h1M11.5 12h1M17.5 12h1" strokeWidth="2.6" />
     </svg>
   ),
 }

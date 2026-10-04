@@ -245,6 +245,7 @@ body{
   font-size:10px; font-weight:800; line-height:16px; text-align:center;
   box-shadow:0 0 0 2px var(--surface);
 }
+.nav-dot{position:absolute; top:-2px; right:-4px; width:9px; height:9px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 2px var(--surface);}
 .btn-wrap{position:relative; display:block;}
 .search-row{display:flex; gap:8px; margin:14px 0;}
 .search-input{
@@ -612,67 +613,102 @@ body{
 .buff-row .btn-secondary{margin-top:0; padding:9px 14px; font-size:13px; width:auto;}
 .buff-row .badge{flex:0 0 auto; white-space:nowrap;}
 
-/* ---- ДЭП (Shop's wheel-of-fortune tab, see WheelScreen.tsx) ---- */
-.wheel-screen{display:flex; flex-direction:column; align-items:center; padding:20px 0 8px;}
-.wheel-stage{position:relative; width:272px; height:272px; margin:0 auto; max-width:100%;}
-.wheel-pointer{
-  position:absolute; top:-6px; left:50%; transform:translateX(-50%);
-  width:0; height:0; z-index:2;
-  border-left:11px solid transparent; border-right:11px solid transparent; border-top:18px solid var(--ink);
-  filter:drop-shadow(0 2px 3px rgba(23,24,27,0.25));
-}
-/* Same 12 slots/order as spin_wheel's v_segments — colour is purely
-   cosmetic (zebra neutrals for the losing slots, accent for x2, gold for
-   the single x3) but the ANGLES must stay in lockstep with the backend
-   array, since angleForSlot() rotates this to land on whichever index the
-   server returns. */
-.wheel-dial{
-  position:absolute; inset:6px; border-radius:50%;
-  background:conic-gradient(from 0deg,
-    #F1EDE3 0deg 30deg, #E4DFD1 30deg 60deg, var(--accent) 60deg 90deg,
-    #F1EDE3 90deg 120deg, #E4DFD1 120deg 150deg, var(--accent) 150deg 180deg,
-    #F1EDE3 180deg 210deg, #E4DFD1 210deg 240deg, var(--accent) 240deg 270deg,
-    #F1EDE3 270deg 300deg, #E4DFD1 300deg 330deg, #E8B923 330deg 360deg);
-  box-shadow:0 0 26px rgba(23,24,27,0.10), inset 0 0 0 5px #fff, inset 0 0 0 6px var(--line);
-  transition-property:transform; transition-timing-function:var(--ease-out);
-}
-.wheel-peg{
-  position:absolute; top:50%; left:50%; width:7px; height:7px; border-radius:50%;
-  background:linear-gradient(180deg,#F5D68A,#B8860B); box-shadow:0 1px 1px rgba(0,0,0,0.3);
-}
-.wheel-label{position:absolute; top:50%; left:50%; font-size:15px; font-weight:800; color:var(--ink); font-variant-numeric:tabular-nums;}
-.wheel-label-zero{color:rgba(23,24,27,0.38); font-weight:700;}
-.wheel-label-x2{color:#fff;}
-.wheel-label-jackpot{color:#fff; font-size:16px;}
-.wheel-hub{
-  position:absolute; inset:0; margin:auto; width:52px; height:52px; border-radius:50%;
-  background:#fff; box-shadow:0 2px 8px rgba(23,24,27,0.18), inset 0 0 0 1px var(--line);
-  display:flex; align-items:center; justify-content:center;
-}
+/* ---- Горячий сектор недели ---- */
+.map-sheet-hot{display:flex; align-items:center; gap:5px; margin:-2px 0 -2px; font-size:12px; font-weight:700; color:#B83E00; white-space:nowrap; overflow:hidden;}
+.map-sheet-hot b{font-weight:800; text-transform:uppercase; letter-spacing:.04em;}
+.map-sheet-hot-flame{display:flex; flex:0 0 auto;}
+.map-sheet-hot-bonus{margin-left:auto; padding:2px 7px; border-radius:999px; background:var(--accent); color:#fff; font-size:11px; font-weight:800;}
+.treasury-chip{display:flex; align-items:center; gap:3px; flex:0 0 auto; height:30px; padding:0 9px 0 6px; border:none; border-radius:999px; background:#F3F1EC; color:var(--ink-soft); font:inherit; font-size:12.5px; font-weight:800; font-variant-numeric:tabular-nums; cursor:pointer;}
+.treasury-chip-cap{font-weight:700; color:var(--ink-faint);}
+.treasury-chip.ready{background:var(--accent-soft); color:#9A3412; box-shadow:inset 0 0 0 1.5px rgba(252,82,0,.45);}
+.treasury-chip.ready .treasury-chip-num{color:var(--accent);}
+.sector-hot{display:flex; gap:10px; margin-top:12px; padding:12px; border-radius:16px; background:linear-gradient(135deg,#FFF1E8,#FFE3D1); border:1px solid rgba(252,82,0,.28);}
+.sector-hot-flame{flex:0 0 auto; width:30px; height:30px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px var(--accent);}
+.sector-hot-body{min-width:0;}
+.sector-hot-title{font-size:13.5px; font-weight:800; color:#B83E00;}
+.sector-hot-text{font-size:12.5px; line-height:1.35; color:#7A3A12; margin-top:2px;}
+.sector-income{display:flex; align-items:center; gap:6px; margin-top:10px; font-size:13px; font-weight:700; color:var(--ink-soft);}
+.hot-sector-marker{display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:#fff; box-shadow:0 0 0 2px #FC5200, 0 4px 12px rgba(252,82,0,.45); pointer-events:none;}
 
-.wheel-bet-panel{width:100%; max-width:320px; margin-top:22px; display:flex; flex-direction:column; gap:10px;}
-.wheel-bet-label{font-size:12.5px; font-weight:700; color:var(--ink-soft);}
-.wheel-bet-row{
-  display:flex; align-items:center; gap:8px;
-  background:var(--surface); border:1.5px solid var(--line); border-radius:14px; padding:12px 14px;
-}
-.wheel-bet-input{flex:1; min-width:0; border:none; background:none; font:inherit; font-size:20px; font-weight:800; color:var(--ink); font-variant-numeric:tabular-nums;}
-.wheel-bet-input:focus{outline:none;}
-.wheel-quick-row{display:flex; gap:8px;}
-.wheel-quick-btn{
-  flex:1; padding:9px 0; border-radius:12px; border:1.5px solid var(--line); background:var(--surface);
-  font:inherit; font-size:13px; font-weight:700; color:var(--ink-soft); cursor:pointer;
-  transition:background .15s var(--ease), border-color .15s var(--ease), color .15s var(--ease);
-}
-.wheel-quick-btn:active{transform:scale(.96);}
-.wheel-spin-btn{margin-top:2px;}
-.wheel-balance{text-align:center; font-size:12.5px; color:var(--ink-faint); font-weight:600; display:flex; align-items:center; justify-content:center; gap:4px;}
+/* ---- Ежедневная награда (DailyRewardCard, under the Shop balance) ---- */
+.daily-card{margin-top:10px; padding:12px 12px 10px; border-radius:18px; background:#fff; border:1px solid var(--line); box-shadow:var(--shadow-sm);}
+.daily-head{display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:9px;}
+.daily-title{font-weight:800; font-size:14px;}
+.daily-day{font-size:12.5px; font-weight:700; color:var(--ink-soft);}
+.daily-strip{display:grid; grid-template-columns:repeat(10,minmax(0,1fr)); gap:4px;}
+.daily-cell{height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; background:#F3F1EC; color:var(--ink-soft); font-size:11.5px; font-weight:800; font-variant-numeric:tabular-nums;}
+.daily-cell.last{background:linear-gradient(135deg,#FFF1C9,#FFD978); color:#8A5A00;}
+.daily-cell.done{background:var(--green-soft); color:var(--green); animation:dailyTick .35s var(--ease-out);}
+.daily-cell.current{background:var(--accent); color:#fff; box-shadow:0 4px 12px rgba(252,82,0,.32); animation:dailyPulse 1.8s ease-in-out infinite;}
+@keyframes dailyPulse{0%,100%{transform:scale(1);} 50%{transform:scale(1.08);}}
+@keyframes dailyTick{0%{transform:scale(.5);} 70%{transform:scale(1.15);} 100%{transform:scale(1);}}
+.daily-claim{margin-top:10px; display:flex; align-items:center; justify-content:center; gap:6px;}
+.daily-claimed-line{margin-top:10px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:14px; font-weight:800; color:var(--green);}
+.daily-hint{margin-top:7px; font-size:11.5px; line-height:1.35; color:var(--ink-faint); text-align:center;}
+.daily-error{color:#D33;}
+.daily-card-done{display:flex; align-items:center; gap:8px; padding:10px 12px;}
+.daily-done-tick{flex:0 0 auto; width:20px; height:20px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center;}
+.daily-done-text{flex:1; min-width:0; font-size:13px; font-weight:700;}
+.daily-done-next{display:flex; align-items:center; gap:4px; font-size:12.5px; font-weight:700; color:var(--ink-soft); white-space:nowrap;}
+@media (prefers-reduced-motion: reduce){.daily-cell.current,.daily-cell.done{animation:none;}}
 
-.wheel-result-card{text-align:center;}
-.wheel-result-mult{font-size:40px; font-weight:900; color:var(--accent); line-height:1;}
-.wheel-result-mult-zero{color:var(--ink-faint);}
-.wheel-result-coins{display:flex; justify-content:center; margin-top:10px;}
-.wheel-result-sub{font-size:13.5px; color:var(--ink-soft); margin-top:6px;}
+/* ---- Слоты (Shop tab that replaced ДЭП, see SlotsScreen.tsx) ----
+   Reel motion adapted from StealthWorm's loader on Uiverse (MIT):
+   https://uiverse.io/StealthWorm/chatty-zebra-11 */
+.slots{--slot-cell:84px; display:flex; flex-direction:column; padding:16px 0 8px;}
+.slots-title{font-family:var(--font-display),'Manrope',sans-serif; font-weight:700; font-size:24px; text-transform:uppercase; letter-spacing:.02em; text-align:center; margin-bottom:12px;}
+.slots-machine{position:relative; background:#17181B; border-radius:24px; padding:14px; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06), 0 12px 28px rgba(23,24,27,.22); transition:box-shadow .3s var(--ease);}
+.slots-machine.won{box-shadow:inset 0 0 0 2px var(--accent), 0 0 0 5px rgba(252,82,0,.16), 0 12px 28px rgba(23,24,27,.22); animation:slots-won .5s var(--ease-out);}
+.slots-window{position:relative; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px;}
+.slot-reel{position:relative; overflow:hidden; border-radius:16px; background:#fff;}
+.slot-reel::before,.slot-reel::after{content:''; position:absolute; left:0; right:0; height:24px; z-index:1; pointer-events:none;}
+.slot-reel::before{top:0; background:linear-gradient(#fff 15%, rgba(255,255,255,0));}
+.slot-reel::after{bottom:0; background:linear-gradient(rgba(255,255,255,0), #fff 85%);}
+.slot-strip{transition-property:transform; transition-timing-function:cubic-bezier(.18,.84,.3,1.06);}
+.slot-strip.moving{animation-name:slot-spin-blur; animation-timing-function:linear; will-change:transform, filter;}
+.slot-cell{height:var(--slot-cell); display:flex; align-items:center; justify-content:center;}
+.slots-payline{position:absolute; left:-6px; right:-6px; top:50%; height:2px; margin-top:-1px; border-radius:2px; background:var(--accent); opacity:.5; pointer-events:none; z-index:2;}
+/* Idle "tease" while spins are left — the loader's own keyframes: a cell and
+   a half out under a 10px blur, then back. */
+.slot-tease.tease-0{animation:slot-tease-down 3s ease-in-out 3s infinite;}
+.slot-tease.tease-1{animation:slot-tease-down 4s ease-in-out 3s infinite;}
+.slot-tease.tease-2{animation:slot-tease-up 4s ease-in-out 3s infinite;}
+@keyframes slot-tease-up{
+  0%{transform:translateY(0); filter:blur(0);}
+  30%{transform:translateY(calc(var(--slot-cell) * -1.5)); filter:blur(10px);}
+  60%,100%{transform:translateY(0); filter:blur(0);}
+}
+@keyframes slot-tease-down{
+  0%{transform:translateY(0); filter:blur(0);}
+  30%{transform:translateY(calc(var(--slot-cell) * 1.5)); filter:blur(10px);}
+  60%,100%{transform:translateY(0); filter:blur(0);}
+}
+@keyframes slot-spin-blur{
+  0%{filter:blur(0);}
+  12%{filter:blur(10px);}
+  72%{filter:blur(6px);}
+  100%{filter:blur(0);}
+}
+@keyframes slots-won{0%{transform:scale(1);} 40%{transform:scale(1.025);} 100%{transform:scale(1);}}
+.slots-result{min-height:46px; display:flex; align-items:center; justify-content:center; margin-top:12px; text-align:center;}
+.slots-result-text{display:inline-flex; align-items:center; gap:6px; font-weight:800; font-size:16px; line-height:1.25; color:var(--ink); animation:slots-pop .45s var(--ease-out);}
+.slots-result-text.miss{color:var(--ink-soft); font-weight:700;}
+@keyframes slots-pop{0%{transform:scale(.6); opacity:0;} 60%{transform:scale(1.06); opacity:1;} 100%{transform:scale(1);}}
+.slots-count{text-align:center; font-size:13px; font-weight:700; color:var(--ink); margin-top:10px;}
+.slots-hint{text-align:center; font-size:12.5px; line-height:1.35; color:var(--ink-soft); margin-top:2px;}
+.slots-shields{margin-top:12px; padding:10px 12px; border-radius:12px; background:var(--accent-soft); color:#9A3412; font-size:13px; font-weight:600; line-height:1.35; text-align:center;}
+.slots-paytable{margin-top:18px; padding:4px 14px; border:1px solid var(--line); border-radius:16px; background:#fff;}
+.slots-paytable-head{display:flex; justify-content:space-between; padding:9px 0 7px; font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint);}
+.slots-pay-row{display:flex; align-items:center; gap:12px; padding:9px 0; border-top:1px solid var(--line);}
+.slots-pay-symbols{display:flex; gap:2px; flex:0 0 auto;}
+.slots-pay-label{flex:1; min-width:0; font-size:13.5px; font-weight:700; line-height:1.25;}
+.slots-pay-reward{display:flex; align-items:center; gap:4px; margin-top:2px; font-size:12.5px; font-weight:600; color:var(--ink-soft);}
+.slots-pay-chance{font-size:13px; font-weight:700; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+@media (prefers-reduced-motion: reduce){
+  .slot-tease{animation:none !important;}
+  .slot-strip{transition:none !important; animation:none !important;}
+  .slots-result-text,.slots-machine.won{animation:none;}
+}
 
 /* ---- Species collection ---- */
 .species-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px;}

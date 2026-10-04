@@ -37,6 +37,11 @@ export function useSectorsGeometry() {
 // territories_with_stats had ~1.9k rows in Sept 2026 — two pages. Those are
 // requested together instead of one after the other; a table that outgrows
 // them still loads in full, the extra pages just follow sequentially.
+// 1 while a sector is one of the week's hot ones, else 0.
+function hotRank(t: Territory): number {
+  return t.hotUntil && new Date(t.hotUntil).getTime() > Date.now() ? 1 : 0
+}
+
 const TERRITORY_PAGE_SIZE = 1000
 const TERRITORY_PARALLEL_PAGES = 2
 
@@ -60,7 +65,7 @@ export function useTerritories() {
     queryFn: async (): Promise<Territory[]> => {
       const supabase = createClient()
       const columns =
-        'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted, shield_until, owner_equipped_skin, owner_clan_id, owner_clan_name, owner_clan_crest, co_holders, capturer_id'
+        'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted, shield_until, owner_equipped_skin, owner_clan_id, owner_clan_name, owner_clan_crest, co_holders, capturer_id, hot_until'
       // PostgREST caps a single response at 1000 rows by default and stays
       // silent about it (no error, just a truncated array) — the table
       // crossed that count once admin-added sectors piled up, which is how
@@ -119,6 +124,7 @@ export function useTerritories() {
           ownerClanCrest: row?.owner_clan_crest ?? null,
           coHolders: toCoHolders(row?.co_holders, user?.id),
           capturerId: row?.capturer_id ?? null,
+          hotUntil: row?.hot_until ?? null,
         }
       }
 
@@ -151,8 +157,9 @@ export function useTerritories() {
         // first card, the territories tab) — a single sort here instead of
         // one per screen, since every consumer shares this same array; the
         // tab re-sorts only when another order is picked there. Never-fished
-        // sectors follow in number order (see compareSectors).
-        .sort(compareSectors('lastCatch'))
+        // sectors follow in number order (see compareSectors). The week's
+        // hot sectors go before all of them — the map's first cards.
+        .sort((a, b) => hotRank(b) - hotRank(a) || compareSectors('lastCatch')(a, b))
     },
     // Until the stored session is read the key would say "no user" and the
     // whole table would be fetched once for nobody, then again for the real
@@ -2056,6 +2063,8 @@ export function useConfirmCatch() {
       queryClient.invalidateQueries({ queryKey: ['territories'] })
       queryClient.invalidateQueries({ queryKey: ['catches'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
+      // Every catch adds a free spin in the Shop's slots.
+      queryClient.invalidateQueries({ queryKey: ['slot-state'] })
     },
   })
 }
@@ -2318,30 +2327,133 @@ export function useActivateBuff() {
   })
 }
 
-export type WheelSpinResult = {
-  segmentIndex: number
-  multiplier: number
-  payout: number
-  newBalance: number
+export type SlotSymbol = 'stavrida' | 'skorpena' | 'lufar' | 'katran' | 'hook' | 'hex'
+export type SlotPrize = 'jackpot' | 'jackpot_coins' | 'shield' | 'double' | 'lufar' | 'triple' | 'pair' | 'none'
+export type SlotState = { total: number; used: number; left: number; nextReset: string; freeShields: number }
+export type SlotSpinResult = { reels: SlotSymbol[]; prize: SlotPrize; coins: number; balance: number; left: number; total: number; freeShields: number }
+
+// Free spins (the Shop's «Слоты» tab, which replaced ДЭП): one a day plus
+// one per catch, at most 4 — get_slot_state counts them in the player's own
+// city day, spin_slots rolls the outcome and pays it.
+export function useSlotState() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['slot-state', user?.id ?? null],
+    enabled: !!user,
+    queryFn: async (): Promise<SlotState> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_slot_state')
+      if (error) throw error
+      const d = data as { total: number; used: number; left: number; next_reset: string; free_shields: number }
+      return { total: d.total, used: d.used, left: d.left, nextReset: d.next_reset, freeShields: d.free_shields }
+    },
+  })
 }
 
-// ДЭП (Shop's wheel-of-fortune tab) — the RNG and payout live entirely in
-// spin_wheel itself (client can't influence or predict the roll), this just
-// forwards the bet and hands back which slot it landed on so WheelScreen can
-// spin the dial to the right angle before showing the result. Deliberately
-// does NOT invalidate the profile/coins query on its own success: the RPC
-// resolves almost instantly, well before the multi-second spin animation
-// finishes, so refetching here would flash the new balance in the header
-// while the dial is still spinning — spoiling the reveal by telegraphing
-// the outcome early. WheelScreen invalidates it itself once the dial
-// actually stops, see its onSpinEnd.
-export function useSpinWheel() {
+// Like ДЭП before it, this doesn't refresh the coin balance on its own: the
+// reels take a few seconds to stop, and a balance that jumps first would give
+// the result away. SlotsScreen refreshes it once the last reel lands.
+export function useSpinSlots() {
   return useMutation({
-    mutationFn: async (bet: number): Promise<WheelSpinResult> => {
+    mutationFn: async (): Promise<SlotSpinResult> => {
       const supabase = createClient()
-      const { data, error } = await supabase.rpc('spin_wheel', { p_bet: bet }).single()
+      const { data, error } = await supabase.rpc('spin_slots')
       if (error) throw error
-      return { segmentIndex: data.segment_index, multiplier: data.multiplier, payout: data.payout, newBalance: data.new_balance }
+      const d = data as { reels: SlotSymbol[]; prize: SlotPrize; coins: number; balance: number; left: number; total: number; free_shields: number }
+      return { reels: d.reels, prize: d.prize, coins: d.coins, balance: d.balance, left: d.left, total: d.total, freeShields: d.free_shields }
+    },
+  })
+}
+
+export type DailyRewardState = { claimedToday: boolean; day: number; broken: boolean; amounts: number[]; nextReset: string }
+
+// The 10-day login reward under the Shop's balance. `day` is today's step
+// of the run — the one to claim, or the one already claimed today.
+export function useDailyRewardState() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['daily-reward', user?.id ?? null],
+    enabled: !!user,
+    queryFn: async (): Promise<DailyRewardState> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_daily_reward_state')
+      if (error) throw error
+      const d = data as { claimed_today: boolean; day: number; broken: boolean; amounts: number[]; next_reset: string }
+      return { claimedToday: d.claimed_today, day: d.day, broken: d.broken, amounts: d.amounts, nextReset: d.next_reset }
+    },
+  })
+}
+
+export function useClaimDailyReward() {
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+  return useMutation({
+    mutationFn: async (): Promise<{ day: number; coins: number; balance: number }> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('claim_daily_reward')
+      if (error) throw error
+      return data as { day: number; coins: number; balance: number }
+    },
+    onSuccess: (res) => {
+      queryClient.setQueryData<DailyRewardState>(['daily-reward', user?.id ?? null], (old) =>
+        old ? { ...old, claimedToday: true, day: res.day, broken: false } : old
+      )
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['daily-reward', user?.id ?? null] })
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
+    },
+  })
+}
+
+export type TreasuryState = { available: number; collectedToday: number; dailyCap: number; perDay: number; sectors: number }
+
+// Казна: coins the player's sectors have earned since the last collection
+// (no further back than a day), at most 30 a day.
+export function useTreasury(enabled = true) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['treasury', user?.id ?? null],
+    enabled: !!user && enabled,
+    queryFn: async (): Promise<TreasuryState> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_treasury')
+      if (error) throw error
+      const d = data as { available: number; collected_today: number; daily_cap: number; per_day: number; sectors: number }
+      return { available: d.available, collectedToday: d.collected_today, dailyCap: d.daily_cap, perDay: d.per_day, sectors: d.sectors }
+    },
+  })
+}
+
+export function useCollectTreasury() {
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+  return useMutation({
+    mutationFn: async (): Promise<{ coins: number; balance: number }> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('collect_treasury')
+      if (error) throw error
+      return data as { coins: number; balance: number }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['treasury', user?.id ?? null] })
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
+    },
+  })
+}
+
+export function useUseFreeShield() {
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+  return useMutation({
+    mutationFn: async (territoryId: string) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('use_free_shield', { p_territory_id: territoryId })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['territories'] })
+      queryClient.invalidateQueries({ queryKey: ['slot-state', user?.id ?? null] })
     },
   })
 }

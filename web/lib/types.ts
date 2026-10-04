@@ -1349,6 +1349,7 @@ export type Database = {
           lng: number | null
           co_holders: Json | null
           capturer_id: string | null
+          hot_until: string | null
           owner_clan_crest: Json | null
           owner_clan_id: number | null
           owner_clan_name: string | null
@@ -1649,6 +1650,13 @@ export type Database = {
         Returns: { segment_index: number; multiplier: number; payout: number; new_balance: number }[]
       }
       create_telegram_link_token: { Args: Record<string, never>; Returns: string }
+      get_slot_state: { Args: Record<string, never>; Returns: Json }
+      get_daily_reward_state: { Args: Record<string, never>; Returns: Json }
+      claim_daily_reward: { Args: Record<string, never>; Returns: Json }
+      get_treasury: { Args: Record<string, never>; Returns: Json }
+      collect_treasury: { Args: Record<string, never>; Returns: Json }
+      spin_slots: { Args: Record<string, never>; Returns: Json }
+      use_free_shield: { Args: { p_territory_id: string }; Returns: undefined }
       mark_notifications_read: { Args: Record<string, never>; Returns: undefined }
       notification_deliver_after_from: { Args: { p_city: string; p_from: string }; Returns: string }
       my_telegram_notification_state: {

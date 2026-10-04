@@ -13,6 +13,11 @@ import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { sectorHoldersCapturerFirst } from '@/lib/data/sectorHolders'
 import { mostPopularSectorId } from '@/lib/data/sectorOrder'
 import { MapRacePill } from '@/components/app-shell/ClanRace'
+import { TreasuryChip } from '@/components/app-shell/TreasuryChip'
+import { HOT_FLAME_SVG } from '@/lib/map/hotFlame'
+import { useI18n } from '@/lib/i18n'
+import { formatWeekdayTime } from '@/lib/i18n/format'
+import { useNow } from '@/lib/useNow'
 
 // Native scrollIntoView({behavior:'smooth'}) paces itself by distance, not
 // time — fine for the carousel's own drag-driven scrolling, but a map tap
@@ -91,6 +96,8 @@ export const MapScreen = forwardRef<
     onOpenClan?: (id: number) => void
     // Regatta plaque — only passed for someone in a clan (see MapRacePill).
     race?: { city: CityId; clanId: number; onOpen: () => void } | null
+    // The app's toast — Казна says what happened through it.
+    onToast?: (msg: string) => void
   }
 >(function MapScreen(
   {
@@ -109,9 +116,16 @@ export const MapScreen = forwardRef<
     city,
     onOpenClan,
     race,
+    onToast,
   },
   forwardedRef
 ) {
+  // `tr`, not `t`: the carousel below names each sector `t`.
+  const { t: tr, lang } = useI18n()
+  // Казна only asks the server once there's something to earn from.
+  const holdsSector = territories.some((s) => s.status === 'mine' || s.coHolders.some((h) => h.isMe))
+  const now = useNow()
+  const isHot = (s: Territory) => !!s.hotUntil && new Date(s.hotUntil).getTime() > now
   // «Кланы» layer toggle — remembered per device, a pure viewing preference.
   const [clanLayer, setClanLayer] = useState(() => {
     try {
@@ -318,6 +332,7 @@ export const MapScreen = forwardRef<
           <div className="map-hud-bar">
             {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
             <img src="/brand/logo_2.svg" alt="RANGE" className="map-hud-logo" />
+            <TreasuryChip enabled={holdsSector} onToast={(msg) => onToast?.(msg)} />
             <div className="map-layer-switch" role="radiogroup" aria-label="Раскраска карты">
               <button type="button" role="radio" aria-checked={!clanLayer} className={`map-layer-opt${!clanLayer ? ' on' : ''}`} onClick={() => setLayer(false)}>
                 Игроки
@@ -424,6 +439,14 @@ export const MapScreen = forwardRef<
                     Telegram's iOS WebView, crash) on phones. */}
                 {Math.abs(i - centerIndex) <= SHEET_WINDOW && (
                 <>
+                {isHot(t) && (
+                  <div className="map-sheet-hot">
+                    <span className="map-sheet-hot-flame" aria-hidden dangerouslySetInnerHTML={{ __html: HOT_FLAME_SVG }} />
+                    <b>{tr('hot.badge')}</b>
+                    <span>· {tr('hot.until', { time: formatWeekdayTime(t.hotUntil!, lang) })}</span>
+                    <span className="map-sheet-hot-bonus">×2</span>
+                  </div>
+                )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ fontSize: 21, fontWeight: 800, flex: '0 0 auto' }}>{t.id}</div>
                   {t.status !== 'free' && t.ownerDisplayName && (

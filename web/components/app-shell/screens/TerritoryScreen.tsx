@@ -4,7 +4,11 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { formatCoords, mapsLinks, openExternal } from '@/lib/openExternal'
-import { useCatchesByTerritory, useProfile, useCanAddCatchManually, useIsSuperAdmin, useBuffs, useBuyShield, useAdminSetTerritoryKind } from '@/lib/supabase/queries'
+import { useCatchesByTerritory, useProfile, useCanAddCatchManually, useIsSuperAdmin, useBuffs, useBuyShield, useAdminSetTerritoryKind, useSlotState, useUseFreeShield } from '@/lib/supabase/queries'
+import { useI18n, useT } from '@/lib/i18n'
+import { formatWeekdayTime } from '@/lib/i18n/format'
+import { useNow } from '@/lib/useNow'
+import { HOT_FLAME_SVG } from '@/lib/map/hotFlame'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { KIND_LABEL, WATER_KINDS_BY_CITY } from '@/lib/data/species'
 import { cityForSectorId } from '@/lib/data/city'
@@ -170,6 +174,12 @@ function ShieldButton({ territory }: { territory: Territory }) {
   const { data: myProfile } = useProfile(user?.id ?? null)
   const { data: buffs = [] } = useBuffs()
   const buyShield = useBuyShield()
+  // Shields won in the Shop's slots wait here, on the one screen where there's
+  // a sector to put them on.
+  const { data: slotState } = useSlotState()
+  const useFreeShield = useUseFreeShield()
+  const freeShields = slotState?.freeShields ?? 0
+  const t = useT()
   const [showInsufficient, setShowInsufficient] = useState(false)
   const price = buffs.find((b) => b.id === 'shield')?.price ?? 80
   const coins = myProfile?.coins ?? 0
@@ -182,6 +192,11 @@ function ShieldButton({ territory }: { territory: Territory }) {
 
   return (
     <>
+      {freeShields > 0 && (
+        <button className="btn-primary" style={{ marginTop: 12 }} disabled={useFreeShield.isPending} onClick={() => useFreeShield.mutate(territory.id)}>
+          {t('territory.freeShield')} · {t('territory.freeShieldLeft', { count: freeShields })}
+        </button>
+      )}
       <button className="btn-secondary shop-price-btn" style={{ marginTop: 12 }} disabled={buyShield.isPending} onClick={handleClick}>
         {buyShield.isPending ? (
           'Покупаем…'
@@ -290,6 +305,11 @@ export function TerritoryScreen({
   onShowOnMap?: (id: string) => void
 }) {
   const canAddCatchManually = useCanAddCatchManually()
+  const { t: tr, lang } = useI18n()
+  const now = useNow()
+  const hot = !!territory.hotUntil && new Date(territory.hotUntil).getTime() > now
+  // Казна: every sector held earns its holders 8 coins a day (×3 while hot).
+  const holdsThis = territory.status === 'mine' || territory.coHolders.some((h) => h.isMe)
   const isSuperAdmin = useIsSuperAdmin()
   const { data: catches = [], isPending: catchesPending } = useCatchesByTerritory(territory.id)
   const { data: ownerProfile } = useProfile(territory.ownerId ?? null)
@@ -347,8 +367,26 @@ export function TerritoryScreen({
             {KIND_LABEL[territory.kind]}
           </div>
           <SectorCoords lat={territory.lat} lng={territory.lng} onToast={onToast} />
+          {hot && (
+            <div className="sector-hot">
+              <span className="sector-hot-flame" aria-hidden dangerouslySetInnerHTML={{ __html: HOT_FLAME_SVG }} />
+              <div className="sector-hot-body">
+                <div className="sector-hot-title">
+                  {tr('hot.badge')} · {tr('hot.until', { time: formatWeekdayTime(territory.hotUntil!, lang) })}
+                </div>
+                <div className="sector-hot-text">{tr('hot.bonus')}</div>
+                <div className="sector-hot-text">{tr('hot.holdReward')}</div>
+              </div>
+            </div>
+          )}
           {sectorCapturer(territory) && (
             <SectorOwnerCard capturer={sectorCapturer(territory)!} coHolders={sectorOtherHolders(territory)} onOpenUser={onOpenUser} />
+          )}
+          {holdsThis && (
+            <div className="sector-income">
+              <CoinIcon size={16} />
+              {tr('treasury.perDay', { count: hot ? 24 : 8 })}
+            </div>
           )}
           {territory.ownerId && territory.ownerClanId && (
             <button className="sector-clan-line tap-scale" onClick={() => onOpenClan(territory.ownerClanId!)}>

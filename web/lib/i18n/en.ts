@@ -1,0 +1,83 @@
+import type { Dict } from '@/lib/i18n/core'
+
+export const en: Dict = {
+  common: {
+    coins: { one: '{count} coin', other: '{count} coins' },
+    tryAgain: 'Something went wrong, try again',
+  },
+  shop: {
+    tabSlots: 'Slots',
+  },
+  slots: {
+    title: 'Angler’s slots',
+    spinsToday: 'Spins today: {left} of {total}',
+    spin: 'Spin for free',
+    spinning: 'Spinning…',
+    noSpins: 'No spins left today',
+    noSpinsHint: 'Catch a fish to get another spin. Tomorrow’s first spin is free again',
+    perCatch: '+1 spin for every catch, up to 4 a day',
+    payTable: 'Payouts',
+    chance: 'Chance',
+    freeShields: 'Shields in reserve: {count}. Put one on your sector from its screen',
+    result: {
+      jackpot: 'Jackpot! The Katran frame is yours',
+      jackpotCoins: 'Jackpot! +{coins} coins',
+      shield: 'A shield in reserve — put it on your sector',
+      double: 'Double coins for 24 hours',
+      lufar: 'Three bluefish! +{coins} coins',
+      triple: 'Three in a row! +{coins} coins',
+      pair: 'A pair! +{coins} coins',
+      none: 'No luck this time',
+    },
+    rows: {
+      jackpot: '3 dogfish',
+      shield: '3 hexes',
+      double: '3 hooks',
+      lufar: '3 bluefish',
+      triple: '3 horse mackerel or 3 scorpionfish',
+      pair: '2 of a kind',
+    },
+    rewards: {
+      jackpot: 'Katran frame',
+      shield: 'Shield in reserve',
+      double: '×2 coins for a day',
+    },
+    symbols: {
+      stavrida: 'Horse mackerel',
+      skorpena: 'Scorpionfish',
+      lufar: 'Bluefish',
+      katran: 'Dogfish',
+      hook: 'Hook',
+      hex: 'Hex',
+    },
+  },
+  daily: {
+    title: 'Daily reward',
+    dayOf: 'day {day} of 10',
+    claim: 'Claim +{coins}',
+    claiming: 'Claiming…',
+    claimed: 'Today’s reward is claimed',
+    tomorrow: 'Tomorrow +{coins}',
+    hint: 'Come back every day: miss one and the streak starts over',
+    broken: 'The streak broke — starting again from day one',
+  },
+  treasury: {
+    title: 'Treasury',
+    amount: '{available} of {cap}',
+    collect: 'Collect',
+    perDay: { one: 'Earns {count} coin a day', other: 'Earns {count} coins a day' },
+    capReached: 'Collected {cap} of {cap} today — more tomorrow',
+    empty: 'Filling up: 1 coin every 3 hours from each sector',
+    collected: '+{coins} to your wallet',
+  },
+  hot: {
+    badge: 'Hot sector',
+    until: 'until {time}',
+    bonus: '×2 coins per catch, ×3 to the Treasury',
+    holdReward: 'Hold it to the end of the week: +100 coins and a medal',
+  },
+  territory: {
+    freeShield: 'Put a free shield',
+    freeShieldLeft: 'In reserve: {count}',
+  },
+}

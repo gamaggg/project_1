@@ -17,7 +17,9 @@ import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { NAME_STYLES } from '@/lib/data/nameStyles'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { SkinPreview } from '@/components/app-shell/SkinPreview'
-import { WheelScreen } from '@/components/app-shell/screens/WheelScreen'
+import { SlotsScreen } from '@/components/app-shell/screens/SlotsScreen'
+import { DailyRewardCard } from '@/components/app-shell/DailyRewardCard'
+import { useT } from '@/lib/i18n'
 import type { CityId } from '@/lib/data/city'
 import {
   useProfile,
@@ -52,17 +54,18 @@ function rarityClass(price: number): string {
   return 'shop-card-common'
 }
 
-type Category = 'avatar_frame' | 'hero_bg' | 'name_style' | 'territory_skin' | 'buffs' | 'wheel'
+type Category = 'avatar_frame' | 'hero_bg' | 'name_style' | 'territory_skin' | 'buffs' | 'slots'
 const CATEGORIES: { id: Category; label: string; icon: React.ReactNode }[] = [
   { id: 'avatar_frame', label: 'Рамки', icon: SHOP_TAB_ICONS.frame },
   { id: 'hero_bg', label: 'Фоны', icon: SHOP_TAB_ICONS.background },
   { id: 'name_style', label: 'Имя', icon: SHOP_TAB_ICONS.sparkle },
   { id: 'territory_skin', label: 'Скины', icon: SHOP_TAB_ICONS.skin },
   { id: 'buffs', label: 'Бафы', icon: SHOP_TAB_ICONS.bolt },
-  { id: 'wheel', label: 'ДЭП', icon: SHOP_TAB_ICONS.wheel },
+  { id: 'slots', label: 'Слоты', icon: SHOP_TAB_ICONS.slots },
 ]
 
 export function ShopScreen({ onBack }: { onBack: () => void }) {
+  const t = useT()
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   // The 4th-challenge slot bought here is the account's own real weekly
@@ -132,11 +135,13 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
           </button>
         </div>
 
+        <DailyRewardCard />
+
         <div className="shop-tabs">
           {CATEGORIES.map((c) => (
             <button key={c.id} className={`shop-tab${category === c.id ? ' active' : ''}`} onClick={() => setCategory(c.id)}>
               <span>{c.icon}</span>
-              {c.label}
+              {c.id === 'slots' ? t('shop.tabSlots') : c.label}
             </button>
           ))}
         </div>
@@ -228,7 +233,7 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
           />
         )}
 
-        {category === 'wheel' && <WheelScreen />}
+        {category === 'slots' && <SlotsScreen />}
       </div>
 
       {purchaseModal}

@@ -31,6 +31,10 @@ declare global {
     Telegram?: {
       WebApp?: {
         initData: string
+        // Unverified copy of initData's fields — only for harmless hints like
+        // the interface language; anything that matters goes through the
+        // signed initData on the server.
+        initDataUnsafe?: { user?: { language_code?: string } }
         ready: () => void
         expand: () => void
         requestFullscreen?: () => void
