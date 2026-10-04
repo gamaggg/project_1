@@ -1348,6 +1348,7 @@ export type Database = {
           lat: number | null
           lng: number | null
           co_holders: Json | null
+          capturer_id: string | null
           owner_clan_crest: Json | null
           owner_clan_id: number | null
           owner_clan_name: string | null

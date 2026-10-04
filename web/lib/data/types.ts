@@ -37,6 +37,10 @@ export type Territory = {
   // taking the sector. Empty for an unshared sector. The map and the sector
   // screen split the hex into one equal part per holder (owner first).
   coHolders: TerritoryCoHolder[]
+  // Of the owner and coHolders, the one whose catch here is the freshest
+  // (territories_with_stats.capturer_id) — shown as «Захватил сектор».
+  // Null for an unshared sector.
+  capturerId: string | null
 }
 
 export type TerritoryCoHolder = {

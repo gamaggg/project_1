@@ -60,7 +60,7 @@ export function useTerritories() {
     queryFn: async (): Promise<Territory[]> => {
       const supabase = createClient()
       const columns =
-        'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted, shield_until, owner_equipped_skin, owner_clan_id, owner_clan_name, owner_clan_crest, co_holders'
+        'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted, shield_until, owner_equipped_skin, owner_clan_id, owner_clan_name, owner_clan_crest, co_holders, capturer_id'
       // PostgREST caps a single response at 1000 rows by default and stays
       // silent about it (no error, just a truncated array) — the table
       // crossed that count once admin-added sectors piled up, which is how
@@ -118,6 +118,7 @@ export function useTerritories() {
           ownerClanName: row?.owner_clan_name ?? null,
           ownerClanCrest: row?.owner_clan_crest ?? null,
           coHolders: toCoHolders(row?.co_holders, user?.id),
+          capturerId: row?.capturer_id ?? null,
         }
       }
 
