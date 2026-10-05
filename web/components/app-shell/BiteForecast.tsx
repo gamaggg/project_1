@@ -181,9 +181,8 @@ export function SectorForecastCard({ territory, city }: { territory: Territory; 
     point,
     timezone: CITIES[city].timezone,
     sea,
-    // Only the sector's own hours: neighbours' catches say little about
-    // this spot's best time.
-    catchHours: insights && insights.scope !== 'nearby' ? insights.hours : null,
+    // The sector's own catch hours (insights never mixes in other sectors).
+    catchHours: insights?.hours ?? null,
   })
 
   if (isError && !days) return null

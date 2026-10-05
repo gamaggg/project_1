@@ -1,8 +1,8 @@
 -- Правки пачки 3 (решения пользователя 05.10); прод эти объекты ещё не вызывает.
 -- 1) Легенда сектора: 90 дней вместо 30 и минимум 10 уловов вместо 3.
--- 2) «Что клюёт здесь» показывает этот сектор, а не все сектора того же типа воды в городе:
---    3+ улова здесь за 90 дней → они; уловы здесь были, но меньше → все уловы сектора за всё время;
---    здесь ещё не ловили → соседние сектора (до ~1,2 км) за 90 дней. my_count — за 90 дней, как у легенды.
+-- 2) «Что клюёт здесь» — только уловы этого сектора (никаких «всех секторов того же типа» и соседей):
+--    3+ улова здесь за 90 дней → они; иначе все уловы сектора за всё время (0 — блок не показывается).
+--    my_count — за 90 дней, как у легенды.
 
 create or replace function public._sector_legend(p_territory_id text)
  returns table(user_id uuid, catches int)
@@ -31,13 +31,11 @@ as $function$
 declare
   v_uid uuid := auth.uid();
   v_kind text;
-  v_lat double precision;
-  v_lng double precision;
   v_tz text := public._city_tz(case when left(p_territory_id, 1) = 'M' then 'moscow' else 'batumi' end);
   v_scope text;
   v_out jsonb;
 begin
-  select t.kind::text, t.lat, t.lng into v_kind, v_lat, v_lng from public.territories t where t.id = p_territory_id;
+  select t.kind::text into v_kind from public.territories t where t.id = p_territory_id;
   if not found then
     raise exception 'unknown sector';
   end if;
@@ -46,28 +44,16 @@ begin
       join public.profiles p on p.id = c.user_id and not coalesce(p.is_blocked, false)
       where c.territory_id = p_territory_id and c.caught_at > now() - interval '90 days') >= 3 then
     v_scope := 'sector';
-  elsif exists (select 1 from public.catches c
-                join public.profiles p on p.id = c.user_id and not coalesce(p.is_blocked, false)
-                where c.territory_id = p_territory_id) then
-    v_scope := 'sector_all';
   else
-    v_scope := 'nearby';
+    v_scope := 'sector_all';
   end if;
 
   with src as (
     select c.species, c.method, c.bait, c.caught_at
     from public.catches c
     join public.profiles p on p.id = c.user_id and not coalesce(p.is_blocked, false)
-    where case v_scope
-      when 'sector' then c.territory_id = p_territory_id and c.caught_at > now() - interval '90 days'
-      when 'sector_all' then c.territory_id = p_territory_id
-      else c.caught_at > now() - interval '90 days'
-           and v_lat is not null
-           and c.territory_id in (
-             select t.id from public.territories t
-             where not t.is_deleted and t.id <> p_territory_id and left(t.id, 1) = left(p_territory_id, 1)
-               and power((t.lat - v_lat) * 111.2, 2) + power((t.lng - v_lng) * 111.2 * cos(radians(v_lat)), 2) <= 1.44)
-    end
+    where c.territory_id = p_territory_id
+      and (v_scope = 'sector_all' or c.caught_at > now() - interval '90 days')
   )
   select jsonb_build_object(
     'scope', v_scope,

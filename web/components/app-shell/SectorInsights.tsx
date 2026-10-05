@@ -104,24 +104,17 @@ export function SectorInsightsCard({ territory }: { territory: Territory }) {
   const t = useT()
   const { data } = useSectorInsights(territory.id)
   const { data: species = [] } = useSpecies()
-  if (!data) return null
+  // Nobody has fished here: nothing to say about this spot (the catches
+  // list below already says it's empty).
+  if (!data || data.total === 0) return null
 
   return (
     <div className="insights-card">
       <div className="insights-head">
         <span className="insights-title">{t('insights.title')}</span>
-        {data && (
-          <span className="insights-period">
-            {data.scope === 'sector' ? t('insights.period90') : data.scope === 'sector_all' ? t('insights.periodAll') : t('insights.periodNearby')}
-          </span>
-        )}
+        <span className="insights-period">{data.scope === 'sector' ? t('insights.period90') : t('insights.periodAll')}</span>
       </div>
-      {data.total === 0 ? (
-        <div className="insights-empty">{t('insights.empty')}</div>
-      ) : (
-        <InsightsBody data={data} speciesName={(key) => species.find((s) => s.key === key)?.name ?? key} />
-      )}
-      {data.scope === 'nearby' && data.total > 0 && <div className="insights-note">{t('insights.nearbyNote')}</div>}
+      <InsightsBody data={data} speciesName={(key) => species.find((s) => s.key === key)?.name ?? key} />
     </div>
   )
 }

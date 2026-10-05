@@ -2446,10 +2446,10 @@ export function useCollectTreasury() {
 }
 
 export type SectorInsights = {
-  // 'sector': 3+ catches here in 90 days, these are they. 'sector_all':
-  // fewer, so every catch ever made here. 'nearby': nobody has fished here,
-  // so the sectors within ~1 km over 90 days.
-  scope: 'sector' | 'sector_all' | 'nearby'
+  // Only ever this sector's own catches. 'sector': 3+ here in 90 days,
+  // these are they. 'sector_all': fewer, so every catch ever made here
+  // (total 0 — nobody has fished here, and the card stays hidden).
+  scope: 'sector' | 'sector_all'
   kind: TerritoryKind
   total: number
   species: { key: string; count: number }[]
@@ -2475,7 +2475,7 @@ export function useSectorInsights(territoryId: string | null) {
       const { data, error } = await supabase.rpc('get_sector_insights', { p_territory_id: territoryId! })
       if (error) throw error
       const d = data as {
-        scope: 'sector' | 'sector_all' | 'nearby'
+        scope: 'sector' | 'sector_all'
         kind: TerritoryKind
         total: number
         species: { key: string; count: number }[]
