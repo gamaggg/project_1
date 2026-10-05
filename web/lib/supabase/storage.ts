@@ -40,3 +40,15 @@ export async function uploadAnnouncementPhoto(blob: Blob): Promise<string> {
   const { data } = supabase.storage.from('announcement-photos').getPublicUrl(path)
   return data.publicUrl
 }
+
+// «Улов из галереи» for the diary: same bucket and folder rule as catch
+// photos, under <uid>/diary/ (diary_catches only accepts URLs from there),
+// with a random name — these never show up anywhere public.
+export async function uploadDiaryPhoto(userId: string, blob: Blob): Promise<string> {
+  const supabase = createClient()
+  const path = `${userId}/diary/${crypto.randomUUID()}.jpg`
+  const { error } = await supabase.storage.from('catch-photos').upload(path, blob, { contentType: 'image/jpeg' })
+  if (error) throw error
+  const { data } = supabase.storage.from('catch-photos').getPublicUrl(path)
+  return data.publicUrl
+}

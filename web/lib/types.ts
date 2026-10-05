@@ -507,6 +507,78 @@ export type Database = {
           },
         ]
       }
+      diary_catches: {
+        Row: {
+          caught_at: string
+          created_at: string
+          day: string
+          id: number
+          lat: number | null
+          length_cm: number | null
+          lng: number | null
+          photo_url: string
+          species: string
+          territory_id: string | null
+          user_id: string
+          weight_kg: number | null
+        }
+        Insert: {
+          caught_at: string
+          created_at?: string
+          day: string
+          id?: number
+          lat?: number | null
+          length_cm?: number | null
+          lng?: number | null
+          photo_url: string
+          species: string
+          territory_id?: string | null
+          user_id?: string
+          weight_kg?: number | null
+        }
+        Update: {
+          caught_at?: string
+          created_at?: string
+          day?: string
+          id?: number
+          lat?: number | null
+          length_cm?: number | null
+          lng?: number | null
+          photo_url?: string
+          species?: string
+          territory_id?: string | null
+          user_id?: string
+          weight_kg?: number | null
+        }
+        Relationships: []
+      }
+      diary_days: {
+        Row: {
+          created_at: string
+          day: string
+          note: string | null
+          territory_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          note?: string | null
+          territory_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          note?: string | null
+          territory_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           created_at: string

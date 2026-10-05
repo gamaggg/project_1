@@ -11,7 +11,7 @@ import type { TKey } from '@/lib/i18n/core'
 // time: sky and air, water (by the sea), wind, pressure and where it was
 // heading, waves. Nothing at all while it loads or if the
 // archive has nothing for that hour.
-export function CatchConditions({ catchId, caughtAt, territoryId }: { catchId: number; caughtAt: string; territoryId: string }) {
+export function CatchConditions({ catchId, caughtAt, territoryId, compact = false }: { catchId: number; caughtAt: string; territoryId: string; compact?: boolean }) {
   const { t, lang } = useI18n()
   const { data: c } = useCatchConditions(catchId)
   if (!c) return null
@@ -40,8 +40,8 @@ export function CatchConditions({ catchId, caughtAt, territoryId }: { catchId: n
   if (c.wave != null) chips.push({ key: 'wave', text: t('conditions.wave', { value: num(c.wave) }) })
 
   return (
-    <div className="catch-conditions">
-      <div className="catch-conditions-title">{t('conditions.title')}</div>
+    <div className={`catch-conditions${compact ? ' compact' : ''}`}>
+      {!compact && <div className="catch-conditions-title">{t('conditions.title')}</div>}
       <div className="catch-conditions-chips">
         {chips.map((ch) => (
           <span key={ch.key} className="catch-conditions-chip">
