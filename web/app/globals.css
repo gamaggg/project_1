@@ -3317,3 +3317,22 @@ button.race-lane{cursor:pointer;}
 @keyframes recap-glow-3{0%{transform:translate(0,0) scale(.95); opacity:.6;} 100%{transform:translate(-200px,120px) scale(1.15); opacity:1;}}
 @keyframes recap-glow-4{0%{transform:translate(0,0) scale(1); opacity:.9;} 100%{transform:translate(220px,-160px) scale(1.2); opacity:.6;}}
 @media (prefers-reduced-motion: reduce){.recap-decor{display:none;}}
+
+/* ===== Казна: окно с объяснением ===== */
+.treasury-chip.done{opacity:.7;}
+.treasury-sheet-body{display:flex; flex-direction:column; gap:12px; padding-bottom:18px;}
+.treasury-now{display:flex; align-items:center; gap:14px; padding:16px; border-radius:18px; background:#FAF8F3;}
+.treasury-now.ready{background:var(--accent-soft); box-shadow:inset 0 0 0 1.5px rgba(252,82,0,.3);}
+.treasury-now-text{display:flex; flex-direction:column; gap:2px; min-width:0;}
+.treasury-now-text span{font-size:13px; font-weight:700; color:var(--ink-soft);}
+.treasury-now-text b{font-size:30px; font-weight:800; line-height:1.1; font-variant-numeric:tabular-nums;}
+.treasury-now.ready .treasury-now-text b{color:#9A3412;}
+.treasury-now-text b.small{font-size:16px;}
+.treasury-progress{padding:12px 14px; border:1px solid var(--line); border-radius:16px;}
+.treasury-progress-head{font-size:13.5px; font-weight:800;}
+.treasury-progress-bar{height:8px; margin-top:8px; border-radius:4px; background:#F1EFEA; overflow:hidden;}
+.treasury-progress-bar i{display:block; width:100%; height:100%; border-radius:4px; background:var(--accent); transform-origin:left center;}
+.treasury-progress-sub{margin-top:8px; font-size:12.5px; font-weight:700; color:var(--ink-soft);}
+.treasury-how{padding:12px 14px; border-radius:16px; background:#F7F6F2;}
+.treasury-how-title{font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-faint);}
+.treasury-how ul{margin:8px 0 0; padding-left:18px; display:flex; flex-direction:column; gap:6px; font-size:13px; line-height:1.4; color:var(--ink);}
