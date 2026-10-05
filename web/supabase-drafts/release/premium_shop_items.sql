@@ -5,6 +5,18 @@
 -- Только в релиз: в нынешнем клиенте этих id нет — рамка показалась бы пустой, имя обычным, скин не нарисовался бы.
 -- После применения удалить lib/data/premiumShopPreview.ts и его вызов в ShopScreen.
 
+-- profiles.hero_bg принимает только перечисленные фоны — добавить четыре новых
+-- (без этого покупка проходит, а «Применить» падает на CHECK; найдено dry-run 05.10).
+alter table public.profiles drop constraint profiles_hero_bg_check;
+alter table public.profiles add constraint profiles_hero_bg_check check (hero_bg = any (array[
+  'default','ocean','forest','dusk','crimson','mono','teal','rose',
+  'waves','waves-ocean','waves-purple','waves-pink',
+  'aurora','aurora-orange','aurora-pink','aurora-blue',
+  'aurora-light','aurora-light-orange','aurora-light-pink','aurora-light-blue',
+  'circles','halftone',
+  'deepwater','moonpath','school','golddust'
+]));
+
 insert into public.shop_items (id, category, name, price, sort_order) values
   ('frame_aurora',    'avatar_frame',   'Рамка «Северное сияние»', 800,  16),
   ('frame_flame',     'avatar_frame',   'Рамка «Пламя»',           1000, 17),
