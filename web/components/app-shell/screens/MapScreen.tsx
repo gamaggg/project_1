@@ -557,7 +557,7 @@ export const MapScreen = forwardRef<
                   </span>
                   {t.status !== 'free' && (
                     <span style={{ marginLeft: 'auto', flex: '0 0 auto', display: 'flex' }}>
-                      <DefenseShields value={t.defense} />
+                      <DefenseShields value={t.defense} size={16} />
                     </span>
                   )}
                 </div>

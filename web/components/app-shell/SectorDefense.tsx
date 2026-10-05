@@ -15,7 +15,9 @@ export function DefenseShields({ value, size = 14 }: { value: number; size?: num
   return (
     <span className="defense-shields" role="img" aria-label={t('defense.label', { value })}>
       {[0, 1, 2].map((i) => (
-        <svg key={i} width={size} height={size} viewBox="0 0 24 24" className={i < value ? 'on' : ''} aria-hidden>
+        // Cropped to the shield itself (no empty margin in the box), so a row
+        // of shields lines up flush with the badges beside or above it.
+        <svg key={i} width={Math.round(size * 0.8)} height={size} viewBox="3.5 1.5 17 21" className={i < value ? 'on' : ''} aria-hidden>
           <path d={SHIELD} />
         </svg>
       ))}

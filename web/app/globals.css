@@ -3464,7 +3464,7 @@ button.race-lane{cursor:pointer;}
 
 /* «Защита сектора» (SectorDefense.tsx): three shields, filled up to the
    sector's defense — the «Под щитом» badge's teal, outline when empty. */
-.defense-shields{display:inline-flex; gap:2px; align-items:center;}
+.defense-shields{display:inline-flex; gap:3px; align-items:center;}
 .defense-shields svg{display:block; fill:none; stroke:#9BBDB8; stroke-width:2; stroke-linejoin:round;}
 .defense-shields svg.on{fill:#12A190; stroke:#0E8074;}
 /* Sector screen: legend and defense in one card — two equal columns built
