@@ -11,6 +11,7 @@ import { getCurrentCoords, useGeolocationPermission } from '@/lib/geolocation'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { DefenseShields } from '@/components/app-shell/SectorDefense'
+import { FirstStepsPill } from '@/components/app-shell/FirstSteps'
 import { ForecastChip } from '@/components/app-shell/BiteForecast'
 import { RecapBanner } from '@/components/recap/WeekRecap'
 import { NearestFreeCard, NearestFreeIcon, findNearestFree, type NearestFreeState } from '@/components/app-shell/NearestFree'
@@ -391,7 +392,7 @@ export const MapScreen = forwardRef<
           {/* One line either way, so the panel keeps its height when the
               layer flips. Clans show as their crests — the same crests the
               sectors carry on that layer. */}
-          <div className="map-legend-row">
+          <div data-tour="legend" className="map-legend-row">
             {clanLayer ? (
               <>
                 {clanStandings.slice(0, 3).map((c) => (
@@ -468,7 +469,7 @@ export const MapScreen = forwardRef<
             </svg>
           </button>
           {newbie && (
-            <button className="map-control-btn map-control-locate tap-scale" onClick={() => void startNearestFree()} aria-label={tr('nearest.button')} title={tr('nearest.button')}>
+            <button data-tour="nearest" className="map-control-btn map-control-locate tap-scale" onClick={() => void startNearestFree()} aria-label={tr('nearest.button')} title={tr('nearest.button')}>
               <NearestFreeIcon />
             </button>
           )}
@@ -489,12 +490,17 @@ export const MapScreen = forwardRef<
           {freeNav ? (
             <NearestFreeCard state={freeNav} onNext={nextFree} onOpen={onOpenTerritory} onClose={() => setFreeNav(null)} />
           ) : (
-            !selectedIds?.size && !pendingAddDrafts?.length && <RecapBanner city={city} onFindFree={() => void startNearestFree()} />
+            // The «Неделя» sticker on the left, «Первые шаги» on the right —
+            // one row, so neither pushes the other up over the map.
+            <div className="map-sheet-extras">
+              {!selectedIds?.size && !pendingAddDrafts?.length && <RecapBanner city={city} onFindFree={() => void startNearestFree()} />}
+              <FirstStepsPill onToast={onToast} />
+            </div>
           )}
           <div className="map-sheet-row" ref={sheetRowRef} onScroll={handleScroll} onPointerDown={markUserScroll} onWheel={markUserScroll}>
             {territories.map((t, i) => (
               <div
-                className={`map-sheet-card${t.id === justSelectedId ? ' map-sheet-card-pulse' : ''}`}
+                data-tour="sector-card" className={`map-sheet-card${t.id === justSelectedId ? ' map-sheet-card-pulse' : ''}`}
                 key={t.id}
                 data-id={t.id}
                 onAnimationEnd={() => setJustSelectedId((cur) => (cur === t.id ? null : cur))}

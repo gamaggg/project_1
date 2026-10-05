@@ -5,6 +5,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import {
   useTerritories,
   useConfirmCatch,
+  useFirstSteps,
   useMyCatches,
   useSpecies,
   latestOwnCatchId,
@@ -50,7 +51,7 @@ import { OnboardingFlow } from '@/components/app-shell/onboarding/OnboardingFlow
 import { useTelegramBackButton } from '@/lib/telegram/useTelegramBackButton'
 import { hapticBuildUp, hapticTap } from '@/lib/telegram/haptics'
 import { BottomNav } from '@/components/app-shell/BottomNav'
-import { WhatsNewTour } from '@/components/app-shell/WhatsNewTour'
+import { SpotlightTours } from '@/components/app-shell/SpotlightTours'
 import {
   ClanBattleCeremony,
   ForgotPasswordFlow,
@@ -176,6 +177,9 @@ export function FishZoneApp() {
   const queryClient = useQueryClient()
   const { data: speciesList = [] } = useSpecies()
   const { data: myProfile, isLoading: myProfileLoading } = useProfile(user?.id ?? null)
+  // «Первые шаги»: a newcomer gets the newcomer tours and the checklist;
+  // undefined while loading, null when the server doesn't have it yet.
+  const { data: firstSteps } = useFirstSteps()
   const { data: territories = [], isLoading: territoriesLoading, isSuccess: territoriesReady } = useTerritories()
   const isSuperAdmin = useIsSuperAdmin()
   const canAddCatchFromGallery = useCanAddCatchFromGallery()
@@ -1825,7 +1829,11 @@ export function FishZoneApp() {
         />
       )}
 
-      <WhatsNewTour screen={currentScreen} enabled={!!myProfile?.onboardingCompleted} memberSince={myProfile?.createdAt ?? null} />
+      <SpotlightTours
+        screen={currentScreen}
+        audience={!myProfile?.onboardingCompleted || firstSteps === undefined ? null : firstSteps?.eligible ? 'newcomer' : 'whatsNew'}
+        memberSince={myProfile?.createdAt ?? null}
+      />
       {currentScreen !== 'screen-camera' && currentScreen !== 'screen-clan-editor' && currentScreen !== 'screen-clan-chat' && !showingTrophyScene && (
         <BottomNav
           active={NAV_SCREENS.includes(currentScreen) ? (currentScreen as TabScreenId) : navScreen}

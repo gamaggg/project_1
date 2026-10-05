@@ -225,7 +225,7 @@ export function ConfirmScreen({
           </div>
         )}
         {(speciesCoins > 0 || captureCoins > 0) && (
-          <div className="catch-trophy-reward">
+          <div data-tour="catch-reward" className="catch-trophy-reward">
             {speciesCoins > 0 && (
               <div className="catch-trophy-reward-row">
                 <span>{caughtSpeciesName ?? pendingCatch?.species}</span>

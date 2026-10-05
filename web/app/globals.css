@@ -3544,3 +3544,24 @@ button.standing-col{cursor:pointer;}
 .faq-answer ul{margin:0 0 8px; padding-left:18px; display:flex; flex-direction:column; gap:4px;}
 .faq-empty{padding:28px 4px; text-align:center; color:var(--ink-faint); font-size:14px;}
 @media (prefers-reduced-motion: reduce){.faq-q svg{transition:none;}}
+
+/* «Первые шаги» (FirstSteps.tsx) — right of the «Неделя» sticker above the
+   sector card; the row lets map swipes through everywhere but its items. */
+.map-sheet-container > .map-sheet-extras{pointer-events:none;}
+.map-sheet-extras{display:flex; align-items:flex-end; gap:8px; padding-right:12px;}
+.map-sheet-extras > *{pointer-events:auto;}
+.first-steps-pill{margin-left:auto; flex:0 0 auto; display:inline-flex; align-items:center; gap:8px; height:40px; padding:0 14px 0 5px; border:none; border-radius:999px; background:var(--surface); color:var(--ink); font:inherit; font-size:13.5px; font-weight:800; white-space:nowrap; box-shadow:var(--shadow); cursor:pointer;}
+.first-steps-pill.ready{background:var(--accent); color:#fff;}
+.first-steps-ring{width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:conic-gradient(var(--accent) var(--p), var(--line) 0); flex:0 0 auto;}
+.first-steps-ring > span{width:22px; height:22px; border-radius:50%; background:var(--surface); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:var(--accent); font-variant-numeric:tabular-nums;}
+.first-steps-pill.ready .first-steps-ring{background:#fff;}
+.first-steps-pill.ready .first-steps-ring > span{background:var(--accent); color:#fff;}
+.first-steps-sub{display:flex; align-items:center; gap:5px; font-size:13.5px; font-weight:600; color:var(--ink-soft); margin-top:2px;}
+.first-steps-list{list-style:none; margin:14px 0 0; padding:0; display:flex; flex-direction:column; gap:12px;}
+.first-steps-list li{display:flex; align-items:flex-start; gap:12px;}
+.first-steps-check{flex:0 0 auto; width:24px; height:24px; border-radius:50%; border:2px solid var(--line); display:flex; align-items:center; justify-content:center; color:#fff; margin-top:1px;}
+.first-steps-list li.done .first-steps-check{background:#1F9D55; border-color:#1F9D55;}
+.first-steps-text{display:flex; flex-direction:column; gap:2px; min-width:0;}
+.first-steps-text b{font-size:14.5px; font-weight:800;}
+.first-steps-list li.done .first-steps-text b{color:var(--ink-soft); text-decoration:line-through; text-decoration-color:rgba(0,0,0,.25);}
+.first-steps-text span{font-size:12.5px; line-height:1.35; color:var(--ink-soft); font-weight:600;}

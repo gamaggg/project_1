@@ -3,37 +3,37 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useI18n } from '@/lib/i18n'
-import { WHATS_NEW_TOURS, WHATS_NEW_VERSION, type TourStep } from '@/lib/data/whatsNew'
+import { TOURS, TOURS_VERSION, type Tour, type TourAudience, type TourStep } from '@/lib/data/tours'
 
-const STORE = `range:whats-new:${WHATS_NEW_VERSION}`
 const PAD = 6
 
 type Seen = Record<string, boolean>
+const storeKey = (audience: TourAudience) => `range:tours:${TOURS_VERSION}:${audience}`
 
-function readSeen(): Seen {
+function readSeen(audience: TourAudience): Seen {
   try {
-    return JSON.parse(localStorage.getItem(STORE) ?? '{}') as Seen
+    return JSON.parse(localStorage.getItem(storeKey(audience)) ?? '{}') as Seen
   } catch {
     return {}
   }
 }
-function writeSeen(seen: Seen) {
+function writeSeen(audience: TourAudience, seen: Seen) {
   try {
-    localStorage.setItem(STORE, JSON.stringify(seen))
+    localStorage.setItem(storeKey(audience), JSON.stringify(seen))
   } catch {
-    // Private mode / storage off: the tour may show again — harmless.
+    // Private mode / storage off: a tour may show again — harmless.
   }
 }
 
 // The element a step points at, if it's really there for this player: in
-// the visible screen (screens stay mounted underneath), laid out, not
-// inside a closed overlay.
+// the visible screen (screens stay mounted underneath), laid out, and on
+// screen sideways (the sector cards are a horizontal carousel).
 function findTarget(target: string): HTMLElement | null {
   const all = document.querySelectorAll<HTMLElement>(`[data-tour="${target}"]`)
   for (const el of all) {
     if (el.closest('.screen:not(.active)')) continue
     const r = el.getBoundingClientRect()
-    if (r.width > 0 && r.height > 0) return el
+    if (r.width > 0 && r.height > 0 && r.right > 0 && r.left < window.innerWidth) return el
   }
   return null
 }
@@ -42,54 +42,55 @@ function findTarget(target: string): HTMLElement | null {
 // player — goes first; the tour waits its turn.
 const busy = () => !!document.querySelector('.modal-overlay, .move-sheet-overlay, .recap-player')
 
-// «Что нового» (see lib/data/whatsNew.ts): the screen dimmed around one
-// element at a time, a note beside it, «Далее» / «Пропустить».
-// Only for players who were here before the update (a day or more) — a
-// newcomer gets the regular onboarding, and «new» means nothing to them.
-export function WhatsNewTour({ screen, enabled, memberSince }: { screen: string; enabled: boolean; memberSince: string | null }) {
+// The screen dimmed around one element at a time, a note beside it,
+// «Далее» / «Пропустить» — see lib/data/tours.ts for who gets which tour.
+// «Что нового» only for players who were here before the update (a day or
+// more) — anyone newer is a newcomer anyway.
+export function SpotlightTours({ screen, audience, memberSince }: { screen: string; audience: TourAudience | null; memberSince: string | null }) {
   const { t } = useI18n()
-  const [steps, setSteps] = useState<TourStep[] | null>(null)
-  const [tourScreen, setTourScreen] = useState<string | null>(null)
+  const [tour, setTour] = useState<{ def: Tour; steps: TourStep[] } | null>(null)
   const [index, setIndex] = useState(0)
   const [rect, setRect] = useState<DOMRect | null>(null)
 
-  // Start a screen's tour a moment after it opens (its data and layout
-  // settle first), with only the steps whose elements are actually there.
+  // Look for a tour of this screen that's due: unseen, its key element there.
   useEffect(() => {
-    if (!enabled || steps || !memberSince || Date.now() - new Date(memberSince).getTime() < 24 * 3600 * 1000) return
-    const tour = WHATS_NEW_TOURS[screen]
-    if (!tour) return
-    const seen = readSeen()
-    if (seen.skip || seen[screen]) return
-    let tries = 0
+    if (!audience || tour) return
+    if (audience === 'whatsNew' && (!memberSince || Date.now() - new Date(memberSince).getTime() < 24 * 3600 * 1000)) return
+    const candidates = TOURS[audience].filter((x) => x.screen === screen)
+    if (candidates.length === 0) return
     const id = window.setInterval(() => {
-      tries++
+      const seen = readSeen(audience)
+      if (seen.skip) {
+        window.clearInterval(id)
+        return
+      }
       if (busy()) return
-      const present = tour.filter((s) => findTarget(s.target))
-      if (present.length === 0 && tries < 6) return
-      window.clearInterval(id)
-      if (present.length === 0) return
-      setTourScreen(screen)
-      setIndex(0)
-      setSteps(present)
+      for (const def of candidates) {
+        if (seen[def.id] || !findTarget(def.requires)) continue
+        const steps = def.steps.filter((s) => findTarget(s.target))
+        if (steps.length === 0) continue
+        window.clearInterval(id)
+        setIndex(0)
+        setTour({ def, steps })
+        return
+      }
     }, 900)
     return () => window.clearInterval(id)
-  }, [screen, enabled, steps, memberSince])
+  }, [screen, audience, tour, memberSince])
 
   // Leaving the screen mid-tour closes it (it shows again next time).
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- the tour belongs to the screen it started on
-    if (steps && tourScreen && screen !== tourScreen) setSteps(null)
-  }, [screen, steps, tourScreen])
+    if (tour && screen !== tour.def.screen) setTour(null)
+  }, [screen, tour])
 
   // Follow the target: scrolled into view on each step, then measured every
   // frame while the tour is up (cheap — one rect), so the window keeps up
   // with scrolling and layout shifts.
-  const step = steps?.[index]
+  const step = tour?.steps[index]
   useEffect(() => {
     if (!step) return
-    const el = findTarget(step.target)
-    el?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    findTarget(step.target)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
     let raf = 0
     const tick = () => {
       const now = findTarget(step.target)
@@ -100,16 +101,16 @@ export function WhatsNewTour({ screen, enabled, memberSince }: { screen: string;
     return () => cancelAnimationFrame(raf)
   }, [step])
 
-  if (!steps || !step || !rect || !tourScreen) return null
+  if (!tour || !step || !rect || !audience) return null
 
   const finish = (all: boolean) => {
-    const seen = readSeen()
-    seen[tourScreen] = true
+    const seen = readSeen(audience)
+    seen[tour.def.id] = true
     if (all) seen.skip = true
-    writeSeen(seen)
-    setSteps(null)
+    writeSeen(audience, seen)
+    setTour(null)
   }
-  const last = index === steps.length - 1
+  const last = index === tour.steps.length - 1
 
   // Kept inside the app's own column, not the window: on a wide screen the
   // app is a phone-width column in the middle, and a note clamped to the
@@ -129,18 +130,26 @@ export function WhatsNewTour({ screen, enabled, memberSince }: { screen: string;
     <div className="tour-root" role="dialog" aria-modal="true" aria-label={t(`tour.${step.key}.title`)}>
       <div className="tour-hole" style={hole} />
       <div
-        key={index}
+        key={`${tour.def.id}-${index}`}
         className={`tour-tip ${below ? 'below' : 'above'}`}
         style={{ left: tipLeft, width: tipW, ...(below ? { top: hole.top + hole.height + 14 } : { bottom: vh - hole.top + 14 }) }}
       >
         <span className="tour-arrow" style={{ left: arrowX - 7 }} />
-        <div className="tour-kicker">{t('tour.kicker', { n: index + 1, total: steps.length })}</div>
+        <div className="tour-kicker">
+          {tour.steps.length > 1
+            ? t(audience === 'newcomer' ? 'tour.kickerTip' : 'tour.kicker', { n: index + 1, total: tour.steps.length })
+            : t('tour.kickerTipOne')}
+        </div>
         <div className="tour-title">{t(`tour.${step.key}.title`)}</div>
         <div className="tour-text">{t(`tour.${step.key}.text`)}</div>
         <div className="tour-actions">
-          <button className="tour-skip" onClick={() => finish(true)}>
-            {t('tour.skip')}
-          </button>
+          {tour.steps.length > 1 ? (
+            <button className="tour-skip" onClick={() => finish(true)}>
+              {t('tour.skip')}
+            </button>
+          ) : (
+            <span />
+          )}
           <button className="btn-primary tour-next" onClick={() => (last ? finish(false) : setIndex(index + 1))}>
             {last ? t('tour.done') : t('tour.next')}
           </button>

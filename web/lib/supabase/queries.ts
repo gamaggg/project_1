@@ -2058,6 +2058,47 @@ export function useHasClaimedFromOthers(userId: string | null) {
   })
 }
 
+// «Первые шаги» (supabase-drafts/first_steps.sql): a newcomer's six steps,
+// worked out on the server from what they've actually done, and the one-off
+// 100 coins for all six. Null when the server doesn't have it (yet) — then
+// the app behaves as before: no checklist, the «Что нового» tours.
+export type FirstStepKey = 'catch' | 'treasury' | 'daily' | 'fortify' | 'challenge' | 'clan'
+export type FirstSteps = { eligible: boolean; claimed: boolean; reward: number; steps: Record<FirstStepKey, boolean> }
+
+export function useFirstSteps() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['first-steps', user?.id ?? null],
+    enabled: !!user,
+    // Steps finish on other screens (a challenge, a clan) too — while the
+    // checklist is up, look again every minute.
+    refetchInterval: (q) => (q.state.data && q.state.data.eligible && !q.state.data.claimed ? 60_000 : false),
+    queryFn: async (): Promise<FirstSteps | null> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_first_steps')
+      if (error) return null
+      return data as unknown as FirstSteps
+    },
+    staleTime: 30_000,
+  })
+}
+
+export function useClaimFirstSteps() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('claim_first_steps')
+      if (error) throw error
+      return data as unknown as { coins: number; balance: number }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['first-steps'] })
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
+    },
+  })
+}
+
 export function useConfirmCatch() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -2096,6 +2137,7 @@ export function useConfirmCatch() {
       }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['first-steps'] })
       queryClient.invalidateQueries({ queryKey: ['territories'] })
       queryClient.invalidateQueries({ queryKey: ['catches'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
@@ -2439,6 +2481,7 @@ export function useClaimDailyReward() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['daily-reward', user?.id ?? null] })
       queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['first-steps'] })
     },
   })
 }
@@ -2475,6 +2518,7 @@ export function useCollectTreasury() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['treasury', user?.id ?? null] })
       queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['first-steps'] })
     },
   })
 }

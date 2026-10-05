@@ -36,7 +36,7 @@ export function SpeciesPicker({
 
   return (
     <>
-      <button type="button" id="species" className={`species-trigger${selected ? '' : ' empty'}`} onClick={() => setOpen(true)}>
+      <button type="button" id="species" data-tour="species" className={`species-trigger${selected ? '' : ' empty'}`} onClick={() => setOpen(true)}>
         {selected ? selected.name : 'Выбери вид рыбы'}
       </button>
       {open && (

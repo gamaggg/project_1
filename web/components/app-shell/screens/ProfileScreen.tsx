@@ -598,7 +598,7 @@ export function ProfileScreen({
       )}
 
       <div className="profile-cta-row" style={{ marginTop: 24 }}>
-        <button className="profile-cta-btn profile-cta-challenges tap-scale" onClick={onOpenChallenges}>
+        <button data-tour="challenges" className="profile-cta-btn profile-cta-challenges tap-scale" onClick={onOpenChallenges}>
           <div className="profile-cta-pattern" />
           <span className="profile-cta-arrow">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
@@ -624,7 +624,7 @@ export function ProfileScreen({
 
       {profile?.clanId ? (
         <button
-          className="profile-clan-card tap-scale"
+          data-tour="clan" className="profile-clan-card tap-scale"
           style={{ background: resolveClanBackground(null).css }}
           onClick={() => onOpenClan(profile.clanId!)}
         >
@@ -648,7 +648,7 @@ export function ProfileScreen({
           </span>
         </button>
       ) : (
-        <button className="profile-clan-card profile-clan-card-empty tap-scale" onClick={onOpenClans}>
+        <button data-tour="clan" className="profile-clan-card profile-clan-card-empty tap-scale" onClick={onOpenClans}>
           <span className="profile-clan-stack" aria-hidden>
             <ClanCrest crest={{ shape: 'shield', symbol: 'anchor', primary: '#1D6FC9', secondary: '#FFFFFF' }} size={34} />
             <ClanCrest crest={{ shape: 'hex', symbol: 'pike', primary: '#FC5200', secondary: '#FFE7C2' }} size={42} />
@@ -840,7 +840,7 @@ export function ProfileScreen({
         </span>
       </button>
 
-      <button className="profile-faq-row tap-scale" onClick={onOpenFaq}>
+      <button data-tour="faq" className="profile-faq-row tap-scale" onClick={onOpenFaq}>
         <span className="profile-faq-icon" aria-hidden>
           ?
         </span>

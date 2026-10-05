@@ -1833,6 +1833,8 @@ export type Database = {
       get_city_week_recap: { Args: { p_city: string; p_week_offset?: number; p_user?: string }; Returns: Json }
       queue_bite_forecast: { Args: { p_city: string; p_for_date: string; p_score: number; p_from: string; p_to: string }; Returns: number }
       onboarding_due: { Args: { p_limit?: number }; Returns: { chat_id: number; user_id: string | null; step: string; city: string | null; name: string | null; data: Json }[] }
+      get_first_steps: { Args: Record<string, never>; Returns: Json }
+      claim_first_steps: { Args: Record<string, never>; Returns: Json }
       log_app_events: { Args: { p_device: string; p_session: string; p_events: Json }; Returns: number }
       get_app_stats: { Args: { p_days?: number; p_tz?: string }; Returns: Json }
       collect_treasury: { Args: Record<string, never>; Returns: Json }
