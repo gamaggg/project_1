@@ -3277,13 +3277,13 @@ button.race-lane{cursor:pointer;}
 /* The recap as a sticker on the map: small, square, tilted, white-edged. */
 .recap-sticker-wrap{position:relative; align-self:flex-start; margin-left:18px; transform:rotate(-5deg); animation:recap-sticker-in .45s var(--ease-out) both;}
 @keyframes recap-sticker-in{from{opacity:0; transform:rotate(-14deg) scale(.7);}}
-.recap-sticker{width:96px; height:96px; padding:10px 8px 8px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; border:3px solid #fff; border-radius:20px; background:linear-gradient(150deg,#FF8A3D 0%,#FC5200 55%,#E2400A 100%); box-shadow:0 10px 20px rgba(150,40,0,.35), 0 2px 4px rgba(0,0,0,.15); color:#fff; font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent;}
+.recap-sticker{width:118px; height:118px; padding:12px 10px 10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; border:3.5px solid #fff; border-radius:24px; background:linear-gradient(150deg,#FF8A3D 0%,#FC5200 55%,#E2400A 100%); box-shadow:0 10px 20px rgba(150,40,0,.35), 0 2px 4px rgba(0,0,0,.15); color:#fff; font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent;}
 .recap-sticker:active{transform:scale(.96);}
 .recap-sticker-spark{margin-bottom:2px;}
-.recap-sticker-week{font-family:var(--font-display),'Oswald',sans-serif; font-size:21px; line-height:1; text-transform:uppercase; letter-spacing:.02em;}
-.recap-sticker-city{font-family:var(--font-display),'Oswald',sans-serif; font-size:13px; line-height:1.15; text-transform:uppercase; color:#FFE14D; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-.recap-sticker-dates{margin-top:3px; font-size:10px; font-weight:800; color:rgba(255,255,255,.85); font-variant-numeric:tabular-nums;}
-.recap-sticker-close{position:absolute; top:-8px; right:-8px; width:24px; height:24px; display:flex; align-items:center; justify-content:center; padding:0; border:2px solid #fff; border-radius:50%; background:#17181B; color:#fff; box-shadow:0 2px 6px rgba(0,0,0,.25); cursor:pointer;}
+.recap-sticker-week{font-family:var(--font-display),'Oswald',sans-serif; font-size:26px; line-height:1; text-transform:uppercase; letter-spacing:.02em;}
+.recap-sticker-city{font-family:var(--font-display),'Oswald',sans-serif; font-size:16px; line-height:1.15; text-transform:uppercase; color:#FFE14D; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.recap-sticker-dates{margin-top:4px; font-size:12px; font-weight:800; color:rgba(255,255,255,.85); font-variant-numeric:tabular-nums;}
+.recap-sticker-close{position:absolute; top:-9px; right:-9px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; padding:0; border:2px solid #fff; border-radius:50%; background:#17181B; color:#fff; box-shadow:0 2px 6px rgba(0,0,0,.25); cursor:pointer;}
 @media (prefers-reduced-motion: reduce){.recap-sticker-wrap{animation:none;}}
 .recap-player{position:fixed; inset:0; z-index:2000; display:flex; align-items:center; justify-content:center; animation:recap-fade .25s var(--ease-out) both;}
 @keyframes recap-fade{from{opacity:0;}}
