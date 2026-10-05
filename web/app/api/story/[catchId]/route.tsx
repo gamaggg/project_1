@@ -128,9 +128,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ catc
 
           <div style={{ position: 'absolute', left: 80, right: 80, bottom: 150, display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', width: 132, height: 152 }}>
-                <svg width={132} height={152} viewBox="0 0 132 152" style={{ position: 'absolute', top: 0, left: 0 }}>
-                  <polygon points="66,4 128,40 128,112 66,148 4,112 4,40" fill="#FC5200" stroke="#FFB27A" strokeWidth={4} />
+              {/* Flat top and bottom, corners left and right — the map's own sector hexes. */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', width: 176, height: 152 }}>
+                <svg width={176} height={152} viewBox="0 0 176 152" style={{ position: 'absolute', top: 0, left: 0 }}>
+                  <polygon points="46,4 130,4 172,76 130,148 46,148 4,76" fill="#FC5200" stroke="#FFB27A" strokeWidth={4} strokeLinejoin="round" />
                 </svg>
                 <span style={{ color: '#fff', fontFamily: 'Oswald', fontSize: 34 }}>{c.territory_id}</span>
               </div>
