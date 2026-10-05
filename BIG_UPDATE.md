@@ -62,7 +62,7 @@
 - Удалить тестовые горячие сектора (`delete from hot_sectors` — строки id 1–4 выбраны вручную 05.10 для проверки), иначе при запуске расписания их «победители» получат настоящие награды.
 - `pick_hot_sectors`: если до конца недели меньше суток, брать следующую неделю (05.10 ручной выбор в воскресенье дал Москве сектора до полуночи).
 - Иконки слотов — заменить на SVG пользователя (символы в `SlotSymbol.tsx`, id не меняются).
-- Применить `release/premium_shop_items.sql` (13 дорогих вещей), затем удалить `lib/data/premiumShopPreview.ts` и `withPremiumPreview` в `ShopScreen`.
+- Применить `release/premium_shop_items.sql` (17 дорогих вещей + расширение CHECK `profiles.hero_bg` для 4 новых фонов), затем удалить `lib/data/premiumShopPreview.ts` и `withPremiumPreview` в `ShopScreen`.
 
 ## Статус
 | # | Пункт | Состояние |
