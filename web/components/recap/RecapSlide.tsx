@@ -252,7 +252,7 @@ function hexPoints(cx: number, cy: number, w: number): string {
     [cx - w / 4, cy + h / 2],
     [cx - w / 2, cy],
   ]
-    .map(([x, y]) => `${Math.round(x)},${Math.round(y)}`)
+    .map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`)
     .join(' ')
 }
 
@@ -285,15 +285,16 @@ function Sector({ env }: { env: SlideEnv }) {
         <div style={{ display: 'flex', position: 'relative', width: COMB_W, height: COMB_H, alignItems: 'center', justifyContent: 'center' }}>
           <svg width={COMB_W} height={COMB_H} viewBox={`0 0 ${COMB_W} ${COMB_H}`} style={{ position: 'absolute', top: 0, left: 0 }}>
             {around.map(([x, y], i) => (
-              <polygon key={i} points={hexPoints(x, y, HEX_W - 14)} fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.4)" strokeWidth={4} strokeLinejoin="round" />
+              <polygon key={i} points={hexPoints(x, y, HEX_W - 16)} fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.4)" strokeWidth={4} strokeLinejoin="round" />
             ))}
-            {/* Same size as its neighbours — one honeycomb, like the map. */}
-            <polygon points={hexPoints(cx, cy, HEX_W - 14)} fill={YELLOW} stroke="#FFFFFF" strokeWidth={8} strokeLinejoin="round" />
+            {/* Same size and the same stroke as its neighbours, so every gap in
+                the honeycomb is equal — one grid, like the map. */}
+            <polygon points={hexPoints(cx, cy, HEX_W - 16)} fill={YELLOW} stroke="#FFFFFF" strokeWidth={4} strokeLinejoin="round" />
           </svg>
           {/* Positioned so it paints above the absolutely placed honeycomb. */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-            <span style={{ fontFamily: env.fonts.display, fontSize: 112, lineHeight: 1, color: '#6A00C8' }}>{s.territoryId}</span>
-            {kind && <span style={{ fontSize: 40, fontWeight: 800, color: 'rgba(106,0,200,.7)', marginTop: 8 }}>{kind}</span>}
+            <span style={{ fontFamily: env.fonts.display, fontSize: 80, lineHeight: 1, color: '#6A00C8' }}>{s.territoryId}</span>
+            {kind && <span style={{ fontSize: 32, fontWeight: 800, color: 'rgba(106,0,200,.7)', marginTop: 6 }}>{kind}</span>}
           </div>
         </div>
         <div style={{ display: 'flex', fontSize: 58, fontWeight: 800, marginTop: 40 }}>{env.t('recap.sectorCatches', { count: count(s.catches, env.anim) })}</div>
