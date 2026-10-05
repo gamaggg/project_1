@@ -613,6 +613,37 @@ body{
 .buff-row .btn-secondary{margin-top:0; padding:9px 14px; font-size:13px; width:auto;}
 .buff-row .badge{flex:0 0 auto; white-space:nowrap;}
 
+/* ---- Что клюёт здесь и легенда сектора (SectorInsights.tsx) ---- */
+.insights-card{margin-top:16px; padding:14px 16px; border-radius:var(--radius-l); background:var(--surface); box-shadow:var(--shadow-sm);}
+.insights-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:10px;}
+.insights-title{font-size:16px; font-weight:800;}
+.insights-period{font-size:12px; font-weight:700; color:var(--ink-faint);}
+.insights-empty{font-size:13.5px; line-height:1.4; color:var(--ink-soft);}
+.insights-species{display:flex; flex-direction:column; gap:7px;}
+.insights-species-row{display:grid; grid-template-columns:minmax(0,108px) minmax(0,1fr) 28px; align-items:center; gap:10px; font-size:13px;}
+.insights-species-name{font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.insights-species-bar{height:8px; border-radius:4px; background:#F1EFEA; overflow:hidden;}
+.insights-species-bar i{display:block; height:100%; border-radius:4px; background:var(--accent);}
+.insights-species-count{text-align:right; font-weight:800; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+.insights-best{margin-top:14px; font-size:13px; font-weight:800;}
+.insights-hours{display:grid; grid-template-columns:repeat(24,minmax(0,1fr)); align-items:end; gap:2px; height:38px; margin-top:8px;}
+.insights-hours i{display:block; border-radius:2px 2px 0 0; background:#E4E1DA;}
+.insights-hours i.on{background:var(--accent);}
+.insights-hours-axis{display:flex; justify-content:space-between; margin-top:4px; font-size:10.5px; font-weight:700; color:var(--ink-faint); font-variant-numeric:tabular-nums;}
+.insights-gear{display:flex; flex-direction:column; gap:4px; margin-top:12px; font-size:13px; line-height:1.4;}
+.insights-gear-label{display:inline-block; min-width:76px; color:var(--ink-faint); font-weight:700;}
+.insights-note{margin-top:10px; font-size:12px; line-height:1.4; color:var(--ink-faint);}
+.legend-row{margin-top:12px; padding:10px 12px; border-radius:14px; background:#FBF6EA; border:1px solid #F1E3C2;}
+.legend-row-head{display:flex; align-items:center; gap:6px; font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:#9A6B12;}
+.legend-row-person{display:flex; align-items:center; gap:10px; width:100%; margin-top:8px; padding:0; border:none; background:none; font:inherit; text-align:left; cursor:pointer;}
+.legend-row-avatar{flex:0 0 auto; width:34px; height:34px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#FF7A38,var(--accent) 70%); color:#fff; font-size:12px; font-weight:800; box-shadow:0 0 0 2px #E2B13C;}
+.legend-row-avatar img{width:100%; height:100%; object-fit:cover;}
+.legend-row-text{display:flex; flex-direction:column; min-width:0;}
+.legend-row-text b{font-size:14.5px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.legend-row-text span{font-size:12.5px; color:var(--ink-soft); font-weight:600;}
+.legend-row-none{margin-top:6px; font-size:13px; line-height:1.4; color:var(--ink-soft);}
+.legend-row-progress{margin-top:8px; font-size:12px; font-weight:700; color:#9A6B12;}
+
 /* ---- Горячий сектор недели ---- */
 .map-sheet-hot{display:flex; align-items:center; gap:5px; margin:-2px 0 -2px; font-size:12px; line-height:1; font-weight:700; color:#B83E00; white-space:nowrap; overflow:hidden;}
 .map-sheet-hot b{font-weight:800; text-transform:uppercase; letter-spacing:.04em;}
@@ -3083,3 +3114,96 @@ button.race-lane{cursor:pointer;}
 .clan-admin-slots-text{flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;}
 .clan-admin-slots-text b{font-size:14.5px; color:var(--ink);}
 .clan-admin-slots-text span{font-size:12px; color:var(--ink-soft);}
+
+/* ===== Атлас рыб ===== */
+.fish-silhouette{display:block; flex:0 0 auto; overflow:visible;}
+.fish-silhouette path{fill:var(--fish-color);}
+.fish-silhouette .fish-eye{fill:#fff; opacity:.9;}
+.fish-silhouette .fish-whisker{fill:none; stroke:var(--fish-color); stroke-width:1.4; stroke-linecap:round;}
+.fish-silhouette.locked .fish-eye{display:none;}
+.atlas-hero{
+  position:relative; overflow:hidden; display:flex; align-items:center; gap:16px; margin-bottom:22px;
+  padding:16px; border-radius:20px; background:#0F2A33; box-shadow:var(--shadow-sm);
+}
+.atlas-hero::before{
+  content:''; position:absolute; inset:0; pointer-events:none; opacity:.55;
+  background-image:repeating-radial-gradient(ellipse at 110% 120%, transparent 0 11px, rgba(63,208,180,.09) 11px 12px);
+}
+.atlas-hero > *{position:relative;}
+.atlas-hero-ring{position:relative; flex:0 0 76px; width:76px; height:76px;}
+.atlas-hero-ring span{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:#fff; font-variant-numeric:tabular-nums;}
+.atlas-hero-ring-fill{transition:stroke-dashoffset .8s var(--ease-out);}
+.atlas-hero-text{min-width:0;}
+.atlas-hero-kicker{font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#3FD0B4;}
+.atlas-hero-title{margin-top:2px; font-size:19px; font-weight:800; color:#fff;}
+.atlas-hero-hint{margin-top:4px; font-size:12.5px; line-height:1.4; color:rgba(255,255,255,.62);}
+.atlas-category{margin-bottom:24px;}
+.atlas-category-head{display:flex; align-items:center; gap:8px;}
+.atlas-category-dot{width:9px; height:9px; border-radius:3px; flex:0 0 auto;}
+.atlas-category-name{font-size:16px; font-weight:800; flex:1; min-width:0;}
+.atlas-category-count{font-size:13px; font-weight:800; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+.atlas-category-bar{height:5px; margin:8px 0 12px; border-radius:3px; background:#EFECE6; overflow:hidden;}
+.atlas-category-bar i{display:block; height:100%; border-radius:3px; transition:width .6s var(--ease-out);}
+.atlas-grid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px;}
+.atlas-tile{
+  position:relative; display:flex; flex-direction:column; align-items:center; gap:6px; min-height:112px;
+  padding:14px 6px 10px; border:1px solid var(--line); border-radius:16px; background:#FAF9F6;
+  font:inherit; color:var(--ink-faint); text-align:center; cursor:pointer;
+  animation:atlas-tile-in .35s var(--ease-out) both;
+}
+.atlas-tile.caught{background:var(--surface); border-color:color-mix(in srgb, var(--tile-color) 28%, var(--line)); color:var(--ink); box-shadow:var(--shadow-sm);}
+.atlas-tile-name{font-size:12px; font-weight:700; line-height:1.25; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+.atlas-tile-count{position:absolute; top:6px; right:8px; font-size:11px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--ink-faint);}
+.atlas-tile.caught .atlas-tile-count{color:var(--tile-color);}
+.atlas-tile-skeleton{background:#F3F1EC; border-color:transparent; animation:none;}
+@keyframes atlas-tile-in{from{opacity:0; transform:translateY(6px);}}
+.atlas-sheet{max-height:86dvh;}
+.atlas-sheet-hero{
+  display:flex; align-items:center; justify-content:center; height:120px; margin:10px 18px 0; border-radius:18px;
+  background:color-mix(in srgb, var(--tile-color) 9%, #F7F6F2);
+}
+.atlas-sheet-head{padding:14px 18px 6px; text-align:center;}
+.atlas-sheet-kicker{font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint);}
+.atlas-sheet-title{margin-top:3px; font-size:21px; font-weight:800; text-wrap:balance;}
+.atlas-sheet-sub{margin-top:4px; font-size:13px; font-weight:600; color:var(--ink-soft);}
+.atlas-sheet-body{display:flex; flex-direction:column; gap:10px; padding-top:8px; padding-bottom:18px;}
+.atlas-sheet-block{padding:12px 14px; border-radius:16px; background:#F7F6F2;}
+.atlas-sheet-label{display:block; font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-faint);}
+.atlas-sheet-muted{font-size:13px; line-height:1.4; color:var(--ink-soft);}
+.atlas-sheet-row{display:flex; align-items:center; gap:12px; width:100%; padding:10px 14px 10px 10px; border:1px solid var(--line); border-radius:16px; background:var(--surface); font:inherit; text-align:left; cursor:pointer;}
+.atlas-sheet-photo{flex:0 0 auto; width:52px; height:52px; border-radius:12px; overflow:hidden; background:#EEE;}
+.atlas-sheet-photo img{width:100%; height:100%; object-fit:cover;}
+.atlas-sheet-row-text{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+.atlas-sheet-row-text b{font-size:15px; font-weight:800;}
+.atlas-sheet-record{display:flex; align-items:baseline; gap:8px; margin-top:6px; padding:0; border:none; background:none; font:inherit; text-align:left; cursor:pointer;}
+.atlas-sheet-record b{font-size:20px; font-weight:800; font-variant-numeric:tabular-nums;}
+.atlas-sheet-record span{font-size:13px; font-weight:700; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.atlas-months{display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:4px; margin-top:10px;}
+.atlas-month{display:flex; flex-direction:column; align-items:center; gap:4px;}
+.atlas-month-track{display:flex; align-items:flex-end; width:100%; height:44px;}
+.atlas-month-track i{display:block; width:100%; border-radius:3px; background:#E4E1DA;}
+.atlas-month span{font-size:10.5px; font-weight:700; color:var(--ink-faint); text-transform:uppercase;}
+.atlas-sectors{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
+.atlas-sector{padding:6px 12px; border:1px solid var(--line); border-radius:999px; background:var(--surface); font:inherit; font-size:13px; font-weight:800; font-variant-numeric:tabular-nums; cursor:pointer;}
+.atlas-card{
+  display:flex; align-items:center; gap:12px; width:100%; margin-top:12px; padding:14px 14px 14px 16px;
+  border:1px solid var(--line); border-radius:20px; background:var(--surface); box-shadow:var(--shadow-sm);
+  font:inherit; color:inherit; text-align:left; cursor:pointer;
+}
+.atlas-card-text{flex:1; min-width:0; display:flex; flex-direction:column; gap:3px;}
+.atlas-card-title{font-size:15px; font-weight:800;}
+.atlas-card-sub{font-size:12.5px; font-weight:600; color:var(--ink-soft);}
+.atlas-card-bar{display:block; height:5px; margin-top:6px; border-radius:3px; background:#EFECE6; overflow:hidden;}
+.atlas-card-bar i{display:block; height:100%; border-radius:3px; background:#1FA38A;}
+.atlas-card-strip{display:flex; align-items:center; flex:0 0 auto;}
+.atlas-card-strip .fish-silhouette + .fish-silhouette{margin-left:-12px;}
+.profile-legend-chip{display:inline-flex; align-items:center; gap:6px; margin-top:12px; padding:6px 12px 6px 10px; border-radius:999px; background:#FBF6EA; border:1px solid #F1E3C2; font-size:12.5px; font-weight:800; color:#9A6B12;}
+@media (prefers-reduced-motion: reduce){.atlas-tile{animation:none;} .atlas-hero-ring-fill, .atlas-category-bar i{transition:none;}}
+.map-sheet-legend{display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; width:24px; height:24px; margin-left:-4px; border-radius:50%; background:#FBF6EA;}
+.catch-trophy-atlas{
+  display:flex; align-items:center; gap:8px; margin:-8px auto 16px; width:max-content; max-width:100%;
+  padding:7px 14px 7px 10px; border-radius:999px; background:rgba(63,208,180,.14); border:1px solid rgba(63,208,180,.35);
+  color:#BFF5E9; font-size:13px; font-weight:800;
+  animation:trophyFadeUp .5s 1.45s ease both;
+}
+@media (prefers-reduced-motion: reduce){.catch-trophy-atlas{animation:none;}}

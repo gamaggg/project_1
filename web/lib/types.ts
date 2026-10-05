@@ -1350,6 +1350,7 @@ export type Database = {
           co_holders: Json | null
           capturer_id: string | null
           hot_until: string | null
+          legend_id: string | null
           owner_clan_crest: Json | null
           owner_clan_id: number | null
           owner_clan_name: string | null
@@ -1654,6 +1655,8 @@ export type Database = {
       get_daily_reward_state: { Args: Record<string, never>; Returns: Json }
       claim_daily_reward: { Args: Record<string, never>; Returns: Json }
       get_treasury: { Args: Record<string, never>; Returns: Json }
+      get_sector_insights: { Args: { p_territory_id: string }; Returns: Json }
+      get_species_atlas: { Args: { p_city: string }; Returns: Json }
       collect_treasury: { Args: Record<string, never>; Returns: Json }
       spin_slots: { Args: Record<string, never>; Returns: Json }
       use_free_shield: { Args: { p_territory_id: string }; Returns: undefined }

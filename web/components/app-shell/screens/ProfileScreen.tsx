@@ -26,7 +26,7 @@ import { KIND_LABEL } from '@/lib/data/species'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { resolveClanBackground } from '@/lib/data/clanBackgrounds'
 import { CLAN_ROLE_LABEL } from '@/lib/data/clanLevels'
-import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralFollowers, pluralSpecies, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
+import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralFollowers, pluralSpecies, pluralTerritories, speciesBreakdown } from '@/lib/format'
 import { ACH_ICONS, CTA_ICONS } from '@/components/app-shell/icons'
 import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorPreviewMap'
 import { DEFAULT_TERRITORY_COLOR, TERRITORY_COLORS } from '@/lib/data/territoryColors'
@@ -40,6 +40,9 @@ import { CITIES, type CityId } from '@/lib/data/city'
 import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
 import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
 import { useTelegramHomeScreen } from '@/lib/telegram/useTelegramHomeScreen'
+import { AtlasCard } from '@/components/app-shell/screens/AtlasScreen'
+import { LaurelIcon } from '@/components/app-shell/SectorInsights'
+import { useT } from '@/lib/i18n'
 
 // Telegram notifications, as one row rather than a screen of its own —
 // there's a single setting to make so far. Which control it shows depends on
@@ -392,12 +395,12 @@ export function ProfileScreen({
   onShareProfile,
   onInviteFriends,
   onOpenFollowers,
-  onOpenSpecies,
   onPostAnnouncement,
   onEditPublicId,
   onGrantCoins,
   onOpenShop,
   onOpenChallenges,
+  onOpenAtlas,
   onOpenClans,
   onOpenClan,
 }: {
@@ -424,12 +427,12 @@ export function ProfileScreen({
   // «Пригласи друзей» — the plain referral link (+100 coins each side).
   onInviteFriends: () => void
   onOpenFollowers: (people: ProfileSummary[]) => void
-  onOpenSpecies: (species: SpeciesEntry[]) => void
   onPostAnnouncement: () => void
   onEditPublicId: (id: string) => void
   onGrantCoins: (id: string) => void
   onOpenShop: () => void
   onOpenChallenges: () => void
+  onOpenAtlas: () => void
   onOpenClans: () => void
   onOpenClan: (id: number) => void
 }) {
@@ -449,8 +452,12 @@ export function ProfileScreen({
   // intercepts before ProfileScreen (or any other screen) can mount. See
   // DECISIONS.md.
   const heroRef = useMagneticProfileHero()
+  const t = useT()
   const mySpecies = speciesBreakdown(myCatches)
   const speciesCount = mySpecies.length
+  const cityPrefix = CITIES[city].idPrefix
+  const atlasCaught = new Set(myCatches.filter((c) => c.territoryId.startsWith(cityPrefix)).map((c) => c.species))
+  const legendCount = user ? allTerritories.filter((tr) => tr.legendId === user.id).length : 0
   const record = personalRecord(myCatches)
   const achievements = computeAchievements(
     myCatches,
@@ -568,7 +575,7 @@ export function ProfileScreen({
           <b>{myCatches.length}</b>
           <span>{pluralCatches(myCatches.length)}</span>
         </button>
-        <button className="hero-stat" onClick={() => onOpenSpecies(mySpecies)}>
+        <button className="hero-stat" onClick={onOpenAtlas}>
           <b>{speciesCount}</b>
           <span>{pluralSpecies(speciesCount)} рыб</span>
         </button>
@@ -580,6 +587,13 @@ export function ProfileScreen({
           <span>{pluralFollowers(profile?.followersCount ?? 0)}</span>
         </button>
       </div>
+
+      {legendCount > 0 && (
+        <div className="profile-legend-chip">
+          <LaurelIcon size={15} />
+          {t('legend.profileCount', { count: legendCount })}
+        </div>
+      )}
 
       <div className="profile-cta-row" style={{ marginTop: 24 }}>
         <button className="profile-cta-btn profile-cta-challenges tap-scale" onClick={onOpenChallenges}>
@@ -649,6 +663,8 @@ export function ProfileScreen({
           </span>
         </button>
       )}
+
+      <AtlasCard city={city} caughtKeys={atlasCaught} onOpen={onOpenAtlas} />
 
       <div className="section-title-row" style={{ marginTop: 24 }}>
         <div className="section-title">Достижения</div>

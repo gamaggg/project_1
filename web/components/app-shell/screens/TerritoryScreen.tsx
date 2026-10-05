@@ -8,6 +8,7 @@ import { useCatchesByTerritory, useProfile, useCanAddCatchManually, useIsSuperAd
 import { useI18n, useT } from '@/lib/i18n'
 import { formatWeekdayTime } from '@/lib/i18n/format'
 import { useNow } from '@/lib/useNow'
+import { SectorInsightsCard, SectorLegendRow } from '@/components/app-shell/SectorInsights'
 import { HOT_FLAME_SVG } from '@/lib/map/hotFlame'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { KIND_LABEL, WATER_KINDS_BY_CITY } from '@/lib/data/species'
@@ -382,6 +383,7 @@ export function TerritoryScreen({
           {sectorCapturer(territory) && (
             <SectorOwnerCard capturer={sectorCapturer(territory)!} coHolders={sectorOtherHolders(territory)} onOpenUser={onOpenUser} />
           )}
+          <SectorLegendRow territory={territory} onOpenUser={onOpenUser} />
           {holdsThis && (
             <div className="sector-income">
               <CoinIcon size={16} />
@@ -426,6 +428,8 @@ export function TerritoryScreen({
             <div className="label">Тип</div>
           </div>
         </div>
+
+        <SectorInsightsCard territory={territory} />
 
         <div className="section-title-row" style={{ marginTop: 22 }}>
           <div className="section-title">Последние уловы</div>

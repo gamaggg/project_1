@@ -10,6 +10,7 @@ import { formatWhen } from '@/lib/format'
 import { getCurrentCoords, useGeolocationPermission } from '@/lib/geolocation'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
+import { LaurelIcon } from '@/components/app-shell/SectorInsights'
 import { sectorHoldersCapturerFirst } from '@/lib/data/sectorHolders'
 import { mostPopularSectorId } from '@/lib/data/sectorOrder'
 import { MapRacePill } from '@/components/app-shell/ClanRace'
@@ -449,6 +450,11 @@ export const MapScreen = forwardRef<
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ fontSize: 21, fontWeight: 800, flex: '0 0 auto' }}>{t.id}</div>
+                  {t.legendId && (
+                    <span className="map-sheet-legend" title={tr('legend.title')} aria-label={tr('legend.title')}>
+                      <LaurelIcon size={17} />
+                    </span>
+                  )}
                   {t.status !== 'free' && t.ownerDisplayName && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: '1 1 auto' }}>
                       {/* Shared by clan-mates: every holder's face, stacked, in

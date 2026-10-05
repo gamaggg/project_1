@@ -65,7 +65,7 @@ export function useTerritories() {
     queryFn: async (): Promise<Territory[]> => {
       const supabase = createClient()
       const columns =
-        'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted, shield_until, owner_equipped_skin, owner_clan_id, owner_clan_name, owner_clan_crest, co_holders, capturer_id, hot_until'
+        'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted, shield_until, owner_equipped_skin, owner_clan_id, owner_clan_name, owner_clan_crest, co_holders, capturer_id, hot_until, legend_id'
       // PostgREST caps a single response at 1000 rows by default and stays
       // silent about it (no error, just a truncated array) — the table
       // crossed that count once admin-added sectors piled up, which is how
@@ -125,6 +125,7 @@ export function useTerritories() {
           coHolders: toCoHolders(row?.co_holders, user?.id),
           capturerId: row?.capturer_id ?? null,
           hotUntil: row?.hot_until ?? null,
+          legendId: row?.legend_id ?? null,
         }
       }
 
@@ -2065,6 +2066,8 @@ export function useConfirmCatch() {
       queryClient.invalidateQueries({ queryKey: ['activity'] })
       // Every catch adds a free spin in the Shop's slots.
       queryClient.invalidateQueries({ queryKey: ['slot-state'] })
+      queryClient.invalidateQueries({ queryKey: ['species-atlas'] })
+      queryClient.invalidateQueries({ queryKey: ['sector-insights'] })
     },
   })
 }
@@ -2438,6 +2441,129 @@ export function useCollectTreasury() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['treasury', user?.id ?? null] })
       queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
+    },
+  })
+}
+
+export type SectorInsights = {
+  // 'kind': the sector itself had fewer than 3 catches in 30 days, so these
+  // are every sector of the same water type in the city.
+  scope: 'sector' | 'kind'
+  kind: TerritoryKind
+  total: number
+  species: { key: string; count: number }[]
+  // 24 counts, one per local hour 0–23.
+  hours: number[]
+  methods: { name: string; count: number }[]
+  baits: { name: string; count: number }[]
+  lastCatchAt: string | null
+  legend: { id: string; name: string | null; avatarUrl: string | null; count: number } | null
+  // The viewer's own catches here in the same 30 days (null signed out).
+  myCount: number | null
+}
+
+// «Что клюёт здесь» and the sector's legend — one request per opened
+// sector screen, public like the map itself.
+export function useSectorInsights(territoryId: string | null) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['sector-insights', territoryId, user?.id ?? null],
+    enabled: !!territoryId,
+    queryFn: async (): Promise<SectorInsights> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_sector_insights', { p_territory_id: territoryId! })
+      if (error) throw error
+      const d = data as {
+        scope: 'sector' | 'kind'
+        kind: TerritoryKind
+        total: number
+        species: { key: string; count: number }[]
+        hours: number[]
+        methods: { name: string; count: number }[]
+        baits: { name: string; count: number }[]
+        last_catch_at: string | null
+        legend: { id: string; name: string | null; avatar_url: string | null; count: number } | null
+        my_count: number | null
+      }
+      return {
+        scope: d.scope,
+        kind: d.kind,
+        total: d.total,
+        species: d.species,
+        hours: d.hours,
+        methods: d.methods,
+        baits: d.baits,
+        lastCatchAt: d.last_catch_at,
+        legend: d.legend ? { id: d.legend.id, name: d.legend.name, avatarUrl: d.legend.avatar_url, count: d.legend.count } : null,
+        myCount: d.my_count,
+      }
+    },
+  })
+}
+
+// After a catch is saved: is it the player's first of this species in the
+// city (so the success screen can say «Новый вид в атласе!»)? Asked once the
+// catch is in, so a count of exactly 1 is the catch just made.
+export async function isFirstOfSpeciesInCity(userId: string, species: string, cityPrefix: string): Promise<boolean> {
+  const supabase = createClient()
+  const { count, error } = await supabase
+    .from('catches')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('species', species)
+    .like('territory_id', `${cityPrefix}%`)
+  if (error) return false
+  return count === 1
+}
+
+export type AtlasEntry = {
+  key: string
+  category: string
+  mine: number
+  firstAt: string | null
+  best: { catchId: number; lengthCm: number | null; weightKg: number | null; photoUrl: string; caughtAt: string } | null
+  cityCount: number
+  anglers: number
+  record: { catchId: number; lengthCm: number; userId: string; name: string | null } | null
+  // 12 counts, January to December, all years.
+  months: number[]
+  topSectors: string[]
+}
+
+// Атлас рыб: every species of the city, with what the player has caught.
+export function useSpeciesAtlas(city: CityId) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['species-atlas', city, user?.id ?? null],
+    enabled: !!user,
+    queryFn: async (): Promise<AtlasEntry[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_species_atlas', { p_city: city })
+      if (error) throw error
+      type Raw = {
+        key: string
+        category: string
+        mine: number
+        first_at: string | null
+        best: { catch_id: number; length_cm: number | null; weight_kg: number | null; photo_url: string; caught_at: string } | null
+        city_count: number
+        anglers: number
+        record: { catch_id: number; length_cm: number; user_id: string; name: string | null } | null
+        months: number[]
+        top_sectors: string[]
+      }
+      return (data as Raw[]).map((e) => ({
+        key: e.key,
+        category: e.category,
+        mine: e.mine,
+        firstAt: e.first_at,
+        best: e.best ? { catchId: e.best.catch_id, lengthCm: e.best.length_cm, weightKg: e.best.weight_kg, photoUrl: e.best.photo_url, caughtAt: e.best.caught_at } : null,
+        cityCount: e.city_count,
+        anglers: e.anglers,
+        record: e.record ? { catchId: e.record.catch_id, lengthCm: e.record.length_cm, userId: e.record.user_id, name: e.record.name } : null,
+        months: e.months,
+        topSectors: e.top_sectors,
+      }))
     },
   })
 }
