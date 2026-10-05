@@ -235,6 +235,7 @@ export const ru = {
     anglerTitle: 'Рыбак недели',
     anglerCatches: { one: 'улов за неделю', few: 'улова за неделю', many: 'уловов за неделю', other: 'улова за неделю' },
     anglerCaptures: { one: 'и {count} захват сектора', few: 'и {count} захвата секторов', many: 'и {count} захватов секторов', other: 'и {count} захвата секторов' },
+    kinds: { sea: 'море', river: 'река', lake: 'озеро', pond: 'пруд' },
     sectorTitle: 'Сектор недели',
     sectorCatches: { one: '{count} улов здесь за неделю', few: '{count} улова здесь за неделю', many: '{count} уловов здесь за неделю', other: '{count} улова здесь за неделю' },
     contested: { one: 'Сектор {id} сменил хозяина {count} раз', few: 'Сектор {id} сменил хозяина {count} раза', many: 'Сектор {id} сменил хозяина {count} раз', other: 'Сектор {id} сменил хозяина {count} раза' },

@@ -241,23 +241,64 @@ function Angler({ env }: { env: SlideEnv }) {
   )
 }
 
+// Flat-top hex (corners left and right, like the map's sectors) as SVG points.
+function hexPoints(cx: number, cy: number, w: number): string {
+  const h = (w * Math.sqrt(3)) / 2
+  return [
+    [cx - w / 4, cy - h / 2],
+    [cx + w / 4, cy - h / 2],
+    [cx + w / 2, cy],
+    [cx + w / 4, cy + h / 2],
+    [cx - w / 4, cy + h / 2],
+    [cx - w / 2, cy],
+  ]
+    .map(([x, y]) => `${Math.round(x)},${Math.round(y)}`)
+    .join(' ')
+}
+
+// Sized so the whole honeycomb — centre plus a neighbour on each side —
+// fits the slide's 912 px of content width with room for the strokes.
+const HEX_W = 330
+const HEX_H = (HEX_W * Math.sqrt(3)) / 2
+const COMB_W = Math.round(HEX_W * 2.5 + 24)
+const COMB_H = Math.round(HEX_H * 3 + 24)
+
 function Sector({ env }: { env: SlideEnv }) {
   const s = env.data.sector!
   const c = env.data.contested
+  const cx = COMB_W / 2
+  const cy = COMB_H / 2
+  // The six neighbours, as on the map: left and right ones half a row up and down.
+  const around = [
+    [cx, cy - HEX_H],
+    [cx, cy + HEX_H],
+    [cx - HEX_W * 0.75, cy - HEX_H / 2],
+    [cx - HEX_W * 0.75, cy + HEX_H / 2],
+    [cx + HEX_W * 0.75, cy - HEX_H / 2],
+    [cx + HEX_W * 0.75, cy + HEX_H / 2],
+  ]
+  const kind = s.kind && ['sea', 'river', 'lake', 'pond'].includes(s.kind) ? env.t(`recap.kinds.${s.kind}` as TKey) : null
   return (
     <Frame id="sector" env={env}>
       <Title env={env}>{env.t('recap.sectorTitle')}</Title>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 'auto', marginBottom: 'auto' }}>
-        {/* Flat top and bottom, corners left and right — the map's sector hex. */}
-        <div style={{ display: 'flex', position: 'relative', width: 640, height: 554, alignItems: 'center', justifyContent: 'center' }}>
-          <svg width={640} height={554} viewBox="0 0 640 554" style={{ position: 'absolute', top: 0, left: 0 }}>
-            <polygon points="166,10 474,10 630,277 474,544 166,544 10,277" fill={YELLOW} stroke="rgba(255,255,255,.6)" strokeWidth={10} strokeLinejoin="round" />
+        <div style={{ display: 'flex', position: 'relative', width: COMB_W, height: COMB_H, alignItems: 'center', justifyContent: 'center' }}>
+          <svg width={COMB_W} height={COMB_H} viewBox={`0 0 ${COMB_W} ${COMB_H}`} style={{ position: 'absolute', top: 0, left: 0 }}>
+            {around.map(([x, y], i) => (
+              <polygon key={i} points={hexPoints(x, y, HEX_W - 14)} fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.4)" strokeWidth={4} strokeLinejoin="round" />
+            ))}
+            {/* Same size as its neighbours — one honeycomb, like the map. */}
+            <polygon points={hexPoints(cx, cy, HEX_W - 14)} fill={YELLOW} stroke="#FFFFFF" strokeWidth={8} strokeLinejoin="round" />
           </svg>
-          <span style={{ fontFamily: env.fonts.display, fontSize: 170, color: '#7A00D6' }}>{s.territoryId}</span>
+          {/* Positioned so it paints above the absolutely placed honeycomb. */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+            <span style={{ fontFamily: env.fonts.display, fontSize: 112, lineHeight: 1, color: '#6A00C8' }}>{s.territoryId}</span>
+            {kind && <span style={{ fontSize: 40, fontWeight: 800, color: 'rgba(106,0,200,.7)', marginTop: 8 }}>{kind}</span>}
+          </div>
         </div>
-        <div style={{ display: 'flex', fontSize: 58, fontWeight: 800, marginTop: 50 }}>{env.t('recap.sectorCatches', { count: count(s.catches, env.anim) })}</div>
+        <div style={{ display: 'flex', fontSize: 58, fontWeight: 800, marginTop: 40 }}>{env.t('recap.sectorCatches', { count: count(s.catches, env.anim) })}</div>
         {c && (
-          <div style={{ display: 'flex', marginTop: 40, padding: '22px 36px', borderRadius: 36, background: 'rgba(255,255,255,.18)', fontSize: 42, fontWeight: 800, textAlign: 'center' }}>
+          <div style={{ display: 'flex', marginTop: 34, padding: '22px 36px', borderRadius: 36, background: 'rgba(255,255,255,.18)', fontSize: 42, fontWeight: 800, textAlign: 'center' }}>
             {env.t('recap.contested', { id: c.territoryId, count: c.changes })}
           </div>
         )}

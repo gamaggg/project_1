@@ -234,6 +234,7 @@ export const en: Dict = {
     anglerTitle: 'Angler of the week',
     anglerCatches: { one: 'catch this week', other: 'catches this week' },
     anglerCaptures: { one: 'and {count} sector captured', other: 'and {count} sectors captured' },
+    kinds: { sea: 'sea', river: 'river', lake: 'lake', pond: 'pond' },
     sectorTitle: 'Sector of the week',
     sectorCatches: { one: '{count} catch here this week', other: '{count} catches here this week' },
     contested: { one: 'Sector {id} changed hands {count} time', other: 'Sector {id} changed hands {count} times' },

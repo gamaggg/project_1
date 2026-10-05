@@ -236,6 +236,7 @@ export const ka: Dict = {
     anglerTitle: 'კვირის მეთევზე',
     anglerCatches: { one: 'დაჭერა ამ კვირაში', other: 'დაჭერა ამ კვირაში' },
     anglerCaptures: { one: 'და {count} დაპყრობილი სექტორი', other: 'და {count} დაპყრობილი სექტორი' },
+    kinds: { sea: 'ზღვა', river: 'მდინარე', lake: 'ტბა', pond: 'ტბორი' },
     sectorTitle: 'კვირის სექტორი',
     sectorCatches: { one: 'აქ {count} დაჭერა ამ კვირაში', other: 'აქ {count} დაჭერა ამ კვირაში' },
     contested: { one: 'სექტორმა {id} პატრონი {count}-ჯერ შეიცვალა', other: 'სექტორმა {id} პატრონი {count}-ჯერ შეიცვალა' },

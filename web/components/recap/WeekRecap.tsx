@@ -139,19 +139,27 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
   const id: SlideId = slides[index]
   const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-  const go = useCallback(
-    (next: number) => {
-      if (next < 0) next = 0
+  // Steps go through refs, not the rendered index: two quick taps (or arrow
+  // presses) before React re-renders must count as two steps, not one.
+  const indexRef = useRef(0)
+  const closeRef = useRef(onClose)
+  useEffect(() => {
+    closeRef.current = onClose
+  }, [onClose])
+  const step = useCallback(
+    (delta: number) => {
+      const next = Math.max(0, indexRef.current + delta)
       if (next >= slides.length) {
-        onClose()
+        closeRef.current()
         return
       }
+      indexRef.current = next
       elapsed.current = 0
       setIndex(next)
       setProgress(0)
       setAnim(0)
     },
-    [slides.length, onClose]
+    [slides.length]
   )
 
   // One clock for the whole player: the bar fills, numbers count up, and
@@ -167,8 +175,8 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
         const p = Math.min(1, elapsed.current / SLIDE_MS)
         setProgress(p)
         setAnim(reduced ? 1 : Math.min(1, elapsed.current / 1100))
-        if (p >= 1 && index < slides.length - 1) {
-          go(index + 1)
+        if (p >= 1 && indexRef.current < slides.length - 1) {
+          step(1)
           return
         }
       }
@@ -176,7 +184,7 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [index, slides.length, go, sharing, reduced])
+  }, [index, slides.length, step, sharing, reduced])
 
   // The 1080×1920 slide scaled to fit the screen.
   useLayoutEffect(() => {
@@ -188,13 +196,13 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-      if (e.key === 'ArrowRight') go(index + 1)
-      if (e.key === 'ArrowLeft') go(index - 1)
+      if (e.key === 'Escape') closeRef.current()
+      if (e.key === 'ArrowRight') step(1)
+      if (e.key === 'ArrowLeft') step(-1)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [index, go, onClose])
+  }, [step])
 
   async function share() {
     setSharing(true)
@@ -222,7 +230,7 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
           paused.current = false
           if (performance.now() - pressAt.current > 250) return
           const rect = stageRef.current!.getBoundingClientRect()
-          go(e.clientX - rect.left < rect.width / 3 ? index - 1 : index + 1)
+          step(e.clientX - rect.left < rect.width / 3 ? -1 : 1)
         }}
         onPointerCancel={() => (paused.current = false)}
         onPointerLeave={() => (paused.current = false)}
