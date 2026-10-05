@@ -114,6 +114,8 @@ export const en: Dict = {
     hint: 'Catch new species — each one opens up in the atlas',
     cardSub: 'Species found: {mine} of {total}',
     recordYou: 'That’s your record',
+    loadError: 'Couldn’t load the atlas',
+    retry: 'Try again',
     openCatch: 'Open catch',
   },
   forecast: {

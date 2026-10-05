@@ -116,6 +116,8 @@ export const ka: Dict = {
     hint: 'დაიჭირე ახალი სახეობები — თითოეული ატლასში გაიხსნება',
     cardSub: 'აღმოჩენილი სახეობები: {mine} / {total}',
     recordYou: 'ეს შენი რეკორდია',
+    loadError: 'ატლასი ვერ ჩაიტვირთა',
+    retry: 'თავიდან ცდა',
     openCatch: 'დაჭერის ნახვა',
   },
   forecast: {

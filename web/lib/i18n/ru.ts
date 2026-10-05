@@ -115,6 +115,8 @@ export const ru = {
     hint: 'Лови новые виды — каждый откроется в атласе',
     cardSub: 'Открыто видов: {mine} из {total}',
     recordYou: 'Это твой рекорд',
+    loadError: 'Не удалось загрузить атлас',
+    retry: 'Повторить',
     openCatch: 'Открыть улов',
   },
   forecast: {

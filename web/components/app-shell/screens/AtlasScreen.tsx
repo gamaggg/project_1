@@ -32,7 +32,7 @@ export function AtlasScreen({
   onOpenUser: (userId: string) => void
 }) {
   const { t } = useI18n()
-  const { data: atlas, isLoading } = useSpeciesAtlas(city)
+  const { data: atlas, isLoading, isError, refetch, isFetching } = useSpeciesAtlas(city)
   const { data: species = [] } = useSpecies()
   const [openKey, setOpenKey] = useState<string | null>(null)
   const nameOf = (key: string) => species.find((s) => s.key === key)?.name ?? key
@@ -68,7 +68,7 @@ export function AtlasScreen({
                 className="atlas-hero-ring-fill"
               />
             </svg>
-            <span>{isLoading ? '…' : t('atlas.progress', { mine, total })}</span>
+            <span>{atlas ? t('atlas.progress', { mine, total }) : '…'}</span>
           </div>
           <div className="atlas-hero-text">
             <div className="atlas-hero-kicker">{CITIES[city].name}</div>
@@ -77,7 +77,14 @@ export function AtlasScreen({
           </div>
         </div>
 
-        {isLoading ? (
+        {isError && !atlas ? (
+          <div className="atlas-error">
+            <div>{t('atlas.loadError')}</div>
+            <button className="btn-secondary" onClick={() => void refetch()} disabled={isFetching}>
+              {t('atlas.retry')}
+            </button>
+          </div>
+        ) : isLoading ? (
           <div className="atlas-grid">
             {Array.from({ length: 9 }, (_, i) => (
               <div key={i} className="atlas-tile atlas-tile-skeleton" />
