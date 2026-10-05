@@ -322,14 +322,6 @@ export const en: Dict = {
     attackOpened: 'Defense down — the next catch takes the sector',
     captureOncePerDay: 'Capture coins for this sector — once a day',
   },
-  fishing: {
-    start: "I'm fishing",
-    started: "You're fishing — the bot will pin a reminder to snap your catch",
-    forHm: 'Fishing for {h} h {m} min',
-    forM: 'Fishing for {m} min',
-    stop: 'Finish',
-    stopped: 'Fishing finished',
-  },
   activity: {
     hotWeek: 'This week’s hot sectors: {sectors}',
     hotWeekSub: '×2 coins per catch until Sunday · hold one for +100 and a medal',

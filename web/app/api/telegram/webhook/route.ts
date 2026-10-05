@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { SITE_URL } from '@/lib/site'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isEmptyTelegramAccount } from '@/lib/telegram/accounts'
-import { processFishingSessions } from '@/lib/telegram/fishing'
+import { stopFishingDay } from '@/lib/telegram/fishing'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
@@ -135,21 +135,15 @@ export async function POST(req: Request) {
 
   const update = await req.json()
 
-  // «Закончить рыбалку» under the pinned «Я на рыбалке» message (see
-  // lib/telegram/fishing.ts): ends the player's open session and turns the
-  // message into the summary right away.
+  // «Я уже закончил» under a «Ещё на рыбалке?» reminder (see
+  // lib/telegram/fishing.ts): quiet until tomorrow.
   const callback = update.callback_query
   if (callback?.data === 'fishing_stop') {
-    const admin = createAdminClient()
-    const { data: p } = await admin.from('profiles').select('id').eq('telegram_id', callback.from?.id).maybeSingle()
-    if (p) {
-      await admin.from('fishing_sessions').update({ ended_at: new Date().toISOString() }).eq('user_id', p.id).is('ended_at', null)
-      await processFishingSessions({ userId: p.id }).catch(() => {})
-    }
+    const linked = await stopFishingDay(callback.from?.id).catch(() => false)
     await fetch(`${TELEGRAM_API}/answerCallbackQuery`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ callback_query_id: callback.id, text: p ? 'Рыбалка закончена 🎣' : 'Не нашли твой аккаунт RANGE' }),
+      body: JSON.stringify({ callback_query_id: callback.id, text: linked ? 'Понял, до следующей рыбалки 🎣' : 'Не нашли твой аккаунт RANGE' }),
     })
     return NextResponse.json({ ok: true })
   }

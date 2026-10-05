@@ -11,7 +11,6 @@ import { getCurrentCoords, useGeolocationPermission } from '@/lib/geolocation'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { DefenseShields } from '@/components/app-shell/SectorDefense'
-import { FishingPill } from '@/components/app-shell/FishingPill'
 import { ForecastChip } from '@/components/app-shell/BiteForecast'
 import { RecapBanner } from '@/components/recap/WeekRecap'
 import { NearestFreeCard, NearestFreeIcon, findNearestFree, type NearestFreeState } from '@/components/app-shell/NearestFree'
@@ -490,12 +489,7 @@ export const MapScreen = forwardRef<
           {freeNav ? (
             <NearestFreeCard state={freeNav} onNext={nextFree} onOpen={onOpenTerritory} onClose={() => setFreeNav(null)} />
           ) : (
-            // The «Неделя» sticker on the left, «Я на рыбалке» on the right —
-            // one row, so neither pushes the other up over the map.
-            <div className="map-sheet-extras">
-              {!selectedIds?.size && !pendingAddDrafts?.length && <RecapBanner city={city} onFindFree={() => void startNearestFree()} />}
-              <FishingPill onToast={onToast} />
-            </div>
+            !selectedIds?.size && !pendingAddDrafts?.length && <RecapBanner city={city} onFindFree={() => void startNearestFree()} />
           )}
           <div className="map-sheet-row" ref={sheetRowRef} onScroll={handleScroll} onPointerDown={markUserScroll} onWheel={markUserScroll}>
             {territories.map((t, i) => (
