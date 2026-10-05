@@ -556,7 +556,10 @@ export const MapScreen = forwardRef<
                     {t.lastCatchAt ? 'Последний улов: ' + formatWhen(t.lastCatchAt) : 'Пока нет уловов'}
                   </span>
                   {t.status !== 'free' && (
-                    <span style={{ marginLeft: 'auto', flex: '0 0 auto', display: 'flex' }}>
+                    // Optically, not geometrically, flush with the badges above: a
+                    // pill's round end reads ~3px further in than its box, the
+                    // shields' straight side doesn't — so the shields step in too.
+                    <span style={{ marginLeft: 'auto', marginRight: 3, flex: '0 0 auto', display: 'flex' }}>
                       <DefenseShields value={t.defense} size={16} />
                     </span>
                   )}
