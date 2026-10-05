@@ -3190,3 +3190,20 @@ button.race-lane{cursor:pointer;}
 .catch-conditions-chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;}
 .catch-conditions-chip{display:inline-flex; align-items:center; gap:5px; height:28px; padding:0 10px; border-radius:999px; background:#F3F1EC; font-size:12.5px; font-weight:700; color:var(--ink-soft); font-variant-numeric:tabular-nums; white-space:nowrap;}
 .catch-conditions-chip svg{margin-left:-3px;}
+
+/* ===== Живой город ===== */
+.pulse{margin:0 12px; border-radius:16px; background:rgba(255,255,255,.96); box-shadow:var(--shadow); overflow:hidden;}
+.pulse-line{display:flex; align-items:center; gap:7px; width:100%; min-width:0; padding:8px 12px; border:none; background:none; font:inherit; color:var(--ink); text-align:left; cursor:pointer;}
+.pulse-dot{flex:0 0 auto; width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 0 3px var(--green-soft);}
+.pulse-title{flex:0 0 auto; font-size:12px; font-weight:700; color:var(--ink-soft); white-space:nowrap;}
+.pulse-stats{flex:1; min-width:0; display:flex; align-items:center; gap:4px; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums;}
+.pulse-stats b{font-weight:800;}
+.pulse-stats span{color:var(--ink-faint);}
+.pulse-chevron{flex:0 0 auto; color:var(--ink-faint); transform:rotate(180deg); transition:transform .2s var(--ease-out);}
+.pulse.open .pulse-chevron{transform:none;}
+.pulse-photos{display:flex; gap:6px; padding:0 12px 10px; overflow-x:auto; scrollbar-width:none;}
+.pulse-photos::-webkit-scrollbar{display:none;}
+.pulse-photo{position:relative; flex:0 0 auto; width:64px; height:64px; padding:0; border:none; border-radius:12px; overflow:hidden; background:#EEE; cursor:pointer;}
+.pulse-photo img{width:100%; height:100%; object-fit:cover; display:block;}
+.pulse-photo span{position:absolute; left:0; right:0; bottom:0; padding:10px 4px 3px; background:linear-gradient(transparent, rgba(0,0,0,.6)); color:#fff; font-size:9.5px; font-weight:700; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+@media (prefers-reduced-motion: reduce){.pulse-chevron{transition:none;}}

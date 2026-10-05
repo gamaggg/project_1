@@ -2502,6 +2502,51 @@ export function useSectorInsights(territoryId: string | null) {
   })
 }
 
+export type CityPulse = {
+  catches: number
+  anglers: number
+  captures: number
+  recent: { catchId: number; userId: string; name: string | null; avatarUrl: string | null; species: string | null; photoUrl: string; territoryId: string; caughtAt: string }[]
+}
+
+// «Живой город»: the city over the last 7 days and its freshest photos —
+// one small request for the map's plaque.
+export function useCityPulse(city: CityId, enabled: boolean) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['catches', 'city-pulse', city],
+    enabled: enabled && !!user,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async (): Promise<CityPulse | null> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_city_pulse', { p_city: city })
+      if (error) throw error
+      if (!data) return null
+      const d = data as {
+        catches: number
+        anglers: number
+        captures: number
+        recent: { catch_id: number; user_id: string; name: string | null; avatar_url: string | null; species: string | null; photo_url: string; territory_id: string; caught_at: string }[]
+      }
+      return {
+        catches: d.catches,
+        anglers: d.anglers,
+        captures: d.captures,
+        recent: d.recent.map((r) => ({
+          catchId: r.catch_id,
+          userId: r.user_id,
+          name: r.name,
+          avatarUrl: r.avatar_url,
+          species: r.species,
+          photoUrl: r.photo_url,
+          territoryId: r.territory_id,
+          caughtAt: r.caught_at,
+        })),
+      }
+    },
+  })
+}
+
 export type CatchConditions = {
   airTemp: number | null
   waterTemp: number | null

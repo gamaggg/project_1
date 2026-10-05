@@ -167,6 +167,15 @@ export const ka: Dict = {
     pressure: 'წნევა {value} მმ',
     dirs: { n: 'ჩ', ne: 'ჩა', e: 'ა', se: 'სა', s: 'ს', sw: 'სდ', w: 'დ', nw: 'ჩდ' },
   },
+  pulse: {
+    week: '{city} ამ კვირაში',
+    catches: { one: '{count} დაჭერა', other: '{count} დაჭერა' },
+    anglers: { one: '{count} მეთევზე', other: '{count} მეთევზე' },
+    captures: { one: '{count} დაპყრობა', other: '{count} დაპყრობა' },
+    expand: 'ახალი დაჭერების ჩვენება',
+    collapse: 'ჩაკეცვა',
+    cities: { batumi: 'ბათუმი', moscow: 'მოსკოვი' },
+  },
   territory: {
     freeShield: 'დადე უფასო ფარი',
     freeShieldLeft: 'მარაგში: {count}',

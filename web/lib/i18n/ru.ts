@@ -166,6 +166,15 @@ export const ru = {
     pressure: 'давление {value} мм',
     dirs: { n: 'С', ne: 'СВ', e: 'В', se: 'ЮВ', s: 'Ю', sw: 'ЮЗ', w: 'З', nw: 'СЗ' },
   },
+  pulse: {
+    week: '{city} за неделю',
+    catches: { one: '{count} улов', few: '{count} улова', many: '{count} уловов', other: '{count} улова' },
+    anglers: { one: '{count} рыбак', few: '{count} рыбака', many: '{count} рыбаков', other: '{count} рыбака' },
+    captures: { one: '{count} захват', few: '{count} захвата', many: '{count} захватов', other: '{count} захвата' },
+    expand: 'Показать свежие уловы',
+    collapse: 'Свернуть',
+    cities: { batumi: 'Батуми', moscow: 'Москва' },
+  },
   territory: {
     freeShield: 'Поставить бесплатный щит',
     freeShieldLeft: 'В запасе: {count}',

@@ -165,6 +165,15 @@ export const en: Dict = {
     pressure: 'pressure {value} hPa',
     dirs: { n: 'N', ne: 'NE', e: 'E', se: 'SE', s: 'S', sw: 'SW', w: 'W', nw: 'NW' },
   },
+  pulse: {
+    week: '{city} this week',
+    catches: { one: '{count} catch', other: '{count} catches' },
+    anglers: { one: '{count} angler', other: '{count} anglers' },
+    captures: { one: '{count} capture', other: '{count} captures' },
+    expand: 'Show fresh catches',
+    collapse: 'Collapse',
+    cities: { batumi: 'Batumi', moscow: 'Moscow' },
+  },
   territory: {
     freeShield: 'Put a free shield',
     freeShieldLeft: 'In reserve: {count}',
