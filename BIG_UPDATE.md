@@ -89,6 +89,7 @@
 - Иконки слотов — заменить на SVG пользователя (символы в `SlotSymbol.tsx`, id не меняются).
 - Cron `telegram-fishing` каждые 5 минут на `/api/telegram/fishing` (GET, Bearer CRON_SECRET) — «Ещё на рыбалке?». Перед включением проверить `?dry=1`.
 - Сверить «Вопросы и ответы» (`lib/data/faq.ts`) с итоговыми правилами и перенести правило «FAQ меняется вместе с каждой фичей» в DECISIONS.md.
+- «Первые шаги»: пометить всех, у кого есть уловы, не новичками (`insert into first_steps … eligible = false`, в конце `first_steps.sql`) — иначе старые игроки увидят плашку и смогут забрать 100.
 - Применить `release/premium_shop_items.sql` (17 дорогих вещей + расширение CHECK `profiles.hero_bg` для 4 новых фонов), затем удалить `lib/data/premiumShopPreview.ts` и `withPremiumPreview` в `ShopScreen`.
 
 ## Статус
