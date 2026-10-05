@@ -3505,7 +3505,7 @@ button.standing-col{cursor:pointer;}
 /* «Что нового» (WhatsNewTour.tsx): the screen dimmed around one element (a
    window cut with a huge spread shadow, white ring), a note beside it. */
 .tour-root{position:fixed; inset:0; z-index:2000;}
-.tour-hole{position:fixed; border-radius:16px; pointer-events:none; box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 0 0 9999px rgba(8,10,14,.66); transition:top .3s var(--ease-out), left .3s var(--ease-out), width .3s var(--ease-out), height .3s var(--ease-out);}
+.tour-hole{position:fixed; border-radius:16px; pointer-events:none; box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 0 0 9999px rgba(8,10,14,.66);}
 .tour-tip{position:fixed; background:var(--surface); border-radius:18px; padding:16px 16px 12px; box-shadow:0 18px 40px rgba(0,0,0,.28); animation:tour-in .28s var(--ease-out) both;}
 @keyframes tour-in{from{opacity:0; transform:translateY(6px);}}
 .tour-tip.above{animation-name:tour-in-up;}
@@ -3519,4 +3519,4 @@ button.standing-col{cursor:pointer;}
 .tour-actions{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:14px;}
 .tour-skip{background:none; border:none; padding:8px 2px; font:inherit; font-size:13.5px; font-weight:700; color:var(--ink-faint); cursor:pointer;}
 .btn-primary.tour-next{width:auto; padding:11px 22px; font-size:14.5px; border-radius:13px;}
-@media (prefers-reduced-motion: reduce){.tour-tip{animation:none;} .tour-hole{transition:none;}}
+@media (prefers-reduced-motion: reduce){.tour-tip{animation:none;}}
