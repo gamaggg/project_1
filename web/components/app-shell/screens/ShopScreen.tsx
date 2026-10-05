@@ -274,6 +274,7 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
             frame: profile?.equippedFrame ?? null,
             nameStyle: profile?.equippedNameStyle ?? null,
             territoryColor: profile?.territoryColor ?? DEFAULT_TERRITORY_COLOR,
+            city,
           }}
           state={tryOnState(tryOn)}
           onBuy={() => {

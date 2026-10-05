@@ -5,12 +5,13 @@ import { createPortal } from 'react-dom'
 import { AvatarFrameRing } from '@/components/app-shell/AvatarFrameRing'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
-import { SkinPreview } from '@/components/app-shell/SkinPreview'
+import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorPreviewMap'
 import { StyledName } from '@/components/app-shell/StyledName'
 import { resolveHeroBackground } from '@/lib/data/heroBackgrounds'
 import { resolveAvatarFrame } from '@/lib/data/shopItems'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import type { ShopItem } from '@/lib/supabase/queries'
+import type { CityId } from '@/lib/data/city'
 
 export type TryOnLook = {
   displayName: string
@@ -19,13 +20,15 @@ export type TryOnLook = {
   frame: string | null
   nameStyle: string | null
   territoryColor: string
+  city: CityId
 }
 
 // «Примерить»: the player's own profile header with one shop item swapped
 // in — a background, frame or name style over whatever else they already
-// wear — or, for a sector skin, their sector drawn large. Same pieces the
-// real profile uses (HeroBgLive, AvatarFrameRing, StyledName), so what's
-// shown is what they'd get.
+// wear — or, for a sector skin, a piece of their city's map with their
+// sectors in it, in their colour. Same pieces the real profile and map use
+// (HeroBgLive, AvatarFrameRing, StyledName, the color picker's preview map),
+// so what's shown is what they'd get.
 export function ShopTryOn({
   item,
   look,
@@ -50,8 +53,8 @@ export function ShopTryOn({
     <div className="modal-overlay" onClick={onClose}>
       <div className="tryon-card" onClick={(e) => e.stopPropagation()}>
         {item.category === 'territory_skin' ? (
-          <div className="tryon-skin">
-            <SkinPreview skinId={item.id} color={look.territoryColor} width={220} />
+          <div className="tryon-map">
+            <TerritoryColorPreviewMap city={look.city} myTerritoryColor={look.territoryColor} equippedSkin={item.id} />
           </div>
         ) : (
           <div
