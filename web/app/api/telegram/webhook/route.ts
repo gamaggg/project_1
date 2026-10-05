@@ -94,6 +94,9 @@ async function linkAccount(token: string, message: { chat: { id: number }; from?
 // go to every chat that pressed /start (admin_post_announcement).
 async function stopNotifications(message: { chat: { id: number }; from?: { id: number } }) {
   const telegramId = message.from?.id ?? message.chat.id
+  // Someone who pressed /start but never signed up has no profile to switch
+  // off — this stops the onboarding chain for their chat (onboarding_due).
+  await createAdminClient().from('telegram_bot_starts').update({ stopped_at: new Date().toISOString() }).eq('chat_id', message.chat.id)
   const { data, error } = await createAdminClient()
     .from('profiles')
     .update({ tg_notifications_enabled: false, tg_choice_at: new Date().toISOString() })

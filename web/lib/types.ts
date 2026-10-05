@@ -1128,17 +1128,26 @@ export type Database = {
           chat_id: number
           followup_sent_at: string | null
           started_at: string
+          stopped_at: string | null
         }
         Insert: {
           chat_id: number
           followup_sent_at?: string | null
           started_at?: string
+          stopped_at?: string | null
         }
         Update: {
           chat_id?: number
           followup_sent_at?: string | null
           started_at?: string
+          stopped_at?: string | null
         }
+        Relationships: []
+      }
+      onboarding_messages: {
+        Row: { chat_id: number; step: string; user_id: string | null; sent_at: string }
+        Insert: { chat_id: number; step: string; user_id?: string | null; sent_at?: string }
+        Update: { chat_id?: number; step?: string; user_id?: string | null; sent_at?: string }
         Relationships: []
       }
       telegram_broadcast_queue: {
@@ -1779,6 +1788,7 @@ export type Database = {
       get_treasury: { Args: Record<string, never>; Returns: Json }
       get_sector_insights: { Args: { p_territory_id: string }; Returns: Json }
       get_city_week_recap: { Args: { p_city: string; p_week_offset?: number; p_user?: string }; Returns: Json }
+      onboarding_due: { Args: { p_limit?: number }; Returns: { chat_id: number; user_id: string | null; step: string; city: string | null; name: string | null; data: Json }[] }
       log_app_events: { Args: { p_device: string; p_session: string; p_events: Json }; Returns: number }
       get_app_stats: { Args: { p_days?: number; p_tz?: string }; Returns: Json }
       collect_treasury: { Args: Record<string, never>; Returns: Json }
