@@ -3562,5 +3562,4 @@ button.standing-col{cursor:pointer;}
 .first-steps-list li.done .first-steps-check{background:#1F9D55; border-color:#1F9D55;}
 .first-steps-text{display:flex; flex-direction:column; gap:2px; min-width:0;}
 .first-steps-text b{font-size:14.5px; font-weight:800;}
-.first-steps-list li.done .first-steps-text b{color:var(--ink-soft); text-decoration:line-through; text-decoration-color:rgba(0,0,0,.25);}
 .first-steps-text span{font-size:12.5px; line-height:1.35; color:var(--ink-soft); font-weight:600;}
