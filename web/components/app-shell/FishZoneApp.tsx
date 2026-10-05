@@ -6,6 +6,7 @@ import {
   useTerritories,
   useConfirmCatch,
   useMyCatches,
+  useSpecies,
   latestOwnCatchId,
   useProfile,
   useUpdateProfile,
@@ -33,6 +34,10 @@ import { useClanBattleCeremony } from '@/lib/clanBattleCeremony'
 import { hasVisibleTypedText, useAppUpdate } from '@/lib/appUpdate'
 import { insideTelegram } from '@/lib/openExternal'
 import { track } from '@/lib/analytics'
+import { addOfflineCatch } from '@/lib/offlineCatches'
+import { useOfflineCatchQueue, useOnline } from '@/lib/useOfflineCatches'
+import { useT } from '@/lib/i18n'
+import { useQueryClient } from '@tanstack/react-query'
 import { inviteLink, parseGuestShare, refParam, rememberClanInvite, rememberRef, takeRememberedRef, type ClanInvite } from '@/lib/guestShare'
 import { GuestShareScreen } from '@/components/app-shell/GuestShareScreen'
 import { formatCooldown, type SpeciesEntry } from '@/lib/format'
@@ -163,6 +168,9 @@ type StackEntry =
 
 export function FishZoneApp() {
   const { user, loading: authLoading, signOut } = useAuth()
+  const tr = useT()
+  const queryClient = useQueryClient()
+  const { data: speciesList = [] } = useSpecies()
   const { data: myProfile, isLoading: myProfileLoading } = useProfile(user?.id ?? null)
   const { data: territories = [], isLoading: territoriesLoading, isSuccess: territoriesReady } = useTerritories()
   const isSuperAdmin = useIsSuperAdmin()
@@ -390,6 +398,11 @@ export function FishZoneApp() {
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null)
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [photoStatus, setPhotoStatus] = useState<PhotoStatus>('uploading')
+  // When the photo was taken — an offline catch counts at this moment.
+  const [capturedAt, setCapturedAt] = useState<string | null>(null)
+  // The photo upload failed for want of a connection (not a server error):
+  // the catch can still be saved on the phone and sent later.
+  const [uploadNetworkFail, setUploadNetworkFail] = useState(false)
   // CameraScreen never unmounts on its own (screens stay mounted, only their CSS
   // 'active' class toggles) — bump this on every fresh entry into screen-camera
   // and pass it as `key` so getUserMedia state resets instead of reusing a
@@ -424,6 +437,23 @@ export function FishZoneApp() {
   // The trophy-card celebration is full-bleed and edge-to-edge on purpose —
   // both the nav and any achievement popup stay off it, see below.
   const showingTrophyScene = currentScreen === 'screen-confirm' && confirmStep === 'success'
+  const online = useOnline()
+  const offlineMode = photoStatus === 'error' && (!online || uploadNetworkFail)
+  // Catches saved without a connection go out by themselves; each outcome
+  // is said in a toast.
+  const offlineQueue = useOfflineCatchQueue(user?.id ?? null, (r) => {
+    const speciesName = (key: string) => speciesList.find((sp) => sp.key === key)?.name ?? key
+    if (r.kind === 'sent') {
+      showToast(r.late ? tr('offline.sentLate', { species: speciesName(r.item.species) }) : tr('offline.sent', { species: speciesName(r.item.species) }))
+      queryClient.invalidateQueries({ queryKey: ['territories'] })
+      queryClient.invalidateQueries({ queryKey: ['catches'] })
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
+    } else if (r.kind === 'expired') {
+      showToast(tr('offline.expired'))
+    } else {
+      showToast(tr('offline.rejected'))
+    }
+  })
 
   // Reveals whichever entry a pop landed on, restoring its territory/user-id
   // (see StackEntry comment above) — shared by the in-app pop() (below) and
@@ -771,7 +801,10 @@ export function FishZoneApp() {
     } catch (err) {
       if (uploadSeqRef.current !== seq) return
       setPhotoStatus('error')
-      reportClientError('photo_upload', err)
+      const msg = err instanceof Error ? err.message : String(err)
+      const network = !navigator.onLine || /failed to fetch|networkerror|load failed|network request failed/i.test(msg)
+      setUploadNetworkFail(network)
+      if (!network) reportClientError('photo_upload', err)
     }
   }
   // Upload starts right after the shutter fires, not at form submit — the user
@@ -779,6 +812,8 @@ export function FishZoneApp() {
   function handleCapture(blob: Blob) {
     if (!catchTerritoryId) return
     setCapturedPhoto(blob)
+    setCapturedAt(new Date().toISOString())
+    setUploadNetworkFail(false)
     setPhotoUrl(null)
     setPhotoStatus('uploading')
     setConfirmStep('form')
@@ -796,7 +831,25 @@ export function FishZoneApp() {
     setCameraSessionId((n) => n + 1)
     pop()
   }
+  // No connection: keep the catch on the phone; it goes out by itself later
+  // (useOfflineCatchQueue) and counts at the moment the photo was taken.
+  async function saveCatchOffline(form: CatchFormData, url: string | null) {
+    if (!catchTerritoryId) return
+    await addOfflineCatch({
+      territoryId: catchTerritoryId,
+      ...form,
+      caughtAt: capturedAt ?? new Date().toISOString(),
+      ...(url ? { photoUrl: url } : { photo: capturedPhoto ?? undefined }),
+    })
+    track('catch_offline', { territory: catchTerritoryId }, city)
+    showToast(tr('offline.saved'))
+    finishCatchFlow()
+  }
   async function submitCatch(form: CatchFormData) {
+    if (catchTerritoryId && !photoUrl && offlineMode && capturedPhoto) {
+      await saveCatchOffline(form, null)
+      return
+    }
     if (!catchTerritoryId || !photoUrl) return
     const t = territories.find((x) => x.id === catchTerritoryId)
     const payload: PendingCatch = { territoryId: catchTerritoryId, photoUrl, ...form }
@@ -818,6 +871,10 @@ export function FishZoneApp() {
       // message instead of `instanceof Error` (see confirm_catch's
       // COOLDOWN: exception, surfaced verbatim as error.message).
       const message = typeof err === 'object' && err !== null && 'message' in err ? String((err as { message: unknown }).message) : ''
+      if (!navigator.onLine || /failed to fetch|networkerror|load failed|network request failed/i.test(message)) {
+        await saveCatchOffline(form, photoUrl)
+        return
+      }
       const cooldownMatch = /COOLDOWN:(\d+)/.exec(message)
       const shieldedMatch = /SHIELDED:(\d+)/.exec(message)
       if (cooldownMatch) {
@@ -1240,6 +1297,7 @@ export function FishZoneApp() {
             onToast={showToast}
             newbie={isNewbie}
             nearestFreeRequest={nearestFreeRequest}
+            offlinePending={offlineQueue}
           />
         </Screen>
         <Screen id="screen-territory" current={currentScreen} onBack={pop}>
@@ -1378,6 +1436,7 @@ export function FishZoneApp() {
               speciesCoins={catchSpeciesCoins}
               savedCatchId={savedCatchId}
               onToast={showToast}
+              offlineMode={offlineMode}
               captureCoins={catchCaptureCoins}
               clanSupport={catchClanSupport}
               clanShare={catchClanShare}

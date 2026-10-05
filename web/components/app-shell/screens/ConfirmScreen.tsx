@@ -10,6 +10,7 @@ import { HexBadge } from '@/components/app-shell/HexBadge'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { StoryButton } from '@/components/app-shell/StoryButton'
+import { useT } from '@/lib/i18n'
 import type { PendingCatch, Territory } from '@/lib/data/types'
 
 export type CatchFormData = {
@@ -27,6 +28,7 @@ export function ConfirmScreen({
   pendingCatch,
   savedCatchId,
   onToast,
+  offlineMode = false,
   wasFree,
   speciesCoins,
   captureCoins,
@@ -46,6 +48,9 @@ export function ConfirmScreen({
   pendingCatch: PendingCatch | null
   // Id of the catch just saved, once known — shows «В историю».
   savedCatchId?: number | null
+  // The photo couldn't upload for want of a connection: the catch can still
+  // be saved on the phone and sent by itself later.
+  offlineMode?: boolean
   onToast?: (msg: string) => void
   wasFree: boolean
   speciesCoins: number
@@ -62,6 +67,7 @@ export function ConfirmScreen({
   onBack: () => void
   onShare: () => void
 }) {
+  const t = useT()
   const city = cityForSectorId(territory.id)
   const categories = CATEGORIES_BY_CITY[city]
   const baits = BAITS_BY_CITY[city]
@@ -135,7 +141,7 @@ export function ConfirmScreen({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!speciesKey || photoStatus !== 'success') return
+    if (!speciesKey || (photoStatus !== 'success' && !offlineMode)) return
     onSubmit({
       species: speciesKey,
       lengthCm: lengthCm.trim() ? Number(lengthCm) : null,
@@ -241,7 +247,21 @@ export function ConfirmScreen({
                 <div className="msg">Загружаем фото…</div>
               </div>
             )}
-            {photoStatus === 'error' && (
+            {photoStatus === 'error' && offlineMode && (
+              <div className="confirm-photo-status confirm-photo-offline">
+                <div className="confirm-offline-title">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M2 8.8a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16.2a5 5 0 0 1 6 0M12 20h.01M3 3l18 18" />
+                  </svg>
+                  {t('offline.noNetwork')}
+                </div>
+                <div className="msg">{t('offline.confirmHint')}</div>
+                <button type="button" className="confirm-photo-retry tap-scale" onClick={onRetryUpload}>
+                  Повторить попытку
+                </button>
+              </div>
+            )}
+            {photoStatus === 'error' && !offlineMode && (
               <div className="confirm-photo-status">
                 <div className="msg">Не удалось загрузить фото. Без фото улов сохранить нельзя.</div>
                 <button type="button" className="confirm-photo-retry tap-scale" onClick={onRetryUpload}>
@@ -333,8 +353,8 @@ export function ConfirmScreen({
           </div>
 
           <div style={{ marginTop: 10 }}>
-            <button className="btn-primary" type="submit" disabled={!speciesKey || photoStatus !== 'success' || pending}>
-              {pending ? 'Сохраняем…' : 'Подтвердить улов'}
+            <button className="btn-primary" type="submit" disabled={!speciesKey || (photoStatus !== 'success' && !offlineMode) || pending}>
+              {pending ? 'Сохраняем…' : offlineMode ? t('offline.saveOffline') : 'Подтвердить улов'}
             </button>
           </div>
         </form>

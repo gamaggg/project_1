@@ -1799,6 +1799,7 @@ export type Database = {
       confirm_catch: {
         Args: {
           p_bait?: string
+          p_caught_at?: string
           p_length_cm?: number
           p_method?: string
           p_photo_url: string
@@ -1806,7 +1807,7 @@ export type Database = {
           p_territory_id: string
           p_weight_kg?: number
         }
-        Returns: { species_coins: number; capture_coins: number; clan_support: boolean }[]
+        Returns: { species_coins: number; capture_coins: number; clan_support: boolean; late?: boolean }[]
       }
       get_admin_permissions: {
         Args: { p_user_id: string }
