@@ -90,13 +90,12 @@ export const SHOP_TAB_ICONS = {
       <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" />
     </svg>
   ),
-  // Cherries — the classic slot-machine symbol.
+  // The slots panel itself: a frame with three reel windows and the payline
+  // running through them (SlotsScreen's machine in miniature).
   slots: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="6.8" cy="17.2" r="3.6" />
-      <circle cx="16.8" cy="16.2" r="3.6" />
-      <path d="M6.8 13.6C7.4 9.2 10 6 14 4.2M16.8 12.6C16.6 9.4 15.8 6.6 14 4.2" />
-      <path d="M14 4.2c1.6-1.9 4.5-2.3 6.6-.9-1.6 1.9-4.5 2.3-6.6.9z" />
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path fill="currentColor" fillRule="evenodd" d="M5.5 4.5H18.5A4 4 0 0 1 22.5 8.5V15.5A4 4 0 0 1 18.5 19.5H5.5A4 4 0 0 1 1.5 15.5V8.5A4 4 0 0 1 5.5 4.5ZM5.2 6.7H6.67A1.5 1.5 0 0 1 8.17 8.2V15.8A1.5 1.5 0 0 1 6.67 17.3H5.2A1.5 1.5 0 0 1 3.7 15.8V8.2A1.5 1.5 0 0 1 5.2 6.7ZM11.27 6.7H12.73A1.5 1.5 0 0 1 14.23 8.2V15.8A1.5 1.5 0 0 1 12.73 17.3H11.27A1.5 1.5 0 0 1 9.77 15.8V8.2A1.5 1.5 0 0 1 11.27 6.7ZM17.33 6.7H18.8A1.5 1.5 0 0 1 20.3 8.2V15.8A1.5 1.5 0 0 1 18.8 17.3H17.33A1.5 1.5 0 0 1 15.83 15.8V8.2A1.5 1.5 0 0 1 17.33 6.7Z" />
+      <path d="M4.2 12h15.6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity=".55" />
     </svg>
   ),
 }
