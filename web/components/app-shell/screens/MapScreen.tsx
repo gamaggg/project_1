@@ -11,6 +11,8 @@ import { getCurrentCoords, useGeolocationPermission } from '@/lib/geolocation'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { LaurelIcon } from '@/components/app-shell/SectorInsights'
+import { ForecastChip } from '@/components/app-shell/BiteForecast'
+import { NearestFreeCard, NearestFreeIcon, findNearestFree, type NearestFreeState } from '@/components/app-shell/NearestFree'
 import { sectorHoldersCapturerFirst } from '@/lib/data/sectorHolders'
 import { mostPopularSectorId } from '@/lib/data/sectorOrder'
 import { MapRacePill } from '@/components/app-shell/ClanRace'
@@ -99,6 +101,11 @@ export const MapScreen = forwardRef<
     race?: { city: CityId; clanId: number; onOpen: () => void } | null
     // The app's toast — Казна says what happened through it.
     onToast?: (msg: string) => void
+    // No catches yet: the «Ближайший свободный сектор» button shows.
+    newbie?: boolean
+    // Bumped by the onboarding's last step («Найти свободный сектор рядом»)
+    // to run the same search as the button once the map is up.
+    nearestFreeRequest?: number
   }
 >(function MapScreen(
   {
@@ -118,6 +125,8 @@ export const MapScreen = forwardRef<
     onOpenClan,
     race,
     onToast,
+    newbie,
+    nearestFreeRequest,
   },
   forwardedRef
 ) {
@@ -206,6 +215,38 @@ export const MapScreen = forwardRef<
   function markUserScroll() {
     userScrollRef.current = true
   }
+
+  const [freeNav, setFreeNav] = useState<NearestFreeState | null>(null)
+  const freeBusy = useRef(false)
+  function showFree(id: string) {
+    handlePolygonSelect(id)
+    mapRef.current?.flyToTerritory(id)
+  }
+  async function startNearestFree() {
+    if (freeBusy.current) return
+    freeBusy.current = true
+    const found = await findNearestFree(territories, city)
+    freeBusy.current = false
+    if (!found) {
+      onToast?.(tr('nearest.none'))
+      return
+    }
+    if (found.located) mapRef.current?.showUserLocation(found.origin.lat, found.origin.lng)
+    else onToast?.(tr('nearest.noLocation'))
+    setFreeNav(found)
+    showFree(found.items[0].id)
+  }
+  function nextFree() {
+    if (!freeNav) return
+    const index = (freeNav.index + 1) % freeNav.items.length
+    setFreeNav({ ...freeNav, index })
+    showFree(freeNav.items[index].id)
+  }
+  useEffect(() => {
+    if (nearestFreeRequest) void startNearestFree()
+    // Only a new request runs it — not every re-render of the sectors.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nearestFreeRequest])
 
   const sheetRowRef = useRef<HTMLDivElement>(null)
   // A fast fixed-duration scroll (see scrollToCardFast) barely reads as
@@ -377,6 +418,7 @@ export const MapScreen = forwardRef<
                 </span>
               </>
             )}
+            <ForecastChip city={city} />
           </div>
           {race && !selectedIds?.size && !pendingAddDrafts?.length && <MapRacePill city={race.city} clanId={race.clanId} onOpen={race.onOpen} />}
         </div>
@@ -421,8 +463,14 @@ export const MapScreen = forwardRef<
               <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
             </svg>
           </button>
+          {newbie && (
+            <button className="map-control-btn map-control-locate tap-scale" onClick={() => void startNearestFree()} aria-label={tr('nearest.button')} title={tr('nearest.button')}>
+              <NearestFreeIcon />
+            </button>
+          )}
         </div>
         <div className="map-sheet-container">
+          {freeNav && <NearestFreeCard state={freeNav} onNext={nextFree} onOpen={onOpenTerritory} onClose={() => setFreeNav(null)} />}
           <div className="map-sheet-row" ref={sheetRowRef} onScroll={handleScroll} onPointerDown={markUserScroll} onWheel={markUserScroll}>
             {territories.map((t, i) => (
               <div

@@ -6,6 +6,7 @@ import {
   useTerritories,
   useConfirmCatch,
   isFirstOfSpeciesInCity,
+  useMyCatches,
   useProfile,
   useUpdateProfile,
   useRealtimeSync,
@@ -189,6 +190,11 @@ export function FishZoneApp() {
     if (myProfile?.city) setCity(myProfile.city)
   }, [myProfile?.city])
   const updateProfile = useUpdateProfile()
+  // Already loaded at launch by useAchievementUnlock (same query) — «no
+  // catches yet» costs nothing extra.
+  const { data: myCatchesForNewbie, isSuccess: myCatchesReady } = useMyCatches()
+  const isNewbie = myCatchesReady && (myCatchesForNewbie?.length ?? 0) === 0
+  const [nearestFreeRequest, setNearestFreeRequest] = useState(0)
   const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories, territoriesReady, city)
   const { show: showWeekTop, entry: weekTopEntry, dismiss: dismissWeekTop } = useWeekTopModal(city)
   const clanCeremony = useClanBattleCeremony(city, myProfile?.clanId ?? null)
@@ -1184,6 +1190,7 @@ export function FishZoneApp() {
           initialStep={!user && guestAuth ? guestAuth : undefined}
           onBackToShare={!user && guestShare ? () => setGuestAuth(null) : undefined}
           invited={!!launchRef}
+          onFindNearestFree={() => setNearestFreeRequest((n) => n + 1)}
         />
       </div>
     )
@@ -1217,6 +1224,8 @@ export function FishZoneApp() {
             onOpenClan={openClan}
             race={myProfile?.clanId ? { city: myProfile.city, clanId: myProfile.clanId, onOpen: openClanRace } : null}
             onToast={showToast}
+            newbie={isNewbie}
+            nearestFreeRequest={nearestFreeRequest}
           />
         </Screen>
         <Screen id="screen-territory" current={currentScreen} onBack={pop}>

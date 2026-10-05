@@ -23,6 +23,9 @@ export type CityInfo = {
   // happens to be" (which could be anywhere, or not exist yet for a brand-new
   // account with zero territories).
   colorPreviewCenter: [number, number]
+  // Open sea off the city for the bite forecast's waves (Open-Meteo marine).
+  // Null where there's no sea.
+  seaPoint: [number, number] | null
 }
 
 export const CITIES: Record<CityId, CityInfo> = {
@@ -36,6 +39,7 @@ export const CITIES: Record<CityId, CityInfo> = {
     zoom: 14.3,
     // Batumi sea port.
     colorPreviewCenter: [41.6555, 41.6414],
+    seaPoint: [41.66, 41.6],
   },
   moscow: {
     id: 'moscow',
@@ -51,6 +55,7 @@ export const CITIES: Record<CityId, CityInfo> = {
     zoom: 14.3,
     // Kremlin embankment.
     colorPreviewCenter: [55.7485, 37.6180],
+    seaPoint: null,
   },
 }
 

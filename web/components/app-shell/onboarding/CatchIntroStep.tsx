@@ -1,8 +1,10 @@
 'use client'
 
 import { BackButton } from '@/components/app-shell/BackButton'
+import { useT } from '@/lib/i18n'
 
-export function CatchIntroStep({ onBack, onDone }: { onBack: () => void; onDone: () => void }) {
+export function CatchIntroStep({ onBack, onDone, onFindNearestFree }: { onBack: () => void; onDone: () => void; onFindNearestFree?: () => void }) {
+  const t = useT()
   return (
     <div className="intro-screen intro-screen--catch">
       <BackButton onClick={onBack} variant="intro" />
@@ -35,6 +37,11 @@ export function CatchIntroStep({ onBack, onDone }: { onBack: () => void; onDone:
         <button className="intro-cta" onClick={onDone}>
           Продолжить
         </button>
+        {onFindNearestFree && (
+          <button className="intro-cta-secondary" onClick={onFindNearestFree}>
+            {t('nearest.onboarding')}
+          </button>
+        )}
       </div>
     </div>
   )

@@ -3207,3 +3207,65 @@ button.race-lane{cursor:pointer;}
   animation:trophyFadeUp .5s 1.45s ease both;
 }
 @media (prefers-reduced-motion: reduce){.catch-trophy-atlas{animation:none;}}
+
+/* ===== Прогноз клёва ===== */
+.score-bars{display:block; flex:0 0 auto;}
+.forecast-chip{display:inline-flex; align-items:center; gap:5px; flex:0 0 auto; margin-left:auto; padding:3px 9px 3px 7px; border:none; border-radius:999px; background:#F3F1EC; font:inherit; font-size:11.5px; font-weight:800; color:var(--ink-soft); cursor:pointer;}
+.forecast-chip b{font-size:12.5px; font-variant-numeric:tabular-nums;}
+.forecast-card{display:block; width:100%; margin-top:16px; padding:14px 16px; border:none; border-radius:var(--radius-l); background:var(--surface); box-shadow:var(--shadow-sm); font:inherit; color:inherit; text-align:left; cursor:pointer;}
+.forecast-card:disabled{cursor:default;}
+.forecast-card-label{font-size:12.5px; font-weight:800;}
+.forecast-days{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px;}
+.forecast-day{display:flex; flex-direction:column; align-items:center; gap:5px; padding:9px 4px 8px; border-radius:14px; background:#F7F6F2;}
+.forecast-day.today{background:#FFF4EC; box-shadow:inset 0 0 0 1.5px rgba(252,82,0,.22);}
+.forecast-day-name{font-size:11.5px; font-weight:800; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;}
+.forecast-day-score{display:inline-flex; align-items:center; gap:4px; font-size:13px; font-weight:800; font-variant-numeric:tabular-nums;}
+.forecast-day-skeleton{height:78px;}
+.forecast-card-best{margin-top:10px; font-size:13px; font-weight:800;}
+.forecast-sheet{max-height:88dvh;}
+.forecast-sheet-body{display:flex; flex-direction:column; gap:10px; padding-bottom:18px;}
+.forecast-today{display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:18px; background:color-mix(in srgb, var(--score-color) 10%, #FAF9F6); box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--score-color) 30%, transparent);}
+.forecast-today-score{display:flex; align-items:baseline; flex:0 0 auto; font-variant-numeric:tabular-nums;}
+.forecast-today-score b{font-size:40px; line-height:1; font-weight:800; color:var(--score-color);}
+.forecast-today-score span{font-size:15px; font-weight:800; color:var(--ink-faint);}
+.forecast-today-text{flex:1; min-width:0;}
+.forecast-today-label{font-size:16px; font-weight:800;}
+.forecast-today-best{margin-top:3px; font-size:13px; font-weight:700; color:var(--ink-soft);}
+.forecast-today-weather{display:flex; flex-direction:column; align-items:center; gap:2px; flex:0 0 auto; font-size:12.5px; font-weight:800; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+.forecast-block{padding:12px 14px; border-radius:16px; background:#F7F6F2;}
+.forecast-hours i.on{background:var(--accent);}
+.forecast-factors{display:flex; flex-direction:column; border:1px solid var(--line); border-radius:16px; overflow:hidden;}
+.forecast-factor{display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding:10px 14px; font-size:13px;}
+.forecast-factor + .forecast-factor{border-top:1px solid var(--line);}
+.forecast-factor span{color:var(--ink-soft); font-weight:700; flex:0 0 auto;}
+.forecast-factor b{font-weight:800; text-align:right;}
+.forecast-next{display:flex; flex-direction:column; margin-top:6px;}
+.forecast-next-row{display:grid; grid-template-columns:minmax(0,1fr) 24px 64px minmax(0,1.3fr); align-items:center; gap:10px; padding:8px 0;}
+.forecast-next-row + .forecast-next-row{border-top:1px solid rgba(23,24,27,.07);}
+.forecast-next-day{display:flex; flex-direction:column; min-width:0;}
+.forecast-next-day b{font-size:13.5px; font-weight:800;}
+.forecast-next-day span{font-size:11.5px; font-weight:700; color:var(--ink-faint);}
+.forecast-next-temp{font-size:13px; font-weight:800; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+.forecast-next-score{display:flex; align-items:center; gap:6px; min-width:0; font-size:12.5px; font-weight:800;}
+.forecast-next-score span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.forecast-note{font-size:11.5px; line-height:1.45; color:var(--ink-faint);}
+
+/* ===== Ближайший свободный сектор ===== */
+.nearest-free-card{
+  position:relative; margin:0 12px; padding:12px 14px; border-radius:18px; background:#17181B; color:#fff;
+  box-shadow:var(--shadow-lg); animation:nearest-in .3s var(--ease-out) both;
+}
+@keyframes nearest-in{from{opacity:0; transform:translateY(10px);}}
+.nearest-free-close{position:absolute; top:8px; right:8px; width:28px; height:28px; display:flex; align-items:center; justify-content:center; border:none; border-radius:50%; background:rgba(255,255,255,.1); color:rgba(255,255,255,.7); cursor:pointer;}
+.nearest-free-kicker{font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#FF9A5C;}
+.nearest-free-kicker span{color:rgba(255,255,255,.45);}
+.nearest-free-main{display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 10px; margin-top:4px; padding:0; border:none; background:none; font:inherit; color:inherit; text-align:left; cursor:pointer;}
+.nearest-free-main b{font-size:21px; font-weight:800;}
+.nearest-free-status{padding:2px 8px; border-radius:999px; background:rgba(255,255,255,.12); font-size:11.5px; font-weight:800;}
+.nearest-free-dist{font-size:13.5px; font-weight:700; color:rgba(255,255,255,.75); font-variant-numeric:tabular-nums;}
+.nearest-free-hint{margin-top:4px; font-size:12.5px; color:rgba(255,255,255,.55);}
+.nearest-free-actions{display:flex; gap:8px; margin-top:10px;}
+.nearest-free-btn{flex:1; height:38px; border:none; border-radius:12px; background:rgba(255,255,255,.12); color:#fff; font:inherit; font-size:14px; font-weight:800; cursor:pointer;}
+.nearest-free-btn.primary{background:var(--accent);}
+@media (prefers-reduced-motion: reduce){.nearest-free-card{animation:none;}}
+.intro-screen--catch .intro-cta-secondary{display:block; width:100%; margin-top:10px; padding:13px 0; border:1.5px solid rgba(23,24,27,.16); border-radius:16px; background:none; color:var(--ink); font:inherit; font-size:15px; font-weight:800; text-align:center; cursor:pointer;}

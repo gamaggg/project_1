@@ -33,6 +33,7 @@ export function OnboardingFlow({
   initialStep,
   onBackToShare,
   invited,
+  onFindNearestFree,
 }: {
   onCityChosen?: (city: CityId) => void
   onForgotPassword: () => void
@@ -42,6 +43,9 @@ export function OnboardingFlow({
   onBackToShare?: () => void
   // Opened from a friend's invite link — Welcome mentions the start bonus.
   invited?: boolean
+  // The last step's second button: finish onboarding and have the map look
+  // for the nearest free sector straight away.
+  onFindNearestFree?: () => void
 }) {
   const { user, signOut, signInWithTelegram } = useAuth()
   // Only true for an account that just got silently created by the Telegram
@@ -147,5 +151,18 @@ export function OnboardingFlow({
   if (step === 'territory-intro') return <TerritoryIntroStep onBack={() => setStep('city')} onDone={() => setStep('catch-intro')} />
   // Last screen of the wizard — flips onboarding_completed, which is what
   // makes FishZoneApp's gate unmount the whole wizard and show the real map.
-  return <CatchIntroStep onBack={() => setStep('territory-intro')} onDone={() => updateProfile.mutate({ onboardingCompleted: true })} />
+  return (
+    <CatchIntroStep
+      onBack={() => setStep('territory-intro')}
+      onDone={() => updateProfile.mutate({ onboardingCompleted: true })}
+      onFindNearestFree={
+        onFindNearestFree
+          ? () => {
+              onFindNearestFree()
+              updateProfile.mutate({ onboardingCompleted: true })
+            }
+          : undefined
+      }
+    />
+  )
 }

@@ -1,14 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { createPortal } from 'react-dom'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
-import { formatCoords, mapsLinks, openExternal } from '@/lib/openExternal'
+import { formatCoords } from '@/lib/openExternal'
 import { useCatchesByTerritory, useProfile, useCanAddCatchManually, useIsSuperAdmin, useBuffs, useBuyShield, useAdminSetTerritoryKind, useSlotState, useUseFreeShield } from '@/lib/supabase/queries'
 import { useI18n, useT } from '@/lib/i18n'
 import { formatWeekdayTime } from '@/lib/i18n/format'
 import { useNow } from '@/lib/useNow'
 import { SectorInsightsCard, SectorLegendRow } from '@/components/app-shell/SectorInsights'
+import { SectorForecastCard } from '@/components/app-shell/BiteForecast'
+import { RouteModal } from '@/components/app-shell/RouteModal'
 import { HOT_FLAME_SVG } from '@/lib/map/hotFlame'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { KIND_LABEL, WATER_KINDS_BY_CITY } from '@/lib/data/species'
@@ -137,33 +138,7 @@ function SectorCoords({ lat, lng, onToast }: { lat: number; lng: number; onToast
       <button className="sector-coords-btn primary tap-scale" onClick={() => setMapsOpen(true)}>
         Маршрут
       </button>
-      {mapsOpen &&
-        createPortal(
-          <div className="modal-overlay" onClick={() => setMapsOpen(false)}>
-            <div className="modal-card sector-maps-card" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-title">Маршрут до сектора</div>
-              <div className="modal-body" style={{ margin: '6px 0 14px' }}>
-                {coords}
-              </div>
-              {mapsLinks(lat, lng).map((m) => (
-                <button
-                  key={m.id}
-                  className="sector-maps-option tap-scale"
-                  onClick={() => {
-                    setMapsOpen(false)
-                    openExternal(m.url)
-                  }}
-                >
-                  {m.label}
-                </button>
-              ))}
-              <button className="comments-dialog-cancel" onClick={() => setMapsOpen(false)}>
-                Отмена
-              </button>
-            </div>
-          </div>,
-          document.body
-        )}
+      {mapsOpen && <RouteModal lat={lat} lng={lng} onClose={() => setMapsOpen(false)} />}
     </div>
   )
 }
@@ -429,6 +404,7 @@ export function TerritoryScreen({
           </div>
         </div>
 
+        <SectorForecastCard territory={territory} city={cityForSectorId(territory.id)} />
         <SectorInsightsCard territory={territory} />
 
         <div className="section-title-row" style={{ marginTop: 22 }}>

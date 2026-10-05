@@ -3,7 +3,7 @@ import type { Territory } from '@/lib/data/types'
 
 const MAX_DISTANCE_M = 400 // half the 600m hex width, plus slack for GPS error
 
-function haversineMeters(aLat: number, aLng: number, bLat: number, bLng: number): number {
+export function haversineMeters(aLat: number, aLng: number, bLat: number, bLng: number): number {
   const R = 6_371_000
   const dLat = ((bLat - aLat) * Math.PI) / 180
   const dLng = ((bLng - aLng) * Math.PI) / 180
