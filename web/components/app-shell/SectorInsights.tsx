@@ -189,34 +189,40 @@ export function SectorLegendRow({ territory, onOpenUser }: { territory: Territor
   const mine = data.myCount
   const isMe = !!legend && legend.id === user?.id
 
+  // No legend yet: one slim line instead of the full card — what it takes,
+  // and how far along the viewer is.
+  if (!legend) {
+    return (
+      <div className="legend-mini">
+        <LaurelIcon size={16} />
+        <span className="legend-mini-text">{t('legend.noneShort')}</span>
+        {mine !== null && <span className="legend-mini-progress">{t('legend.noneProgressShort', { mine })}</span>}
+      </div>
+    )
+  }
+
   return (
     <div className="legend-row">
       <div className="legend-row-head">{t('legend.title')}</div>
-      {legend ? (
-        <button className="legend-row-person tap-scale" onClick={() => onOpenUser(legend.id)}>
-          <LegendWreath>
-            <span className="legend-row-avatar">
-              {legend.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- small avatar thumbnail, same as the rest of the sector screen
-                <img src={thumbUrl(legend.avatarUrl, 96)} alt="" />
-              ) : (
-                (legend.name ?? '?').slice(0, 2).toUpperCase()
-              )}
-            </span>
-          </LegendWreath>
-          <span className="legend-row-text">
-            <b>{isMe ? t('legend.you') : legend.name}</b>
-            <span>{t('legend.catchesPeriod', { count: legend.count })}</span>
+      <button className="legend-row-person tap-scale" onClick={() => onOpenUser(legend.id)}>
+        <LegendWreath>
+          <span className="legend-row-avatar">
+            {legend.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- small avatar thumbnail, same as the rest of the sector screen
+              <img src={thumbUrl(legend.avatarUrl, 96)} alt="" />
+            ) : (
+              (legend.name ?? '?').slice(0, 2).toUpperCase()
+            )}
           </span>
-        </button>
-      ) : (
-        <div className="legend-row-none">{t('legend.none')}</div>
-      )}
+        </LegendWreath>
+        <span className="legend-row-text">
+          <b>{isMe ? t('legend.you') : legend.name}</b>
+          <span>{t('legend.catchesPeriod', { count: legend.count })}</span>
+        </span>
+      </button>
       {mine !== null && !isMe && (
         <div className="legend-row-progress">
-          {legend
-            ? `${t('legend.mineHere', { count: mine })} · ${t('legend.toLegend', { count: Math.max(1, legend.count - mine + 1) })}`
-            : t('legend.noneProgress', { mine })}
+          {t('legend.mineHere', { count: mine })} · {t('legend.toLegend', { count: Math.max(1, legend.count - mine + 1) })}
         </div>
       )}
     </div>

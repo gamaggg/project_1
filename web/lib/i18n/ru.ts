@@ -93,8 +93,8 @@ export const ru = {
     you: 'Это ты',
     mineHere: { one: 'У тебя здесь {count} улов', few: 'У тебя здесь {count} улова', many: 'У тебя здесь {count} уловов', other: 'У тебя здесь {count} улова' },
     toLegend: { one: 'до легенды ещё {count} улов', few: 'до легенды ещё {count} улова', many: 'до легенды ещё {count} уловов', other: 'до легенды ещё {count} улова' },
-    none: 'Легенды пока нет — поймай здесь 10 рыб за 90 дней, и она твоя',
-    noneProgress: 'У тебя здесь {mine} из 10 уловов',
+    noneShort: 'Легенды нет — нужно 10 уловов за 90 дней',
+    noneProgressShort: '{mine}/10',
     profileCount: { one: 'Легенда {count} сектора', few: 'Легенда {count} секторов', many: 'Легенда {count} секторов', other: 'Легенда {count} сектора' },
   },
   forecast: {

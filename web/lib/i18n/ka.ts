@@ -94,8 +94,8 @@ export const ka: Dict = {
     you: 'ეს შენ ხარ',
     mineHere: { one: 'აქ გაქვს {count} დაჭერა', other: 'აქ გაქვს {count} დაჭერა' },
     toLegend: { one: 'ლეგენდამდე კიდევ {count} დაჭერა', other: 'ლეგენდამდე კიდევ {count} დაჭერა' },
-    none: 'ლეგენდა ჯერ არ არის — დაიჭირე აქ 10 თევზი 90 დღეში და ის შენ იქნები',
-    noneProgress: 'აქ გაქვს 10-დან {mine} დაჭერა',
+    noneShort: 'ლეგენდა არ არის — საჭიროა 10 დაჭერა 90 დღეში',
+    noneProgressShort: '{mine}/10',
     profileCount: { one: '{count} სექტორის ლეგენდა', other: '{count} სექტორის ლეგენდა' },
   },
   forecast: {
