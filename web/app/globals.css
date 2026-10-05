@@ -1154,7 +1154,11 @@ body{
 .map-sheet-container{
   position:absolute; left:0; right:0; bottom:94px; z-index:700;
   display:flex; flex-direction:column; gap:9px;
+  /* Full width, but only its pieces take touches: the empty space beside
+     the week-recap sticker (or above a card) passes swipes to the map. */
+  pointer-events:none;
 }
+.map-sheet-container > *{pointer-events:auto;}
 .map-sheet-row{
   display:flex; gap:12px;
   overflow-x:auto;
