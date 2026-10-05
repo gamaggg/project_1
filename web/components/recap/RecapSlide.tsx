@@ -26,6 +26,9 @@ export type SlideEnv = {
   fonts: { display: string; body: string }
   // The shared image carries the site's address at the bottom.
   branded?: boolean
+  // In the app: a moving background layer (bubbles, drifting light) drawn
+  // under the text. The still image has none.
+  decor?: ReactNode
 }
 
 const YELLOW = '#FFE14D'
@@ -71,6 +74,7 @@ function Frame({ id, env, children, photo }: { id: SlideId; env: SlideEnv; child
       {/* A soft glow so the colour fields aren't flat. */}
       <div style={{ position: 'absolute', top: -260, right: -300, width: 900, height: 900, borderRadius: 450, background: 'radial-gradient(circle, rgba(255,255,255,.22), rgba(255,255,255,0) 70%)', display: 'flex' }} />
       <div style={{ position: 'absolute', bottom: -320, left: -280, width: 860, height: 860, borderRadius: 430, background: 'radial-gradient(circle, rgba(255,225,77,.18), rgba(255,225,77,0) 70%)', display: 'flex' }} />
+      {!photo && env.decor}
       {photo}
       <div style={{ position: 'absolute', top: 170, left: 84, right: 84, display: 'flex', color: YELLOW, fontSize: 38, fontWeight: 800, letterSpacing: 1 }}>
         {env.t('recap.kicker')} · {dayRange(env)}

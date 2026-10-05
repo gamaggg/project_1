@@ -247,6 +247,7 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
               img: (u, w, h) => sizedPhoto(u, w, h),
               logo: '/brand/logo_2.svg',
               fonts: { display: 'var(--font-display), Oswald, sans-serif', body: 'var(--font-manrope), Manrope, sans-serif' },
+              decor: <RecapDecor />,
             }}
           />
         </div>
@@ -284,5 +285,41 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
       </div>
     </div>,
     document.body
+  )
+}
+
+// Barely-there motion behind a slide: two pools of light drifting, a few
+// bubbles rising, a slow wave along the bottom. In slide units (1080×1920,
+// scaled with the slide); negative delays so it's already moving on the
+// first frame. Off entirely for reduced motion (see the CSS).
+const BUBBLES: { x: number; size: number; dur: number; delay: number }[] = [
+  { x: 110, size: 26, dur: 13, delay: 2 },
+  { x: 260, size: 14, dur: 10, delay: 7 },
+  { x: 420, size: 34, dur: 16, delay: 11 },
+  { x: 560, size: 18, dur: 12, delay: 4 },
+  { x: 700, size: 40, dur: 18, delay: 9 },
+  { x: 830, size: 16, dur: 11, delay: 1 },
+  { x: 960, size: 24, dur: 14, delay: 6 },
+  { x: 180, size: 12, dur: 9, delay: 5 },
+  { x: 640, size: 12, dur: 10, delay: 13 },
+]
+
+const WAVE = 'M0 60 Q 135 0 270 60 T 540 60 T 810 60 T 1080 60 T 1350 60 T 1620 60 T 1890 60 T 2160 60 V 200 H 0 Z'
+
+function RecapDecor() {
+  return (
+    <div className="recap-decor" aria-hidden>
+      <span className="recap-blob a" />
+      <span className="recap-blob b" />
+      {BUBBLES.map((b, i) => (
+        <i key={i} className="recap-bubble" style={{ left: b.x, width: b.size, height: b.size, animationDuration: `${b.dur}s`, animationDelay: `-${b.delay}s` }} />
+      ))}
+      <svg className="recap-wave w1" width="2160" height="200" viewBox="0 0 2160 200" preserveAspectRatio="none">
+        <path d={WAVE} fill="#fff" />
+      </svg>
+      <svg className="recap-wave w2" width="2160" height="200" viewBox="0 0 2160 200" preserveAspectRatio="none">
+        <path d={WAVE} fill="#fff" />
+      </svg>
+    </div>
   )
 }
