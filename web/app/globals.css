@@ -1416,8 +1416,12 @@ body{
    there — its own top margin (spacing when there's no ring) pushed it 7px
    down, leaving the top medal far off and the bottom one against the avatar. */
 .award-ring-stage > .profile-hero-avatar-ring{margin:0;}
+/* Centred on its spot by the negative margin (half its 40px), not by a
+   transform: the centring used to live inside the drift animation, so
+   wherever the animation is off — iOS «Уменьшение движения», which Safari
+   and Telegram both honour — every medal sat 20px right and 20px down. */
 .award-ring-badge{
-  position:absolute; width:40px; height:40px; border-radius:50%; cursor:pointer;
+  position:absolute; width:40px; height:40px; margin:-20px 0 0 -20px; border-radius:50%; cursor:pointer;
   display:flex; align-items:center; justify-content:center; color:#fff; padding:0;
   border:2.5px solid var(--surface); box-shadow:0 5px 14px rgba(0,0,0,0.22);
   font-family:inherit; z-index:2;
@@ -1425,8 +1429,8 @@ body{
 }
 .award-ring-badge svg{width:18px; height:18px;}
 @keyframes award-drift{
-  0%{transform:translate(calc(-50% + var(--dx1)), calc(-50% + var(--dy1)));}
-  100%{transform:translate(calc(-50% + var(--dx2)), calc(-50% + var(--dy2)));}
+  0%{transform:translate(var(--dx1), var(--dy1));}
+  100%{transform:translate(var(--dx2), var(--dy2));}
 }
 
 /* ---------- AwardDetailModal (see AwardDetailModal.tsx) ---------- */
