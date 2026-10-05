@@ -3,13 +3,41 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTelegramBackButton } from '@/lib/telegram/useTelegramBackButton'
 
-const MAX_PHOTO_WIDTH = 1280
+// Long side of the saved photo. Was 1280 on the width alone — and with no
+// resolution asked of the camera, phones streamed 640×480 anyway: catch
+// photos averaged 126 KB (05.10), soft and grainy.
+const MAX_PHOTO_SIDE = 1920
+const JPEG_QUALITY = 0.88
 const CAMERA_GRANTED_KEY = 'fishzone:cameraGranted'
 
 type CameraState = 'intro' | 'requesting' | 'live' | 'denied'
 
-// Torch (flashlight) capability isn't in TS's DOM lib — non-standard but real.
-type TorchCapabilities = { torch?: boolean }
+// Torch (flashlight) and focus capabilities aren't in TS's DOM lib —
+// non-standard but real (Chrome/Android).
+type TorchCapabilities = { torch?: boolean; focusMode?: string[] }
+
+// ImageCapture (Chrome/Android) takes a real still from the sensor — full
+// resolution, the phone's own processing — instead of a frame of the
+// preview video. Not in TS's DOM lib; iOS has no such API.
+type ImageCaptureLike = { takePhoto: () => Promise<Blob> }
+declare const ImageCapture: { new (track: MediaStreamTrack): ImageCaptureLike } | undefined
+
+// Draws any image source down to MAX_PHOTO_SIDE on its long side and encodes
+// one JPEG — the same pass for a live frame, a sensor still and an admin's
+// gallery pick, so they all look and weigh alike in confirm/upload.
+function encodePhoto(source: CanvasImageSource, width: number, height: number, done: (blob: Blob) => void) {
+  const scale = Math.min(1, MAX_PHOTO_SIDE / Math.max(width, height))
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.round(width * scale)
+  canvas.height = Math.round(height * scale)
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(source, 0, 0, canvas.width, canvas.height)
+  canvas.toBlob((blob) => {
+    if (blob) done(blob)
+  }, 'image/jpeg', JPEG_QUALITY)
+}
 
 // No "continue without photo" path anywhere here — a catch cannot be logged
 // without a real photo (see DECISIONS.md). Denied/error only ever offers a
@@ -33,6 +61,8 @@ export function CameraScreen({
   const [state, setState] = useState<CameraState>('intro')
   const [torchSupported, setTorchSupported] = useState(false)
   const [torchOn, setTorchOn] = useState(false)
+  // A sensor still takes a moment (Android) — the shutter waits for it.
+  const [shooting, setShooting] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
@@ -94,11 +124,19 @@ export function CameraScreen({
   async function requestCamera() {
     setState('requesting')
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+      // Without a size the browser picks its default — 640×480 on many
+      // phones. 4:3 like the phone's own camera; the closest mode wins.
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1440 } },
+        audio: false,
+      })
       streamRef.current = stream
       localStorage.setItem(CAMERA_GRANTED_KEY, '1')
       const track = stream.getVideoTracks()[0]
       const caps = track?.getCapabilities?.() as unknown as TorchCapabilities | undefined
+      if (caps?.focusMode?.includes('continuous')) {
+        track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] } as unknown as MediaTrackConstraints).catch(() => {})
+      }
       setTorchSupported(!!caps?.torch)
       setTorchOn(false)
       setState('live')
@@ -129,24 +167,45 @@ export function CameraScreen({
     onBack()
   }
 
-  function shoot() {
+  function grabFrame() {
     const video = videoRef.current
     if (!video || !video.videoWidth) return
-    const scale = Math.min(1, MAX_PHOTO_WIDTH / video.videoWidth)
-    const canvas = document.createElement('canvas')
-    canvas.width = Math.round(video.videoWidth * scale)
-    canvas.height = Math.round(video.videoHeight * scale)
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-    stopStream()
-    canvas.toBlob((blob) => { if (blob) onCapture(blob) }, 'image/jpeg', 0.85)
+    encodePhoto(video, video.videoWidth, video.videoHeight, (blob) => {
+      stopStream()
+      onCapture(blob)
+    })
   }
 
-  // Same resize/encode pass as shoot() above (MAX_PHOTO_WIDTH, jpeg 0.85) —
-  // a gallery pick should look and weigh the same as a live shot once it's
-  // in confirm/upload, not carry through whatever resolution the source
-  // photo happened to be.
+  // A real still where the browser can take one (Android), else a frame of
+  // the preview (iPhone). With the torch on, the frame: takePhoto may switch
+  // the torch off for its own exposure.
+  async function shoot() {
+    const video = videoRef.current
+    if (!video || !video.videoWidth || shooting) return
+    const track = streamRef.current?.getVideoTracks()[0]
+    if (track && !torchOn && typeof ImageCapture !== 'undefined') {
+      setShooting(true)
+      try {
+        const still = await new ImageCapture(track).takePhoto()
+        const bitmap = await createImageBitmap(still)
+        encodePhoto(bitmap, bitmap.width, bitmap.height, (blob) => {
+          bitmap.close()
+          stopStream()
+          onCapture(blob)
+        })
+        return
+      } catch {
+        // Some devices refuse a still mid-preview — the frame still works.
+      } finally {
+        setShooting(false)
+      }
+    }
+    grabFrame()
+  }
+
+  // Same resize/encode pass as shoot() above — a gallery pick should look
+  // and weigh the same as a live shot once it's in confirm/upload, not carry
+  // through whatever resolution the source photo happened to be.
   function handleGalleryPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     e.target.value = ''
@@ -154,16 +213,11 @@ export function CameraScreen({
     const img = new Image()
     const url = URL.createObjectURL(file)
     img.onload = () => {
-      const scale = Math.min(1, MAX_PHOTO_WIDTH / img.naturalWidth)
-      const canvas = document.createElement('canvas')
-      canvas.width = Math.round(img.naturalWidth * scale)
-      canvas.height = Math.round(img.naturalHeight * scale)
-      const ctx = canvas.getContext('2d')
       URL.revokeObjectURL(url)
-      if (!ctx) return
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-      stopStream()
-      canvas.toBlob((blob) => { if (blob) onCapture(blob) }, 'image/jpeg', 0.85)
+      encodePhoto(img, img.naturalWidth, img.naturalHeight, (blob) => {
+        stopStream()
+        onCapture(blob)
+      })
     }
     img.src = url
   }
@@ -217,7 +271,7 @@ export function CameraScreen({
       <div className="camera-controls">
         {isLive ? (
           <>
-            <div className="shutter tap-scale" onClick={shoot} />
+            <div className={`shutter tap-scale${shooting ? ' busy' : ''}`} onClick={shoot} />
             {allowGallery && (
               <div className="cam-round-btn camera-gallery-btn tap-scale" onClick={() => galleryInputRef.current?.click()} aria-label="Выбрать из галереи">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
