@@ -85,6 +85,9 @@ export const ru = {
     how3: 'Забрать можно до {cap} монет в сутки. Лимит обновляется в 00:00.',
     hoursMin: '{h} ч {m} мин',
     gotIt: 'Понятно',
+    fillsIn: 'лимит {cap} набирается за {time}',
+    hoursOnly: '{h} ч',
+    minutesOnly: '{m} мин',
   },
   hot: {
     badge: 'Горячий сектор',

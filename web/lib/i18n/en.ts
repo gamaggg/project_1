@@ -84,6 +84,9 @@ export const en: Dict = {
     how3: 'You can collect up to {cap} coins a day. The limit resets at midnight.',
     hoursMin: '{h} h {m} min',
     gotIt: 'Got it',
+    fillsIn: 'the {cap} limit fills in {time}',
+    hoursOnly: '{h} h',
+    minutesOnly: '{m} min',
   },
   hot: {
     badge: 'Hot sector',

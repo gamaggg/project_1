@@ -59,7 +59,19 @@ function TreasurySheet({ data, onClose, onToast }: { data: TreasuryState; onClos
   const tz = CITIES[profile?.city ?? 'batumi'].timezone
   const local = nowInZone(tz, now)
   const minutesLeft = 24 * 60 - (Number(local.slice(11, 13)) * 60 + new Date(now).getUTCMinutes())
-  const resetIn = t('treasury.hoursMin', { h: Math.floor(minutesLeft / 60), m: minutesLeft % 60 })
+  const duration = (minutes: number) => {
+    const h = Math.floor(minutes / 60)
+    const m = minutes % 60
+    return h && m ? t('treasury.hoursMin', { h, m }) : h ? t('treasury.hoursOnly', { h }) : t('treasury.minutesOnly', { m })
+  }
+  const resetIn = duration(minutesLeft)
+  // With enough sectors the daily limit, not the income, is what counts:
+  // say how fast it fills rather than an income that can't all be taken.
+  const fillMinutes = data.perDay > 0 ? Math.round(((data.dailyCap / data.perDay) * 24 * 60) / 10) * 10 : 0
+  const incomeLine =
+    data.perDay >= data.dailyCap
+      ? t('treasury.fillsIn', { cap: data.dailyCap, time: duration(Math.max(10, fillMinutes)) })
+      : t('treasury.perDayShort', { count: data.perDay })
 
   function onCollect() {
     collect.mutate(undefined, {
@@ -110,7 +122,7 @@ function TreasurySheet({ data, onClose, onToast }: { data: TreasuryState; onClos
               <i style={{ transform: `scaleX(${Math.min(1, data.collectedToday / data.dailyCap)})` }} />
             </div>
             <div className="treasury-progress-sub">
-              {t('treasury.sectors', { count: data.sectors })} · {t('treasury.perDayShort', { count: data.perDay })}
+              {t('treasury.sectors', { count: data.sectors })} · {incomeLine}
             </div>
           </div>
 

@@ -86,6 +86,9 @@ export const ka: Dict = {
     how3: 'დღეში შეგიძლია აიღო {cap} მონეტამდე. ლიმიტი 00:00-ზე განახლდება.',
     hoursMin: '{h} სთ {m} წთ',
     gotIt: 'გასაგებია',
+    fillsIn: 'ლიმიტი {cap} ივსება {time}-ში',
+    hoursOnly: '{h} სთ',
+    minutesOnly: '{m} წთ',
   },
   hot: {
     badge: 'ცხელი სექტორი',
