@@ -200,12 +200,12 @@ function Trophy({ env }: { env: SlideEnv }) {
       id="trophy"
       env={env}
       photo={
-        <div style={{ position: 'absolute', inset: 0, display: 'flex' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, width: SLIDE_W, height: SLIDE_H, display: 'flex' }}>
           {src && (
             // eslint-disable-next-line @next/next/no-img-element -- shared markup for the image renderer
             <img src={src} width={SLIDE_W} height={SLIDE_H} style={{ position: 'absolute', top: 0, left: 0, width: SLIDE_W, height: SLIDE_H, objectFit: 'cover' }} alt="" />
           )}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 520, display: 'flex', background: 'linear-gradient(rgba(10,6,40,.85), rgba(10,6,40,0))' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 640, display: 'flex', background: 'linear-gradient(rgba(10,6,40,.92), rgba(10,6,40,.55) 55%, rgba(10,6,40,0))' }} />
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 1100, display: 'flex', background: 'linear-gradient(rgba(10,6,40,0), rgba(10,6,40,.6) 40%, rgba(10,6,40,.95))' }} />
         </div>
       }
@@ -279,7 +279,14 @@ function Time({ env }: { env: SlideEnv }) {
       <Title env={env}>{env.t('recap.timeTitle')}</Title>
       <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', marginBottom: 'auto' }}>
         <div style={{ display: 'flex', fontSize: 50, fontWeight: 800 }}>{env.t('recap.timeSub')}</div>
-        {win && <div style={{ display: 'flex', fontFamily: env.fonts.display, fontSize: 190, lineHeight: 1, color: '#FFF2A8', marginTop: 16 }}>{`${hh(win.from)}–${hh(win.to)}`}</div>}
+        {win && (
+          // Three pieces in one row: the image renderer would break the line at the dash.
+          <div style={{ display: 'flex', fontFamily: env.fonts.display, fontSize: 170, lineHeight: 1, color: '#FFF2A8', marginTop: 16 }}>
+            <span>{hh(win.from)}</span>
+            <span style={{ margin: '0 12px' }}>–</span>
+            <span>{hh(win.to)}</span>
+          </div>
+        )}
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 420, marginTop: 70 }}>
           {d.hours.map((n, h) => (
             <div
