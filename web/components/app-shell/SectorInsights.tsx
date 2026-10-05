@@ -180,28 +180,61 @@ function InsightsBody({ data, speciesName }: { data: Insights; speciesName: (key
 
 // «Легенда сектора» under «Захватил сектор»: who has fished here the most
 // in 90 days, and how far the viewer is from taking that over.
-export function SectorLegendRow({ territory, onOpenUser }: { territory: Territory; onOpenUser: (id: string) => void }) {
+export function SectorLegendRow({
+  territory,
+  onOpenUser,
+  aside,
+}: {
+  territory: Territory
+  onOpenUser: (id: string) => void
+  // The sector's defense (SectorDefenseAside) — when there is one, legend
+  // and defense share one card split down the middle instead of stacking
+  // two cards on top of each other.
+  aside?: React.ReactNode
+}) {
   const t = useT()
   const { user } = useAuth()
   const { data } = useSectorInsights(territory.id)
-  if (!data) return null
+  if (!data) {
+    return aside ? (
+      <div className="sector-standing">
+        <div className="legend-row" />
+        {aside}
+      </div>
+    ) : null
+  }
   const legend = data.legend
   const mine = data.myCount
   const isMe = !!legend && legend.id === user?.id
 
-  // No legend yet: one slim line instead of the full card — what it takes,
-  // and how far along the viewer is.
+  // No legend yet: what it takes and how far along the viewer is — one slim
+  // line on its own, a short block beside the defense.
   if (!legend) {
+    if (!aside) {
+      return (
+        <div className="legend-mini">
+          <LaurelIcon size={16} />
+          <span className="legend-mini-text">{t('legend.noneShort')}</span>
+          {mine !== null && <span className="legend-mini-progress">{t('legend.noneProgressShort', { mine })}</span>}
+        </div>
+      )
+    }
     return (
-      <div className="legend-mini">
-        <LaurelIcon size={16} />
-        <span className="legend-mini-text">{t('legend.noneShort')}</span>
-        {mine !== null && <span className="legend-mini-progress">{t('legend.noneProgressShort', { mine })}</span>}
+      <div className="sector-standing">
+        <div className="legend-row">
+          <div className="legend-row-head">{t('legend.title')}</div>
+          <div className="legend-row-none">
+            <LaurelIcon size={16} />
+            <span>{t('legend.noneMid')}</span>
+          </div>
+          {mine !== null && <span className="legend-mini-progress">{t('legend.noneProgressShort', { mine })}</span>}
+        </div>
+        {aside}
       </div>
     )
   }
 
-  return (
+  const card = (
     <div className="legend-row">
       <div className="legend-row-head">{t('legend.title')}</div>
       <button className="legend-row-person tap-scale" onClick={() => onOpenUser(legend.id)}>
@@ -226,5 +259,13 @@ export function SectorLegendRow({ territory, onOpenUser }: { territory: Territor
         </div>
       )}
     </div>
+  )
+  return aside ? (
+    <div className="sector-standing">
+      {card}
+      {aside}
+    </div>
+  ) : (
+    card
   )
 }

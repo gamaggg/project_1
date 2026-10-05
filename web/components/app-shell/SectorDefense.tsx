@@ -21,29 +21,32 @@ export function DefenseShields({ value, size = 14 }: { value: number; size?: num
   )
 }
 
-// The sector screen's line about it: how strong, and what that means for
-// whoever is looking — the holder (and their clan) keep it up by fishing
-// here; anyone else sees how many catches it would take.
-export function SectorDefenseRow({ territory, myClanId }: { territory: Territory; myClanId: number | null }) {
+// The right-hand half of the sector screen's legend card (see
+// SectorLegendRow's aside): how strong the defense is and, in a few words,
+// what it means for whoever is looking — the holder (and their clan) keep it
+// up by fishing here; anyone else sees how many catches it would take.
+// Nothing for a free sector.
+export function SectorDefenseAside({ territory, myClanId }: { territory: Territory; myClanId: number | null }) {
   const { t } = useI18n()
   if (!territory.ownerId) return null
   const value = territory.defense
   const holds = territory.status === 'mine' || territory.coHolders.some((h) => h.isMe)
   const clan = !holds && myClanId !== null && territory.ownerClanId === myClanId
   const text = holds
-    ? t('defense.holder')
+    ? t('defense.shortHolder')
     : clan
-      ? t('defense.clan')
+      ? t('defense.shortClan')
       : value > 0
-        ? t('defense.attackLeft', { count: value + 1 })
-        : t('defense.open')
+        ? t('defense.shortLeft', { count: value + 1 })
+        : t('defense.shortOpen')
   return (
-    <div className={`sector-defense${value === 0 ? ' open' : ''}`}>
-      <DefenseShields value={value} size={18} />
-      <div className="sector-defense-text">
-        <b>{t('defense.title', { value })}</b>
-        <span>{text}</span>
+    <div className={`sector-standing-defense${value === 0 ? ' open' : ''}`}>
+      <div className="sector-standing-head">{t('defense.head')}</div>
+      <div className="sector-standing-value">
+        <DefenseShields value={value} size={20} />
+        <b>{t('defense.value', { value })}</b>
       </div>
+      <span className="sector-standing-hint">{text}</span>
     </div>
   )
 }

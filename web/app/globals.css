@@ -3480,12 +3480,21 @@ button.race-lane{cursor:pointer;}
 .defense-shields{display:inline-flex; gap:2px; align-items:center;}
 .defense-shields svg{display:block; fill:none; stroke:#9BBDB8; stroke-width:2; stroke-linejoin:round;}
 .defense-shields svg.on{fill:#12A190; stroke:#0E8074;}
-.sector-defense{display:flex; align-items:center; gap:10px; margin-top:12px; padding:10px 12px; border-radius:14px; background:#EAF7F4; border:1px solid #C9EAE3;}
-.sector-defense.open{background:var(--bg); border-color:var(--line);}
-.sector-defense-text{display:flex; flex-direction:column; min-width:0; gap:1px;}
-.sector-defense-text b{font-size:13.5px; font-weight:800; color:#0B6A60;}
-.sector-defense.open .sector-defense-text b{color:var(--ink-soft);}
-.sector-defense-text span{font-size:12.5px; line-height:1.35; color:var(--ink-soft); font-weight:600;}
+/* Sector screen: legend and defense in one card split down the middle —
+   the legend's warm half on the left, the defense's teal column on the right. */
+.sector-standing{display:grid; grid-template-columns:minmax(0,1fr) auto; margin-top:12px; border-radius:14px; overflow:hidden; border:1px solid #EADFC6;}
+.sector-standing > .legend-row{margin:0; border:none; border-radius:0; min-width:0;}
+.legend-row-none{display:flex; align-items:center; gap:6px; margin-top:6px; font-size:12.5px; line-height:1.35; font-weight:700; color:#9A6B12;}
+.legend-row-none svg{flex:0 0 auto;}
+.sector-standing > .legend-row .legend-mini-progress{display:inline-block; margin-top:8px;}
+.sector-standing-defense{width:124px; padding:10px 12px; background:#EAF7F4; border-left:1px solid #CFE7E0; display:flex; flex-direction:column; gap:6px;}
+.sector-standing-defense.open{background:#F5F4F0; border-left-color:var(--line);}
+.sector-standing-head{font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:#0E8074;}
+.sector-standing-defense.open .sector-standing-head{color:var(--ink-faint);}
+.sector-standing-value{display:flex; flex-direction:column; align-items:flex-start; gap:3px;}
+.sector-standing-value b{font-size:13px; font-weight:800; color:#0B6A60; font-variant-numeric:tabular-nums; white-space:nowrap;}
+.sector-standing-defense.open .sector-standing-value b{color:var(--ink-soft);}
+.sector-standing-hint{font-size:12px; line-height:1.3; font-weight:600; color:var(--ink-soft);}
 /* After an attack (ConfirmScreen): the sector's shields left, on the dark trophy card. */
 .catch-trophy-attack{display:flex; align-items:center; justify-content:center; gap:8px; margin:-10px auto 16px; max-width:300px; text-align:left; font-size:13.5px; font-weight:700; line-height:1.35; color:rgba(255,255,255,.88); animation:comment-in .5s var(--ease-out) 1.35s both;}
 .catch-trophy-attack .defense-shields svg{stroke:rgba(255,255,255,.45);}
