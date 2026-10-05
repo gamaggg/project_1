@@ -2446,9 +2446,10 @@ export function useCollectTreasury() {
 }
 
 export type SectorInsights = {
-  // 'kind': the sector itself had fewer than 3 catches in 30 days, so these
-  // are every sector of the same water type in the city.
-  scope: 'sector' | 'kind'
+  // 'sector': 3+ catches here in 90 days, these are they. 'sector_all':
+  // fewer, so every catch ever made here. 'nearby': nobody has fished here,
+  // so the sectors within ~1 km over 90 days.
+  scope: 'sector' | 'sector_all' | 'nearby'
   kind: TerritoryKind
   total: number
   species: { key: string; count: number }[]
@@ -2474,7 +2475,7 @@ export function useSectorInsights(territoryId: string | null) {
       const { data, error } = await supabase.rpc('get_sector_insights', { p_territory_id: territoryId! })
       if (error) throw error
       const d = data as {
-        scope: 'sector' | 'kind'
+        scope: 'sector' | 'sector_all' | 'nearby'
         kind: TerritoryKind
         total: number
         species: { key: string; count: number }[]

@@ -1,7 +1,6 @@
 'use client'
 
 import { useSectorInsights, useSpecies, type SectorInsights as Insights } from '@/lib/supabase/queries'
-import { KIND_LABEL } from '@/lib/data/species'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useT } from '@/lib/i18n'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -111,14 +110,18 @@ export function SectorInsightsCard({ territory }: { territory: Territory }) {
     <div className="insights-card">
       <div className="insights-head">
         <span className="insights-title">{t('insights.title')}</span>
-        <span className="insights-period">{t('insights.period')}</span>
+        {data && (
+          <span className="insights-period">
+            {data.scope === 'sector' ? t('insights.period90') : data.scope === 'sector_all' ? t('insights.periodAll') : t('insights.periodNearby')}
+          </span>
+        )}
       </div>
       {data.total === 0 ? (
         <div className="insights-empty">{t('insights.empty')}</div>
       ) : (
         <InsightsBody data={data} speciesName={(key) => species.find((s) => s.key === key)?.name ?? key} />
       )}
-      {data.scope === 'kind' && data.total > 0 && <div className="insights-note">{t('insights.kindScope', { kind: KIND_LABEL[data.kind] })}</div>}
+      {data.scope === 'nearby' && data.total > 0 && <div className="insights-note">{t('insights.nearbyNote')}</div>}
     </div>
   )
 }
