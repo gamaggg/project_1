@@ -1470,6 +1470,8 @@ export function FishZoneApp() {
             onOpenClan={openClan}
             onOpenRace={openClanRace}
             onOpenClanChat={openClanChat}
+            onOpenShop={openShop}
+            onOpenMap={() => navClick('screen-map')}
           />
         </Screen>
         <Screen id="screen-profile" current={currentScreen}>

@@ -9,6 +9,7 @@ import { formatCatchMeta, formatWhen, pluralSectors, pluralCatches } from '@/lib
 import { FishIcon } from '@/components/app-shell/icons'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { AwardFeedIcon, FeedIcon, FEED_ICONS } from '@/components/app-shell/ActivityIcons'
+import { useT } from '@/lib/i18n'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { CLAN_ROLE_LABEL, type ClanRole } from '@/lib/data/clanLevels'
@@ -192,6 +193,8 @@ export function ActivityScreen({
   onOpenChallenges,
   onOpenRace,
   onOpenClanChat,
+  onOpenShop,
+  onOpenMap,
 }: {
   // This screen stays mounted while other tabs are on top of it, so being
   // rendered says nothing about being looked at — and marking notifications
@@ -209,7 +212,10 @@ export function ActivityScreen({
   onOpenChallenges: () => void
   onOpenRace: () => void
   onOpenClanChat: (clanId: number) => void
+  onOpenShop?: () => void
+  onOpenMap?: () => void
 }) {
+  const tr = useT()
   const { data: activity = [], isLoading, isSuccess } = useActivity()
   const { data: cityFeed = [] } = useCityFeed(city)
   const markRead = useMarkNotificationsRead()
@@ -397,6 +403,60 @@ export function ActivityScreen({
                         Списано {a.moderationCoinsRemoved} <CoinIcon size={16} />
                       </div>
                     )}
+                    <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {unreadIds.has(a.id) && <span className="unread-dot" />}
+                      {formatWhen(a.createdAt)}
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+            if (a.kind === 'game_event' && a.gameEvent) {
+              const ev = a.gameEvent
+              const p = ev.payload
+              const n = (k: string) => Number(p[k] ?? 0)
+              let tone: 'accent' | 'gold' | 'blue' | 'green' = 'accent'
+              let icon = FEED_ICONS.flame
+              let title = ''
+              let sub: string | null = null
+              let action: (() => void) | undefined
+              if (ev.kind === 'hot_sector_week') {
+                const sectors = (p.sectors as string[] | undefined) ?? []
+                title = tr('activity.hotWeek', { sectors: sectors.join(', ') })
+                sub = tr('activity.hotWeekSub')
+                if (sectors[0]) action = () => onOpenTerritory(sectors[0])
+              } else if (ev.kind === 'hot_sector_won') {
+                title = tr('activity.hotWon', { id: a.territoryId ?? '' })
+                sub = tr('activity.hotWonSub', { coins: n('coins') || 100 })
+                action = onOpenOwnAwards
+              } else if (ev.kind === 'legend_gained' || ev.kind === 'legend_lost') {
+                tone = 'gold'
+                icon = FEED_ICONS.laurel
+                title =
+                  ev.kind === 'legend_gained'
+                    ? tr('activity.legendGained', { id: a.territoryId ?? '' })
+                    : tr('activity.legendLost', { name: a.who || tr('activity.someone'), id: a.territoryId ?? '' })
+                sub = ev.kind === 'legend_gained' ? tr('legend.catchesPeriod', { count: n('catches') }) : tr('activity.legendLostSub')
+                if (a.territoryId) action = () => onOpenTerritory(a.territoryId!)
+              } else if (ev.kind === 'bite_forecast') {
+                tone = 'blue'
+                icon = FEED_ICONS.bars
+                title = n('score') >= 5 ? tr('activity.forecastGreat', { score: n('score') }) : tr('activity.forecastGood', { score: n('score') })
+                sub = p.from && p.to ? tr('activity.forecastSub', { from: String(p.from), to: String(p.to) }) : null
+                action = onOpenMap
+              } else if (ev.kind === 'daily_reward_reminder') {
+                tone = 'green'
+                icon = FEED_ICONS.gift
+                title = tr('activity.reward', { day: n('day') })
+                sub = tr('activity.rewardSub', { coins: n('coins') })
+                action = onOpenShop
+              }
+              return (
+                <div className={`activity-item${action ? ' tap-scale' : ''}`} key={a.id} style={{ cursor: action ? 'pointer' : undefined }} onClick={action}>
+                  <FeedIcon tone={tone} icon={icon} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 800, lineHeight: 1.35 }}>{title}</div>
+                    {sub && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', fontWeight: 600, marginTop: 3 }}>{sub}</div>}
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                       {unreadIds.has(a.id) && <span className="unread-dot" />}
                       {formatWhen(a.createdAt)}

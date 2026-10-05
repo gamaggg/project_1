@@ -693,6 +693,9 @@ export function useLastCatchChoices() {
 // because they're identical for everyone — fanning one out into a row per
 // user would multiply writes for no gain — so they're fetched globally and
 // merged back in at the right chronological spot.
+// Game notifications drawn as one generic row in «Активность».
+const GAME_EVENT_KINDS = new Set(['hot_sector_week', 'hot_sector_won', 'legend_gained', 'legend_lost', 'bite_forecast', 'daily_reward_reminder'])
+
 export function useActivity() {
   const { user } = useAuth()
   return useQuery({
@@ -760,7 +763,9 @@ export function useActivity() {
                                         row.kind === 'referral_reward' ||
                                         row.kind === 'system_alert'
                                       ? (row.kind as ActivityEntry['kind'])
-                                      : 'catch'
+                                      : GAME_EVENT_KINDS.has(row.kind)
+                                        ? 'game_event'
+                                        : 'catch'
           return {
             id: `notif:${row.id}`,
             who: actor?.display_name ?? 'Рыбак',
@@ -813,6 +818,7 @@ export function useActivity() {
                   }
                 : null,
             alertText: kind === 'system_alert' ? ((payload.text as string) ?? null) : null,
+            gameEvent: kind === 'game_event' ? { kind: row.kind, payload } : null,
           }
         })
       }

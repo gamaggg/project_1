@@ -39,6 +39,9 @@
 - **Прогноз клёва:** направление ветра (словом, без стрелки) и температура воды (только море — Open-Meteo marine).
 - **Погода во время улова** на экране улова: небо и воздух (луна вместо солнца ночью), вода и волна у моря, ветер с направлением, давление со стрелкой тренда за 3 ч. Берётся один раз из архива Open-Meteo маршрутом `/api/catch-conditions` (service_role) и хранится в `catch_conditions`; старые уловы заполняются при первом просмотре. Таблица — `catch_conditions.sql` (применена 05.10).
 
+## Новые сообщения в Telegram (05.10, код готов, включаются в релиз)
+Виды: `hot_sector_week` (пт 12:05 — горячие сектора недели игрокам города), `hot_sector_won` (вс — удержал), `legend_gained` / `legend_lost` (каждые 10 мин по секторам со свежими уловами), `bite_forecast` («завтра хороший клёв», 19:00, 4–5 баллов, ≤2 в неделю, не два дня подряд, рыбакам города за 60 дней), `daily_reward_reminder` (19:00, серия 3+, награда не забрана). В «Активности» — общая карточка `game_event`, в Telegram — тексты в `send-notifications`. Сервер: `release/game_notifications.sql` (триггер-белый список, `sector_legends` + `refresh_sector_legends`, `announce_hot_sectors`, `remind_daily_rewards`, `forecast_alerts` + `queue_bite_forecast`, расписание в комментарии), маршрут `/api/telegram/forecast-alert`. Dry-run: легенды — 3 при заполнении без уведомлений, смена → «стал»/«обошли»; горячие — 77 в «Активность» Батуми / 50 в Telegram, повтор 0; прогноз — вт 15, ср заблокирован, пт 15, вс заблокирован, Москва 4. ВАЖНО: до релиза эти виды не создавать — старый клиент показал бы их как улов.
+
 ## Миграции
 - `supabase-drafts/slots_free_spins.sql` — применена 04.10.
 - `supabase-drafts/economy_daily_treasury_hot.sql` — применена 05.10.
@@ -50,6 +53,7 @@
 - `supabase-drafts/onboarding_chain.sql` (цепочка новичкам: `onboarding_messages`, `telegram_bot_starts.stopped_at`, `onboarding_due`) — применена 05.10.
 
 ## Перед релизом не забыть
+- Применить `release/game_notifications.sql` и включить его расписание (см. конец файла): legends 10 мин + сутки, announce-hot пт 12:05 обоих городов, remind-daily-rewards ежечасно, forecast-alert 15:00/16:00 UTC; cron для pick_hot_sectors пт 12:00 и settle_hot_sectors вс 23:59.
 - `npm run db:contract` до релизной миграции покажет «лишние аргументы: p_caught_at» у confirm_catch в рабочей копии — это ожидаемо, уходит после `release/confirm_catch_offline.sql`. Серверные вызовы (createAdminClient) проверка больше не требует открывать для authenticated и не отдаёт сторожу.
 - Cron `telegram-send-onboarding` каждые 15 минут на `/api/telegram/send-onboarding` (Bearer CRON_SECRET, как у остальных). Первая пятница после релиза: old_friday уйдёт ~180 старым игрокам без уловов — это ожидаемо.
 - Релизная миграция: применить `release/confirm_catch_offline.sql` (DROP+CREATE confirm_catch с p_caught_at, DEFAULT и права как были), затем `npm run db:contract`; сразу проверить обычный улов на телефоне.

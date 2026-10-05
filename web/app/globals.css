@@ -3345,3 +3345,5 @@ button.race-lane{cursor:pointer;}
 .offline-pill-text{display:flex; flex-direction:column; min-width:0;}
 .offline-pill-text b{font-size:13px; font-weight:800;}
 .offline-pill-text span{font-size:11.5px; font-weight:700; color:rgba(255,255,255,.65);}
+.feed-icon-gold{background:linear-gradient(160deg,#F2C14E,#C9921F 70%);}
+.feed-icon-green{background:linear-gradient(160deg,#4FCB7E,#2FA84F 70%);}

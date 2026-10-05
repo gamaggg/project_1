@@ -267,10 +267,13 @@ export type ActivityEntry = {
   // "This concerns a sector of mine" — the feed only carries other people's
   // actions now, so this no longer means "I did it" (see useActivity).
   mine: boolean
-  kind: 'catch' | 'sector_lost' | 'follow' | 'moderation' | 'like' | 'announcement' | 'award' | 'weekly_result' | 'challenge' | 'challenges_week_done' | 'challenge_deadline' | 'comment' | 'comment_reply' | 'comment_removed' | 'clan_invite' | 'clan_join_request' | 'clan_join_accepted' | 'clan_role_changed' | 'clan_kicked' | 'clan_disbanded' | 'clan_chest_reward' | 'clan_race_result' | 'clan_race_overtaken' | 'clan_race_finished' | 'clan_chat_mention' | 'referral_joined' | 'referral_reward' | 'system_alert'
+  kind: 'catch' | 'sector_lost' | 'follow' | 'moderation' | 'like' | 'announcement' | 'award' | 'weekly_result' | 'challenge' | 'challenges_week_done' | 'challenge_deadline' | 'comment' | 'comment_reply' | 'comment_removed' | 'clan_invite' | 'clan_join_request' | 'clan_join_accepted' | 'clan_role_changed' | 'clan_kicked' | 'clan_disbanded' | 'clan_chest_reward' | 'clan_race_result' | 'clan_race_overtaken' | 'clan_race_finished' | 'clan_chat_mention' | 'referral_joined' | 'referral_reward' | 'system_alert' | 'game_event'
   // Still unread as of the moment the screen loaded. Opening the feed marks
   // everything read, so this is a snapshot, not live state.
   unread: boolean
+  // The newer game notifications (hot sectors, legends, bite forecast, daily
+  // reward) share one row style; which one and its numbers live here.
+  gameEvent?: { kind: string; payload: Record<string, unknown> } | null
   territoryId?: string
   territoryKind?: TerritoryKind
   speciesName: string | null

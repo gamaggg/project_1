@@ -216,6 +216,58 @@ function renderMessage(notification: NotificationRef): Message | null {
         url: `${SITE_URL}/?challenges=1`,
       }
     }
+    case 'hot_sector_week': {
+      const sectors = (notification.payload?.sectors as string[] | undefined) ?? []
+      if (!sectors.length) return null
+      const city = sectors[0].startsWith('M') ? 'Москве' : 'Батуми'
+      return {
+        text: `🔥 Горячие сектора недели в ${city}: ${sectors.join(' и ')}.\n\nДо конца воскресенья — ×2 монеты за улов и ×3 в Казну. Кто удержит сектор до конца недели, получит +100 монет и медаль.`,
+        buttonLabel: 'Открыть сектор',
+        url: `${SITE_URL}/?territory=${encodeURIComponent(sectors[0])}`,
+      }
+    }
+    case 'hot_sector_won': {
+      const coins = (notification.payload?.coins as number | undefined) ?? 100
+      if (!notification.territory_id) return null
+      return { text: `🔥 Ты удержал горячий сектор ${notification.territory_id} до конца недели — +${coins} монет и медаль`, buttonLabel: 'Открыть профиль', url: SITE_URL }
+    }
+    case 'legend_gained': {
+      const n = (notification.payload?.catches as number | undefined) ?? 0
+      if (!notification.territory_id) return null
+      return {
+        text: `🏆 Ты стал легендой сектора ${notification.territory_id}: больше всех уловов здесь за 90 дней — ${n} ${pluralCatches(n)}`,
+        buttonLabel: 'Открыть сектор',
+        url: `${SITE_URL}/?territory=${encodeURIComponent(notification.territory_id)}`,
+      }
+    }
+    case 'legend_lost':
+      if (!notification.territory_id) return null
+      return {
+        text: `${actorName} обошёл тебя на секторе ${notification.territory_id} — теперь легенда он. Верни титул!`,
+        buttonLabel: 'Открыть сектор',
+        url: `${SITE_URL}/?territory=${encodeURIComponent(notification.territory_id)}`,
+      }
+    case 'bite_forecast': {
+      const score = notification.payload?.score as number | undefined
+      const city = notification.payload?.city === 'moscow' ? 'Москве' : 'Батуми'
+      const from = notification.payload?.from as string | undefined
+      const to = notification.payload?.to as string | undefined
+      if (!score) return null
+      return {
+        text: `🎣 Завтра в ${city} ${score >= 5 ? 'отличный' : 'хороший'} клёв — ${score}/5.${from && to ? ` Лучшее время ${from}–${to}.` : ''}`,
+        buttonLabel: 'Открыть прогноз',
+        url: SITE_URL,
+      }
+    }
+    case 'daily_reward_reminder': {
+      const day = notification.payload?.day as number | undefined
+      const coins = notification.payload?.coins as number | undefined
+      return {
+        text: `🎁 Ежедневная награда ждёт${day ? `: день ${day} из 10` : ''}${coins ? ` — +${coins} монет` : ''}. Забери до полуночи, чтобы не прервать серию.`,
+        buttonLabel: 'Забрать награду',
+        url: SITE_URL,
+      }
+    }
     default:
       // Kind that isn't wired up yet — the queueing trigger already filters
       // these out, so reaching here means the two lists drifted apart; drop
