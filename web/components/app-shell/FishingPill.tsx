@@ -22,7 +22,9 @@ export function FishingPill({ onToast }: { onToast?: (msg: string) => void }) {
   const { data: session } = useFishingSession()
   const start = useStartFishing()
   const stop = useStopFishing()
-  const now = useNow(60_000)
+  // Every 15 s, not every minute: a minute-long tick read as a clock that
+  // had stopped (and lagged up to a minute behind).
+  const now = useNow(15_000)
   if (!user) return null
 
   if (!session || new Date(session.endsAt).getTime() <= now) {
