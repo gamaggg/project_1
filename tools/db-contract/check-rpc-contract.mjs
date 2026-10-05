@@ -120,9 +120,13 @@ function objectKeys(obj) {
   return { keys, optional }
 }
 
+// A file that makes calls with the service-role client (createAdminClient —
+// server routes only) doesn't need `authenticated` to hold EXECUTE: those
+// functions are often service-role-only on purpose (onboarding_due).
 function extractCalls(files) {
   const calls = []
   for (const f of files) {
+    const server = /createAdminClient\(/.test(f.text)
     const re = /\.rpc\(\s*['"]([a-z0-9_]+)['"]\s*(,)?/g
     let m
     while ((m = re.exec(f.text))) {
@@ -137,13 +141,13 @@ function extractCalls(files) {
           if (obj) ({ keys, optional } = objectKeys(obj))
         } else {
           // Args passed as a variable — can't see the keys statically.
-          calls.push({ name, keys: null, where: f.path })
+          calls.push({ name, keys: null, where: f.path, server })
           continue
         }
       }
       const line = f.text.slice(0, m.index).split('\n').length
-      calls.push({ name, keys, where: `${f.path}:${line}` })
-      if (optional.size) calls.push({ name, keys: keys.filter((k) => !optional.has(k)), where: `${f.path}:${line} (без необязательных)` })
+      calls.push({ name, keys, where: `${f.path}:${line}`, server })
+      if (optional.size) calls.push({ name, keys: keys.filter((k) => !optional.has(k)), where: `${f.path}:${line} (без необязательных)`, server })
     }
   }
   return calls
@@ -160,8 +164,11 @@ async function check(label, calls, env) {
       continue
     }
     const k = `${c.name}|${[...c.keys].sort().join(',')}`
-    if (!unique.has(k)) unique.set(k, { rpc: c.name, keys: c.keys, where: [c.where] })
-    else unique.get(k).where.push(c.where)
+    if (!unique.has(k)) unique.set(k, { rpc: c.name, keys: c.keys, where: [c.where], serverOnly: c.server })
+    else {
+      unique.get(k).where.push(c.where)
+      unique.get(k).serverOnly &&= c.server
+    }
   }
   const payload = [...unique.values()].map(({ rpc, keys }) => ({ rpc, keys }))
   const res = await fetch(`${env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/admin_rpc_contract_check`, {
@@ -174,7 +181,11 @@ async function check(label, calls, env) {
     body: JSON.stringify({ p_calls: payload }),
   })
   if (!res.ok) throw new Error(`admin_rpc_contract_check: ${res.status} ${await res.text()}`)
-  const problems = await res.json()
+  // A server-only call that merely lacks `authenticated` EXECUTE is fine.
+  const problems = (await res.json()).filter((p) => {
+    const entry = unique.get(`${p.rpc}|${[...p.keys].sort().join(',')}`)
+    return !(entry?.serverOnly && /EXECUTE/.test(p.problem))
+  })
   const rpcCount = new Set(payload.map((p) => p.rpc)).size
   if (!problems.length) {
     console.log(`✓ ${label}: ${rpcCount} функций, ${payload.length} вариантов вызова — всё находится в базе`)
@@ -202,7 +213,9 @@ if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
 // live site gets caught even if nobody ran this script afterwards.
 async function publishWatchList(calls, env) {
   const unique = new Map()
-  for (const c of calls) if (c.keys !== null) unique.set(`${c.name}|${[...c.keys].sort().join(',')}`, { rpc: c.name, keys: c.keys })
+  // Server routes call with the service role; the watchdog checks the calls
+  // players' phones make.
+  for (const c of calls) if (c.keys !== null && !c.server) unique.set(`${c.name}|${[...c.keys].sort().join(',')}`, { rpc: c.name, keys: c.keys })
   const res = await fetch(`${env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/admin_set_rpc_contract_watch`, {
     method: 'POST',
     headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, 'Content-Type': 'application/json' },
