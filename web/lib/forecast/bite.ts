@@ -1,9 +1,12 @@
 // Прогноз клёва: weather from Open-Meteo (free, no key, CC BY 4.0 — the
-// sheet credits it), scored on the phone. Every hour gets a 0–~1.2 factor
+// sheet credits it), scored on the phone. Every hour gets a 0–~1.1 factor
 // product (pressure level and trend, wind, waves on the sea, rain, dawn and
-// dusk, and — when we know them — the hours our players actually catch at);
-// a day's 1–5 blends its best 3-hour stretch with the whole daytime, nudged
-// by the moon and by how far the pressure swings over the day. Deliberately simple and readable: it has to explain
+// dusk); a day's 1–5 blends its best 3-hour stretch with the whole daytime,
+// nudged by the moon and by how far the pressure swings over the day — so
+// the score is the weather's alone, and sectors side by side share it.
+// Where a sector has its own catch history, that (not the generic dawn/dusk
+// guess) picks the «лучшее время» window: a spot people fish at night gets a
+// night window, matching its «Что клюёт здесь». Deliberately simple and readable: it has to explain
 // itself in the sheet's factor rows, not be a black box.
 
 export type ForecastPoint = { lat: number; lng: number }
@@ -148,8 +151,8 @@ function daySwing(hpa: number): number {
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0)
 
 // Today and the next three days. `catchHours` — 24 counts of our own
-// catches by local hour (the sector's «Что клюёт здесь») — shifts the best
-// window toward when people really catch; without enough of them it's off.
+// catches by local hour (the sector's «Что клюёт здесь») — decides the best
+// window when there are at least 10 of them; the score never uses them.
 // `nowLocal` ('YYYY-MM-DDTHH') keeps today's best window in the future.
 export function scoreForecast(raw: RawForecast, catchHours: number[] | null, nowLocal: string): ForecastDay[] {
   const totalCatches = catchHours ? catchHours.reduce((a, b) => a + b, 0) : 0
@@ -163,36 +166,41 @@ export function scoreForecast(raw: RawForecast, catchHours: number[] | null, now
     const sunset = hourOf(day.sunset)
     const moon = moonAt(new Date(`${day.date}T12:00:00Z`))
 
-    const hours = idx.map((i, h) => {
+    const weather = idx.map((i) => {
       const delta = i >= 6 ? raw.pressure[i] - raw.pressure[i - 6] : 0
-      const catches = totalCatches >= 10 && catchHours ? 0.85 + 0.3 * (catchHours[h] / peakCatches) : 1
       return (
         pressureLevel(raw.pressure[i]) *
         pressureTrend(delta) *
         windFactor(raw.wind[i], raw.gusts[i]) *
         waveFactor(raw.wave ? raw.wave[i] : null) *
-        rainFactor(raw.precip[i], raw.code[i]) *
-        lightFactor(h, sunrise, sunset) *
-        catches
+        rainFactor(raw.precip[i], raw.code[i])
       )
     })
+    // What the score is made of: weather plus the dawn/dusk prior.
+    const scored = weather.map((w, h) => w * lightFactor(h, sunrise, sunset))
+    // What picks the window (and draws the hourly bars): the sector's own
+    // catch hours when there are enough of them, else the same as above.
+    const hours =
+      catchHours && totalCatches >= 10 ? weather.map((w, h) => w * (0.5 + catchHours[h] / peakCatches)) : scored
 
-    // Best 3-hour stretch between 04:00 and 23:00; for today only what's
+    // Best 3-hour stretch between 04:00 and midnight; for today only what's
     // still ahead (when at least three hours are left).
     const isToday = nowLocal.startsWith(day.date)
     const nowHour = isToday ? Number(nowLocal.slice(11, 13)) : 0
-    const firstStart = isToday && nowHour <= 20 ? Math.max(4, nowHour) : 4
+    const firstStart = isToday && nowHour <= 21 ? Math.max(4, nowHour) : 4
+    const window3 = (xs: number[], s: number) => (xs[s] + xs[s + 1] + xs[s + 2]) / 3
     let best: ForecastDay['best'] = null
-    let bestMean = 0
-    for (let s = firstStart; s <= 20; s++) {
-      const m = (hours[s] + hours[s + 1] + hours[s + 2]) / 3
-      if (m > bestMean) {
-        bestMean = m
+    let bestRank = 0
+    for (let s = firstStart; s <= 21; s++) {
+      const m = window3(hours, s)
+      if (m > bestRank) {
+        bestRank = m
         best = { from: s, to: s + 3 }
       }
     }
-    if (!best) bestMean = Math.max(...hours.slice(4, 23))
-    const dayMean = mean(hours.slice(5, 22))
+    let bestMean = 0
+    for (let s = 4; s <= 21; s++) bestMean = Math.max(bestMean, window3(scored, s))
+    const dayMean = mean(scored.slice(5, 22))
     const moonFactor = moon.phase === 'new' || moon.phase === 'full' ? 1.06 : moon.phase === 'firstQuarter' || moon.phase === 'lastQuarter' ? 0.97 : 1
     const swing = raw.pressure[idx[23]] - raw.pressure[idx[0]]
     const rawScore = (0.45 * bestMean + 0.55 * dayMean) * moonFactor * daySwing(swing)
