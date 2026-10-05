@@ -2058,6 +2058,65 @@ export function useHasClaimedFromOthers(userId: string | null) {
   })
 }
 
+// «Я на рыбалке» (fishing_sessions, lib/telegram/fishing.ts): the player's
+// open session, if any — 8 hours from the start unless they end it sooner.
+export type FishingSession = { id: number; startedAt: string; endsAt: string }
+
+export function useFishingSession() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['fishing-session', user?.id ?? null],
+    enabled: !!user,
+    queryFn: async (): Promise<FishingSession | null> => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('fishing_sessions')
+        .select('id, started_at, ends_at')
+        .is('ended_at', null)
+        .gt('ends_at', new Date().toISOString())
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (error) throw error
+      return data ? { id: data.id, startedAt: data.started_at, endsAt: data.ends_at } : null
+    },
+    staleTime: 60_000,
+  })
+}
+
+// Starting or ending also nudges the bot route for just this player, so the
+// pinned message appears (or comes off) right away rather than on the next
+// 5-minute run. Best effort: the cron run catches up if this one fails.
+function nudgeFishingBot() {
+  fetch('/api/telegram/fishing', { method: 'POST' }).catch(() => {})
+}
+
+export function useStartFishing() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('start_fishing')
+      if (error) throw error
+      nudgeFishingBot()
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['fishing-session'] }),
+  })
+}
+
+export function useStopFishing() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('stop_fishing')
+      if (error) throw error
+      nudgeFishingBot()
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['fishing-session'] }),
+  })
+}
+
 export function useConfirmCatch() {
   const queryClient = useQueryClient()
   return useMutation({

@@ -1144,6 +1144,45 @@ export type Database = {
         }
         Relationships: []
       }
+      fishing_sessions: {
+        Row: {
+          id: number
+          user_id: string
+          started_at: string
+          ends_at: string
+          ended_at: string | null
+          chat_id: number | null
+          message_id: number | null
+          reminder_message_id: number | null
+          reminded_at: string | null
+          closed_at: string | null
+        }
+        Insert: {
+          id?: never
+          user_id?: string
+          started_at?: string
+          ends_at?: string
+          ended_at?: string | null
+          chat_id?: number | null
+          message_id?: number | null
+          reminder_message_id?: number | null
+          reminded_at?: string | null
+          closed_at?: string | null
+        }
+        Update: {
+          id?: never
+          user_id?: string
+          started_at?: string
+          ends_at?: string
+          ended_at?: string | null
+          chat_id?: number | null
+          message_id?: number | null
+          reminder_message_id?: number | null
+          reminded_at?: string | null
+          closed_at?: string | null
+        }
+        Relationships: []
+      }
       onboarding_messages: {
         Row: { chat_id: number; step: string; user_id: string | null; sent_at: string }
         Insert: { chat_id: number; step: string; user_id?: string | null; sent_at?: string }
@@ -1791,6 +1830,22 @@ export type Database = {
       get_city_week_recap: { Args: { p_city: string; p_week_offset?: number; p_user?: string }; Returns: Json }
       queue_bite_forecast: { Args: { p_city: string; p_for_date: string; p_score: number; p_from: string; p_to: string }; Returns: number }
       onboarding_due: { Args: { p_limit?: number }; Returns: { chat_id: number; user_id: string | null; step: string; city: string | null; name: string | null; data: Json }[] }
+      start_fishing: {
+        Args: Record<string, never>
+        Returns: {
+            id: number
+            user_id: string
+            started_at: string
+            ends_at: string
+            ended_at: string | null
+            chat_id: number | null
+            message_id: number | null
+            reminder_message_id: number | null
+            reminded_at: string | null
+            closed_at: string | null
+        }
+      }
+      stop_fishing: { Args: Record<string, never>; Returns: undefined }
       log_app_events: { Args: { p_device: string; p_session: string; p_events: Json }; Returns: number }
       get_app_stats: { Args: { p_days?: number; p_tz?: string }; Returns: Json }
       collect_treasury: { Args: Record<string, never>; Returns: Json }

@@ -1003,6 +1003,20 @@ export function FishZoneApp() {
     }
   }, [territories, territoriesLoading])
 
+  // ?camera=1 — the «📷 Сфоткать улов» button under the bot's «Я на
+  // рыбалке» message (lib/telegram/fishing.ts): straight into the catch flow,
+  // same as tapping the camera button. Once, then the query string goes.
+  const cameraLinkOpened = useRef(false)
+  useEffect(() => {
+    if (cameraLinkOpened.current || !user || territoriesLoading || !territories.length) return
+    if (new URLSearchParams(window.location.search).get('camera') !== '1') return
+    cameraLinkOpened.current = true
+    window.history.replaceState(null, '', window.location.pathname)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens the camera once from the launch URL (external input)
+    void handlePlus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, from the launch URL
+  }, [user, territories, territoriesLoading])
+
   // Opens a ?user=<publicId> link (from shareProfile above) straight into
   // that profile on first load — same pattern as the ?territory= effect,
   // just resolving the short public_id to the real id first since
