@@ -10,6 +10,10 @@ export type AvatarFrame = {
   label: string
   ring: string
   glow?: boolean
+  // Premium (800+) frames move: the ring turns, a soft copy of it glows
+  // behind, and each has its own extra — see AvatarFrameRing.tsx and
+  // .avatar-frame-fx in globals.css.
+  fx?: 'aurora' | 'flame' | 'comet' | 'holo' | 'royal'
 }
 
 export const AVATAR_FRAMES: AvatarFrame[] = [
@@ -44,6 +48,36 @@ export const AVATAR_FRAMES: AvatarFrame[] = [
     label: 'Платиновая рамка',
     ring: 'conic-gradient(from 180deg, #7C8B9C, #EAF2FA, #C6D3E0, #7C8B9C, #4E5A68, #7C8B9C)',
     glow: true,
+  },
+  {
+    id: 'frame_aurora',
+    label: 'Рамка «Северное сияние»',
+    ring: 'conic-gradient(from 0deg, #10D9A0, #22C3EE, #7C5CFF, #F052B4, #7C5CFF, #22C3EE, #10D9A0)',
+    fx: 'aurora',
+  },
+  {
+    id: 'frame_flame',
+    label: 'Рамка «Пламя»',
+    ring: 'conic-gradient(from 0deg, #FF3D00, #FF8A00, #FFD23F, #FF8A00, #FF3D00, #C41E00, #FF5A00, #FFB000, #FF3D00)',
+    fx: 'flame',
+  },
+  {
+    id: 'frame_comet',
+    label: 'Рамка «Комета»',
+    ring: 'conic-gradient(from 0deg, #0B1A3A 0deg, #10285A 190deg, #1E5BFF 280deg, #6FD8FF 335deg, #FFFFFF 356deg, #0B1A3A 360deg)',
+    fx: 'comet',
+  },
+  {
+    id: 'frame_holo',
+    label: 'Рамка «Голограмма»',
+    ring: 'conic-gradient(from 0deg, #FF6FB0, #FFC66F, #FFFFFF 17%, #7CF2CF, #6FB8FF, #A98BFF, #FFFFFF 67%, #FF8FC6, #FF6FB0)',
+    fx: 'holo',
+  },
+  {
+    id: 'frame_royal',
+    label: 'Рамка «Королевская»',
+    ring: 'conic-gradient(from 0deg, #8B6508, #FFD700, #FFF6C8, #E8B923, #8B6508, #C99A1A, #FFE680, #FFFBE6, #B8860B, #8B6508)',
+    fx: 'royal',
   },
 ]
 

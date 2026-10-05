@@ -27,6 +27,7 @@ import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
 import { CITIES } from '@/lib/data/city'
 import { resolveHeroBackground } from '@/lib/data/heroBackgrounds'
 import { resolveAvatarFrame } from '@/lib/data/shopItems'
+import { AvatarFrameRing } from '@/components/app-shell/AvatarFrameRing'
 import { StyledName } from '@/components/app-shell/StyledName'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { clanErrorMessage } from '@/lib/data/clanLevels'
@@ -173,7 +174,7 @@ export function UserProfileScreen({
         <AwardsRing awards={awards} onOpenAward={onOpenAward}>
           <div className="profile-hero-avatar-ring">
             {equippedFrame && (
-              <div className={`avatar-frame-ring${equippedFrame.glow ? ' avatar-frame-glow' : ''}`} style={{ background: equippedFrame.ring }} />
+              <AvatarFrameRing frame={equippedFrame} />
             )}
             <button
               className="profile-hero-avatar-btn"

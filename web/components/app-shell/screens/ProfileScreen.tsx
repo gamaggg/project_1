@@ -32,6 +32,7 @@ import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorP
 import { DEFAULT_TERRITORY_COLOR, TERRITORY_COLORS } from '@/lib/data/territoryColors'
 import { resolveHeroBackground } from '@/lib/data/heroBackgrounds'
 import { resolveAvatarFrame } from '@/lib/data/shopItems'
+import { AvatarFrameRing } from '@/components/app-shell/AvatarFrameRing'
 import { StyledName } from '@/components/app-shell/StyledName'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { insideTelegram } from '@/lib/openExternal'
@@ -513,7 +514,7 @@ export function ProfileScreen({
         <AwardsRing awards={awards} onOpenAward={onOpenAward}>
           <div className="profile-hero-avatar-ring">
             {equippedFrame && (
-              <div className={`avatar-frame-ring${equippedFrame.glow ? ' avatar-frame-glow' : ''}`} style={{ background: equippedFrame.ring }} />
+              <AvatarFrameRing frame={equippedFrame} />
             )}
             <div className="avatar-edit-wrap">
               <div className="profile-avatar">

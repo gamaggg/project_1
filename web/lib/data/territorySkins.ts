@@ -25,6 +25,12 @@ export const TERRITORY_SKINS: TerritorySkin[] = [
   { id: 'skin_scribble', label: 'Вихрь' },
   { id: 'skin_net', label: 'Сеть' },
   { id: 'skin_grass', label: 'Трава' },
+  // Premium (800+): same hex/viewBox and single ink as the hand-drawn ones,
+  // with tonal depth from opacity alone (source-in keeps each pixel's alpha).
+  { id: 'skin_scales', label: 'Чешуя' },
+  { id: 'skin_depth', label: 'Глубины' },
+  { id: 'skin_compass', label: 'Роза ветров' },
+  { id: 'skin_school', label: 'Косяк' },
 ]
 
 export function resolveTerritorySkin(id: string | null | undefined): TerritorySkin | null {

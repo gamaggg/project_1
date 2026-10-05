@@ -577,6 +577,18 @@ body{
 .shop-card-epic::before{
   content:'✦'; position:absolute; top:10px; right:12px; color:#B45AE6; font-size:13px;
 }
+/* 800+ — the premium tier: a brand-gradient border (a second background
+   clipped to the border box) and two sparks. */
+.shop-card-legendary{
+  border-color:transparent;
+  background:linear-gradient(var(--surface),var(--surface)) padding-box,
+             linear-gradient(140deg,#FFC24B,#FC5200 42%,#E0447B 72%,#7C5CFF) border-box;
+  box-shadow:0 6px 20px rgba(252,82,0,0.16);
+}
+.shop-card-legendary::before{
+  content:'✦✦'; position:absolute; top:9px; right:11px; font-size:12px; letter-spacing:1px;
+  background:linear-gradient(90deg,#FC5200,#E0447B); -webkit-background-clip:text; background-clip:text; color:transparent;
+}
 .shop-price-btn{display:inline-flex; align-items:center; justify-content:center; gap:5px;}
 .shop-card-preview{width:76px; height:76px; position:relative; margin-top:4px;}
 .shop-card-avatar{position:relative; width:76px; height:76px;}
@@ -1627,6 +1639,62 @@ body{
   50%{box-shadow:0 0 18px 4px rgba(255,215,0,.6);}
 }
 @media (prefers-reduced-motion: reduce){.avatar-frame-ring.avatar-frame-glow{animation:none;}}
+/* Premium frames (800+, AvatarFrameRing.tsx): the ring turns — transform
+   only, so the compositor just rotates the already-painted gradient.
+   ::before is a blurred copy glowing behind, ::after the sharp ring on top;
+   both read --ring. */
+.avatar-frame-fx{animation:frameSpin 8s linear infinite; will-change:transform;}
+.avatar-frame-fx::before,
+.avatar-frame-fx::after{content:''; position:absolute; inset:0; border-radius:50%; background:var(--ring);}
+.avatar-frame-fx::before{inset:-3px; filter:blur(7px); opacity:.6; animation:frameGlow 3.2s var(--ease-in-out) infinite;}
+@keyframes frameSpin{to{transform:rotate(360deg);}}
+@keyframes frameGlow{0%,100%{opacity:.35;} 50%{opacity:.8;}}
+.avatar-frame-fx.fx-aurora{animation-duration:11s;}
+.avatar-frame-fx.fx-flame{animation-duration:4.5s;}
+.avatar-frame-fx.fx-flame::before{inset:-4px; filter:blur(8px); animation:frameFlicker 1.6s linear infinite;}
+@keyframes frameFlicker{
+  0%,100%{opacity:.55; transform:scale(1);}
+  17%{opacity:.9; transform:scale(1.05);}
+  31%{opacity:.5; transform:scale(1.01);}
+  46%{opacity:.95; transform:scale(1.07);}
+  63%{opacity:.6; transform:scale(1.02);}
+  81%{opacity:.85; transform:scale(1.05);}
+}
+/* The comet's bright head drags its glow round with it. */
+.avatar-frame-fx.fx-comet{animation-duration:2.4s;}
+.avatar-frame-fx.fx-comet::before{inset:-4px; filter:blur(6px); opacity:.95; animation:none;}
+.avatar-frame-fx.fx-holo{animation-duration:6s;}
+.avatar-frame-fx.fx-royal{animation-duration:14s;}
+.avatar-frame-fx.fx-royal::before{animation-duration:2.6s;}
+/* Three sparkles riding the ring's outer edge (13% of the ring, pushed out
+   3.9 of their own sizes ≈ 51% of the ring from its centre) — any further in
+   and the photo, painted over the ring, hides half of each. */
+.frame-sparkle{
+  position:absolute; left:50%; top:50%; width:13%; aspect-ratio:1; margin:-6.5% 0 0 -6.5%;
+  transform:rotate(var(--a)) translateY(-390%); z-index:1;
+}
+.frame-sparkle::before{
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(circle, #FFFFFF 0 22%, #FFF1A8 45%, #FFD24A 70%);
+  clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);
+  animation:sparkleTwinkle 2.7s var(--ease-in-out) var(--d) infinite;
+}
+@keyframes sparkleTwinkle{
+  0%,100%{transform:scale(.3) rotate(0deg); opacity:.3;}
+  50%{transform:scale(1) rotate(45deg); opacity:1;}
+}
+@media (prefers-reduced-motion: reduce){
+  .avatar-frame-fx,.avatar-frame-fx::before,.frame-sparkle::before{animation:none;}
+}
+/* Premium name styles (nameStyles.ts): the colours drift through the
+   letters (flow — the gradient repeats once across a double-width image,
+   so sliding it one width loops seamlessly) or a glint sweeps across them
+   now and then (shine — a second background layer over the gold). */
+.name-fx-flow{background-size:200% 100%; animation:nameFlow 5s linear infinite;}
+@keyframes nameFlow{from{background-position:0% 0;} to{background-position:100% 0;}}
+.name-fx-shine{background-size:250% 100%, 100% 100%; background-repeat:no-repeat; animation:nameShine 4.2s var(--ease-in-out) infinite;}
+@keyframes nameShine{0%{background-position:130% 0, 0 0;} 55%,100%{background-position:-30% 0, 0 0;}}
+@media (prefers-reduced-motion: reduce){.name-fx-flow,.name-fx-shine{animation:none;}}
 .hero-stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
 .hero-stat{
   background:var(--surface); border:1px solid var(--line); border-radius:16px;

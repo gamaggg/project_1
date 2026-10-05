@@ -10,9 +10,12 @@ export function StyledName({ name, styleId, className }: { name: string; styleId
   if (!style) return <span className={className}>{name}</span>
   return (
     <span
-      className={className}
+      className={[className, style.fx && `name-fx-${style.fx}`].filter(Boolean).join(' ') || undefined}
       style={{
-        background: style.gradient,
+        // backgroundImage, not the `background` shorthand: the shorthand
+        // would also pin size/position inline, over the .name-fx-* classes
+        // that animate them.
+        backgroundImage: style.gradient,
         WebkitBackgroundClip: 'text',
         backgroundClip: 'text',
         color: 'transparent',

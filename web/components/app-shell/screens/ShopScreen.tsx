@@ -11,6 +11,8 @@ import { SHOP_TAB_ICONS } from '@/components/app-shell/icons'
 import { usePurchaseFlow } from '@/components/app-shell/usePurchaseFlow'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { AVATAR_FRAMES } from '@/lib/data/shopItems'
+import { withPremiumPreview } from '@/lib/data/premiumShopPreview'
+import { AvatarFrameRing } from '@/components/app-shell/AvatarFrameRing'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { HERO_BACKGROUNDS, PREMIUM_HERO_BG_IDS } from '@/lib/data/heroBackgrounds'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
@@ -46,9 +48,10 @@ type PendingRefund = { kind: 'item'; id: string; name: string; price: number } |
 
 // Card border/accent tier by price — a cheap, purely visual "rarity" read
 // (not a real game-balance system) so the grid isn't a wall of identical
-// cards; the shop's one real premium item (skin_predator, 700) is the only
-// one that lands in "epic" territory.
+// cards; 800+ is the premium tier (animated frames and names, the richer
+// skins).
 function rarityClass(price: number): string {
+  if (price >= 800) return 'shop-card-legendary'
   if (price > 500) return 'shop-card-epic'
   if (price > 200) return 'shop-card-rare'
   return 'shop-card-common'
@@ -73,7 +76,8 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
   // not the map-tab lens a `city` prop would have meant (see that screen's
   // comment for the duplicate-week bug this avoids).
   const city = profile?.city ?? 'batumi'
-  const { data: items = [] } = useShopItems()
+  const { data: dbItems = [] } = useShopItems()
+  const items = withPremiumPreview(dbItems)
   const { data: owned = new Set<string>() } = useMyInventory()
   const buyItem = useBuyShopItem()
   const equipItem = useEquipShopItem()
@@ -387,7 +391,7 @@ function FrameCard({
     <div className={`shop-card ${rarityClass(item.price)}`}>
       <div className="shop-card-preview">
         <div className="shop-card-avatar">
-          <div className={`avatar-frame-ring${frame?.glow ? ' avatar-frame-glow' : ''}`} style={{ background: frame?.ring }} />
+          <AvatarFrameRing frame={frame} />
           <div className="shop-card-avatar-inner">
             {/* eslint-disable-next-line @next/next/no-img-element -- Supabase thumbnail URL, same as the profile avatar */}
             {avatarUrl ? <img src={thumbUrl(avatarUrl, 160)} alt="" loading="lazy" decoding="async" /> : initials}
