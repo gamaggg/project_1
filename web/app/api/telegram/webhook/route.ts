@@ -149,6 +149,35 @@ export async function POST(req: Request) {
   }
 
   const message = update.message
+
+  // A super admin's reply to a forwarded support request (see
+  // /api/support/notify): it becomes the answer in the player's «Активность».
+  const repliedTo = message?.reply_to_message?.message_id
+  if (repliedTo) {
+    const admin = createAdminClient()
+    const { data: link } = await admin
+      .from('support_telegram_messages')
+      .select('ticket_id')
+      .eq('chat_id', message.chat.id)
+      .eq('message_id', repliedTo)
+      .maybeSingle()
+    if (link) {
+      const text = typeof message.text === 'string' ? message.text.trim() : ''
+      let answer: string
+      if (!text) {
+        answer = 'Пока можно отвечать только текстом.'
+      } else {
+        const { error } = await admin.rpc('answer_support_ticket', { p_ticket_id: link.ticket_id, p_admin_telegram: message.from?.id, p_body: text })
+        answer = error ? `Не получилось отправить ответ: ${error.message}` : `✅ Ответ на обращение #${link.ticket_id} отправлен игроку`
+      }
+      await fetch(`${TELEGRAM_API}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: message.chat.id, text: answer, reply_to_message_id: message.message_id }),
+      })
+      return NextResponse.json({ ok: true })
+    }
+  }
   if (typeof message?.text === 'string' && /^\/stop(@\w+)?$/i.test(message.text.trim())) {
     await stopNotifications(message)
     return NextResponse.json({ ok: true })

@@ -11,6 +11,8 @@ import { compareSectors } from '@/lib/data/sectorOrder'
 import type { ShareKind } from '@/lib/guestShare'
 import type { Database } from '@/lib/types'
 import { mapRecap, type WeekRecap } from '@/lib/recap'
+import { uploadSupportPhoto } from '@/lib/supabase/storage'
+import { downscaleToJpeg } from '@/lib/exif'
 
 type SectorGeometry = {
   id: string
@@ -711,7 +713,7 @@ export function useLastCatchChoices() {
 // user would multiply writes for no gain — so they're fetched globally and
 // merged back in at the right chronological spot.
 // Game notifications drawn as one generic row in «Активность».
-const GAME_EVENT_KINDS = new Set(['hot_sector_week', 'hot_sector_won', 'legend_gained', 'legend_lost', 'bite_forecast', 'daily_reward_reminder', 'sector_attacked'])
+const GAME_EVENT_KINDS = new Set(['hot_sector_week', 'hot_sector_won', 'legend_gained', 'legend_lost', 'bite_forecast', 'daily_reward_reminder', 'sector_attacked', 'support_reply'])
 
 export function useActivity() {
   const { user } = useAuth()
@@ -2096,6 +2098,60 @@ export function useClaimFirstSteps() {
       queryClient.invalidateQueries({ queryKey: ['first-steps'] })
       queryClient.invalidateQueries({ queryKey: ['profile'] })
     },
+  })
+}
+
+// «Написать в поддержку» (supabase-drafts/support.sql): the player's own
+// requests with the answers they got, newest first.
+export type SupportTicket = { id: number; body: string; createdAt: string; answered: boolean; replies: { body: string; createdAt: string }[] }
+
+export function useMySupport() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['support', user?.id ?? null],
+    enabled: !!user,
+    queryFn: async (): Promise<SupportTicket[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('support_tickets')
+        .select('id, body, created_at, answered_at, support_replies(body, created_at)')
+        .order('created_at', { ascending: false })
+        .limit(20)
+      if (error) return []
+      return (data ?? []).map((r) => ({
+        id: r.id,
+        body: r.body,
+        createdAt: r.created_at,
+        answered: !!r.answered_at,
+        replies: ((r.support_replies ?? []) as { body: string; created_at: string }[])
+          .map((x) => ({ body: x.body, createdAt: x.created_at }))
+          .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1)),
+      }))
+    },
+  })
+}
+
+// Sends a request: the screenshot (downscaled) to the private bucket, the
+// request itself, then a nudge to the server route that forwards it to the
+// admins' Telegram.
+export function useCreateSupportTicket() {
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ body, photo }: { body: string; photo: Blob | null }) => {
+      if (!user) throw new Error('not authenticated')
+      const supabase = createClient()
+      const photoPath = photo ? await uploadSupportPhoto(user.id, await downscaleToJpeg(photo, 1600)) : null
+      const { data, error } = await supabase.rpc('create_support_ticket', { p_body: body, p_photo_path: photoPath ?? undefined })
+      if (error) throw error
+      await fetch('/api/support/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketId: data }),
+      }).catch(() => {})
+      return data as number
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['support'] }),
   })
 }
 

@@ -1186,6 +1186,26 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: { id: number; user_id: string; body: string; photo_path: string | null; created_at: string; answered_at: string | null }
+        Insert: { id?: never; user_id: string; body: string; photo_path?: string | null; created_at?: string; answered_at?: string | null }
+        Update: { id?: never; user_id?: string; body?: string; photo_path?: string | null; created_at?: string; answered_at?: string | null }
+        Relationships: []
+      }
+      support_replies: {
+        Row: { id: number; ticket_id: number; admin_id: string | null; body: string; created_at: string }
+        Insert: { id?: never; ticket_id: number; admin_id?: string | null; body: string; created_at?: string }
+        Update: { id?: never; ticket_id?: number; admin_id?: string | null; body?: string; created_at?: string }
+        Relationships: [
+          { foreignKeyName: "support_replies_ticket_id_fkey"; columns: ["ticket_id"]; isOneToOne: false; referencedRelation: "support_tickets"; referencedColumns: ["id"] },
+        ]
+      }
+      support_telegram_messages: {
+        Row: { chat_id: number; message_id: number; ticket_id: number }
+        Insert: { chat_id: number; message_id: number; ticket_id: number }
+        Update: { chat_id?: number; message_id?: number; ticket_id?: number }
+        Relationships: []
+      }
       onboarding_messages: {
         Row: { chat_id: number; step: string; user_id: string | null; sent_at: string }
         Insert: { chat_id: number; step: string; user_id?: string | null; sent_at?: string }
@@ -1834,6 +1854,8 @@ export type Database = {
       queue_bite_forecast: { Args: { p_city: string; p_for_date: string; p_score: number; p_from: string; p_to: string }; Returns: number }
       onboarding_due: { Args: { p_limit?: number }; Returns: { chat_id: number; user_id: string | null; step: string; city: string | null; name: string | null; data: Json }[] }
       get_first_steps: { Args: Record<string, never>; Returns: Json }
+      create_support_ticket: { Args: { p_body: string; p_photo_path?: string }; Returns: number }
+      answer_support_ticket: { Args: { p_ticket_id: number; p_admin_telegram: number; p_body: string }; Returns: string }
       claim_first_steps: { Args: Record<string, never>; Returns: Json }
       log_app_events: { Args: { p_device: string; p_session: string; p_events: Json }; Returns: number }
       get_app_stats: { Args: { p_days?: number; p_tz?: string }; Returns: Json }

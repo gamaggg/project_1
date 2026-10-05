@@ -247,6 +247,15 @@ function renderMessage(notification: NotificationRef): Message | null {
         buttonLabel: 'Открыть сектор',
         url: `${SITE_URL}/?territory=${encodeURIComponent(notification.territory_id)}`,
       }
+    case 'support_reply': {
+      const text = notification.payload?.text as string | undefined
+      if (!text) return null
+      return {
+        text: `💬 Ответ поддержки RANGE:\n\n${text}`,
+        buttonLabel: 'Открыть RANGE',
+        url: SITE_URL,
+      }
+    }
     case 'sector_attacked': {
       if (!notification.territory_id) return null
       const defense = Number(notification.payload?.defense ?? 0)

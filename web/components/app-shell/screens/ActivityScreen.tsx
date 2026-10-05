@@ -195,6 +195,7 @@ export function ActivityScreen({
   onOpenClanChat,
   onOpenShop,
   onOpenMap,
+  onOpenFaq,
 }: {
   // This screen stays mounted while other tabs are on top of it, so being
   // rendered says nothing about being looked at — and marking notifications
@@ -214,6 +215,7 @@ export function ActivityScreen({
   onOpenClanChat: (clanId: number) => void
   onOpenShop?: () => void
   onOpenMap?: () => void
+  onOpenFaq?: () => void
 }) {
   const tr = useT()
   const { data: activity = [], isLoading, isSuccess } = useActivity()
@@ -450,6 +452,12 @@ export function ActivityScreen({
                 title = tr('activity.sectorAttacked', { name: a.who || tr('activity.someone'), id: a.territoryId ?? '' })
                 sub = tr('activity.sectorAttackedSub', { value: n('defense') })
                 if (a.territoryId) action = () => onOpenTerritory(a.territoryId!)
+              } else if (ev.kind === 'support_reply') {
+                tone = 'blue'
+                icon = FEED_ICONS.chat
+                title = tr('activity.supportReply')
+                sub = typeof p.text === 'string' ? p.text : null
+                action = onOpenFaq
               } else if (ev.kind === 'daily_reward_reminder') {
                 tone = 'green'
                 icon = FEED_ICONS.gift

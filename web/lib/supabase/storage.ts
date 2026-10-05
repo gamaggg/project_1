@@ -52,3 +52,14 @@ export async function uploadDiaryPhoto(userId: string, blob: Blob): Promise<stri
   const { data } = supabase.storage.from('catch-photos').getPublicUrl(path)
   return data.publicUrl
 }
+
+// A screenshot for «Написать в поддержку»: a private bucket (no public URL —
+// only the server reads it, handing Telegram a short-lived signed link), so
+// what's stored is the path, not a URL.
+export async function uploadSupportPhoto(userId: string, blob: Blob): Promise<string> {
+  const supabase = createClient()
+  const path = `${userId}/${crypto.randomUUID()}.jpg`
+  const { error } = await supabase.storage.from('support').upload(path, blob, { contentType: 'image/jpeg' })
+  if (error) throw error
+  return path
+}

@@ -114,6 +114,11 @@ export const FEED_ICONS = {
       <path d="M5 19v-3M9.5 19v-6M14 19v-9M18.5 19V6" />
     </Svg>
   ),
+  chat: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12Z" />
+    </svg>
+  ),
   gift: (
     <Svg>
       <path d="M4 11h16v9H4zM3 7.5h18V11H3zM12 7.5V20" />

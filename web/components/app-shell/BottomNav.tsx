@@ -9,7 +9,6 @@ export function BottomNav({
   plusPending,
   unreadCount = 0,
   clanChatUnread = 0,
-  rewardReady = false,
 }: {
   active: TabScreenId
   onNavigate: (id: TabScreenId) => void
@@ -19,8 +18,6 @@ export function BottomNav({
   // Unread messages in the player's clan chat — the chat is reached through
   // the profile's clan card, so its count rides on the profile tab.
   clanChatUnread?: number
-  // Today's daily reward is waiting in the Shop (reached from the profile).
-  rewardReady?: boolean
 }) {
   return (
     <div className="bottomnav">
@@ -72,7 +69,6 @@ export function BottomNav({
               {clanChatUnread > 9 ? '9+' : clanChatUnread}
             </span>
           )}
-          {clanChatUnread === 0 && rewardReady && <span className="nav-dot" aria-hidden />}
         </span>
         <span>Профиль</span>
       </NavItem>

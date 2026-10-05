@@ -21,7 +21,6 @@ import {
   useClan,
   useClanChatLive,
   useClanChatSummary,
-  useDailyRewardState,
   useClaimReferral,
   reportClientError,
 } from '@/lib/supabase/queries'
@@ -226,7 +225,6 @@ export function FishZoneApp() {
   useClanChatLive(myProfile?.clanId ?? null)
   // Only clan members make this request — it feeds the profile tab's badge.
   const { data: clanChatSummary } = useClanChatSummary(myProfile?.clanId ?? null)
-  const { data: dailyReward } = useDailyRewardState()
 
   // Achievement detail photos are full-bleed JPGs (~80-110KB each) fetched
   // cold on the first tap — without this the background pops in a beat after
@@ -1504,6 +1502,7 @@ export function FishZoneApp() {
             onOpenClanChat={openClanChat}
             onOpenShop={openShop}
             onOpenMap={() => navClick('screen-map')}
+            onOpenFaq={() => push({ screen: 'screen-faq' })}
           />
         </Screen>
         <Screen id="screen-profile" current={currentScreen}>
@@ -1598,7 +1597,7 @@ export function FishZoneApp() {
           <AdminAccessScreen onBack={pop} onOpenUser={openUserProfile} onEditAccess={setEditingAdminAccessId} />
         </Screen>
         <Screen id="screen-faq" current={currentScreen} onBack={pop}>
-          <FaqScreen onBack={pop} />
+          <FaqScreen onBack={pop} onToast={showToast} />
         </Screen>
         <Screen id="screen-admin-stats" current={currentScreen} onBack={pop}>
           {isSuperAdmin && <AdminStatsScreen onBack={pop} active={currentScreen === 'screen-admin-stats'} />}
@@ -1842,7 +1841,6 @@ export function FishZoneApp() {
           plusPending={locating}
           unreadCount={unreadCount}
           clanChatUnread={clanChatSummary?.unread ?? 0}
-          rewardReady={!!dailyReward && !dailyReward.claimedToday}
         />
       )}
     </div>

@@ -21,7 +21,7 @@ begin
                       'clan_chest_reward', 'clan_race_result', 'clan_race_overtaken', 'clan_race_finished',
                       'clan_chat_mention', 'referral_joined', 'referral_reward', 'system_alert',
                       'hot_sector_week', 'hot_sector_won', 'legend_gained', 'legend_lost', 'bite_forecast', 'daily_reward_reminder',
-                      'sector_attacked') then
+                      'sector_attacked', 'support_reply') then
     return new;
   end if;
 
