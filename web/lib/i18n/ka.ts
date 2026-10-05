@@ -90,12 +90,13 @@ export const ka: Dict = {
   },
   legend: {
     title: 'სექტორის ლეგენდა',
-    hint: 'ყველაზე მეტი დაჭერა აქ 30 დღეში',
-    catches30: { one: '{count} დაჭერა 30 დღეში', other: '{count} დაჭერა 30 დღეში' },
+    hint: 'ყველაზე მეტი დაჭერა აქ 90 დღეში',
+    catchesPeriod: { one: '{count} დაჭერა 90 დღეში', other: '{count} დაჭერა 90 დღეში' },
     you: 'ეს შენ ხარ',
-    yourProgress: 'შენ გაქვს {mine} · ლეგენდამდე კიდევ {left}',
-    none: 'ლეგენდა ჯერ არ არის — დაიჭირე აქ 3 თევზი 30 დღეში და ის შენ იქნები',
-    noneProgress: 'შენ გაქვს {mine} / 3',
+    mineHere: { one: 'აქ გაქვს {count} დაჭერა', other: 'აქ გაქვს {count} დაჭერა' },
+    toLegend: { one: 'ლეგენდამდე კიდევ {count} დაჭერა', other: 'ლეგენდამდე კიდევ {count} დაჭერა' },
+    none: 'ლეგენდა ჯერ არ არის — დაიჭირე აქ 3 თევზი 90 დღეში და ის შენ იქნები',
+    noneProgress: 'აქ გაქვს 3-დან {mine} დაჭერა',
     profileCount: { one: '{count} სექტორის ლეგენდა', other: '{count} სექტორის ლეგენდა' },
   },
   forecast: {

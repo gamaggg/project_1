@@ -89,12 +89,13 @@ export const ru = {
   },
   legend: {
     title: 'Легенда сектора',
-    hint: 'Больше всех уловов здесь за 30 дней',
-    catches30: { one: '{count} улов за 30 дней', few: '{count} улова за 30 дней', many: '{count} уловов за 30 дней', other: '{count} улова за 30 дней' },
+    hint: 'Больше всех уловов здесь за 90 дней',
+    catchesPeriod: { one: '{count} улов за 90 дней', few: '{count} улова за 90 дней', many: '{count} уловов за 90 дней', other: '{count} улова за 90 дней' },
     you: 'Это ты',
-    yourProgress: 'У тебя {mine} · до легенды ещё {left}',
-    none: 'Легенды пока нет — поймай здесь 3 рыбы за 30 дней, и она твоя',
-    noneProgress: 'У тебя {mine} из 3',
+    mineHere: { one: 'У тебя здесь {count} улов', few: 'У тебя здесь {count} улова', many: 'У тебя здесь {count} уловов', other: 'У тебя здесь {count} улова' },
+    toLegend: { one: 'до легенды ещё {count} улов', few: 'до легенды ещё {count} улова', many: 'до легенды ещё {count} уловов', other: 'до легенды ещё {count} улова' },
+    none: 'Легенды пока нет — поймай здесь 3 рыбы за 90 дней, и она твоя',
+    noneProgress: 'У тебя здесь {mine} из 3 уловов',
     profileCount: { one: 'Легенда {count} сектора', few: 'Легенда {count} секторов', many: 'Легенда {count} секторов', other: 'Легенда {count} сектора' },
   },
   forecast: {

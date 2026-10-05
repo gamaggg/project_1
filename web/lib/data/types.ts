@@ -44,7 +44,7 @@ export type Territory = {
   // Until when this is one of the week's hot sectors (×2 coins for catches,
   // ×3 Казна; territories_with_stats.hot_until). Null when it isn't.
   hotUntil: string | null
-  // «Легенда сектора»: whoever caught the most here in the last 30 days (at
+  // «Легенда сектора»: whoever caught the most here in the last 90 days (at
   // least 3; territories_with_stats.legend_id). Null when nobody qualifies.
   legendId: string | null
 }

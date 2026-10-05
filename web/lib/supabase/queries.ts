@@ -2457,7 +2457,7 @@ export type SectorInsights = {
   baits: { name: string; count: number }[]
   lastCatchAt: string | null
   legend: { id: string; name: string | null; avatarUrl: string | null; count: number } | null
-  // The viewer's own catches here in the same 30 days (null signed out).
+  // The viewer's own catches here in the legend's 90 days (null signed out).
   myCount: number | null
 }
 

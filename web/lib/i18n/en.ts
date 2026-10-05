@@ -88,12 +88,13 @@ export const en: Dict = {
   },
   legend: {
     title: 'Sector legend',
-    hint: 'Most catches here in 30 days',
-    catches30: { one: '{count} catch in 30 days', other: '{count} catches in 30 days' },
+    hint: 'Most catches here in 90 days',
+    catchesPeriod: { one: '{count} catch in 90 days', other: '{count} catches in 90 days' },
     you: 'That’s you',
-    yourProgress: 'You have {mine} · {left} more to become the legend',
-    none: 'No legend yet — catch 3 fish here within 30 days and it’s you',
-    noneProgress: 'You have {mine} of 3',
+    mineHere: { one: 'You have {count} catch here', other: 'You have {count} catches here' },
+    toLegend: { one: '{count} more catch to become the legend', other: '{count} more catches to become the legend' },
+    none: 'No legend yet — catch 3 fish here within 90 days and it’s you',
+    noneProgress: 'You have {mine} of 3 catches here',
     profileCount: { one: 'Legend of {count} sector', other: 'Legend of {count} sectors' },
   },
   forecast: {

@@ -24,6 +24,63 @@ export function LaurelIcon({ size = 16, color = '#C9921F' }: { size?: number; co
   )
 }
 
+// The legend's avatar frame: two laurel branches rising from a tie at the
+// bottom and curving up both sides, open at the top like a victor's wreath.
+// Leaves are laid along the arc in pairs and shrink toward the tips.
+const WREATH_C = 32
+const WREATH_R = 25
+function wreathBranch(side: 1 | -1) {
+  const leaves: React.ReactNode[] = []
+  const steps = 7
+  const point = (deg: number) => {
+    const th = (deg * Math.PI) / 180
+    return [WREATH_C + WREATH_R * Math.cos(th), WREATH_C + WREATH_R * Math.sin(th)]
+  }
+  const startDeg = side === 1 ? 102 : 78
+  const endDeg = side === 1 ? 222 : -42
+  for (let i = 0; i < steps; i++) {
+    const t = i / (steps - 1)
+    const deg = startDeg + (endDeg - startDeg) * t
+    const [x, y] = point(deg)
+    const grow = deg + 90 * side
+    const len = 4.4 - t * 1.4
+    for (const k of [-1, 1]) {
+      const a = grow + k * 34
+      const ar = (a * Math.PI) / 180
+      const cx = x + Math.cos(ar) * len
+      const cy = y + Math.sin(ar) * len
+      leaves.push(<ellipse key={`${i}${k}`} cx={cx} cy={cy} rx={len} ry={len * 0.45} transform={`rotate(${a} ${cx} ${cy})`} />)
+    }
+  }
+  const [sx, sy] = point(startDeg)
+  const [ex, ey] = point(endDeg)
+  const tipAr = ((endDeg + 90 * side) * Math.PI) / 180
+  const tx = ex + Math.cos(tipAr) * 2.6
+  const ty = ey + Math.sin(tipAr) * 2.6
+  return (
+    <g>
+      <path d={`M${sx} ${sy} A${WREATH_R} ${WREATH_R} 0 0 ${side === 1 ? 1 : 0} ${ex} ${ey}`} fill="none" stroke="#B07F18" strokeWidth="1.3" strokeLinecap="round" />
+      {leaves}
+      <ellipse cx={tx} cy={ty} rx={2.8} ry={1.25} transform={`rotate(${endDeg + 90 * side} ${tx} ${ty})`} />
+    </g>
+  )
+}
+
+export function LegendWreath({ size = 58, children }: { size?: number; children: React.ReactNode }) {
+  return (
+    <span className="legend-wreath" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden>
+        <g fill="#D4A22C">
+          {wreathBranch(1)}
+          {wreathBranch(-1)}
+        </g>
+        <path d="M27.5 59.5l4.5-3 4.5 3M32 56.5v-1.5" fill="none" stroke="#B07F18" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      {children}
+    </span>
+  )
+}
+
 // The busiest 3-hour stretch of the day, wrapping past midnight (a sector
 // that bites 21:00–01:00 is one evening, not two halves). Null when there's
 // too little to call it.
@@ -126,7 +183,7 @@ function InsightsBody({ data, speciesName }: { data: Insights; speciesName: (key
 }
 
 // «Легенда сектора» under «Захватил сектор»: who has fished here the most
-// in 30 days, and how far the viewer is from taking that over.
+// in 90 days, and how far the viewer is from taking that over.
 export function SectorLegendRow({ territory, onOpenUser }: { territory: Territory; onOpenUser: (id: string) => void }) {
   const t = useT()
   const { user } = useAuth()
@@ -138,23 +195,22 @@ export function SectorLegendRow({ territory, onOpenUser }: { territory: Territor
 
   return (
     <div className="legend-row">
-      <div className="legend-row-head">
-        <LaurelIcon size={15} />
-        <span>{t('legend.title')}</span>
-      </div>
+      <div className="legend-row-head">{t('legend.title')}</div>
       {legend ? (
         <button className="legend-row-person tap-scale" onClick={() => onOpenUser(legend.id)}>
-          <span className="legend-row-avatar">
-            {legend.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- small avatar thumbnail, same as the rest of the sector screen
-              <img src={thumbUrl(legend.avatarUrl, 96)} alt="" />
-            ) : (
-              (legend.name ?? '?').slice(0, 2).toUpperCase()
-            )}
-          </span>
+          <LegendWreath>
+            <span className="legend-row-avatar">
+              {legend.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- small avatar thumbnail, same as the rest of the sector screen
+                <img src={thumbUrl(legend.avatarUrl, 96)} alt="" />
+              ) : (
+                (legend.name ?? '?').slice(0, 2).toUpperCase()
+              )}
+            </span>
+          </LegendWreath>
           <span className="legend-row-text">
             <b>{isMe ? t('legend.you') : legend.name}</b>
-            <span>{t('legend.catches30', { count: legend.count })}</span>
+            <span>{t('legend.catchesPeriod', { count: legend.count })}</span>
           </span>
         </button>
       ) : (
@@ -162,7 +218,9 @@ export function SectorLegendRow({ territory, onOpenUser }: { territory: Territor
       )}
       {mine !== null && !isMe && (
         <div className="legend-row-progress">
-          {legend ? t('legend.yourProgress', { mine, left: Math.max(1, legend.count - mine + 1) }) : t('legend.noneProgress', { mine })}
+          {legend
+            ? `${t('legend.mineHere', { count: mine })} · ${t('legend.toLegend', { count: Math.max(1, legend.count - mine + 1) })}`
+            : t('legend.noneProgress', { mine })}
         </div>
       )}
     </div>

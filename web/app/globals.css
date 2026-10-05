@@ -634,9 +634,12 @@ body{
 .insights-gear-label{display:inline-block; min-width:76px; color:var(--ink-faint); font-weight:700;}
 .insights-note{margin-top:10px; font-size:12px; line-height:1.4; color:var(--ink-faint);}
 .legend-row{margin-top:12px; padding:10px 12px; border-radius:14px; background:#FBF6EA; border:1px solid #F1E3C2;}
-.legend-row-head{display:flex; align-items:center; gap:6px; font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:#9A6B12;}
-.legend-row-person{display:flex; align-items:center; gap:10px; width:100%; margin-top:8px; padding:0; border:none; background:none; font:inherit; text-align:left; cursor:pointer;}
-.legend-row-avatar{flex:0 0 auto; width:34px; height:34px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#FF7A38,var(--accent) 70%); color:#fff; font-size:12px; font-weight:800; box-shadow:0 0 0 2px #E2B13C;}
+.legend-row-head{font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:#9A6B12;}
+.legend-row-person{display:flex; align-items:center; gap:8px; width:100%; margin-top:4px; margin-left:-6px; padding:0; border:none; background:none; font:inherit; text-align:left; cursor:pointer;}
+.legend-row-avatar{flex:0 0 auto; width:34px; height:34px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#FF7A38,var(--accent) 70%); color:#fff; font-size:12px; font-weight:800; box-shadow:0 0 0 2px #FBF6EA;}
+.legend-wreath{position:relative; flex:0 0 auto; display:flex; align-items:center; justify-content:center;}
+.legend-wreath svg{position:absolute; inset:0; overflow:visible;}
+.legend-wreath .legend-row-avatar{width:36px; height:36px;}
 .legend-row-avatar img{width:100%; height:100%; object-fit:cover;}
 .legend-row-text{display:flex; flex-direction:column; min-width:0;}
 .legend-row-text b{font-size:14.5px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
@@ -3117,7 +3120,6 @@ button.race-lane{cursor:pointer;}
 
 /* ===== Легенда в профиле ===== */
 .profile-legend-chip{display:inline-flex; align-items:center; gap:6px; margin-top:12px; padding:6px 12px 6px 10px; border-radius:999px; background:#FBF6EA; border:1px solid #F1E3C2; font-size:12.5px; font-weight:800; color:#9A6B12;}
-.map-sheet-legend{display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; width:24px; height:24px; margin-left:-4px; border-radius:50%; background:#FBF6EA;}
 
 /* ===== Прогноз клёва ===== */
 .score-bars{display:block; flex:0 0 auto;}
