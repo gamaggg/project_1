@@ -8,7 +8,7 @@ import type { Territory } from '@/lib/data/types'
 import { resolveTerritoryColor, FREE_TERRITORY_COLOR, OTHER_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { crestSvgMarkup, resolveCrest } from '@/lib/data/clanCrests'
 import { splitSector } from '@/lib/map/sectorParts'
-import { HOT_FLAME_SVG } from '@/lib/map/hotFlame'
+import { hotFlameSvg } from '@/lib/map/hotFlame'
 
 // Clan layer: a sector held by someone outside any clan.
 const SOLO_OWNER_COLOR = '#9A9CA3'
@@ -59,8 +59,21 @@ function avatarInnerHtml(avatarUrl: string | null, displayName: string | null): 
     : escapeHtml((displayName ?? 'Рыбак').slice(0, 2).toUpperCase())
 }
 
+// A hot sector's id label turns brand orange with a flame in front of the
+// number — part of the label itself, so it sits under the avatar at every
+// zoom instead of competing with it for the centre.
+function idLabelHtml(t: Territory): string {
+  return isHotNow(t)
+    ? `<div class="leaflet-territory-label hot">${hotFlameSvg(9, '#fff')}${escapeHtml(t.id)}</div>`
+    : `<div class="leaflet-territory-label">${escapeHtml(t.id)}</div>`
+}
+
+function isHotNow(t: Territory): boolean {
+  return !!t.hotUntil && new Date(t.hotUntil).getTime() > Date.now()
+}
+
 function territoryMarkerHtml(t: Territory, clanLayer: boolean): string {
-  const label = `<div class="leaflet-territory-label">${escapeHtml(t.id)}</div>`
+  const label = idLabelHtml(t)
   if (t.status === 'free' || !t.ownerId) return `<div class="leaflet-territory-marker">${label}</div>`
   // Clan layer: the owner's clan crest takes the avatar's place.
   if (clanLayer && t.ownerClanCrest) {
@@ -155,6 +168,7 @@ export const LeafletMap = forwardRef<
     const [zoomTick, setZoomTick] = useState(0)
     const markersLayerRef = useRef<L.LayerGroup | null>(null)
     const labelsLayerRef = useRef<L.LayerGroup | null>(null)
+    const hotBadgesLayerRef = useRef<L.LayerGroup | null>(null)
     // Last set `draw` was given, so the viewport-driven label rebuild below
     // can run from a map event without re-running the whole polygon pass.
     const territoriesRef = useRef<Territory[]>([])
@@ -337,21 +351,24 @@ export const LeafletMap = forwardRef<
         })
       })
       // The week's hot sectors (at most two per city): a brand-orange outline
-      // over everything, with a soft wider stroke under it for the glow, and
-      // a flame at the centre that shows at every zoom. Static — the map
-      // itself stays free of animation.
-      const now = Date.now()
-      territories
-        .filter((t) => t.hotUntil && new Date(t.hotUntil).getTime() > now)
-        .forEach((t) => {
-          L.polygon(t.corners, { color: HOT_COLOR, weight: 9, opacity: 0.22, fill: false, interactive: false }).addTo(markersLayer)
-          L.polygon(t.corners, { color: HOT_COLOR, weight: 3, opacity: 1, fill: false, interactive: false }).addTo(markersLayer)
+      // over everything, with a soft wider stroke under it for the glow. The
+      // flame itself is in the sector's id label (see idLabelHtml); zoomed out
+      // past the labels, a small flame badge takes the empty centre instead
+      // (hotBadgesLayer, shown only below LABEL_MIN_ZOOM). Static — the map
+      // stays free of animation.
+      const hotBadges = hotBadgesLayerRef.current
+      hotBadges?.clearLayers()
+      territories.filter(isHotNow).forEach((t) => {
+        L.polygon(t.corners, { color: HOT_COLOR, weight: 9, opacity: 0.22, fill: false, interactive: false }).addTo(markersLayer)
+        L.polygon(t.corners, { color: HOT_COLOR, weight: 3, opacity: 1, fill: false, interactive: false }).addTo(markersLayer)
+        if (hotBadges) {
           L.marker([t.lat, t.lng], {
-            icon: L.divIcon({ className: 'hot-sector-marker', html: HOT_FLAME_SVG, iconSize: [26, 26], iconAnchor: [13, 13] }),
+            icon: L.divIcon({ className: 'hot-sector-badge', html: hotFlameSvg(12, '#fff'), iconSize: [22, 22], iconAnchor: [11, 11] }),
             interactive: false,
             keyboard: false,
-          }).addTo(markersLayer)
-        })
+          }).addTo(hotBadges)
+        }
+      })
       drawLabels()
     }
 
@@ -386,7 +403,7 @@ export const LeafletMap = forwardRef<
           L.marker([t.lat, t.lng], {
             icon: L.divIcon({
               className: 'leaflet-territory-marker-wrap',
-              html: `<div class="leaflet-territory-marker"><div class="leaflet-territory-label">${escapeHtml(t.id)}</div></div>`,
+              html: `<div class="leaflet-territory-marker">${idLabelHtml(t)}</div>`,
               iconSize: [40, 18],
             }),
             interactive: false,
@@ -548,6 +565,7 @@ export const LeafletMap = forwardRef<
 
         markersLayerRef.current = L.layerGroup().addTo(map)
         labelsLayerRef.current = L.layerGroup()
+        hotBadgesLayerRef.current = L.layerGroup()
         // Only ever holds the one highlighted sector, so it doesn't need the
         // polygon canvas's wide swipe buffer — at 0.6 this <svg> (and the
         // compositing layer its glow filter gets) was 2.2× the viewport.
@@ -597,6 +615,11 @@ export const LeafletMap = forwardRef<
           const show = map.getZoom() >= LABEL_MIN_ZOOM
           if (show && !map.hasLayer(labelsLayerRef.current!)) labelsLayerRef.current!.addTo(map)
           if (!show && map.hasLayer(labelsLayerRef.current!)) map.removeLayer(labelsLayerRef.current!)
+          // The other way round for the hot-sector badges: they stand in for
+          // the labels' flame when the labels are hidden.
+          const badges = hotBadgesLayerRef.current!
+          if (!show && !map.hasLayer(badges)) badges.addTo(map)
+          if (show && map.hasLayer(badges)) map.removeLayer(badges)
         }
         map.on('zoomend', updateLabelVisibility)
         // Labels only exist for the current viewport (see drawLabels), so

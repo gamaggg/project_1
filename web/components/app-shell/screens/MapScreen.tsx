@@ -474,7 +474,7 @@ export const MapScreen = forwardRef<
                     </div>
                   )}
                   {shieldBadge(t.shieldUntil)}
-                  {t.id === mostPopularId && (
+                  {t.id === mostPopularId && !isHot(t) && (
                     <span className="badge badge-accent" title="Самый популярный сектор" style={{ flex: '0 0 auto' }}>
                       🔥
                     </span>
