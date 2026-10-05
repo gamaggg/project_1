@@ -11,7 +11,17 @@
 --   * сектор переходит, только если после снимка там никто другой не ловил и на нём
 --     сейчас нет чужого щита; иначе улов засчитывается без захвата (late = true) —
 --     монеты за вид даются, захвата и монет за захват нет, улов не теряется.
--- Обычный улов (p_caught_at = null) работает ровно как раньше.
+-- Обычный улов (p_caught_at = null) работает как раньше, кроме двух правил ниже.
+--
+-- «Защита сектора» (решение 05.10 по отзывам игроков; колонки — sector_defense_columns.sql):
+--   * защита 0–3 тает на 1 в сутки от defense_at (считается на лету, как в territories_with_stats);
+--   * улов владельца или его соклановца: защита +1 (до 3);
+--   * улов чужого при защите > 0 — атака: улов засчитан (монеты за вид), сектор не переходит,
+--     защита −1, владельцу уведомление sector_attacked не чаще раза в час на сектор;
+--   * при защите 0 чужой улов забирает сектор, защита становится 1;
+--   * щит («Щит», «Прилив») работает как раньше — поверх защиты.
+-- «+25 за захват» одного и того же сектора — одному игроку не чаще раза в 24 ч (фарм перехватами).
+-- В результате ещё attacked (это была атака) и defense (защита сектора после улова).
 
 drop function public.confirm_catch(text, text, text, integer, numeric, text, text);
 
@@ -25,7 +35,7 @@ create function public.confirm_catch(
   p_bait text default null::text,
   p_caught_at timestamptz default null::timestamptz
 )
- returns table(species_coins integer, capture_coins integer, clan_support boolean, late boolean)
+ returns table(species_coins integer, capture_coins integer, clan_support boolean, late boolean, attacked boolean, defense integer)
  language plpgsql
  security definer
  set search_path to 'public'
@@ -47,6 +57,11 @@ declare
   v_clan_mate boolean := false;
   v_at timestamptz := coalesce(p_caught_at, now());
   v_late boolean := false;
+  v_defense smallint;
+  v_defense_at timestamptz;
+  v_def_now int := 0;
+  v_def_after int := 0;
+  v_attack boolean := false;
 begin
   if v_uid is null then raise exception 'not authenticated'; end if;
 
@@ -76,8 +91,13 @@ begin
 
   insert into public.territories (id) values (p_territory_id) on conflict (id) do nothing;
 
-  select owner_id, shield_until into v_prev_owner, v_shield_until from public.territories t where t.id = p_territory_id and not is_deleted for update;
+  select owner_id, shield_until, t.defense, t.defense_at into v_prev_owner, v_shield_until, v_defense, v_defense_at
+  from public.territories t where t.id = p_territory_id and not is_deleted for update;
   if not found then raise exception 'unknown territory %', p_territory_id; end if;
+  -- Защита на сейчас: без уловов владельца тает на 1 в сутки.
+  if v_prev_owner is not null then
+    v_def_now := greatest(0, v_defense - floor(extract(epoch from (now() - coalesce(v_defense_at, now()))) / 86400)::int);
+  end if;
 
   -- Владелец — соклановец по клану города этого сектора: сектор остаётся за ним.
   if v_prev_owner is not null and v_prev_owner <> v_uid then
@@ -103,22 +123,33 @@ begin
     raise exception 'SHIELDED:%', extract(epoch from v_shield_until)::bigint;
   end if;
 
+  -- Чужой улов на секторе с защитой — атака, а не захват.
+  v_attack := not v_late and v_prev_owner is not null and v_prev_owner <> v_uid and not v_clan_mate and v_def_now > 0;
+
   insert into public.catches (territory_id, user_id, species, length_cm, weight_kg, method, bait, photo_url, caught_at)
   values (p_territory_id, v_uid, p_species, p_length_cm, p_weight_kg, p_method, p_bait, p_photo_url, v_at)
   returning * into v_catch;
   if v_late then
-    null; -- сектор не трогаем
+    v_def_after := v_def_now; -- сектор не трогаем
+  elsif v_attack then
+    v_def_after := v_def_now - 1;
+    update public.territories t set defense = v_def_after, defense_at = now() where t.id = p_territory_id;
   elsif not v_clan_mate then
+    -- Захват (защита 1) или улов владельца на своём секторе (+1, до 3).
+    v_def_after := case when v_prev_owner is distinct from v_uid then 1 else least(3, v_def_now + 1) end;
     update public.territories t set owner_id = v_uid, claimed_at = now(),
-      shield_until = case when v_prev_owner is distinct from v_uid then null else shield_until end
+      shield_until = case when v_prev_owner is distinct from v_uid then null else shield_until end,
+      defense = v_def_after, defense_at = now()
       where t.id = p_territory_id;
   else
     -- Соклановец входит в долю сектора: до 4 владельцев вместе с хозяином.
-    -- Пятый просто поддерживает сектор.
+    -- Пятый просто поддерживает сектор. Защиту укрепляет любой из них.
     insert into public.territory_shares (territory_id, user_id)
     select p_territory_id, v_uid
     where (select count(*) from public.territory_shares s where s.territory_id = p_territory_id) < 3
     on conflict do nothing;
+    v_def_after := least(3, v_def_now + 1);
+    update public.territories t set defense = v_def_after, defense_at = now() where t.id = p_territory_id;
   end if;
   insert into public.activity_log (user_id, territory_id, kind, catch_id) values (v_uid, p_territory_id, 'catch', v_catch.id);
 
@@ -140,7 +171,17 @@ begin
     v_species_coins := 0;
   end if;
 
-  if v_prev_owner is distinct from v_uid and not v_clan_mate and not v_late then
+  if v_attack then
+    -- Владельцу — «твой сектор атакуют», не чаще раза в час на сектор.
+    if not exists (select 1 from public.notifications n
+                   where n.user_id = v_prev_owner and n.kind = 'sector_attacked' and n.territory_id = p_territory_id
+                     and n.created_at > now() - interval '1 hour') then
+      insert into public.notifications (user_id, kind, actor_id, territory_id, payload)
+      values (v_prev_owner, 'sector_attacked', v_uid, p_territory_id, jsonb_build_object('defense', v_def_after));
+    end if;
+  end if;
+
+  if v_prev_owner is distinct from v_uid and not v_clan_mate and not v_late and not v_attack then
     insert into public.activity_log (user_id, territory_id, kind, catch_id, previous_owner_id)
     values (v_uid, p_territory_id, 'claim', v_catch.id, v_prev_owner);
 
@@ -156,11 +197,18 @@ begin
     end if;
 
     -- A flat reward for actually taking a sector, also tagged with catch_id
-    -- for the same moderation-reversal reason as above.
-    v_capture_coins := 25 * v_multiplier;
-    update public.profiles p set coins = coins + v_capture_coins where p.id = v_uid;
-    insert into public.coin_transactions (user_id, amount, reason, label, catch_id)
-    values (v_uid, v_capture_coins, 'sector_capture', 'Захват сектора ' || p_territory_id, v_catch.id);
+    -- for the same moderation-reversal reason as above. Once a day per
+    -- player per sector: two players taking one sector back and forth
+    -- farmed it (05.10: 32 of 66 captures within 30 min of the last one).
+    if not exists (select 1 from public.coin_transactions ct
+                   join public.catches c2 on c2.id = ct.catch_id
+                   where ct.user_id = v_uid and ct.reason = 'sector_capture' and c2.territory_id = p_territory_id
+                     and ct.created_at > now() - interval '24 hours') then
+      v_capture_coins := 25 * v_multiplier;
+      update public.profiles p set coins = coins + v_capture_coins where p.id = v_uid;
+      insert into public.coin_transactions (user_id, amount, reason, label, catch_id)
+      values (v_uid, v_capture_coins, 'sector_capture', 'Захват сектора ' || p_territory_id, v_catch.id);
+    end if;
   end if;
 
   -- Any catch (yours or a fresh capture) can consume an armed Эхо, making
@@ -173,7 +221,7 @@ begin
     update public.catches c set echo = true where c.id = v_catch.id;
   end if;
 
-  return query select v_species_coins, v_capture_coins, v_clan_mate, v_late;
+  return query select v_species_coins, v_capture_coins, v_clan_mate, v_late, v_attack, v_def_after;
 end;
 $function$;
 
@@ -181,3 +229,13 @@ $function$;
 -- «not authenticated» изнутри — на это смотрит проверка после миграций).
 revoke all on function public.confirm_catch(text, text, text, integer, numeric, text, text, timestamptz) from public;
 grant execute on function public.confirm_catch(text, text, text, integer, numeric, text, text, timestamptz) to anon, authenticated, service_role;
+
+-- Начальная защита занятых секторов: по уловам владельца и его доли за последние 3 дня
+-- (до 3). Брошенные сектора — 0, их, как и раньше, забирает один улов.
+update public.territories t set
+  defense = least(3, (select count(*) from public.catches c
+                      where c.territory_id = t.id and c.caught_at > now() - interval '3 days'
+                        and (c.user_id = t.owner_id
+                             or exists (select 1 from public.territory_shares s where s.territory_id = t.id and s.user_id = c.user_id)))),
+  defense_at = now()
+where t.owner_id is not null and not t.is_deleted;

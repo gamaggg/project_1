@@ -4,6 +4,7 @@
 --   legend_gained / legend_lost — стал легендой сектора / тебя обошли;
 --   bite_forecast          — «завтра хороший клёв» (создаёт маршрут /api/telegram/forecast-alert);
 --   daily_reward_reminder  — 19:00, серия 3+ и награда не забрана.
+--   sector_attacked        — «твой сектор атакуют» (создаёт confirm_catch, release/confirm_catch_offline.sql).
 -- Всё это — только в релиз: клиент до релиза не знает этих видов и показал бы их как улов.
 
 -- 1) Разрешить новые виды для Telegram (остальное в триггере как было).
@@ -19,7 +20,8 @@ begin
                       'clan_invite', 'clan_join_request', 'clan_join_accepted', 'clan_kicked', 'clan_disbanded',
                       'clan_chest_reward', 'clan_race_result', 'clan_race_overtaken', 'clan_race_finished',
                       'clan_chat_mention', 'referral_joined', 'referral_reward', 'system_alert',
-                      'hot_sector_week', 'hot_sector_won', 'legend_gained', 'legend_lost', 'bite_forecast', 'daily_reward_reminder') then
+                      'hot_sector_week', 'hot_sector_won', 'legend_gained', 'legend_lost', 'bite_forecast', 'daily_reward_reminder',
+                      'sector_attacked') then
     return new;
   end if;
 

@@ -61,12 +61,13 @@
 - `supabase-drafts/catch_conditions.sql` (погода во время улова) — применена 05.10.
 - `supabase-drafts/city_week_recap.sql` («Неделя в городе») — применена 05.10.
 - `supabase-drafts/onboarding_chain.sql` (цепочка новичкам: `onboarding_messages`, `telegram_bot_starts.stopped_at`, `onboarding_due`) — применена 05.10.
+- `supabase-drafts/sector_defense_columns.sql` («Защита сектора»: `territories.defense`, `defense_at`, защита «на сейчас» в конце `territories_with_stats`) — ждёт «применяй». Dry-run 05.10: 2192 сектора, представление 40 мс, права на месте. Откат: `rollback_sector_defense_columns.sql`.
 
 ## Перед релизом не забыть
 - Применить `release/game_notifications.sql` и включить его расписание (см. конец файла): legends 10 мин + сутки, announce-hot пт 12:05 обоих городов, remind-daily-rewards ежечасно, forecast-alert 15:00/16:00 UTC; cron для pick_hot_sectors пт 12:00 и settle_hot_sectors вс 23:59.
 - `npm run db:contract` до релизной миграции покажет «лишние аргументы: p_caught_at» у confirm_catch в рабочей копии — это ожидаемо, уходит после `release/confirm_catch_offline.sql`. Серверные вызовы (createAdminClient) проверка больше не требует открывать для authenticated и не отдаёт сторожу.
 - Cron `telegram-send-onboarding` каждые 15 минут на `/api/telegram/send-onboarding` (Bearer CRON_SECRET, как у остальных). Первая пятница после релиза: old_friday уйдёт ~180 старым игрокам без уловов — это ожидаемо.
-- Релизная миграция: применить `release/confirm_catch_offline.sql` (DROP+CREATE confirm_catch с p_caught_at, DEFAULT и права как были), затем `npm run db:contract`; сразу проверить обычный улов на телефоне.
+- Релизная миграция: применить `release/confirm_catch_offline.sql` (DROP+CREATE confirm_catch с p_caught_at + «Защита сектора» + «+25 раз в сутки», результат + attacked/defense; DEFAULT и права как были; в конце — начальная защита занятых секторов по уловам за 3 дня). Dry-run 05.10 на B0439: захват → защита 1 (+25), свой улов 2, соклановец 3, чужой 2→1→0 (одно уведомление), захват чужим 1 (+25), перезахват A — атака, затем захват без +25 (раз в сутки); 3 за двое суток → 1; начальные значения 0:50, 1:10, 2:2, 3:4, затем `npm run db:contract`; сразу проверить обычный улов на телефоне.
 - Удалить неиспользуемую `get_city_pulse` (её заменила «Неделя в городе»).
 - Очистить `app_events` (`delete from app_events` — до релиза там только тестовые клики 05.10 с localhost, до того как сбор на localhost отключили), иначе «Статистика» покажет их как настоящие заходы.
 - Удалить тестовые горячие сектора (`delete from hot_sectors` — строки id 1–4 выбраны вручную 05.10 для проверки), иначе при запуске расписания их «победители» получат настоящие награды.
