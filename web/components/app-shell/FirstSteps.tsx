@@ -29,9 +29,16 @@ export function FirstStepsPill({ onToast }: { onToast?: (msg: string) => void })
           setOpen(true)
         }}
       >
-        <span className="first-steps-ring" style={{ '--p': `${(done / ORDER.length) * 360}deg` } as React.CSSProperties} aria-hidden>
-          <span>{done}</span>
-        </span>
+        {all ? (
+          // Done: the reward itself, not a full ring with «6» in it.
+          <span className="first-steps-coin" aria-hidden>
+            <CoinIcon size={20} />
+          </span>
+        ) : (
+          <span className="first-steps-ring" style={{ '--p': `${(done / ORDER.length) * 360}deg` } as React.CSSProperties} aria-hidden>
+            <span>{done}</span>
+          </span>
+        )}
         {all ? t('firstSteps.pillReady', { coins: data.reward }) : t('firstSteps.pill', { done, total: ORDER.length })}
       </button>
       {open && <FirstStepsSheet onClose={() => setOpen(false)} onToast={onToast} />}
