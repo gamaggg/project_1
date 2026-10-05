@@ -571,7 +571,7 @@ export function ProfileScreen({
           <b>{myTerritories.length}</b>
           <span>{pluralTerritories(myTerritories.length)}</span>
         </button>
-        <button className="hero-stat" onClick={onOpenAllCatches}>
+        <button data-tour="diary" className="hero-stat" onClick={onOpenAllCatches}>
           <b>{myCatches.length}</b>
           <span>{pluralCatches(myCatches.length)}</span>
         </button>
@@ -607,7 +607,7 @@ export function ProfileScreen({
           <span className="profile-cta-title">Челленджи недели</span>
           <span className="profile-cta-sub">Выполняй и получай награды</span>
         </button>
-        <button className="profile-cta-btn profile-cta-shop tap-scale" onClick={onOpenShop}>
+        <button data-tour="shop" className="profile-cta-btn profile-cta-shop tap-scale" onClick={onOpenShop}>
           <div className="profile-cta-pattern" />
           <span className="profile-cta-arrow">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">

@@ -41,7 +41,7 @@ export function BottomNav({
         <span>Территории</span>
       </NavItem>
       <div
-        className="navitem navitem-plus tap-scale"
+        data-tour="camera" className="navitem navitem-plus tap-scale"
         onClick={plusPending ? undefined : onPlus}
         style={plusPending ? { pointerEvents: 'none', opacity: 0.6 } : undefined}
       >

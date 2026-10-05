@@ -153,7 +153,7 @@ export function ForecastChip({ city }: { city: CityId }) {
     <>
       <button
         type="button"
-        className="forecast-chip tap-scale"
+        data-tour="forecast" className="forecast-chip tap-scale"
         onClick={() => {
           hapticTap()
           setOpen(true)
@@ -190,7 +190,7 @@ export function SectorForecastCard({ territory, city }: { territory: Territory; 
 
   return (
     <>
-      <button type="button" className="forecast-card tap-scale" onClick={() => days && setOpen(true)} disabled={!days}>
+      <button type="button" data-tour="sector-forecast" className="forecast-card tap-scale" onClick={() => days && setOpen(true)} disabled={!days}>
         <div className="insights-head">
           <span className="insights-title">{t('forecast.here')}</span>
           {today && <span className="forecast-card-label" style={{ color: SCORE_COLOR[today.score] }}>{scoreLabel(today.score)}</span>}

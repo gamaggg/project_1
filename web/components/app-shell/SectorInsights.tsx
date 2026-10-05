@@ -109,7 +109,7 @@ export function SectorInsightsCard({ territory }: { territory: Territory }) {
   if (!data || data.total === 0) return null
 
   return (
-    <div className="insights-card">
+    <div data-tour="insights" className="insights-card">
       <div className="insights-head">
         <span className="insights-title">{t('insights.title')}</span>
         <span className="insights-period">{data.scope === 'sector' ? t('insights.period90') : t('insights.periodAll')}</span>
@@ -240,7 +240,7 @@ export function SectorLegendRow({
   )
 
   return (
-    <div className={`sector-standing${aside ? '' : ' solo'}`}>
+    <div data-tour="standing" className={`sector-standing${aside ? '' : ' solo'}`}>
       {column}
       {aside}
     </div>

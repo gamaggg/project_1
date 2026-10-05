@@ -56,7 +56,7 @@ export function RecapBanner({ city, onFindFree }: { city: CityId; onFindFree: ()
         <div className="recap-sticker-wrap">
           <button
             type="button"
-            className="recap-sticker"
+            data-tour="recap" className="recap-sticker"
             onClick={() => {
               track('recap_open', { week: data.weekStart }, city)
               setOpen(true)

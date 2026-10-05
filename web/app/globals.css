@@ -652,7 +652,7 @@ body{
 .map-sheet-hot{display:flex; align-items:center; gap:5px; margin:-2px 0 -2px; font-size:12px; line-height:1; font-weight:700; color:#B83E00; white-space:nowrap; overflow:hidden;}
 .map-sheet-hot b{font-weight:800; text-transform:uppercase; letter-spacing:.04em;}
 .map-sheet-hot-flame{display:flex; flex:0 0 auto;}
-.map-sheet-hot-bonus{margin-left:auto; padding:2px 7px; border-radius:999px; background:var(--accent); color:#fff; font-size:11px; font-weight:800;}
+.map-sheet-hot-bonus{margin-left:auto; margin-right:1px; padding:2px 7px; border-radius:999px; background:var(--accent); color:#fff; font-size:11px; font-weight:800;}
 .treasury-chip{display:flex; align-items:center; gap:3px; flex:0 0 auto; height:30px; padding:0 9px 0 6px; border:none; border-radius:999px; background:#F3F1EC; color:var(--ink-soft); font:inherit; font-size:12.5px; font-weight:800; font-variant-numeric:tabular-nums; cursor:pointer;}
 .treasury-chip-cap{font-weight:700; color:var(--ink-faint);}
 .treasury-chip.ready{background:var(--accent-soft); color:#9A3412; box-shadow:inset 0 0 0 1.5px rgba(252,82,0,.45);}
@@ -3501,3 +3501,22 @@ button.standing-col{cursor:pointer;}
 .defense-sheet-rules{list-style:none; margin:14px 0 0; padding:0; display:flex; flex-direction:column; gap:10px;}
 .defense-sheet-rules li{position:relative; padding-left:18px; font-size:13.5px; line-height:1.45; color:var(--ink);}
 .defense-sheet-rules li::before{content:''; position:absolute; left:3px; top:7px; width:7px; height:7px; border-radius:2px; background:#12A190; transform:rotate(45deg);}
+
+/* «Что нового» (WhatsNewTour.tsx): the screen dimmed around one element (a
+   window cut with a huge spread shadow, white ring), a note beside it. */
+.tour-root{position:fixed; inset:0; z-index:2000;}
+.tour-hole{position:fixed; border-radius:16px; pointer-events:none; box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 0 0 9999px rgba(8,10,14,.66); transition:top .3s var(--ease-out), left .3s var(--ease-out), width .3s var(--ease-out), height .3s var(--ease-out);}
+.tour-tip{position:fixed; background:var(--surface); border-radius:18px; padding:16px 16px 12px; box-shadow:0 18px 40px rgba(0,0,0,.28); animation:tour-in .28s var(--ease-out) both;}
+@keyframes tour-in{from{opacity:0; transform:translateY(6px);}}
+.tour-tip.above{animation-name:tour-in-up;}
+@keyframes tour-in-up{from{opacity:0; transform:translateY(-6px);}}
+.tour-arrow{position:absolute; width:14px; height:14px; background:var(--surface); transform:rotate(45deg); border-radius:2px;}
+.tour-tip.below .tour-arrow{top:-6px;}
+.tour-tip.above .tour-arrow{bottom:-6px;}
+.tour-kicker{font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--accent);}
+.tour-title{font-size:16.5px; font-weight:800; margin-top:4px; line-height:1.25;}
+.tour-text{font-size:13.5px; line-height:1.45; color:var(--ink-soft); margin-top:5px;}
+.tour-actions{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:14px;}
+.tour-skip{background:none; border:none; padding:8px 2px; font:inherit; font-size:13.5px; font-weight:700; color:var(--ink-faint); cursor:pointer;}
+.btn-primary.tour-next{width:auto; padding:11px 22px; font-size:14.5px; border-radius:13px;}
+@media (prefers-reduced-motion: reduce){.tour-tip{animation:none;} .tour-hole{transition:none;}}

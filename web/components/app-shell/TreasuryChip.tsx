@@ -30,6 +30,7 @@ export function TreasuryChip({ enabled, onToast }: { enabled: boolean; onToast: 
     <>
       <button
         type="button"
+        data-tour="treasury"
         className={`treasury-chip tap-scale${ready ? ' ready' : ''}${capReached ? ' done' : ''}`}
         onClick={() => {
           hapticTap()
