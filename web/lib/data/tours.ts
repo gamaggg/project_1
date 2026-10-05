@@ -69,6 +69,7 @@ export const TOURS: Record<TourAudience, Tour[]> = {
       steps: [
         { target: 'shop', key: 'shop' },
         { target: 'diary', key: 'diary' },
+        { target: 'faq', key: 'faq' },
       ],
     },
   ],
