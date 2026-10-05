@@ -3,26 +3,24 @@
 import { insideTelegram } from '@/lib/openExternal'
 import type { Lang } from '@/lib/i18n/core'
 
-// «В историю»: inside Telegram, its own story editor with our 9:16 card
-// (/api/story/<id>) and a caption; the tappable link sticker only for
-// Premium, the only accounts Telegram allows it for. In a browser there are
-// no stories — the card goes to the phone's share sheet, or downloads.
+// «В историю»: inside Telegram, its own story editor with one of our 9:16
+// cards and a caption; the tappable link sticker only for Premium, the only
+// accounts Telegram allows it for. In a browser there are no stories — the
+// card goes to the phone's share sheet, or downloads.
 export type StoryResult = 'telegram' | 'shared' | 'downloaded' | 'failed'
 
-export async function shareCatchStory(catchId: number, lang: Lang, caption: string): Promise<StoryResult> {
-  const imageUrl = `${window.location.origin}/api/story/${catchId}?lang=${lang}`
+export async function shareImageToStory(imageUrl: string, caption: string, link: string | null, filename: string): Promise<StoryResult> {
   const webApp = window.Telegram?.WebApp
   if (insideTelegram() && webApp?.shareToStory && (webApp.isVersionAtLeast?.('7.8') ?? true)) {
     const premium = !!webApp.initDataUnsafe?.user?.is_premium
-    const link = `${window.location.origin}${window.location.pathname}?catch=${catchId}`
-    webApp.shareToStory(imageUrl, { text: caption.slice(0, premium ? 2048 : 200), ...(premium ? { widget_link: { url: link, name: 'RANGE' } } : {}) })
+    webApp.shareToStory(imageUrl, { text: caption.slice(0, premium ? 2048 : 200), ...(premium && link ? { widget_link: { url: link, name: 'RANGE' } } : {}) })
     return 'telegram'
   }
   try {
     const res = await fetch(imageUrl)
     if (!res.ok) return 'failed'
     const blob = await res.blob()
-    const file = new File([blob], `range-${catchId}.png`, { type: 'image/png' })
+    const file = new File([blob], filename, { type: 'image/png' })
     if (navigator.canShare?.({ files: [file] })) {
       try {
         await navigator.share({ files: [file], text: caption })
@@ -34,7 +32,7 @@ export async function shareCatchStory(catchId: number, lang: Lang, caption: stri
     }
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
-    a.download = file.name
+    a.download = filename
     document.body.appendChild(a)
     a.click()
     a.remove()
@@ -43,4 +41,9 @@ export async function shareCatchStory(catchId: number, lang: Lang, caption: stri
   } catch {
     return 'failed'
   }
+}
+
+export function shareCatchStory(catchId: number, lang: Lang, caption: string): Promise<StoryResult> {
+  const origin = window.location.origin
+  return shareImageToStory(`${origin}/api/story/${catchId}?lang=${lang}`, caption, `${origin}${window.location.pathname}?catch=${catchId}`, `range-${catchId}.png`)
 }

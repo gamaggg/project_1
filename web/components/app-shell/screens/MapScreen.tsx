@@ -11,7 +11,7 @@ import { getCurrentCoords, useGeolocationPermission } from '@/lib/geolocation'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { ForecastChip } from '@/components/app-shell/BiteForecast'
-import { CityPulse } from '@/components/app-shell/CityPulse'
+import { RecapBanner } from '@/components/recap/WeekRecap'
 import { NearestFreeCard, NearestFreeIcon, findNearestFree, type NearestFreeState } from '@/components/app-shell/NearestFree'
 import { sectorHoldersCapturerFirst } from '@/lib/data/sectorHolders'
 import { mostPopularSectorId } from '@/lib/data/sectorOrder'
@@ -106,8 +106,6 @@ export const MapScreen = forwardRef<
     // Bumped by the onboarding's last step («Найти свободный сектор рядом»)
     // to run the same search as the button once the map is up.
     nearestFreeRequest?: number
-    // «Живой город» photos open the catch.
-    onOpenCatch?: (catchId: number) => void
   }
 >(function MapScreen(
   {
@@ -129,7 +127,6 @@ export const MapScreen = forwardRef<
     onToast,
     newbie,
     nearestFreeRequest,
-    onOpenCatch,
   },
   forwardedRef
 ) {
@@ -476,7 +473,7 @@ export const MapScreen = forwardRef<
           {freeNav ? (
             <NearestFreeCard state={freeNav} onNext={nextFree} onOpen={onOpenTerritory} onClose={() => setFreeNav(null)} />
           ) : (
-            onOpenCatch && !selectedIds?.size && !pendingAddDrafts?.length && <CityPulse city={city} newbie={!!newbie} onOpenCatch={onOpenCatch} />
+            !selectedIds?.size && !pendingAddDrafts?.length && <RecapBanner city={city} onFindFree={() => void startNearestFree()} />
           )}
           <div className="map-sheet-row" ref={sheetRowRef} onScroll={handleScroll} onPointerDown={markUserScroll} onWheel={markUserScroll}>
             {territories.map((t, i) => (

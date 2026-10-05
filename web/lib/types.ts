@@ -1778,7 +1778,7 @@ export type Database = {
       claim_daily_reward: { Args: Record<string, never>; Returns: Json }
       get_treasury: { Args: Record<string, never>; Returns: Json }
       get_sector_insights: { Args: { p_territory_id: string }; Returns: Json }
-      get_city_pulse: { Args: { p_city: string }; Returns: Json }
+      get_city_week_recap: { Args: { p_city: string; p_week_offset?: number; p_user?: string }; Returns: Json }
       log_app_events: { Args: { p_device: string; p_session: string; p_events: Json }; Returns: number }
       get_app_stats: { Args: { p_days?: number; p_tz?: string }; Returns: Json }
       collect_treasury: { Args: Record<string, never>; Returns: Json }

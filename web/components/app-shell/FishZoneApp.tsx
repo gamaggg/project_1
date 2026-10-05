@@ -1240,7 +1240,6 @@ export function FishZoneApp() {
             onToast={showToast}
             newbie={isNewbie}
             nearestFreeRequest={nearestFreeRequest}
-            onOpenCatch={openCatchPhoto}
           />
         </Screen>
         <Screen id="screen-territory" current={currentScreen} onBack={pop}>

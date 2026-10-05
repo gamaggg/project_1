@@ -10,6 +10,7 @@ import { CITIES, type CityId } from '@/lib/data/city'
 import { compareSectors } from '@/lib/data/sectorOrder'
 import type { ShareKind } from '@/lib/guestShare'
 import type { Database } from '@/lib/types'
+import { mapRecap, type WeekRecap } from '@/lib/recap'
 
 type SectorGeometry = {
   id: string
@@ -2502,51 +2503,6 @@ export function useSectorInsights(territoryId: string | null) {
   })
 }
 
-export type CityPulse = {
-  catches: number
-  anglers: number
-  captures: number
-  recent: { catchId: number; userId: string; name: string | null; avatarUrl: string | null; species: string | null; photoUrl: string; territoryId: string; caughtAt: string }[]
-}
-
-// «Живой город»: the city over the last 7 days and its freshest photos —
-// one small request for the map's plaque.
-export function useCityPulse(city: CityId, enabled: boolean) {
-  const { user } = useAuth()
-  return useQuery({
-    queryKey: ['catches', 'city-pulse', city],
-    enabled: enabled && !!user,
-    staleTime: 5 * 60 * 1000,
-    queryFn: async (): Promise<CityPulse | null> => {
-      const supabase = createClient()
-      const { data, error } = await supabase.rpc('get_city_pulse', { p_city: city })
-      if (error) throw error
-      if (!data) return null
-      const d = data as {
-        catches: number
-        anglers: number
-        captures: number
-        recent: { catch_id: number; user_id: string; name: string | null; avatar_url: string | null; species: string | null; photo_url: string; territory_id: string; caught_at: string }[]
-      }
-      return {
-        catches: d.catches,
-        anglers: d.anglers,
-        captures: d.captures,
-        recent: d.recent.map((r) => ({
-          catchId: r.catch_id,
-          userId: r.user_id,
-          name: r.name,
-          avatarUrl: r.avatar_url,
-          species: r.species,
-          photoUrl: r.photo_url,
-          territoryId: r.territory_id,
-          caughtAt: r.caught_at,
-        })),
-      }
-    },
-  })
-}
-
 export type AppStats = {
   from: string
   daily: { day: string; active: number; signedIn: number; newUsers: number; catches: number }[]
@@ -2703,6 +2659,23 @@ export async function latestOwnCatchId(userId: string): Promise<number | null> {
   const supabase = createClient()
   const { data } = await supabase.from('catches').select('id').eq('user_id', userId).order('caught_at', { ascending: false }).limit(1).maybeSingle()
   return data?.id ?? null
+}
+
+// «Неделя в городе»: last full week's recap for the map banner and the
+// story player (get_city_week_recap). One request, a little after launch.
+export function useCityWeekRecap(city: CityId, enabled: boolean) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['city-week-recap', city, user?.id ?? null],
+    enabled: enabled && !!user,
+    staleTime: 60 * 60 * 1000,
+    queryFn: async (): Promise<WeekRecap | null> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_city_week_recap', { p_city: city })
+      if (error) throw error
+      return data ? mapRecap(data as Parameters<typeof mapRecap>[0]) : null
+    },
+  })
 }
 
 export type CatchConditions = {
