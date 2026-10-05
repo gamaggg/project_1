@@ -26,7 +26,7 @@ function readHidden(): string | null {
 // «Неделя в городе» on the map: a slim banner over the sector cards. Tap —
 // the story player; × asks first, then hides it until next Monday's recap.
 export function RecapBanner({ city, onFindFree }: { city: CityId; onFindFree: () => void }) {
-  const { t, lang } = useI18n()
+  const { t } = useI18n()
   const [ready, setReady] = useState(false)
   const [hidden, setHidden] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
@@ -42,36 +42,36 @@ export function RecapBanner({ city, onFindFree }: { city: CityId; onFindFree: ()
   const { data } = useCityWeekRecap(city, ready)
   if (!data || data.catches === 0) return null
 
-  const f = new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short' })
-  const range = `${f.format(new Date(`${data.weekStart}T12:00:00`))} – ${f.format(new Date(`${data.weekEnd}T12:00:00`))}`
+  // «28.09–4.10»: fits a sticker, reads the same in every language.
+  const dm = (iso: string) => {
+    const d = new Date(`${iso}T12:00:00`)
+    return `${d.getDate()}.${String(d.getMonth() + 1).padStart(2, '0')}`
+  }
+  const shortRange = `${dm(data.weekStart)}–${dm(data.weekEnd)}`
 
   return (
     <>
       {hidden !== data.weekStart && (
-        <div className="recap-banner">
+        // A sticker slapped on the map: small, square, tilted, brand orange.
+        <div className="recap-sticker-wrap">
           <button
             type="button"
-            className="recap-banner-main"
+            className="recap-sticker"
             onClick={() => {
               track('recap_open', { week: data.weekStart }, city)
               setOpen(true)
             }}
+            aria-label={t('recap.bannerTitle', { cityIn: t(`recap.cityIn.${city}` as TKey) })}
           >
-            <span className="recap-banner-icon" aria-hidden>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFE14D">
-                <path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z" />
-              </svg>
-            </span>
-            <span className="recap-banner-text">
-              <b>{t('recap.bannerTitle', { cityIn: t(`recap.cityIn.${city}` as TKey) })}</b>
-              <span>{t('recap.bannerSub', { from: range.split(' – ')[0], to: range.split(' – ')[1] })}</span>
-            </span>
-            <svg className="recap-banner-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M9 5l7 7-7 7" />
+            <svg className="recap-sticker-spark" width="18" height="18" viewBox="0 0 24 24" fill="#FFE14D" aria-hidden>
+              <path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z" />
             </svg>
+            <span className="recap-sticker-week">{t('recap.stickerWeek')}</span>
+            <span className="recap-sticker-city">{t(`recap.cityIn.${city}` as TKey)}</span>
+            <span className="recap-sticker-dates">{shortRange}</span>
           </button>
-          <button type="button" className="recap-banner-close" aria-label={t('recap.hide')} onClick={() => setConfirming(true)}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" aria-hidden>
+          <button type="button" className="recap-sticker-close" aria-label={t('recap.hide')} onClick={() => setConfirming(true)}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" aria-hidden>
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </button>

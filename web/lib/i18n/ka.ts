@@ -211,6 +211,7 @@ export const ka: Dict = {
   },
   recap: {
     cityIn: { batumi: 'ბათუმში', moscow: 'მოსკოვში' },
+    stickerWeek: 'კვირა',
     bannerTitle: 'კვირა {cityIn}',
     bannerSub: '{from} – {to} შედეგები',
     hideTitle: 'დავმალოთ კვირის შედეგები?',

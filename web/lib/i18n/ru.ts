@@ -210,6 +210,7 @@ export const ru = {
   },
   recap: {
     cityIn: { batumi: 'в Батуми', moscow: 'в Москве' },
+    stickerWeek: 'Неделя',
     bannerTitle: 'Неделя {cityIn}',
     bannerSub: 'Итоги {from} – {to}',
     hideTitle: 'Скрыть итоги недели?',

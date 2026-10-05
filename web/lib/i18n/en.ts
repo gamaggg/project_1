@@ -209,6 +209,7 @@ export const en: Dict = {
   },
   recap: {
     cityIn: { batumi: 'in Batumi', moscow: 'in Moscow' },
+    stickerWeek: 'Week',
     bannerTitle: 'Your week {cityIn}',
     bannerSub: '{from} – {to} recap',
     hideTitle: 'Hide this week’s recap?',
