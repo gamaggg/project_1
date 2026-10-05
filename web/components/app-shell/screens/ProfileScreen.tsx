@@ -388,6 +388,7 @@ export function ProfileScreen({
   onOpenReports,
   onOpenAdminAccess,
   onOpenAdminStats,
+  onOpenFaq,
   onOpenAdminLog,
   adminLogUnreadCount,
   onOpenAchievements,
@@ -420,6 +421,7 @@ export function ProfileScreen({
   onOpenReports: () => void
   onOpenAdminAccess: () => void
   onOpenAdminStats: () => void
+  onOpenFaq: () => void
   onOpenAdminLog: () => void
   adminLogUnreadCount: number
   onOpenAchievements: () => void
@@ -663,6 +665,19 @@ export function ProfileScreen({
           </span>
         </button>
       )}
+
+      <button className="profile-faq-row tap-scale" onClick={onOpenFaq}>
+        <span className="profile-faq-icon" aria-hidden>
+          ?
+        </span>
+        <span className="profile-faq-text">
+          <b>{t('faq.entryTitle')}</b>
+          <span>{t('faq.entrySub')}</span>
+        </span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
 
       <div className="section-title-row" style={{ marginTop: 24 }}>
         <div className="section-title">Достижения</div>

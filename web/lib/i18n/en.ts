@@ -337,6 +337,13 @@ export const en: Dict = {
     shop: { title: 'Shop', text: 'New items: live backgrounds, animated frames, name effects and skins — try any of them on. Plus a daily reward for coming in.' },
     diary: { title: 'Diary', text: '«My catches» now has a diary: fishing days with the weather, notes and catches from your gallery.' },
   },
+  faq: {
+    title: 'Questions and answers',
+    search: 'Search the rules',
+    empty: 'Nothing found — try another word',
+    entryTitle: 'How to play',
+    entrySub: 'Answers about the rules',
+  },
   activity: {
     hotWeek: 'This week’s hot sectors: {sectors}',
     hotWeekSub: '×2 coins per catch until Sunday · hold one for +100 and a medal',

@@ -84,6 +84,7 @@ import { TerritoriesListScreen, type Mode as RatingMode } from '@/components/app
 import { ShopScreen } from '@/components/app-shell/screens/ShopScreen'
 import { ChallengesScreen } from '@/components/app-shell/screens/ChallengesScreen'
 import { AdminStatsScreen } from '@/components/app-shell/screens/AdminStatsScreen'
+import { FaqScreen } from '@/components/app-shell/screens/FaqScreen'
 import { ClanListScreen } from '@/components/app-shell/screens/ClanListScreen'
 import { ClanScreen } from '@/components/app-shell/screens/ClanScreen'
 import { MyCatchesScreen } from '@/components/app-shell/screens/MyCatchesScreen'
@@ -120,6 +121,7 @@ export type ScreenId =
   | 'screen-admin-access'
   | 'screen-admin-log'
   | 'screen-admin-stats'
+  | 'screen-faq'
   | 'screen-achievements'
   | 'screen-achievement-detail'
   | 'screen-last-week'
@@ -156,6 +158,7 @@ type StackEntry =
   | { screen: 'screen-admin-access' }
   | { screen: 'screen-admin-log' }
   | { screen: 'screen-admin-stats' }
+  | { screen: 'screen-faq' }
   | { screen: 'screen-achievements'; userId: string }
   | { screen: 'screen-achievement-detail'; userId: string; icon: Achievement['icon'] }
   | { screen: 'screen-last-week' }
@@ -1516,6 +1519,7 @@ export function FishZoneApp() {
             onOpenReports={() => push({ screen: 'screen-admin-reports' })}
             onOpenAdminAccess={() => push({ screen: 'screen-admin-access' })}
             onOpenAdminStats={() => push({ screen: 'screen-admin-stats' })}
+            onOpenFaq={() => push({ screen: 'screen-faq' })}
             onOpenAdminLog={() => {
               markAdminLogRead()
               push({ screen: 'screen-admin-log' })
@@ -1588,6 +1592,9 @@ export function FishZoneApp() {
         </Screen>
         <Screen id="screen-admin-access" current={currentScreen} onBack={pop}>
           <AdminAccessScreen onBack={pop} onOpenUser={openUserProfile} onEditAccess={setEditingAdminAccessId} />
+        </Screen>
+        <Screen id="screen-faq" current={currentScreen} onBack={pop}>
+          <FaqScreen onBack={pop} />
         </Screen>
         <Screen id="screen-admin-stats" current={currentScreen} onBack={pop}>
           {isSuperAdmin && <AdminStatsScreen onBack={pop} active={currentScreen === 'screen-admin-stats'} />}
