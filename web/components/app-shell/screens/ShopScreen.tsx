@@ -12,6 +12,7 @@ import { usePurchaseFlow } from '@/components/app-shell/usePurchaseFlow'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { AVATAR_FRAMES } from '@/lib/data/shopItems'
 import { withPremiumPreview } from '@/lib/data/premiumShopPreview'
+import { ShopTryOn } from '@/components/app-shell/ShopTryOn'
 import { AvatarFrameRing } from '@/components/app-shell/AvatarFrameRing'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { HERO_BACKGROUNDS, PREMIUM_HERO_BG_IDS } from '@/lib/data/heroBackgrounds'
@@ -85,6 +86,7 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
   const { request, modal: purchaseModal } = usePurchaseFlow(coins)
   const [category, setCategory] = useState<Category>('avatar_frame')
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [tryOn, setTryOn] = useState<ShopItem | null>(null)
 
   const isSuperAdmin = useIsSuperAdmin()
   const refundItem = useAdminRefundItem()
@@ -110,6 +112,19 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
     return owned.has(id) || !PREMIUM_HERO_BG_IDS.has(id)
   }
   const nameStyles = items.filter((i) => i.category === 'name_style')
+  function tryOnState(item: ShopItem): 'equipped' | 'owned' | 'locked' {
+    const worn =
+      item.category === 'avatar_frame'
+        ? profile?.equippedFrame
+        : item.category === 'name_style'
+          ? profile?.equippedNameStyle
+          : item.category === 'territory_skin'
+            ? profile?.equippedSkin
+            : profile?.heroBg
+    if (worn === item.id) return 'equipped'
+    const has = item.category === 'hero_bg' ? ownedBg(item.id) : owned.has(item.id)
+    return has ? 'owned' : 'locked'
+  }
   const skins = items.filter((i) => i.category === 'territory_skin')
 
   return (
@@ -165,6 +180,7 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
                 onEquip={() => equipItem.mutate({ itemId: item.id })}
                 onUnequip={() => equipItem.mutate({ itemId: null, category: 'avatar_frame' })}
                 busy={buyItem.isPending || equipItem.isPending}
+                onTryOn={() => setTryOn(item)}
                 onRefund={isSuperAdmin && owned.has(item.id) ? () => setRefunding({ kind: 'item', id: item.id, name: item.name, price: item.price }) : undefined}
               />
             ))}
@@ -182,6 +198,7 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
                 onBuy={() => request(item.price, item.name, () => buyItem.mutate(item.id))}
                 onEquip={() => equipItem.mutate({ itemId: item.id })}
                 busy={buyItem.isPending || equipItem.isPending}
+                onTryOn={() => setTryOn(item)}
                 onRefund={isSuperAdmin && owned.has(item.id) ? () => setRefunding({ kind: 'item', id: item.id, name: item.name, price: item.price }) : undefined}
               />
             ))}
@@ -201,6 +218,7 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
                 onEquip={() => equipItem.mutate({ itemId: item.id })}
                 onUnequip={() => equipItem.mutate({ itemId: null, category: 'name_style' })}
                 busy={buyItem.isPending || equipItem.isPending}
+                onTryOn={() => setTryOn(item)}
                 onRefund={isSuperAdmin && owned.has(item.id) ? () => setRefunding({ kind: 'item', id: item.id, name: item.name, price: item.price }) : undefined}
               />
             ))}
@@ -222,6 +240,7 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
                   onEquip={() => equipItem.mutate({ itemId: item.id })}
                   onUnequip={() => equipItem.mutate({ itemId: null, category: 'territory_skin' })}
                   busy={buyItem.isPending || equipItem.isPending}
+                  onTryOn={() => setTryOn(item)}
                   onRefund={isSuperAdmin && owned.has(item.id) ? () => setRefunding({ kind: 'item', id: item.id, name: item.name, price: item.price }) : undefined}
                 />
               ))}
@@ -245,6 +264,30 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
         <RefundConfirmModal label={refunding.name} price={refunding.price} busy={refundBusy} onConfirm={confirmRefund} onClose={() => setRefunding(null)} />
       )}
       {historyOpen && <CoinHistoryModal onClose={() => setHistoryOpen(false)} />}
+      {tryOn && (
+        <ShopTryOn
+          item={tryOn}
+          look={{
+            displayName: profile?.displayName ?? 'Рыбак',
+            avatarUrl: profile?.avatarUrl ?? null,
+            heroBg: profile?.heroBg ?? null,
+            frame: profile?.equippedFrame ?? null,
+            nameStyle: profile?.equippedNameStyle ?? null,
+            territoryColor: profile?.territoryColor ?? DEFAULT_TERRITORY_COLOR,
+          }}
+          state={tryOnState(tryOn)}
+          onBuy={() => {
+            const it = tryOn
+            setTryOn(null)
+            request(it.price, it.name, () => buyItem.mutate(it.id))
+          }}
+          onEquip={() => {
+            equipItem.mutate({ itemId: tryOn.id })
+            setTryOn(null)
+          }}
+          onClose={() => setTryOn(null)}
+        />
+      )}
     </>
   )
 }
@@ -370,6 +413,7 @@ function FrameCard({
   onEquip,
   onUnequip,
   busy,
+  onTryOn,
   onRefund,
 }: {
   item: ShopItem
@@ -383,6 +427,7 @@ function FrameCard({
   onEquip: () => void
   onUnequip: () => void
   busy: boolean
+  onTryOn: () => void
   onRefund?: () => void
 }) {
   const frame = AVATAR_FRAMES.find((f) => f.id === item.id)
@@ -413,6 +458,9 @@ function FrameCard({
           {item.price}
         </button>
       )}
+      <button className="challenge-swap-btn" onClick={onTryOn}>
+        Примерить
+      </button>
       {onRefund && (
         <button className="challenge-swap-btn" onClick={onRefund}>
           Вернуть
@@ -429,6 +477,7 @@ function BgCard({
   onBuy,
   onEquip,
   busy,
+  onTryOn,
   onRefund,
 }: {
   item: ShopItem
@@ -437,6 +486,7 @@ function BgCard({
   onBuy: () => void
   onEquip: () => void
   busy: boolean
+  onTryOn: () => void
   onRefund?: () => void
 }) {
   const bg = HERO_BACKGROUNDS.find((b) => b.id === item.id)
@@ -461,6 +511,9 @@ function BgCard({
           {item.price}
         </button>
       )}
+      <button className="challenge-swap-btn" onClick={onTryOn}>
+        Примерить
+      </button>
       {onRefund && (
         <button className="challenge-swap-btn" onClick={onRefund}>
           Вернуть
@@ -479,6 +532,7 @@ function NameStyleCard({
   onEquip,
   onUnequip,
   busy,
+  onTryOn,
   onRefund,
 }: {
   item: ShopItem
@@ -489,6 +543,7 @@ function NameStyleCard({
   onEquip: () => void
   onUnequip: () => void
   busy: boolean
+  onTryOn: () => void
   onRefund?: () => void
 }) {
   return (
@@ -511,6 +566,9 @@ function NameStyleCard({
           {item.price}
         </button>
       )}
+      <button className="challenge-swap-btn" onClick={onTryOn}>
+        Примерить
+      </button>
       {onRefund && (
         <button className="challenge-swap-btn" onClick={onRefund}>
           Вернуть
@@ -529,6 +587,7 @@ function SkinCard({
   onEquip,
   onUnequip,
   busy,
+  onTryOn,
   onRefund,
 }: {
   item: ShopItem
@@ -539,6 +598,7 @@ function SkinCard({
   onEquip: () => void
   onUnequip: () => void
   busy: boolean
+  onTryOn: () => void
   onRefund?: () => void
 }) {
   return (
@@ -559,6 +619,9 @@ function SkinCard({
           {item.price}
         </button>
       )}
+      <button className="challenge-swap-btn" onClick={onTryOn}>
+        Примерить
+      </button>
       {onRefund && (
         <button className="challenge-swap-btn" onClick={onRefund}>
           Вернуть
