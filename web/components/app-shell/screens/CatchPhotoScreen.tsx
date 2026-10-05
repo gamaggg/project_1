@@ -6,6 +6,7 @@ import { useCatchById, useCatchesByTerritory, useCatchLikes, useToggleCatchLike,
 import { useAuth } from '@/components/providers/AuthProvider'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import { CatchConditions } from '@/components/app-shell/CatchConditions'
+import { StoryButton } from '@/components/app-shell/StoryButton'
 import { CatcherLabel } from '@/components/app-shell/screens/TerritoryScreen'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { EditCatchSheet, MoveCatchSheet } from '@/components/app-shell/lazyScreens'
@@ -34,6 +35,7 @@ export function CatchPhotoScreen({
   onOpenUser,
   onOpenTerritory,
   onShare,
+  onToast,
   onReportPhoto,
   onDeleteCatch,
   onOpenLikers,
@@ -44,6 +46,7 @@ export function CatchPhotoScreen({
   onOpenUser: (id: string) => void
   onOpenTerritory: (id: string) => void
   onShare: (catchId: number, text: string) => void
+  onToast: (msg: string) => void
   onReportPhoto: (catchId: number) => void
   onDeleteCatch: (catchId: number) => void
   onOpenLikers: (likers: ProfileSummary[]) => void
@@ -340,6 +343,7 @@ export function CatchPhotoScreen({
               </svg>
               Поделиться
             </button>
+            {c.mine && <StoryButton catchId={c.id} caption={`${c.speciesName}${meta ? ` ${meta}` : ''}`} onToast={onToast} />}
           </div>
         </div>
       </div>

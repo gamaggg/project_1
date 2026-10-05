@@ -9,6 +9,7 @@ import { formatWeightGrams } from '@/lib/format'
 import { HexBadge } from '@/components/app-shell/HexBadge'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { StoryButton } from '@/components/app-shell/StoryButton'
 import type { PendingCatch, Territory } from '@/lib/data/types'
 
 export type CatchFormData = {
@@ -24,6 +25,8 @@ export type PhotoStatus = 'uploading' | 'success' | 'error'
 export function ConfirmScreen({
   territory,
   pendingCatch,
+  savedCatchId,
+  onToast,
   wasFree,
   speciesCoins,
   captureCoins,
@@ -41,6 +44,9 @@ export function ConfirmScreen({
 }: {
   territory: Territory
   pendingCatch: PendingCatch | null
+  // Id of the catch just saved, once known — shows «В историю».
+  savedCatchId?: number | null
+  onToast?: (msg: string) => void
   wasFree: boolean
   speciesCoins: number
   captureCoins: number
@@ -207,6 +213,9 @@ export function ConfirmScreen({
           <button className="btn-primary" onClick={onShare}>
             Поделиться уловом
           </button>
+          {savedCatchId && onToast && (
+            <StoryButton big catchId={savedCatchId} caption={[caughtSpeciesName ?? pendingCatch?.species, meta.split(' · ').slice(0, -1).join(' · ')].filter(Boolean).join(' ')} onToast={onToast} />
+          )}
           <button className="btn-secondary" onClick={onFinish}>
             Готово
           </button>

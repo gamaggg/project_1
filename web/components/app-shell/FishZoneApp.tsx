@@ -6,6 +6,7 @@ import {
   useTerritories,
   useConfirmCatch,
   useMyCatches,
+  latestOwnCatchId,
   useProfile,
   useUpdateProfile,
   useRealtimeSync,
@@ -377,6 +378,9 @@ export function FishZoneApp() {
   const [confirmStep, setConfirmStep] = useState<'form' | 'success'>('form')
   const [wasFree, setWasFree] = useState(false)
   const [catchSpeciesCoins, setCatchSpeciesCoins] = useState(0)
+  // The catch just saved — the success screen's «В историю» needs its id,
+  // which confirm_catch doesn't return; read back right after.
+  const [savedCatchId, setSavedCatchId] = useState<number | null>(null)
   const [catchCaptureCoins, setCatchCaptureCoins] = useState(0)
   // A catch on a clan-mate's sector: it stays theirs (see confirm_catch).
   const [catchClanSupport, setCatchClanSupport] = useState(false)
@@ -805,6 +809,8 @@ export function FishZoneApp() {
       setCatchClanShare(result.clanSupport && !!t && (t.coHolders.some((h) => h.isMe) || t.coHolders.length < 3))
       setPendingCatch(payload)
       track('catch_saved', { territory: catchTerritoryId }, city)
+      setSavedCatchId(null)
+      if (user) latestOwnCatchId(user.id).then(setSavedCatchId)
       setConfirmStep('success')
       hapticBuildUp()
     } catch (err) {
@@ -1344,6 +1350,7 @@ export function FishZoneApp() {
               onOpenUser={openUserProfile}
               onOpenTerritory={openTerritory}
               onShare={shareCatch}
+              onToast={showToast}
               onReportPhoto={openReportModal}
               onDeleteCatch={setDeletingCatchId}
               onOpenLikers={setViewingLikersFor}
@@ -1370,6 +1377,8 @@ export function FishZoneApp() {
               pendingCatch={pendingCatch}
               wasFree={wasFree}
               speciesCoins={catchSpeciesCoins}
+              savedCatchId={savedCatchId}
+              onToast={showToast}
               captureCoins={catchCaptureCoins}
               clanSupport={catchClanSupport}
               clanShare={catchClanShare}

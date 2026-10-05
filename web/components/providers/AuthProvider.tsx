@@ -34,7 +34,7 @@ declare global {
         // Unverified copy of initData's fields — only for harmless hints like
         // the interface language; anything that matters goes through the
         // signed initData on the server.
-        initDataUnsafe?: { user?: { language_code?: string } }
+        initDataUnsafe?: { user?: { language_code?: string; is_premium?: boolean } }
         ready: () => void
         expand: () => void
         requestFullscreen?: () => void
@@ -70,6 +70,9 @@ declare global {
         // do this at all (desktop Telegram, most notably).
         addToHomeScreen?: () => void
         checkHomeScreenStatus?: (cb: (status: 'unsupported' | 'unknown' | 'added' | 'missed') => void) => void
+        // Bot API 7.8+ — opens Telegram's story editor with a public image.
+        // widget_link (a tappable link sticker) needs Telegram Premium.
+        shareToStory?: (mediaUrl: string, params?: { text?: string; widget_link?: { url: string; name?: string } }) => void
       }
     }
   }

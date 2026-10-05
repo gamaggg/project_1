@@ -209,6 +209,13 @@ export const en: Dict = {
     saved: 'Saved to your diary',
     deleted: 'Removed from your diary',
   },
+  story: {
+    button: 'To story',
+    caption: '🎣 {catch} — my catch in RANGE. Can you beat it?',
+    downloaded: 'Image saved — add it to your story',
+    failed: 'Couldn’t make the image, try again',
+    preparing: 'Preparing the image…',
+  },
   territory: {
     freeShield: 'Put a free shield',
     freeShieldLeft: 'In reserve: {count}',

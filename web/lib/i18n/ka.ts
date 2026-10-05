@@ -211,6 +211,13 @@ export const ka: Dict = {
     saved: 'ჩაიწერა დღიურში',
     deleted: 'წაიშალა დღიურიდან',
   },
+  story: {
+    button: 'სთორიში',
+    caption: '🎣 {catch} — ჩემი დაჭერა RANGE-ში. შეძლებ მეტის დაჭერას?',
+    downloaded: 'სურათი შენახულია — დაამატე სთორიში',
+    failed: 'სურათი ვერ შედგა, სცადე ხელახლა',
+    preparing: 'სურათს ვამზადებთ…',
+  },
   territory: {
     freeShield: 'დადე უფასო ფარი',
     freeShieldLeft: 'მარაგში: {count}',

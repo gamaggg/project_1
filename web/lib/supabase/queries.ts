@@ -2697,6 +2697,14 @@ export function useDeleteDiaryCatch() {
   })
 }
 
+// The caller's most recent catch — right after confirm_catch, that's the
+// one just saved (confirm_catch doesn't hand back its id).
+export async function latestOwnCatchId(userId: string): Promise<number | null> {
+  const supabase = createClient()
+  const { data } = await supabase.from('catches').select('id').eq('user_id', userId).order('caught_at', { ascending: false }).limit(1).maybeSingle()
+  return data?.id ?? null
+}
+
 export type CatchConditions = {
   airTemp: number | null
   waterTemp: number | null

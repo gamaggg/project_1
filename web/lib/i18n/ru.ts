@@ -210,6 +210,13 @@ export const ru = {
     saved: 'Записано в дневник',
     deleted: 'Удалено из дневника',
   },
+  story: {
+    button: 'В историю',
+    caption: '🎣 {catch} — мой улов в RANGE. Сможешь поймать больше?',
+    downloaded: 'Картинка сохранена — добавь её в историю',
+    failed: 'Не получилось собрать картинку, попробуй ещё раз',
+    preparing: 'Готовим картинку…',
+  },
   territory: {
     freeShield: 'Поставить бесплатный щит',
     freeShieldLeft: 'В запасе: {count}',
