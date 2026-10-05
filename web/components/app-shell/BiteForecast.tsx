@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CITIES, type CityId } from '@/lib/data/city'
-import { HPA_TO_MMHG, weatherKind, type ForecastDay, type ForecastPoint, type WeatherKind } from '@/lib/forecast/bite'
+import { HPA_TO_MMHG, compassPoint, weatherKind, type ForecastDay, type ForecastPoint, type WeatherKind } from '@/lib/forecast/bite'
 import { useBiteForecast } from '@/lib/forecast/useBiteForecast'
 import { useSectorInsights } from '@/lib/supabase/queries'
 import { useI18n } from '@/lib/i18n'
@@ -269,8 +269,13 @@ function ForecastSheet({ title, kicker, days, sector, onClose }: { title: string
 
           <div className="forecast-factors">
             <FactorRow label={t('forecast.pressure')} value={`${pressure(today.pressureHpa)} · ${trend(today.pressureTrend)}`} />
-            <FactorRow label={t('forecast.wind')} value={t('forecast.windValue', { value: num(today.wind), gusts: Math.round(today.gusts) })} />
+            <FactorRow
+              label={t('forecast.wind')}
+              icon={<WindArrow from={today.windDir} />}
+              value={t('forecast.windValue', { value: num(today.wind), dir: t(`forecast.windDirs.${compassPoint(today.windDir)}` as TKey), gusts: Math.round(today.gusts) })}
+            />
             {today.wave != null && <FactorRow label={t('forecast.wave')} value={t('forecast.waveValue', { value: num(today.wave) })} />}
+            {today.waterTemp != null && <FactorRow label={t('forecast.water')} value={t('forecast.waterValue', { value: num(today.waterTemp) })} />}
             <FactorRow label={t('forecast.moon')} value={`${t(`forecast.moonPhases.${today.moon.phase}` as TKey)} · ${moonPct}%`} />
             <FactorRow label={t('forecast.sun')} value={t('forecast.sunValue', { sunrise: clock(today.sunrise), sunset: clock(today.sunset) })} />
           </div>
@@ -307,11 +312,23 @@ function ForecastSheet({ title, kicker, days, sector, onClose }: { title: string
   )
 }
 
-function FactorRow({ label, value }: { label: string; value: string }) {
+function FactorRow({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
   return (
     <div className="forecast-factor">
       <span>{label}</span>
-      <b>{value}</b>
+      <b>
+        {icon}
+        {value}
+      </b>
     </div>
+  )
+}
+
+// Points where the wind blows to — the way a weather map draws it.
+function WindArrow({ from }: { from: number }) {
+  return (
+    <svg className="forecast-wind-arrow" width="14" height="14" viewBox="0 0 24 24" aria-hidden style={{ transform: `rotate(${from + 180}deg)` }}>
+      <path d="M12 3l5.5 15L12 15l-5.5 3z" fill="currentColor" />
+    </svg>
   )
 }

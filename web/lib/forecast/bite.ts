@@ -15,11 +15,13 @@ export type RawForecast = {
   times: string[] // local 'YYYY-MM-DDTHH:mm', yesterday + 4 days
   pressure: number[] // hPa, mean sea level
   wind: number[] // m/s
+  windDir: number[] // degrees the wind blows from, 0 = north
   gusts: number[]
   precip: number[] // mm
   temp: number[]
   code: number[] // WMO weather code
   wave: (number | null)[] | null // m; null off the sea
+  waterTemp: (number | null)[] | null // °C, sea surface; null off the sea
   days: { date: string; sunrise: string; sunset: string }[]
 }
 
@@ -35,8 +37,12 @@ export type ForecastDay = {
   // hPa over the day — what the angler reads as «падает / растёт».
   pressureTrend: number
   wind: number
+  // Where the daytime wind comes from, degrees (0 = north) — averaged as
+  // vectors, so 350° and 10° make north, not south.
+  windDir: number
   gusts: number
   wave: number | null
+  waterTemp: number | null
   tempMin: number
   tempMax: number
   code: number
@@ -55,9 +61,9 @@ export async function fetchRawForecast(point: ForecastPoint, timezone: string, s
   const common = `timezone=${encodeURIComponent(timezone)}&past_days=1&forecast_days=4`
   const weatherUrl =
     `https://api.open-meteo.com/v1/forecast?latitude=${point.lat.toFixed(3)}&longitude=${point.lng.toFixed(3)}` +
-    `&hourly=temperature_2m,pressure_msl,wind_speed_10m,wind_gusts_10m,precipitation,weather_code&daily=sunrise,sunset&wind_speed_unit=ms&${common}`
+    `&hourly=temperature_2m,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation,weather_code&daily=sunrise,sunset&wind_speed_unit=ms&${common}`
   const marineUrl = sea
-    ? `https://marine-api.open-meteo.com/v1/marine?latitude=${sea.lat.toFixed(3)}&longitude=${sea.lng.toFixed(3)}&hourly=wave_height&${common}`
+    ? `https://marine-api.open-meteo.com/v1/marine?latitude=${sea.lat.toFixed(3)}&longitude=${sea.lng.toFixed(3)}&hourly=wave_height,sea_surface_temperature&${common}`
     : null
   const [weather, marine] = await Promise.all([
     getJson(weatherUrl),
@@ -67,16 +73,20 @@ export async function fetchRawForecast(point: ForecastPoint, timezone: string, s
   const h = weather.hourly as Record<string, (number | null)[]> & { time: string[] }
   const d = weather.daily as { time: string[]; sunrise: string[]; sunset: string[] }
   const num = (xs: (number | null)[]) => xs.map((x) => x ?? 0)
-  const waves = marine ? ((marine.hourly as Record<string, (number | null)[]>).wave_height ?? null) : null
+  const marineHourly = marine ? (marine.hourly as Record<string, (number | null)[]>) : null
+  const waves = marineHourly?.wave_height ?? null
+  const waterTemp = marineHourly?.sea_surface_temperature ?? null
   return {
     times: h.time,
     pressure: num(h.pressure_msl),
     wind: num(h.wind_speed_10m),
+    windDir: num(h.wind_direction_10m),
     gusts: num(h.wind_gusts_10m),
     precip: num(h.precipitation),
     temp: num(h.temperature_2m),
     code: num(h.weather_code),
     wave: waves && waves.some((w) => w != null) ? waves : null,
+    waterTemp: waterTemp && waterTemp.some((w) => w != null) ? waterTemp : null,
     days: d.time.map((date, i) => ({ date, sunrise: d.sunrise[i], sunset: d.sunset[i] })),
   }
 }
@@ -207,6 +217,14 @@ export function scoreForecast(raw: RawForecast, catchHours: number[] | null, now
 
     const daytime = idx.slice(6, 22)
     const waves = raw.wave ? daytime.map((i) => raw.wave![i]).filter((w): w is number => w != null) : []
+    const water = raw.waterTemp ? daytime.map((i) => raw.waterTemp![i]).filter((w): w is number => w != null) : []
+    let wx = 0
+    let wy = 0
+    for (const i of daytime) {
+      const r = (raw.windDir[i] * Math.PI) / 180
+      wx += Math.sin(r) * raw.wind[i]
+      wy += Math.cos(r) * raw.wind[i]
+    }
     days.push({
       date: day.date,
       score: scoreFromRaw(rawScore),
@@ -215,8 +233,10 @@ export function scoreForecast(raw: RawForecast, catchHours: number[] | null, now
       pressureHpa: mean(idx.map((i) => raw.pressure[i])),
       pressureTrend: swing,
       wind: mean(daytime.map((i) => raw.wind[i])),
+      windDir: ((Math.atan2(wx, wy) * 180) / Math.PI + 360) % 360,
       gusts: Math.max(...daytime.map((i) => raw.gusts[i])),
       wave: waves.length ? mean(waves) : null,
+      waterTemp: water.length ? mean(water) : null,
       tempMin: Math.min(...idx.map((i) => raw.temp[i])),
       tempMax: Math.max(...idx.map((i) => raw.temp[i])),
       code: raw.code[idx[13]],
@@ -247,3 +267,8 @@ export function weatherKind(code: number): WeatherKind {
 }
 
 export const HPA_TO_MMHG = 0.750062
+
+export type CompassPoint = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw'
+export function compassPoint(deg: number): CompassPoint {
+  return (['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'] as const)[Math.round((((deg % 360) + 360) % 360) / 45) % 8]
+}

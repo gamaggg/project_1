@@ -3152,7 +3152,8 @@ button.race-lane{cursor:pointer;}
 .forecast-factor{display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding:10px 14px; font-size:13px;}
 .forecast-factor + .forecast-factor{border-top:1px solid var(--line);}
 .forecast-factor span{color:var(--ink-soft); font-weight:700; flex:0 0 auto;}
-.forecast-factor b{font-weight:800; text-align:right;}
+.forecast-factor b{display:inline-flex; align-items:center; justify-content:flex-end; gap:6px; font-weight:800; text-align:right;}
+.forecast-wind-arrow{flex:0 0 auto; color:var(--blue);}
 .forecast-next{display:flex; flex-direction:column; margin-top:6px;}
 .forecast-next-row{display:grid; grid-template-columns:minmax(0,1fr) 24px 64px minmax(0,1.3fr); align-items:center; gap:10px; padding:8px 0;}
 .forecast-next-row + .forecast-next-row{border-top:1px solid rgba(23,24,27,.07);}
