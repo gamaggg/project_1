@@ -15,6 +15,8 @@ const SVG_ASPECT = 191.54 / 166.23
 // on-screen size (the Shop's small fixed-size SkinPreview card). The real
 // map passes its own — see DEFAULT_TILE_HEIGHT's usage below.
 const DEFAULT_TILE_HEIGHT = 180
+// See getSkinPattern's transform.
+const OVERSCAN = 0.02
 
 // SVGs load async, so a pattern requested before the image is ready comes
 // back null (the caller falls back to a flat fill — see LeafletMap.tsx) and
@@ -54,7 +56,16 @@ function getSkinImage(skinId: string): HTMLImageElement | null {
 // into a smaller destination, only shows a crop of itself — a
 // CanvasPattern never scales its source to fit, it always paints at native
 // size).
-function buildSkinCanvas(skinId: string, color: string, tileHeight: number, tileWidth?: number): HTMLCanvasElement | null {
+// How the map draws a skin (vs the Shop's plain swatch): the sector's own
+// tint underneath (same as an unskinned sector's fill) with the lines nearly
+// opaque on top — drawn at the polygon's full opacity, since the alpha is
+// baked in here. Before, the bare lines went down at the sector's 32% fill:
+// fine up close, gone when zoomed out. `bold` thickens the lines (the
+// artwork drawn a few times, nudged by that many pixels) for a small sector,
+// where they'd otherwise shrink to hairlines.
+type SkinLook = { tint: number; lines: number; bold: number }
+
+function buildSkinCanvas(skinId: string, color: string, tileHeight: number, tileWidth?: number, look?: SkinLook): HTMLCanvasElement | null {
   if (!resolveTerritorySkin(skinId)) return null
   const img = getSkinImage(skinId)
   if (!img) return null
@@ -68,10 +79,20 @@ function buildSkinCanvas(skinId: string, color: string, tileHeight: number, tile
   canvas.height = height
   const ctx = canvas.getContext('2d')
   if (!ctx) return null
-  ctx.drawImage(img, 0, 0, width, height)
+  const b = look?.bold ?? 0
+  const nudges = b > 0 ? [[0, 0], [b, 0], [-b, 0], [0, b], [0, -b]] : [[0, 0]]
+  for (const [dx, dy] of nudges) ctx.drawImage(img, dx, dy, width, height)
   ctx.globalCompositeOperation = 'source-in'
   ctx.fillStyle = color
+  if (look) ctx.globalAlpha = look.lines
   ctx.fillRect(0, 0, width, height)
+  if (look) {
+    ctx.globalCompositeOperation = 'destination-over'
+    ctx.globalAlpha = look.tint
+    ctx.fillRect(0, 0, width, height)
+    ctx.globalAlpha = 1
+  }
+  ctx.globalCompositeOperation = 'source-over'
   return canvas
 }
 
@@ -146,16 +167,29 @@ export function useSkinPatterns() {
     // throw mid-draw.
     const bucketedHeight = Math.max(20, Math.round(tileHeight / 20) * 20)
     const bucketedWidth = tileWidth !== undefined ? Math.max(20, Math.round(tileWidth / 20) * 20) : undefined
+    const look: SkinLook = { tint: 0.3, lines: 0.9, bold: bucketedHeight <= 60 ? 1.2 : bucketedHeight <= 120 ? 0.7 : 0 }
     const key = `${skinId}:${color}:${bucketedHeight}:${bucketedWidth ?? 'auto'}`
     let canvas = canvasCacheRef.current.get(key)
     if (canvas === undefined) {
-      canvas = buildSkinCanvas(skinId, color, bucketedHeight, bucketedWidth)
+      canvas = buildSkinCanvas(skinId, color, bucketedHeight, bucketedWidth, look)
       canvasCacheRef.current.set(key, canvas)
     }
     if (!canvas) return null
     const pattern = canvas.getContext('2d')!.createPattern(canvas, 'no-repeat')
     if (!pattern) return null
-    pattern.setTransform(new DOMMatrix().translate(offsetX, offsetY))
+    // The raster is built at the bucketed size, so it has to be stretched
+    // onto this sector's real box — painted at its own size it fell up to
+    // 10px short on the right/bottom (and its hex edges off the polygon's),
+    // which showed as bare strips along some sides at some zooms. A further
+    // 2% on every side puts the artwork's own hex edge just outside the
+    // polygon's, which clips it.
+    const w = tileWidth ?? tileHeight * SVG_ASPECT
+    const h = tileHeight
+    pattern.setTransform(
+      new DOMMatrix()
+        .translate(offsetX - w * OVERSCAN, offsetY - h * OVERSCAN)
+        .scale((w * (1 + 2 * OVERSCAN)) / canvas.width, (h * (1 + 2 * OVERSCAN)) / canvas.height)
+    )
     return pattern
   }
 }

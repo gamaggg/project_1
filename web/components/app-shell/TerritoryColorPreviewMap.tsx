@@ -78,18 +78,20 @@ export function TerritoryColorPreviewMap({
         L.polygon(s.corners, { color: FREE_TERRITORY_COLOR, weight: 1.2, fillColor: FREE_TERRITORY_COLOR, fillOpacity: 0.14, opacity: 0.6 }).addTo(map)
       })
       demoCornersRef.current = demo.map((s) => s.corners)
-      demoLayersRef.current = demo.map((s) =>
-        L.polygon(s.corners, {
+      demoLayersRef.current = demo.map((s) => {
+        const fillStyle = computeFillStyle(s.corners)
+        return L.polygon(s.corners, {
           color: myTerritoryColor,
           weight: 1.5,
           // A CanvasPattern is a spec-legal fillStyle value right alongside a
           // plain color string — Leaflet's types just don't know that (see
           // lib/map/skinPattern.ts / LeafletMap.tsx's own use of the trick).
-          fillColor: computeFillStyle(s.corners) as unknown as string,
-          fillOpacity: 0.4,
+          fillColor: fillStyle as unknown as string,
+          // A skin pattern carries its own tint and line alpha (skinPattern.ts).
+          fillOpacity: typeof fillStyle === 'string' ? 0.4 : 1,
           opacity: 0.95,
         }).addTo(map)
-      )
+      })
     })
     return () => {
       cancelled = true
@@ -108,7 +110,7 @@ export function TerritoryColorPreviewMap({
     demoLayersRef.current.forEach((layer, i) => {
       const corners = demoCornersRef.current[i]
       const fillStyle = corners ? computeFillStyle(corners) : myTerritoryColor
-      layer.setStyle({ color: myTerritoryColor, fillColor: fillStyle as unknown as string })
+      layer.setStyle({ color: myTerritoryColor, fillColor: fillStyle as unknown as string, fillOpacity: typeof fillStyle === 'string' ? 0.4 : 1 })
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myTerritoryColor, equippedSkin, skinAssetsVersion])

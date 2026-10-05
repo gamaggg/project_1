@@ -286,7 +286,8 @@ export const LeafletMap = forwardRef<
             L.polygon(part, {
               stroke: false,
               fillColor: (i === 0 && pattern ? pattern : partColor) as unknown as string,
-              fillOpacity,
+              // A skin pattern has its tint and line alpha baked in (see skinPattern.ts).
+              fillOpacity: i === 0 && pattern ? 1 : fillOpacity,
               interactive: false,
             }).addTo(markersLayer)
           })
@@ -297,7 +298,7 @@ export const LeafletMap = forwardRef<
           // A CanvasPattern is a spec-legal fillStyle value right alongside a
           // plain color string — Leaflet's types just don't know that.
           fillColor: (pattern ?? color) as unknown as string,
-          fillOpacity: split ? 0 : fillOpacity,
+          fillOpacity: split ? 0 : pattern ? 1 : fillOpacity,
           opacity: 0.9,
         }).addTo(markersLayer)
         if (split) {
