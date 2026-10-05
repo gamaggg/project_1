@@ -578,7 +578,8 @@ body{
   content:'✦'; position:absolute; top:10px; right:12px; color:#B45AE6; font-size:13px;
 }
 /* 800+ — the premium tier: a brand-gradient border (a second background
-   clipped to the border box) and two sparks. */
+   clipped to the border box) and two sparks on a tag sitting across the top
+   edge — inside the card they covered the corner of a full-width preview. */
 .shop-card-legendary{
   border-color:transparent;
   background:linear-gradient(var(--surface),var(--surface)) padding-box,
@@ -586,7 +587,9 @@ body{
   box-shadow:0 6px 20px rgba(252,82,0,0.16);
 }
 .shop-card-legendary::before{
-  content:'✦✦'; position:absolute; top:9px; right:11px; z-index:1; font-size:12px; letter-spacing:1px; color:var(--accent);
+  content:'✦✦'; position:absolute; top:-9px; right:14px; z-index:1;
+  padding:0 7px; border-radius:999px; background:var(--surface); border:1.5px solid var(--accent);
+  font-size:10px; line-height:15px; letter-spacing:1px; color:var(--accent);
 }
 .shop-price-btn{display:inline-flex; align-items:center; justify-content:center; gap:5px;}
 .shop-card-preview{width:76px; height:76px; position:relative; margin-top:4px;}
