@@ -271,7 +271,6 @@ function ForecastSheet({ title, kicker, days, sector, onClose }: { title: string
             <FactorRow label={t('forecast.pressure')} value={`${pressure(today.pressureHpa)} · ${trend(today.pressureTrend)}`} />
             <FactorRow
               label={t('forecast.wind')}
-              icon={<WindArrow from={today.windDir} />}
               value={t('forecast.windValue', { value: num(today.wind), dir: t(`forecast.windDirs.${compassPoint(today.windDir)}` as TKey), gusts: Math.round(today.gusts) })}
             />
             {today.wave != null && <FactorRow label={t('forecast.wave')} value={t('forecast.waveValue', { value: num(today.wave) })} />}
@@ -312,23 +311,11 @@ function ForecastSheet({ title, kicker, days, sector, onClose }: { title: string
   )
 }
 
-function FactorRow({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
+function FactorRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="forecast-factor">
       <span>{label}</span>
-      <b>
-        {icon}
-        {value}
-      </b>
+      <b>{value}</b>
     </div>
-  )
-}
-
-// Points where the wind blows to — the way a weather map draws it.
-function WindArrow({ from }: { from: number }) {
-  return (
-    <svg className="forecast-wind-arrow" width="14" height="14" viewBox="0 0 24 24" aria-hidden style={{ transform: `rotate(${from + 180}deg)` }}>
-      <path d="M12 3l5.5 15L12 15l-5.5 3z" fill="currentColor" />
-    </svg>
   )
 }
