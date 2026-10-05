@@ -6,6 +6,9 @@ import type { Lang } from '@/lib/i18n/core'
 // _daily_reward_amounts, pick/settle_hot_sectors, spin_slots, buffs,
 // challenges, create_clan, _clan_week_events, _clan_race_state,
 // settle_clan_week) — change them together with the rule.
+// RULE (05.10): every new feature or change to a rule, price, reward, limit
+// or timing updates this file in the same change — take the numbers from the
+// code/database, never from memory.
 // An answer is paragraphs and bullet lists. Russian only for now; the other
 // languages fall back to it until the app is translated.
 
