@@ -157,6 +157,15 @@ export const en: Dict = {
     title: 'Directions to the sector',
     cancel: 'Cancel',
   },
+  conditions: {
+    title: 'Weather at the catch',
+    water: 'water {value}°C',
+    wind: 'wind {value} m/s {dir}',
+    calm: 'calm',
+    wave: 'waves {value} m',
+    pressure: 'pressure {value} hPa',
+    dirs: { n: 'N', ne: 'NE', e: 'E', se: 'SE', s: 'S', sw: 'SW', w: 'W', nw: 'NW' },
+  },
   territory: {
     freeShield: 'Put a free shield',
     freeShieldLeft: 'In reserve: {count}',

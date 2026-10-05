@@ -17,3 +17,6 @@ drop function if exists public._sector_legend(text);
 
 -- legend_90d_min10.sql: вернуть 30 дней и 3 улова — тот же скрипт с '90 days' → '30 days' и >= 10 → >= 3
 -- (md5 представления после применения сверить заново).
+
+-- catch_conditions.sql
+drop table if exists public.catch_conditions;

@@ -158,6 +158,15 @@ export const ru = {
     title: 'Маршрут до сектора',
     cancel: 'Отмена',
   },
+  conditions: {
+    title: 'Погода во время улова',
+    water: 'вода {value}°',
+    wind: 'ветер {value} м/с {dir}',
+    calm: 'штиль',
+    wave: 'волна {value} м',
+    pressure: 'давление {value} мм',
+    dirs: { n: 'С', ne: 'СВ', e: 'В', se: 'ЮВ', s: 'Ю', sw: 'ЮЗ', w: 'З', nw: 'СЗ' },
+  },
   territory: {
     freeShield: 'Поставить бесплатный щит',
     freeShieldLeft: 'В запасе: {count}',

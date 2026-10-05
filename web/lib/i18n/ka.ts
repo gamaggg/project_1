@@ -159,6 +159,15 @@ export const ka: Dict = {
     title: 'მარშრუტი სექტორამდე',
     cancel: 'გაუქმება',
   },
+  conditions: {
+    title: 'ამინდი დაჭერისას',
+    water: 'წყალი {value}°',
+    wind: 'ქარი {value} მ/წმ {dir}',
+    calm: 'შტილი',
+    wave: 'ტალღა {value} მ',
+    pressure: 'წნევა {value} მმ',
+    dirs: { n: 'ჩ', ne: 'ჩა', e: 'ა', se: 'სა', s: 'ს', sw: 'სდ', w: 'დ', nw: 'ჩდ' },
+  },
   territory: {
     freeShield: 'დადე უფასო ფარი',
     freeShieldLeft: 'მარაგში: {count}',

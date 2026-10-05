@@ -9,6 +9,7 @@ import type { SpeciesCategory } from '@/lib/data/species'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { compareSectors } from '@/lib/data/sectorOrder'
 import type { ShareKind } from '@/lib/guestShare'
+import type { Database } from '@/lib/types'
 
 type SectorGeometry = {
   id: string
@@ -2495,6 +2496,54 @@ export function useSectorInsights(territoryId: string | null) {
         lastCatchAt: d.last_catch_at,
         legend: d.legend ? { id: d.legend.id, name: d.legend.name, avatarUrl: d.legend.avatar_url, count: d.legend.count } : null,
         myCount: d.my_count,
+      }
+    },
+  })
+}
+
+export type CatchConditions = {
+  airTemp: number | null
+  waterTemp: number | null
+  wind: number | null
+  windDir: number | null
+  gusts: number | null
+  pressure: number | null
+  pressureTrend: number | null
+  wave: number | null
+  weatherCode: number | null
+}
+
+// «Погода во время улова»: the stored row if someone has opened this catch
+// before, else the server fetches it from Open-Meteo's archive once and
+// stores it (/api/catch-conditions). Weather in the past never changes.
+// Null when it can't be had — the catch screen just shows nothing then.
+export function useCatchConditions(catchId: number | null) {
+  return useQuery({
+    queryKey: ['catch-conditions', catchId],
+    enabled: !!catchId,
+    staleTime: Infinity,
+    gcTime: 30 * 60 * 1000,
+    retry: false,
+    queryFn: async (): Promise<CatchConditions | null> => {
+      const supabase = createClient()
+      const { data } = await supabase.from('catch_conditions').select('*').eq('catch_id', catchId!).maybeSingle()
+      let row: Database['public']['Tables']['catch_conditions']['Row'] | null = data
+      if (!row) {
+        const res = await fetch('/api/catch-conditions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ catchId }) })
+        if (!res.ok) return null
+        row = await res.json()
+      }
+      if (!row) return null
+      return {
+        airTemp: row.air_temp,
+        waterTemp: row.water_temp,
+        wind: row.wind,
+        windDir: row.wind_dir,
+        gusts: row.gusts,
+        pressure: row.pressure,
+        pressureTrend: row.pressure_trend,
+        wave: row.wave,
+        weatherCode: row.weather_code,
       }
     },
   })

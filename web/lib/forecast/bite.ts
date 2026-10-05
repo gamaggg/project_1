@@ -268,6 +268,20 @@ export function weatherKind(code: number): WeatherKind {
 
 export const HPA_TO_MMHG = 0.750062
 
+// Is the sun below the horizon at this moment and place? (NOAA's simple
+// declination / hour-angle formula — plenty for picking a moon over a sun.)
+export function isNight(at: Date, lat: number, lng: number): boolean {
+  const rad = Math.PI / 180
+  const dayOfYear = (Date.UTC(at.getUTCFullYear(), at.getUTCMonth(), at.getUTCDate()) - Date.UTC(at.getUTCFullYear(), 0, 0)) / 86400000
+  const g = ((2 * Math.PI) / 365) * (dayOfYear - 1 + (at.getUTCHours() - 12) / 24)
+  const decl = 0.006918 - 0.399912 * Math.cos(g) + 0.070257 * Math.sin(g) - 0.006758 * Math.cos(2 * g) + 0.000907 * Math.sin(2 * g)
+  const eqTime = 229.18 * (0.000075 + 0.001868 * Math.cos(g) - 0.032077 * Math.sin(g) - 0.014615 * Math.cos(2 * g) - 0.040849 * Math.sin(2 * g))
+  const minutes = at.getUTCHours() * 60 + at.getUTCMinutes() + eqTime + 4 * lng
+  const hourAngle = (minutes / 4 - 180) * rad
+  const elevation = Math.asin(Math.sin(lat * rad) * Math.sin(decl) + Math.cos(lat * rad) * Math.cos(decl) * Math.cos(hourAngle))
+  return elevation < -0.833 * rad
+}
+
 export type CompassPoint = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw'
 export function compassPoint(deg: number): CompassPoint {
   return (['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'] as const)[Math.round((((deg % 360) + 360) % 360) / 45) % 8]

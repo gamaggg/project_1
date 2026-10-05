@@ -457,6 +457,56 @@ export type Database = {
           },
         ]
       }
+      catch_conditions: {
+        Row: {
+          air_temp: number | null
+          catch_id: number
+          fetched_at: string
+          gusts: number | null
+          pressure: number | null
+          pressure_trend: number | null
+          water_temp: number | null
+          wave: number | null
+          weather_code: number | null
+          wind: number | null
+          wind_dir: number | null
+        }
+        Insert: {
+          air_temp?: number | null
+          catch_id: number
+          fetched_at?: string
+          gusts?: number | null
+          pressure?: number | null
+          pressure_trend?: number | null
+          water_temp?: number | null
+          wave?: number | null
+          weather_code?: number | null
+          wind?: number | null
+          wind_dir?: number | null
+        }
+        Update: {
+          air_temp?: number | null
+          catch_id?: number
+          fetched_at?: string
+          gusts?: number | null
+          pressure?: number | null
+          pressure_trend?: number | null
+          water_temp?: number | null
+          wave?: number | null
+          weather_code?: number | null
+          wind?: number | null
+          wind_dir?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catch_conditions_catch_id_fkey"
+            columns: ["catch_id"]
+            isOneToOne: true
+            referencedRelation: "catches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follows: {
         Row: {
           created_at: string

@@ -5,6 +5,7 @@ import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useCatchById, useCatchesByTerritory, useCatchLikes, useToggleCatchLike, useIsSuperAdmin, useCatchComments } from '@/lib/supabase/queries'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
+import { CatchConditions } from '@/components/app-shell/CatchConditions'
 import { CatcherLabel } from '@/components/app-shell/screens/TerritoryScreen'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { EditCatchSheet, MoveCatchSheet } from '@/components/app-shell/lazyScreens'
@@ -306,6 +307,7 @@ export function CatchPhotoScreen({
             </button>
             <span>· {formatWhen(c.caughtAt)}</span>
           </div>
+          <CatchConditions catchId={c.id} caughtAt={c.caughtAt} territoryId={c.territoryId} />
 
           <div className="catch-comments-preview tap-scale" onClick={() => onOpenComments(c.id)}>
             {commentPreview.map((cm) => (

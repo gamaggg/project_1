@@ -37,7 +37,16 @@ export function ScoreBars({ score, size = 14 }: { score: ForecastDay['score']; s
   )
 }
 
-export function WeatherIcon({ kind, size = 20 }: { kind: WeatherKind; size?: number }) {
+export function WeatherIcon({ kind, size = 20, night = false }: { kind: WeatherKind; size?: number; night?: boolean }) {
+  // A clear or partly cloudy night shows the moon, not the sun.
+  if (night && (kind === 'clear' || kind === 'partly')) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden>
+        <path d="M15.5 3.5a8.5 8.5 0 1 0 5 15.4A7 7 0 0 1 15.5 3.5z" fill="#8E9BB5" transform={kind === 'partly' ? 'translate(-3 -3) scale(.85)' : undefined} />
+        {kind === 'partly' && <path d="M8.5 20h9.2a3.8 3.8 0 0 0 .3-7.6A5.2 5.2 0 0 0 8 13.3 3.4 3.4 0 0 0 8.5 20z" fill="#C7CCD4" />}
+      </svg>
+    )
+  }
   const sun = <circle cx="12" cy="12" r="4.2" fill="#F5B300" />
   const rays = (
     <g stroke="#F5B300" strokeWidth="1.8" strokeLinecap="round">
