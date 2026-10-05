@@ -9,8 +9,6 @@ import { formatWeightGrams } from '@/lib/format'
 import { HexBadge } from '@/components/app-shell/HexBadge'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
-import { FishSilhouette } from '@/components/app-shell/FishSilhouette'
-import { useT } from '@/lib/i18n'
 import type { PendingCatch, Territory } from '@/lib/data/types'
 
 export type CatchFormData = {
@@ -26,7 +24,6 @@ export type PhotoStatus = 'uploading' | 'success' | 'error'
 export function ConfirmScreen({
   territory,
   pendingCatch,
-  newSpecies,
   wasFree,
   speciesCoins,
   captureCoins,
@@ -44,8 +41,6 @@ export function ConfirmScreen({
 }: {
   territory: Territory
   pendingCatch: PendingCatch | null
-  // First catch of this species in the city — «Новый вид в атласе!».
-  newSpecies?: boolean
   wasFree: boolean
   speciesCoins: number
   captureCoins: number
@@ -61,7 +56,6 @@ export function ConfirmScreen({
   onBack: () => void
   onShare: () => void
 }) {
-  const t = useT()
   const city = cityForSectorId(territory.id)
   const categories = CATEGORIES_BY_CITY[city]
   const baits = BAITS_BY_CITY[city]
@@ -182,12 +176,6 @@ export function ConfirmScreen({
           </div>
         </div>
         <div className="catch-trophy-title">{wasFree ? 'Теперь это твоя территория' : 'Улов зафиксирован'}</div>
-        {newSpecies && pendingCatch && (
-          <div className="catch-trophy-atlas">
-            <FishSilhouette speciesKey={pendingCatch.species} color="#3FD0B4" width={30} />
-            {t('atlas.newSpecies')}
-          </div>
-        )}
         {clanSupport && (
           <div className="catch-trophy-support">
             {clanShare

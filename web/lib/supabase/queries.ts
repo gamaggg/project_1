@@ -2066,7 +2066,6 @@ export function useConfirmCatch() {
       queryClient.invalidateQueries({ queryKey: ['activity'] })
       // Every catch adds a free spin in the Shop's slots.
       queryClient.invalidateQueries({ queryKey: ['slot-state'] })
-      queryClient.invalidateQueries({ queryKey: ['species-atlas'] })
       queryClient.invalidateQueries({ queryKey: ['sector-insights'] })
     },
   })
@@ -2497,73 +2496,6 @@ export function useSectorInsights(territoryId: string | null) {
         legend: d.legend ? { id: d.legend.id, name: d.legend.name, avatarUrl: d.legend.avatar_url, count: d.legend.count } : null,
         myCount: d.my_count,
       }
-    },
-  })
-}
-
-// After a catch is saved: is it the player's first of this species in the
-// city (so the success screen can say «Новый вид в атласе!»)? Asked once the
-// catch is in, so a count of exactly 1 is the catch just made.
-export async function isFirstOfSpeciesInCity(userId: string, species: string, cityPrefix: string): Promise<boolean> {
-  const supabase = createClient()
-  const { count, error } = await supabase
-    .from('catches')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('species', species)
-    .like('territory_id', `${cityPrefix}%`)
-  if (error) return false
-  return count === 1
-}
-
-export type AtlasEntry = {
-  key: string
-  category: string
-  mine: number
-  firstAt: string | null
-  best: { catchId: number; lengthCm: number | null; weightKg: number | null; photoUrl: string; caughtAt: string } | null
-  cityCount: number
-  anglers: number
-  record: { catchId: number; lengthCm: number; userId: string; name: string | null } | null
-  // 12 counts, January to December, all years.
-  months: number[]
-  topSectors: string[]
-}
-
-// Атлас рыб: every species of the city, with what the player has caught.
-export function useSpeciesAtlas(city: CityId) {
-  const { user } = useAuth()
-  return useQuery({
-    queryKey: ['species-atlas', city, user?.id ?? null],
-    enabled: !!user,
-    queryFn: async (): Promise<AtlasEntry[]> => {
-      const supabase = createClient()
-      const { data, error } = await supabase.rpc('get_species_atlas', { p_city: city })
-      if (error) throw error
-      type Raw = {
-        key: string
-        category: string
-        mine: number
-        first_at: string | null
-        best: { catch_id: number; length_cm: number | null; weight_kg: number | null; photo_url: string; caught_at: string } | null
-        city_count: number
-        anglers: number
-        record: { catch_id: number; length_cm: number; user_id: string; name: string | null } | null
-        months: number[]
-        top_sectors: string[]
-      }
-      return (data as Raw[]).map((e) => ({
-        key: e.key,
-        category: e.category,
-        mine: e.mine,
-        firstAt: e.first_at,
-        best: e.best ? { catchId: e.best.catch_id, lengthCm: e.best.length_cm, weightKg: e.best.weight_kg, photoUrl: e.best.photo_url, caughtAt: e.best.caught_at } : null,
-        cityCount: e.city_count,
-        anglers: e.anglers,
-        record: e.record ? { catchId: e.record.catch_id, lengthCm: e.record.length_cm, userId: e.record.user_id, name: e.record.name } : null,
-        months: e.months,
-        topSectors: e.top_sectors,
-      }))
     },
   })
 }

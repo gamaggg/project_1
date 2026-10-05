@@ -13,5 +13,4 @@ drop table if exists public.app_events;
 
 -- пачка 3
 drop function if exists public.get_sector_insights(text);
-drop function if exists public.get_species_atlas(text);
 drop function if exists public._sector_legend(text);

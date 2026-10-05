@@ -1,4 +1,5 @@
--- Большое обновление, пачка 3 (только новое): «Что клюёт здесь», легенда сектора, атлас рыб.
+-- Большое обновление, пачка 3 (только новое): «Что клюёт здесь», легенда сектора.
+-- (Атлас рыб убран по решению пользователя 05.10.)
 
 -- ===== Легенда сектора: больше всех уловов на секторе за 30 дней, минимум 3 =====
 -- Ничья — у того, кто начал ловить здесь раньше. Уловы заблокированных не считаются.
@@ -82,61 +83,8 @@ begin
 end;
 $function$;
 
--- ===== Атлас рыб: все виды города, что поймал игрок, рекорды и сезон по городу =====
-create function public.get_species_atlas(p_city text)
- returns jsonb
- language plpgsql
- stable
- security definer
- set search_path to 'public'
-as $function$
-declare
-  v_uid uuid := auth.uid();
-  v_prefix text := case when p_city = 'moscow' then 'M' else 'B' end;
-  v_categories text[] := case when p_city = 'moscow' then array['peaceful', 'predator'] else array['marine', 'freshwater'] end;
-begin
-  if v_uid is null then
-    raise exception 'not authenticated';
-  end if;
-  return (
-    with city_catches as (
-      select c.*
-      from public.catches c
-      join public.profiles p on p.id = c.user_id and not coalesce(p.is_blocked, false)
-      where c.territory_id like v_prefix || '%'
-    )
-    select coalesce(jsonb_agg(jsonb_build_object(
-      'key', s.key,
-      'category', s.category,
-      'mine', (select count(*) from city_catches c where c.species = s.key and c.user_id = v_uid),
-      'first_at', (select min(c.caught_at) from city_catches c where c.species = s.key and c.user_id = v_uid),
-      'best', (select jsonb_build_object('catch_id', c.id, 'length_cm', c.length_cm, 'weight_kg', c.weight_kg, 'photo_url', c.photo_url, 'caught_at', c.caught_at)
-               from city_catches c where c.species = s.key and c.user_id = v_uid
-               order by c.length_cm desc nulls last, c.weight_kg desc nulls last, c.caught_at desc limit 1),
-      'city_count', (select count(*) from city_catches c where c.species = s.key),
-      'anglers', (select count(distinct c.user_id) from city_catches c where c.species = s.key),
-      'record', (select jsonb_build_object('catch_id', c.id, 'length_cm', c.length_cm, 'user_id', c.user_id, 'name', p.display_name)
-                 from city_catches c join public.profiles p on p.id = c.user_id
-                 where c.species = s.key and c.length_cm is not null
-                 order by c.length_cm desc, c.caught_at asc limit 1),
-      'months', (select jsonb_agg(coalesce(m.n, 0) order by g.m)
-                 from generate_series(1, 12) g(m)
-                 left join (select extract(month from c.caught_at)::int as mo, count(*)::int as n
-                            from city_catches c where c.species = s.key group by 1) m on m.mo = g.m),
-      'top_sectors', coalesce((select jsonb_agg(x.territory_id order by x.n desc)
-                               from (select c.territory_id, count(*) as n from city_catches c where c.species = s.key
-                                     group by c.territory_id order by count(*) desc limit 3) x), '[]'::jsonb)
-    ) order by s.category, s.name), '[]'::jsonb)
-    from public.species s
-    where s.category = any (v_categories)
-  );
-end;
-$function$;
-
 revoke all on function public.get_sector_insights(text) from public;
-revoke all on function public.get_species_atlas(text) from public, anon;
 grant execute on function public.get_sector_insights(text) to anon, authenticated, service_role;
-grant execute on function public.get_species_atlas(text) to authenticated, service_role;
 
 -- Легенда видна на карточке сектора на карте без отдельного запроса: legend_id в конце
 -- territories_with_stats (CREATE OR REPLACE сохраняет права; текст сверен по контрольной сумме).

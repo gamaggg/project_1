@@ -5,7 +5,6 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import {
   useTerritories,
   useConfirmCatch,
-  isFirstOfSpeciesInCity,
   useMyCatches,
   useProfile,
   useUpdateProfile,
@@ -37,7 +36,7 @@ import { GuestShareScreen } from '@/components/app-shell/GuestShareScreen'
 import { formatCooldown, type SpeciesEntry } from '@/lib/format'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { draftHexAt } from '@/lib/data/hexGrid'
-import { CITIES, cityForSectorId, loadStoredCity, storeCity, type CityId } from '@/lib/data/city'
+import { cityForSectorId, loadStoredCity, storeCity, type CityId } from '@/lib/data/city'
 import { mostPopularSectorId } from '@/lib/data/sectorOrder'
 import type { PendingCatch, TerritoryStatus } from '@/lib/data/types'
 import { OnboardingFlow } from '@/components/app-shell/onboarding/OnboardingFlow'
@@ -76,7 +75,6 @@ import { TerritoryScreen } from '@/components/app-shell/screens/TerritoryScreen'
 import { TerritoriesListScreen, type Mode as RatingMode } from '@/components/app-shell/screens/TerritoriesListScreen'
 import { ShopScreen } from '@/components/app-shell/screens/ShopScreen'
 import { ChallengesScreen } from '@/components/app-shell/screens/ChallengesScreen'
-import { AtlasScreen } from '@/components/app-shell/screens/AtlasScreen'
 import { ClanListScreen } from '@/components/app-shell/screens/ClanListScreen'
 import { ClanScreen } from '@/components/app-shell/screens/ClanScreen'
 import { MyCatchesScreen } from '@/components/app-shell/screens/MyCatchesScreen'
@@ -117,7 +115,6 @@ export type ScreenId =
   | 'screen-last-week'
   | 'screen-shop'
   | 'screen-challenges'
-  | 'screen-atlas'
   | 'screen-clans'
   | 'screen-clan'
   | 'screen-clan-editor'
@@ -153,7 +150,6 @@ type StackEntry =
   | { screen: 'screen-last-week' }
   | { screen: 'screen-shop' }
   | { screen: 'screen-challenges' }
-  | { screen: 'screen-atlas' }
   | { screen: 'screen-clans' }
   | { screen: 'screen-clan'; clanId: number }
   | { screen: 'screen-clan-editor'; mode: 'create' | 'edit'; clanId: number | null }
@@ -372,7 +368,6 @@ export function FishZoneApp() {
   const [confirmStep, setConfirmStep] = useState<'form' | 'success'>('form')
   const [wasFree, setWasFree] = useState(false)
   const [catchSpeciesCoins, setCatchSpeciesCoins] = useState(0)
-  const [catchNewSpecies, setCatchNewSpecies] = useState(false)
   const [catchCaptureCoins, setCatchCaptureCoins] = useState(0)
   // A catch on a clan-mate's sector: it stays theirs (see confirm_catch).
   const [catchClanSupport, setCatchClanSupport] = useState(false)
@@ -573,9 +568,6 @@ export function FishZoneApp() {
   }
   function openChallenges() {
     push({ screen: 'screen-challenges' })
-  }
-  function openAtlas() {
-    push({ screen: 'screen-atlas' })
   }
   function openTerritory(id: string) {
     // A "Последние действия"/activity link can point at a sector a super
@@ -795,13 +787,8 @@ export function FishZoneApp() {
       setCatchClanSupport(result.clanSupport)
       setCatchClanShare(result.clanSupport && !!t && (t.coHolders.some((h) => h.isMe) || t.coHolders.length < 3))
       setPendingCatch(payload)
-      setCatchNewSpecies(false)
       setConfirmStep('success')
       hapticBuildUp()
-      if (user) {
-        const prefix = CITIES[cityForSectorId(catchTerritoryId)].idPrefix
-        isFirstOfSpeciesInCity(user.id, form.species, prefix).then(setCatchNewSpecies)
-      }
     } catch (err) {
       // Supabase's PostgrestError isn't an Error instance — duck-type the
       // message instead of `instanceof Error` (see confirm_catch's
@@ -1279,9 +1266,6 @@ export function FishZoneApp() {
         <Screen id="screen-challenges" current={currentScreen} onBack={pop} eager>
           {myProfile && <ChallengesScreen onBack={pop} active={currentScreen === 'screen-challenges'} />}
         </Screen>
-        <Screen id="screen-atlas" current={currentScreen} onBack={pop}>
-          {myProfile && <AtlasScreen city={city} onBack={pop} onOpenCatch={openCatchPhoto} onOpenTerritory={openTerritory} onOpenUser={openUserProfile} />}
-        </Screen>
         <Screen id="screen-clans" current={currentScreen} onBack={pop}>
           {myProfile && <ClanListScreen city={myProfile.city} onBack={pop} onOpenClan={openClan} onCreate={() => openClanEditor('create', null)} />}
         </Screen>
@@ -1364,7 +1348,6 @@ export function FishZoneApp() {
               pendingCatch={pendingCatch}
               wasFree={wasFree}
               speciesCoins={catchSpeciesCoins}
-              newSpecies={catchNewSpecies}
               captureCoins={catchCaptureCoins}
               clanSupport={catchClanSupport}
               clanShare={catchClanShare}
@@ -1427,12 +1410,12 @@ export function FishZoneApp() {
             onShareProfile={shareProfile}
             onInviteFriends={inviteFriends}
             onOpenFollowers={setViewingFollowersFor}
+            onOpenSpecies={setViewingSpeciesFor}
             onPostAnnouncement={() => setPostingAnnouncement(true)}
             onEditPublicId={setEditingPublicIdUserId}
             onGrantCoins={setGrantingCoinsUserId}
             onOpenShop={openShop}
             onOpenChallenges={openChallenges}
-            onOpenAtlas={openAtlas}
             onOpenClans={openClans}
             onOpenClan={openClan}
           />

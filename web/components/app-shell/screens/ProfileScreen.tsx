@@ -26,7 +26,7 @@ import { KIND_LABEL } from '@/lib/data/species'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { resolveClanBackground } from '@/lib/data/clanBackgrounds'
 import { CLAN_ROLE_LABEL } from '@/lib/data/clanLevels'
-import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralFollowers, pluralSpecies, pluralTerritories, speciesBreakdown } from '@/lib/format'
+import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralFollowers, pluralSpecies, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
 import { ACH_ICONS, CTA_ICONS } from '@/components/app-shell/icons'
 import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorPreviewMap'
 import { DEFAULT_TERRITORY_COLOR, TERRITORY_COLORS } from '@/lib/data/territoryColors'
@@ -40,7 +40,6 @@ import { CITIES, type CityId } from '@/lib/data/city'
 import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
 import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
 import { useTelegramHomeScreen } from '@/lib/telegram/useTelegramHomeScreen'
-import { AtlasCard } from '@/components/app-shell/screens/AtlasScreen'
 import { LaurelIcon } from '@/components/app-shell/SectorInsights'
 import { useT } from '@/lib/i18n'
 
@@ -395,12 +394,12 @@ export function ProfileScreen({
   onShareProfile,
   onInviteFriends,
   onOpenFollowers,
+  onOpenSpecies,
   onPostAnnouncement,
   onEditPublicId,
   onGrantCoins,
   onOpenShop,
   onOpenChallenges,
-  onOpenAtlas,
   onOpenClans,
   onOpenClan,
 }: {
@@ -427,12 +426,12 @@ export function ProfileScreen({
   // «Пригласи друзей» — the plain referral link (+100 coins each side).
   onInviteFriends: () => void
   onOpenFollowers: (people: ProfileSummary[]) => void
+  onOpenSpecies: (species: SpeciesEntry[]) => void
   onPostAnnouncement: () => void
   onEditPublicId: (id: string) => void
   onGrantCoins: (id: string) => void
   onOpenShop: () => void
   onOpenChallenges: () => void
-  onOpenAtlas: () => void
   onOpenClans: () => void
   onOpenClan: (id: number) => void
 }) {
@@ -455,8 +454,6 @@ export function ProfileScreen({
   const t = useT()
   const mySpecies = speciesBreakdown(myCatches)
   const speciesCount = mySpecies.length
-  const cityPrefix = CITIES[city].idPrefix
-  const atlasCaught = new Set(myCatches.filter((c) => c.territoryId.startsWith(cityPrefix)).map((c) => c.species))
   const legendCount = user ? allTerritories.filter((tr) => tr.legendId === user.id).length : 0
   const record = personalRecord(myCatches)
   const achievements = computeAchievements(
@@ -575,7 +572,7 @@ export function ProfileScreen({
           <b>{myCatches.length}</b>
           <span>{pluralCatches(myCatches.length)}</span>
         </button>
-        <button className="hero-stat" onClick={onOpenAtlas}>
+        <button className="hero-stat" onClick={() => onOpenSpecies(mySpecies)}>
           <b>{speciesCount}</b>
           <span>{pluralSpecies(speciesCount)} рыб</span>
         </button>
@@ -663,8 +660,6 @@ export function ProfileScreen({
           </span>
         </button>
       )}
-
-      <AtlasCard city={city} caughtKeys={atlasCaught} onOpen={onOpenAtlas} />
 
       <div className="section-title-row" style={{ marginTop: 24 }}>
         <div className="section-title">Достижения</div>

@@ -252,7 +252,7 @@ function ForecastSheet({ title, kicker, days, sector, onClose }: { title: string
           </div>
 
           <div className="forecast-block">
-            <span className="atlas-sheet-label">{t('forecast.hours')}</span>
+            <span className="forecast-label">{t('forecast.hours')}</span>
             <div className="insights-hours forecast-hours" aria-hidden>
               {today.hours.map((v, h) => (
                 <i key={h} className={inBest(h) ? 'on' : undefined} style={{ height: `${Math.max(8, (v / peak) * 100)}%` }} />
@@ -276,7 +276,7 @@ function ForecastSheet({ title, kicker, days, sector, onClose }: { title: string
           </div>
 
           <div className="forecast-block">
-            <span className="atlas-sheet-label">{t('forecast.next')}</span>
+            <span className="forecast-label">{t('forecast.next')}</span>
             <div className="forecast-next">
               {days.slice(1, 4).map((d, i) => (
                 <div key={d.date} className="forecast-next-row">
