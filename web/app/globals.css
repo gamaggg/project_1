@@ -645,21 +645,8 @@ body{
 .insights-hours-axis{display:flex; justify-content:space-between; margin-top:4px; font-size:10.5px; font-weight:700; color:var(--ink-faint); font-variant-numeric:tabular-nums;}
 .insights-gear{display:flex; flex-direction:column; gap:4px; margin-top:12px; font-size:13px; line-height:1.4;}
 .insights-gear-label{display:inline-block; min-width:76px; color:var(--ink-faint); font-weight:700;}
-.legend-row{margin-top:12px; padding:10px 12px; border-radius:14px; background:#FBF6EA; border:1px solid #F1E3C2;}
-.legend-row-head{font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:#9A6B12;}
-.legend-row-person{display:flex; align-items:center; gap:8px; width:100%; margin-top:4px; margin-left:-6px; padding:0; border:none; background:none; font:inherit; text-align:left; cursor:pointer;}
-.legend-row-avatar{flex:0 0 auto; width:34px; height:34px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#FF7A38,var(--accent) 70%); color:#fff; font-size:12px; font-weight:800; box-shadow:0 0 0 2px #FBF6EA;}
 .legend-wreath{position:relative; flex:0 0 auto; display:flex; align-items:center; justify-content:center;}
 .legend-wreath svg{position:absolute; inset:0; overflow:visible;}
-.legend-wreath .legend-row-avatar{width:36px; height:36px;}
-.legend-row-avatar img{width:100%; height:100%; object-fit:cover;}
-.legend-row-text{display:flex; flex-direction:column; min-width:0;}
-.legend-row-text b{font-size:14.5px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-.legend-row-text span{font-size:12.5px; color:var(--ink-soft); font-weight:600;}
-.legend-mini{display:flex; align-items:center; gap:8px; margin-top:12px; padding:9px 12px; border-radius:12px; background:#FBF6EA; border:1px solid #F1E3C2;}
-.legend-mini-text{flex:1; min-width:0; font-size:12.5px; font-weight:700; color:#9A6B12; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-.legend-mini-progress{flex:0 0 auto; padding:2px 8px; border-radius:999px; background:#F1E3C2; font-size:12px; font-weight:800; color:#7A540E; font-variant-numeric:tabular-nums;}
-.legend-row-progress{margin-top:8px; font-size:12px; font-weight:700; color:#9A6B12;}
 
 /* ---- Горячий сектор недели ---- */
 .map-sheet-hot{display:flex; align-items:center; gap:5px; margin:-2px 0 -2px; font-size:12px; line-height:1; font-weight:700; color:#B83E00; white-space:nowrap; overflow:hidden;}
@@ -3480,21 +3467,25 @@ button.race-lane{cursor:pointer;}
 .defense-shields{display:inline-flex; gap:2px; align-items:center;}
 .defense-shields svg{display:block; fill:none; stroke:#9BBDB8; stroke-width:2; stroke-linejoin:round;}
 .defense-shields svg.on{fill:#12A190; stroke:#0E8074;}
-/* Sector screen: legend and defense in one card split down the middle —
-   the legend's warm half on the left, the defense's teal column on the right. */
-.sector-standing{display:grid; grid-template-columns:minmax(0,1fr) auto; margin-top:12px; border-radius:14px; overflow:hidden; border:1px solid #EADFC6;}
-.sector-standing > .legend-row{margin:0; border:none; border-radius:0; min-width:0;}
-.legend-row-none{display:flex; align-items:center; gap:6px; margin-top:6px; font-size:12.5px; line-height:1.35; font-weight:700; color:#9A6B12;}
-.legend-row-none svg{flex:0 0 auto;}
-.sector-standing > .legend-row .legend-mini-progress{display:inline-block; margin-top:8px;}
-.sector-standing-defense{width:124px; padding:10px 12px; background:#EAF7F4; border-left:1px solid #CFE7E0; display:flex; flex-direction:column; gap:6px;}
-.sector-standing-defense.open{background:#F5F4F0; border-left-color:var(--line);}
-.sector-standing-head{font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:#0E8074;}
-.sector-standing-defense.open .sector-standing-head{color:var(--ink-faint);}
-.sector-standing-value{display:flex; flex-direction:column; align-items:flex-start; gap:3px;}
-.sector-standing-value b{font-size:13px; font-weight:800; color:#0B6A60; font-variant-numeric:tabular-nums; white-space:nowrap;}
-.sector-standing-defense.open .sector-standing-value b{color:var(--ink-soft);}
-.sector-standing-hint{font-size:12px; line-height:1.3; font-weight:600; color:var(--ink-soft);}
+/* Sector screen: legend and defense in one card — two equal columns built
+   the same way (label, a mark with its number, a short line), one white
+   ground, only the label colour telling them apart (gold / teal). */
+.sector-standing{display:grid; grid-template-columns:1fr 1fr; margin-top:12px; border-radius:14px; border:1px solid var(--line); background:var(--surface); overflow:hidden;}
+.sector-standing.solo{grid-template-columns:1fr;}
+.standing-col{display:flex; flex-direction:column; align-items:flex-start; gap:6px; min-width:0; width:100%; padding:11px 12px 12px; margin:0; background:none; border:none; font:inherit; color:inherit; text-align:left;}
+.standing-col + .standing-col{border-left:1px solid var(--line);}
+button.standing-col{cursor:pointer;}
+.standing-head{font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; line-height:1.2;}
+.standing-col-legend .standing-head{color:#9A6B12;}
+.standing-col-defense .standing-head{color:#0E8074;}
+.standing-col.empty .standing-head{color:var(--ink-faint);}
+.standing-main{display:flex; align-items:center; gap:8px; height:42px; min-width:0; max-width:100%;}
+.standing-main b{font-size:14.5px; font-weight:800; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums;}
+.standing-col.empty .standing-main b{color:var(--ink-soft);}
+.standing-col.empty .standing-main > svg{opacity:.55;}
+.standing-hint{font-size:12px; line-height:1.35; font-weight:600; color:var(--ink-soft);}
+.standing-avatar{width:26px; height:26px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#FF7A38,var(--accent) 70%); color:#fff; font-size:10px; font-weight:800;}
+.standing-avatar img{width:100%; height:100%; object-fit:cover; display:block;}
 /* After an attack (ConfirmScreen): the sector's shields left, on the dark trophy card. */
 .catch-trophy-attack{display:flex; align-items:center; justify-content:center; gap:8px; margin:-10px auto 16px; max-width:300px; text-align:left; font-size:13.5px; font-weight:700; line-height:1.35; color:rgba(255,255,255,.88); animation:comment-in .5s var(--ease-out) 1.35s both;}
 .catch-trophy-attack .defense-shields svg{stroke:rgba(255,255,255,.45);}

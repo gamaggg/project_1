@@ -111,10 +111,8 @@ export const ka: Dict = {
     catchesPeriod: { one: '{count} დაჭერა 90 დღეში', other: '{count} დაჭერა 90 დღეში' },
     you: 'ეს შენ ხარ',
     mineHere: { one: 'აქ გაქვს {count} დაჭერა', other: 'აქ გაქვს {count} დაჭერა' },
-    toLegend: { one: 'ლეგენდამდე კიდევ {count} დაჭერა', other: 'ლეგენდამდე კიდევ {count} დაჭერა' },
-    noneShort: 'ლეგენდა არ არის — საჭიროა 10 დაჭერა 90 დღეში',
-    noneMid: 'ჯერ არ არის — საჭიროა 10 დაჭერა 90 დღეში',
-    noneProgressShort: '{mine}/10',
+    progressOf: '{mine} / 10',
+    needShort: 'საჭიროა 10 დაჭერა 90 დღეში',
     profileCount: { one: '{count} სექტორის ლეგენდა', other: '{count} სექტორის ლეგენდა' },
   },
   forecast: {

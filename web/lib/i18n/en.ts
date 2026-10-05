@@ -109,10 +109,8 @@ export const en: Dict = {
     catchesPeriod: { one: '{count} catch in 90 days', other: '{count} catches in 90 days' },
     you: 'That’s you',
     mineHere: { one: 'You have {count} catch here', other: 'You have {count} catches here' },
-    toLegend: { one: '{count} more catch to become the legend', other: '{count} more catches to become the legend' },
-    noneShort: 'No legend yet — takes 10 catches in 90 days',
-    noneMid: 'None yet — takes 10 catches in 90 days',
-    noneProgressShort: '{mine}/10',
+    progressOf: '{mine} of 10',
+    needShort: 'Takes 10 catches in 90 days',
     profileCount: { one: 'Legend of {count} sector', other: 'Legend of {count} sectors' },
   },
   forecast: {

@@ -110,10 +110,8 @@ export const ru = {
     catchesPeriod: { one: '{count} улов за 90 дней', few: '{count} улова за 90 дней', many: '{count} уловов за 90 дней', other: '{count} улова за 90 дней' },
     you: 'Это ты',
     mineHere: { one: 'У тебя здесь {count} улов', few: 'У тебя здесь {count} улова', many: 'У тебя здесь {count} уловов', other: 'У тебя здесь {count} улова' },
-    toLegend: { one: 'до легенды ещё {count} улов', few: 'до легенды ещё {count} улова', many: 'до легенды ещё {count} уловов', other: 'до легенды ещё {count} улова' },
-    noneShort: 'Легенды нет — нужно 10 уловов за 90 дней',
-    noneMid: 'Пока нет — нужно 10 уловов за 90 дней',
-    noneProgressShort: '{mine}/10',
+    progressOf: '{mine} из 10',
+    needShort: 'Нужно 10 уловов за 90 дней',
     profileCount: { one: 'Легенда {count} сектора', few: 'Легенда {count} секторов', many: 'Легенда {count} секторов', other: 'Легенда {count} сектора' },
   },
   forecast: {

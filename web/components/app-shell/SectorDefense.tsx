@@ -40,13 +40,13 @@ export function SectorDefenseAside({ territory, myClanId }: { territory: Territo
         ? t('defense.shortLeft', { count: value + 1 })
         : t('defense.shortOpen')
   return (
-    <div className={`sector-standing-defense${value === 0 ? ' open' : ''}`}>
-      <div className="sector-standing-head">{t('defense.head')}</div>
-      <div className="sector-standing-value">
+    <div className={`standing-col standing-col-defense${value === 0 ? ' empty' : ''}`}>
+      <span className="standing-head">{t('defense.head')}</span>
+      <span className="standing-main">
         <DefenseShields value={value} size={20} />
         <b>{t('defense.value', { value })}</b>
-      </div>
-      <span className="sector-standing-hint">{text}</span>
+      </span>
+      <span className="standing-hint">{text}</span>
     </div>
   )
 }

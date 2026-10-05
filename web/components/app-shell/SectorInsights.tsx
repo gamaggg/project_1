@@ -187,59 +187,26 @@ export function SectorLegendRow({
 }: {
   territory: Territory
   onOpenUser: (id: string) => void
-  // The sector's defense (SectorDefenseAside) — when there is one, legend
-  // and defense share one card split down the middle instead of stacking
-  // two cards on top of each other.
+  // The sector's defense (SectorDefenseAside) — legend and defense share one
+  // card, two equal columns built the same way: label, a mark with its
+  // number, a short line under it.
   aside?: React.ReactNode
 }) {
   const t = useT()
   const { user } = useAuth()
   const { data } = useSectorInsights(territory.id)
-  if (!data) {
-    return aside ? (
-      <div className="sector-standing">
-        <div className="legend-row" />
-        {aside}
-      </div>
-    ) : null
-  }
-  const legend = data.legend
-  const mine = data.myCount
+  const legend = data?.legend ?? null
+  const mine = data?.myCount ?? null
   const isMe = !!legend && legend.id === user?.id
 
-  // No legend yet: what it takes and how far along the viewer is — one slim
-  // line on its own, a short block beside the defense.
-  if (!legend) {
-    if (!aside) {
-      return (
-        <div className="legend-mini">
-          <LaurelIcon size={16} />
-          <span className="legend-mini-text">{t('legend.noneShort')}</span>
-          {mine !== null && <span className="legend-mini-progress">{t('legend.noneProgressShort', { mine })}</span>}
-        </div>
-      )
-    }
-    return (
-      <div className="sector-standing">
-        <div className="legend-row">
-          <div className="legend-row-head">{t('legend.title')}</div>
-          <div className="legend-row-none">
-            <LaurelIcon size={16} />
-            <span>{t('legend.noneMid')}</span>
-          </div>
-          {mine !== null && <span className="legend-mini-progress">{t('legend.noneProgressShort', { mine })}</span>}
-        </div>
-        {aside}
-      </div>
-    )
-  }
-
-  const card = (
-    <div className="legend-row">
-      <div className="legend-row-head">{t('legend.title')}</div>
-      <button className="legend-row-person tap-scale" onClick={() => onOpenUser(legend.id)}>
-        <LegendWreath>
-          <span className="legend-row-avatar">
+  const column = !data ? (
+    <div className="standing-col standing-col-legend" />
+  ) : legend ? (
+    <button className="standing-col standing-col-legend tap-scale" onClick={() => onOpenUser(legend.id)}>
+      <span className="standing-head">{t('legend.title')}</span>
+      <span className="standing-main">
+        <LegendWreath size={42}>
+          <span className="standing-avatar">
             {legend.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- small avatar thumbnail, same as the rest of the sector screen
               <img src={thumbUrl(legend.avatarUrl, 96)} alt="" />
@@ -248,24 +215,34 @@ export function SectorLegendRow({
             )}
           </span>
         </LegendWreath>
-        <span className="legend-row-text">
-          <b>{isMe ? t('legend.you') : legend.name}</b>
-          <span>{t('legend.catchesPeriod', { count: legend.count })}</span>
-        </span>
-      </button>
-      {mine !== null && !isMe && (
-        <div className="legend-row-progress">
-          {t('legend.mineHere', { count: mine })} · {t('legend.toLegend', { count: Math.max(1, legend.count - mine + 1) })}
-        </div>
-      )}
+        <b>{isMe ? t('legend.you') : legend.name}</b>
+      </span>
+      <span className="standing-hint">
+        {t('legend.catchesPeriod', { count: legend.count })}
+        {mine !== null && !isMe && (
+          <>
+            <br />
+            {t('legend.mineHere', { count: mine })}
+          </>
+        )}
+      </span>
+    </button>
+  ) : (
+    // Nobody yet: how far along the viewer is, against the 10 it takes.
+    <div className="standing-col standing-col-legend empty">
+      <span className="standing-head">{t('legend.title')}</span>
+      <span className="standing-main">
+        <LaurelIcon size={24} />
+        <b>{t('legend.progressOf', { mine: mine ?? 0 })}</b>
+      </span>
+      <span className="standing-hint">{t('legend.needShort')}</span>
     </div>
   )
-  return aside ? (
-    <div className="sector-standing">
-      {card}
+
+  return (
+    <div className={`sector-standing${aside ? '' : ' solo'}`}>
+      {column}
       {aside}
     </div>
-  ) : (
-    card
   )
 }
