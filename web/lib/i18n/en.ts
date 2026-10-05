@@ -301,6 +301,17 @@ export const en: Dict = {
       other: '{count} more catches to take it',
     },
     shortOpen: 'The next catch takes it',
+    sheetKicker: 'How it works',
+    sheetTitle: 'Sector defense',
+    rules: {
+      reinforce: "Every catch here by the holder or their clan adds +1 defense, up to 3",
+      attack: "An outsider's catch removes 1 defense — the sector doesn't change hands",
+      capture: "With no defense left, the next outside catch takes the sector — its new holder starts at 1",
+      decay: "If the holder and their clan don't fish here, defense drops by 1 a day",
+      shield: 'A shop shield works on top: while it is up, the sector cannot be attacked',
+      coins: 'Capture coins for the same sector — once a day',
+    },
+    ok: 'Got it',
     attackTitle: 'Sector attacked',
     attackAfter: {
       one: 'Defense {value} of 3 — {count} more catch to take it',
@@ -310,6 +321,14 @@ export const en: Dict = {
     },
     attackOpened: 'Defense down — the next catch takes the sector',
     captureOncePerDay: 'Capture coins for this sector — once a day',
+  },
+  fishing: {
+    start: "I'm fishing",
+    started: "You're fishing — the bot will pin a reminder to snap your catch",
+    forHm: 'Fishing for {h} h {m} min',
+    forM: 'Fishing for {m} min',
+    stop: 'Finish',
+    stopped: 'Fishing finished',
   },
   activity: {
     hotWeek: 'This week’s hot sectors: {sectors}',

@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useI18n } from '@/lib/i18n'
 import type { Territory } from '@/lib/data/types'
 
@@ -25,9 +27,10 @@ export function DefenseShields({ value, size = 14 }: { value: number; size?: num
 // SectorLegendRow's aside): how strong the defense is and, in a few words,
 // what it means for whoever is looking — the holder (and their clan) keep it
 // up by fishing here; anyone else sees how many catches it would take.
-// Nothing for a free sector.
+// Tapping it opens the rules (DefenseSheet). Nothing for a free sector.
 export function SectorDefenseAside({ territory, myClanId }: { territory: Territory; myClanId: number | null }) {
   const { t } = useI18n()
+  const [open, setOpen] = useState(false)
   if (!territory.ownerId) return null
   const value = territory.defense
   const holds = territory.status === 'mine' || territory.coHolders.some((h) => h.isMe)
@@ -40,13 +43,55 @@ export function SectorDefenseAside({ territory, myClanId }: { territory: Territo
         ? t('defense.shortLeft', { count: value + 1 })
         : t('defense.shortOpen')
   return (
-    <div className={`standing-col standing-col-defense${value === 0 ? ' empty' : ''}`}>
-      <span className="standing-head">{t('defense.head')}</span>
-      <span className="standing-main">
-        <DefenseShields value={value} size={20} />
-        <b>{t('defense.value', { value })}</b>
-      </span>
-      <span className="standing-hint">{text}</span>
-    </div>
+    <>
+      <button className={`standing-col standing-col-defense tap-scale${value === 0 ? ' empty' : ''}`} onClick={() => setOpen(true)}>
+        <span className="standing-head">{t('defense.head')}</span>
+        <span className="standing-main">
+          <DefenseShields value={value} size={20} />
+          <b>{t('defense.value', { value })}</b>
+        </span>
+        <span className="standing-hint">{text}</span>
+      </button>
+      {open && <DefenseSheet value={value} status={text} onClose={() => setOpen(false)} />}
+    </>
+  )
+}
+
+const RULES = ['reinforce', 'attack', 'capture', 'decay', 'shield', 'coins'] as const
+
+// The rules, same sheet as the Казна's explanation: this sector's defense
+// now and what it means for the viewer on top, then how it all works.
+function DefenseSheet({ value, status, onClose }: { value: number; status: string; onClose: () => void }) {
+  const { t } = useI18n()
+  return createPortal(
+    <div className="move-sheet-overlay" onClick={onClose}>
+      <div className="move-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={t('defense.sheetTitle')}>
+        <div className="move-sheet-handle" />
+        <div className="move-head">
+          <div>
+            <div className="move-kicker">{t('defense.sheetKicker')}</div>
+            <div className="move-title">{t('defense.sheetTitle')}</div>
+          </div>
+        </div>
+        <div className="move-body">
+          <div className={`defense-sheet-now${value === 0 ? ' empty' : ''}`}>
+            <DefenseShields value={value} size={30} />
+            <div>
+              <b>{t('defense.value', { value })}</b>
+              <span>{status}</span>
+            </div>
+          </div>
+          <ul className="defense-sheet-rules">
+            {RULES.map((r) => (
+              <li key={r}>{t(`defense.rules.${r}`)}</li>
+            ))}
+          </ul>
+          <button className="btn-primary" style={{ margin: '16px 0 18px' }} onClick={onClose}>
+            {t('defense.ok')}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
   )
 }

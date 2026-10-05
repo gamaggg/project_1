@@ -3491,3 +3491,13 @@ button.standing-col{cursor:pointer;}
 .catch-trophy-attack .defense-shields svg{stroke:rgba(255,255,255,.45);}
 .catch-trophy-attack .defense-shields svg.on{fill:#2BC4B0; stroke:#8BE6DA;}
 @media (prefers-reduced-motion: reduce){.catch-trophy-attack{animation:none;}}
+/* Defense rules sheet (SectorDefense.tsx): this sector now, then the rules. */
+.defense-sheet-now{display:flex; align-items:center; gap:14px; padding:14px; margin-top:4px; border-radius:16px; background:#EAF7F4; border:1px solid #CFE7E0;}
+.defense-sheet-now.empty{background:var(--bg); border-color:var(--line);}
+.defense-sheet-now > div{display:flex; flex-direction:column; gap:2px; min-width:0;}
+.defense-sheet-now b{font-size:17px; font-weight:800; color:#0B6A60; font-variant-numeric:tabular-nums;}
+.defense-sheet-now.empty b{color:var(--ink-soft);}
+.defense-sheet-now span{font-size:13px; line-height:1.35; font-weight:600; color:var(--ink-soft);}
+.defense-sheet-rules{list-style:none; margin:14px 0 0; padding:0; display:flex; flex-direction:column; gap:10px;}
+.defense-sheet-rules li{position:relative; padding-left:18px; font-size:13.5px; line-height:1.45; color:var(--ink);}
+.defense-sheet-rules li::before{content:''; position:absolute; left:3px; top:7px; width:7px; height:7px; border-radius:2px; background:#12A190; transform:rotate(45deg);}
