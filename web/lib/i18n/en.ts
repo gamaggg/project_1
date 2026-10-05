@@ -251,8 +251,11 @@ export const en: Dict = {
     youEmpty: 'You weren’t out on the water',
     youEmptySub: 'A new week is on — free sectors are waiting',
     youCta: 'Find a free sector',
-    finalTitle: 'A new week is on',
-    finalSub: 'Catch, capture sectors and make next week’s recap',
+    finalTitle: 'The week {cityIn} in one picture',
+    finalSub: 'A new week is on — catch and make the next recap',
+    finalAnglers: { one: 'angler', other: 'anglers' },
+    finalTop: 'Top fish',
+    finalTrophy: 'Trophy',
     toMap: 'To the map',
   },
   territory: {

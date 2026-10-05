@@ -252,8 +252,11 @@ export const ru = {
     youEmpty: 'Тебя не было на воде',
     youEmptySub: 'Новая неделя уже идёт — свободные сектора ждут',
     youCta: 'Найти свободный сектор',
-    finalTitle: 'Новая неделя уже идёт',
-    finalSub: 'Лови, захватывай сектора и попади в итоги',
+    finalTitle: 'Неделя {cityIn} в одной картинке',
+    finalSub: 'Новая неделя уже идёт — лови и попади в итоги',
+    finalAnglers: { one: 'рыбак', few: 'рыбака', many: 'рыбаков', other: 'рыбака' },
+    finalTop: 'Главная рыба',
+    finalTrophy: 'Трофей',
     toMap: 'На карту',
   },
   territory: {

@@ -395,17 +395,101 @@ function You({ env }: { env: SlideEnv }) {
   )
 }
 
+// The last slide sums the whole week up as one card of tiles — the slide
+// people share most, so everything worth bragging about is on it.
+const TILE_GAP = 24
+const TILE_W = (912 - TILE_GAP) / 2
+
+function Tile({ children, photo, bg, height, width = TILE_W, shown }: { children: ReactNode; photo?: string | null; bg?: string; height: number; width?: number; shown: boolean }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        position: 'relative',
+        width,
+        height,
+        borderRadius: 36,
+        overflow: 'hidden',
+        background: bg ?? 'rgba(255,255,255,.16)',
+        opacity: shown ? 1 : 0,
+      }}
+    >
+      {photo && (
+        // eslint-disable-next-line @next/next/no-img-element -- shared markup for the image renderer
+        <img src={photo} width={width} height={height} style={{ position: 'absolute', top: 0, left: 0, width, height, objectFit: 'cover' }} alt="" />
+      )}
+      {photo && <div style={{ position: 'absolute', top: 0, left: 0, width, height, display: 'flex', background: 'linear-gradient(rgba(20,6,30,.05), rgba(20,6,30,.8))' }} />}
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', width, height, padding: 28 }}>{children}</div>
+    </div>
+  )
+}
+
 function Final({ env }: { env: SlideEnv }) {
+  const d = env.data
+  const top = d.topSpecies[0]
+  const win = busiestWindow(d.hours)
+  const me = d.me
+  const shown = (i: number) => env.anim >= i * 0.1
+  const label = (text: string) => <span style={{ fontSize: 30, fontWeight: 800, color: 'rgba(255,255,255,.85)' }}>{text}</span>
+  const sizeOf = (cm: number | null, kg: number | null) =>
+    cm ? `${cm} ${env.lang === 'en' ? 'cm' : env.lang === 'ka' ? 'სმ' : 'см'}` : kg ? `${new Intl.NumberFormat(env.lang, { maximumFractionDigits: 1 }).format(kg)} ${env.lang === 'en' ? 'kg' : env.lang === 'ka' ? 'კგ' : 'кг'}` : ''
+
   return (
     <Frame id="final" env={env}>
-      <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', marginBottom: 'auto' }}>
-        {env.logo && !env.branded && (
-          // eslint-disable-next-line @next/next/no-img-element -- shared markup for the image renderer
-          <img src={env.logo} width={420} height={121} style={{ marginBottom: 60, filter: 'brightness(0) invert(1)' }} alt="" />
+      <div style={{ display: 'flex', fontSize: 72, fontWeight: 800, lineHeight: 1.05, letterSpacing: -1 }}>{env.t('recap.finalTitle', { cityIn: env.t(`recap.cityIn.${env.city}` as TKey) })}</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: TILE_GAP, marginTop: 44 }}>
+        <Tile height={290} bg="rgba(255,225,77,.95)" shown={shown(0)}>
+          <span style={{ fontFamily: env.fonts.display, fontSize: 150, lineHeight: 0.9, color: '#C2185B' }}>{count(d.catches, env.anim)}</span>
+          <span style={{ fontSize: 40, fontWeight: 800, color: '#7A0E3A' }}>{env.t('recap.introBig', { count: d.catches })}</span>
+        </Tile>
+        <Tile height={290} shown={shown(1)}>
+          <span style={{ fontFamily: env.fonts.display, fontSize: 150, lineHeight: 0.9, color: YELLOW }}>{count(d.anglers, env.anim)}</span>
+          <span style={{ fontSize: 40, fontWeight: 800 }}>{env.t('recap.finalAnglers', { count: d.anglers })}</span>
+        </Tile>
+        {top && (
+          <Tile height={300} photo={top.photoUrl ? env.img(top.photoUrl, 888, 600) : null} shown={shown(2)}>
+            {label(env.t('recap.finalTop'))}
+            <span style={{ fontSize: 54, fontWeight: 800, lineHeight: 1.05 }}>{top.name}</span>
+          </Tile>
         )}
-        <div style={{ display: 'flex', fontSize: 120, fontWeight: 800, lineHeight: 1.02, letterSpacing: -2 }}>{env.t('recap.finalTitle')}</div>
-        <div style={{ display: 'flex', fontSize: 54, marginTop: 36, color: 'rgba(255,255,255,.9)', lineHeight: 1.3 }}>{env.t('recap.finalSub')}</div>
+        {d.trophy && (
+          <Tile height={300} photo={env.img(d.trophy.photoUrl, 888, 600)} shown={shown(3)}>
+            {label(env.t('recap.finalTrophy'))}
+            <span style={{ fontFamily: env.fonts.display, fontSize: 84, lineHeight: 1, color: YELLOW }}>{sizeOf(d.trophy.lengthCm, d.trophy.weightKg)}</span>
+            <span style={{ fontSize: 34, fontWeight: 800 }}>{d.trophy.species}</span>
+          </Tile>
+        )}
+        {d.sector && (
+          <Tile height={230} shown={shown(4)}>
+            {label(env.t('recap.sectorTitle'))}
+            <div style={{ display: 'flex', alignItems: 'flex-end', height: 72, fontFamily: env.fonts.display, fontSize: 66, lineHeight: 1 }}>{d.sector.territoryId}</div>
+          </Tile>
+        )}
+        {win && (
+          <Tile height={230} shown={shown(5)}>
+            {label(env.t('recap.timeTitle'))}
+            <div style={{ display: 'flex', alignItems: 'flex-end', height: 72, fontFamily: env.fonts.display, fontSize: 66, lineHeight: 1 }}>
+              <span>{hh(win.from)}</span>
+              <span style={{ margin: '0 6px' }}>–</span>
+              <span>{hh(win.to)}</span>
+            </div>
+          </Tile>
+        )}
+        <Tile height={170} width={912} bg="rgba(0,0,0,.18)" shown={shown(6)}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 26, height: 114 }}>
+            {me && <Avatar env={env} url={me.avatarUrl} name={me.name} size={100} ring={YELLOW} />}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {label(env.t('recap.youTitle'))}
+              <span style={{ fontSize: 48, fontWeight: 800 }}>
+                {me && me.catches > 0
+                  ? `${me.catches} ${env.t('recap.youCatches', { count: me.catches })}${me.place ? ` · ${env.t('recap.youPlace', { place: me.place })}` : ''}`
+                  : env.t('recap.youEmpty')}
+              </span>
+            </div>
+          </div>
+        </Tile>
       </div>
+      <div style={{ display: 'flex', fontSize: 40, fontWeight: 800, marginTop: 40, color: 'rgba(255,255,255,.92)', lineHeight: 1.3 }}>{env.t('recap.finalSub')}</div>
     </Frame>
   )
 }
@@ -446,6 +530,12 @@ export function slideImages(id: SlideId, d: WeekRecap): { url: string; w: number
       return d.angler?.avatarUrl ? [{ url: d.angler.avatarUrl, w: 880, h: 880 }] : []
     case 'you':
       return d.me?.avatarUrl ? [{ url: d.me.avatarUrl, w: 300, h: 300 }] : []
+    case 'final':
+      return [
+        ...(d.topSpecies[0]?.photoUrl ? [{ url: d.topSpecies[0].photoUrl, w: 888, h: 600 }] : []),
+        ...(d.trophy ? [{ url: d.trophy.photoUrl, w: 888, h: 600 }] : []),
+        ...(d.me?.avatarUrl ? [{ url: d.me.avatarUrl, w: 200, h: 200 }] : []),
+      ]
     default:
       return []
   }
