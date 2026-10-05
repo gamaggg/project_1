@@ -21,6 +21,8 @@
 --   * при защите 0 чужой улов забирает сектор, защита становится 1;
 --   * щит («Щит», «Прилив») работает как раньше — поверх защиты.
 -- «+25 за захват» одного и того же сектора — одному игроку не чаще раза в 24 ч (фарм перехватами).
+-- Горячий сектор: монеты за вид рыбы ×2, если улов сделан, пока сектор горит (обещано на экране
+-- сектора и в «Вопросах и ответах»; до этой миграции бонуса не было).
 -- В результате ещё attacked (это была атака) и defense (защита сектора после улова).
 
 drop function public.confirm_catch(text, text, text, integer, numeric, text, text);
@@ -62,6 +64,7 @@ declare
   v_def_now int := 0;
   v_def_after int := 0;
   v_attack boolean := false;
+  v_hot boolean := false;
 begin
   if v_uid is null then raise exception 'not authenticated'; end if;
 
@@ -164,9 +167,15 @@ begin
   select coin_value into v_species_coins from public.species s where s.key = p_species;
   if v_species_coins is not null then
     v_species_coins := v_species_coins * v_multiplier;
+    v_hot := exists (select 1 from public.hot_sectors hs where hs.territory_id = p_territory_id and v_at >= hs.starts_at and v_at < hs.ends_at);
+    if v_hot then
+      v_species_coins := v_species_coins * 2;
+    end if;
     update public.profiles p set coins = coins + v_species_coins where p.id = v_uid;
     insert into public.coin_transactions (user_id, amount, reason, label, catch_id)
-    values (v_uid, v_species_coins, 'catch_reward', coalesce((select s2.name from public.species s2 where s2.key = p_species), p_species), v_catch.id);
+    values (v_uid, v_species_coins, 'catch_reward',
+            coalesce((select s2.name from public.species s2 where s2.key = p_species), p_species) || case when v_hot then ' · горячий сектор ×2' else '' end,
+            v_catch.id);
   else
     v_species_coins := 0;
   end if;
