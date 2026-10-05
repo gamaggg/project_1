@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useSpecies, useLastCatchChoices } from '@/lib/supabase/queries'
-import { CATEGORY_LABEL, CATEGORIES_BY_CITY, KIND_LABEL, METHODS, BAITS_BY_CITY, categoryForKind, type SpeciesCategory } from '@/lib/data/species'
+import { CATEGORIES_BY_CITY, KIND_LABEL, METHODS, BAITS_BY_CITY } from '@/lib/data/species'
 import { matchFishialSpecies } from '@/lib/data/fishSpeciesMatch'
 import { cityForSectorId } from '@/lib/data/city'
 import { formatWeightGrams } from '@/lib/format'
@@ -10,6 +10,7 @@ import { HexBadge } from '@/components/app-shell/HexBadge'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { StoryButton } from '@/components/app-shell/StoryButton'
+import { SpeciesPicker } from '@/components/app-shell/SpeciesPicker'
 import { useT } from '@/lib/i18n'
 import type { PendingCatch, Territory } from '@/lib/data/types'
 
@@ -72,9 +73,12 @@ export function ConfirmScreen({
   const categories = CATEGORIES_BY_CITY[city]
   const baits = BAITS_BY_CITY[city]
   const { data: species = [] } = useSpecies()
-  const [category, setCategory] = useState<SpeciesCategory>(categoryForKind(territory.kind, city))
+  // The whole city's fish in one list (see SpeciesPicker).
+  const speciesOptions = species.filter((s) => categories.includes(s.category))
   const [speciesKey, setSpeciesKey] = useState('')
   const [speciesGuessed, setSpeciesGuessed] = useState(false)
+  const [speciesFromLast, setSpeciesFromLast] = useState(false)
+  const [openedAt] = useState(() => Date.now())
   const [lengthCm, setLengthCm] = useState('')
   const [weightG, setWeightG] = useState('')
   const [method, setMethod] = useState('')
@@ -83,19 +87,30 @@ export function ConfirmScreen({
   const touchedSpeciesRef = useRef(false)
 
   // Opens on whatever method/bait this person used last (see
-  // useLastCatchChoices) — most people fish the same way catch after catch.
-  // Once only, and never over a choice they already made while this was
-  // still loading.
+  // useLastCatchChoices) — most people fish the same way catch after catch —
+  // and on the last fish too if that was within the same outing (6 hours):
+  // when it bites, it's the same fish again and again. Once only, and never
+  // over a choice they already made while this was still loading.
   const { data: lastChoices } = useLastCatchChoices()
   // Adjusted during render (not in an effect) the moment the choices arrive,
   // so the form never paints a frame with empty fields first.
   const [prefilled, setPrefilled] = useState(false)
-  if (!prefilled && lastChoices) {
+  if (!prefilled && lastChoices && speciesOptions.length > 0) {
     setPrefilled(true)
     const lastMethod = lastChoices.methods.find((m) => METHODS.includes(m))
     const lastBait = lastChoices.baits.find((b) => baits.includes(b))
     if (lastMethod && !method) setMethod(lastMethod)
     if (lastBait && !bait) setBait(lastBait)
+    const last = lastChoices.lastSpecies
+    if (
+      last &&
+      !speciesKey &&
+      openedAt - new Date(last.caughtAt).getTime() < 6 * 60 * 60 * 1000 &&
+      speciesOptions.some((s) => s.key === last.key)
+    ) {
+      setSpeciesKey(last.key)
+      setSpeciesFromLast(true)
+    }
   }
 
   // The blob URL is an external resource: it's created and revoked by the
@@ -120,13 +135,11 @@ export function ConfirmScreen({
       .then((res) => (res.ok ? res.json() : { candidates: [] }))
       .then((data: { candidates: { scientificName: string; confidence: number }[] }) => {
         if (cancelled || touchedSpeciesRef.current) return
-        const allKeys = new Set(species.map((s) => s.key))
+        const allKeys = new Set(species.filter((s) => categories.includes(s.category)).map((s) => s.key))
         const matchedKey = matchFishialSpecies(data.candidates ?? [], allKeys)
         if (!matchedKey) return
-        const matched = species.find((s) => s.key === matchedKey)
-        if (!matched) return
-        setCategory(matched.category)
         setSpeciesKey(matchedKey)
+        setSpeciesFromLast(false)
         setSpeciesGuessed(true)
       })
       .catch(() => {})
@@ -136,7 +149,6 @@ export function ConfirmScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [capturedPhoto, species.length])
 
-  const speciesOptions = species.filter((s) => s.category === category)
   const caughtSpeciesName = pendingCatch ? species.find((s) => s.key === pendingCatch.species)?.name : undefined
 
   function handleSubmit(e: React.FormEvent) {
@@ -274,47 +286,23 @@ export function ConfirmScreen({
             Территория {territory.id} · {KIND_LABEL[territory.kind]}
           </div>
 
-          <div className="filter-row" style={{ marginTop: 18 }}>
-            {categories.map((c) => (
-              <div
-                key={c}
-                className={`filter-chip${category === c ? ' active' : ''}`}
-                onClick={() => {
-                  touchedSpeciesRef.current = true
-                  setSpeciesGuessed(false)
-                  setCategory(c)
-                  setSpeciesKey('')
-                }}
-              >
-                {CATEGORY_LABEL[c]}
-              </div>
-            ))}
-          </div>
-
-          <div className="auth-field">
+          <div className="auth-field" style={{ marginTop: 18 }}>
             <label htmlFor="species">
               Вид рыбы
               {speciesGuessed && <span className="species-guess-badge">определено по фото</span>}
+              {speciesFromLast && <span className="species-guess-badge">как в прошлый раз</span>}
             </label>
-            <select
-              id="species"
-              required
+            <SpeciesPicker
+              options={speciesOptions}
               value={speciesKey}
-              onChange={(e) => {
+              frequent={lastChoices?.frequentSpecies ?? []}
+              onChange={(key) => {
                 touchedSpeciesRef.current = true
                 setSpeciesGuessed(false)
-                setSpeciesKey(e.target.value)
+                setSpeciesFromLast(false)
+                setSpeciesKey(key)
               }}
-            >
-              <option value="" disabled>
-                Выбери вид рыбы
-              </option>
-              {speciesOptions.map((s) => (
-                <option key={s.key} value={s.key}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           <div style={{ display: 'flex', gap: 12 }}>

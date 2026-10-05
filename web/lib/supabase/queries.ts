@@ -644,12 +644,21 @@ export function useMyCatches() {
   return useCatchesByUser(user?.id ?? null)
 }
 
-export type LastCatchChoices = { methods: string[]; baits: string[] }
+export type LastCatchChoices = {
+  methods: string[]
+  baits: string[]
+  // The newest catch's species and when it was caught — the form reuses it
+  // within the same outing (see ConfirmScreen), when it's often the same fish
+  // again and again.
+  lastSpecies: { key: string; caughtAt: string } | null
+  // Species keys by how often this person caught them, most first.
+  frequentSpecies: string[]
+}
 
-// The caller's recently used methods and baits, newest first, so the catch
-// form can open on what they picked last. Read back from their own catches
-// rather than a separate "preference" stored per device: it follows the
-// account across Telegram and the browser, and needs nothing new saved.
+// The caller's recently used methods, baits and species, newest first, so
+// the catch form can open on what they picked last. Read back from their own
+// catches rather than a separate "preference" stored per device: it follows
+// the account across Telegram and the browser, and needs nothing new saved.
 // Lists (not just the latest value) because baits are per city — the form
 // takes the newest one that exists in the current sector's city list, so a
 // Batumi-only bait doesn't get prefilled on a Moscow catch. Under the
@@ -664,19 +673,26 @@ export function useLastCatchChoices() {
       const supabase = createClient()
       const { data, error } = await supabase
         .from('catches')
-        .select('method, bait')
+        .select('species, method, bait, caught_at')
         .eq('user_id', user!.id)
-        .or('method.not.is.null,bait.not.is.null')
         .order('caught_at', { ascending: false })
-        .limit(30)
+        .limit(60)
       if (error) throw error
       const methods: string[] = []
       const baits: string[] = []
+      const counts = new Map<string, number>()
       for (const row of data) {
         if (row.method && !methods.includes(row.method)) methods.push(row.method)
         if (row.bait && !baits.includes(row.bait)) baits.push(row.bait)
+        if (row.species) counts.set(row.species, (counts.get(row.species) ?? 0) + 1)
       }
-      return { methods, baits }
+      const last = data[0]
+      return {
+        methods,
+        baits,
+        lastSpecies: last?.species ? { key: last.species, caughtAt: last.caught_at } : null,
+        frequentSpecies: [...counts.entries()].sort((x, y) => y[1] - x[1]).map(([key]) => key),
+      }
     },
   })
 }
