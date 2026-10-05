@@ -49,6 +49,14 @@ const ease = (a: number) => 1 - Math.pow(1 - Math.min(1, Math.max(0, a)), 3)
 const count = (v: number, anim: number) => Math.round(v * ease(anim))
 const hh = (h: number) => `${String(h % 24).padStart(2, '0')}:00`
 
+// The i-th item of a list fading up into place: each starts `step` after
+// the previous and takes `span` of the slide's entrance (anim 0 → 1), easing
+// out. At anim = 1 (the shared image) everything is simply in place.
+function reveal(anim: number, i: number, step: number, span: number) {
+  const p = ease((anim - i * step) / span)
+  return { opacity: p, transform: `translateY(${Math.round((1 - p) * 36)}px)` }
+}
+
 function dayRange(env: SlideEnv) {
   const f = new Intl.DateTimeFormat(env.lang, { day: 'numeric', month: 'short' })
   const a = new Date(`${env.data.weekStart}T12:00:00`)
@@ -148,8 +156,8 @@ function Numbers({ env }: { env: SlideEnv }) {
     <Frame id="numbers" env={env}>
       <Title env={env}>{env.t('recap.numbersTitle')}</Title>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 70, marginTop: 'auto', marginBottom: 'auto' }}>
-        {rows.map((r) => (
-          <div key={r.label} style={{ display: 'flex', flexDirection: 'column' }}>
+        {rows.map((r, i) => (
+          <div key={r.label} style={{ display: 'flex', flexDirection: 'column', ...reveal(env.anim, i, 0.16, 0.5) }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 30 }}>
               <span style={{ fontFamily: env.fonts.display, fontSize: 230, lineHeight: 0.9, color: YELLOW }}>{count(r.value, env.anim)}</span>
             </div>
@@ -171,9 +179,8 @@ function Species({ env }: { env: SlideEnv }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 54, marginTop: 'auto', marginBottom: 'auto' }}>
         {d.topSpecies.map((s, i) => {
           const src = s.photoUrl ? env.img(s.photoUrl, 440, 440) : null
-          const shown = env.anim >= i * 0.22
           return (
-            <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 36, opacity: shown ? 1 : 0 }}>
+            <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 36, ...reveal(env.anim, i, 0.18, 0.5) }}>
               <span style={{ display: 'flex', width: 90, fontFamily: env.fonts.display, fontSize: 150, color: YELLOW }}>{i + 1}</span>
               {src ? (
                 // eslint-disable-next-line @next/next/no-img-element -- shared markup for the image renderer
@@ -404,7 +411,7 @@ function You({ env }: { env: SlideEnv }) {
 const TILE_GAP = 24
 const TILE_W = (912 - TILE_GAP) / 2
 
-function Tile({ children, photo, bg, height, width = TILE_W, shown }: { children: ReactNode; photo?: string | null; bg?: string; height: number; width?: number; shown: boolean }) {
+function Tile({ children, photo, bg, height, width = TILE_W, appear }: { children: ReactNode; photo?: string | null; bg?: string; height: number; width?: number; appear: { opacity: number; transform: string } }) {
   return (
     <div
       style={{
@@ -415,7 +422,7 @@ function Tile({ children, photo, bg, height, width = TILE_W, shown }: { children
         borderRadius: 36,
         overflow: 'hidden',
         background: bg ?? 'rgba(255,255,255,.16)',
-        opacity: shown ? 1 : 0,
+        ...appear,
       }}
     >
       {photo && (
@@ -433,7 +440,7 @@ function Final({ env }: { env: SlideEnv }) {
   const top = d.topSpecies[0]
   const win = busiestWindow(d.hours)
   const me = d.me
-  const shown = (i: number) => env.anim >= i * 0.1
+  const shown = (i: number) => reveal(env.anim, i, 0.09, 0.42)
   const label = (text: string) => <span style={{ fontSize: 30, fontWeight: 800, color: 'rgba(255,255,255,.85)' }}>{text}</span>
   const sizeOf = (cm: number | null, kg: number | null) =>
     cm ? `${cm} ${env.lang === 'en' ? 'cm' : env.lang === 'ka' ? 'სმ' : 'см'}` : kg ? `${new Intl.NumberFormat(env.lang, { maximumFractionDigits: 1 }).format(kg)} ${env.lang === 'en' ? 'kg' : env.lang === 'ka' ? 'კგ' : 'кг'}` : ''
@@ -442,35 +449,35 @@ function Final({ env }: { env: SlideEnv }) {
     <Frame id="final" env={env}>
       <div style={{ display: 'flex', fontSize: 72, fontWeight: 800, lineHeight: 1.05, letterSpacing: -1 }}>{env.t('recap.finalTitle', { cityIn: env.t(`recap.cityIn.${env.city}` as TKey) })}</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: TILE_GAP, marginTop: 44 }}>
-        <Tile height={290} bg="rgba(255,225,77,.95)" shown={shown(0)}>
+        <Tile height={290} bg="rgba(255,225,77,.95)" appear={shown(0)}>
           <span style={{ fontFamily: env.fonts.display, fontSize: 150, lineHeight: 0.9, color: '#C2185B' }}>{count(d.catches, env.anim)}</span>
           <span style={{ fontSize: 40, fontWeight: 800, color: '#7A0E3A' }}>{env.t('recap.introBig', { count: d.catches })}</span>
         </Tile>
-        <Tile height={290} shown={shown(1)}>
+        <Tile height={290} appear={shown(1)}>
           <span style={{ fontFamily: env.fonts.display, fontSize: 150, lineHeight: 0.9, color: YELLOW }}>{count(d.anglers, env.anim)}</span>
           <span style={{ fontSize: 40, fontWeight: 800 }}>{env.t('recap.finalAnglers', { count: d.anglers })}</span>
         </Tile>
         {top && (
-          <Tile height={300} photo={top.photoUrl ? env.img(top.photoUrl, 888, 600) : null} shown={shown(2)}>
+          <Tile height={300} photo={top.photoUrl ? env.img(top.photoUrl, 888, 600) : null} appear={shown(2)}>
             {label(env.t('recap.finalTop'))}
             <span style={{ fontSize: 54, fontWeight: 800, lineHeight: 1.05 }}>{top.name}</span>
           </Tile>
         )}
         {d.trophy && (
-          <Tile height={300} photo={env.img(d.trophy.photoUrl, 888, 600)} shown={shown(3)}>
+          <Tile height={300} photo={env.img(d.trophy.photoUrl, 888, 600)} appear={shown(3)}>
             {label(env.t('recap.finalTrophy'))}
             <span style={{ fontFamily: env.fonts.display, fontSize: 84, lineHeight: 1, color: YELLOW }}>{sizeOf(d.trophy.lengthCm, d.trophy.weightKg)}</span>
             <span style={{ fontSize: 34, fontWeight: 800 }}>{d.trophy.species}</span>
           </Tile>
         )}
         {d.sector && (
-          <Tile height={230} shown={shown(4)}>
+          <Tile height={230} appear={shown(4)}>
             {label(env.t('recap.sectorTitle'))}
             <div style={{ display: 'flex', alignItems: 'flex-end', height: 72, fontFamily: env.fonts.display, fontSize: 66, lineHeight: 1 }}>{d.sector.territoryId}</div>
           </Tile>
         )}
         {win && (
-          <Tile height={230} shown={shown(5)}>
+          <Tile height={230} appear={shown(5)}>
             {label(env.t('recap.timeTitle'))}
             <div style={{ display: 'flex', alignItems: 'flex-end', height: 72, fontFamily: env.fonts.display, fontSize: 66, lineHeight: 1 }}>
               <span>{hh(win.from)}</span>
@@ -479,7 +486,7 @@ function Final({ env }: { env: SlideEnv }) {
             </div>
           </Tile>
         )}
-        <Tile height={170} width={912} bg="rgba(0,0,0,.18)" shown={shown(6)}>
+        <Tile height={170} width={912} bg="rgba(0,0,0,.18)" appear={shown(6)}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 26, height: 114 }}>
             {me && <Avatar env={env} url={me.avatarUrl} name={me.name} size={100} ring={YELLOW} />}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
