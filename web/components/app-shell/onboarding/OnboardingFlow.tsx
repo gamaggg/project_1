@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useProfile, useUpdateProfile } from '@/lib/supabase/queries'
 import { WelcomeStep } from '@/components/app-shell/onboarding/WelcomeStep'
@@ -12,6 +12,7 @@ import { CityStep } from '@/components/app-shell/onboarding/CityStep'
 import { NameStep } from '@/components/app-shell/onboarding/NameStep'
 import { ColorStep } from '@/components/app-shell/onboarding/ColorStep'
 import type { CityId } from '@/lib/data/city'
+import { track } from '@/lib/analytics'
 
 // Listed in actual flow order: welcome -> account -> name -> color -> city ->
 // territory-intro -> catch-intro (which flips onboarding_completed and ends
@@ -59,6 +60,10 @@ export function OnboardingFlow({
   // «Создать аккаунт» on a shared screen lands on the Telegram Welcome.
   const [step, setStep] = useState<Step>(viaTelegram && initialStep === 'account' ? 'welcome' : (initialStep ?? 'welcome'))
   const updateProfile = useUpdateProfile()
+  // Where newcomers drop off (super admin's «Статистика»).
+  useEffect(() => {
+    track('onboarding_step', { step })
+  }, [step])
 
   // Resumes an in-progress account exactly once per mount. Deliberately NOT
   // re-run on every myProfile cache update — a successful NameStep save

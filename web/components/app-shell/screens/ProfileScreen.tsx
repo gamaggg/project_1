@@ -386,6 +386,7 @@ export function ProfileScreen({
   onOpenPhoto,
   onOpenReports,
   onOpenAdminAccess,
+  onOpenAdminStats,
   onOpenAdminLog,
   adminLogUnreadCount,
   onOpenAchievements,
@@ -417,6 +418,7 @@ export function ProfileScreen({
   onOpenPhoto: (catchId: number) => void
   onOpenReports: () => void
   onOpenAdminAccess: () => void
+  onOpenAdminStats: () => void
   onOpenAdminLog: () => void
   adminLogUnreadCount: number
   onOpenAchievements: () => void
@@ -784,6 +786,11 @@ export function ProfileScreen({
           <div style={{ marginTop: 12 }}>
             <button className="btn-secondary" onClick={onOpenAdminAccess}>
               Доступы
+            </button>
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <button className="btn-secondary" onClick={onOpenAdminStats}>
+              Статистика
             </button>
           </div>
           <div className="btn-wrap" style={{ marginTop: 12 }}>

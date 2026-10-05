@@ -2547,6 +2547,51 @@ export function useCityPulse(city: CityId, enabled: boolean) {
   })
 }
 
+export type AppStats = {
+  from: string
+  daily: { day: string; active: number; signedIn: number; newUsers: number; catches: number }[]
+  wau: number
+  mau: number
+  funnel: { registered: number; onboarded: number; camera: number; firstCatch: number; secondDay: number }
+  retention: { cohort: number; d1: number; w1: number }
+  screens: { screen: string; views: number; people: number }[]
+  onboarding: { step: string; devices: number }[]
+}
+
+// Super admin's «Статистика» (get_app_stats checks the role itself).
+export function useAppStats(days: number, enabled: boolean) {
+  return useQuery({
+    queryKey: ['app-stats', days],
+    enabled,
+    staleTime: 60_000,
+    queryFn: async (): Promise<AppStats> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_app_stats', { p_days: days, p_tz: 'Asia/Tbilisi' })
+      if (error) throw error
+      const d = data as {
+        from: string
+        daily: { day: string; active: number; signed_in: number; new_users: number; catches: number }[]
+        wau: number
+        mau: number
+        funnel: { registered: number; onboarded: number; camera: number; first_catch: number; second_day: number }
+        retention: { cohort: number; d1: number; w1: number }
+        screens: { screen: string; views: number; people: number }[]
+        onboarding: { step: string; devices: number }[]
+      }
+      return {
+        from: d.from,
+        daily: d.daily.map((x) => ({ day: x.day, active: x.active, signedIn: x.signed_in, newUsers: x.new_users, catches: x.catches })),
+        wau: d.wau,
+        mau: d.mau,
+        funnel: { registered: d.funnel.registered, onboarded: d.funnel.onboarded, camera: d.funnel.camera, firstCatch: d.funnel.first_catch, secondDay: d.funnel.second_day },
+        retention: d.retention,
+        screens: d.screens,
+        onboarding: d.onboarding,
+      }
+    },
+  })
+}
+
 export type CatchConditions = {
   airTemp: number | null
   waterTemp: number | null

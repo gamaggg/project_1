@@ -31,6 +31,7 @@ import { useWeekTopModal } from '@/lib/weekTopModal'
 import { useClanBattleCeremony } from '@/lib/clanBattleCeremony'
 import { hasVisibleTypedText, useAppUpdate } from '@/lib/appUpdate'
 import { insideTelegram } from '@/lib/openExternal'
+import { track } from '@/lib/analytics'
 import { inviteLink, parseGuestShare, refParam, rememberClanInvite, rememberRef, takeRememberedRef, type ClanInvite } from '@/lib/guestShare'
 import { GuestShareScreen } from '@/components/app-shell/GuestShareScreen'
 import { formatCooldown, type SpeciesEntry } from '@/lib/format'
@@ -75,6 +76,7 @@ import { TerritoryScreen } from '@/components/app-shell/screens/TerritoryScreen'
 import { TerritoriesListScreen, type Mode as RatingMode } from '@/components/app-shell/screens/TerritoriesListScreen'
 import { ShopScreen } from '@/components/app-shell/screens/ShopScreen'
 import { ChallengesScreen } from '@/components/app-shell/screens/ChallengesScreen'
+import { AdminStatsScreen } from '@/components/app-shell/screens/AdminStatsScreen'
 import { ClanListScreen } from '@/components/app-shell/screens/ClanListScreen'
 import { ClanScreen } from '@/components/app-shell/screens/ClanScreen'
 import { MyCatchesScreen } from '@/components/app-shell/screens/MyCatchesScreen'
@@ -110,6 +112,7 @@ export type ScreenId =
   | 'screen-admin-reports'
   | 'screen-admin-access'
   | 'screen-admin-log'
+  | 'screen-admin-stats'
   | 'screen-achievements'
   | 'screen-achievement-detail'
   | 'screen-last-week'
@@ -145,6 +148,7 @@ type StackEntry =
   | { screen: 'screen-admin-reports' }
   | { screen: 'screen-admin-access' }
   | { screen: 'screen-admin-log' }
+  | { screen: 'screen-admin-stats' }
   | { screen: 'screen-achievements'; userId: string }
   | { screen: 'screen-achievement-detail'; userId: string; icon: Achievement['icon'] }
   | { screen: 'screen-last-week' }
@@ -195,6 +199,11 @@ export function FishZoneApp() {
   const { show: showWeekTop, entry: weekTopEntry, dismiss: dismissWeekTop } = useWeekTopModal(city)
   const clanCeremony = useClanBattleCeremony(city, myProfile?.clanId ?? null)
   useRealtimeSync()
+  // One «app_open» per launch, signed in or not (the funnel starts before
+  // an account exists).
+  useEffect(() => {
+    track('app_open', { tg: insideTelegram() })
+  }, [])
   // Your clan's chat, live for the whole session — keeps the unread badges
   // on the clan and profile cards (and an open chat) current.
   useClanChatLive(myProfile?.clanId ?? null)
@@ -398,6 +407,14 @@ export function FishZoneApp() {
   const currentScreen: ScreenId = topEntry.screen
   const territoriesInitialFilter = topEntry.screen === 'screen-territories' ? topEntry.initialFilter : undefined
   const territoriesInitialMode = topEntry.screen === 'screen-territories' ? topEntry.initialMode : undefined
+  // Usage stats (lib/analytics): which screens get opened, and the camera
+  // as its own event — the newcomer funnel counts it.
+  useEffect(() => {
+    if (!user) return
+    track('screen', { id: currentScreen }, city)
+    if (currentScreen === 'screen-camera') track('camera_open', undefined, city)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per screen change, not per city/user refresh
+  }, [currentScreen, !!user])
   const catchesTerritoryId = topEntry.screen === 'screen-catches' ? topEntry.territoryId : undefined
   const catchesUserId = topEntry.screen === 'screen-catches' && !catchesTerritoryId ? (topEntry.userId ?? user?.id) : undefined
   // The trophy-card celebration is full-bleed and edge-to-edge on purpose —
@@ -787,6 +804,7 @@ export function FishZoneApp() {
       setCatchClanSupport(result.clanSupport)
       setCatchClanShare(result.clanSupport && !!t && (t.coHolders.some((h) => h.isMe) || t.coHolders.length < 3))
       setPendingCatch(payload)
+      track('catch_saved', { territory: catchTerritoryId }, city)
       setConfirmStep('success')
       hapticBuildUp()
     } catch (err) {
@@ -820,6 +838,7 @@ export function FishZoneApp() {
   // Real clipboard write, not a fake toast — the link round-trips through the
   // deep-link effect below, which opens screen-territory straight from it.
   async function shareTerritory(territoryId: string) {
+    track('share', { what: 'territory' }, city)
     const url = `${window.location.origin}${window.location.pathname}?territory=${territoryId}${refParam(myProfile?.publicId)}`
     try {
       await navigator.clipboard.writeText(url)
@@ -854,6 +873,7 @@ export function FishZoneApp() {
     }
   }
   async function shareProfile(publicId: string, text: string) {
+    track('share', { what: 'profile' }, city)
     const url = `${window.location.origin}${window.location.pathname}?user=${publicId}${refParam(myProfile?.publicId)}`
     try {
       await navigator.clipboard.writeText(`${text}\n${url}`)
@@ -881,6 +901,7 @@ export function FishZoneApp() {
   // the public, stable identifier (no short-id resolve step needed), so the
   // ?catch= deep-link effect below can open it straight away.
   async function shareCatch(catchId: number, text: string) {
+    track('share', { what: 'catch' }, city)
     const url = `${window.location.origin}${window.location.pathname}?catch=${catchId}${refParam(myProfile?.publicId)}`
     try {
       await navigator.clipboard.writeText(`${text}\n${url}`)
@@ -1400,6 +1421,7 @@ export function FishZoneApp() {
             onOpenPhoto={openCatchPhoto}
             onOpenReports={() => push({ screen: 'screen-admin-reports' })}
             onOpenAdminAccess={() => push({ screen: 'screen-admin-access' })}
+            onOpenAdminStats={() => push({ screen: 'screen-admin-stats' })}
             onOpenAdminLog={() => {
               markAdminLogRead()
               push({ screen: 'screen-admin-log' })
@@ -1472,6 +1494,9 @@ export function FishZoneApp() {
         </Screen>
         <Screen id="screen-admin-access" current={currentScreen} onBack={pop}>
           <AdminAccessScreen onBack={pop} onOpenUser={openUserProfile} onEditAccess={setEditingAdminAccessId} />
+        </Screen>
+        <Screen id="screen-admin-stats" current={currentScreen} onBack={pop}>
+          {isSuperAdmin && <AdminStatsScreen onBack={pop} active={currentScreen === 'screen-admin-stats'} />}
         </Screen>
         <Screen id="screen-admin-log" current={currentScreen} onBack={pop}>
           <AdminActionsScreen title="Последние действия" onBack={pop} onOpenUser={openUserProfile} onOpenTerritory={openTerritory} />
