@@ -3304,23 +3304,16 @@ button.race-lane{cursor:pointer;}
 .recap-cta{min-width:130px; height:48px; padding:0 20px; border:2px solid rgba(255,255,255,.8); border-radius:999px; background:rgba(255,255,255,.12); color:#fff; font:inherit; font-size:16px; font-weight:800; cursor:pointer;}
 @media (prefers-reduced-motion: reduce){.recap-player, .recap-slide-in{animation:none;}}
 
-/* Barely-there motion behind the recap slides (app only). */
+/* Barely-there motion behind the recap slides (app only): soft pools of
+   light, each drifting and breathing at its own pace. */
 .recap-decor{position:absolute; top:0; left:0; width:1080px; height:1920px; overflow:hidden; pointer-events:none;}
-.recap-blob{position:absolute; border-radius:50%;}
-.recap-blob.a{width:900px; height:900px; top:-160px; left:-320px; background:radial-gradient(circle, rgba(255,255,255,.17), rgba(255,255,255,0) 65%); animation:recap-drift-a 14s ease-in-out infinite alternate;}
-.recap-blob.b{width:1000px; height:1000px; bottom:-280px; right:-360px; background:radial-gradient(circle, rgba(255,225,77,.15), rgba(255,225,77,0) 65%); animation:recap-drift-b 17s ease-in-out infinite alternate;}
-@keyframes recap-drift-a{to{transform:translate(240px,200px) scale(1.15);}}
-@keyframes recap-drift-b{to{transform:translate(-220px,-280px) scale(1.1);}}
-.recap-bubble{position:absolute; bottom:-60px; border-radius:50%; border:3px solid rgba(255,255,255,.24); background:rgba(255,255,255,.07); animation:recap-rise linear infinite; will-change:transform;}
-@keyframes recap-rise{
-  0%{transform:translate(0,0); opacity:0;}
-  10%{opacity:1;}
-  35%{transform:translate(26px,-700px);}
-  65%{transform:translate(-22px,-1350px);}
-  90%{opacity:.8;}
-  100%{transform:translate(10px,-2050px); opacity:0;}
-}
-.recap-wave{position:absolute; left:0; bottom:-40px; opacity:.07; animation:recap-wave 22s linear infinite;}
-.recap-wave.w2{bottom:-70px; opacity:.05; animation-duration:31s; animation-direction:reverse;}
-@keyframes recap-wave{from{transform:translateX(0);} to{transform:translateX(-1080px);}}
+.recap-glow{position:absolute; border-radius:50%; will-change:transform, opacity;}
+.recap-glow.g1{width:880px; height:880px; top:-180px; left:-300px; background:radial-gradient(circle, rgba(255,255,255,.14), rgba(255,255,255,0) 66%); animation:recap-glow-1 19s ease-in-out infinite alternate;}
+.recap-glow.g2{width:980px; height:980px; bottom:-300px; right:-340px; background:radial-gradient(circle, rgba(255,225,77,.12), rgba(255,225,77,0) 66%); animation:recap-glow-2 23s ease-in-out infinite alternate;}
+.recap-glow.g3{width:640px; height:640px; top:640px; right:-260px; background:radial-gradient(circle, rgba(255,140,200,.11), rgba(255,140,200,0) 66%); animation:recap-glow-3 17s ease-in-out infinite alternate;}
+.recap-glow.g4{width:560px; height:560px; top:1080px; left:-220px; background:radial-gradient(circle, rgba(140,220,255,.1), rgba(140,220,255,0) 66%); animation:recap-glow-4 27s ease-in-out infinite alternate;}
+@keyframes recap-glow-1{0%{transform:translate(0,0) scale(1); opacity:.8;} 50%{opacity:1;} 100%{transform:translate(180px,160px) scale(1.12); opacity:.75;}}
+@keyframes recap-glow-2{0%{transform:translate(0,0) scale(1); opacity:1;} 50%{opacity:.7;} 100%{transform:translate(-160px,-220px) scale(1.08); opacity:.95;}}
+@keyframes recap-glow-3{0%{transform:translate(0,0) scale(.95); opacity:.6;} 100%{transform:translate(-200px,120px) scale(1.15); opacity:1;}}
+@keyframes recap-glow-4{0%{transform:translate(0,0) scale(1); opacity:.9;} 100%{transform:translate(220px,-160px) scale(1.2); opacity:.6;}}
 @media (prefers-reduced-motion: reduce){.recap-decor{display:none;}}
