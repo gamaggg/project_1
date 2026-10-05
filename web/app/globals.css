@@ -3143,7 +3143,7 @@ button.race-lane{cursor:pointer;}
 .atlas-category-name{font-size:16px; font-weight:800; flex:1; min-width:0;}
 .atlas-category-count{font-size:13px; font-weight:800; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
 .atlas-category-bar{height:5px; margin:8px 0 12px; border-radius:3px; background:#EFECE6; overflow:hidden;}
-.atlas-category-bar i{display:block; height:100%; border-radius:3px; transition:width .6s var(--ease-out);}
+.atlas-category-bar i{display:block; width:100%; height:100%; border-radius:3px; transform-origin:left center; transition:transform .6s var(--ease-out);}
 .atlas-grid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px;}
 .atlas-tile{
   position:relative; display:flex; flex-direction:column; align-items:center; gap:6px; min-height:112px;

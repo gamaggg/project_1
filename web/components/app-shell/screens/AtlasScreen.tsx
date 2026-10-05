@@ -142,7 +142,7 @@ function AtlasCategory({
         <span className="atlas-category-count">{t('atlas.progress', { mine: caught, total: entries.length })}</span>
       </div>
       <div className="atlas-category-bar">
-        <i style={{ width: `${(caught / entries.length) * 100}%`, background: color }} />
+        <i style={{ transform: `scaleX(${caught / entries.length})`, background: color }} />
       </div>
       <div className="atlas-grid">
         {entries.map((e, i) => {
