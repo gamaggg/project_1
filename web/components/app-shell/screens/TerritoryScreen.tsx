@@ -8,6 +8,7 @@ import { useI18n, useT } from '@/lib/i18n'
 import { formatWeekdayTime } from '@/lib/i18n/format'
 import { useNow } from '@/lib/useNow'
 import { SectorInsightsCard, SectorLegendRow } from '@/components/app-shell/SectorInsights'
+import { SectorDefenseRow } from '@/components/app-shell/SectorDefense'
 import { SectorForecastCard } from '@/components/app-shell/BiteForecast'
 import { RouteModal } from '@/components/app-shell/RouteModal'
 import { HOT_FLAME_SVG } from '@/lib/map/hotFlame'
@@ -289,6 +290,8 @@ export function TerritoryScreen({
   const isSuperAdmin = useIsSuperAdmin()
   const { data: catches = [], isPending: catchesPending } = useCatchesByTerritory(territory.id)
   const { data: ownerProfile } = useProfile(territory.ownerId ?? null)
+  const { user } = useAuth()
+  const { data: myProfile } = useProfile(user?.id ?? null)
   const recent = catches.slice(0, 3)
 
   return (
@@ -358,6 +361,7 @@ export function TerritoryScreen({
           {sectorCapturer(territory) && (
             <SectorOwnerCard capturer={sectorCapturer(territory)!} coHolders={sectorOtherHolders(territory)} onOpenUser={onOpenUser} />
           )}
+          <SectorDefenseRow territory={territory} myClanId={myProfile?.clanId ?? null} />
           <SectorLegendRow territory={territory} onOpenUser={onOpenUser} />
           {holdsThis && (
             <div className="sector-income">

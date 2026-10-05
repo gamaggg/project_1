@@ -47,6 +47,11 @@ export type Territory = {
   // «Легенда сектора»: whoever caught the most here in the last 90 days (at
   // least 10; territories_with_stats.legend_id). Null when nobody qualifies.
   legendId: string | null
+  // «Защита сектора» 0–3 right now (territories_with_stats.defense — already
+  // worn down by a day per day without the holder's catches). An outsider's
+  // catch takes 1 off; only at 0 does the next one take the sector. 0 for a
+  // free sector.
+  defense: number
 }
 
 export type TerritoryCoHolder = {

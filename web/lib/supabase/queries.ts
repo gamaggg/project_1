@@ -67,7 +67,7 @@ export function useTerritories() {
     queryFn: async (): Promise<Territory[]> => {
       const supabase = createClient()
       const columns =
-        'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted, shield_until, owner_equipped_skin, owner_clan_id, owner_clan_name, owner_clan_crest, co_holders, capturer_id, hot_until, legend_id'
+        'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted, shield_until, owner_equipped_skin, owner_clan_id, owner_clan_name, owner_clan_crest, co_holders, capturer_id, hot_until, legend_id, defense'
       // PostgREST caps a single response at 1000 rows by default and stays
       // silent about it (no error, just a truncated array) — the table
       // crossed that count once admin-added sectors piled up, which is how
@@ -128,6 +128,7 @@ export function useTerritories() {
           capturerId: row?.capturer_id ?? null,
           hotUntil: row?.hot_until ?? null,
           legendId: row?.legend_id ?? null,
+          defense: row?.defense ?? 0,
         }
       }
 
@@ -710,7 +711,7 @@ export function useLastCatchChoices() {
 // user would multiply writes for no gain — so they're fetched globally and
 // merged back in at the right chronological spot.
 // Game notifications drawn as one generic row in «Активность».
-const GAME_EVENT_KINDS = new Set(['hot_sector_week', 'hot_sector_won', 'legend_gained', 'legend_lost', 'bite_forecast', 'daily_reward_reminder'])
+const GAME_EVENT_KINDS = new Set(['hot_sector_week', 'hot_sector_won', 'legend_gained', 'legend_lost', 'bite_forecast', 'daily_reward_reminder', 'sector_attacked'])
 
 export function useActivity() {
   const { user } = useAuth()
@@ -2082,7 +2083,17 @@ export function useConfirmCatch() {
         })
         .single()
       if (error) throw error
-      return { speciesCoins: data.species_coins, captureCoins: data.capture_coins, clanSupport: !!data.clan_support }
+      return {
+        speciesCoins: data.species_coins,
+        captureCoins: data.capture_coins,
+        clanSupport: !!data.clan_support,
+        // «Защита сектора»: an outsider's catch on a defended sector wears
+        // the defense down instead of taking it. Both are absent from a
+        // server that predates the release migration — then it's a capture,
+        // as before.
+        attacked: !!data.attacked,
+        defense: typeof data.defense === 'number' ? data.defense : null,
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['territories'] })

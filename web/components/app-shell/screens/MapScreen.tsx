@@ -10,6 +10,7 @@ import { formatWhen } from '@/lib/format'
 import { getCurrentCoords, useGeolocationPermission } from '@/lib/geolocation'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
+import { DefenseShields } from '@/components/app-shell/SectorDefense'
 import { ForecastChip } from '@/components/app-shell/BiteForecast'
 import { RecapBanner } from '@/components/recap/WeekRecap'
 import { NearestFreeCard, NearestFreeIcon, findNearestFree, type NearestFreeState } from '@/components/app-shell/NearestFree'
@@ -549,9 +550,16 @@ export const MapScreen = forwardRef<
                   )}
                   <div style={{ marginLeft: 'auto', flex: '0 0 auto' }}>{statusBadge(t.status, myTerritoryColor, t.coHolders.some((h) => h.isMe))}</div>
                 </div>
-                <div style={{ display: 'flex', gap: 18, fontSize: 13, color: 'var(--ink-soft)', fontWeight: 600 }}>
-                  <span>Уловов {t.catchCount}</span>
-                  <span>{t.lastCatchAt ? 'Последний улов: ' + formatWhen(t.lastCatchAt) : 'Пока нет уловов'}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 18, fontSize: 13, color: 'var(--ink-soft)', fontWeight: 600 }}>
+                  <span style={{ flex: '0 0 auto' }}>Уловов {t.catchCount}</span>
+                  <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {t.lastCatchAt ? 'Последний улов: ' + formatWhen(t.lastCatchAt) : 'Пока нет уловов'}
+                  </span>
+                  {t.status !== 'free' && (
+                    <span style={{ marginLeft: 'auto', flex: '0 0 auto', display: 'flex' }}>
+                      <DefenseShields value={t.defense} />
+                    </span>
+                  )}
                 </div>
                 <button className="btn-primary" style={{ marginTop: 'auto' }} onClick={() => onOpenTerritory(t.id)}>
                   Подробнее о секторе

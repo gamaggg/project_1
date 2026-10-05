@@ -395,6 +395,11 @@ export function FishZoneApp() {
   // A clan-mate's sector with a free part (up to 4 holders) — the catch
   // joined its share (see territory_shares), not just supported it.
   const [catchClanShare, setCatchClanShare] = useState(false)
+  // «Защита сектора»: the catch only wore the sector's defense down (its
+  // defense after the catch), or null when it wasn't an attack.
+  const [catchAttackDefense, setCatchAttackDefense] = useState<number | null>(null)
+  // Took the sector but the +25 was already paid for it today.
+  const [catchCaptureNoCoins, setCatchCaptureNoCoins] = useState(false)
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null)
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [photoStatus, setPhotoStatus] = useState<PhotoStatus>('uploading')
@@ -855,7 +860,10 @@ export function FishZoneApp() {
     const payload: PendingCatch = { territoryId: catchTerritoryId, photoUrl, ...form }
     try {
       const result = await confirmCatchMutation.mutateAsync(payload)
-      setWasFree(t?.status !== 'mine' && !result.clanSupport)
+      const captured = t?.status !== 'mine' && !result.clanSupport && !result.attacked
+      setWasFree(captured)
+      setCatchAttackDefense(result.attacked ? (result.defense ?? 0) : null)
+      setCatchCaptureNoCoins(captured && result.defense !== null && result.captureCoins === 0)
       setCatchSpeciesCoins(result.speciesCoins)
       setCatchCaptureCoins(result.captureCoins)
       setCatchClanSupport(result.clanSupport)
@@ -1440,6 +1448,8 @@ export function FishZoneApp() {
               captureCoins={catchCaptureCoins}
               clanSupport={catchClanSupport}
               clanShare={catchClanShare}
+              attackDefense={catchAttackDefense}
+              captureNoCoins={catchCaptureNoCoins}
               step={confirmStep}
               pending={confirmCatchMutation.isPending}
               capturedPhoto={capturedPhoto}

@@ -247,6 +247,18 @@ function renderMessage(notification: NotificationRef): Message | null {
         buttonLabel: 'Открыть сектор',
         url: `${SITE_URL}/?territory=${encodeURIComponent(notification.territory_id)}`,
       }
+    case 'sector_attacked': {
+      if (!notification.territory_id) return null
+      const defense = Number(notification.payload?.defense ?? 0)
+      return {
+        text:
+          defense > 0
+            ? `⚔️ ${actorName} атакует твой сектор ${notification.territory_id} — защита ${defense} из 3. Поймай там рыбу, чтобы укрепить защиту.`
+            : `⚔️ ${actorName} снял защиту твоего сектора ${notification.territory_id} — следующий чужой улов заберёт его. Поймай там рыбу, чтобы удержать.`,
+        buttonLabel: 'Открыть сектор',
+        url: `${SITE_URL}/?territory=${encodeURIComponent(notification.territory_id)}`,
+      }
+    }
     case 'bite_forecast': {
       const score = notification.payload?.score as number | undefined
       const city = notification.payload?.city === 'moscow' ? 'Москве' : 'Батуми'

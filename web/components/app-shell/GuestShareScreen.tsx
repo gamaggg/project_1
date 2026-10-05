@@ -177,6 +177,7 @@ function TerritoryBody({ t, onLocked }: { t: TerritoryPreview; onLocked: (what: 
         capturerId: null,
         hotUntil: null,
         legendId: null,
+        defense: 0,
       }
     : null
 

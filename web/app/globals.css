@@ -3474,3 +3474,20 @@ button.race-lane{cursor:pointer;}
 .species-empty{padding:24px 2px; color:var(--ink-faint); font-size:14px; text-align:center;}
 /* A sensor still is being taken (CameraScreen, Android) — a beat, not a freeze. */
 .shutter.busy{opacity:.55; pointer-events:none; transition:opacity .15s var(--ease);}
+
+/* «Защита сектора» (SectorDefense.tsx): three shields, filled up to the
+   sector's defense — the «Под щитом» badge's teal, outline when empty. */
+.defense-shields{display:inline-flex; gap:2px; align-items:center;}
+.defense-shields svg{display:block; fill:none; stroke:#9BBDB8; stroke-width:2; stroke-linejoin:round;}
+.defense-shields svg.on{fill:#12A190; stroke:#0E8074;}
+.sector-defense{display:flex; align-items:center; gap:10px; margin-top:12px; padding:10px 12px; border-radius:14px; background:#EAF7F4; border:1px solid #C9EAE3;}
+.sector-defense.open{background:var(--bg); border-color:var(--line);}
+.sector-defense-text{display:flex; flex-direction:column; min-width:0; gap:1px;}
+.sector-defense-text b{font-size:13.5px; font-weight:800; color:#0B6A60;}
+.sector-defense.open .sector-defense-text b{color:var(--ink-soft);}
+.sector-defense-text span{font-size:12.5px; line-height:1.35; color:var(--ink-soft); font-weight:600;}
+/* After an attack (ConfirmScreen): the sector's shields left, on the dark trophy card. */
+.catch-trophy-attack{display:flex; align-items:center; justify-content:center; gap:8px; margin:-10px auto 16px; max-width:300px; text-align:left; font-size:13.5px; font-weight:700; line-height:1.35; color:rgba(255,255,255,.88); animation:comment-in .5s var(--ease-out) 1.35s both;}
+.catch-trophy-attack .defense-shields svg{stroke:rgba(255,255,255,.45);}
+.catch-trophy-attack .defense-shields svg.on{fill:#2BC4B0; stroke:#8BE6DA;}
+@media (prefers-reduced-motion: reduce){.catch-trophy-attack{animation:none;}}

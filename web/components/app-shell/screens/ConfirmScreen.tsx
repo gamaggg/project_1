@@ -11,6 +11,7 @@ import { BackButton } from '@/components/app-shell/BackButton'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { StoryButton } from '@/components/app-shell/StoryButton'
 import { SpeciesPicker } from '@/components/app-shell/SpeciesPicker'
+import { DefenseShields } from '@/components/app-shell/SectorDefense'
 import { useT } from '@/lib/i18n'
 import type { PendingCatch, Territory } from '@/lib/data/types'
 
@@ -35,6 +36,8 @@ export function ConfirmScreen({
   captureCoins,
   clanSupport,
   clanShare,
+  attackDefense = null,
+  captureNoCoins = false,
   step,
   pending,
   capturedPhoto,
@@ -58,6 +61,11 @@ export function ConfirmScreen({
   captureCoins: number
   clanSupport?: boolean
   clanShare?: boolean
+  // «Защита сектора»: the sector's defense after this catch wore it down
+  // (an attack, not a capture), or null.
+  attackDefense?: number | null
+  // Took the sector, but its +25 was already paid today (once a day).
+  captureNoCoins?: boolean
   step: 'form' | 'success'
   pending: boolean
   capturedPhoto: Blob
@@ -199,7 +207,16 @@ export function ConfirmScreen({
             </div>
           </div>
         </div>
-        <div className="catch-trophy-title">{wasFree ? 'Теперь это твоя территория' : 'Улов зафиксирован'}</div>
+        <div className="catch-trophy-title">
+          {attackDefense !== null ? t('defense.attackTitle') : wasFree ? 'Теперь это твоя территория' : 'Улов зафиксирован'}
+        </div>
+        {attackDefense !== null && (
+          <div className="catch-trophy-attack">
+            <DefenseShields value={attackDefense} size={18} />
+            <span>{attackDefense > 0 ? t('defense.attackAfter', { value: attackDefense, count: attackDefense + 1 }) : t('defense.attackOpened')}</span>
+          </div>
+        )}
+        {captureNoCoins && <div className="catch-trophy-support">{t('defense.captureOncePerDay')}</div>}
         {clanSupport && (
           <div className="catch-trophy-support">
             {clanShare

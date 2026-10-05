@@ -289,6 +289,28 @@ export const en: Dict = {
     expired: 'An offline catch wasn’t sent — more than a day has passed',
     rejected: 'An offline catch wasn’t accepted',
   },
+  defense: {
+    title: 'Defense {value} of 3',
+    label: 'Sector defense: {value} of 3',
+    holder: 'Each catch of yours here adds +1 defense, up to 3. Without catches it drops by 1 a day',
+    clan: "Your clan's sector — your catch here adds +1 defense too",
+    attackLeft: {
+      one: 'To take the sector you need {count} more catch: each outside catch removes 1 defense',
+      few: 'To take the sector you need {count} more catches: each outside catch removes 1 defense',
+      many: 'To take the sector you need {count} more catches: each outside catch removes 1 defense',
+      other: 'To take the sector you need {count} more catches: each outside catch removes 1 defense',
+    },
+    open: 'No defense — the next catch takes the sector',
+    attackTitle: 'Sector attacked',
+    attackAfter: {
+      one: 'Defense {value} of 3 — {count} more catch to take it',
+      few: 'Defense {value} of 3 — {count} more catches to take it',
+      many: 'Defense {value} of 3 — {count} more catches to take it',
+      other: 'Defense {value} of 3 — {count} more catches to take it',
+    },
+    attackOpened: 'Defense down — the next catch takes the sector',
+    captureOncePerDay: 'Capture coins for this sector — once a day',
+  },
   activity: {
     hotWeek: 'This week’s hot sectors: {sectors}',
     hotWeekSub: '×2 coins per catch until Sunday · hold one for +100 and a medal',
@@ -302,6 +324,8 @@ export const en: Dict = {
     forecastSub: 'Best time {from}–{to}',
     reward: 'Your daily reward is waiting: day {day} of 10',
     rewardSub: '+{coins} coins — collect before midnight',
+    sectorAttacked: '{name} is attacking your sector {id}',
+    sectorAttackedSub: 'Defense {value} of 3 — catch a fish here to reinforce it',
     someone: 'Another angler',
   },
   territory: {

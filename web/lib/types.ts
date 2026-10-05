@@ -1482,6 +1482,7 @@ export type Database = {
           capturer_id: string | null
           hot_until: string | null
           legend_id: string | null
+          defense: number | null
           owner_clan_crest: Json | null
           owner_clan_id: number | null
           owner_clan_name: string | null
@@ -1818,7 +1819,7 @@ export type Database = {
           p_territory_id: string
           p_weight_kg?: number
         }
-        Returns: { species_coins: number; capture_coins: number; clan_support: boolean; late?: boolean }[]
+        Returns: { species_coins: number; capture_coins: number; clan_support: boolean; late?: boolean; attacked?: boolean; defense?: number }[]
       }
       get_admin_permissions: {
         Args: { p_user_id: string }

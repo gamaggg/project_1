@@ -415,7 +415,7 @@ export function ActivityScreen({
               const ev = a.gameEvent
               const p = ev.payload
               const n = (k: string) => Number(p[k] ?? 0)
-              let tone: 'accent' | 'gold' | 'blue' | 'green' = 'accent'
+              let tone: 'accent' | 'gold' | 'blue' | 'green' | 'red' = 'accent'
               let icon = FEED_ICONS.flame
               let title = ''
               let sub: string | null = null
@@ -444,6 +444,12 @@ export function ActivityScreen({
                 title = n('score') >= 5 ? tr('activity.forecastGreat', { score: n('score') }) : tr('activity.forecastGood', { score: n('score') })
                 sub = p.from && p.to ? tr('activity.forecastSub', { from: String(p.from), to: String(p.to) }) : null
                 action = onOpenMap
+              } else if (ev.kind === 'sector_attacked') {
+                tone = 'red'
+                icon = FEED_ICONS.shield
+                title = tr('activity.sectorAttacked', { name: a.who || tr('activity.someone'), id: a.territoryId ?? '' })
+                sub = tr('activity.sectorAttackedSub', { value: n('defense') })
+                if (a.territoryId) action = () => onOpenTerritory(a.territoryId!)
               } else if (ev.kind === 'daily_reward_reminder') {
                 tone = 'green'
                 icon = FEED_ICONS.gift
