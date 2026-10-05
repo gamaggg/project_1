@@ -45,7 +45,7 @@ export type Territory = {
   // ×3 Казна; territories_with_stats.hot_until). Null when it isn't.
   hotUntil: string | null
   // «Легенда сектора»: whoever caught the most here in the last 90 days (at
-  // least 3; territories_with_stats.legend_id). Null when nobody qualifies.
+  // least 10; territories_with_stats.legend_id). Null when nobody qualifies.
   legendId: string | null
 }
 

@@ -93,8 +93,8 @@ export const en: Dict = {
     you: 'That’s you',
     mineHere: { one: 'You have {count} catch here', other: 'You have {count} catches here' },
     toLegend: { one: '{count} more catch to become the legend', other: '{count} more catches to become the legend' },
-    none: 'No legend yet — catch 3 fish here within 90 days and it’s you',
-    noneProgress: 'You have {mine} of 3 catches here',
+    none: 'No legend yet — catch 10 fish here within 90 days and it’s you',
+    noneProgress: 'You have {mine} of 10 catches here',
     profileCount: { one: 'Legend of {count} sector', other: 'Legend of {count} sectors' },
   },
   forecast: {

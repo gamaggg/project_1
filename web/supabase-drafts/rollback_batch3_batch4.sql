@@ -15,5 +15,5 @@ drop table if exists public.app_events;
 drop function if exists public.get_sector_insights(text);
 drop function if exists public._sector_legend(text);
 
--- legend_90_days.sql: вернуть 30 дней — тот же скрипт с '90 days' → '30 days'
+-- legend_90d_min10.sql: вернуть 30 дней и 3 улова — тот же скрипт с '90 days' → '30 days' и >= 10 → >= 3
 -- (md5 представления после применения сверить заново).
