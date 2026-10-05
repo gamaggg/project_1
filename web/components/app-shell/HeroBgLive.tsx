@@ -7,6 +7,7 @@ import { CirclesBackground } from '@/components/app-shell/CirclesBackground'
 import { HalftoneBackground } from '@/components/app-shell/HalftoneBackground'
 import { BubblesBackground } from '@/components/app-shell/BubblesBackground'
 import { FirefliesBackground } from '@/components/app-shell/FirefliesBackground'
+import { PremiumBackground } from '@/components/app-shell/PremiumBackgrounds'
 
 // Single dispatch point for every animated hero_bg preset's live component —
 // picks by `kind` (heroBackgrounds.ts), so the 4 call sites that show a
@@ -28,6 +29,11 @@ export function HeroBgLive({ bg, variant }: { bg: HeroBackground; variant: 'hero
       return <BubblesBackground color={bg.bubbleColor} />
     case 'fireflies':
       return <FirefliesBackground color={bg.fireflyColor} />
+    case 'deep':
+    case 'moonpath':
+    case 'school':
+    case 'golddust':
+      return <PremiumBackground kind={bg.kind} />
     default:
       if (variant === 'swatch') return <WavyBackground waveWidth={13} blur={3} colors={bg.waveColors} backgroundFill={bg.waveBackgroundFill} />
       if (variant === 'preview') return <WavyBackground waveWidth={22} blur={5} colors={bg.waveColors} backgroundFill={bg.waveBackgroundFill} />

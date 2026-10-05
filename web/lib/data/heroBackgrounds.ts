@@ -1,3 +1,5 @@
+import type { PremiumBackgroundKind } from '@/components/app-shell/PremiumBackgrounds'
+
 // Presets for the profile hero panel's background (see ChangeColorModal) —
 // same "swatch, not free-form picker" approach as territoryColors.ts, and for
 // the same reason: free colors would risk unreadable hero text, so every
@@ -32,7 +34,7 @@ export type HeroBackground = {
   css: string
   accentRgb: string
   animated?: boolean
-  kind?: 'waves' | 'aurora' | 'circles' | 'halftone' | 'bubbles' | 'fireflies'
+  kind?: 'waves' | 'aurora' | 'circles' | 'halftone' | 'bubbles' | 'fireflies' | PremiumBackgroundKind
   waveColors?: string[]
   waveBackgroundFill?: string
   auroraGradient?: string
@@ -283,6 +285,45 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
     animated: true,
     kind: 'halftone',
     dotColor: '#FC5200',
+  },
+  // Premium (800+) — whole little scenes, each painted on one canvas with
+  // its own fixed palette (PremiumBackgrounds.tsx); base/css are the same
+  // ground as the scene, for the first paint and the picker swatch.
+  {
+    id: 'deepwater',
+    label: 'Глубина',
+    base: 'linear-gradient(180deg,#0E4A5C,#082A38 55%,#03121A)',
+    css: 'linear-gradient(180deg,#0E4A5C,#082A38 55%,#03121A)',
+    accentRgb: '56,189,248',
+    animated: true,
+    kind: 'deep',
+  },
+  {
+    id: 'moonpath',
+    label: 'Лунная дорожка',
+    base: 'linear-gradient(180deg,#070B26,#1B2560 60%,#0C1440 60%,#03061A)',
+    css: 'linear-gradient(180deg,#070B26,#1B2560 60%,#0C1440 60%,#03061A)',
+    accentRgb: '200,210,255',
+    animated: true,
+    kind: 'moonpath',
+  },
+  {
+    id: 'school',
+    label: 'Косяк',
+    base: 'linear-gradient(180deg,#0F4D4A,#04191A)',
+    css: 'linear-gradient(180deg,#0F4D4A,#04191A)',
+    accentRgb: '45,212,191',
+    animated: true,
+    kind: 'school',
+  },
+  {
+    id: 'golddust',
+    label: 'Золотая пыль',
+    base: 'linear-gradient(160deg,#2C1F08,#0D0803)',
+    css: 'linear-gradient(160deg,#2C1F08,#0D0803)',
+    accentRgb: '255,200,60',
+    animated: true,
+    kind: 'golddust',
   },
 ]
 

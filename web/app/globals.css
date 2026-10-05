@@ -586,7 +586,7 @@ body{
   box-shadow:0 6px 20px rgba(252,82,0,0.16);
 }
 .shop-card-legendary::before{
-  content:'✦✦'; position:absolute; top:9px; right:11px; font-size:12px; letter-spacing:1px; color:var(--accent);
+  content:'✦✦'; position:absolute; top:9px; right:11px; z-index:1; font-size:12px; letter-spacing:1px; color:var(--accent);
 }
 .shop-price-btn{display:inline-flex; align-items:center; justify-content:center; gap:5px;}
 .shop-card-preview{width:76px; height:76px; position:relative; margin-top:4px;}

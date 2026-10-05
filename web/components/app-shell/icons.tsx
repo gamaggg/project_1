@@ -90,11 +90,13 @@ export const SHOP_TAB_ICONS = {
       <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" />
     </svg>
   ),
+  // Cherries — the classic slot-machine symbol.
   slots: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="5" width="18" height="14" rx="3" />
-      <path d="M9 5v14M15 5v14" />
-      <path d="M5.5 12h1M11.5 12h1M17.5 12h1" strokeWidth="2.6" />
+      <circle cx="6.8" cy="17.2" r="3.6" />
+      <circle cx="16.8" cy="16.2" r="3.6" />
+      <path d="M6.8 13.6C7.4 9.2 10 6 14 4.2M16.8 12.6C16.6 9.4 15.8 6.6 14 4.2" />
+      <path d="M14 4.2c1.6-1.9 4.5-2.3 6.6-.9-1.6 1.9-4.5 2.3-6.6.9z" />
     </svg>
   ),
 }

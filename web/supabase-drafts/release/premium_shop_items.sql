@@ -1,5 +1,6 @@
 -- РЕЛИЗ: дорогие вещи в магазине (800–2000 монет).
 -- Вид у каждой — в коде: рамки в lib/data/shopItems.ts (анимация — AvatarFrameRing + .avatar-frame-fx),
+-- фоны в lib/data/heroBackgrounds.ts (сцены — PremiumBackgrounds.tsx),
 -- стили имени в lib/data/nameStyles.ts (.name-fx-*), скины — public/skins/<id>.svg.
 -- Только в релиз: в нынешнем клиенте этих id нет — рамка показалась бы пустой, имя обычным, скин не нарисовался бы.
 -- После применения удалить lib/data/premiumShopPreview.ts и его вызов в ShopScreen.
@@ -10,6 +11,10 @@ insert into public.shop_items (id, category, name, price, sort_order) values
   ('frame_comet',     'avatar_frame',   'Рамка «Комета»',          1200, 18),
   ('frame_holo',      'avatar_frame',   'Рамка «Голограмма»',      1500, 19),
   ('frame_royal',     'avatar_frame',   'Рамка «Королевская»',     2000, 20),
+  ('deepwater',       'hero_bg',        'Глубина',                 800,  23),
+  ('moonpath',        'hero_bg',        'Лунная дорожка',          1000, 24),
+  ('school',          'hero_bg',        'Косяк',                   1500, 25),
+  ('golddust',        'hero_bg',        'Золотая пыль',            2000, 26),
   ('name_aurora',     'name_style',     'Имя «Северное сияние»',   800,  7),
   ('name_lava',       'name_style',     'Имя «Лава»',              1000, 8),
   ('name_holo',       'name_style',     'Имя «Голограмма»',        1300, 9),
