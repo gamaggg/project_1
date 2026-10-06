@@ -13,7 +13,10 @@ export type AvatarFrame = {
   // Premium (800+) frames move: the ring turns, a soft copy of it glows
   // behind, and each has its own extra — see AvatarFrameRing.tsx and
   // .avatar-frame-fx in globals.css.
-  fx?: 'aurora' | 'flame' | 'comet' | 'holo' | 'royal'
+  fx?: 'aurora' | 'flame' | 'comet' | 'holo' | 'royal' | 'katran' | 'som'
+  // The jackpot frames (never for sale — only the slots' 0,1% jackpot, each
+  // city its own): the city's jackpot fish from the reels swims round the rim.
+  swimmer?: string
 }
 
 export const AVATAR_FRAMES: AvatarFrame[] = [
@@ -79,7 +82,26 @@ export const AVATAR_FRAMES: AvatarFrame[] = [
     ring: 'conic-gradient(from 0deg, #8B6508, #FFD700, #FFF6C8, #E8B923, #8B6508, #C99A1A, #FFE680, #FFFBE6, #B8860B, #8B6508)',
     fx: 'royal',
   },
+  {
+    // Batumi's jackpot: steel-grey like the dogfish, white spots on the rim.
+    id: 'frame_katran',
+    label: 'Рамка «Катран»',
+    ring: 'conic-gradient(from 0deg, #2B313C, #56606F, #B7C2CF, #56606F, #2B313C, #3B4250, #8792A2, #E9EEF3, #3B4250, #2B313C)',
+    fx: 'katran',
+    swimmer: '/slots/katran.webp',
+  },
+  {
+    // Moscow's jackpot: the river at night — catfish violet into weedy green, bubbles rising.
+    id: 'frame_som',
+    label: 'Рамка «Сом»',
+    ring: 'conic-gradient(from 0deg, #26213F, #4B4A7A, #9C9AD0, #4B4A7A, #26213F, #2F4A3C, #6E8F5A, #C8D9A6, #2F4A3C, #26213F)',
+    fx: 'som',
+    swimmer: '/slots/som.webp',
+  },
 ]
+
+// Which jackpot frame a city's slots give (spin_slots on the server agrees).
+export const JACKPOT_FRAME = { batumi: 'frame_katran', moscow: 'frame_som' } as const
 
 export function resolveAvatarFrame(id: string | null | undefined): AvatarFrame | null {
   if (!id) return null

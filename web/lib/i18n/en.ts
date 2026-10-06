@@ -11,6 +11,8 @@ export const en: Dict = {
   slots: {
     title: 'Angler’s slots',
     spinsToday: 'Spins today: {left} of {total}',
+    gift: 'Gift spins: {count}',
+    giftHint: 'A gift from RANGE — they don’t expire at midnight and are used after the regular ones',
     spin: 'Spin for free',
     spinning: 'Spinning…',
     noSpins: 'No spins left today',
@@ -41,6 +43,11 @@ export const en: Dict = {
       jackpot: 'Katran frame',
       shield: 'Shield in reserve',
       double: '×2 coins for a day',
+    },
+    moscow: {
+      result: { lufar: 'Three pike! +{coins} coins', jackpot: 'Jackpot! The Catfish frame is yours' },
+      rows: { jackpot: '3 catfish', lufar: '3 pike', triple: '3 perch or 3 bream' },
+      rewards: { jackpot: 'Catfish frame' },
     },
     symbols: {
       stavrida: 'Horse mackerel',

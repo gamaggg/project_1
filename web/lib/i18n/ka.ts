@@ -13,6 +13,8 @@ export const ka: Dict = {
   slots: {
     title: 'მეთევზის სლოტები',
     spinsToday: 'დღევანდელი დატრიალებები: {left} / {total}',
+    gift: 'საჩუქრად მიღებული დატრიალებები: {count}',
+    giftHint: 'საჩუქარი RANGE-ისგან — დღის ბოლოს არ იწვება და ჩვეულებრივების შემდეგ გამოიყენება',
     spin: 'დაატრიალე უფასოდ',
     spinning: 'ტრიალებს…',
     noSpins: 'დღევანდელი დატრიალებები ამოიწურა',
@@ -43,6 +45,11 @@ export const ka: Dict = {
       jackpot: 'ჩარჩო „კატრანი"',
       shield: 'ფარი მარაგში',
       double: '×2 მონეტა 24 საათით',
+    },
+    moscow: {
+      result: { lufar: 'სამი ქარიყლაპია! +{coins} მონეტა', jackpot: 'ჯეკპოტი! ჩარჩო „ლოქო“ შენია' },
+      rows: { jackpot: '3 ლოქო', lufar: '3 ქარიყლაპია', triple: '3 ქორჭილა ან 3 კაპარჭინა' },
+      rewards: { jackpot: 'ჩარჩო „ლოქო“' },
     },
     symbols: {
       stavrida: 'სტავრიდა',

@@ -1522,6 +1522,8 @@ export type ShopItem = {
   category: 'hero_bg' | 'avatar_frame' | 'name_style' | 'territory_skin'
   name: string
   price: number
+  // false = a prize, not for sale (the slots' jackpot frames); buy_shop_item refuses it.
+  purchasable: boolean
 }
 
 // The catalog rarely changes (a handful of rows, hand-curated) — cached like
@@ -1531,9 +1533,9 @@ export function useShopItems() {
     queryKey: ['shop-items'],
     queryFn: async (): Promise<ShopItem[]> => {
       const supabase = createClient()
-      const { data, error } = await supabase.from('shop_items').select('id, category, name, price').order('category').order('sort_order')
+      const { data, error } = await supabase.from('shop_items').select('id, category, name, price, purchasable').order('category').order('sort_order')
       if (error) throw error
-      return data.map((r) => ({ id: r.id, category: r.category as ShopItem['category'], name: r.name, price: r.price }))
+      return data.map((r) => ({ id: r.id, category: r.category as ShopItem['category'], name: r.name, price: r.price, purchasable: r.purchasable }))
     },
     staleTime: Infinity,
     gcTime: Infinity,
@@ -2464,8 +2466,10 @@ export function useActivateBuff() {
 
 export type SlotSymbol = 'stavrida' | 'skorpena' | 'lufar' | 'katran' | 'hook' | 'hex'
 export type SlotPrize = 'jackpot' | 'jackpot_coins' | 'shield' | 'double' | 'lufar' | 'triple' | 'pair' | 'none'
-export type SlotState = { total: number; used: number; left: number; nextReset: string; freeShields: number }
-export type SlotSpinResult = { reels: SlotSymbol[]; prize: SlotPrize; coins: number; balance: number; left: number; total: number; freeShields: number }
+// left counts the gift spins too (`bonus` of them) — a super admin's present
+// that doesn't burn at midnight and is spent after the day's own spins.
+export type SlotState = { total: number; used: number; left: number; bonus: number; nextReset: string; freeShields: number }
+export type SlotSpinResult = { reels: SlotSymbol[]; prize: SlotPrize; coins: number; balance: number; left: number; total: number; bonus: number; freeShields: number }
 
 // Free spins (the Shop's «Слоты» tab, which replaced ДЭП): one a day plus
 // one per catch, at most 4 — get_slot_state counts them in the player's own
@@ -2479,8 +2483,8 @@ export function useSlotState() {
       const supabase = createClient()
       const { data, error } = await supabase.rpc('get_slot_state')
       if (error) throw error
-      const d = data as { total: number; used: number; left: number; next_reset: string; free_shields: number }
-      return { total: d.total, used: d.used, left: d.left, nextReset: d.next_reset, freeShields: d.free_shields }
+      const d = data as { total: number; used: number; left: number; bonus?: number; next_reset: string; free_shields: number }
+      return { total: d.total, used: d.used, left: d.left, bonus: d.bonus ?? 0, nextReset: d.next_reset, freeShields: d.free_shields }
     },
   })
 }
@@ -2494,8 +2498,44 @@ export function useSpinSlots() {
       const supabase = createClient()
       const { data, error } = await supabase.rpc('spin_slots')
       if (error) throw error
-      const d = data as { reels: SlotSymbol[]; prize: SlotPrize; coins: number; balance: number; left: number; total: number; free_shields: number }
-      return { reels: d.reels, prize: d.prize, coins: d.coins, balance: d.balance, left: d.left, total: d.total, freeShields: d.free_shields }
+      const d = data as { reels: SlotSymbol[]; prize: SlotPrize; coins: number; balance: number; left: number; total: number; bonus?: number; free_shields: number }
+      return { reels: d.reels, prize: d.prize, coins: d.coins, balance: d.balance, left: d.left, total: d.total, bonus: d.bonus ?? 0, freeShields: d.free_shields }
+    },
+  })
+}
+
+export type AdminSlotSpins = { dailyLeft: number; dailyTotal: number; bonus: number }
+
+// Super admin: a player's spins right now — today's own and the gift ones.
+export function useAdminSlotSpins(userId: string | null) {
+  return useQuery({
+    queryKey: ['admin-slot-spins', userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<AdminSlotSpins> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('admin_slot_spins', { p_user_id: userId! })
+      if (error) throw error
+      const d = data as { daily_left: number; daily_total: number; bonus: number }
+      return { dailyLeft: d.daily_left, dailyTotal: d.daily_total, bonus: d.bonus }
+    },
+  })
+}
+
+// Super admin: gift spins to anyone, themselves included (negative takes
+// them back, never below 0; at most 100 either way per call).
+export function useAdminGrantSpins() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ userId, amount }: { userId: string; amount: number }) => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('admin_grant_spins', { p_user_id: userId, p_amount: amount })
+      if (error) throw error
+      return data as number
+    },
+    onSuccess: (_data, { userId }) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-slot-spins', userId] })
+      queryClient.invalidateQueries({ queryKey: ['slot-state'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
     },
   })
 }

@@ -401,6 +401,7 @@ export function ProfileScreen({
   onPostAnnouncement,
   onEditPublicId,
   onGrantCoins,
+  onGrantSpins,
   onOpenShop,
   onOpenChallenges,
   onOpenClans,
@@ -435,6 +436,7 @@ export function ProfileScreen({
   onPostAnnouncement: () => void
   onEditPublicId: (id: string) => void
   onGrantCoins: (id: string) => void
+  onGrantSpins: (id: string) => void
   onOpenShop: () => void
   onOpenChallenges: () => void
   onOpenClans: () => void
@@ -818,6 +820,9 @@ export function ProfileScreen({
             <div style={{ marginTop: 12 }}>
               <button className="btn-secondary shop-price-btn" onClick={() => onGrantCoins(user.id)}>
                 Монеты: <CoinIcon size={16} /> {profile?.coins ?? 0}
+              </button>
+              <button className="btn-secondary" style={{ marginTop: 8 }} onClick={() => onGrantSpins(user.id)}>
+                Прокруты слотов
               </button>
             </div>
           )}

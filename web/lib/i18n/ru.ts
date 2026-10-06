@@ -12,6 +12,8 @@ export const ru = {
   slots: {
     title: 'Рыбацкие слоты',
     spinsToday: 'Прокрутов сегодня: {left} из {total}',
+    gift: 'Подарочные прокруты: {count}',
+    giftHint: 'Подарок от RANGE — не сгорают в конце дня, тратятся после обычных',
     spin: 'Крутить бесплатно',
     spinning: 'Крутим…',
     noSpins: 'Прокруты на сегодня закончились',
@@ -42,6 +44,11 @@ export const ru = {
       jackpot: 'Рамка «Катран»',
       shield: 'Щит в запас',
       double: '×2 монеты на сутки',
+    },
+    moscow: {
+      result: { lufar: 'Три щуки! +{coins} монет', jackpot: 'Джекпот! Рамка «Сом» твоя' },
+      rows: { jackpot: '3 сома', lufar: '3 щуки', triple: '3 окуня или 3 леща' },
+      rewards: { jackpot: 'Рамка «Сом»' },
     },
     symbols: {
       stavrida: 'Ставрида',

@@ -53,6 +53,7 @@ export const BulkAddTerritoriesModal = lazyComponent(() =>
 export const DeleteUserModal = lazyComponent(() => import('@/components/app-shell/screens/DeleteUserModal').then((m) => m.DeleteUserModal))
 export const ChangeUserIdModal = lazyComponent(() => import('@/components/app-shell/screens/ChangeUserIdModal').then((m) => m.ChangeUserIdModal))
 export const GrantCoinsModal = lazyComponent(() => import('@/components/app-shell/screens/GrantCoinsModal').then((m) => m.GrantCoinsModal))
+export const GrantSpinsModal = lazyComponent(() => import('@/components/app-shell/screens/GrantSpinsModal').then((m) => m.GrantSpinsModal))
 export const PostAnnouncementModal = lazyComponent(() =>
   import('@/components/app-shell/screens/PostAnnouncementModal').then((m) => m.PostAnnouncementModal),
 )
@@ -85,6 +86,7 @@ const adminOnly = [
   DeleteUserModal,
   ChangeUserIdModal,
   GrantCoinsModal,
+  GrantSpinsModal,
   PostAnnouncementModal,
   MoveCatchSheet,
   EditCatchSheet,

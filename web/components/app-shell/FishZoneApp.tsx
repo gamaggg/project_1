@@ -68,6 +68,7 @@ import {
   DeleteUserModal,
   ChangeUserIdModal,
   GrantCoinsModal,
+  GrantSpinsModal,
   AchievementUnlockedModal,
   AdminReportsScreen,
   AdminActionsScreen,
@@ -379,6 +380,7 @@ export function FishZoneApp() {
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
   const [editingPublicIdUserId, setEditingPublicIdUserId] = useState<string | null>(null)
   const [grantingCoinsUserId, setGrantingCoinsUserId] = useState<string | null>(null)
+  const [grantingSpinsUserId, setGrantingSpinsUserId] = useState<string | null>(null)
   const [viewingLikersFor, setViewingLikersFor] = useState<ProfileSummary[] | null>(null)
   const [viewingCommentsFor, setViewingCommentsFor] = useState<{ catchId: number; highlightId: number | null } | null>(null)
   const [viewingFollowersFor, setViewingFollowersFor] = useState<ProfileSummary[] | null>(null)
@@ -387,6 +389,7 @@ export function FishZoneApp() {
   const [postingAnnouncement, setPostingAnnouncement] = useState(false)
   const { data: editingPublicIdProfile } = useProfile(editingPublicIdUserId)
   const { data: grantingCoinsProfile } = useProfile(grantingCoinsUserId)
+  const { data: grantingSpinsProfile } = useProfile(grantingSpinsUserId)
   const { data: deletingUserProfile } = useProfile(deletingUserId)
   const [pendingCatch, setPendingCatch] = useState<PendingCatch | null>(null)
   const [confirmStep, setConfirmStep] = useState<'form' | 'success'>('form')
@@ -1538,6 +1541,7 @@ export function FishZoneApp() {
             onPostAnnouncement={() => setPostingAnnouncement(true)}
             onEditPublicId={setEditingPublicIdUserId}
             onGrantCoins={setGrantingCoinsUserId}
+            onGrantSpins={setGrantingSpinsUserId}
             onOpenShop={openShop}
             onOpenChallenges={openChallenges}
             onOpenClans={openClans}
@@ -1561,6 +1565,7 @@ export function FishZoneApp() {
               onEditAdminAccess={setEditingAdminAccessId}
               onEditPublicId={setEditingPublicIdUserId}
               onGrantCoins={setGrantingCoinsUserId}
+              onGrantSpins={setGrantingSpinsUserId}
               onShareProfile={shareProfile}
               onOpenFollowers={setViewingFollowersFor}
               onOpenAvatarPreview={setViewingAvatarUrl}
@@ -1750,6 +1755,13 @@ export function FishZoneApp() {
           displayName={grantingCoinsProfile.displayName}
           currentCoins={grantingCoinsProfile.coins ?? 0}
           onClose={() => setGrantingCoinsUserId(null)}
+        />
+      )}
+      {grantingSpinsUserId !== null && grantingSpinsProfile && (
+        <GrantSpinsModal
+          userId={grantingSpinsUserId}
+          displayName={grantingSpinsProfile.displayName}
+          onClose={() => setGrantingSpinsUserId(null)}
         />
       )}
       {viewingCommentsFor !== null && (

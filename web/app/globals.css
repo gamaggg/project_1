@@ -591,6 +591,20 @@ body{
   padding:0 7px; border-radius:999px; background:var(--surface); border:1.5px solid var(--accent);
   font-size:10px; line-height:15px; letter-spacing:1px; color:var(--accent);
 }
+/* A slots jackpot prize (Катран / Сом): gold border and a «Джекпот» tag in
+   the legendary tag's place — not for sale, so no price on it. */
+.shop-card-jackpot{
+  border-color:transparent;
+  background:linear-gradient(var(--surface),var(--surface)) padding-box,
+             linear-gradient(140deg,#FFE7A0,#E2B13C 38%,#9C6A12 66%,#FFD45C) border-box;
+  box-shadow:0 6px 20px rgba(226,177,60,0.24);
+}
+.shop-card-jackpot::before{
+  content:attr(data-tag); position:absolute; top:-9px; right:14px; z-index:1;
+  padding:0 8px; border-radius:999px; background:#FFF8E6; border:1.5px solid #E2B13C;
+  font-size:10px; font-weight:800; line-height:15px; letter-spacing:.06em; text-transform:uppercase; color:#8A5A00;
+}
+.shop-card-jackpot-note{font-size:11.5px; font-weight:700; color:#8A6A2A; margin-top:-4px; white-space:nowrap;}
 .shop-price-btn{display:inline-flex; align-items:center; justify-content:center; gap:5px;}
 .shop-card-preview{width:76px; height:76px; position:relative; margin-top:4px;}
 .shop-card-avatar{position:relative; width:76px; height:76px;}
@@ -695,7 +709,7 @@ body{
 /* ---- Слоты (Shop tab that replaced ДЭП, see SlotsScreen.tsx) ----
    Reel motion adapted from StealthWorm's loader on Uiverse (MIT):
    https://uiverse.io/StealthWorm/chatty-zebra-11 */
-.slots{--slot-cell:84px; display:flex; flex-direction:column; padding:16px 0 8px;}
+.slots{--slot-cell:92px; display:flex; flex-direction:column; padding:16px 0 8px;}
 .slots-title{font-family:var(--font-display),'Manrope',sans-serif; font-weight:700; font-size:24px; text-transform:uppercase; letter-spacing:.02em; text-align:center; margin-bottom:12px;}
 .slots-machine{position:relative; background:#17181B; border-radius:24px; padding:14px; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06), 0 12px 28px rgba(23,24,27,.22); transition:box-shadow .3s var(--ease);}
 .slots-machine.won{box-shadow:inset 0 0 0 2px var(--accent), 0 0 0 5px rgba(252,82,0,.16), 0 12px 28px rgba(23,24,27,.22); animation:slots-won .5s var(--ease-out);}
@@ -707,22 +721,13 @@ body{
 .slot-strip{transition-property:transform; transition-timing-function:cubic-bezier(.18,.84,.3,1.06);}
 .slot-strip.moving{animation-name:slot-spin-blur; animation-timing-function:linear; will-change:transform, filter;}
 .slot-cell{height:var(--slot-cell); display:flex; align-items:center; justify-content:center;}
+.slot-symbol{display:block; max-width:calc(100% - 10px); object-fit:contain; user-select:none; -webkit-user-drag:none; pointer-events:none;}
+.slot-symbol-hex{transform:scale(.88);}
 .slots-payline{position:absolute; left:-6px; right:-6px; top:50%; height:2px; margin-top:-1px; border-radius:2px; background:var(--accent); opacity:.5; pointer-events:none; z-index:2;}
-/* Idle "tease" while spins are left — the loader's own keyframes: a cell and
-   a half out under a 10px blur, then back. */
-.slot-tease.tease-0{animation:slot-tease-down 3s ease-in-out 3s infinite;}
-.slot-tease.tease-1{animation:slot-tease-down 4s ease-in-out 3s infinite;}
-.slot-tease.tease-2{animation:slot-tease-up 4s ease-in-out 3s infinite;}
-@keyframes slot-tease-up{
-  0%{transform:translateY(0); filter:blur(0);}
-  30%{transform:translateY(calc(var(--slot-cell) * -1.5)); filter:blur(10px);}
-  60%,100%{transform:translateY(0); filter:blur(0);}
-}
-@keyframes slot-tease-down{
-  0%{transform:translateY(0); filter:blur(0);}
-  30%{transform:translateY(calc(var(--slot-cell) * 1.5)); filter:blur(10px);}
-  60%,100%{transform:translateY(0); filter:blur(0);}
-}
+/* Idle drift (SlotsScreen): a reel rolls a few cells on to a new symbol
+   under a lighter blur than a spin. */
+.slot-strip.moving.drift{animation-name:slot-drift-blur;}
+@keyframes slot-drift-blur{0%{filter:blur(0);} 25%{filter:blur(4px);} 100%{filter:blur(0);}}
 @keyframes slot-spin-blur{
   0%{filter:blur(0);}
   12%{filter:blur(10px);}
@@ -736,16 +741,18 @@ body{
 @keyframes slots-pop{0%{transform:scale(.6); opacity:0;} 60%{transform:scale(1.06); opacity:1;} 100%{transform:scale(1);}}
 .slots-count{text-align:center; font-size:13px; font-weight:700; color:var(--ink); margin-top:10px;}
 .slots-hint{text-align:center; font-size:12.5px; line-height:1.35; color:var(--ink-soft); margin-top:2px;}
+.slots-gift{display:flex; flex-direction:column; gap:2px; margin-top:12px; padding:10px 12px; border-radius:12px; border:1px solid rgba(226,177,60,.45); background:#FFF8E6; text-align:center;}
+.slots-gift b{font-size:13.5px; font-weight:800; color:#8A5A00;}
+.slots-gift span{font-size:12px; line-height:1.35; color:#8A6A2A;}
 .slots-shields{margin-top:12px; padding:10px 12px; border-radius:12px; background:var(--accent-soft); color:#9A3412; font-size:13px; font-weight:600; line-height:1.35; text-align:center;}
 .slots-paytable{margin-top:18px; padding:4px 14px; border:1px solid var(--line); border-radius:16px; background:#fff;}
 .slots-paytable-head{display:flex; justify-content:space-between; padding:9px 0 7px; font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint);}
 .slots-pay-row{display:flex; align-items:center; gap:12px; padding:9px 0; border-top:1px solid var(--line);}
-.slots-pay-symbols{display:flex; gap:2px; flex:0 0 auto;}
+.slots-pay-symbols{display:flex; align-items:center; gap:3px; flex:0 0 auto;}
 .slots-pay-label{flex:1; min-width:0; font-size:13.5px; font-weight:700; line-height:1.25;}
 .slots-pay-reward{display:flex; align-items:center; gap:4px; margin-top:2px; font-size:12.5px; font-weight:600; color:var(--ink-soft);}
 .slots-pay-chance{font-size:13px; font-weight:700; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
 @media (prefers-reduced-motion: reduce){
-  .slot-tease{animation:none !important;}
   .slot-strip{transition:none !important; animation:none !important;}
   .slots-result-text,.slots-machine.won{animation:none;}
 }
@@ -1676,8 +1683,57 @@ body{
   0%,100%{transform:scale(.3) rotate(0deg); opacity:.3;}
   50%{transform:scale(1) rotate(45deg); opacity:1;}
 }
+/* Jackpot frames (Катран / Сом — slots only, never sold): a gold rim round
+   the turning ring and a gold halo instead of the ring's own colours. */
+.avatar-frame-fx.fx-katran{animation-duration:16s;}
+.avatar-frame-fx.fx-som{animation-duration:20s; animation-direction:reverse;}
+.avatar-frame-fx.fx-katran::after,
+.avatar-frame-fx.fx-som::after{box-shadow:0 0 0 1.5px #E2B13C, 0 0 0 3px rgba(226,177,60,.28);}
+.avatar-frame-fx.fx-katran::before,
+.avatar-frame-fx.fx-som::before{background:conic-gradient(#E2B13C, #FFE7A0, #B8860B, #FFD45C, #E2B13C); inset:-4px; filter:blur(8px); animation-duration:2.8s;}
+/* The katran's white spots on the rim — riding the 5px band (≈47.5% of the
+   ring from its centre), twinkling in turn. */
+.frame-spot{
+  position:absolute; left:50%; top:50%; width:4%; aspect-ratio:1; margin:-2% 0 0 -2%;
+  transform:rotate(var(--a)) translateY(-1190%); z-index:1;
+}
+.frame-spot::before{
+  content:''; position:absolute; inset:0; border-radius:50%; background:#fff; box-shadow:0 0 4px rgba(255,255,255,.9);
+  animation:spotTwinkle 2.4s var(--ease-in-out) var(--d) infinite;
+}
+@keyframes spotTwinkle{0%,100%{transform:scale(.5); opacity:.45;} 50%{transform:scale(1); opacity:1;}}
+/* The catfish's bubbles: born on the rim, rising off it and popping. */
+.frame-bubble{
+  position:absolute; left:50%; top:50%; width:9%; aspect-ratio:1; margin:-4.5% 0 0 -4.5%;
+  transform:rotate(var(--a)) translateY(-520%); z-index:1;
+}
+.frame-bubble::before{
+  content:''; position:absolute; inset:0; border-radius:50%;
+  border:1.5px solid rgba(220,236,255,.9); background:radial-gradient(circle at 35% 35%, rgba(255,255,255,.75) 0 18%, rgba(255,255,255,0) 30%);
+  animation:bubbleRise 3.3s var(--ease-out) var(--d) infinite;
+}
+@keyframes bubbleRise{
+  0%{transform:translateY(0) scale(.3); opacity:0;}
+  20%{opacity:1;}
+  80%{opacity:.9;}
+  100%{transform:translateY(-110%) scale(1); opacity:0;}
+}
+/* The fish itself: same box as the ring, above the photo, swimming round
+   anticlockwise — the art faces left, so at the top it heads left. Its
+   middle rides the rim band (2.5px in from the ring's outer edge). */
+.avatar-frame-ring ~ .frame-swim{
+  position:absolute; inset:-5px; z-index:2; pointer-events:none;
+  animation:frameSwim 12s linear infinite; will-change:transform;
+}
+.frame-swim img{
+  position:absolute; left:50%; top:2.5px; width:46%; height:auto; transform:translate(-50%, -50%);
+  filter:drop-shadow(0 1.5px 2px rgba(10,14,30,.45)); user-select:none; -webkit-user-drag:none;
+}
+.frame-swim.swim-som{animation-duration:15s;}
+.frame-swim.swim-som img{width:42%;}
+@keyframes frameSwim{to{transform:rotate(-360deg);}}
 @media (prefers-reduced-motion: reduce){
-  .avatar-frame-fx,.avatar-frame-fx::before,.frame-sparkle::before{animation:none;}
+  .avatar-frame-fx,.avatar-frame-fx::before,.frame-sparkle::before,.frame-spot::before,.frame-bubble::before,.avatar-frame-ring ~ .frame-swim{animation:none;}
 }
 /* Premium name styles (nameStyles.ts): the colours drift through the
    letters (flow — the gradient repeats once across a double-width image,

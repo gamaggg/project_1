@@ -10,14 +10,13 @@ import { StyledName } from '@/components/app-shell/StyledName'
 import { SHOP_TAB_ICONS } from '@/components/app-shell/icons'
 import { usePurchaseFlow } from '@/components/app-shell/usePurchaseFlow'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { AVATAR_FRAMES } from '@/lib/data/shopItems'
+import { AVATAR_FRAMES, JACKPOT_FRAME } from '@/lib/data/shopItems'
 import { withPremiumPreview } from '@/lib/data/premiumShopPreview'
 import { ShopTryOn } from '@/components/app-shell/ShopTryOn'
 import { AvatarFrameRing } from '@/components/app-shell/AvatarFrameRing'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { HERO_BACKGROUNDS, PREMIUM_HERO_BG_IDS } from '@/lib/data/heroBackgrounds'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
-import { NAME_STYLES } from '@/lib/data/nameStyles'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { SkinPreview } from '@/components/app-shell/SkinPreview'
 import { SlotsScreen } from '@/components/app-shell/screens/SlotsScreen'
@@ -101,7 +100,11 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
     setRefunding(null)
   }
 
-  const frames = items.filter((i) => i.category === 'avatar_frame')
+  // A jackpot frame isn't sold — it's shown only in its own city (as what the
+  // slots there can give) or to whoever already won it.
+  const frames = items.filter(
+    (i) => i.category === 'avatar_frame' && (i.purchasable || owned.has(i.id) || i.id === JACKPOT_FRAME[city])
+  )
   // The plain colour presets (Огонь/Океан/Лес/…) aren't in PREMIUM_HERO_BG_IDS
   // — they've always been free, picked straight from ChangeColorModal with no
   // shop_items row needed at all. Listing them here too just gives everyone
@@ -181,7 +184,12 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
                 onUnequip={() => equipItem.mutate({ itemId: null, category: 'avatar_frame' })}
                 busy={buyItem.isPending || equipItem.isPending}
                 onTryOn={() => setTryOn(item)}
-                onRefund={isSuperAdmin && owned.has(item.id) ? () => setRefunding({ kind: 'item', id: item.id, name: item.name, price: item.price }) : undefined}
+                onGoSlots={() => setCategory('slots')}
+                onRefund={
+                  isSuperAdmin && owned.has(item.id) && item.purchasable
+                    ? () => setRefunding({ kind: 'item', id: item.id, name: item.name, price: item.price })
+                    : undefined
+                }
               />
             ))}
           </div>
@@ -256,7 +264,7 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
           />
         )}
 
-        {category === 'slots' && <SlotsScreen />}
+        {category === 'slots' && <SlotsScreen city={city} />}
       </div>
 
       {purchaseModal}
@@ -280,7 +288,9 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
           onBuy={() => {
             const it = tryOn
             setTryOn(null)
-            request(it.price, it.name, () => buyItem.mutate(it.id))
+            // A jackpot frame can't be bought — «Выбить в слотах» goes there instead.
+            if (!it.purchasable) setCategory('slots')
+            else request(it.price, it.name, () => buyItem.mutate(it.id))
           }}
           onEquip={() => {
             equipItem.mutate({ itemId: tryOn.id })
@@ -415,6 +425,7 @@ function FrameCard({
   onUnequip,
   busy,
   onTryOn,
+  onGoSlots,
   onRefund,
 }: {
   item: ShopItem
@@ -429,12 +440,14 @@ function FrameCard({
   onUnequip: () => void
   busy: boolean
   onTryOn: () => void
+  onGoSlots: () => void
   onRefund?: () => void
 }) {
   const frame = AVATAR_FRAMES.find((f) => f.id === item.id)
+  const prize = !item.purchasable
 
   return (
-    <div className={`shop-card ${rarityClass(item.price)}`}>
+    <div className={`shop-card ${prize ? 'shop-card-jackpot' : rarityClass(item.price)}`} data-tag={prize ? 'Джекпот' : undefined}>
       <div className="shop-card-preview">
         <div className="shop-card-avatar">
           <AvatarFrameRing frame={frame} />
@@ -453,6 +466,13 @@ function FrameCard({
         <button className="btn-primary" onClick={onEquip} disabled={busy}>
           Надеть
         </button>
+      ) : prize ? (
+        <>
+          <div className="shop-card-jackpot-note">Только в слотах · 0,1%</div>
+          <button className="btn-secondary" onClick={onGoSlots}>
+            Выбить в слотах
+          </button>
+        </>
       ) : (
         <button className="btn-secondary shop-price-btn" onClick={onBuy} disabled={busy}>
           <CoinIcon size={16} />

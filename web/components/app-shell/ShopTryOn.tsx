@@ -83,7 +83,11 @@ export function ShopTryOn({
         <div className="tryon-body">
           <div className="tryon-label">Примерка</div>
           <div className="modal-title">{item.name}</div>
-          {state === 'locked' ? (
+          {state === 'locked' && !item.purchasable ? (
+            <button className="btn-primary" onClick={onBuy}>
+              Выбить в слотах · шанс 0,1%
+            </button>
+          ) : state === 'locked' ? (
             <button className="btn-primary shop-price-btn" onClick={onBuy}>
               Купить за <CoinIcon size={16} /> {item.price}
             </button>

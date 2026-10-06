@@ -1044,6 +1044,7 @@ export type Database = {
           id: string
           name: string
           price: number
+          purchasable: boolean
           sort_order: number
         }
         Insert: {
@@ -1051,6 +1052,7 @@ export type Database = {
           id: string
           name: string
           price: number
+          purchasable?: boolean
           sort_order?: number
         }
         Update: {
@@ -1058,6 +1060,7 @@ export type Database = {
           id?: string
           name?: string
           price?: number
+          purchasable?: boolean
           sort_order?: number
         }
         Relationships: []
@@ -1861,6 +1864,8 @@ export type Database = {
       get_app_stats: { Args: { p_days?: number; p_tz?: string }; Returns: Json }
       collect_treasury: { Args: Record<string, never>; Returns: Json }
       spin_slots: { Args: Record<string, never>; Returns: Json }
+      admin_slot_spins: { Args: { p_user_id: string }; Returns: Json }
+      admin_grant_spins: { Args: { p_user_id: string; p_amount: number }; Returns: number }
       use_free_shield: { Args: { p_territory_id: string }; Returns: undefined }
       mark_notifications_read: { Args: Record<string, never>; Returns: undefined }
       notification_deliver_after_from: { Args: { p_city: string; p_from: string }; Returns: string }

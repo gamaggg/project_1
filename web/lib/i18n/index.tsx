@@ -19,9 +19,16 @@ const I18nContext = createContext<I18n>({
   t: (key, vars) => translate('ru', key, vars),
 })
 
+// Russian for everyone until the whole app is translated (BIG_UPDATE item
+// 11, decided 06.10): most screens are still Russian in code, so following an
+// English or Georgian Telegram would mix translated new screens with the
+// Russian rest. Flip this on together with the full translation.
+const TRANSLATION_READY = false
+
 // First visit: the language Telegram reports for the person, else the
 // browser's. After that, whatever they picked (stored on the device).
 function detectLang(): Lang {
+  if (!TRANSLATION_READY) return 'ru'
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (isLang(saved)) return saved

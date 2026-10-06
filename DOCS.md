@@ -291,6 +291,17 @@ RPC `admin_edit_catch(p_catch_id, p_species, p_length_cm, p_weight_kg)` — то
    ```
    Для частичного восстановления (например, вернуть удалённые уловы) копию поднимают в отдельный проект и переносят оттуда нужные строки. Боевую базу целиком поверх не заливают.
 
+### Большое обновление: механики, расписание, админ
+- **Слоты** (магазин → «Слоты», `SlotsScreen.tsx`, `spin_slots` / `get_slot_state`): 1 бесплатный прокрут в день + 1 за улов, до 4; шансы — таблица на экране (джекпот 0,1%). Картинки — `public/slots/*.webp`, в Москве на тех же символах свои рыбы (`SlotSymbol.tsx`). Джекпот — рамка города (`frame_katran` / `frame_som`, `purchasable = false`), если уже есть — 300 монет.
+- **Подарочные прокруты:** профиль игрока (или свой) → «Прокруты слотов» (только супер-админ) → `admin_grant_spins` (±1…100, не ниже 0, пишется в журнал), `admin_slot_spins` — сколько сейчас. Хранятся в `slot_bonus_spins`, тратятся после обычных, не сгорают.
+- **Защита сектора:** `territories.defense` (0–3) + `defense_at`; в `territories_with_stats` — защита на сейчас. Логика — в `confirm_catch` (захват → 1, свой/клановый улов +1, чужой при защите −1 и уведомление `sector_attacked` не чаще раза в час).
+- **Горячие сектора:** `pick_hot_sectors(city)` — самый популярный за 30 дней + касающийся его сосед (свободный, если есть), до вс 23:59 по городу; `announce_hot_sectors` — уведомление; `settle_hot_sectors` — +100 и медаль держателям. ×2 за улов — в `confirm_catch`, ×3 в Казну — в `_treasury_state`.
+- **Расписание (pg_cron), `release/cron.sql`:** `telegram-send-onboarding` */15, `telegram-fishing` */5, `forecast-alert-*` 19:00 по городу, `pick-hot-*` пт 12:00, `announce-hot-*` пт 12:05, `settle-hot-sectors` ежечасно, `refresh-sector-legends` */10 и раз в сутки, `remind-daily-rewards` ежечасно. HTTP-задачи копируют команду (с Bearer CRON_SECRET) у `telegram-send-notifications` — секрет в репозиторий не попадает.
+- **Поддержка:** «Вопросы и ответы» → «Напиши в поддержку» → `create_support_ticket` → `/api/support/notify` шлёт супер-админам в бота; ответ — reply на это сообщение в Telegram → webhook → `answer_support_ticket` → «Ответ поддержки» в «Активности» игрока.
+- **Подсказки и «Первые шаги»:** `SpotlightTours.tsx` + `lib/data/tours.ts` (элементы помечены `data-tour`); `first_steps` / `get_first_steps` / `claim_first_steps` (100 монет за 6 шагов, только новичкам: без уловов на момент релиза).
+- **Языки:** `lib/i18n` (ru/en/ka). Пока `TRANSLATION_READY = false` — все на русском.
+- **Через неделю после релиза:** `drop function public.spin_wheel(integer); drop function public.get_city_pulse(text);` (см. конец `release/cleanup.sql`).
+
 ## Прототип (fishzone-app.html)
 
 Однофайловый MVP-прототип (HTML/CSS/JS, без сборки и зависимостей, кроме Leaflet и Google Fonts через CDN, эмулирует экран iPhone 390×844) — из него перенесён `web/`. Дальше не развивается; ниже — как он устроен, для справки при переносе оставшейся логики или сверке поведения.

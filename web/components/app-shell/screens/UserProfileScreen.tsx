@@ -75,6 +75,7 @@ export function UserProfileScreen({
   onEditAdminAccess,
   onEditPublicId,
   onGrantCoins,
+  onGrantSpins,
   onShareProfile,
   onOpenFollowers,
   onOpenAvatarPreview,
@@ -95,6 +96,7 @@ export function UserProfileScreen({
   onEditAdminAccess: (id: string) => void
   onEditPublicId: (id: string) => void
   onGrantCoins: (id: string) => void
+  onGrantSpins: (id: string) => void
   onShareProfile: (publicId: string, text: string) => void
   onOpenFollowers: (people: ProfileSummary[]) => void
   onOpenAvatarPreview: (url: string) => void
@@ -294,6 +296,12 @@ export function UserProfileScreen({
         {isSuperAdmin && (
           <button className="btn-secondary shop-price-btn" style={{ marginTop: 8 }} onClick={() => onGrantCoins(userId)}>
             Монеты: <CoinIcon size={16} /> {profile?.coins ?? 0}
+          </button>
+        )}
+
+        {isSuperAdmin && (
+          <button className="btn-secondary" style={{ marginTop: 8 }} onClick={() => onGrantSpins(userId)}>
+            Прокруты слотов
           </button>
         )}
 
