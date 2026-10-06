@@ -76,11 +76,12 @@ function filler(count: number): SymbolId[] {
 }
 
 const PAY_ROWS: { prize: SlotPrize; symbols: SymbolId[]; chance: number; label: TKey; reward: { coins: number } | { text: TKey } }[] = [
-  // Same odds as spin_slots on the server (supabase-drafts/slots_odds_free_spin.sql).
+  // Same odds as spin_slots on the server (supabase-drafts/slots_odds_free_spin.sql),
+  // rarest first.
   { prize: 'jackpot', symbols: ['katran', 'katran', 'katran'], chance: 0.003, label: 'slots.rows.jackpot', reward: { text: 'slots.rewards.jackpot' } },
+  { prize: 'lufar', symbols: ['lufar', 'lufar', 'lufar'], chance: 0.04, label: 'slots.rows.lufar', reward: { coins: 100 } },
   { prize: 'shield', symbols: ['hex', 'hex', 'hex'], chance: 0.05, label: 'slots.rows.shield', reward: { text: 'slots.rewards.shield' } },
   { prize: 'double', symbols: ['hook', 'hook', 'hook'], chance: 0.06, label: 'slots.rows.double', reward: { text: 'slots.rewards.double' } },
-  { prize: 'lufar', symbols: ['lufar', 'lufar', 'lufar'], chance: 0.04, label: 'slots.rows.lufar', reward: { coins: 100 } },
   { prize: 'free_spin', symbols: ['skorpena', 'skorpena', 'skorpena'], chance: 0.08, label: 'slots.rows.freeSpin', reward: { text: 'slots.rewards.freeSpin' } },
   { prize: 'triple', symbols: ['stavrida', 'stavrida', 'stavrida'], chance: 0.14, label: 'slots.rows.triple', reward: { coins: 25 } },
   { prize: 'pair', symbols: ['skorpena', 'skorpena', 'hook'], chance: 0.38, label: 'slots.rows.pair', reward: { coins: 10 } },
