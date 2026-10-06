@@ -1349,6 +1349,7 @@ export function FishZoneApp() {
             territories={cityTerritories}
             myTerritoryColor={myTerritoryColor}
             onOpenTerritory={handleMapTerritoryClick}
+            onOpenUser={openUserProfile}
             selectedIds={isSuperAdmin ? selectedTerritoryIds : undefined}
             onLongPressTerritory={isSuperAdmin ? handleLongPressTerritory : undefined}
             onDeleteSelected={() => setConfirmingBulkDelete(true)}

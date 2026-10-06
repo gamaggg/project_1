@@ -88,6 +88,8 @@ export const MapScreen = forwardRef<
     territories: Territory[]
     myTerritoryColor: string
     onOpenTerritory: (id: string) => void
+    // A tap on a holder's face (or the owner's name) on the sector card.
+    onOpenUser: (id: string) => void
     selectedIds?: Set<string>
     onLongPressTerritory?: (id: string) => void
     onDeleteSelected?: () => void
@@ -116,6 +118,7 @@ export const MapScreen = forwardRef<
     territories,
     myTerritoryColor,
     onOpenTerritory,
+    onOpenUser,
     selectedIds,
     onLongPressTerritory,
     onDeleteSelected,
@@ -529,21 +532,30 @@ export const MapScreen = forwardRef<
                       {/* Shared by clan-mates: every holder's face, stacked, in
                           place of the name — four avatars and a name don't
                           fit a phone-width row (names are on the sector screen).
-                          Whoever captured it last comes first. */}
-                      <div
-                        className="avatar-stack"
-                        title={t.coHolders.length ? sectorHoldersCapturerFirst(t).map((h) => h.displayName ?? 'Рыбак').join(', ') : undefined}
-                      >
-                        {sectorHoldersCapturerFirst(t).map((h) => (
-                          <div key={h.id} className="avatar" style={{ width: 24, height: 24, fontSize: 10 }}>
-                            {h.avatarUrl ? <img src={thumbUrl(h.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : (h.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()}
-                          </div>
-                        ))}
-                      </div>
-                      {t.coHolders.length === 0 && (
-                        <span style={{ fontSize: 13.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {t.ownerDisplayName}
-                        </span>
+                          Whoever captured it last comes first. A face (or the
+                          owner's name) opens that player's profile. */}
+                      {t.coHolders.length === 0 ? (
+                        <button type="button" className="map-sheet-owner" onClick={() => onOpenUser(t.ownerId!)}>
+                          <span className="avatar" style={{ width: 24, height: 24, fontSize: 10 }}>
+                            {t.ownerAvatarUrl ? <img src={thumbUrl(t.ownerAvatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : t.ownerDisplayName.slice(0, 2).toUpperCase()}
+                          </span>
+                          <span className="map-sheet-owner-name">{t.ownerDisplayName}</span>
+                        </button>
+                      ) : (
+                        <div className="avatar-stack" title={sectorHoldersCapturerFirst(t).map((h) => h.displayName ?? 'Рыбак').join(', ')}>
+                          {sectorHoldersCapturerFirst(t).map((h) => (
+                            <button
+                              key={h.id}
+                              type="button"
+                              className="avatar map-sheet-holder"
+                              style={{ width: 24, height: 24, fontSize: 10 }}
+                              aria-label={h.displayName ?? 'Рыбак'}
+                              onClick={() => onOpenUser(h.id)}
+                            >
+                              {h.avatarUrl ? <img src={thumbUrl(h.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : (h.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()}
+                            </button>
+                          ))}
+                        </div>
                       )}
                       {t.ownerClanCrest != null && <ClanCrest crest={t.ownerClanCrest} size={16} title={t.ownerClanName ?? undefined} />}
                     </div>
