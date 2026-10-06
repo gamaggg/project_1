@@ -18,6 +18,7 @@ export const en: Dict = {
     noSpins: 'No spins left today',
     noSpinsHint: 'Catch a fish to get another spin. Tomorrow’s first spin is free again',
     perCatch: '+1 spin for every catch, up to 4 a day',
+    limitHint: 'That’s all 4 spins for today. New ones after midnight',
     payTable: 'Payouts',
     chance: 'Chance',
     freeShields: 'Shields in reserve: {count}. Put one on your sector from its screen',

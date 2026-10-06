@@ -14,7 +14,7 @@ export type AvatarFrame = {
   // behind, and each has its own extra — see AvatarFrameRing.tsx and
   // .avatar-frame-fx in globals.css.
   fx?: 'aurora' | 'flame' | 'comet' | 'holo' | 'royal' | 'katran' | 'som'
-  // The jackpot frames (never for sale — only the slots' 0,1% jackpot, each
+  // The jackpot frames (never for sale — only the slots' jackpot, each
   // city its own): the city's jackpot fish from the reels swims round the rim.
   swimmer?: string
 }
@@ -102,6 +102,12 @@ export const AVATAR_FRAMES: AvatarFrame[] = [
 
 // Which jackpot frame a city's slots give (spin_slots on the server agrees).
 export const JACKPOT_FRAME = { batumi: 'frame_katran', moscow: 'frame_som' } as const
+
+// The slots' jackpot odds — the same threshold as spin_slots on the server
+// (supabase-drafts/slots_odds_free_spin.sql). The pay table and the shop's
+// jackpot frames both show it from here.
+export const JACKPOT_CHANCE = 0.003
+export const JACKPOT_CHANCE_LABEL = `${(JACKPOT_CHANCE * 100).toLocaleString('ru')}%`
 
 export function resolveAvatarFrame(id: string | null | undefined): AvatarFrame | null {
   if (!id) return null

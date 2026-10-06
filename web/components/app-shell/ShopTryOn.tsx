@@ -8,7 +8,7 @@ import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorPreviewMap'
 import { StyledName } from '@/components/app-shell/StyledName'
 import { resolveHeroBackground } from '@/lib/data/heroBackgrounds'
-import { resolveAvatarFrame } from '@/lib/data/shopItems'
+import { JACKPOT_CHANCE_LABEL, resolveAvatarFrame } from '@/lib/data/shopItems'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import type { ShopItem } from '@/lib/supabase/queries'
 import type { CityId } from '@/lib/data/city'
@@ -85,7 +85,7 @@ export function ShopTryOn({
           <div className="modal-title">{item.name}</div>
           {state === 'locked' && !item.purchasable ? (
             <button className="btn-primary" onClick={onBuy}>
-              Выбить в слотах · шанс 0,1%
+              Выбить в слотах · шанс {JACKPOT_CHANCE_LABEL}
             </button>
           ) : state === 'locked' ? (
             <button className="btn-primary shop-price-btn" onClick={onBuy}>

@@ -10,7 +10,7 @@ import { StyledName } from '@/components/app-shell/StyledName'
 import { SHOP_TAB_ICONS } from '@/components/app-shell/icons'
 import { usePurchaseFlow } from '@/components/app-shell/usePurchaseFlow'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { AVATAR_FRAMES, JACKPOT_FRAME } from '@/lib/data/shopItems'
+import { AVATAR_FRAMES, JACKPOT_CHANCE_LABEL, JACKPOT_FRAME } from '@/lib/data/shopItems'
 import { ShopTryOn } from '@/components/app-shell/ShopTryOn'
 import { AvatarFrameRing } from '@/components/app-shell/AvatarFrameRing'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
@@ -466,7 +466,7 @@ function FrameCard({
         </button>
       ) : prize ? (
         <>
-          <div className="shop-card-jackpot-note">Только в слотах · 0,1%</div>
+          <div className="shop-card-jackpot-note">Только в слотах · {JACKPOT_CHANCE_LABEL}</div>
           <button className="btn-secondary" onClick={onGoSlots}>
             Выбить в слотах
           </button>

@@ -7,6 +7,7 @@ import { SlotSymbol, slotSymbolSrc } from '@/components/app-shell/SlotSymbol'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useSlotState, useSpinSlots, type SlotPrize, type SlotSpinResult, type SlotSymbol as SymbolId } from '@/lib/supabase/queries'
 import type { CityId } from '@/lib/data/city'
+import { JACKPOT_CHANCE } from '@/lib/data/shopItems'
 import { useI18n, type TKey } from '@/lib/i18n'
 import { hapticSuccess, hapticTap } from '@/lib/telegram/haptics'
 
@@ -17,6 +18,8 @@ import { hapticSuccess, hapticTap } from '@/lib/telegram/haptics'
 
 const CELL = 92 // one symbol, px — keep in sync with --slot-cell in globals.css
 const WINDOW = 128 // visible reel height: one symbol plus a peek of its neighbours
+// A day's spins: 1 free plus 1 per catch, at most this many (_slot_day_state).
+const DAILY_SPINS_MAX = 4
 // On narrow phones a reel is far narrower than WINDOW is tall, and the tall
 // windows pushed the spin button under the bottom menu. There each window is
 // made square: the whole reel — cells, peeks, symbols, the strip's travel —
@@ -84,7 +87,7 @@ function filler(count: number): SymbolId[] {
 const PAY_ROWS: { prize: SlotPrize; symbols: SymbolId[]; chance: number; label: TKey; reward: { coins: number } | { text: TKey } }[] = [
   // Same odds as spin_slots on the server (supabase-drafts/slots_odds_free_spin.sql),
   // rarest first.
-  { prize: 'jackpot', symbols: ['katran', 'katran', 'katran'], chance: 0.003, label: 'slots.rows.jackpot', reward: { text: 'slots.rewards.jackpot' } },
+  { prize: 'jackpot', symbols: ['katran', 'katran', 'katran'], chance: JACKPOT_CHANCE, label: 'slots.rows.jackpot', reward: { text: 'slots.rewards.jackpot' } },
   { prize: 'lufar', symbols: ['lufar', 'lufar', 'lufar'], chance: 0.04, label: 'slots.rows.lufar', reward: { coins: 100 } },
   { prize: 'shield', symbols: ['hex', 'hex', 'hex'], chance: 0.05, label: 'slots.rows.shield', reward: { text: 'slots.rewards.shield' } },
   { prize: 'double', symbols: ['hook', 'hook', 'hook'], chance: 0.06, label: 'slots.rows.double', reward: { text: 'slots.rewards.double' } },
@@ -316,7 +319,11 @@ export function SlotsScreen({ city }: { city: CityId }) {
         {spinning || spin.isPending ? t('slots.spinning') : left > 0 ? t('slots.spin') : t('slots.noSpins')}
       </button>
       <div className="slots-count">{t('slots.spinsToday', { left: left - bonus, total })}</div>
-      <div className="slots-hint">{left > 0 ? t('slots.perCatch') : t('slots.noSpinsHint')}</div>
+      {/* At the day's cap (DAILY_SPINS_MAX, _slot_day_state on the server) another
+          catch brings no spin, so the hint says so instead of promising one. */}
+      <div className="slots-hint">
+        {left > 0 ? t('slots.perCatch') : total >= DAILY_SPINS_MAX ? t('slots.limitHint') : t('slots.noSpinsHint')}
+      </div>
       {bonus > 0 && (
         <div className="slots-gift">
           <b>{t('slots.gift', { count: bonus })}</b>
