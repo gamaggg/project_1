@@ -451,6 +451,19 @@ export function FishZoneApp() {
   // The trophy-card celebration is full-bleed and edge-to-edge on purpose —
   // both the nav and any achievement popup stay off it, see below.
   const showingTrophyScene = currentScreen === 'screen-confirm' && confirmStep === 'success'
+  // Telegram on iPhone paints its own strip under the page (by the home
+  // indicator), white by default — a white band under the dark camera and
+  // the dark trophy scene. Match it to whatever dark screen is up.
+  const darkScreen = currentScreen === 'screen-camera' || showingTrophyScene
+  useEffect(() => {
+    const webApp = window.Telegram?.WebApp
+    if (!webApp?.setBottomBarColor || !webApp.isVersionAtLeast?.('7.10')) return
+    try {
+      webApp.setBottomBarColor(darkScreen ? (showingTrophyScene ? '#0B0C10' : '#0E1013') : '#FFFFFF')
+    } catch {
+      // An older Telegram without the method — the strip just stays white.
+    }
+  }, [darkScreen, showingTrophyScene])
   const online = useOnline()
   const offlineMode = photoStatus === 'error' && (!online || uploadNetworkFail)
   // Catches saved without a connection go out by themselves; each outcome

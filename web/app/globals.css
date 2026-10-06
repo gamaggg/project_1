@@ -1358,10 +1358,14 @@ body{
 .info-grid .value{font-size:15.5px; font-weight:800; letter-spacing:-0.1px;}
 /* ---------- Catch success: trophy card (see ConfirmScreen's 'success' step) ---------- */
 .catch-trophy-scene{
-  position:absolute; inset:0; overflow:hidden;
+  position:absolute; inset:0; overflow-x:hidden; overflow-y:auto;
   background:linear-gradient(180deg,#181920,#0B0C10);
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  padding:24px 20px calc(24px + env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px));
+  display:flex; flex-direction:column; align-items:center;
+  /* Full-bleed (inset:0 covers .screen's own top padding), so it pads itself
+     under Telegram's header. Centred by the auto margins on the card and the
+     buttons rather than justify-content:center — when it doesn't fit, centre
+     alignment pushed the card up under the header with no way to scroll to it. */
+  padding:calc(16px + env(safe-area-inset-top) + var(--tg-safe-area-top, 0px)) 20px calc(20px + env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px));
 }
 .catch-trophy-glow{
   position:absolute; top:-40px; left:50%; transform:translateX(-50%);
@@ -1369,7 +1373,12 @@ body{
   background:radial-gradient(circle,rgba(252,130,20,0.32),transparent 70%);
   filter:blur(6px);
 }
-.catch-trophy-stage{width:100%; max-width:320px; perspective:900px; position:relative; z-index:1;}
+/* The card (3:4) takes what's left after the title, rewards and three buttons
+   (~400px) on short screens — at 320px wide on a phone in Telegram it didn't fit. */
+.catch-trophy-stage{
+  width:100%; perspective:900px; position:relative; z-index:1; margin-top:auto; flex:0 0 auto;
+  max-width:min(320px, max(180px, calc((100dvh - env(safe-area-inset-top) - var(--tg-safe-area-top, 0px) - env(safe-area-inset-bottom) - var(--tg-safe-area-bottom, 0px) - 400px) * .75)));
+}
 .catch-trophy-card{
   width:100%; aspect-ratio:3/4; border-radius:24px; position:relative;
   transform-style:preserve-3d;
@@ -1427,7 +1436,7 @@ body{
   display:inline-flex; align-items:center; gap:5px; font-size:15px; font-weight:800; color:#fff;
   font-variant-numeric:tabular-nums;
 }
-.catch-trophy-ctas{width:100%; max-width:320px; opacity:0; animation:trophyFadeUp .5s 1.3s ease both; position:relative; z-index:1;}
+.catch-trophy-ctas{width:100%; max-width:320px; margin-bottom:auto; opacity:0; animation:trophyFadeUp .5s 1.3s ease both; position:relative; z-index:1; flex:0 0 auto;}
 .catch-trophy-scene .btn-secondary{background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.22); color:#fff;}
 .catch-trophy-scene .btn-secondary:active{background:rgba(255,255,255,.14);}
 

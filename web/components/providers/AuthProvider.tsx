@@ -38,6 +38,9 @@ declare global {
         ready: () => void
         expand: () => void
         requestFullscreen?: () => void
+        // Bot API 7.10+: the strip Telegram draws below the page on iOS (by
+        // the home indicator) — white unless the app colours it.
+        setBottomBarColor?: (color: string) => void
         isFullscreen?: boolean
         isVersionAtLeast?: (version: string) => boolean
         safeAreaInset?: TelegramSafeAreaInset
