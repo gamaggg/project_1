@@ -742,7 +742,7 @@ body{
 .slots-machine.won{box-shadow:inset 0 0 0 2px var(--accent), 0 0 0 5px rgba(252,82,0,.16), 0 12px 28px rgba(23,24,27,.22); animation:slots-won .5s var(--ease-out);}
 .slots-window{position:relative; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px;}
 .slot-reel{position:relative; overflow:hidden; border-radius:16px; background:#fff;}
-.slot-reel::before,.slot-reel::after{content:''; position:absolute; left:0; right:0; height:24px; z-index:1; pointer-events:none;}
+.slot-reel::before,.slot-reel::after{content:''; position:absolute; left:0; right:0; height:calc(var(--slot-cell) * .26); z-index:1; pointer-events:none;}
 .slot-reel::before{top:0; background:linear-gradient(#fff 15%, rgba(255,255,255,0));}
 .slot-reel::after{bottom:0; background:linear-gradient(rgba(255,255,255,0), #fff 85%);}
 .slot-strip{transition-property:transform; transition-timing-function:cubic-bezier(.18,.84,.3,1.06);}
@@ -779,6 +779,14 @@ body{
 .slots-pay-label{flex:1; min-width:0; font-size:13.5px; font-weight:700; line-height:1.25;}
 .slots-pay-reward{display:flex; align-items:center; gap:4px; margin-top:2px; font-size:12.5px; font-weight:600; color:var(--ink-soft);}
 .slots-pay-chance{font-size:13px; font-weight:700; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+/* Narrow phones: the reels go square (SlotsScreen's NARROW scale) and the
+   button's longest label, «Прокруты на сегодня закончились», stays on one
+   line — so the button is back above the bottom menu. */
+@media (max-width:380px){
+  .slots{padding-top:8px;}
+  .slots-result{min-height:34px; margin-top:10px;}
+  .slots-spin{padding-left:12px; padding-right:12px; font-size:14.5px; white-space:nowrap;}
+}
 @media (prefers-reduced-motion: reduce){
   .slot-strip{transition:none !important; animation:none !important;}
   .slots-result-text,.slots-machine.won{animation:none;}

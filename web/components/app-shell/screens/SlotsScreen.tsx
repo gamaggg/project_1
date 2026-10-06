@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { SlotSymbol, slotSymbolSrc } from '@/components/app-shell/SlotSymbol'
@@ -17,6 +17,12 @@ import { hapticSuccess, hapticTap } from '@/lib/telegram/haptics'
 
 const CELL = 92 // one symbol, px — keep in sync with --slot-cell in globals.css
 const WINDOW = 128 // visible reel height: one symbol plus a peek of its neighbours
+// On narrow phones a reel is far narrower than WINDOW is tall, and the tall
+// windows pushed the spin button under the bottom menu. There each window is
+// made square: the whole reel — cells, peeks, symbols, the strip's travel —
+// is scaled by reel width / WINDOW, while all the motion maths below stays in
+// the units above.
+const NARROW = '(max-width: 380px)'
 const CENTER = (WINDOW - CELL) / 2
 const SPIN_MS = [1500, 1950, 2400]
 const STRIP_FILL = 16
@@ -232,6 +238,28 @@ export function SlotsScreen({ city }: { city: CityId }) {
     })
   }
 
+  const windowRef = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(1)
+  useEffect(() => {
+    const el = windowRef.current
+    if (!el) return
+    const narrow = window.matchMedia(NARROW)
+    const measure = () => {
+      const gap = parseFloat(getComputedStyle(el).columnGap) || 0
+      const reelWidth = (el.clientWidth - 2 * gap) / 3
+      const next = narrow.matches && reelWidth > 0 ? Math.min(1, Math.round((reelWidth / WINDOW) * 1000) / 1000) : 1
+      setScale((prev) => (prev === next ? prev : next))
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    narrow.addEventListener('change', measure)
+    return () => {
+      observer.disconnect()
+      narrow.removeEventListener('change', measure)
+    }
+  }, [])
+
   const percent = new Intl.NumberFormat(lang, { style: 'percent', maximumFractionDigits: 1 })
 
   return (
@@ -239,13 +267,17 @@ export function SlotsScreen({ city }: { city: CityId }) {
       <div className="slots-title">{t('slots.title')}</div>
 
       <div className={`slots-machine${result && result.prize !== 'none' ? ' won' : ''}`}>
-        <div className="slots-window" style={{ height: WINDOW }}>
+        <div
+          ref={windowRef}
+          className="slots-window"
+          style={{ height: WINDOW * scale, '--slot-cell': `${CELL * scale}px` } as CSSProperties}
+        >
           {reels.map((reel, i) => (
             <div key={i} className="slot-reel">
               <div
                 className={`slot-strip${reel.duration ? ` moving${reel.drift ? ' drift' : ''}` : ''}`}
                 style={{
-                  transform: `translateY(${reel.y}px)`,
+                  transform: `translateY(${reel.y * scale}px)`,
                   transitionDuration: `${reel.duration}ms`,
                   animationDuration: `${reel.duration}ms`,
                 }}
@@ -259,7 +291,7 @@ export function SlotsScreen({ city }: { city: CityId }) {
               >
                 {reel.strip.map((symbol, j) => (
                   <div key={j} className="slot-cell">
-                    <SlotSymbol symbol={symbol} city={city} size={66} />
+                    <SlotSymbol symbol={symbol} city={city} size={Math.round(66 * scale)} />
                   </div>
                 ))}
               </div>
