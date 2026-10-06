@@ -192,7 +192,7 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
   // the status-bar inset on top of a card already below it and landed on the
   // slide's «Итоги недели» line.) The insets are read off a probe element,
   // the only way to resolve env(safe-area-inset-*) in script.
-  const [insets, setInsets] = useState({ top: 0, bottom: 0 })
+  const [view, setView] = useState({ w: 0, h: 0, top: 0, bottom: 0 })
   useLayoutEffect(() => {
     const fit = () => {
       const probe = document.createElement('div')
@@ -203,7 +203,7 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
       const top = parseFloat(cs.paddingTop) || 0
       const bottom = parseFloat(cs.paddingBottom) || 0
       probe.remove()
-      setInsets({ top, bottom })
+      setView({ w: window.innerWidth, h: window.innerHeight, top, bottom })
       setScale(Math.min(window.innerWidth / SLIDE_W, (window.innerHeight - top - bottom) / SLIDE_H))
     }
     fit()
@@ -232,13 +232,42 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
 
   const width = SLIDE_W * scale
   const height = SLIDE_H * scale
+  // On a phone (a screen not much wider than the slide) the story runs edge
+  // to edge: the slide's colour, glows and photo fill the whole screen, under
+  // the status bar and Telegram's buttons too, while its text, the progress
+  // bars and the buttons stay on the 9:16 slide in the safe area (see
+  // SlideEnv.canvas). A wide screen keeps the card on black.
+  const bleed = view.w > 0 && view.w / scale <= SLIDE_W * 1.3
+  const cardLeft = bleed ? (view.w - width) / 2 : 0
+  const cardTop = bleed ? view.top + (view.h - view.top - view.bottom - height) / 2 : 0
+  const canvas = bleed
+    ? { w: Math.ceil(view.w / scale), h: Math.ceil(view.h / scale), x: cardLeft / scale, y: cardTop / scale }
+    : undefined
+  const onCard = bleed ? { left: cardLeft, width } : undefined
+
+  // Safari paints the strip under its collapsed toolbar — outside the player —
+  // in the page's own (white) background, so for as long as the story is open
+  // the page takes the colour of the slide's lower edge.
+  useEffect(() => {
+    const root = document.documentElement
+    const before = root.style.backgroundColor
+    root.style.backgroundColor = bleed ? (SLIDE_BG[id].match(/#[0-9a-f]{6}(?![\s\S]*#[0-9a-f]{6})/i)?.[0] ?? '#000') : '#000'
+    return () => {
+      root.style.backgroundColor = before
+    }
+  }, [id, bleed])
 
   return createPortal(
-    <div className="recap-player" role="dialog" aria-label={t('recap.kicker')} style={{ background: '#000', paddingTop: insets.top, paddingBottom: insets.bottom }}>
+    <div
+      className="recap-player"
+      role="dialog"
+      aria-label={t('recap.kicker')}
+      style={{ background: '#000', paddingTop: bleed ? 0 : view.top, paddingBottom: bleed ? 0 : view.bottom }}
+    >
       <div
         ref={stageRef}
         className="recap-stage"
-        style={{ width, height }}
+        style={bleed ? { width: view.w, height: view.h, borderRadius: 0 } : { width, height }}
         onPointerDown={() => {
           paused.current = true
           pressAt.current = performance.now()
@@ -252,7 +281,11 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
         onPointerCancel={() => (paused.current = false)}
         onPointerLeave={() => (paused.current = false)}
       >
-        <div key={id} className="recap-slide-in" style={{ width: SLIDE_W, height: SLIDE_H, transform: `scale(${scale})`, transformOrigin: '0 0', background: SLIDE_BG[id] }}>
+        <div
+          key={id}
+          className="recap-slide-in"
+          style={{ width: canvas?.w ?? SLIDE_W, height: canvas?.h ?? SLIDE_H, transform: `scale(${scale})`, transformOrigin: '0 0', background: SLIDE_BG[id] }}
+        >
           <RecapSlide
             id={id}
             env={{
@@ -265,11 +298,17 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
               logo: '/brand/logo_2.svg',
               fonts: { display: 'var(--font-display), Oswald, sans-serif', body: 'var(--font-manrope), Manrope, sans-serif' },
               decor: <RecapDecor />,
+              canvas,
             }}
           />
         </div>
 
-        <div className="recap-top" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
+        <div
+          className="recap-top"
+          style={onCard && { ...onCard, right: 'auto', top: cardTop }}
+          onPointerDown={(e) => e.stopPropagation()}
+          onPointerUp={(e) => e.stopPropagation()}
+        >
           <div className="recap-bars">
             {slides.map((s, i) => (
               <span key={s}>
@@ -284,7 +323,12 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
           </button>
         </div>
 
-        <div className="recap-bottom" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
+        <div
+          className="recap-bottom"
+          style={onCard && { ...onCard, right: 'auto', bottom: view.h - cardTop - height + 22 }}
+          onPointerDown={(e) => e.stopPropagation()}
+          onPointerUp={(e) => e.stopPropagation()}
+        >
           {id === 'you' && !(data.me && data.me.catches > 0) && (
             <button type="button" className="recap-cta" onClick={onFindFree}>
               {t('recap.youCta')}

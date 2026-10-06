@@ -29,6 +29,12 @@ export type SlideEnv = {
   // In the app: a moving background layer (bubbles, drifting light) drawn
   // under the text. The still image has none.
   decor?: ReactNode
+  // In the app on a phone: the whole screen in slide units (w×h), with the
+  // 1080×1920 slide itself — every line of text — at (x, y) inside it, in
+  // the safe area. The colour, glows and photo fill all of it, so the story
+  // runs edge to edge instead of sitting in black bars. The still image has
+  // none and is drawn exactly as before.
+  canvas?: { w: number; h: number; x: number; y: number }
 }
 
 const YELLOW = '#FFE14D'
@@ -65,25 +71,20 @@ function dayRange(env: SlideEnv) {
 }
 
 function Frame({ id, env, children, photo }: { id: SlideId; env: SlideEnv; children: ReactNode; photo?: ReactNode }) {
-  return (
-    <div
-      style={{
-        width: SLIDE_W,
-        height: SLIDE_H,
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-        overflow: 'hidden',
-        background: SLIDE_BG[id],
-        fontFamily: env.fonts.body,
-        color: '#fff',
-      }}
-    >
-      {/* A soft glow so the colour fields aren't flat. */}
-      <div style={{ position: 'absolute', top: -260, right: -300, width: 900, height: 900, borderRadius: 450, background: 'radial-gradient(circle, rgba(255,255,255,.22), rgba(255,255,255,0) 70%)', display: 'flex' }} />
-      <div style={{ position: 'absolute', bottom: -320, left: -280, width: 860, height: 860, borderRadius: 430, background: 'radial-gradient(circle, rgba(255,225,77,.18), rgba(255,225,77,0) 70%)', display: 'flex' }} />
-      {!photo && env.decor}
-      {photo}
+  const c = env.canvas
+  // A 1080×1920 background layer (the photo, the drifting light) scaled to
+  // cover the whole canvas, centred.
+  const cover = (node: ReactNode) => {
+    if (!c) return node
+    const k = Math.max(c.w / SLIDE_W, c.h / SLIDE_H)
+    return (
+      <div style={{ position: 'absolute', top: (c.h - SLIDE_H * k) / 2, left: (c.w - SLIDE_W * k) / 2, width: SLIDE_W, height: SLIDE_H, display: 'flex', transform: `scale(${k})`, transformOrigin: '0 0' }}>
+        {node}
+      </div>
+    )
+  }
+  const text = (
+    <>
       <div style={{ position: 'absolute', top: 170, left: 84, right: 84, display: 'flex', color: YELLOW, fontSize: 38, fontWeight: 800, letterSpacing: 1 }}>
         {env.t('recap.kicker')} · {dayRange(env)}
       </div>
@@ -99,6 +100,28 @@ function Frame({ id, env, children, photo }: { id: SlideId; env: SlideEnv; child
           <span style={{ fontSize: 34, color: 'rgba(255,255,255,.75)' }}>catchrange.com</span>
         </div>
       )}
+    </>
+  )
+  return (
+    <div
+      style={{
+        width: c?.w ?? SLIDE_W,
+        height: c?.h ?? SLIDE_H,
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+        overflow: 'hidden',
+        background: SLIDE_BG[id],
+        fontFamily: env.fonts.body,
+        color: '#fff',
+      }}
+    >
+      {/* A soft glow so the colour fields aren't flat. */}
+      <div style={{ position: 'absolute', top: -260, right: -300, width: 900, height: 900, borderRadius: 450, background: 'radial-gradient(circle, rgba(255,255,255,.22), rgba(255,255,255,0) 70%)', display: 'flex' }} />
+      <div style={{ position: 'absolute', bottom: -320, left: -280, width: 860, height: 860, borderRadius: 430, background: 'radial-gradient(circle, rgba(255,225,77,.18), rgba(255,225,77,0) 70%)', display: 'flex' }} />
+      {!photo && cover(env.decor)}
+      {photo && cover(photo)}
+      {c ? <div style={{ position: 'absolute', top: c.y, left: c.x, width: SLIDE_W, height: SLIDE_H, display: 'flex' }}>{text}</div> : text}
     </div>
   )
 }
