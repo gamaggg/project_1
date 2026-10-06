@@ -186,9 +186,26 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
     return () => cancelAnimationFrame(raf)
   }, [index, slides.length, step, sharing, reduced])
 
-  // The 1080×1920 slide scaled to fit the screen.
+  // The 1080×1920 slide scaled to fit the safe part of the screen — below the
+  // status bar and Telegram's header buttons, above the home indicator — so
+  // the progress bars can sit at the card's own top edge. (They used to add
+  // the status-bar inset on top of a card already below it and landed on the
+  // slide's «Итоги недели» line.) The insets are read off a probe element,
+  // the only way to resolve env(safe-area-inset-*) in script.
+  const [insets, setInsets] = useState({ top: 0, bottom: 0 })
   useLayoutEffect(() => {
-    const fit = () => setScale(Math.min(window.innerWidth / SLIDE_W, window.innerHeight / SLIDE_H))
+    const fit = () => {
+      const probe = document.createElement('div')
+      probe.style.cssText =
+        'position:fixed;top:0;left:0;visibility:hidden;pointer-events:none;padding-top:calc(env(safe-area-inset-top) + var(--tg-safe-area-top, 0px));padding-bottom:calc(env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px))'
+      document.body.appendChild(probe)
+      const cs = getComputedStyle(probe)
+      const top = parseFloat(cs.paddingTop) || 0
+      const bottom = parseFloat(cs.paddingBottom) || 0
+      probe.remove()
+      setInsets({ top, bottom })
+      setScale(Math.min(window.innerWidth / SLIDE_W, (window.innerHeight - top - bottom) / SLIDE_H))
+    }
     fit()
     window.addEventListener('resize', fit)
     return () => window.removeEventListener('resize', fit)
@@ -217,7 +234,7 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
   const height = SLIDE_H * scale
 
   return createPortal(
-    <div className="recap-player" role="dialog" aria-label={t('recap.kicker')} style={{ background: '#000' }}>
+    <div className="recap-player" role="dialog" aria-label={t('recap.kicker')} style={{ background: '#000', paddingTop: insets.top, paddingBottom: insets.bottom }}>
       <div
         ref={stageRef}
         className="recap-stage"

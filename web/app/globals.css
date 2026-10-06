@@ -1076,7 +1076,9 @@ body{
    brand + «Игроки | Кланы» on the first line, the legend right under it
    (left edge shared with the logo), and for clan members the clan battle
    as the panel's own orange footer. */
-.map-hud{position:absolute; top:12px; left:12px; right:12px; z-index:500; overflow:hidden;
+/* 6px from the top and over the menu (was 12) — the user asked for more
+   map between the two panels, «not right up against the edge». */
+.map-hud{position:absolute; top:6px; left:12px; right:12px; z-index:500; overflow:hidden;
   background:rgba(255,255,255,0.97); border-radius:18px; backdrop-filter:blur(8px);
   box-shadow:0 10px 28px rgba(10,28,48,.20), 0 1px 3px rgba(10,28,48,.10);}
 .map-hud-bar{display:flex; align-items:center; gap:14px; padding:6px 6px 0 14px;}
@@ -1187,7 +1189,7 @@ body{
 .map-selection-bar-btn.cancel{background:rgba(255,255,255,0.12); color:#fff;}
 .map-selection-bar-btn:active{transform:scale(0.96);}
 .map-sheet-container{
-  position:absolute; left:0; right:0; bottom:94px; z-index:700;
+  position:absolute; left:0; right:0; bottom:88px; z-index:700;
   display:flex; flex-direction:column; gap:9px;
   /* Full width, but only its pieces take touches: the empty space beside
      the week-recap sticker (or above a card) passes swipes to the map. */
@@ -1204,7 +1206,7 @@ body{
      (map-sheet-card-pulse, up to 6px of box-shadow spread) had nowhere to
      render above/below the card and got cut off flush with its edge —
      8px top/bottom gives that spread actual room. The container below
-     anchors by bottom:94px, so the extra height grows upward only. */
+     anchors by bottom:88px, so the extra height grows upward only. */
   padding:8px 12px;
 }
 .map-sheet-row::-webkit-scrollbar{display:none;}
@@ -3444,17 +3446,17 @@ button.race-lane{cursor:pointer;}
 .recap-sticker-dates{margin-top:2px; font-size:12px; font-weight:800; color:rgba(255,255,255,.85); font-variant-numeric:tabular-nums;}
 .recap-sticker-close{position:absolute; top:-9px; right:-9px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; padding:0; border:2px solid #fff; border-radius:50%; background:#17181B; color:#fff; box-shadow:0 2px 6px rgba(0,0,0,.25); cursor:pointer;}
 @media (prefers-reduced-motion: reduce){.recap-sticker-wrap{animation:none;}}
-.recap-player{position:fixed; inset:0; z-index:2000; display:flex; align-items:center; justify-content:center; animation:recap-fade .25s var(--ease-out) both;}
+.recap-player{position:fixed; inset:0; z-index:2000; display:flex; align-items:center; justify-content:center; box-sizing:border-box; animation:recap-fade .25s var(--ease-out) both;}
 @keyframes recap-fade{from{opacity:0;}}
 .recap-stage{position:relative; overflow:hidden; border-radius:18px; touch-action:none; user-select:none; -webkit-user-select:none;}
 .recap-slide-in{animation:recap-slide-in .35s var(--ease-out) both;}
 @keyframes recap-slide-in{from{opacity:0; transform-origin:0 0;}}
-.recap-top{position:absolute; top:0; left:0; right:0; display:flex; align-items:center; gap:10px; padding:calc(env(safe-area-inset-top) + 12px) 12px 0;}
+.recap-top{position:absolute; top:0; left:0; right:0; display:flex; align-items:center; gap:10px; padding:12px 12px 0;}
 .recap-bars{flex:1; display:flex; gap:4px;}
 .recap-bars span{flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,.32); overflow:hidden;}
 .recap-bars i{display:block; width:100%; height:100%; background:#fff; transform-origin:left center;}
 .recap-close{flex:0 0 auto; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:none; border-radius:50%; background:rgba(0,0,0,.22); color:#fff; cursor:pointer;}
-.recap-bottom{position:absolute; left:0; right:0; bottom:calc(env(safe-area-inset-bottom) + 22px); display:flex; justify-content:center; gap:10px; padding:0 18px;}
+.recap-bottom{position:absolute; left:0; right:0; bottom:22px; display:flex; justify-content:center; gap:10px; padding:0 18px;}
 /* Two buttons sit side by side so they never cover the slide's last line. */
 .recap-bottom > button{flex:0 1 auto; min-width:0; max-width:240px;}
 .recap-share{min-width:150px; height:48px; padding:0 24px; border:none; border-radius:999px; background:#FFE14D; color:#17181B; font:inherit; font-size:16px; font-weight:800; cursor:pointer;}
