@@ -713,7 +713,7 @@ export function useLastCatchChoices() {
 // user would multiply writes for no gain — so they're fetched globally and
 // merged back in at the right chronological spot.
 // Game notifications drawn as one generic row in «Активность».
-const GAME_EVENT_KINDS = new Set(['hot_sector_week', 'hot_sector_won', 'legend_gained', 'legend_lost', 'bite_forecast', 'daily_reward_reminder', 'sector_attacked', 'support_reply'])
+const GAME_EVENT_KINDS = new Set(['hot_sector_week', 'hot_sector_won', 'legend_gained', 'legend_lost', 'bite_forecast', 'daily_reward_reminder', 'sector_attacked', 'support_reply', 'admin_gift'])
 
 export function useActivity() {
   const { user } = useAuth()
@@ -2548,6 +2548,26 @@ export function useAdminSlotSpins(userId: string | null) {
       if (error) throw error
       const d = data as { daily_left: number; daily_total: number; bonus: number }
       return { dailyLeft: d.daily_left, dailyTotal: d.daily_total, bonus: d.bonus }
+    },
+  })
+}
+
+// Super admin: a gift to the chosen players, or everyone (userIds null) —
+// coins and/or bonus slot spins and their own few words; each gets
+// «Подарок от RANGE» in «Активность» (supabase-drafts/admin_gift.sql).
+export function useAdminGift() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ userIds, coins, spins, note }: { userIds: string[] | null; coins: number; spins: number; note: string }) => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('admin_gift', { p_user_ids: userIds, p_coins: coins, p_spins: spins, p_note: note.trim() || undefined })
+      if (error) throw error
+      return data as number
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
+      queryClient.invalidateQueries({ queryKey: ['slot-state'] })
     },
   })
 }

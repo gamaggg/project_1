@@ -426,6 +426,9 @@ export const en: Dict = {
     sectorAttackedSub: 'Defense {value} of 3 — catch a fish here to reinforce it',
     supportReply: 'New message in your support chat',
     supportOpen: 'Open',
+    giftTitle: 'A gift from RANGE',
+    giftCoins: { one: '+{count} coin', other: '+{count} coins' },
+    giftSpins: { one: '{count} bonus spin', other: '{count} bonus spins' },
     someone: 'Another angler',
   },
   territory: {

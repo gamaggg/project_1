@@ -427,6 +427,9 @@ export const ru = {
     sectorAttackedSub: 'Защита {value} из 3 — поймай здесь рыбу, чтобы укрепить',
     supportReply: 'Новое сообщение в чате с поддержкой',
     supportOpen: 'Перейти',
+    giftTitle: 'Подарок от RANGE',
+    giftCoins: { one: '+{count} монета', few: '+{count} монеты', many: '+{count} монет', other: '+{count} монеты' },
+    giftSpins: { one: '{count} бонусный прокрут', few: '{count} бонусных прокрута', many: '{count} бонусных прокрутов', other: '{count} бонусного прокрута' },
     someone: 'Другой рыбак',
   },
   territory: {

@@ -461,6 +461,20 @@ export function ActivityScreen({
                 cta = tr('activity.supportOpen')
                 const ticketId = typeof p.ticket_id === 'number' ? p.ticket_id : null
                 if (onOpenFaq) action = () => onOpenFaq(ticketId)
+              } else if (ev.kind === 'admin_gift') {
+                // A super admin's gift (admin_gift): their own words if they
+                // wrote any, the amounts under them.
+                tone = 'gold'
+                icon = FEED_ICONS.gift
+                title = typeof p.note === 'string' && p.note ? p.note : tr('activity.giftTitle')
+                sub = [
+                  n('coins') > 0 ? tr('activity.giftCoins', { count: n('coins') }) : null,
+                  n('spins') > 0 ? tr('activity.giftSpins', { count: n('spins') }) : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')
+                if (typeof p.note === 'string' && p.note) sub = `${tr('activity.giftTitle')}: ${sub}`
+                action = onOpenShop
               } else if (ev.kind === 'daily_reward_reminder') {
                 tone = 'green'
                 icon = FEED_ICONS.gift

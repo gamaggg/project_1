@@ -428,6 +428,9 @@ export const ka: Dict = {
     sectorAttackedSub: 'დაცვა {value} / 3 — დაიჭირე აქ თევზი, რომ გაამაგრო',
     supportReply: 'ახალი შეტყობინება მხარდაჭერის ჩატში',
     supportOpen: 'გადასვლა',
+    giftTitle: 'საჩუქარი RANGE-ისგან',
+    giftCoins: { one: '+{count} მონეტა', other: '+{count} მონეტა' },
+    giftSpins: { one: '{count} ბონუს დატრიალება', other: '{count} ბონუს დატრიალება' },
     someone: 'სხვა მეთევზე',
   },
   territory: {

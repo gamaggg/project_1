@@ -1875,6 +1875,7 @@ export type Database = {
       spin_slots: { Args: Record<string, never>; Returns: Json }
       admin_slot_spins: { Args: { p_user_id: string }; Returns: Json }
       admin_grant_spins: { Args: { p_user_id: string; p_amount: number }; Returns: number }
+      admin_gift: { Args: { p_user_ids: string[] | null; p_coins: number; p_spins: number; p_note?: string }; Returns: number }
       use_free_shield: { Args: { p_territory_id: string }; Returns: undefined }
       mark_notifications_read: { Args: Record<string, never>; Returns: undefined }
       notification_deliver_after_from: { Args: { p_city: string; p_from: string }; Returns: string }

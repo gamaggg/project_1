@@ -1480,7 +1480,7 @@ export function FishZoneApp() {
           )}
         </Screen>
         <Screen id="screen-users" current={currentScreen} onBack={pop}>
-          <UsersListScreen onBack={pop} onOpenUser={openUserProfile} />
+          <UsersListScreen onBack={pop} onOpenUser={openUserProfile} onToast={showToast} />
         </Screen>
         <Screen id="screen-camera" current={currentScreen}>
           <CameraScreen
