@@ -177,6 +177,21 @@ body{
   display:flex; align-items:center; justify-content:space-between;
   padding:6px 20px 4px;
 }
+/* In Telegram (fullscreen) its own «Назад» and «…» sit in a band at the very
+   top (--tg-safe-area-top, below the status bar) and our chevron is hidden
+   there, so a screen's title row moves up into that band, level with them —
+   it used to sit under an empty band. Only rows with nothing of ours on the
+   right (the empty spacer), so nothing ends up under Telegram's «…».
+   Outside Telegram the band is 0 and nothing moves (the min() keeps the
+   extra 6px — .screen-inner's own top padding — out of it too). */
+.screen-inner > .header-row:first-child:has(> :last-child:empty){
+  margin-top:calc(-1 * var(--tg-safe-area-top, 0px) - min(6px, var(--tg-safe-area-top, 0px)));
+  min-height:var(--tg-safe-area-top, 0px);
+}
+.shop-sticky-top > .header-row:first-child{
+  margin-top:calc(-1 * var(--tg-safe-area-top, 0px));
+  min-height:var(--tg-safe-area-top, 0px);
+}
 /* The middle child is always the screen title — an unbroken display name
    (no spaces allowed, see NameStep's NAME_RE) can't wrap, so without this it
    overflows the row and forces horizontal scroll on the whole page. */
