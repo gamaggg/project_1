@@ -466,7 +466,10 @@ export const LeafletMap = forwardRef<
         const map = mapRef.current
         const t = territories.find((x) => x.id === id)
         if (!map || !t) return
-        const targetZoom = Math.max(map.getZoom(), 16.5)
+        // Keep the player's scale — «На карте» and swiping the cards used to
+        // zoom right in (16.5, the sector filling half the screen). Only a
+        // map zoomed far out comes in to 14, where a sector still reads.
+        const targetZoom = Math.max(map.getZoom(), 14)
         map.flyTo([t.lat, t.lng], targetZoom, { duration: 0.5 })
       },
       showUserLocation: placeUserMarker,

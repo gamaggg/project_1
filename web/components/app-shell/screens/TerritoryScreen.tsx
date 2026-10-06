@@ -113,6 +113,8 @@ function SectorOwnerCard({
 
 // The sector's centre as plain coordinates — copy them into any maps app, or
 // jump straight to a route there — so you can actually get to the water.
+// Two lines: the coordinates in full on top (a tap copies them too), the two
+// buttons under them — on one line the buttons left room for a single digit.
 function SectorCoords({ lat, lng, onToast }: { lat: number; lng: number; onToast: (message: string) => void }) {
   const [mapsOpen, setMapsOpen] = useState(false)
   const coords = formatCoords(lat, lng)
@@ -128,17 +130,21 @@ function SectorCoords({ lat, lng, onToast }: { lat: number; lng: number; onToast
 
   return (
     <div className="sector-coords">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z" />
-        <circle cx="12" cy="9.5" r="2.5" />
-      </svg>
-      <span className="sector-coords-value">{coords}</span>
-      <button className="sector-coords-btn tap-scale" onClick={() => void copy()}>
-        Скопировать
+      <button type="button" className="sector-coords-line" onClick={() => void copy()}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z" />
+          <circle cx="12" cy="9.5" r="2.5" />
+        </svg>
+        <span className="sector-coords-value">{coords}</span>
       </button>
-      <button className="sector-coords-btn primary tap-scale" onClick={() => setMapsOpen(true)}>
-        Маршрут
-      </button>
+      <div className="sector-coords-actions">
+        <button className="sector-coords-btn tap-scale" onClick={() => void copy()}>
+          Скопировать
+        </button>
+        <button className="sector-coords-btn primary tap-scale" onClick={() => setMapsOpen(true)}>
+          Маршрут
+        </button>
+      </div>
       {mapsOpen && <RouteModal lat={lat} lng={lng} onClose={() => setMapsOpen(false)} />}
     </div>
   )

@@ -223,7 +223,10 @@ body{
      more gaps in the same pool, so the whitespace before the first icon,
      between every pair, and after the last icon all come out equal. */
   justify-content:space-evenly;
-  padding:0 0 calc(env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px));
+  /* The full home-indicator inset left the labels floating high (82px bar +
+     34px under it); like a native iPhone tab bar, the labels may come ~12px
+     into that zone (no change on screens without an inset). */
+  padding:0 0 max(0px, calc(env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px) - 12px));
   z-index:40;
 }
 .navitem{
@@ -3130,9 +3133,11 @@ button.race-lane{cursor:pointer;}
   .battle-cer-confetti{display:none;}
 }
 /* Sector screen: the centre's coordinates, copy or route in a maps app. */
-.sector-coords{display:flex; align-items:center; gap:8px; margin-top:12px; padding:8px 8px 8px 12px; border-radius:14px; background:var(--bg); border:1px solid var(--line); color:var(--ink-soft);}
-.sector-coords-value{flex:1; min-width:0; font-size:13.5px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; -webkit-user-select:all; user-select:all;}
-.sector-coords-btn{flex:0 0 auto; border:none; border-radius:10px; padding:7px 11px; font:inherit; font-size:12.5px; font-weight:800; background:#F0EEEA; color:var(--ink); cursor:pointer;}
+.sector-coords{display:flex; flex-direction:column; gap:8px; margin-top:12px; padding:10px; border-radius:14px; background:var(--bg); border:1px solid var(--line); color:var(--ink-soft);}
+.sector-coords-line{display:flex; align-items:center; gap:8px; min-width:0; padding:0 2px; border:none; background:none; font:inherit; color:inherit; text-align:left; cursor:pointer;}
+.sector-coords-value{flex:1; min-width:0; font-size:14px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; -webkit-user-select:all; user-select:all;}
+.sector-coords-actions{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.sector-coords-btn{border:none; border-radius:10px; padding:9px 11px; font:inherit; font-size:13px; font-weight:800; background:#F0EEEA; color:var(--ink); cursor:pointer;}
 .sector-coords-btn.primary{background:var(--accent); color:#fff;}
 .sector-maps-option{display:block; width:100%; border:none; border-top:1px solid var(--line); background:none; font:inherit; font-size:15px; font-weight:700; color:var(--ink); padding:13px; cursor:pointer;}
 
@@ -3680,3 +3685,16 @@ button.standing-col{cursor:pointer;}
 .support-photo{position:relative; margin-top:10px; width:96px; height:96px; border-radius:14px; overflow:hidden; border:1px solid var(--line);}
 .support-photo img{width:100%; height:100%; object-fit:cover; display:block;}
 .support-photo-remove{position:absolute; top:4px; right:4px; width:24px; height:24px; border-radius:50%; border:none; background:rgba(0,0,0,.6); color:#fff; font-size:16px; line-height:1; cursor:pointer;}
+
+/* Narrow screens (≤380px — small phones, or Safari's page zoom «аА» at 115–125%):
+   the map header's «Игроки | Кланы» ran off the right edge, and a sector's
+   «1 из 3» next to the shields got cut to «1 и…», and the bottom menu's
+   «Активность» and «Профиль» ran into each other. Wider screens are unchanged. */
+@media (max-width: 380px){
+  .map-hud-bar{gap:8px; padding-left:12px;}
+  .map-hud-logo{height:18px;}
+  .treasury-chip{height:28px; padding:0 7px 0 5px; font-size:12px;}
+  .map-layer-opt{padding:6px 7px; font-size:12px;}
+  .standing-main{flex-wrap:wrap; height:auto; min-height:42px; row-gap:2px;}
+  .navitem span{font-size:10.5px; letter-spacing:0;}
+}
