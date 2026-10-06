@@ -44,7 +44,7 @@ import { GuestShareScreen } from '@/components/app-shell/GuestShareScreen'
 import { formatCooldown, type SpeciesEntry } from '@/lib/format'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { draftHexAt } from '@/lib/data/hexGrid'
-import { cityForSectorId, loadStoredCity, storeCity, type CityId } from '@/lib/data/city'
+import { cityFirst, cityForSectorId, loadStoredCity, storeCity, type CityId } from '@/lib/data/city'
 import { mostPopularSectorId } from '@/lib/data/sectorOrder'
 import type { PendingCatch, TerritoryStatus } from '@/lib/data/types'
 import { OnboardingFlow } from '@/components/app-shell/onboarding/OnboardingFlow'
@@ -318,6 +318,12 @@ export function FishZoneApp() {
   const [changingCity, setChangingCity] = useState(false)
   const cityTerritories = useMemo(() => territories.filter((t) => cityForSectorId(t.id) === city), [territories, city])
   const mostPopularId = useMemo(() => mostPopularSectorId(cityTerritories), [cityTerritories])
+  // The player's sectors in the other city — «Мои» on the territories list
+  // shows them after this city's, so it matches the profile.
+  const heldElsewhere = useMemo(
+    () => territories.filter((t) => cityForSectorId(t.id) !== city && (t.status === 'mine' || t.coHolders.some((h) => h.isMe))),
+    [territories, city]
+  )
 
   const [stack, setStack] = useState<StackEntry[]>([{ screen: 'screen-map' }])
   // push/pop/resetTo below read this instead of `stack` directly so the
@@ -1009,7 +1015,9 @@ export function FishZoneApp() {
 
   const viewingTerritory = territories.find((t) => t.id === viewingTerritoryId) ?? null
   const catchTerritory = territories.find((t) => t.id === catchTerritoryId) ?? null
-  const myTerritories = territories.filter((t) => t.status === 'mine')
+  // Every sector the player holds — their own and their share in a
+  // clan-mate's, both cities, this city's first.
+  const myTerritories = cityFirst(territories.filter((t) => t.status === 'mine' || t.coHolders.some((h) => h.isMe)), city)
 
   // Opens a ?territory=<id> link (from shareTerritory above) straight into
   // that sector on first load. Guarded by a ref, not just the effect's deps,
@@ -1390,6 +1398,7 @@ export function FishZoneApp() {
         <Screen id="screen-territories" current={currentScreen}>
           <TerritoriesListScreen
             territories={cityTerritories}
+            heldElsewhere={heldElsewhere}
             myTerritoryColor={myTerritoryColor}
             city={city}
             initialFilter={territoriesInitialFilter}
@@ -1589,7 +1598,9 @@ export function FishZoneApp() {
           {viewingUserId && (
             <UserProfileScreen
               userId={viewingUserId}
-              territories={territories.filter((t) => t.ownerId === viewingUserId)}
+              // Their own sectors and their shares in a clan-mate's — a share counts
+              // as a sector everywhere (heldTerritories, lib/data/achievements.ts).
+              territories={cityFirst(territories.filter((t) => t.ownerId === viewingUserId || t.coHolders.some((h) => h.id === viewingUserId)), city)}
               allTerritories={territories}
               onBack={pop}
               onOpenTerritory={openTerritory}

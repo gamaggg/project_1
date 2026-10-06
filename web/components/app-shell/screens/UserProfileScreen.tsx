@@ -308,7 +308,7 @@ export function UserProfileScreen({
         <div className="hero-stat-grid" style={{ marginTop: 20 }}>
           <button className="hero-stat" onClick={() => territoriesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
             <b>{territories.length}</b>
-            <span>Территорий</span>
+            <span>{pluralTerritories(territories.length)}</span>
           </button>
           <button className="hero-stat" onClick={onOpenAllCatches}>
             <b>{catches.length}</b>
@@ -316,7 +316,7 @@ export function UserProfileScreen({
           </button>
           <button className="hero-stat" onClick={() => onOpenSpecies(catchSpecies)}>
             <b>{speciesCount}</b>
-            <span>Видов рыб</span>
+            <span>{pluralSpecies(speciesCount)} рыб</span>
           </button>
           <button
             className="hero-stat"

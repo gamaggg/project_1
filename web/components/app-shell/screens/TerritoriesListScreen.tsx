@@ -20,6 +20,11 @@ export type Mode = 'territories' | 'rating' | 'clans'
 // with the loader.
 const TERRITORY_PAGE = 40
 
+// «Мои» is every sector the viewer holds — their own and their share in a
+// clan-mate's (Territory.coHolders) — in both cities, this one's first: the
+// same list and count as the profile (heldTerritories, lib/data/achievements.ts).
+const heldByMe = (t: Territory) => t.status === 'mine' || t.coHolders.some((h) => h.isMe)
+
 export function TerritoriesListScreen({
   territories,
   myTerritoryColor,
@@ -31,6 +36,7 @@ export function TerritoriesListScreen({
   onOpenUser,
   onOpenClan,
   onOpenClans,
+  heldElsewhere,
 }: {
   territories: Territory[]
   myTerritoryColor: string
@@ -42,6 +48,8 @@ export function TerritoriesListScreen({
   onOpenUser: (id: string) => void
   onOpenClan: (id: number) => void
   onOpenClans: () => void
+  // The viewer's sectors in the other city — «Мои» lists them after this city's.
+  heldElsewhere?: Territory[]
 }) {
   const [mode, setMode] = useState<Mode>('territories')
   const [filter, setFilter] = useState<Filter>(initialFilter ?? 'all')
@@ -60,10 +68,11 @@ export function TerritoriesListScreen({
   }
   const [sort, setSort] = useState<SectorSort>('lastCatch')
   const list = useMemo(() => {
-    const filtered = territories.filter((t) => (filter === 'all' ? true : t.status === filter))
+    const filtered = territories.filter((t) => (filter === 'all' ? true : filter === 'mine' ? heldByMe(t) : t.status === filter))
     // territories already comes freshest catch first (see useTerritories).
-    return sort === 'lastCatch' ? filtered : [...filtered].sort(compareSectors(sort))
-  }, [territories, filter, sort])
+    const sorted = (l: Territory[]) => (sort === 'lastCatch' ? l : [...l].sort(compareSectors(sort)))
+    return filter === 'mine' && heldElsewhere?.length ? [...sorted(filtered), ...sorted(heldElsewhere)] : sorted(filtered)
+  }, [territories, filter, sort, heldElsewhere])
   const canViewAllUsers = useCanViewAllUsers()
 
   // Rendered in pages rather than all at once: this screen stays mounted for
@@ -140,7 +149,10 @@ export function TerritoriesListScreen({
           </div>
           <div className="card" style={{ overflow: 'hidden' }}>
             {list.length ? (
-              list.slice(0, visibleCount).map((t, i) => (
+              list.slice(0, visibleCount).map((t, i) => {
+                // a sector shared with clan-mates is the viewer's too
+                const share = t.status !== 'mine' && t.coHolders.some((h) => h.isMe)
+                return (
                 <button
                   key={t.id}
                   className="terr-list-item"
@@ -151,7 +163,7 @@ export function TerritoriesListScreen({
                     className="hex-aspect hex-shape"
                     style={{
                       width: 12,
-                      background: resolveTerritoryColor(t.status, myTerritoryColor),
+                      background: share ? myTerritoryColor : resolveTerritoryColor(t.status, myTerritoryColor),
                       flex: '0 0 auto',
                       alignSelf: 'flex-start',
                       marginTop: 4,
@@ -167,7 +179,8 @@ export function TerritoriesListScreen({
                     <path d="M9 6l6 6-6 6" />
                   </svg>
                 </button>
-              ))
+                )
+              })
             ) : (
               <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Нет территорий в этой категории</div>
             )}

@@ -80,3 +80,9 @@ export function storeCity(city: CityId) {
     localStorage.setItem(STORAGE_KEY, city)
   } catch {}
 }
+
+// A player's sectors across both cities, the given city's first, each group
+// keeping its order — profiles and «Мои» list them like this.
+export function cityFirst<T extends { id: string }>(list: T[], city: CityId): T[] {
+  return [...list].sort((a, b) => Number(cityForSectorId(a.id) !== city) - Number(cityForSectorId(b.id) !== city))
+}
