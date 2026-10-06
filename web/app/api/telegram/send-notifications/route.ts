@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { SITE_URL } from '@/lib/site'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { pluralSectors, pluralCatches } from '@/lib/format'
+import { pluralSectors, pluralCatches, pluralRu } from '@/lib/format'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
@@ -247,6 +247,25 @@ function renderMessage(notification: NotificationRef): Message | null {
         buttonLabel: 'Открыть сектор',
         url: `${SITE_URL}/?territory=${encodeURIComponent(notification.territory_id)}`,
       }
+    case 'admin_gift': {
+      // A super admin's gift (admin_gift): their message if they wrote one,
+      // then what was given.
+      const coins = Number(notification.payload?.coins ?? 0)
+      const spins = Number(notification.payload?.spins ?? 0)
+      const note = typeof notification.payload?.note === 'string' ? notification.payload.note : ''
+      const amounts = [
+        coins > 0 ? `+${coins} ${pluralRu(coins, ['монета', 'монеты', 'монет'])}` : null,
+        spins > 0 ? `${spins} ${pluralRu(spins, ['бонусный прокрут', 'бонусных прокрута', 'бонусных прокрутов'])}` : null,
+      ]
+        .filter(Boolean)
+        .join(' и ')
+      if (!amounts) return null
+      return {
+        text: note ? `🎁 ${note}\n\nПодарок от RANGE: ${amounts}` : `🎁 Подарок от RANGE: ${amounts}`,
+        buttonLabel: 'Открыть RANGE',
+        url: SITE_URL,
+      }
+    }
     case 'support_reply': {
       // A nudge into the support chat, not the answer itself (decided 06.10).
       const ticketId = notification.payload?.ticket_id as number | undefined
