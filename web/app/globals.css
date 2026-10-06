@@ -1189,7 +1189,10 @@ body{
 .map-selection-bar-btn.cancel{background:rgba(255,255,255,0.12); color:#fff;}
 .map-selection-bar-btn:active{transform:scale(0.96);}
 .map-sheet-container{
-  position:absolute; left:0; right:0; bottom:88px; z-index:700;
+  /* The card 6px over the menu, like the top panel under the top edge: the
+     row below holds 8px of room for the selection ring, so the container
+     goes 2px into the menu's height (--nav-h, the real bar height). */
+  position:absolute; left:0; right:0; bottom:calc(var(--nav-h, 82px) - 2px); z-index:700;
   display:flex; flex-direction:column; gap:9px;
   /* Full width, but only its pieces take touches: the empty space beside
      the week-recap sticker (or above a card) passes swipes to the map. */
@@ -1206,7 +1209,7 @@ body{
      (map-sheet-card-pulse, up to 6px of box-shadow spread) had nowhere to
      render above/below the card and got cut off flush with its edge —
      8px top/bottom gives that spread actual room. The container below
-     anchors by bottom:88px, so the extra height grows upward only. */
+     anchors by its bottom, so the extra height grows upward only. */
   padding:8px 12px;
 }
 .map-sheet-row::-webkit-scrollbar{display:none;}

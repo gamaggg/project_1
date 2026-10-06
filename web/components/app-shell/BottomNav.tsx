@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import type { TabScreenId } from '@/components/app-shell/FishZoneApp'
 
 export function BottomNav({
@@ -19,8 +20,20 @@ export function BottomNav({
   // the profile's clan card, so its count rides on the profile tab.
   clanChatUnread?: number
 }) {
+  // The bar's real height (82px, or more with a home-indicator inset) as
+  // --nav-h, so the map's sector card can sit a fixed gap above it.
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const set = () => document.documentElement.style.setProperty('--nav-h', `${el.offsetHeight}px`)
+    set()
+    const ro = new ResizeObserver(set)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
   return (
-    <div className="bottomnav">
+    <div className="bottomnav" ref={ref}>
       <NavItem id="screen-map" active={active === 'screen-map'} onClick={onNavigate}>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M9 4 3 6.5v14L9 18l6 2.5 6-2.5v-14L15 6.5 9 4Z" />
