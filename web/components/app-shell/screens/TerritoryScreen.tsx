@@ -38,15 +38,24 @@ export function statusBadge(status: Territory['status'], myTerritoryColor: strin
   return <span className="badge badge-neutral">Свободна</span>
 }
 
-// Щит/Прилив — shown next to statusBadge wherever it renders, since a
-// protected sector being visibly protected is the whole point (a deterrent
-// other players need to see, not just the owner).
-export function shieldBadge(shieldUntil: string | null) {
-  if (!shieldUntil || new Date(shieldUntil) <= new Date()) return null
+// Щит/Прилив — shown next to statusBadge, since a protected sector being
+// visibly protected is the whole point (a deterrent other players need to
+// see, not just the owner) — with how long it still holds: whole hours, the
+// last three with minutes, the last one in minutes. Counts down on its own.
+function ShieldBadge({ shieldUntil }: { shieldUntil: string | null }) {
+  const now = useNow(30_000)
+  const left = shieldUntil ? new Date(shieldUntil).getTime() - now : 0
+  if (left <= 0) return null
+  const minutes = Math.max(1, Math.ceil(left / 60_000))
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  const time = h === 0 ? `${m} мин` : h < 3 && m > 0 ? `${h} ч ${m} мин` : `${h} ч`
   return (
-    <span className="badge badge-shield">
+    <span className="badge badge-shield" title={`До ${new Date(shieldUntil!).toLocaleString('ru', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}`}>
       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l8 3v6c0 5-3.4 8.7-8 11-4.6-2.3-8-6-8-11V5l8-3z" /></svg>
-      Под щитом
+      {/* Narrow phones get the short form, so the sector id beside it keeps its room. */}
+      <span className="shield-badge-long">Под щитом · ещё {time}</span>
+      <span className="shield-badge-short">Щит · {time}</span>
     </span>
   )
 }
@@ -164,7 +173,7 @@ function ShieldButton({ territory }: { territory: Territory }) {
   const freeShields = slotState?.freeShields ?? 0
   const t = useT()
   const [showInsufficient, setShowInsufficient] = useState(false)
-  const price = buffs.find((b) => b.id === 'shield')?.price ?? 80
+  const price = buffs.find((b) => b.id === 'shield')?.price ?? 150
   const coins = myProfile?.coins ?? 0
   const active = territory.shieldUntil && new Date(territory.shieldUntil) > new Date()
 
@@ -337,14 +346,14 @@ export function TerritoryScreen({
             {/* "Сектор" and the id forced onto their own lines so the id
                 never ellipsizes, regardless of how much width the badge
                 column on the right takes up. */}
-            <div className="page-title" style={{ marginTop: 2 }}>
+            <div className="page-title" style={{ marginTop: 2, flexShrink: 0 }}>
               Сектор
               <br />
               {territory.id}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
               {statusBadge(territory.status, myTerritoryColor, territory.coHolders.some((h) => h.isMe))}
-              {shieldBadge(territory.shieldUntil)}
+              <ShieldBadge shieldUntil={territory.shieldUntil} />
               {isMostPopular && <span className="badge badge-accent">🔥 Самый популярный</span>}
             </div>
           </div>

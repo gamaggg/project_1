@@ -313,6 +313,8 @@ body{
 .badge-accent{background:var(--accent-soft); color:var(--accent);}
 .badge-neutral{background:#EFEEEA; color:var(--ink-soft);}
 .badge-shield{background:#DCF3EF; color:#0E8074;}
+.shield-badge-short{display:none;}
+@media (max-width:380px){.shield-badge-long{display:none;} .shield-badge-short{display:inline;}}
 .btn-primary{
   background:linear-gradient(160deg,#FF6A1F,var(--accent) 65%);
   color:#fff; border:none;
