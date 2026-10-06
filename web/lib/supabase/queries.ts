@@ -2496,7 +2496,7 @@ export function useActivateBuff() {
 }
 
 export type SlotSymbol = 'stavrida' | 'skorpena' | 'lufar' | 'katran' | 'hook' | 'hex'
-export type SlotPrize = 'jackpot' | 'jackpot_coins' | 'shield' | 'double' | 'lufar' | 'triple' | 'pair' | 'none'
+export type SlotPrize = 'jackpot' | 'jackpot_coins' | 'shield' | 'double' | 'lufar' | 'triple' | 'free_spin' | 'pair' | 'none'
 // left counts the gift spins too (`bonus` of them) — a super admin's present
 // that doesn't burn at midnight and is spent after the day's own spins.
 export type SlotState = { total: number; used: number; left: number; bonus: number; nextReset: string; freeShields: number }

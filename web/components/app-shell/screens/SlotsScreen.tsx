@@ -76,12 +76,14 @@ function filler(count: number): SymbolId[] {
 }
 
 const PAY_ROWS: { prize: SlotPrize; symbols: SymbolId[]; chance: number; label: TKey; reward: { coins: number } | { text: TKey } }[] = [
-  { prize: 'jackpot', symbols: ['katran', 'katran', 'katran'], chance: 0.001, label: 'slots.rows.jackpot', reward: { text: 'slots.rewards.jackpot' } },
-  { prize: 'shield', symbols: ['hex', 'hex', 'hex'], chance: 0.03, label: 'slots.rows.shield', reward: { text: 'slots.rewards.shield' } },
-  { prize: 'double', symbols: ['hook', 'hook', 'hook'], chance: 0.04, label: 'slots.rows.double', reward: { text: 'slots.rewards.double' } },
-  { prize: 'lufar', symbols: ['lufar', 'lufar', 'lufar'], chance: 0.025, label: 'slots.rows.lufar', reward: { coins: 100 } },
-  { prize: 'triple', symbols: ['stavrida', 'stavrida', 'stavrida'], chance: 0.1, label: 'slots.rows.triple', reward: { coins: 25 } },
-  { prize: 'pair', symbols: ['skorpena', 'skorpena', 'hook'], chance: 0.3, label: 'slots.rows.pair', reward: { coins: 10 } },
+  // Same odds as spin_slots on the server (supabase-drafts/slots_odds_free_spin.sql).
+  { prize: 'jackpot', symbols: ['katran', 'katran', 'katran'], chance: 0.003, label: 'slots.rows.jackpot', reward: { text: 'slots.rewards.jackpot' } },
+  { prize: 'shield', symbols: ['hex', 'hex', 'hex'], chance: 0.05, label: 'slots.rows.shield', reward: { text: 'slots.rewards.shield' } },
+  { prize: 'double', symbols: ['hook', 'hook', 'hook'], chance: 0.06, label: 'slots.rows.double', reward: { text: 'slots.rewards.double' } },
+  { prize: 'lufar', symbols: ['lufar', 'lufar', 'lufar'], chance: 0.04, label: 'slots.rows.lufar', reward: { coins: 100 } },
+  { prize: 'free_spin', symbols: ['skorpena', 'skorpena', 'skorpena'], chance: 0.08, label: 'slots.rows.freeSpin', reward: { text: 'slots.rewards.freeSpin' } },
+  { prize: 'triple', symbols: ['stavrida', 'stavrida', 'stavrida'], chance: 0.14, label: 'slots.rows.triple', reward: { coins: 25 } },
+  { prize: 'pair', symbols: ['skorpena', 'skorpena', 'hook'], chance: 0.38, label: 'slots.rows.pair', reward: { coins: 10 } },
 ]
 
 // Moscow's reels carry river fish on the same symbols (see SlotSymbol), so
@@ -90,6 +92,8 @@ const MOSCOW_TEXT: Partial<Record<TKey, TKey>> = {
   'slots.rows.jackpot': 'slots.moscow.rows.jackpot',
   'slots.rows.lufar': 'slots.moscow.rows.lufar',
   'slots.rows.triple': 'slots.moscow.rows.triple',
+  'slots.rows.freeSpin': 'slots.moscow.rows.freeSpin',
+  'slots.result.freeSpin': 'slots.moscow.result.freeSpin',
   'slots.result.lufar': 'slots.moscow.result.lufar',
   'slots.result.jackpot': 'slots.moscow.result.jackpot',
   'slots.rewards.jackpot': 'slots.moscow.rewards.jackpot',
@@ -102,6 +106,7 @@ const RESULT_TEXT: Record<SlotPrize, TKey> = {
   double: 'slots.result.double',
   lufar: 'slots.result.lufar',
   triple: 'slots.result.triple',
+  free_spin: 'slots.result.freeSpin',
   pair: 'slots.result.pair',
   none: 'slots.result.none',
 }
