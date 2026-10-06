@@ -11,7 +11,6 @@ import { SHOP_TAB_ICONS } from '@/components/app-shell/icons'
 import { usePurchaseFlow } from '@/components/app-shell/usePurchaseFlow'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { AVATAR_FRAMES, JACKPOT_FRAME } from '@/lib/data/shopItems'
-import { withPremiumPreview } from '@/lib/data/premiumShopPreview'
 import { ShopTryOn } from '@/components/app-shell/ShopTryOn'
 import { AvatarFrameRing } from '@/components/app-shell/AvatarFrameRing'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
@@ -76,8 +75,7 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
   // not the map-tab lens a `city` prop would have meant (see that screen's
   // comment for the duplicate-week bug this avoids).
   const city = profile?.city ?? 'batumi'
-  const { data: dbItems = [] } = useShopItems()
-  const items = withPremiumPreview(dbItems)
+  const { data: items = [] } = useShopItems()
   const { data: owned = new Set<string>() } = useMyInventory()
   const buyItem = useBuyShopItem()
   const equipItem = useEquipShopItem()
