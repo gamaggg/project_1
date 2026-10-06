@@ -34,6 +34,7 @@ import { useClanBattleCeremony } from '@/lib/clanBattleCeremony'
 import { hasVisibleTypedText, useAppUpdate } from '@/lib/appUpdate'
 import { insideTelegram } from '@/lib/openExternal'
 import { track } from '@/lib/analytics'
+import { useSheetSwipeToClose } from '@/lib/useSheetSwipeToClose'
 import { addOfflineCatch } from '@/lib/offlineCatches'
 import { useOfflineCatchQueue, useOnline } from '@/lib/useOfflineCatches'
 import { useT } from '@/lib/i18n'
@@ -465,6 +466,8 @@ export function FishZoneApp() {
     }
   }, [darkScreen, showingTrophyScene])
   const online = useOnline()
+  // Every bottom sheet closes with a swipe down too (see the hook).
+  useSheetSwipeToClose()
   const offlineMode = photoStatus === 'error' && (!online || uploadNetworkFail)
   // Catches saved without a connection go out by themselves; each outcome
   // is said in a toast.
