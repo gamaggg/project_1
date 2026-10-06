@@ -215,7 +215,7 @@ export function ActivityScreen({
   onOpenClanChat: (clanId: number) => void
   onOpenShop?: () => void
   onOpenMap?: () => void
-  onOpenFaq?: () => void
+  onOpenFaq?: (ticketId?: number | null) => void
 }) {
   const tr = useT()
   const { data: activity = [], isLoading, isSuccess } = useActivity()
@@ -422,6 +422,7 @@ export function ActivityScreen({
               let title = ''
               let sub: string | null = null
               let action: (() => void) | undefined
+              let cta: string | null = null
               if (ev.kind === 'hot_sector_week') {
                 const sectors = (p.sectors as string[] | undefined) ?? []
                 title = tr('activity.hotWeek', { sectors: sectors.join(', ') })
@@ -453,11 +454,13 @@ export function ActivityScreen({
                 sub = tr('activity.sectorAttackedSub', { value: n('defense') })
                 if (a.territoryId) action = () => onOpenTerritory(a.territoryId!)
               } else if (ev.kind === 'support_reply') {
+                // A nudge into the support chat, not the answer itself (decided 06.10).
                 tone = 'blue'
                 icon = FEED_ICONS.chat
                 title = tr('activity.supportReply')
-                sub = typeof p.text === 'string' ? p.text : null
-                action = onOpenFaq
+                cta = tr('activity.supportOpen')
+                const ticketId = typeof p.ticket_id === 'number' ? p.ticket_id : null
+                if (onOpenFaq) action = () => onOpenFaq(ticketId)
               } else if (ev.kind === 'daily_reward_reminder') {
                 tone = 'green'
                 icon = FEED_ICONS.gift
@@ -471,6 +474,7 @@ export function ActivityScreen({
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14.5, fontWeight: 800, lineHeight: 1.35 }}>{title}</div>
                     {sub && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', fontWeight: 600, marginTop: 3 }}>{sub}</div>}
+                    {cta && <span className="activity-cta">{cta}</span>}
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                       {unreadIds.has(a.id) && <span className="unread-dot" />}
                       {formatWhen(a.createdAt)}

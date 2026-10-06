@@ -248,12 +248,12 @@ function renderMessage(notification: NotificationRef): Message | null {
         url: `${SITE_URL}/?territory=${encodeURIComponent(notification.territory_id)}`,
       }
     case 'support_reply': {
-      const text = notification.payload?.text as string | undefined
-      if (!text) return null
+      // A nudge into the support chat, not the answer itself (decided 06.10).
+      const ticketId = notification.payload?.ticket_id as number | undefined
       return {
-        text: `💬 Ответ поддержки RANGE:\n\n${text}`,
-        buttonLabel: 'Открыть RANGE',
-        url: SITE_URL,
+        text: '💬 Новое сообщение в чате с поддержкой RANGE',
+        buttonLabel: 'Перейти',
+        url: ticketId ? `${SITE_URL}/?support=${ticketId}` : SITE_URL,
       }
     }
     case 'sector_attacked': {

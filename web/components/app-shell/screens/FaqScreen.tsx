@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { faqFor, type FaqAnswer } from '@/lib/data/faq'
 import { useI18n } from '@/lib/i18n'
-import { useCreateSupportTicket, useMySupport, type SupportTicket } from '@/lib/supabase/queries'
+import { useAddSupportMessage, useCreateSupportTicket, useMySupport, type SupportTicket } from '@/lib/supabase/queries'
 import { formatWhen } from '@/lib/format'
 
 function norm(s: string) {
@@ -32,13 +32,26 @@ function Answer({ a }: { a: FaqAnswer }) {
 
 // «Вопросы и ответы» (lib/data/faq.ts): the game's rules as questions, by
 // topic, one open at a time; the search box looks through questions and
-// answers alike.
-export function FaqScreen({ onBack, onToast }: { onBack: () => void; onToast?: (msg: string) => void }) {
+// answers alike. Below the search: «Напиши в поддержку» and the player's own
+// requests, each a chat. Which chat is open is FishZoneApp's (chatTicketId)
+// — «Активность» and the bot's «Перейти» open one straight away.
+export function FaqScreen({
+  onBack,
+  onToast,
+  chatTicketId = null,
+  onChatChange,
+}: {
+  onBack: () => void
+  onToast?: (msg: string) => void
+  chatTicketId?: number | null
+  onChatChange?: (ticketId: number | null) => void
+}) {
   const { t, lang } = useI18n()
   const [open, setOpen] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [writing, setWriting] = useState(false)
-  const { data: tickets = [] } = useMySupport()
+  const { data: tickets = [] } = useMySupport(chatTicketId !== null)
+  const chatTicket = chatTicketId !== null ? tickets.find((tk) => tk.id === chatTicketId) : undefined
   const q = norm(query.trim())
   const sections = faqFor(lang)
     .map((s) => ({
@@ -68,8 +81,9 @@ export function FaqScreen({ onBack, onToast }: { onBack: () => void; onToast?: (
           <span>{t('support.cardSub')}</span>
         </span>
       </button>
-      {tickets.length > 0 && <MyTickets tickets={tickets} />}
+      {tickets.length > 0 && <MyTickets tickets={tickets} onOpen={(id) => onChatChange?.(id)} />}
       {writing && <SupportSheet onClose={() => setWriting(false)} onToast={onToast} />}
+      {chatTicket && <SupportChatSheet ticket={chatTicket} onClose={() => onChatChange?.(null)} onToast={onToast} />}
       {sections.length === 0 && <div className="faq-empty">{t('faq.empty')}</div>}
       {sections.map((s) => (
         <section key={s.title} className="faq-section">
@@ -97,10 +111,11 @@ export function FaqScreen({ onBack, onToast }: { onBack: () => void; onToast?: (
   )
 }
 
-// The player's own requests, newest first: what they wrote, and the answers.
-function MyTickets({ tickets }: { tickets: SupportTicket[] }) {
+// The player's own requests, newest first: status and the latest message;
+// a tap opens the chat.
+function MyTickets({ tickets, onOpen }: { tickets: SupportTicket[]; onOpen: (id: number) => void }) {
   const { t } = useI18n()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
   return (
     <section className="faq-section">
       <button className="support-mine-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
@@ -111,21 +126,22 @@ function MyTickets({ tickets }: { tickets: SupportTicket[] }) {
       </button>
       {open && (
         <div className="faq-list">
-          {tickets.map((tk) => (
-            <div key={tk.id} className="support-ticket">
-              <div className="support-ticket-head">
-                <span>{formatWhen(tk.createdAt)}</span>
-                <span className={`support-status${tk.answered ? ' answered' : ''}`}>{tk.answered ? t('support.answered') : t('support.waiting')}</span>
-              </div>
-              <p className="support-ticket-body">{tk.body}</p>
-              {tk.replies.map((r, i) => (
-                <div key={i} className="support-reply">
-                  <b>{t('support.replyFrom')}</b>
-                  <p>{r.body}</p>
+          {tickets.map((tk) => {
+            const last = tk.messages[tk.messages.length - 1]
+            return (
+              <button key={tk.id} className="support-ticket tap-scale" onClick={() => onOpen(tk.id)}>
+                <div className="support-ticket-head">
+                  <span>{t('support.ticket', { id: tk.id })} · {formatWhen(last.createdAt)}</span>
+                  <span className={`support-status${tk.answered ? ' answered' : ''}`}>{tk.answered ? t('support.answered') : t('support.waiting')}</span>
                 </div>
-              ))}
-            </div>
-          ))}
+                <p className="support-ticket-body">
+                  {last.from === 'support' && <b>{t('support.replyFrom')}: </b>}
+                  {last.body}
+                </p>
+                <span className="support-ticket-open">{t('support.openChat')}</span>
+              </button>
+            )
+          })}
         </div>
       )}
     </section>
@@ -229,6 +245,110 @@ function SupportSheet({ onClose, onToast }: { onClose: () => void; onToast?: (ms
           >
             {create.isPending ? t('support.sending') : t('support.send')}
           </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+// One request as a chat: everything said, oldest first (the player's on the
+// right, the support's on the left), and a box at the bottom to add to it —
+// text and, if they like, a screenshot. Stays scrolled to the newest.
+function SupportChatSheet({ ticket, onClose, onToast }: { ticket: SupportTicket; onClose: () => void; onToast?: (msg: string) => void }) {
+  const { t } = useI18n()
+  const [body, setBody] = useState('')
+  const [photo, setPhoto] = useState<File | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const threadRef = useRef<HTMLDivElement>(null)
+  const add = useAddSupportMessage()
+  const count = ticket.messages.length
+
+  useEffect(() => {
+    const el = threadRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [count])
+
+  const text = body.trim()
+  const send = () => {
+    if (!text || add.isPending) return
+    add.mutate(
+      { ticketId: ticket.id, body: text, photo },
+      {
+        onSuccess: () => {
+          setBody('')
+          setPhoto(null)
+        },
+        onError: (e) => {
+          const msg = typeof e === 'object' && e && 'message' in e ? String((e as { message: unknown }).message) : ''
+          onToast?.(msg.includes('SUPPORT:too_fast') ? t('support.chatTooFast') : msg.includes('SUPPORT:too_many') ? t('support.chatTooMany') : t('common.tryAgain'))
+        },
+      }
+    )
+  }
+
+  return createPortal(
+    <div className="move-sheet-overlay" onClick={add.isPending ? undefined : onClose}>
+      <div className="move-sheet support-chat" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={t('support.ticket', { id: ticket.id })}>
+        <div className="move-sheet-handle" />
+        <div className="move-head">
+          <div>
+            <div className="move-kicker">{t('support.kicker')}</div>
+            <div className="move-title">{t('support.ticket', { id: ticket.id })}</div>
+          </div>
+          <span className={`support-status${ticket.answered ? ' answered' : ''}`}>{ticket.answered ? t('support.answered') : t('support.waiting')}</span>
+        </div>
+        <div className="support-thread" ref={threadRef}>
+          {ticket.messages.map((m, i) => (
+            <div key={i} className={`support-msg ${m.from}`}>
+              {m.from === 'support' && <b>{t('support.replyFrom')}</b>}
+              <p>{m.body}</p>
+              {m.photo && <span className="support-msg-photo">{t('support.screenshot')}</span>}
+              <time>{formatWhen(m.createdAt)}</time>
+            </div>
+          ))}
+        </div>
+        <div className="support-compose">
+          {photo && (
+            <div className="support-compose-photo">
+              <span>{t('support.screenshot')}</span>
+              <button type="button" aria-label={t('support.removePhoto')} onClick={() => setPhoto(null)}>
+                ×
+              </button>
+            </div>
+          )}
+          <div className="support-compose-row">
+            <button type="button" className="support-compose-attach" aria-label={t('support.attach')} onClick={() => inputRef.current?.click()}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <rect x="3" y="5" width="18" height="14" rx="3" />
+                <circle cx="9" cy="10" r="1.6" />
+                <path d="M21 16l-5-5-8 8" />
+              </svg>
+            </button>
+            <textarea
+              value={body}
+              maxLength={MAX}
+              rows={1}
+              placeholder={t('support.write')}
+              onChange={(e) => setBody(e.target.value)}
+            />
+            <button type="button" className="support-compose-send" disabled={!text || add.isPending} aria-label={t('support.send')} onClick={send}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </button>
+          </div>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+              const f = e.target.files?.[0] ?? null
+              e.target.value = ''
+              if (f) setPhoto(f)
+            }}
+          />
         </div>
       </div>
     </div>,

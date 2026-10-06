@@ -1025,6 +1025,26 @@ export function FishZoneApp() {
     }
   }, [territories, territoriesLoading])
 
+  // The support chat open on «Вопросы и ответы» (FaqScreen is controlled):
+  // from «Активность»'s «Новое сообщение в чате с поддержкой» and from the
+  // bot's «Перейти» (?support=<ticket>), straight into that request's chat.
+  const [supportChatId, setSupportChatId] = useState<number | null>(null)
+  function openSupportChat(ticketId?: number | null) {
+    push({ screen: 'screen-faq' })
+    setSupportChatId(ticketId ?? null)
+  }
+  const supportLinkOpened = useRef(false)
+  useEffect(() => {
+    if (supportLinkOpened.current || !user) return
+    const ticketId = Number(new URLSearchParams(window.location.search).get('support'))
+    if (!ticketId) return
+    supportLinkOpened.current = true
+    window.history.replaceState(null, '', window.location.pathname)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens the support chat once from the launch URL (external input)
+    openSupportChat(ticketId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, from the launch URL
+  }, [user])
+
   // ?camera=1 — the «📷 Сфоткать улов» button under the bot's «Я на
   // рыбалке» message (lib/telegram/fishing.ts): straight into the catch flow,
   // same as tapping the camera button. Once, then the query string goes.
@@ -1518,7 +1538,7 @@ export function FishZoneApp() {
             onOpenClanChat={openClanChat}
             onOpenShop={openShop}
             onOpenMap={() => navClick('screen-map')}
-            onOpenFaq={() => push({ screen: 'screen-faq' })}
+            onOpenFaq={openSupportChat}
           />
         </Screen>
         <Screen id="screen-profile" current={currentScreen}>
@@ -1615,7 +1635,7 @@ export function FishZoneApp() {
           <AdminAccessScreen onBack={pop} onOpenUser={openUserProfile} onEditAccess={setEditingAdminAccessId} />
         </Screen>
         <Screen id="screen-faq" current={currentScreen} onBack={pop}>
-          <FaqScreen onBack={pop} onToast={showToast} />
+          <FaqScreen onBack={pop} onToast={showToast} chatTicketId={supportChatId} onChatChange={setSupportChatId} />
         </Screen>
         <Screen id="screen-admin-stats" current={currentScreen} onBack={pop}>
           {isSuperAdmin && <AdminStatsScreen onBack={pop} active={currentScreen === 'screen-admin-stats'} />}

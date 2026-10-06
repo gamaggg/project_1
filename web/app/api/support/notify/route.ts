@@ -12,32 +12,49 @@ const CITY: Record<string, string> = { batumi: 'Батуми', moscow: 'Моск
 // admin answers by replying to that message in the bot (see the webhook), so
 // each sent message is recorded against the request. Called by the app right
 // after the request is saved, for the player's own request only; a second
-// call for the same request does nothing.
+// call for the same request does nothing. With `messageId` it forwards a
+// follow-up the player wrote in that same request (support_chat.sql) — a
+// reply to it answers the same request too.
 export async function POST(req: Request) {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  const { ticketId } = (await req.json().catch(() => ({}))) as { ticketId?: number }
+  const { ticketId, messageId } = (await req.json().catch(() => ({}))) as { ticketId?: number; messageId?: number }
   if (!ticketId) return NextResponse.json({ error: 'ticketId' }, { status: 400 })
 
   const admin = createAdminClient()
   const { data: ticket } = await admin.from('support_tickets').select('id, user_id, body, photo_path, created_at').eq('id', ticketId).single()
   if (!ticket || ticket.user_id !== user.id) return NextResponse.json({ error: 'not found' }, { status: 404 })
-  const { count: already } = await admin.from('support_telegram_messages').select('ticket_id', { count: 'exact', head: true }).eq('ticket_id', ticketId)
-  if (already) return NextResponse.json({ sent: 0, already: true })
+
+  // What to forward: the request itself (once), or one follow-up in it.
+  let text = ticket.body
+  let photoPath = ticket.photo_path
+  let headLine = `🆘 Обращение #${ticket.id}`
+  if (messageId) {
+    const { data: msg } = await admin.from('support_messages').select('id, ticket_id, body, photo_path, created_at').eq('id', messageId).single()
+    if (!msg || msg.ticket_id !== ticket.id) return NextResponse.json({ error: 'not found' }, { status: 404 })
+    // Only something just written — an old message can't be pushed again.
+    if (Date.now() - new Date(msg.created_at).getTime() > 5 * 60 * 1000) return NextResponse.json({ sent: 0, stale: true })
+    text = msg.body
+    photoPath = msg.photo_path
+    headLine = `💬 Обращение #${ticket.id} — новое сообщение`
+  } else {
+    const { count: already } = await admin.from('support_telegram_messages').select('ticket_id', { count: 'exact', head: true }).eq('ticket_id', ticketId)
+    if (already) return NextResponse.json({ sent: 0, already: true })
+  }
 
   const [{ data: author }, { data: admins }] = await Promise.all([
     admin.from('profiles').select('display_name, public_id, city').eq('id', user.id).single(),
     admin.from('profiles').select('telegram_id').eq('is_super_admin', true).not('telegram_id', 'is', null),
   ])
   const who = [author?.display_name ?? 'Игрок', author?.public_id ? `ID ${author.public_id}` : null, CITY[author?.city ?? ''] ?? null].filter(Boolean).join(' · ')
-  const head = `🆘 Обращение #${ticket.id}\nот ${who}`
+  const head = `${headLine}\nот ${who}`
   const foot = '↩️ Ответь на это сообщение, чтобы ответить игроку'
   let photoUrl: string | null = null
-  if (ticket.photo_path) {
-    const { data } = await admin.storage.from('support').createSignedUrl(ticket.photo_path, 3600)
+  if (photoPath) {
+    const { data } = await admin.storage.from('support').createSignedUrl(photoPath, 3600)
     photoUrl = data?.signedUrl ?? null
   }
 
@@ -53,15 +70,15 @@ export async function POST(req: Request) {
     if (photoUrl) {
       // A photo caption holds 1024 characters — a longer request goes as its
       // own message right after; a reply to either one reaches the player.
-      const caption = `${head}\n\n${ticket.body}\n\n${foot}`
+      const caption = `${head}\n\n${text}\n\n${foot}`
       if (caption.length <= 1024) {
         await send('sendPhoto', { chat_id: chatId, photo: photoUrl, caption })
       } else {
         await send('sendPhoto', { chat_id: chatId, photo: photoUrl, caption: head })
-        await send('sendMessage', { chat_id: chatId, text: `${ticket.body}\n\n${foot}` })
+        await send('sendMessage', { chat_id: chatId, text: `${text}\n\n${foot}` })
       }
     } else {
-      await send('sendMessage', { chat_id: chatId, text: `${head}\n\n${ticket.body}\n\n${foot}` })
+      await send('sendMessage', { chat_id: chatId, text: `${head}\n\n${text}\n\n${foot}` })
     }
     if (ids.length) {
       await admin.from('support_telegram_messages').insert(ids.map((message_id) => ({ chat_id: chatId, message_id, ticket_id: ticket.id })))
