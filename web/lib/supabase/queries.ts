@@ -50,12 +50,22 @@ const TERRITORY_PAGE_SIZE = 1000
 const TERRITORY_PARALLEL_PAGES = 2
 
 // territories_with_stats.co_holders is a jsonb array of {id, avatar_url,
-// display_name}, oldest share first — null when nobody shares the sector.
+// display_name, equipped_skin}, oldest share first — null when nobody shares
+// the sector.
 function toCoHolders(raw: unknown, myId: string | undefined): TerritoryCoHolder[] {
   if (!Array.isArray(raw)) return []
   return raw
-    .filter((h): h is { id: string; avatar_url?: string | null; display_name?: string | null } => typeof h?.id === 'string')
-    .map((h) => ({ id: h.id, avatarUrl: h.avatar_url ?? null, displayName: h.display_name ?? null, isMe: h.id === myId }))
+    .filter(
+      (h): h is { id: string; avatar_url?: string | null; display_name?: string | null; equipped_skin?: string | null } =>
+        typeof h?.id === 'string'
+    )
+    .map((h) => ({
+      id: h.id,
+      avatarUrl: h.avatar_url ?? null,
+      displayName: h.display_name ?? null,
+      isMe: h.id === myId,
+      equippedSkin: h.equipped_skin ?? null,
+    }))
 }
 
 // Merges static geometry with live Supabase ownership (territories_with_stats) —

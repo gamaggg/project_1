@@ -61,6 +61,9 @@ export type TerritoryCoHolder = {
   // The viewer's own share — painted in their territory colour, like
   // status 'mine' is for a sector they own.
   isMe: boolean
+  // Their equipped territory skin — fills their part of the sector on the
+  // map, the way ownerEquippedSkin fills the owner's.
+  equippedSkin: string | null
 }
 
 export type Species = {

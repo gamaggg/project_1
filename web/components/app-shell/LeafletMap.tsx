@@ -92,7 +92,10 @@ function sectorSplit(t: Territory) {
 // Owner first, then clan-mates in the order they joined — the same order
 // splitSector hands the parts out in.
 function sectorHolders(t: Territory) {
-  return [{ avatarUrl: t.ownerAvatarUrl, displayName: t.ownerDisplayName, isMe: t.status === 'mine' }, ...t.coHolders]
+  return [
+    { avatarUrl: t.ownerAvatarUrl, displayName: t.ownerDisplayName, isMe: t.status === 'mine', equippedSkin: t.ownerEquippedSkin },
+    ...t.coHolders,
+  ]
 }
 
 // Default fallback view for a visitor whose real position isn't known yet (no
@@ -236,7 +239,6 @@ export const LeafletMap = forwardRef<
       drawOrder.forEach((t) => {
         const isSelectedForDeletion = selectedIds?.has(t.id) ?? false
         const inClanView = clanLayerRef.current
-        const skin = !inClanView && t.status !== 'free' && t.ownerEquippedSkin ? resolveTerritorySkin(t.ownerEquippedSkin) : null
         const color = isSelectedForDeletion
           ? '#D33'
           : inClanView
@@ -246,48 +248,56 @@ export const LeafletMap = forwardRef<
                 ? resolveCrest(t.ownerClanCrest).primary
                 : SOLO_OWNER_COLOR
             : resolveTerritoryColor(t.status, myTerritoryColor)
-        // Tinted with this same `color` — whatever the sector already renders
-        // in (the owner's own color if it's their own, the fixed "other"
-        // color otherwise) — so a skin never clashes with it (see
-        // territorySkins.ts).
-        let pattern: CanvasPattern | null = null
-        if (skin && map) {
-          // Both the tile's position AND its size are measured from this
-          // specific sector's own corners, not a shared sample from
-          // wherever in `territories` — sectors are the same real-world
-          // hex, but Mercator projection still renders that hex at
-          // different PIXEL sizes depending on latitude, so a size sampled
-          // from one sector (especially one in a different city entirely)
-          // could be visibly wrong for another, leaving the tile short of
-          // the sector's true bounding box on one edge. The position also
-          // has to be in the exact same coordinate space Leaflet's canvas
-          // renderer draws this polygon's own points in (layer points, not
-          // container points) — see useSkinPatterns' getSkinPattern for why.
-          const layerPoints = t.corners.map(([lat, lng]) => map.latLngToLayerPoint([lat, lng]))
-          const xs = layerPoints.map((p) => p.x)
-          const ys = layerPoints.map((p) => p.y)
-          const offsetX = Math.min(...xs)
-          const offsetY = Math.min(...ys)
-          const hexTileWidth = Math.max(...xs) - offsetX
-          const hexTileHeight = Math.max(...ys) - offsetY
-          pattern = getSkinPattern(skin.id, color, offsetX, offsetY, hexTileHeight, hexTileWidth)
+        // A holder's equipped skin, tinted with the colour their sector (or
+        // their part of a shared one) already renders in — their own colour
+        // if it's the viewer, the fixed "other" colour otherwise — so a skin
+        // never clashes with it (see territorySkins.ts). None on the «Кланы»
+        // layer, which paints whole clans in one colour.
+        let tile: { offsetX: number; offsetY: number; width: number; height: number } | null = null
+        const skinPattern = (skinId: string | null, tint: string): CanvasPattern | null => {
+          const skin = !inClanView && t.status !== 'free' ? resolveTerritorySkin(skinId) : null
+          if (!skin || !map) return null
+          if (!tile) {
+            // Both the tile's position AND its size are measured from this
+            // specific sector's own corners, not a shared sample from
+            // wherever in `territories` — sectors are the same real-world
+            // hex, but Mercator projection still renders that hex at
+            // different PIXEL sizes depending on latitude, so a size sampled
+            // from one sector (especially one in a different city entirely)
+            // could be visibly wrong for another, leaving the tile short of
+            // the sector's true bounding box on one edge. The position also
+            // has to be in the exact same coordinate space Leaflet's canvas
+            // renderer draws this polygon's own points in (layer points, not
+            // container points) — see useSkinPatterns' getSkinPattern for why.
+            // A shared sector's parts all take the whole hex's tile, so each
+            // part shows its own slice of its holder's skin.
+            const layerPoints = t.corners.map(([lat, lng]) => map.latLngToLayerPoint([lat, lng]))
+            const xs = layerPoints.map((p) => p.x)
+            const ys = layerPoints.map((p) => p.y)
+            const offsetX = Math.min(...xs)
+            const offsetY = Math.min(...ys)
+            tile = { offsetX, offsetY, width: Math.max(...xs) - offsetX, height: Math.max(...ys) - offsetY }
+          }
+          return getSkinPattern(skin.id, tint, tile.offsetX, tile.offsetY, tile.height, tile.width)
         }
         const fillOpacity = isSelectedForDeletion ? 0.5 : t.status === 'free' ? 0.22 : inClanView && t.ownerClanCrest ? 0.5 : 0.32
-        // Shared by clan-mates: each holder's part gets its own fill (the
-        // viewer's own part in their colour, everyone else's in the usual
-        // "someone else's" blue; one clan colour on the «Кланы» layer),
-        // drawn under the sector's outline. The whole sector below still
-        // takes the clicks — parts are decoration only.
+        // Shared by clan-mates: each holder's part gets its own fill — their
+        // skin, or the plain colour (the viewer's own part in their colour,
+        // everyone else's in the usual "someone else's" blue; one clan colour
+        // on the «Кланы» layer) — drawn under the sector's outline. The whole
+        // sector below still takes the clicks — parts are decoration only.
         const split = isSelectedForDeletion ? null : sectorSplit(t)
+        const pattern = split ? null : skinPattern(t.ownerEquippedSkin, color)
         if (split) {
           const holders = sectorHolders(t)
           split.parts.forEach((part, i) => {
             const partColor = inClanView ? color : i === 0 ? color : holders[i].isMe ? myTerritoryColor : OTHER_TERRITORY_COLOR
+            const partPattern = skinPattern(holders[i].equippedSkin, partColor)
             L.polygon(part, {
               stroke: false,
-              fillColor: (i === 0 && pattern ? pattern : partColor) as unknown as string,
+              fillColor: (partPattern ?? partColor) as unknown as string,
               // A skin pattern has its tint and line alpha baked in (see skinPattern.ts).
-              fillOpacity: i === 0 && pattern ? 1 : fillOpacity,
+              fillOpacity: partPattern ? 1 : fillOpacity,
               interactive: false,
             }).addTo(markersLayer)
           })

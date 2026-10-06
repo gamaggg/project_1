@@ -3,7 +3,13 @@ import type { Territory, TerritoryCoHolder } from '@/lib/data/types'
 // The owner, then the clan-mates sharing the sector, oldest share first.
 function sectorHolders(t: Territory): TerritoryCoHolder[] {
   if (!t.ownerId) return []
-  const owner = { id: t.ownerId, avatarUrl: t.ownerAvatarUrl, displayName: t.ownerDisplayName, isMe: t.status === 'mine' }
+  const owner = {
+    id: t.ownerId,
+    avatarUrl: t.ownerAvatarUrl,
+    displayName: t.ownerDisplayName,
+    isMe: t.status === 'mine',
+    equippedSkin: t.ownerEquippedSkin,
+  }
   return [owner, ...t.coHolders]
 }
 
