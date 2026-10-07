@@ -9,10 +9,17 @@ import type { Lang } from '@/lib/i18n/core'
 // RULE (05.10): every new feature or change to a rule, price, reward, limit
 // or timing updates this file in the same change — take the numbers from the
 // code/database, never from memory.
-// An answer is paragraphs and bullet lists. Russian only for now; the other
-// languages fall back to it until the app is translated.
+// An answer is paragraphs, bullet lists and price tables. Russian only for
+// now; the other languages fall back to it until the app is translated.
 
-export type FaqAnswer = (string | string[])[]
+// A titled two-column table: coins on the left, what they're for on the right.
+export type FaqTable = { title: string; rows: [number, string][] }
+export type FaqAnswer = (string | string[] | FaqTable)[]
+
+// Everything an answer says, as plain text — what the search box looks through.
+export function answerText(a: FaqAnswer): string {
+  return a.map((b) => (typeof b === 'string' ? b : Array.isArray(b) ? b.join(' ') : `${b.title} ${b.rows.map((r) => r.join(' ')).join(' ')}`)).join(' ')
+}
 export type FaqItem = { q: string; a: FaqAnswer }
 export type FaqSection = { title: string; items: FaqItem[] }
 
@@ -104,7 +111,11 @@ const RU: FaqSection[] = [
       },
       {
         q: 'Где смотреть прогноз клёва?',
-        a: ['На карте — значок «Клёв» с оценкой на сегодня; нажми — прогноз по часам и на 3 дня. На экране сектора — прогноз для этого места и «Что клюёт здесь»: какие рыбы, когда и на что здесь ловят.'],
+        a: [
+          'На карте — значок «Клёв» с оценкой на сегодня. Нажми — откроется прогноз: вверху выбираешь день (сегодня и ещё 3), крупная цифра — оценка на весь этот день, рядом лучшее время.',
+          'Веди пальцем по шкале «По часам» — под ней покажется клёв и погода в выбранный час: воздух, ветер, давление, волна. Ниже — что помогает клёву (зелёная точка), а что мешает (красная).',
+          'На экране сектора — прогноз для этого места и «Что клюёт здесь»: какие рыбы, когда и на что здесь ловят.',
+        ],
       },
     ],
   },
@@ -122,6 +133,42 @@ const RU: FaqSection[] = [
             'Челленджи недели — от 10 до 150 монет за задание.',
             'Слоты, сундук клана и Битва кланов.',
           ],
+        ],
+      },
+      {
+        // species.coin_value, checked 07.10
+        q: 'Сколько монет за какую рыбу?',
+        a: [
+          'Монеты за улов зависят только от вида рыбы — размер и вес не важны. Чем реже рыба, тем дороже.',
+          {
+            title: 'Батуми',
+            rows: [
+              [5, 'барабуля, зеленушка, карась, марамойка, морская собачка, ставрида'],
+              [10, 'морской бычок, окунь, скорпена'],
+              [15, 'голавль, смарида'],
+              [20, 'морской карась'],
+              [25, 'амур, звездочёт, каменный окунь, кефаль, луфарь, морской дракон, сарган, толстолобик'],
+              [50, 'карп, мармир, усач, черноморская сельдь'],
+              [75, 'зубарь, пеламида, судак, щука'],
+              [100, 'горбыль, радужная форель, речная форель, сазан, сибас'],
+              [150, 'катран, кумжа, скат, сом'],
+              [250, 'морской петух, черноморская форель'],
+            ],
+          },
+          {
+            title: 'Москва',
+            rows: [
+              [5, 'ёрш, пескарь, плотва, ротан, уклейка'],
+              [10, 'бычок, густера, карась, красноперка'],
+              [15, 'окунь'],
+              [25, 'голавль, лещ, линь, язь'],
+              [50, 'берш, карп, толстолобик'],
+              [75, 'амур, жерех, судак, щука'],
+              [100, 'налим'],
+              [150, 'сом'],
+            ],
+          },
+          'На горячем секторе монеты за улов удваиваются, с «Двойными монетами» — тоже, а вместе — ×4. Если улов захватил сектор, сверху ещё +25.',
         ],
       },
       {

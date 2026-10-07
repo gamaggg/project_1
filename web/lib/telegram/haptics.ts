@@ -10,6 +10,12 @@ export function hapticTap() {
   window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light')
 }
 
+// A faint tick each time a dragged finger lands on a new value (the forecast's
+// hour scrubber) — Telegram's own selection feedback, lighter than a tap.
+export function hapticSelect() {
+  window.Telegram?.WebApp?.HapticFeedback?.selectionChanged()
+}
+
 // A distinct, heavier pulse for a real accomplishment (achievement unlock) —
 // notificationOccurred is Telegram's own "something happened" feedback
 // family, separate from impactOccurred's plain taps.

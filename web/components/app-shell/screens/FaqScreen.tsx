@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { BackButton } from '@/components/app-shell/BackButton'
-import { faqFor, type FaqAnswer } from '@/lib/data/faq'
+import { answerText, faqFor, type FaqAnswer } from '@/lib/data/faq'
+import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { useI18n } from '@/lib/i18n'
 import { useAddSupportMessage, useCreateSupportTicket, useMySupport, type SupportTicket } from '@/lib/supabase/queries'
 import { formatWhen } from '@/lib/format'
@@ -18,12 +19,33 @@ function Answer({ a }: { a: FaqAnswer }) {
       {a.map((block, i) =>
         typeof block === 'string' ? (
           <p key={i}>{block}</p>
-        ) : (
+        ) : Array.isArray(block) ? (
           <ul key={i}>
             {block.map((line) => (
               <li key={line}>{line}</li>
             ))}
           </ul>
+        ) : (
+          // The frame sits on a wrapper: WebKit (Telegram on iPhone) clips a
+          // rounded, overflow-hidden <table> and its <caption> off at the left.
+          <div key={i} className="faq-table">
+            <div className="faq-table-title">{block.title}</div>
+            <div className="faq-table-box">
+              <table>
+                <tbody>
+                  {block.rows.map(([coins, what]) => (
+                    <tr key={coins}>
+                      <th scope="row">
+                        <CoinIcon size={16} />
+                        {coins}
+                      </th>
+                      <td>{what}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )
       )}
     </div>
@@ -56,7 +78,7 @@ export function FaqScreen({
   const sections = faqFor(lang)
     .map((s) => ({
       ...s,
-      items: q ? s.items.filter((it) => norm(it.q).includes(q) || norm(it.a.flat().join(' ')).includes(q)) : s.items,
+      items: q ? s.items.filter((it) => norm(it.q).includes(q) || norm(answerText(it.a)).includes(q)) : s.items,
     }))
     .filter((s) => s.items.length > 0)
 

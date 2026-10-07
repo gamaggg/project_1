@@ -27,11 +27,29 @@ export type RawForecast = {
 
 export type MoonPhase = 'new' | 'waxingCrescent' | 'firstQuarter' | 'waxingGibbous' | 'full' | 'waningGibbous' | 'lastQuarter' | 'waningCrescent'
 
+export type Score = 1 | 2 | 3 | 4 | 5
+
+// One local hour as the sheet's hour readout shows it: its own 1–5 (the
+// weather and the light at that hour, on the day score's scale) and the
+// weather that went into it.
+export type ForecastHour = {
+  score: Score
+  temp: number
+  wind: number
+  windDir: number
+  gusts: number
+  pressureHpa: number
+  precip: number
+  wave: number | null
+  code: number
+}
+
 export type ForecastDay = {
   date: string
-  score: 1 | 2 | 3 | 4 | 5
+  score: Score
   // 24 hourly factors, local hours 0–23.
   hours: number[]
+  hourly: ForecastHour[]
   best: { from: number; to: number } | null
   pressureHpa: number
   // hPa over the day — what the angler reads as «падает / растёт».
@@ -43,6 +61,9 @@ export type ForecastDay = {
   gusts: number
   wave: number | null
   waterTemp: number | null
+  // Daytime (06–22) rain, mm, and whether a thunderstorm is in it.
+  precip: number
+  storm: boolean
   tempMin: number
   tempMax: number
   code: number
@@ -148,7 +169,7 @@ function lightFactor(hour: number, sunrise: number, sunset: number): number {
 
 // A calm, steady day lands on 4; a 5 needs something extra on top — dawn in
 // a falling-pressure window, a new or full moon.
-function scoreFromRaw(raw: number): ForecastDay['score'] {
+function scoreFromRaw(raw: number): Score {
   return raw >= 1.04 ? 5 : raw >= 0.92 ? 4 : raw >= 0.78 ? 3 : raw >= 0.62 ? 2 : 1
 }
 // A front going through: a big swing over the day hurts all of it, not
@@ -229,6 +250,17 @@ export function scoreForecast(raw: RawForecast, catchHours: number[] | null, now
       date: day.date,
       score: scoreFromRaw(rawScore),
       hours,
+      hourly: idx.map((i, h) => ({
+        score: scoreFromRaw(scored[h]),
+        temp: raw.temp[i],
+        wind: raw.wind[i],
+        windDir: raw.windDir[i],
+        gusts: raw.gusts[i],
+        pressureHpa: raw.pressure[i],
+        precip: raw.precip[i],
+        wave: raw.wave ? raw.wave[i] : null,
+        code: raw.code[i],
+      })),
       best,
       pressureHpa: mean(idx.map((i) => raw.pressure[i])),
       pressureTrend: swing,
@@ -237,6 +269,8 @@ export function scoreForecast(raw: RawForecast, catchHours: number[] | null, now
       gusts: Math.max(...daytime.map((i) => raw.gusts[i])),
       wave: waves.length ? mean(waves) : null,
       waterTemp: water.length ? mean(water) : null,
+      precip: daytime.reduce((a, i) => a + raw.precip[i], 0),
+      storm: daytime.some((i) => raw.code[i] >= 95),
       tempMin: Math.min(...idx.map((i) => raw.temp[i])),
       tempMax: Math.max(...idx.map((i) => raw.temp[i])),
       code: raw.code[idx[13]],
@@ -246,6 +280,23 @@ export function scoreForecast(raw: RawForecast, catchHours: number[] | null, now
     })
   }
   return days
+}
+
+// How each of the day's inputs leans, from the same factor curves the score
+// is made of — what the sheet's «Что влияет» dots show.
+export type Tone = 'good' | 'ok' | 'bad'
+export function dayTones(d: ForecastDay): { pressure: Tone; wind: Tone; wave: Tone | null; rain: Tone; moon: Tone } {
+  const level = pressureLevel(d.pressureHpa)
+  const swing = Math.abs(d.pressureTrend)
+  const wind = windFactor(d.wind, d.gusts)
+  const wave = d.wave == null ? null : waveFactor(d.wave)
+  return {
+    pressure: level >= 1 && swing <= 6 ? 'good' : level < 0.85 || swing > 10 ? 'bad' : 'ok',
+    wind: wind >= 0.9 ? 'good' : wind >= 0.75 ? 'ok' : 'bad',
+    wave: wave == null ? null : wave >= 1 ? 'good' : wave >= 0.85 ? 'ok' : 'bad',
+    rain: d.storm || d.precip >= 8 ? 'bad' : d.precip >= 1.5 ? 'ok' : 'good',
+    moon: d.moon.phase === 'new' || d.moon.phase === 'full' ? 'good' : 'ok',
+  }
 }
 
 // 'YYYY-MM-DDTHH' for now in a time zone — Open-Meteo's local clock.

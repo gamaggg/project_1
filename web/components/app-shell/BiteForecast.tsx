@@ -1,15 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CITIES, type CityId } from '@/lib/data/city'
-import { HPA_TO_MMHG, compassPoint, weatherKind, type ForecastDay, type ForecastPoint, type WeatherKind } from '@/lib/forecast/bite'
+import { HPA_TO_MMHG, compassPoint, dayTones, nowInZone, weatherKind, type ForecastDay, type ForecastPoint, type Tone, type WeatherKind } from '@/lib/forecast/bite'
 import { useBiteForecast } from '@/lib/forecast/useBiteForecast'
 import { useSectorInsights } from '@/lib/supabase/queries'
 import { useI18n } from '@/lib/i18n'
 import type { TKey } from '@/lib/i18n/core'
 import type { Territory } from '@/lib/data/types'
-import { hapticTap } from '@/lib/telegram/haptics'
+import { hapticSelect, hapticTap } from '@/lib/telegram/haptics'
+import { useNow } from '@/lib/useNow'
 
 export const SCORE_COLOR: Record<ForecastDay['score'], string> = {
   1: '#B4B7BF',
@@ -164,7 +165,7 @@ export function ForecastChip({ city }: { city: CityId }) {
         {t('forecast.chip')}
         <b style={{ color: SCORE_COLOR[today.score] }}>{today.score}</b>
       </button>
-      {open && days && <ForecastSheet title={t('forecast.title')} kicker={info.name} days={days} sector={false} onClose={() => setOpen(false)} />}
+      {open && days && <ForecastSheet title={t('forecast.title')} kicker={info.name} days={days} sector={false} timezone={info.timezone} onClose={() => setOpen(false)} />}
     </>
   )
 }
@@ -219,17 +220,70 @@ export function SectorForecastCard({ territory, city }: { territory: Territory; 
           </div>
         )}
       </button>
-      {open && days && <ForecastSheet title={t('forecast.here')} kicker={territory.id} days={days} sector onClose={() => setOpen(false)} />}
+      {open && days && <ForecastSheet title={t('forecast.here')} kicker={territory.id} days={days} sector timezone={CITIES[city].timezone} onClose={() => setOpen(false)} />}
     </>
   )
 }
 
-function ForecastSheet({ title, kicker, days, sector, onClose }: { title: string; kicker: string; days: ForecastDay[]; sector: boolean; onClose: () => void }) {
-  const { t, scoreLabel, dayName, dateLabel, pressure, trend, num } = useForecastLabels()
-  const today = days[0]
-  const peak = Math.max(...today.hours)
-  const inBest = (h: number) => !!today.best && h >= today.best.from && h < today.best.to
-  const moonPct = Math.round(today.moon.illumination * 100)
+const hourOf = (iso: string) => Number(iso.slice(11, 13)) + Number(iso.slice(14, 16)) / 60
+
+// The sheet: pick a day on top (its 1–5 is for the whole day), then drag a
+// finger along the hours to read the bite and the weather at any hour; below,
+// which of the day's inputs help the score and which hold it back.
+function ForecastSheet({
+  title,
+  kicker,
+  days,
+  sector,
+  timezone,
+  onClose,
+}: {
+  title: string
+  kicker: string
+  days: ForecastDay[]
+  sector: boolean
+  timezone: string
+  onClose: () => void
+}) {
+  const { t, lang, scoreLabel, dayName, dateLabel, pressure, trend, num } = useForecastLabels()
+  const nowLocal = nowInZone(timezone, useNow(60_000))
+  const nowHour = Number(nowLocal.slice(11, 13))
+  const isToday = (d: ForecastDay) => nowLocal.startsWith(d.date)
+  // Today opens on the current hour, other days on their best window.
+  const startHour = (d: ForecastDay) => (isToday(d) ? nowHour : (d.best?.from ?? 12))
+  const tabs = days.slice(0, 4)
+  const [dayIdx, setDayIdx] = useState(0)
+  const [hour, setHour] = useState(() => startHour(days[0]))
+  const [dragged, setDragged] = useState(false)
+  const chartRef = useRef<HTMLDivElement>(null)
+  const dragging = useRef(false)
+
+  const day = tabs[dayIdx] ?? days[0]
+  const today = isToday(day)
+  const peak = Math.max(...day.hours)
+  const at = day.hourly[hour]
+  const tones = dayTones(day)
+  const moonPct = Math.round(day.moon.illumination * 100)
+  const sunrise = hourOf(day.sunrise)
+  const sunset = hourOf(day.sunset)
+  const night = hour + 0.5 < sunrise || hour + 0.5 > sunset
+
+  const pickDay = (i: number) => {
+    if (i === dayIdx) return
+    hapticTap()
+    setDayIdx(i)
+    setHour(startHour(tabs[i]))
+  }
+  const pickHour = (h: number) => {
+    const next = Math.min(23, Math.max(0, h))
+    if (next === hour) return
+    hapticSelect()
+    setHour(next)
+  }
+  const pickAt = (clientX: number) => {
+    const box = chartRef.current?.getBoundingClientRect()
+    if (box) pickHour(Math.floor(((clientX - box.left) / box.width) * 24))
+  }
 
   return createPortal(
     <div className="move-sheet-overlay" onClick={onClose}>
@@ -242,29 +296,105 @@ function ForecastSheet({ title, kicker, days, sector, onClose }: { title: string
           </div>
         </div>
         <div className="move-body forecast-sheet-body">
-          <div className="forecast-today" style={{ ['--score-color' as string]: SCORE_COLOR[today.score] }}>
+          <div className="forecast-tabs" role="tablist">
+            {tabs.map((d, i) => (
+              <button
+                key={d.date}
+                type="button"
+                role="tab"
+                aria-selected={i === dayIdx}
+                className={`forecast-day forecast-tab${i === dayIdx ? ' on' : ''}`}
+                style={{ ['--score-color' as string]: SCORE_COLOR[d.score] }}
+                onClick={() => pickDay(i)}
+              >
+                <span className="forecast-day-name">{dayName(d, i)}</span>
+                <span className="forecast-tab-date">{dateLabel(d)}</span>
+                <span className="forecast-day-score">
+                  <ScoreBars score={d.score} size={13} />
+                  <b>{d.score}</b>
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="forecast-today" style={{ ['--score-color' as string]: SCORE_COLOR[day.score] }}>
             <div className="forecast-today-score">
-              <b>{today.score}</b>
+              <b>{day.score}</b>
               <span>/5</span>
             </div>
             <div className="forecast-today-text">
-              <div className="forecast-today-label">{scoreLabel(today.score)}</div>
-              {today.best && <div className="forecast-today-best">{t('forecast.bestTime', { from: hh(today.best.from), to: hh(today.best.to) })}</div>}
+              <div className="forecast-today-label">{scoreLabel(day.score)}</div>
+              <div className="forecast-today-best">
+                {t('forecast.dayScore')}
+                {day.best && (
+                  <>
+                    <br />
+                    {t('forecast.bestShort', { from: hh(day.best.from), to: hh(day.best.to) })}
+                  </>
+                )}
+              </div>
             </div>
             <div className="forecast-today-weather">
-              <WeatherIcon kind={weatherKind(today.code)} size={30} />
+              <WeatherIcon kind={weatherKind(day.code)} size={30} />
               <span>
-                {Math.round(today.tempMin)}…{Math.round(today.tempMax)}°
+                {Math.round(day.tempMin)}…{Math.round(day.tempMax)}°
               </span>
+              {day.waterTemp != null && <small>{t('forecast.waterShort', { value: Math.round(day.waterTemp) })}</small>}
             </div>
           </div>
 
           <div className="forecast-block">
-            <span className="forecast-label">{t('forecast.hours')}</span>
-            <div className="insights-hours forecast-hours" aria-hidden>
-              {today.hours.map((v, h) => (
-                <i key={h} className={inBest(h) ? 'on' : undefined} style={{ height: `${Math.max(8, (v / peak) * 100)}%` }} />
-              ))}
+            <div className="forecast-block-head">
+              <span className="forecast-label">{t('forecast.hours')}</span>
+              {!dragged && <span className="forecast-hint">{t('forecast.scrub')}</span>}
+            </div>
+            <div
+              ref={chartRef}
+              className="forecast-chart"
+              role="slider"
+              tabIndex={0}
+              aria-label={t('forecast.hours')}
+              aria-valuemin={0}
+              aria-valuemax={23}
+              aria-valuenow={hour}
+              aria-valuetext={t('forecast.hourAria', { time: hh(hour), label: scoreLabel(at.score) })}
+              onPointerDown={(e) => {
+                dragging.current = true
+                e.currentTarget.setPointerCapture(e.pointerId)
+                setDragged(true)
+                pickAt(e.clientX)
+              }}
+              onPointerMove={(e) => {
+                if (dragging.current) pickAt(e.clientX)
+              }}
+              onPointerUp={() => {
+                dragging.current = false
+              }}
+              onPointerCancel={() => {
+                dragging.current = false
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                  e.preventDefault()
+                  pickHour(hour + (e.key === 'ArrowRight' ? 1 : -1))
+                }
+              }}
+            >
+              {day.best && (
+                <div className="forecast-chart-best" style={{ left: `${(day.best.from / 24) * 100}%`, width: `${((day.best.to - day.best.from) / 24) * 100}%` }}>
+                  <span>{t('forecast.bestMark')}</span>
+                </div>
+              )}
+              <div className="forecast-chart-bars">
+                {day.hours.map((v, h) => (
+                  <i
+                    key={h}
+                    className={`${h === hour ? 'sel' : ''}${today && h < nowHour ? ' past' : ''}`}
+                    style={{ height: `${Math.max(10, (v / peak) * 100)}%`, ['--c' as string]: SCORE_COLOR[day.hourly[h].score] }}
+                  />
+                ))}
+              </div>
+              <div className="forecast-chart-cursor" style={{ left: `${((hour + 0.5) / 24) * 100}%` }} />
             </div>
             <div className="insights-hours-axis" aria-hidden>
               <span>0</span>
@@ -273,39 +403,84 @@ function ForecastSheet({ title, kicker, days, sector, onClose }: { title: string
               <span>18</span>
               <span>24</span>
             </div>
-          </div>
 
-          <div className="forecast-factors">
-            <FactorRow label={t('forecast.pressure')} value={`${pressure(today.pressureHpa)} · ${trend(today.pressureTrend)}`} />
-            <FactorRow
-              label={t('forecast.wind')}
-              value={t('forecast.windValue', { value: num(today.wind), dir: t(`forecast.windDirs.${compassPoint(today.windDir)}` as TKey), gusts: Math.round(today.gusts) })}
-            />
-            {today.wave != null && <FactorRow label={t('forecast.wave')} value={t('forecast.waveValue', { value: num(today.wave) })} />}
-            {today.waterTemp != null && <FactorRow label={t('forecast.water')} value={t('forecast.waterValue', { value: num(today.waterTemp) })} />}
-            <FactorRow label={t('forecast.moon')} value={`${t(`forecast.moonPhases.${today.moon.phase}` as TKey)} · ${moonPct}%`} />
-            <FactorRow label={t('forecast.sun')} value={t('forecast.sunValue', { sunrise: clock(today.sunrise), sunset: clock(today.sunset) })} />
-          </div>
-
-          <div className="forecast-block">
-            <span className="forecast-label">{t('forecast.next')}</span>
-            <div className="forecast-next">
-              {days.slice(1, 4).map((d, i) => (
-                <div key={d.date} className="forecast-next-row">
-                  <span className="forecast-next-day">
-                    <b>{dayName(d, i + 1)}</b>
-                    <span>{dateLabel(d)}</span>
-                  </span>
-                  <WeatherIcon kind={weatherKind(d.code)} size={24} />
-                  <span className="forecast-next-temp">
-                    {Math.round(d.tempMin)}…{Math.round(d.tempMax)}°
-                  </span>
-                  <span className="forecast-next-score">
-                    <ScoreBars score={d.score} size={14} />
-                    <span style={{ color: SCORE_COLOR[d.score] }}>{scoreLabel(d.score)}</span>
-                  </span>
+            <div className="forecast-hour" style={{ ['--score-color' as string]: SCORE_COLOR[at.score] }} aria-live="polite">
+              <div className="forecast-hour-head">
+                <b className="forecast-hour-time">{today && hour === nowHour ? `${t('forecast.now')} · ${hh(hour)}` : hh(hour)}</b>
+                <span className="forecast-hour-score">
+                  <ScoreBars score={at.score} size={14} />
+                  {scoreLabel(at.score)}
+                </span>
+              </div>
+              <div className="forecast-hour-stats">
+                <div className="forecast-stat">
+                  <b>
+                    <WeatherIcon kind={weatherKind(at.code)} size={20} night={night} />
+                    {Math.round(at.temp)}°
+                  </b>
+                  <span>{t('forecast.statAir')}</span>
                 </div>
-              ))}
+                <div className="forecast-stat">
+                  <b>
+                    <svg className="wind-arrow" width="13" height="13" viewBox="0 0 12 12" aria-hidden style={{ transform: `rotate(${at.windDir + 180}deg)` }}>
+                      <path d="M6 1l4 9-4-2.2L2 10z" fill="currentColor" />
+                    </svg>
+                    {t('forecast.msValue', { value: num(at.wind) })}
+                  </b>
+                  <span>{t('forecast.statWind', { dir: t(`forecast.windShort.${compassPoint(at.windDir)}` as TKey) })}</span>
+                </div>
+                <div className="forecast-stat">
+                  <b>{Math.round(lang === 'en' ? at.pressureHpa : at.pressureHpa * HPA_TO_MMHG)}</b>
+                  <span>{t('forecast.statPressure')}</span>
+                </div>
+                <div className="forecast-stat">
+                  {at.wave != null ? (
+                    <>
+                      <b>{t('forecast.waveValue', { value: num(at.wave, at.wave < 0.1 ? 2 : 1) })}</b>
+                      <span>{t('forecast.statWave')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <b>{t('forecast.mmValue', { value: num(at.precip) })}</b>
+                      <span>{t('forecast.statRain')}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="forecast-why">
+            <span className="forecast-label">{t('forecast.factors')}</span>
+            <div className="forecast-legend">
+              <span>
+                <i className="forecast-tone good" />
+                {t('forecast.toneGood')}
+              </span>
+              <span>
+                <i className="forecast-tone ok" />
+                {t('forecast.toneOk')}
+              </span>
+              <span>
+                <i className="forecast-tone bad" />
+                {t('forecast.toneBad')}
+              </span>
+            </div>
+            <div className="forecast-factors">
+              <FactorRow tone={tones.pressure} label={t('forecast.pressure')} value={`${pressure(day.pressureHpa)} · ${trend(day.pressureTrend)}`} />
+              <FactorRow
+                tone={tones.wind}
+                label={t('forecast.wind')}
+                value={t('forecast.windValue', { value: num(day.wind), dir: t(`forecast.windDirs.${compassPoint(day.windDir)}` as TKey), gusts: Math.round(day.gusts) })}
+              />
+              {day.wave != null && tones.wave && <FactorRow tone={tones.wave} label={t('forecast.wave')} value={t('forecast.waveValue', { value: num(day.wave) })} />}
+              <FactorRow
+                tone={tones.rain}
+                label={t('forecast.rain')}
+                value={day.storm ? t('forecast.rainStorm') : day.precip < 0.2 ? t('forecast.rainNone') : t('forecast.rainValue', { value: num(day.precip) })}
+              />
+              <FactorRow tone={tones.moon} label={t('forecast.moon')} value={`${t(`forecast.moonPhases.${day.moon.phase}` as TKey)} · ${moonPct}%`} />
+              <FactorRow tone="ok" label={t('forecast.sun')} value={t('forecast.sunValue', { sunrise: clock(day.sunrise), sunset: clock(day.sunset) })} />
             </div>
           </div>
 
@@ -319,10 +494,13 @@ function ForecastSheet({ title, kicker, days, sector, onClose }: { title: string
   )
 }
 
-function FactorRow({ label, value }: { label: string; value: string }) {
+function FactorRow({ label, value, tone }: { label: string; value: string; tone: Tone }) {
   return (
     <div className="forecast-factor">
-      <span>{label}</span>
+      <span>
+        <i className={`forecast-tone ${tone}`} />
+        {label}
+      </span>
       <b>{value}</b>
     </div>
   )
