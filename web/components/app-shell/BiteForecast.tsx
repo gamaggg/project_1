@@ -362,6 +362,7 @@ function ForecastSheet({
             <div
               ref={chartRef}
               className="forecast-chart"
+              data-own-gesture
               role="slider"
               tabIndex={0}
               aria-label={t('forecast.hours')}

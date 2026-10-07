@@ -10,7 +10,9 @@ import { useEffect } from 'react'
 // flick it) and the gesture ends in a tap on the sheet's own overlay — the
 // same close every sheet already handles, busy states included.
 // A drag that starts inside scrolled content scrolls it instead; so does any
-// drag upwards. Text fields keep their own gestures.
+// drag upwards. Text fields keep their own gestures, and so does anything
+// marked data-own-gesture (the forecast's hour scale, dragged sideways and
+// down alike).
 export function useSheetSwipeToClose() {
   useEffect(() => {
     let sheet: HTMLElement | null = null
@@ -23,7 +25,7 @@ export function useSheetSwipeToClose() {
       if (e.touches.length !== 1) return
       const target = e.target as Element | null
       const s = target?.closest<HTMLElement>('.move-sheet')
-      if (!s || target?.closest('input, textarea, select')) return
+      if (!s || target?.closest('input, textarea, select, [data-own-gesture]')) return
       const scroller = target?.closest<HTMLElement>('.move-body, .support-thread')
       if (scroller && scroller.scrollTop > 0) return
       sheet = s
