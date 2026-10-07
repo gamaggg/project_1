@@ -1096,6 +1096,8 @@ body{
 .map-hud .map-layer-switch{flex:1; min-width:0;}
 .map-legend-row{display:flex; align-items:center; gap:16px; padding:8px 14px 10px; min-width:0; font-size:11.5px; font-weight:700; color:var(--ink-soft); white-space:nowrap; overflow:hidden;}
 .map-legend-item{display:inline-flex; align-items:center; gap:5px; min-width:0;}
+/* «Прогноз клёва» fills a 360px row exactly — narrower phones close the gaps. */
+@media (max-width:359px){.map-legend-row{gap:10px;}}
 .map-legend-item .legend-dot{margin-right:0;}
 .map-legend-clan{background:none; border:none; padding:0; font:inherit; color:var(--ink); cursor:pointer;}
 #leafletMap{
@@ -3340,7 +3342,7 @@ button.race-lane{cursor:pointer;}
 .forecast-hint{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:var(--ink-faint);}
 .forecast-hint::before{content:''; width:14px; height:2px; border-radius:1px; background:currentColor; box-shadow:-4px 0 0 0 transparent; animation:forecast-hint 1.6s var(--ease-in-out) infinite;}
 @keyframes forecast-hint{0%,100%{transform:translateX(-3px);} 50%{transform:translateX(3px);}}
-.forecast-chart{position:relative; height:96px; margin-top:6px; padding-top:28px; touch-action:pan-y; cursor:ew-resize; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; outline:none; border-radius:8px;}
+.forecast-chart{position:relative; height:96px; margin-top:6px; padding-top:28px; touch-action:none; cursor:ew-resize; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; outline:none; border-radius:8px;}
 .forecast-chart:focus-visible{box-shadow:0 0 0 2px var(--accent);}
 .forecast-chart-bars{display:grid; grid-template-columns:repeat(24,minmax(0,1fr)); align-items:end; gap:2px; height:100%;}
 .forecast-chart-bars i{display:block; border-radius:3px 3px 1px 1px; background:color-mix(in srgb, var(--c) 34%, #E9E6DF); transition:background-color .12s var(--ease);}

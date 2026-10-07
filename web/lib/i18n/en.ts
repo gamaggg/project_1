@@ -126,7 +126,7 @@ export const en: Dict = {
   },
   forecast: {
     title: 'Bite forecast',
-    chip: 'Bite',
+    chip: 'Bite forecast',
     here: 'Bite forecast here',
     scores: { s1: 'Barely biting', s2: 'Weak bite', s3: 'Fair bite', s4: 'Good bite', s5: 'Excellent bite' },
     bestTime: 'Best time: {from}–{to}',

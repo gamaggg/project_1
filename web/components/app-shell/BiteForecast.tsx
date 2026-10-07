@@ -257,6 +257,17 @@ function ForecastSheet({
   const [dragged, setDragged] = useState(false)
   const chartRef = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
+  // A finger on the hour scale only scrubs: touch-action:none covers most
+  // browsers, and this non-passive listener stops iOS WebViews from still
+  // scrolling the sheet under a diagonal drag (React's own touch handlers
+  // are passive, so they can't).
+  useEffect(() => {
+    const el = chartRef.current
+    if (!el) return
+    const stop = (e: TouchEvent) => e.preventDefault()
+    el.addEventListener('touchmove', stop, { passive: false })
+    return () => el.removeEventListener('touchmove', stop)
+  }, [])
 
   const day = tabs[dayIdx] ?? days[0]
   const today = isToday(day)
