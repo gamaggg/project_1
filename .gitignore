@@ -25,3 +25,9 @@
 .impeccable/live/deferred-svelte-component-accepts.json
 .impeccable/live/*.png
 # impeccable-ignore-end
+
+# Obsidian vault (docs/): per-device layout and caches stay local;
+# settings and the PlantUML plugin are shared so the vault works on clone.
+docs/.obsidian/workspace*.json
+docs/.obsidian/cache
+docs/.trash/
