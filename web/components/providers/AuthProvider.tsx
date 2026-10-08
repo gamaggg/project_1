@@ -98,19 +98,6 @@ function applyTelegramChrome() {
   document.documentElement.style.setProperty('--tg-safe-area-bottom', `${bottom}px`)
 }
 
-// A plain Safari tab on iPhone / iPad. The strip under the status bar isn't
-// the page's there — Safari paints it itself in a colour it samples from the
-// top of the page, and over the map it came out orange (the clan battle
-// plate). With this class the map's panel docks to the top edge as a solid
-// white header (globals.css), so the strip is the panel's white. Telegram
-// and the home-screen app draw under the status bar themselves and keep the
-// map to the edge.
-function markIosSafariTab(inTelegram: boolean) {
-  const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-  const standalone = (navigator as Navigator & { standalone?: boolean }).standalone === true || window.matchMedia?.('(display-mode: standalone)').matches
-  document.documentElement.classList.toggle('ios-safari-tab', ios && !standalone && !inTelegram)
-}
-
 // Silent sign-in for the Telegram Mini App build: initData is only ever
 // present when this page is actually running inside Telegram's WebView, so
 // this is a no-op everywhere else (regular web, PWA). See
@@ -187,7 +174,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (webApp?.isVersionAtLeast?.('8.0')) webApp.requestFullscreen?.()
     } catch {}
     applyTelegramChrome()
-    markIosSafariTab(!!webApp?.initData)
     webApp?.onEvent?.('contentSafeAreaChanged', applyTelegramChrome)
     webApp?.onEvent?.('safeAreaChanged', applyTelegramChrome)
     webApp?.onEvent?.('fullscreenChanged', applyTelegramChrome)

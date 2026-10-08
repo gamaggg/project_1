@@ -1119,25 +1119,6 @@ body{
 #screen-map{padding-top:0; --map-top-inset:calc(env(safe-area-inset-top) + var(--tg-safe-area-top, 0px));}
 #screen-map .map-geo-banner{padding-top:calc(11px + var(--map-top-inset));}
 #screen-map .map-geo-banner + .map-wrap{--map-top-inset:0px;}
-/* A plain Safari tab on iPhone (AuthProvider's markIosSafariTab): the page
-   can't reach under the status bar there — Safari fills that strip with a
-   colour sampled from the top of the page. The panel docks to the top edge
-   as a solid white header, so the strip comes out the same white and the two
-   read as one. */
-.ios-safari-tab #screen-map .map-hud{top:0; left:0; right:0; border-radius:0 0 18px 18px; background:#fff; backdrop-filter:none; -webkit-backdrop-filter:none;}
-.ios-safari-tab #screen-map .map-hud-bar{padding-top:8px;}
-/* Safari 26 ignores theme-color: it tints the status-bar strip and the
-   toolbar strip from what sits at the page's top / bottom edge, and where
-   that's a picture (map tiles, the welcome screen's pattern) it fell back to
-   orange. A full-width, opaque, fixed band at least 6px tall at each edge is
-   what it samples first — white, so both strips come out white. Under the
-   story player (z-index 2000), and not over the camera's black viewfinder. */
-.ios-safari-tab .app-shell::before,
-.ios-safari-tab .app-shell::after{content:''; position:fixed; left:0; right:0; height:6px; background:#fff; z-index:1500; pointer-events:none;}
-.ios-safari-tab .app-shell::before{top:0;}
-.ios-safari-tab .app-shell::after{bottom:0;}
-.ios-safari-tab .app-shell:has(#screen-camera.active)::before,
-.ios-safari-tab .app-shell:has(#screen-camera.active)::after{display:none;}
 /* Map chrome, top — ONE panel across the map on a single 12px edge:
    brand + «Игроки | Кланы» on the first line, the legend right under it
    (left edge shared with the logo), and for clan members the clan battle
