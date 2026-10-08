@@ -46,6 +46,12 @@ export function RecapBanner({ city, onFindFree }: { city: CityId; onFindFree: ()
   const ui = useUiState()
   const remoteHidden = (ui.state?.recap_hidden as string | undefined) ?? null
   const hiddenWeek = [hidden, remoteHidden].filter((w): w is string => !!w).sort().pop() ?? null
+  // Hidden on this device only (before the account kept it, or offline):
+  // handed up to the account, so the other devices and a fresh sign-in get it.
+  const { set: setUi } = ui
+  useEffect(() => {
+    if (ui.ready && hidden && (!remoteHidden || hidden > remoteHidden)) setUi('recap_hidden', hidden)
+  }, [ui.ready, hidden, remoteHidden, setUi])
   const { data } = useCityWeekRecap(city, ready && ui.ready)
   if (!data || data.catches === 0) return null
 

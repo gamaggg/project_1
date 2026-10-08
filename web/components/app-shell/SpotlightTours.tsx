@@ -59,6 +59,17 @@ export function SpotlightTours({ screen, audience, memberSince }: { screen: stri
   const remoteSeen = uiKey ? ((ui.state?.[uiKey] as Seen | undefined) ?? null) : null
   const remoteSeenKey = JSON.stringify(remoteSeen ?? {})
 
+  // Tours seen or skipped on this device only (before the account kept them,
+  // or offline): handed up to the account, so a fresh sign-in or another
+  // device doesn't start them over.
+  const { set: setUi } = ui
+  useEffect(() => {
+    if (!audience || !uiKey || !ui.ready) return
+    const local = readSeen(audience)
+    const remote = JSON.parse(remoteSeenKey) as Seen
+    if (Object.keys(local).some((k) => local[k] && !remote[k])) setUi(uiKey, { ...remote, ...local })
+  }, [audience, uiKey, ui.ready, remoteSeenKey, setUi])
+
   // Look for a tour of this screen that's due: unseen, its key element there.
   useEffect(() => {
     if (!audience || tour || !ui.ready) return
