@@ -46,12 +46,12 @@ export const metadata: Metadata = {
   },
   // Short label shown under the icon on iOS when someone adds the site to
   // their Home Screen — otherwise iOS falls back to the full <title>, which
-  // is too long to fit under the icon. Matches the manifest's short_name.
+  // is too long to fit under the icon. Matches manifest.ts's short_name.
   appleWebApp: {
     // Without `capable`, Next.js never emits apple-mobile-web-app-capable —
     // an iOS "Add to Home Screen" then opens in ordinary Safari chrome
-    // (address bar and all) instead of standalone. On iOS this meta, not the
-    // manifest, is what makes the home-screen app (see MANIFEST_LINK below).
+    // (address bar and all) instead of standalone, silently defeating the
+    // whole point of the manifest below.
     capable: true,
     title: 'RANGE',
     statusBarStyle: 'black-translucent',
@@ -80,16 +80,11 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 }
 
-// The web app manifest (public/manifest.webmanifest) is linked from script,
-// and not on iPhone / iPad. An iPhone that sees a manifest link when the site
-// is added to the Home Screen opens it in a mode whose window is the status
-// bar's height short of the screen (390×844 phone: 797) — iOS fills the rest
-// with a blank strip under the bottom menu and nothing can be drawn there.
-// Without the link it uses the apple-mobile-web-app-capable mode, full
-// screen (checked on an iPhone 13 simulator, iOS 27). Android still gets the
-// manifest for installing. The mode is fixed when the icon is added, so an
-// iPhone that added it earlier has to remove the icon and add it again.
-const MANIFEST_LINK = `if(!/iP(hone|ad|od)/.test(navigator.userAgent)&&!(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)){var l=document.createElement('link');l.rel='manifest';l.href='/manifest.webmanifest';document.head.appendChild(l)}`
+// The iPhone home-screen app: marked before the first paint, so the CSS that
+// stretches it to the full screen (globals.css, .ios-standalone) applies from
+// the start rather than after the app loads. navigator.standalone exists only
+// on iOS.
+const IOS_STANDALONE = `if(navigator.standalone===true)document.documentElement.classList.add('ios-standalone')`
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -98,8 +93,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${manrope.variable} ${oswald.variable}`}
         style={{ fontFamily: 'var(--font-manrope), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}
       >
-        <Script id="manifest-link" strategy="beforeInteractive">
-          {MANIFEST_LINK}
+        <Script id="ios-standalone" strategy="beforeInteractive">
+          {IOS_STANDALONE}
         </Script>
         {/* beforeInteractive so window.Telegram.WebApp exists by the time
             AuthProvider's effect checks for it — harmless no-op outside Telegram. */}

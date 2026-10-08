@@ -118,6 +118,42 @@ const FALLBACK_ZOOM = 14.3
 // Ported from fishzone-app.html initMap()/drawTerritories() — see DECISIONS.md for
 // why preferCanvas + the zoom-gated labelsLayer exist (703 sectors across all of
 // Adjara's coast; SVG-per-polygon and always-on labels were measured as a problem).
+// mapbox-gl-leaflet finishes a resize on the next animation frame, and a
+// zoom on the GL map's own moveend, without checking the layer is still on a
+// map — when the map is torn down in between (signing in as someone else
+// remounts it) that read null: «Cannot read properties of null (reading
+// 'getZoom')», reported as an app error. Same bodies, plus the check.
+type BridgeProto = {
+  _map: L.Map | null
+  _glMap: { _actualCanvas: HTMLElement; once: (ev: string, fn: () => void) => void; jumpTo: (o: { center: L.LatLng; zoom: number }) => void } | null
+  _zoomEnd: () => void
+  _transitionEnd: (e?: unknown) => void
+  __rangeGuarded?: boolean
+}
+function guardMapboxBridge(Lf: typeof L) {
+  const proto = (Lf as unknown as { MapboxGL?: { prototype: BridgeProto } }).MapboxGL?.prototype
+  if (!proto || proto.__rangeGuarded) return
+  proto.__rangeGuarded = true
+  const zoomEnd = proto._zoomEnd
+  proto._zoomEnd = function (this: BridgeProto) {
+    if (!this._map || !this._glMap) return
+    zoomEnd.call(this)
+  }
+  proto._transitionEnd = function (this: BridgeProto) {
+    Lf.Util.requestAnimFrame(() => {
+      const map = this._map
+      const gl = this._glMap
+      if (!map || !gl) return
+      const zoom = map.getZoom()
+      const center = map.getCenter()
+      const offset = map.latLngToContainerPoint(map.getBounds().getNorthWest())
+      Lf.DomUtil.setTransform(gl._actualCanvas, offset, 1)
+      gl.once('moveend', () => this._zoomEnd())
+      gl.jumpTo({ center, zoom: zoom - 1 })
+    }, this)
+  }
+}
+
 export const LeafletMap = forwardRef<
   LeafletMapHandle,
   {
@@ -540,6 +576,7 @@ export const LeafletMap = forwardRef<
         // used from here on instead of the namespace `LModule` itself.
         const L = (LModule as unknown as { default?: typeof LModule }).default ?? LModule
         leafletRef.current = L
+        guardMapboxBridge(L)
 
         const map = L.map(containerRef.current, {
           zoomControl: false,

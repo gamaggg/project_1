@@ -13,7 +13,10 @@ async function handleGET(req: Request) {
   try {
     return NextResponse.json(await runFishingReminders({ dryRun: new URL(req.url).searchParams.get('dry') === '1' }))
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 })
+    // A database error is a plain object, not an Error — String() of it was
+    // «[object Object]» in the alert.
+    const message = err instanceof Error ? err.message : ((err as { message?: string } | null)?.message ?? String(err))
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 

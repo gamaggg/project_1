@@ -223,7 +223,6 @@ body{
      device/context with a nonzero bottom inset, squeezing the already
      slightly-raised camera button (.navitem-plus's -8px) until it visibly
      pokes out past the bar's own top edge instead of just resting above it. */
-  min-height:82px;
   background:rgba(247,247,244,0.94);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -238,10 +237,14 @@ body{
      more gaps in the same pool, so the whitespace before the first icon,
      between every pair, and after the last icon all come out equal. */
   justify-content:space-evenly;
-  /* The full home-indicator inset left the labels floating high (82px bar +
-     34px under it); like a native iPhone tab bar, the labels may come ~12px
-     into that zone (no change on screens without an inset). */
-  padding:0 0 max(0px, calc(env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px) - 12px));
+  /* The home-indicator room (the inset less 12px — the indicator is a thin
+     line at the very bottom) split above and below the icons, 4px more of it
+     below: the bar keeps its height, and its icons and labels sit about the
+     middle of it — a touch high — instead of riding over an empty band (asked
+     for 09.10). No change on screens without an inset. */
+  --nav-room:max(0px, calc(env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px) - 12px));
+  min-height:82px;
+  padding:calc(var(--nav-room) / 2 - min(4px, var(--nav-room) / 2)) 0 calc(var(--nav-room) / 2 + min(4px, var(--nav-room) / 2));
   z-index:40;
 }
 .navitem{
@@ -1133,12 +1136,24 @@ body{
 .ios-standalone .sector-hero-map .territory-thumb-wrap{height:calc(230px + var(--standalone-top));}
 .ios-standalone .sector-hero-map-icons{top:calc(10px + var(--standalone-top));}
 .ios-standalone #screen-map{--map-top-inset:calc(env(safe-area-inset-top) + 14px);}
-/* Home-screen web app on an iPhone whose viewport ends the status bar's
-   height short of the screen (lib/standaloneViewport.ts): iOS fills that
-   bottom strip with the page's white and shows nothing there, so the menu
-   goes solid white too and the two read as one, without the home-indicator
-   padding the strip already provides. */
-.vp-short .bottomnav{background:#fff; -webkit-backdrop-filter:none; backdrop-filter:none; padding-bottom:0;}
+/* The iPhone home-screen app (.ios-standalone, set in app/layout.tsx). iOS
+   26+ gives it a viewport the top safe area short of the screen (844pt
+   iPhone: innerHeight, 100dvh and position:fixed inset:0 are 797, 100vh and
+   100lvh are 844), so the shell and its bottom menu ended 47pt above the
+   bottom edge over a blank strip. A body as tall as the screen (100lvh) makes
+   iOS lay out the full height — then 100dvh and the fixed shell are 844 too
+   (reproduced and checked on an iPhone 13 simulator; fix and phone check by
+   a developer friend). The rest keeps those pieces at the real bottom even if
+   a build of iOS still reports the short height: --vp-gap is then what's
+   missing. The home-indicator padding (env(safe-area-inset-bottom)) stays. */
+html.ios-standalone{--app-h:100lvh; --vp-gap:calc(100lvh - 100dvh); background:var(--bg);}
+html.ios-standalone body,
+html.ios-standalone .app-shell,
+html.ios-standalone .onboarding-step,
+html.ios-standalone .intro-screen{min-height:var(--app-h);}
+html.ios-standalone .onboarding-welcome{height:var(--app-h);}
+html.ios-standalone .bottomnav,
+html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 /* Map chrome, top — ONE panel across the map on a single 12px edge:
    brand + «Игроки | Кланы» on the first line, the legend right under it
    (left edge shared with the logo), and for clan members the clan battle
@@ -1258,10 +1273,10 @@ body{
 .map-selection-bar-btn.cancel{background:rgba(255,255,255,0.12); color:#fff;}
 .map-selection-bar-btn:active{transform:scale(0.96);}
 .map-sheet-container{
-  /* The card 6px over the menu, like the top panel under the top edge: the
-     row below holds 8px of room for the selection ring, so the container
-     goes 2px into the menu's height (--nav-h, the real bar height). */
-  position:absolute; left:0; right:0; bottom:calc(var(--nav-h, 82px) - 2px); z-index:700;
+  /* The card 12px over the menu — the same as its side margins (the row's
+     12px padding): the row below holds 8px of room for the selection ring,
+     so the container sits 4px above the menu (--nav-h, the real bar height). */
+  position:absolute; left:0; right:0; bottom:calc(var(--nav-h, 82px) + 4px); z-index:700;
   display:flex; flex-direction:column; gap:9px;
   /* Full width, but only its pieces take touches: the empty space beside
      the week-recap sticker (or above a card) passes swipes to the map. */
