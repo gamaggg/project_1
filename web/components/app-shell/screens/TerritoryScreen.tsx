@@ -370,7 +370,9 @@ export function TerritoryScreen({
               Добавить улов (админ)
             </button>
           )}
-          {territory.status === 'mine' && <ShieldButton territory={territory} />}
+          {/* The owner, or a clan-mate holding a share of it (use_free_shield
+              allows both). */}
+          {(territory.status === 'mine' || territory.coHolders.some((h) => h.isMe)) && <ShieldButton territory={territory} />}
           {isSuperAdmin && <AdminKindPicker territory={territory} />}
         </div>
 
