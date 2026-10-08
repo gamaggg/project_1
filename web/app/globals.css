@@ -1119,6 +1119,11 @@ body{
 #screen-map{padding-top:0; --map-top-inset:calc(env(safe-area-inset-top) + var(--tg-safe-area-top, 0px));}
 #screen-map .map-geo-banner{padding-top:calc(11px + var(--map-top-inset));}
 #screen-map .map-geo-banner + .map-wrap{--map-top-inset:0px;}
+/* The home-screen web app: iOS lays a soft blur under the status bar that
+   reaches a little below it, so the panel starts 14px lower, clear of it. */
+@media (display-mode: standalone){
+  #screen-map{--map-top-inset:calc(env(safe-area-inset-top) + var(--tg-safe-area-top, 0px) + 14px);}
+}
 /* Map chrome, top — ONE panel across the map on a single 12px edge:
    brand + «Игроки | Кланы» on the first line, the legend right under it
    (left edge shared with the logo), and for clan members the clan battle
