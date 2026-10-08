@@ -1,7 +1,13 @@
 'use client'
 
+import { useCallback, useRef, useState } from 'react'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { WelcomeMap } from '@/components/app-shell/onboarding/WelcomeMap'
+import type { TickerLine } from '@/lib/welcome/coastScene'
 
+// The first screen: «Лови / Занимай / Владей» over a live map of the Batumi
+// coast where sectors change hands (WelcomeMap), a ticker of those captures,
+// and the two ways in.
 export function WelcomeStep({
   onCapture,
   onSignIn,
@@ -14,39 +20,38 @@ export function WelcomeStep({
   // From a friend's invite link: the +100 start bonus (claim_referral) shown up front.
   invited?: boolean
 }) {
+  const headRef = useRef<HTMLDivElement>(null)
+  const footRef = useRef<HTMLDivElement>(null)
+  const [line, setLine] = useState<TickerLine | null>(null)
+  const onTicker = useCallback((l: TickerLine) => setLine(l), [])
+
   return (
     <div className="onboarding-welcome">
-      {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
-      <img src="/brand/welcome-splash-left.svg" alt="" aria-hidden="true" className="onboarding-welcome-splash onboarding-welcome-splash--left" />
-      {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
-      <img src="/brand/welcome-splash-right.svg" alt="" aria-hidden="true" className="onboarding-welcome-splash onboarding-welcome-splash--right" />
-      <div className="onboarding-welcome-logo">
-        <div className="onboarding-welcome-mark-wrap">
-          {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
-          <img src="/brand/logo_1.svg" alt="RANGE" className="onboarding-welcome-mark" />
-          {/* Same image, recolored pure white via filter (so its own alpha channel gives
-              a pixel-perfect silhouette — no CSS mask/luminance guessing), then a plain
-              gradient mask sweeps a band across just that white copy for the shine. */}
-          {/* eslint-disable-next-line @next/next/no-img-element -- see above */}
-          <img src="/brand/logo_1.svg" alt="" aria-hidden="true" className="onboarding-welcome-shine" />
-        </div>
+      <WelcomeMap headRef={headRef} footRef={footRef} onTicker={onTicker} />
+      <div className="welcome-head" ref={headRef}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
+        <img src="/brand/logo_2.svg" alt="RANGE" className="welcome-logo" />
+        <h1 className="welcome-title">
+          <span>Лови</span>
+          <span className="welcome-title-accent">Занимай</span>
+          <span>Владей</span>
+        </h1>
+        <p className="welcome-sub">Каждый улов меняет карту</p>
       </div>
-      <div className="onboarding-welcome-card">
+      <div className="welcome-foot" ref={footRef}>
         {invited && (
-          <div className="onboarding-welcome-invite">
+          <div className="welcome-invite">
             <CoinIcon size={16} />
             Друг пригласил тебя · +100 монет на старт
           </div>
         )}
-        <div className="onboarding-welcome-title">
-          <span>Лови</span>
-          <span className="onboarding-welcome-title-accent">Занимай</span>
-          <span>Владей</span>
-        </div>
-        <div className="onboarding-welcome-sub">
-          Двое из трёх рыбаков, занявших территорию
-          <br />
-          в первый визит, вернулись за новым уловом.
+        <div className="welcome-ticker" aria-live="polite">
+          <i className="welcome-ticker-dot" aria-hidden />
+          {line && (
+            <span key={`${line.name}${line.id}${line.day}`} className="welcome-ticker-text">
+              <b>{line.name}</b> {line.verb} <b>{line.id}</b> {line.day}
+            </span>
+          )}
         </div>
         {onContinue ? (
           <button className="btn-primary" onClick={onContinue}>
@@ -57,7 +62,7 @@ export function WelcomeStep({
             <button className="btn-primary" onClick={onCapture}>
               Захватить первую территорию
             </button>
-            <button className="onboarding-welcome-link" onClick={onSignIn}>
+            <button className="welcome-link" onClick={onSignIn}>
               У меня уже есть аккаунт
             </button>
           </>

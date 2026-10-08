@@ -296,7 +296,7 @@ export function FishZoneApp() {
       '.intro-back',
       '.otp-resend',
       '.owner-row',
-      '.onboarding-welcome-link',
+      '.welcome-link',
       '.profile-hero-avatar-btn',
       '.map-selection-bar-btn',
       '.award-ring-badge',

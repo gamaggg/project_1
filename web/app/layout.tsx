@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Manrope, Oswald } from 'next/font/google'
+import { Manrope, Oswald, Unbounded } from 'next/font/google'
 import Script from 'next/script'
 import { Analytics } from '@vercel/analytics/next'
 import { QueryProvider } from '@/components/providers/QueryProvider'
@@ -18,6 +18,15 @@ const oswald = Oswald({
   subsets: ['latin', 'cyrillic'],
   weight: '700',
   variable: '--font-display',
+})
+
+// The welcome screen's headline only — not preloaded on every page, fetched
+// when that screen shows it.
+const unbounded = Unbounded({
+  subsets: ['latin', 'cyrillic'],
+  weight: '900',
+  variable: '--font-welcome',
+  preload: false,
 })
 
 const TITLE = 'RANGE: Cast & Claim Territory'
@@ -90,7 +99,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ru" suppressHydrationWarning>
       <body
-        className={`${manrope.variable} ${oswald.variable}`}
+        className={`${manrope.variable} ${oswald.variable} ${unbounded.variable}`}
         style={{ fontFamily: 'var(--font-manrope), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}
       >
         <Script id="ios-standalone" strategy="beforeInteractive">
