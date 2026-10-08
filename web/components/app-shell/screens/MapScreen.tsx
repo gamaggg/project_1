@@ -621,7 +621,11 @@ export const MapScreen = forwardRef<
                       🔥
                     </span>
                   )}
-                  <div style={{ marginLeft: 'auto', flex: '0 0 auto' }}>{statusBadge(t.status, myTerritoryColor, t.coHolders.some((h) => h.isMe))}</div>
+                  {/* Only when there's a pill to show: an empty wrapper (someone
+                      else's sector has none) kept the shield a gap off the edge. */}
+                  {(t.status !== 'other' || t.coHolders.some((h) => h.isMe)) && (
+                    <div style={{ marginLeft: 'auto', flex: '0 0 auto' }}>{statusBadge(t.status, myTerritoryColor, t.coHolders.some((h) => h.isMe))}</div>
+                  )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13, color: 'var(--ink-soft)', fontWeight: 600 }}>
                   <span style={{ flex: '0 0 auto' }}>Уловов {t.catchCount}</span>
