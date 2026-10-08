@@ -1123,6 +1123,10 @@ body{
    reaches a little below it, so the panel starts 14px lower, clear of it. */
 @media (display-mode: standalone){
   #screen-map{--map-top-inset:calc(env(safe-area-inset-top) + var(--tg-safe-area-top, 0px) + 14px);}
+  /* If iOS leaves the viewport short after the keyboard (see
+     lib/standaloneViewport.ts), the strip under the bottom menu is the
+     page's own background — the menu's colour, not a white band. */
+  html, body{background:#F7F7F4;}
 }
 /* Map chrome, top — ONE panel across the map on a single 12px edge:
    brand + «Игроки | Кланы» on the first line, the legend right under it
