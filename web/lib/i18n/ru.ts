@@ -335,7 +335,7 @@ export const ru = {
     youBest: 'Лучший улов — {catch}',
     youEmpty: 'Тебя не было на воде',
     youEmptySub: 'Новая неделя уже идёт — свободные сектора ждут',
-    youCta: 'Найти свободный сектор',
+    youCta: 'Найти сектор',
     finalTitle: 'Неделя {cityIn} в одной картинке',
     finalSub: 'Новая неделя уже идёт — лови и попади в итоги',
     finalAnglers: { one: 'рыбак', few: 'рыбака', many: 'рыбаков', other: 'рыбака' },

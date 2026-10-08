@@ -3604,10 +3604,15 @@ button.race-lane{cursor:pointer;}
 .recap-bars{flex:1; display:flex; gap:4px;}
 .recap-bars span{flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,.32); overflow:hidden;}
 .recap-bars i{display:block; width:100%; height:100%; background:#fff; transform-origin:left center;}
+/* The running bar starts empty; WeekRecap's clock fills it on the element. */
+.recap-bars i.cur{transform:scaleX(0);}
 .recap-close{flex:0 0 auto; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:none; border-radius:50%; background:rgba(0,0,0,.22); color:#fff; cursor:pointer;}
 .recap-bottom{position:absolute; left:0; right:0; bottom:22px; display:flex; justify-content:center; gap:10px; padding:0 18px;}
 /* Two buttons sit side by side so they never cover the slide's last line. */
-.recap-bottom > button{flex:0 1 auto; min-width:0; max-width:240px;}
+/* One line each: «Поделиться» never gives up width (it overflowed off
+   centre when squeezed); the other button takes what's left. */
+.recap-bottom > button{flex:0 1 auto; min-width:0; max-width:240px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.recap-bottom > .recap-share{flex:0 0 auto;}
 .recap-share{min-width:150px; height:48px; padding:0 24px; border:none; border-radius:999px; background:#FFE14D; color:#17181B; font:inherit; font-size:16px; font-weight:800; cursor:pointer;}
 .recap-share:disabled{opacity:.7;}
 .recap-cta{min-width:130px; height:48px; padding:0 20px; border:2px solid rgba(255,255,255,.8); border-radius:999px; background:rgba(255,255,255,.12); color:#fff; font:inherit; font-size:16px; font-weight:800; cursor:pointer;}
@@ -3616,7 +3621,7 @@ button.race-lane{cursor:pointer;}
 /* Barely-there motion behind the recap slides (app only): soft pools of
    light, each drifting and breathing at its own pace. */
 .recap-decor{position:absolute; top:0; left:0; width:1080px; height:1920px; overflow:hidden; pointer-events:none;}
-.recap-glow{position:absolute; border-radius:50%; will-change:transform, opacity;}
+.recap-glow{position:absolute; border-radius:50%;}
 .recap-glow.g1{width:880px; height:880px; top:-180px; left:-300px; background:radial-gradient(circle, rgba(255,255,255,.14), rgba(255,255,255,0) 66%); animation:recap-glow-1 19s ease-in-out infinite alternate;}
 .recap-glow.g2{width:980px; height:980px; bottom:-300px; right:-340px; background:radial-gradient(circle, rgba(255,225,77,.12), rgba(255,225,77,0) 66%); animation:recap-glow-2 23s ease-in-out infinite alternate;}
 .recap-glow.g3{width:640px; height:640px; top:640px; right:-260px; background:radial-gradient(circle, rgba(255,140,200,.11), rgba(255,140,200,0) 66%); animation:recap-glow-3 17s ease-in-out infinite alternate;}

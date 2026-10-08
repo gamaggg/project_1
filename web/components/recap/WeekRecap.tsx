@@ -136,7 +136,7 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
   const { user } = useAuth()
   const slides = recapSlides(data)
   const [index, setIndex] = useState(0)
-  const [progress, setProgress] = useState(0)
+  const barRef = useRef<HTMLElement>(null)
   const [anim, setAnim] = useState(0)
   const [scale, setScale] = useState(0.3)
   const [sharing, setSharing] = useState(false)
@@ -164,7 +164,6 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
       indexRef.current = next
       elapsed.current = 0
       setIndex(next)
-      setProgress(0)
       setAnim(0)
     },
     [slides.length]
@@ -172,6 +171,9 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
 
   // One clock for the whole player: the bar fills, numbers count up, and
   // at the end of a slide the next one starts (the last one just stays).
+  // The bar is moved straight on its element — as state it re-rendered the
+  // whole slide every frame for the full 6 seconds; now the slide renders
+  // only while its numbers count up (the first ~1.1 s).
   useEffect(() => {
     let raf = 0
     let last = performance.now()
@@ -181,7 +183,7 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
       if (!paused.current && !sharing) {
         elapsed.current += dt
         const p = Math.min(1, elapsed.current / SLIDE_MS)
-        setProgress(p)
+        if (barRef.current) barRef.current.style.transform = `scaleX(${p})`
         setAnim(reduced ? 1 : Math.min(1, elapsed.current / 1100))
         if (p >= 1 && indexRef.current < slides.length - 1) {
           step(1)
@@ -292,7 +294,12 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
         <div
           key={id}
           className="recap-slide-in"
-          style={{ width: canvas?.w ?? SLIDE_W, height: canvas?.h ?? SLIDE_H, transform: `scale(${scale})`, transformOrigin: '0 0', background: SLIDE_BG[id] }}
+          // zoom, not transform: scale — iPhone Safari kept a scaled-down
+          // layer at its full 1080×1920 size (×3 for the screen, ~90 MB a
+          // slide, plus the drifting light), and flicking through the story
+          // over the map ran the tab out of memory: «На странице повторно
+          // возникла проблема». zoom lays the slide out at screen size.
+          style={{ width: canvas?.w ?? SLIDE_W, height: canvas?.h ?? SLIDE_H, zoom: scale, background: SLIDE_BG[id] }}
         >
           <RecapSlide
             id={id}
@@ -320,7 +327,7 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
           <div className="recap-bars">
             {slides.map((s, i) => (
               <span key={s}>
-                <i style={{ transform: `scaleX(${i < index ? 1 : i === index ? progress : 0})` }} />
+                {i === index ? <i ref={barRef} className="cur" /> : <i style={{ transform: `scaleX(${i < index ? 1 : 0})` }} />}
               </span>
             ))}
           </div>

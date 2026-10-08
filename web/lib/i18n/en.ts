@@ -334,7 +334,7 @@ export const en: Dict = {
     youBest: 'Best catch: {catch}',
     youEmpty: 'You weren’t out on the water',
     youEmptySub: 'A new week is on — free sectors are waiting',
-    youCta: 'Find a free sector',
+    youCta: 'Find a sector',
     finalTitle: 'The week {cityIn} in one picture',
     finalSub: 'A new week is on — catch and make the next recap',
     finalAnglers: { one: 'angler', other: 'anglers' },
