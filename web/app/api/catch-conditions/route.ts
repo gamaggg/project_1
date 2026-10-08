@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { withErrorReport } from '@/lib/serverErrors'
 
 // «Погода во время улова»: the weather at the sector in the hour of the
 // catch, fetched once from Open-Meteo's archive and kept in
@@ -25,7 +26,7 @@ async function hourly(url: string): Promise<Hourly | null> {
 const day = (d: Date) => d.toISOString().slice(0, 10)
 const round1 = (n: number | null | undefined) => (n == null ? null : Math.round(n * 10) / 10)
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const body = (await request.json().catch(() => null)) as { catchId?: unknown } | null
   const catchId = Number(body?.catchId)
   if (!Number.isInteger(catchId) || catchId <= 0) return NextResponse.json({ error: 'bad catch id' }, { status: 400 })
@@ -76,3 +77,5 @@ export async function POST(request: Request) {
   const { data: saved } = await admin.from('catch_conditions').select('*').eq('catch_id', catchId).maybeSingle()
   return NextResponse.json(saved ?? row)
 }
+
+export const POST = withErrorReport('catch-conditions', handlePOST)

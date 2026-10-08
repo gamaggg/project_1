@@ -301,9 +301,9 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
   )
 }
 
-// tide/echo/double_coins activate instantly (no target) — shield is bought
-// contextually from TerritoryScreen instead (it needs a sector), and
-// challenge_swap from the Challenges screen itself (it needs a slot).
+// tide/echo/double_coins activate instantly (no target); challenge_swap is
+// bought on the Challenges screen itself (it needs a slot). Shields aren't
+// sold — they only drop in the slots and are put on from the sector screen.
 function BuffsSection({
   city,
   request,

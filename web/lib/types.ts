@@ -1431,6 +1431,35 @@ export type Database = {
           },
         ]
       }
+      user_ui_state: {
+        Row: {
+          key: string
+          updated_at: string
+          user_id: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          user_id?: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          user_id?: string
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_ui_state_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       profiles_with_stats: {

@@ -5,6 +5,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import {
   useTerritories,
   useConfirmCatch,
+  useAddDiaryCatch,
   useFirstSteps,
   useMyCatches,
   useSpecies,
@@ -25,7 +26,7 @@ import {
   reportClientError,
 } from '@/lib/supabase/queries'
 import { getCurrentCoords, nearestTerritory, queryGeolocationPermission } from '@/lib/geolocation'
-import { uploadCatchPhoto } from '@/lib/supabase/storage'
+import { copyCatchPhotoToDiary, uploadCatchPhoto, uploadDiaryPhoto } from '@/lib/supabase/storage'
 import { useAdminActionsReadState } from '@/lib/activityRead'
 import { useAchievementUnlock } from '@/lib/achievementUnlock'
 import { APP_LINK_EVENT } from '@/components/app-shell/AppLinkText'
@@ -41,10 +42,11 @@ import { useT } from '@/lib/i18n'
 import { useQueryClient } from '@tanstack/react-query'
 import { inviteLink, parseGuestShare, refParam, rememberClanInvite, rememberRef, takeRememberedRef, type ClanInvite } from '@/lib/guestShare'
 import { GuestShareScreen } from '@/components/app-shell/GuestShareScreen'
-import { formatCooldown, type SpeciesEntry } from '@/lib/format'
+import { formatCatchMeta, formatCooldown, type SpeciesEntry } from '@/lib/format'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { draftHexAt } from '@/lib/data/hexGrid'
-import { cityFirst, cityForSectorId, loadStoredCity, storeCity, type CityId } from '@/lib/data/city'
+import { CITIES, cityFirst, cityForSectorId, loadStoredCity, storeCity, type CityId } from '@/lib/data/city'
+import { ShieldedSectorModal } from '@/components/app-shell/ShieldedSectorModal'
 import { mostPopularSectorId } from '@/lib/data/sectorOrder'
 import type { PendingCatch, TerritoryStatus } from '@/lib/data/types'
 import { OnboardingFlow } from '@/components/app-shell/onboarding/OnboardingFlow'
@@ -186,6 +188,7 @@ export function FishZoneApp() {
   const canAddCatchFromGallery = useCanAddCatchFromGallery()
   const { data: allTerritoryIds = [] } = useAllTerritoryIds()
   const confirmCatchMutation = useConfirmCatch()
+  const addDiaryCatch = useAddDiaryCatch()
   const findUserByPublicId = useFindUserByPublicId()
   const mapHandleRef = useRef<MapScreenHandle>(null)
   const { data: unreadCount = 0 } = useUnreadNotificationCount()
@@ -370,6 +373,8 @@ export function FishZoneApp() {
   const [openAward, setOpenAward] = useState<UserAward | null>(null)
   const [editingAdminAccessId, setEditingAdminAccessId] = useState<string | null>(null)
   const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null)
+  // A catch refused by someone else's shield, kept so it can go to the diary.
+  const [shieldBlock, setShieldBlock] = useState<{ territoryId: string; until: string; photoUrl: string; form: CatchFormData } | null>(null)
   const [reportingCatchId, setReportingCatchId] = useState<number | null>(null)
   const [deletingCatchId, setDeletingCatchId] = useState<number | null>(null)
   const [deletingTerritoryId, setDeletingTerritoryId] = useState<string | null>(null)
@@ -919,15 +924,52 @@ export function FishZoneApp() {
       if (cooldownMatch) {
         setCooldownSeconds(Number(cooldownMatch[1]))
       } else if (shieldedMatch) {
-        const until = new Date(Number(shieldedMatch[1]) * 1000)
-        showToast(`Сектор под щитом до ${until.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })} — нельзя забрать`)
-        backToCamera()
+        setShieldBlock({ territoryId: catchTerritoryId, until: new Date(Number(shieldedMatch[1]) * 1000).toISOString(), photoUrl, form })
       } else if (message === 'account blocked') {
         showToast('Аккаунт заблокирован, добавлять уловы нельзя')
       } else {
         reportClientError('confirm_catch', err)
         showToast('Не удалось сохранить улов, попробуй ещё раз')
       }
+    }
+  }
+  // «Добавить в дневник» from the shield modal: the same photo and fish as a
+  // diary catch (no sector change), dated by the photo, on the sector's own
+  // local day.
+  async function addShieldedCatchToDiary() {
+    if (!shieldBlock) return
+    const when = capturedAt ? new Date(capturedAt) : new Date()
+    const t = territories.find((x) => x.id === shieldBlock.territoryId)
+    const day = new Intl.DateTimeFormat('en-CA', { timeZone: CITIES[cityForSectorId(shieldBlock.territoryId)].timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(when)
+    if (!user) return
+    try {
+      // The diary keeps its photos under <uid>/diary/ — copy the catch's
+      // photo there; if that fails and the shot is still in memory, upload it.
+      let diaryPhotoUrl: string
+      try {
+        diaryPhotoUrl = await copyCatchPhotoToDiary(user.id, shieldBlock.photoUrl)
+      } catch (copyErr) {
+        if (!capturedPhoto) throw copyErr
+        diaryPhotoUrl = await uploadDiaryPhoto(user.id, capturedPhoto)
+      }
+      await addDiaryCatch.mutateAsync({
+        day,
+        caughtAt: when.toISOString(),
+        species: shieldBlock.form.species,
+        lengthCm: shieldBlock.form.lengthCm,
+        weightKg: shieldBlock.form.weightKg,
+        photoUrl: diaryPhotoUrl,
+        territoryId: shieldBlock.territoryId,
+        lat: t?.lat ?? null,
+        lng: t?.lng ?? null,
+      })
+      track('catch_to_diary_shielded', { territory: shieldBlock.territoryId }, city)
+      setShieldBlock(null)
+      showToast('Улов сохранён в дневник')
+      finishCatchFlow()
+    } catch (err) {
+      reportClientError('diary_from_shield', err)
+      showToast('Не удалось сохранить в дневник, попробуй ещё раз')
     }
   }
   function finishCatchFlow() {
@@ -1679,6 +1721,23 @@ export function FishZoneApp() {
             </button>
           </div>
         </div>
+      )}
+
+      {shieldBlock && (
+        <ShieldedSectorModal
+          territoryId={shieldBlock.territoryId}
+          until={shieldBlock.until}
+          ownerName={territories.find((x) => x.id === shieldBlock.territoryId)?.ownerDisplayName ?? null}
+          ownerAvatarUrl={territories.find((x) => x.id === shieldBlock.territoryId)?.ownerAvatarUrl ?? null}
+          ownerClanCrest={territories.find((x) => x.id === shieldBlock.territoryId)?.ownerClanCrest ?? null}
+          ownerClanName={territories.find((x) => x.id === shieldBlock.territoryId)?.ownerClanName ?? null}
+          catchPhotoUrl={shieldBlock.photoUrl}
+          speciesName={speciesList.find((sp) => sp.key === shieldBlock.form.species)?.name ?? shieldBlock.form.species}
+          catchMeta={formatCatchMeta(shieldBlock.form.lengthCm, shieldBlock.form.weightKg)}
+          saving={addDiaryCatch.isPending}
+          onAddToDiary={() => void addShieldedCatchToDiary()}
+          onClose={() => setShieldBlock(null)}
+        />
       )}
 
       {cooldownSeconds !== null && (

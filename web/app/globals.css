@@ -405,6 +405,35 @@ body{
 }
 .perm-switch.on{background:var(--accent);}
 .perm-switch.on::after{transform:translateX(18px);}
+/* «Сектор под щитом» (ShieldedSectorModal): the sector's hexagon with its
+   holder's face, ringed by what's left of the shield's 24 hours. */
+.shield-modal{position:relative; overflow:hidden; padding-top:22px;}
+.shield-modal::before{content:''; position:absolute; left:0; right:0; top:0; height:160px; background:radial-gradient(120% 90% at 50% 0%, #DDF5F0 0%, rgba(221,245,240,0) 72%); pointer-events:none;}
+.shield-modal > *{position:relative;}
+.shield-modal-hero{position:relative; width:140px; height:140px; margin:0 auto 8px;}
+.shield-modal-ring{position:absolute; inset:0;}
+.shield-modal-ring-left{animation:shield-ring-draw .9s var(--ease-out) .12s both;}
+@keyframes shield-ring-draw{from{stroke-dashoffset:var(--ring-c);}}
+.shield-modal-hex{position:absolute; left:50%; top:50%; width:74px; height:64px; transform:translate(-50%,-50%); clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%); background:linear-gradient(160deg,#5FD3C0,#0E8074); display:flex; align-items:center; justify-content:center;}
+.shield-modal-hex-in{width:67px; height:58px; clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%); background:#E9F7F4; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; color:#0E8074;}
+.shield-modal-hex-in img{width:100%; height:100%; object-fit:cover;}
+.shield-modal-badge{position:absolute; left:50%; top:-1px; width:34px; height:34px; margin-left:-17px; border-radius:50%; background:linear-gradient(160deg,#5FD3C0,#0E8074 70%); border:3px solid var(--surface); box-shadow:0 4px 10px rgba(14,128,116,.35); display:flex; align-items:center; justify-content:center; animation:shield-badge-pop .5s var(--ease-out) .35s both;}
+@keyframes shield-badge-pop{0%{transform:scale(.3); opacity:0;} 70%{transform:scale(1.12); opacity:1;} 100%{transform:scale(1);}}
+.shield-modal-title{font-size:19px;}
+.shield-modal-owner{display:inline-flex; align-items:center; gap:5px; margin-top:4px; font-size:13.5px; color:var(--ink-soft);}
+.shield-modal-owner b{color:var(--ink); font-weight:800;}
+.shield-modal-timer{display:flex; flex-direction:column; align-items:center; gap:5px; margin:14px 0 16px;}
+.shield-modal-timer b{font-size:30px; line-height:1; font-weight:800; letter-spacing:-.02em; color:#0B6A60; font-variant-numeric:tabular-nums;}
+.shield-modal-timer small{margin-left:2px; font-size:15px; font-weight:800; color:#3C9F92;}
+.shield-modal-timer span{max-width:240px; font-size:12.5px; line-height:1.4; color:var(--ink-faint);}
+.shield-modal-catch{display:flex; align-items:center; gap:10px; margin-bottom:14px; padding:8px 12px 8px 8px; border-radius:14px; background:#F7F6F2; text-align:left;}
+.shield-modal-catch img{flex:0 0 auto; width:44px; height:44px; border-radius:10px; object-fit:cover;}
+.shield-modal-catch div{display:flex; flex:1; flex-direction:column; min-width:0;}
+.shield-modal-catch b{overflow:hidden; font-size:14px; font-weight:800; white-space:nowrap; text-overflow:ellipsis;}
+.shield-modal-catch span{font-size:12px; color:var(--ink-faint);}
+.shield-modal-close{display:block; width:100%; margin-top:6px; padding:12px; border:none; background:none; font:inherit; font-size:14px; font-weight:700; color:var(--ink-soft); cursor:pointer;}
+.shield-modal-close:disabled{opacity:.5;}
+@media (prefers-reduced-motion: reduce){.shield-modal-ring-left, .shield-modal-badge{animation:none;}}
 .modal-icon{
   width:64px; height:64px; border-radius:50%; margin:0 auto 14px;
   background:linear-gradient(160deg,#6FA8FF,var(--blue) 70%);
@@ -1082,13 +1111,21 @@ body{
 
 /* ---------- Map screen ---------- */
 #screen-map .screen-inner{padding:0;}
+/* The map runs to the very top edge — under the status bar and, in
+   Telegram fullscreen, under its «Закрыть» / «⋯» band — instead of starting
+   below them on a blank strip. Only our own panels keep clear of that band
+   (--map-top-inset); with the geolocation banner shown it takes the band
+   and the map starts under it as before. */
+#screen-map{padding-top:0; --map-top-inset:calc(env(safe-area-inset-top) + var(--tg-safe-area-top, 0px));}
+#screen-map .map-geo-banner{padding-top:calc(11px + var(--map-top-inset));}
+#screen-map .map-geo-banner + .map-wrap{--map-top-inset:0px;}
 /* Map chrome, top — ONE panel across the map on a single 12px edge:
    brand + «Игроки | Кланы» on the first line, the legend right under it
    (left edge shared with the logo), and for clan members the clan battle
    as the panel's own orange footer. */
 /* 6px from the top and over the menu (was 12) — the user asked for more
    map between the two panels, «not right up against the edge». */
-.map-hud{position:absolute; top:6px; left:12px; right:12px; z-index:500; overflow:hidden;
+.map-hud{position:absolute; top:calc(6px + var(--map-top-inset, 0px)); left:12px; right:12px; z-index:500; overflow:hidden;
   background:rgba(255,255,255,0.97); border-radius:18px; backdrop-filter:blur(8px);
   box-shadow:0 10px 28px rgba(10,28,48,.20), 0 1px 3px rgba(10,28,48,.10);}
 .map-hud-bar{display:flex; align-items:center; gap:14px; padding:6px 6px 0 14px;}
@@ -1185,7 +1222,7 @@ body{
    the map to start/extend it) — see MapScreen.tsx/LeafletMap.tsx. Top-center,
    above the legend/header, only rendered while at least one sector is picked. */
 .map-selection-bar{
-  position:absolute; top:12px; left:50%; transform:translateX(-50%);
+  position:absolute; top:calc(12px + var(--map-top-inset, 0px)); left:50%; transform:translateX(-50%);
   background:rgba(23,24,27,0.95); color:#fff;
   border-radius:14px; padding:8px 8px 8px 14px;
   display:flex; align-items:center; gap:10px;
@@ -3453,6 +3490,22 @@ button.race-lane{cursor:pointer;}
 .diary-day-head{display:flex; align-items:center; gap:8px;}
 .diary-day-date{flex:1; min-width:0; font-size:15px; font-weight:800;}
 .diary-day-tag{flex:0 0 auto; padding:3px 9px; border-radius:999px; background:#F1EFEA; font-size:11.5px; font-weight:800; color:var(--ink-soft);}
+/* A fishing day without a catch: a quieter, tinted card. */
+.diary-day.trip{background:#FBF8F1; box-shadow:none; border:1px solid #EFE8DA;}
+.diary-day.trip .diary-note{background:var(--surface);}
+.diary-day-count{flex:0 0 auto; font-size:12.5px; font-weight:800; color:var(--ink-faint); font-variant-numeric:tabular-nums;}
+/* Weather in the diary: one quiet line, not a row of pills. */
+.diary-day .catch-conditions-chips{gap:3px 14px;}
+.diary-day .catch-conditions-chip{height:auto; padding:0; background:none; font-size:12.5px; color:var(--ink-soft);}
+/* «Засчитаны в игре» / «Только в дневнике» */
+.diary-group{margin-top:14px;}
+.diary-group-head{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; font-size:12px; font-weight:800; color:var(--ink-soft);}
+.diary-group-dot{display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green);}
+.diary-sector{padding:2px 7px; border-radius:999px; background:var(--blue-soft); color:var(--blue); font-size:11px; font-variant-numeric:tabular-nums;}
+/* Diary-only photos sit in a dashed frame, as if pasted into a notebook. */
+.diary-thumb.private{padding:4px; border:1.5px dashed #BDB29A; background:#FBF6EA;}
+.diary-thumb.private img{border-radius:8px;}
+.diary-thumb.private span{left:4px; right:4px; bottom:4px; border-radius:0 0 8px 8px;}
 .diary-day-places{display:flex; flex-wrap:wrap; gap:5px; margin-top:6px;}
 .diary-day-places span{padding:2px 8px; border-radius:999px; background:var(--blue-soft); color:var(--blue); font-size:11.5px; font-weight:800; font-variant-numeric:tabular-nums;}
 .catch-conditions.compact{margin-top:8px;}
@@ -3462,7 +3515,20 @@ button.race-lane{cursor:pointer;}
 .diary-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
 .diary-thumb span{position:absolute; left:0; right:0; bottom:0; padding:12px 4px 3px; background:linear-gradient(transparent, rgba(0,0,0,.6)); color:#fff; font-size:10px; font-weight:700; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .diary-thumb em{position:absolute; top:4px; left:4px; padding:1px 6px; border-radius:999px; background:rgba(0,0,0,.55); color:#fff; font-size:9.5px; font-style:normal; font-weight:800;}
-.diary-note{display:block; width:100%; margin-top:10px; padding:10px 12px; border:none; border-radius:12px; background:#FAF8F3; font:inherit; font-size:13.5px; line-height:1.45; color:var(--ink); text-align:left; white-space:pre-wrap; cursor:pointer;}
+.diary-note{display:block; width:100%; margin-top:14px; padding:10px 12px; border:none; border-radius:12px; background:#FBF6EA; font:inherit; font-size:13.5px; line-height:1.45; color:var(--ink); text-align:left; white-space:pre-wrap; cursor:pointer;}
+.diary-note::before{content:attr(data-label); display:block; margin-bottom:4px; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#9C8A63;}
+/* «⋯» and its menu */
+.diary-menu{position:relative; flex:0 0 auto;}
+.diary-menu-btn{display:grid; place-items:center; width:34px; height:30px; padding:0; border:none; border-radius:9px; background:none; color:var(--ink-faint); cursor:pointer; -webkit-tap-highlight-color:transparent;}
+.diary-menu-btn:hover, .diary-menu-btn[aria-expanded="true"]{background:#F1EFEA; color:var(--ink);}
+.diary-menu-btn:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
+.diary-day-head .diary-menu-btn{margin:-6px -8px -6px 0;}
+.diary-menu-list{position:absolute; top:calc(100% + 4px); right:0; z-index:30; min-width:190px; padding:6px; border-radius:14px; background:var(--surface); box-shadow:0 10px 30px rgba(31,26,16,.18), 0 0 0 1px rgba(31,26,16,.05); transform-origin:top right; animation:diary-menu-in .14s ease-out;}
+.diary-menu-list button{display:block; width:100%; height:42px; padding:0 12px; border:none; border-radius:9px; background:none; font:inherit; font-size:14px; font-weight:700; letter-spacing:0; text-transform:none; color:var(--ink); text-align:left; white-space:nowrap; cursor:pointer;}
+.diary-menu-list button:hover, .diary-menu-list button:focus-visible{background:#F4F1EA; outline:none;}
+.diary-menu-list button.danger{color:#D23B2A;}
+@keyframes diary-menu-in{from{opacity:0; transform:scale(.94) translateY(-4px);} to{opacity:1; transform:none;}}
+@media (prefers-reduced-motion: reduce){.diary-menu-list{animation:none;}}
 .diary-link{margin-top:10px; padding:0; border:none; background:none; font:inherit; font-size:13px; font-weight:800; color:var(--accent); cursor:pointer;}
 .diary-link.danger{color:#D23B2A;}
 .diary-link:disabled{opacity:.5;}
@@ -3479,7 +3545,31 @@ button.race-lane{cursor:pointer;}
 .diary-field-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
 .diary-place{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; font-size:14px;}
 .diary-place .diary-link{margin-top:0;}
-.diary-photo-pick{height:120px; border:1.5px dashed #D9D5CC; border-radius:16px; background:#FAF8F3; font:inherit; font-size:14px; font-weight:800; color:var(--ink-soft); cursor:pointer;}
+.diary-photo-pick{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:120px; border:1.5px dashed #D9D5CC; border-radius:16px; background:#FAF8F3; font:inherit; color:var(--ink-soft); cursor:pointer;}
+.diary-photo-pick b{font-size:14px; font-weight:800;}
+.diary-photo-pick span{font-size:12px; font-weight:600; color:var(--ink-faint);}
+/* Dates on iPhone: a native date/time input sizes itself to its own contents
+   and spills out of the column — reset it to an ordinary box. */
+.diary-field input[type=date], .diary-field input[type=datetime-local], .diary-fish-meta input{-webkit-appearance:none; appearance:none; display:block; min-width:0; max-width:100%;}
+.diary-field input::-webkit-date-and-time-value{text-align:left;}
+/* «Уловы из галереи»: one card per photo. */
+.diary-fish-list{display:flex; flex-direction:column; gap:10px;}
+.diary-fish{position:relative; display:grid; grid-template-columns:76px minmax(0,1fr); gap:12px; padding:10px; border:1px solid var(--line); border-radius:16px; background:var(--surface);}
+.diary-fish-photo{width:76px; height:100%; min-height:96px; border-radius:12px; object-fit:cover; display:block;}
+.diary-fish-body{display:flex; flex-direction:column; gap:8px; min-width:0;}
+.diary-fish-body select, .diary-unit input{width:100%; box-sizing:border-box; padding:9px 11px; border:1px solid var(--line); border-radius:11px; background:var(--surface); font:inherit; font-size:14px; color:var(--ink);}
+.diary-fish-size{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.diary-unit{position:relative; display:block; min-width:0;}
+.diary-unit input{padding-right:30px;}
+.diary-unit span{position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:12.5px; font-weight:700; color:var(--ink-faint); pointer-events:none;}
+.diary-fish-meta{display:flex; flex-wrap:wrap; align-items:center; gap:6px; font-size:12px; font-weight:700; color:var(--ink-soft);}
+.diary-fish-meta input{padding:5px 10px; border:none; border-radius:999px; background:#F4F2EC; font:inherit; font-size:12.5px; font-weight:700; color:var(--ink);}
+.diary-fish-meta em{font-style:normal; color:var(--green);}
+.diary-fish-meta span{padding:3px 8px; border-radius:999px; background:var(--blue-soft); color:var(--blue); font-variant-numeric:tabular-nums;}
+/* × on the photo's corner — the form keeps its full width. */
+.diary-fish-remove{position:absolute; top:4px; left:64px; display:flex; align-items:center; justify-content:center; width:28px; height:28px; padding:0; border:2px solid var(--surface); border-radius:50%; background:rgba(23,24,27,.72); color:#fff; box-shadow:0 2px 6px rgba(0,0,0,.25); cursor:pointer;}
+.diary-more{height:44px; border:1.5px dashed #D9D5CC; border-radius:14px; background:#FAF8F3; font:inherit; font-size:13.5px; font-weight:800; color:var(--ink-soft); cursor:pointer;}
+.diary-more:disabled, .diary-fish-remove:disabled{opacity:.5;}
 .diary-photo-preview{position:relative; height:180px; padding:0; border:none; border-radius:16px; overflow:hidden; background:#EEE; cursor:pointer;}
 .diary-photo-preview img{width:100%; height:100%; object-fit:cover; display:block;}
 .diary-photo-preview span{position:absolute; right:8px; bottom:8px; padding:4px 10px; border-radius:999px; background:rgba(0,0,0,.6); color:#fff; font-size:12px; font-weight:800;}

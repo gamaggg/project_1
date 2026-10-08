@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useClanRace } from '@/lib/supabase/queries'
 import type { CityId } from '@/lib/data/city'
+import { useUiState } from '@/lib/uiState'
 
 function storageKey(userId: string, city: CityId) {
   return `fishzone:seenClanBattle:${userId}:${city}`
@@ -18,6 +19,10 @@ export function useClanBattleCeremony(city: CityId, clanId: number | null) {
   const { user } = useAuth()
   const { data: race } = useClanRace(city, !!clanId)
   const [seenWeek, setSeenWeek] = useState<string | null | undefined>(undefined)
+  // On the account too (lib/uiState.ts), so it isn't shown again on another device.
+  const ui = useUiState()
+  const uiKey = `clan_battle_seen:${city}`
+  const remoteWeek = (ui.state?.[uiKey] as string | undefined) ?? null
 
   useEffect(() => {
     if (!user) return
@@ -38,8 +43,10 @@ export function useClanBattleCeremony(city: CityId, clanId: number | null) {
       localStorage.setItem(storageKey(user.id, city), weekKey)
     } catch {}
     setSeenWeek(weekKey)
+    ui.set(uiKey, weekKey)
   }
 
-  const show = !!race && !!mine && !!weekKey && seenWeek !== undefined && seenWeek !== weekKey
+  const lastSeen = [remoteWeek, seenWeek ?? null].filter((w): w is string => !!w).sort().pop() ?? null
+  const show = !!race && !!mine && !!weekKey && seenWeek !== undefined && ui.ready && lastSeen !== weekKey
   return { show, race, clanId, dismiss }
 }

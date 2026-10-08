@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { installGlobalErrorReporting } from '@/lib/errorReporting'
+import { reportClientError } from '@/lib/supabase/queries'
 
 export function QueryProvider({ children }: { children: ReactNode }) {
   const [client] = useState(
@@ -20,5 +22,8 @@ export function QueryProvider({ children }: { children: ReactNode }) {
         },
       })
   )
+  // Any uncaught error in the app's own code reaches the super admins' alert
+  // (lib/errorReporting.ts) — once per session per message.
+  useEffect(() => installGlobalErrorReporting((context, message) => reportClientError(context, { message })), [])
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>
 }

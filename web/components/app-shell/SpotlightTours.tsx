@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useI18n } from '@/lib/i18n'
 import { TOURS, TOURS_VERSION, type Tour, type TourAudience, type TourStep } from '@/lib/data/tours'
+import { useUiState } from '@/lib/uiState'
 
 const PAD = 6
 
@@ -51,15 +52,22 @@ export function SpotlightTours({ screen, audience, memberSince }: { screen: stri
   const [tour, setTour] = useState<{ def: Tour; steps: TourStep[] } | null>(null)
   const [index, setIndex] = useState(0)
   const [rect, setRect] = useState<DOMRect | null>(null)
+  // Seen tours are kept on the account too (lib/uiState.ts), so a tour
+  // finished on the phone doesn't start over in Telegram on the desktop.
+  const ui = useUiState()
+  const uiKey = audience ? `tours:${TOURS_VERSION}:${audience}` : null
+  const remoteSeen = uiKey ? ((ui.state?.[uiKey] as Seen | undefined) ?? null) : null
+  const remoteSeenKey = JSON.stringify(remoteSeen ?? {})
 
   // Look for a tour of this screen that's due: unseen, its key element there.
   useEffect(() => {
-    if (!audience || tour) return
+    if (!audience || tour || !ui.ready) return
     if (audience === 'whatsNew' && (!memberSince || Date.now() - new Date(memberSince).getTime() < 24 * 3600 * 1000)) return
     const candidates = TOURS[audience].filter((x) => x.screen === screen)
     if (candidates.length === 0) return
+    const fromAccount = JSON.parse(remoteSeenKey) as Seen
     const id = window.setInterval(() => {
-      const seen = readSeen(audience)
+      const seen = { ...readSeen(audience), ...fromAccount }
       if (seen.skip) {
         window.clearInterval(id)
         return
@@ -76,7 +84,7 @@ export function SpotlightTours({ screen, audience, memberSince }: { screen: stri
       }
     }, 900)
     return () => window.clearInterval(id)
-  }, [screen, audience, tour, memberSince])
+  }, [screen, audience, tour, memberSince, ui.ready, remoteSeenKey])
 
   // Leaving the screen mid-tour closes it (it shows again next time).
   useEffect(() => {
@@ -104,10 +112,11 @@ export function SpotlightTours({ screen, audience, memberSince }: { screen: stri
   if (!tour || !step || !rect || !audience) return null
 
   const finish = (all: boolean) => {
-    const seen = readSeen(audience)
+    const seen = { ...readSeen(audience), ...(remoteSeen ?? {}) }
     seen[tour.def.id] = true
     if (all) seen.skip = true
     writeSeen(audience, seen)
+    if (uiKey) ui.set(uiKey, seen)
     setTour(null)
   }
   const last = index === tour.steps.length - 1

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { SITE_URL } from '@/lib/site'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { pluralSectors, pluralCatches, pluralRu } from '@/lib/format'
+import { withErrorReport } from '@/lib/serverErrors'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
@@ -324,7 +325,7 @@ function renderMessage(notification: NotificationRef): Message | null {
 // as its own message as soon as that allows, one row in means one message
 // out. (A run of catches by the same angler is already one row: the queueing
 // trigger skips a follow_catch within 3 hours of the previous one.)
-export async function GET(req: Request) {
+async function handleGET(req: Request) {
   const auth = req.headers.get('authorization')
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
@@ -436,3 +437,5 @@ export async function GET(req: Request) {
 
   return NextResponse.json({ sent, blocked })
 }
+
+export const GET = withErrorReport('telegram/send-notifications', handleGET)

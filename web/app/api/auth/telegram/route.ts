@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyTelegramInitData } from '@/lib/telegram/verifyInitData'
 import { telegramEmail } from '@/lib/telegram/accounts'
+import { withErrorReport } from '@/lib/serverErrors'
 
 // Bridges a Telegram Mini App session into Supabase Auth. Supabase has no
 // native "Sign in with Telegram" provider, so this mints a magic-link token
@@ -11,7 +12,7 @@ import { telegramEmail } from '@/lib/telegram/accounts'
 // uses for email codes. No email is ever actually sent — generateLink alone
 // creates the token, nothing dispatches it.
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN
   if (!botToken) return NextResponse.json({ error: 'not configured' }, { status: 500 })
 
@@ -64,3 +65,5 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ email: signInEmail, token: linkData.properties.email_otp })
 }
+
+export const POST = withErrorReport('auth/telegram', handlePOST)

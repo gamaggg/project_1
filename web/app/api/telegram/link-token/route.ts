@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { withErrorReport } from '@/lib/serverErrors'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 
@@ -20,7 +21,7 @@ async function getBotUsername(): Promise<string | null> {
 // Hands the signed-in user a one-tap link that connects their Telegram to
 // this account. The token is minted by create_telegram_link_token under the
 // caller's own session, so a person can only ever link their own account.
-export async function POST() {
+async function handlePOST() {
   const supabase = await createClient()
   const {
     data: { user },
@@ -37,3 +38,5 @@ export async function POST() {
 
   return NextResponse.json({ url: `https://t.me/${botUsername}?start=link_${token}` })
 }
+
+export const POST = withErrorReport('telegram/link-token', handlePOST)

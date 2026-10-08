@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { withErrorReport } from '@/lib/serverErrors'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
@@ -15,7 +16,7 @@ const CITY: Record<string, string> = { batumi: 'Батуми', moscow: 'Моск
 // call for the same request does nothing. With `messageId` it forwards a
 // follow-up the player wrote in that same request (support_chat.sql) — a
 // reply to it answers the same request too.
-export async function POST(req: Request) {
+async function handlePOST(req: Request) {
   const supabase = await createClient()
   const {
     data: { user },
@@ -87,3 +88,5 @@ export async function POST(req: Request) {
   }
   return NextResponse.json({ sent })
 }
+
+export const POST = withErrorReport('support/notify', handlePOST)

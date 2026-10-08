@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyTelegramInitData } from '@/lib/telegram/verifyInitData'
 import { TELEGRAM_EMAIL_DOMAIN, isEmptyTelegramAccount } from '@/lib/telegram/accounts'
+import { withErrorReport } from '@/lib/serverErrors'
 
 // Someone signed in to their own (email) account inside the Telegram Mini
 // App: this attaches that Telegram to it, so the next launch signs them
@@ -11,7 +12,7 @@ import { TELEGRAM_EMAIL_DOMAIN, isEmptyTelegramAccount } from '@/lib/telegram/ac
 // on the empty account the Mini App once made by itself, it moves over;
 // a Telegram tied to an account with real play, or an account already tied
 // to a different Telegram, is left alone.
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN
   if (!botToken) return NextResponse.json({ error: 'not configured' }, { status: 500 })
 
@@ -49,3 +50,5 @@ export async function POST(request: Request) {
   }
   return NextResponse.json({ status: 'linked', moved: !!taken })
 }
+
+export const POST = withErrorReport('auth/telegram/link', handlePOST)

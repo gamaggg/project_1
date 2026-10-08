@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { withErrorReport } from '@/lib/serverErrors'
 
 // Called right after LinkEmailFlow's OtpCodeStep confirms the new email
 // (proving the visitor actually controls it). That alone isn't enough to
@@ -14,7 +15,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 // OTP step that gates this call, finishing the swap with the admin API is
 // equivalent to what double opt-in would have produced anyway — just
 // without a confirmation the synthetic side could never give.
-export async function POST() {
+async function handlePOST() {
   const supabase = await createClient()
   const {
     data: { user },
@@ -34,3 +35,5 @@ export async function POST() {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
+
+export const POST = withErrorReport('auth/complete-email-link', handlePOST)

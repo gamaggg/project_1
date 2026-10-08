@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { SITE_URL } from '@/lib/site'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { pluralCatches } from '@/lib/format'
+import { withErrorReport } from '@/lib/serverErrors'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
@@ -52,7 +53,7 @@ function text(d: Due): string {
   }
 }
 
-export async function GET(req: Request) {
+async function handleGET(req: Request) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
@@ -92,3 +93,5 @@ export async function GET(req: Request) {
   }
   return NextResponse.json({ due: due.length, sent, blocked })
 }
+
+export const GET = withErrorReport('telegram/send-onboarding', handleGET)

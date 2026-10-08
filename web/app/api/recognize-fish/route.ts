@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { withErrorReport } from '@/lib/serverErrors'
 
 // Proxies to Fishial (fishial.ai) so FISHIAL_API_KEY/SECRET never reach the
 // client — the browser only ever talks to this route, never to
@@ -30,7 +31,7 @@ async function getAccessToken(): Promise<string> {
   return token
 }
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   try {
     const contentType = request.headers.get('content-type') ?? 'image/jpeg'
     const imageBytes = await request.arrayBuffer()
@@ -69,3 +70,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ candidates: [] })
   }
 }
+
+export const POST = withErrorReport('recognize-fish', handlePOST)

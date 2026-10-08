@@ -7,7 +7,8 @@ import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import type { Territory } from '@/lib/data/types'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { formatWhen } from '@/lib/format'
-import { getCurrentCoords, useGeolocationPermission } from '@/lib/geolocation'
+import { getCurrentCoords, nearestTerritory, useGeolocationPermission, watchLiveLocation, type Coords } from '@/lib/geolocation'
+import { observeScreenActive } from '@/lib/observeScreenActive'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { DefenseShields } from '@/components/app-shell/SectorDefense'
@@ -55,7 +56,9 @@ function statusBadge(status: Territory['status'], myTerritoryColor: string, mySh
         {status === 'mine' ? 'Моя' : 'Моя доля'}
       </span>
     )
-  if (status === 'other') return <span className="badge badge-blue">Занята</span>
+  // Someone else's: no pill — their face beside the id already says it, and
+  // the pill was what squeezed that name out of a phone-width row.
+  if (status === 'other') return null
   return <span className="badge badge-neutral">Свободна</span>
 }
 
@@ -65,12 +68,17 @@ function statusBadge(status: Territory['status'], myTerritoryColor: string, mySh
 // event fires.
 const SHEET_WINDOW = 3
 
+// Under a shield: the icon and how long is left («18 ч»), not «Под щитом» —
+// the words took the room the owner's name needs.
 function shieldBadge(shieldUntil: string | null) {
-  if (!shieldUntil || new Date(shieldUntil) <= new Date()) return null
+  const left = shieldUntil ? new Date(shieldUntil).getTime() - Date.now() : 0
+  if (left <= 0) return null
+  const minutes = Math.max(1, Math.ceil(left / 60_000))
+  const time = minutes < 60 ? `${minutes} мин` : `${Math.floor(minutes / 60)} ч`
   return (
-    <span className="badge badge-shield">
+    <span className="badge badge-shield" style={{ flex: '0 0 auto' }} title="Под щитом">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l8 3v6c0 5-3.4 8.7-8 11-4.6-2.3-8-6-8-11V5l8-3z" /></svg>
-      Под щитом
+      {time}
     </span>
   )
 }
@@ -173,6 +181,35 @@ export const MapScreen = forwardRef<
   const soloCount = clanLayer ? territories.filter((t) => t.status !== 'free' && t.ownerId && !t.ownerClanId).length : 0
   const mapRef = useRef<LeafletMapHandle>(null)
   const geoPermission = useGeolocationPermission()
+  // The dot on the map follows the player while the map is the screen in
+  // front (the GPS is let go on every other screen and in the background).
+  const rootRef = useRef<HTMLDivElement>(null)
+  const [mapActive, setMapActive] = useState(true)
+  useEffect(() => (rootRef.current ? observeScreenActive(rootRef.current, setMapActive) : undefined), [])
+  // The sector the player is standing in, if any — its card goes first (no
+  // label on it: the outline on the map and the player's dot say it). Otherwise the sheet opens on the freshest catch, the
+  // order useTerritories already gives. A new fix only moves the dot; the
+  // screen re-renders when the sector itself changes.
+  const [hereId, setHereId] = useState<string | null>(null)
+  const lastFixRef = useRef<Coords | null>(null)
+  const territoriesRef = useRef(territories)
+  territoriesRef.current = territories
+  useEffect(() => {
+    if (!mapActive) return
+    return watchLiveLocation((c) => {
+      lastFixRef.current = c
+      mapRef.current?.showUserLocation(c.lat, c.lng)
+      setHereId(nearestTerritory(c.lat, c.lng, territoriesRef.current)?.id ?? null)
+    })
+  }, [mapActive])
+  useEffect(() => {
+    const c = lastFixRef.current
+    if (c) setHereId(nearestTerritory(c.lat, c.lng, territories)?.id ?? null)
+  }, [territories])
+  const cards = useMemo(() => {
+    const here = hereId ? territories.find((t) => t.id === hereId) : undefined
+    return here ? [here, ...territories.filter((t) => t.id !== hereId)] : territories
+  }, [territories, hereId])
   useImperativeHandle(forwardedRef, () => ({
     flyToTerritory: (id: string) => mapRef.current?.flyToTerritory(id),
     showUserLocation: (lat: number, lng: number) => mapRef.current?.showUserLocation(lat, lng),
@@ -222,7 +259,11 @@ export const MapScreen = forwardRef<
 
   function markUserScroll() {
     userScrollRef.current = true
+    lastBrowseRef.current = Date.now()
   }
+  // When the player last flicked through the cards or picked a sector —
+  // walking into another sector doesn't yank the sheet away from that.
+  const lastBrowseRef = useRef(0)
 
   const [freeNav, setFreeNav] = useState<NearestFreeState | null>(null)
   const freeBusy = useRef(false)
@@ -285,7 +326,8 @@ export const MapScreen = forwardRef<
     }
     // Ahead of the scroll, not as a result of it: the card has to have its
     // contents by the time the animation lands on it.
-    const targetIndex = territories.findIndex((t) => t.id === id)
+    lastBrowseRef.current = Date.now()
+    const targetIndex = cards.findIndex((t) => t.id === id)
     if (targetIndex >= 0) setCenterIndex(targetIndex)
     const row = sheetRowRef.current
     const card = row?.querySelector<HTMLElement>(`[data-id="${id}"]`)
@@ -293,6 +335,19 @@ export const MapScreen = forwardRef<
     setJustSelectedId(id)
     setHighlightedSectorId(id)
   }
+
+  // Walking into a sector (or out of every one) brings the sheet back to its
+  // first card — the sector you're in, or the freshest catch — and outlines
+  // it on the map, unless you've been browsing the cards in the last minute.
+  useEffect(() => {
+    if (Date.now() - lastBrowseRef.current < 60_000) return
+    const row = sheetRowRef.current
+    const first = row?.querySelector<HTMLElement>('.map-sheet-card')
+    if (!row || !first) return
+    setCenterIndex(0)
+    scrollToCardFast(row, first)
+    setHighlightedSectorId(hereId)
+  }, [hereId])
 
   // Which carousel card's contents are actually rendered (see the sheet's
   // own comment below). Updated synchronously on every scroll event, unlike
@@ -312,7 +367,7 @@ export const MapScreen = forwardRef<
     }
     const pitch = cardPitchRef.current
     if (!pitch) return
-    const idx = Math.max(0, Math.min(territories.length - 1, Math.round(wrap.scrollLeft / pitch)))
+    const idx = Math.max(0, Math.min(cards.length - 1, Math.round(wrap.scrollLeft / pitch)))
     setCenterIndex((cur) => (cur === idx ? cur : idx))
   }
 
@@ -334,7 +389,7 @@ export const MapScreen = forwardRef<
           closest = i
         }
       })
-      const t = territories[closest]
+      const t = cards[closest]
       if (t) mapRef.current?.flyToTerritory(t.id)
     }, 120)
   }
@@ -345,7 +400,7 @@ export const MapScreen = forwardRef<
   const mostPopularId = useMemo(() => mostPopularSectorId(territories), [territories])
 
   return (
-    <div className="screen-inner" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}>
+    <div ref={rootRef} className="screen-inner" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}>
       {(geoPermission === 'prompt' || geoPermission === 'denied') && (
         <div className="map-geo-banner">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flex: '0 0 auto' }}>
@@ -501,7 +556,7 @@ export const MapScreen = forwardRef<
             </div>
           )}
           <div className="map-sheet-row" ref={sheetRowRef} onScroll={handleScroll} onPointerDown={markUserScroll} onWheel={markUserScroll}>
-            {territories.map((t, i) => (
+            {cards.map((t, i) => (
               <div
                 data-tour="sector-card" className={`map-sheet-card${t.id === justSelectedId ? ' map-sheet-card-pulse' : ''}`}
                 key={t.id}
@@ -568,10 +623,10 @@ export const MapScreen = forwardRef<
                   )}
                   <div style={{ marginLeft: 'auto', flex: '0 0 auto' }}>{statusBadge(t.status, myTerritoryColor, t.coHolders.some((h) => h.isMe))}</div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 18, fontSize: 13, color: 'var(--ink-soft)', fontWeight: 600 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13, color: 'var(--ink-soft)', fontWeight: 600 }}>
                   <span style={{ flex: '0 0 auto' }}>Уловов {t.catchCount}</span>
                   <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {t.lastCatchAt ? 'Последний улов: ' + formatWhen(t.lastCatchAt) : 'Пока нет уловов'}
+                    {t.lastCatchAt ? 'Последний: ' + formatWhen(t.lastCatchAt) : 'Пока нет уловов'}
                   </span>
                   {t.status !== 'free' && (
                     // Optically, not geometrically, flush with the badges above: a

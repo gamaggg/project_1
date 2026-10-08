@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { fetchRawForecast, nowInZone, scoreForecast } from '@/lib/forecast/bite'
+import { withErrorReport } from '@/lib/serverErrors'
 
 // «Завтра хороший клёв»: once a day at 19:00 in each city (pg_cron, switched
 // on in the release migration) — tomorrow's score from the same model the
@@ -10,7 +11,7 @@ import { fetchRawForecast, nowInZone, scoreForecast } from '@/lib/forecast/bite'
 
 const hh = (h: number) => `${String(h % 24).padStart(2, '0')}:00`
 
-export async function GET(req: Request) {
+async function handleGET(req: Request) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
@@ -41,3 +42,5 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: e instanceof Error ? e.message : 'failed' }, { status: 502 })
   }
 }
+
+export const GET = withErrorReport('telegram/forecast-alert', handleGET)

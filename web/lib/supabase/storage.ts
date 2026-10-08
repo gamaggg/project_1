@@ -41,6 +41,22 @@ export async function uploadAnnouncementPhoto(blob: Blob): Promise<string> {
   return data.publicUrl
 }
 
+// A catch refused by someone else's shield, kept in the diary instead:
+// diary_catches only takes URLs under <uid>/diary/, so the photo already
+// uploaded for the catch is copied there on the server (no second upload
+// from the phone). Storage lets anyone read catch-photos and a user write to
+// their own folder, which is all a copy needs.
+export async function copyCatchPhotoToDiary(userId: string, photoUrl: string): Promise<string> {
+  const supabase = createClient()
+  const marker = '/catch-photos/'
+  const from = decodeURIComponent(photoUrl.slice(photoUrl.indexOf(marker) + marker.length))
+  const to = `${userId}/diary/${crypto.randomUUID()}.jpg`
+  const { error } = await supabase.storage.from('catch-photos').copy(from, to)
+  if (error) throw error
+  const { data } = supabase.storage.from('catch-photos').getPublicUrl(to)
+  return data.publicUrl
+}
+
 // «Улов из галереи» for the diary: same bucket and folder rule as catch
 // photos, under <uid>/diary/ (diary_catches only accepts URLs from there),
 // with a random name — these never show up anywhere public.

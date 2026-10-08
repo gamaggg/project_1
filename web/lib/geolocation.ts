@@ -37,11 +37,88 @@ export async function getCurrentCoords(): Promise<Coords | null> {
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 30_000 }
     )
   })
-  if (position) {
-    localStorage.setItem(GEO_GRANTED_KEY, '1')
-    window.dispatchEvent(new Event(GEO_GRANTED_EVENT))
+  if (!position) return null
+  localStorage.setItem(GEO_GRANTED_KEY, '1')
+  window.dispatchEvent(new Event(GEO_GRANTED_EVENT))
+  const coords = { lat: position.coords.latitude, lng: position.coords.longitude }
+  publishFix(coords)
+  allowLive()
+  return coords
+}
+
+// The live position: one watchPosition for the whole app, held only while
+// something on screen asks for it (the map, while it's the visible screen)
+// and the app is in the foreground — the GPS is off otherwise. It starts only
+// once access is already granted and never prompts by itself (see
+// DECISIONS.md, geolocation only on demand); a successful getCurrentCoords
+// both unlocks it and seeds the first fix.
+let liveFix: Coords | null = null
+let liveAllowed = false
+let liveChecking = false
+let watchId: number | null = null
+let visibilityHooked = false
+const liveListeners = new Set<() => void>()
+
+function publishFix(c: Coords) {
+  // A phone lying still still wanders a few metres — not worth a redraw.
+  if (liveFix && haversineMeters(liveFix.lat, liveFix.lng, c.lat, c.lng) < 4) return
+  liveFix = c
+  liveListeners.forEach((l) => l())
+}
+
+function syncWatch() {
+  if (typeof navigator === 'undefined' || !navigator.geolocation) return
+  const want = liveAllowed && liveListeners.size > 0 && document.visibilityState === 'visible'
+  if (want && watchId === null) {
+    watchId = navigator.geolocation.watchPosition(
+      (pos) => publishFix({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (err) => {
+        if (err.code !== err.PERMISSION_DENIED) return
+        liveAllowed = false
+        syncWatch()
+      },
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 30_000 }
+    )
+  } else if (!want && watchId !== null) {
+    navigator.geolocation.clearWatch(watchId)
+    watchId = null
   }
-  return position ? { lat: position.coords.latitude, lng: position.coords.longitude } : null
+}
+
+function allowLive() {
+  liveAllowed = true
+  syncWatch()
+}
+
+function subscribeLive(onChange: () => void) {
+  liveListeners.add(onChange)
+  if (!visibilityHooked) {
+    visibilityHooked = true
+    document.addEventListener('visibilitychange', syncWatch)
+  }
+  if (!liveAllowed && !liveChecking) {
+    liveChecking = true
+    void queryGeolocationPermission().then((p) => {
+      liveChecking = false
+      if (p === 'granted') allowLive()
+    })
+  }
+  syncWatch()
+  return () => {
+    liveListeners.delete(onChange)
+    syncWatch()
+  }
+}
+
+// Calls onFix with the last known position (if any) and every new one until
+// the returned stop — a callback, not React state, so a moving player shifts
+// the dot on the map without re-rendering whole screens every few seconds.
+export function watchLiveLocation(onFix: (c: Coords) => void): () => void {
+  const stop = subscribeLive(() => {
+    if (liveFix) onFix(liveFix)
+  })
+  if (liveFix) onFix(liveFix)
+  return stop
 }
 
 // Territory whose center is within MAX_DISTANCE_M of the given point, or null if

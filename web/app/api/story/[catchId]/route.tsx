@@ -2,13 +2,21 @@ import { ImageResponse } from 'next/og'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 // «Улов в истории Telegram»: a 1080×1920 card the server draws for one
-// catch — the photo full-bleed, species and size big, the sector as a hex
-// badge, who caught it, the logo, and a dare. Telegram's shareToStory needs
+// catch — the photo as its own framed card with nothing laid over it (the
+// fish used to disappear under the species name and the sector badge), and
+// under it species and size, the sector as a hex badge, who caught it, and a
+// dare. Telegram's shareToStory needs
 // a public https image, so this is a plain GET; catches are public anyway.
 // ?lang=ru|en|ka picks the dare's language (and a Georgian-capable font).
 
 const W = 1080
 const H = 1920
+// The photo card: full width less the margins, a little taller than square —
+// a phone's portrait shot loses only a sliver top and bottom.
+const PHOTO_X = 56
+const PHOTO_Y = 196
+const PHOTO_W = W - PHOTO_X * 2
+const PHOTO_H = 1170
 
 const DARE: Record<string, string> = {
   ru: 'Сможешь поймать больше?',
@@ -66,15 +74,16 @@ async function dataUrl(url: string | null): Promise<string | null> {
   }
 }
 
-// A Supabase public object, resized and cropped to the story's 9:16.
+// A Supabase public object, resized and cropped to the photo card.
 function storyPhotoUrl(url: string): string {
   const marker = '/storage/v1/object/public/'
   const i = url.indexOf(marker)
   if (i === -1) return url
-  return `${url.slice(0, i)}/storage/v1/render/image/public/${url.slice(i + marker.length).split('?')[0]}?width=${W}&height=${H}&resize=cover&quality=80`
+  return `${url.slice(0, i)}/storage/v1/render/image/public/${url.slice(i + marker.length).split('?')[0]}?width=${PHOTO_W}&height=${PHOTO_H}&resize=cover&quality=82`
 }
 
-const fmtNum = (n: number, lang: string) => new Intl.NumberFormat(lang, { maximumFractionDigits: 1 }).format(n)
+// 0,25 кг stays 0,25 — one digit made it 0,3.
+const fmtNum = (n: number, lang: string) => new Intl.NumberFormat(lang, { maximumFractionDigits: n < 1 ? 2 : 1 }).format(n)
 
 export async function GET(request: Request, { params }: { params: Promise<{ catchId: string }> }) {
   const { catchId } = await params
@@ -104,6 +113,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ catc
       .filter(Boolean)
       .join(' · ')
     const name = p?.display_name ?? 'RANGE'
+    // A long name («Каменный окунь») steps the type down so it stays on one
+    // line beside the size.
+    const speciesName = sp?.name ?? c.species
+    const speciesSize = speciesName.length > 12 ? 84 : speciesName.length > 8 ? 100 : 116
     const prefix = c.territory_id.slice(0, 1)
     const caughtOn = new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'long', timeZone: prefix === 'M' ? 'Europe/Moscow' : 'Asia/Tbilisi' }).format(new Date(c.caught_at))
     const fonts = [
@@ -115,51 +128,68 @@ export async function GET(request: Request, { params }: { params: Promise<{ catc
 
     return new ImageResponse(
       (
-        <div style={{ width: W, height: H, display: 'flex', position: 'relative', background: '#0B1A20', fontFamily: bodyFont }}>
-          {photo && (
-            // eslint-disable-next-line @next/next/no-img-element -- rendered by the image generator, not a page
-            <img src={photo} width={W} height={H} style={{ position: 'absolute', inset: 0, width: W, height: H, objectFit: 'cover' }} alt="" />
-          )}
-          <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 360, display: 'flex', background: 'linear-gradient(rgba(5,12,16,.72), rgba(5,12,16,0))' }} />
-          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 1100, display: 'flex', background: 'linear-gradient(rgba(5,12,16,0), rgba(5,12,16,.55) 35%, rgba(5,12,16,.94))' }} />
-
+        <div style={{ width: W, height: H, display: 'flex', position: 'relative', background: 'linear-gradient(180deg, #10242C 0%, #0A161B 55%, #071014 100%)', fontFamily: bodyFont }}>
           {/* eslint-disable-next-line @next/next/no-img-element -- rendered by the image generator */}
-          <img src={logoSrc} width={300} height={86} style={{ position: 'absolute', top: 96, left: 80 }} alt="" />
+          <img src={logoSrc} width={226} height={65} style={{ position: 'absolute', top: 92, left: 64 }} alt="" />
 
-          <div style={{ position: 'absolute', left: 80, right: 80, bottom: 150, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
+          <div
+            style={{
+              position: 'absolute',
+              left: PHOTO_X,
+              top: PHOTO_Y,
+              width: PHOTO_W,
+              height: PHOTO_H,
+              display: 'flex',
+              borderRadius: 44,
+              overflow: 'hidden',
+              background: '#1A2C33',
+              boxShadow: '0 30px 80px rgba(0,0,0,.45)',
+            }}
+          >
+            {photo && (
+              // eslint-disable-next-line @next/next/no-img-element -- rendered by the image generator, not a page
+              <img src={photo} width={PHOTO_W} height={PHOTO_H} style={{ width: PHOTO_W, height: PHOTO_H, objectFit: 'cover' }} alt="" />
+            )}
+          </div>
+
+          <div style={{ position: 'absolute', left: 72, right: 72, top: PHOTO_Y + PHOTO_H + 44, display: 'flex', flexDirection: 'column' }}>
+            {/* Species and size share a line; a name too long for both puts
+                the size on the next one. */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', columnGap: 24, rowGap: 14 }}>
+              <div style={{ display: 'flex', color: '#fff', fontFamily: 'Oswald', fontSize: speciesSize, lineHeight: 1, textTransform: 'uppercase', letterSpacing: 1 }}>
+                {speciesName}
+              </div>
+              {size && <div style={{ display: 'flex', flex: '0 0 auto', color: '#FFB27A', fontFamily: 'Oswald', fontSize: 58, lineHeight: 1, paddingBottom: 4 }}>{size}</div>}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', marginTop: 40, gap: 20 }}>
               {/* Flat top and bottom, corners left and right — the map's own sector hexes. */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', width: 176, height: 152 }}>
-                <svg width={176} height={152} viewBox="0 0 176 152" style={{ position: 'absolute', top: 0, left: 0 }}>
-                  <polygon points="46,4 130,4 172,76 130,148 46,148 4,76" fill="#FC5200" stroke="#FFB27A" strokeWidth={4} strokeLinejoin="round" />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', width: 112, height: 97, flex: '0 0 auto' }}>
+                <svg width={112} height={97} viewBox="0 0 176 152" style={{ position: 'absolute', top: 0, left: 0 }}>
+                  <polygon points="46,4 130,4 172,76 130,148 46,148 4,76" fill="#FC5200" stroke="#FFB27A" strokeWidth={5} strokeLinejoin="round" />
                 </svg>
-                <span style={{ color: '#fff', fontFamily: 'Oswald', fontSize: 34 }}>{c.territory_id}</span>
+                <span style={{ color: '#fff', fontFamily: 'Oswald', fontSize: 24 }}>{c.territory_id}</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', color: '#fff', fontSize: 38 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', color: '#fff', fontSize: 32, flex: '0 0 auto' }}>
                 <span>{CITY[lang][prefix] ?? ''}</span>
-                <span style={{ color: 'rgba(255,255,255,.6)', fontSize: 30 }}>{caughtOn}</span>
+                <span style={{ color: 'rgba(255,255,255,.55)', fontSize: 26 }}>{caughtOn}</span>
               </div>
-            </div>
-
-            <div style={{ display: 'flex', marginTop: 40, color: '#fff', fontFamily: 'Oswald', fontSize: 150, lineHeight: 1, textTransform: 'uppercase', letterSpacing: 1 }}>
-              {sp?.name ?? c.species}
-            </div>
-            {size && <div style={{ display: 'flex', marginTop: 18, color: '#FFB27A', fontFamily: 'Oswald', fontSize: 84 }}>{size}</div>}
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 22, marginTop: 56 }}>
+              <div style={{ display: 'flex', flex: '1 1 auto' }} />
               {avatar ? (
                 // eslint-disable-next-line @next/next/no-img-element -- rendered by the image generator
-                <img src={avatar} width={96} height={96} style={{ width: 96, height: 96, borderRadius: 48, objectFit: 'cover', border: '4px solid #FC5200' }} alt="" />
+                <img src={avatar} width={72} height={72} style={{ width: 72, height: 72, borderRadius: 36, objectFit: 'cover', border: '3px solid #FC5200', flex: '0 0 auto' }} alt="" />
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 96, height: 96, borderRadius: 48, background: '#FC5200', color: '#fff', fontSize: 38 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 72, height: 72, borderRadius: 36, background: '#FC5200', color: '#fff', fontSize: 28, flex: '0 0 auto' }}>
                   {name.slice(0, 2).toUpperCase()}
                 </div>
               )}
-              <span style={{ color: '#fff', fontSize: 44 }}>{name}</span>
+              <span style={{ display: 'block', color: '#fff', fontSize: 34, maxWidth: 300, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{name}</span>
             </div>
 
-            <div style={{ display: 'flex', marginTop: 60, color: '#fff', fontSize: 52 }}>{DARE[lang]}</div>
-            <div style={{ display: 'flex', marginTop: 14, color: 'rgba(255,255,255,.5)', fontSize: 32 }}>catchrange.com</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 46 }}>
+              <span style={{ color: '#fff', fontSize: 40 }}>{DARE[lang]}</span>
+              <span style={{ color: 'rgba(255,255,255,.45)', fontSize: 26 }}>catchrange.com</span>
+            </div>
           </div>
         </div>
       ),

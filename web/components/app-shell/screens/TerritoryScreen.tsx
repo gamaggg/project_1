@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { formatCoords } from '@/lib/openExternal'
-import { useCatchesByTerritory, useProfile, useCanAddCatchManually, useIsSuperAdmin, useBuffs, useBuyShield, useAdminSetTerritoryKind, useSlotState, useUseFreeShield } from '@/lib/supabase/queries'
+import { useCatchesByTerritory, useProfile, useCanAddCatchManually, useIsSuperAdmin, useAdminSetTerritoryKind, useSlotState, useUseFreeShield } from '@/lib/supabase/queries'
 import { useI18n, useT } from '@/lib/i18n'
 import { formatWeekdayTime } from '@/lib/i18n/format'
 import { useNow } from '@/lib/useNow'
@@ -22,7 +22,6 @@ import { sectorCapturer, sectorOtherHolders } from '@/lib/data/sectorHolders'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { TerritoryThumbnailMapView } from '@/components/app-shell/TerritoryThumbnailMapView'
 import { BackButton } from '@/components/app-shell/BackButton'
-import { InsufficientCoinsModal } from '@/components/app-shell/InsufficientCoinsModal'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 
 export function statusBadge(status: Territory['status'], myTerritoryColor: string, myShare = false) {
@@ -159,51 +158,19 @@ function SectorCoords({ lat, lng, onToast }: { lat: number; lng: number; onToast
   )
 }
 
-// Bought right when you're worried about a specific sector, not from the
-// general Shop grid — it needs a target, and this screen already is one.
+// Shields aren't sold: they only drop in the Shop's slots, wait in a reserve,
+// and are put on a sector here — the one screen with a sector to put them on.
 function ShieldButton({ territory }: { territory: Territory }) {
-  const { user } = useAuth()
-  const { data: myProfile } = useProfile(user?.id ?? null)
-  const { data: buffs = [] } = useBuffs()
-  const buyShield = useBuyShield()
-  // Shields won in the Shop's slots wait here, on the one screen where there's
-  // a sector to put them on.
   const { data: slotState } = useSlotState()
   const useFreeShield = useUseFreeShield()
   const freeShields = slotState?.freeShields ?? 0
   const t = useT()
-  const [showInsufficient, setShowInsufficient] = useState(false)
-  const price = buffs.find((b) => b.id === 'shield')?.price ?? 150
-  const coins = myProfile?.coins ?? 0
-  const active = territory.shieldUntil && new Date(territory.shieldUntil) > new Date()
 
-  function handleClick() {
-    if (coins < price) setShowInsufficient(true)
-    else buyShield.mutate(territory.id)
-  }
-
+  if (freeShields === 0) return null
   return (
-    <>
-      {freeShields > 0 && (
-        <button className="btn-primary" style={{ marginTop: 12 }} disabled={useFreeShield.isPending} onClick={() => useFreeShield.mutate(territory.id)}>
-          {t('territory.freeShield')} · {t('territory.freeShieldLeft', { count: freeShields })}
-        </button>
-      )}
-      <button className="btn-secondary shop-price-btn" style={{ marginTop: 12 }} disabled={buyShield.isPending} onClick={handleClick}>
-        {buyShield.isPending ? (
-          'Покупаем…'
-        ) : active ? (
-          <>
-            Продлить щит · {price} <CoinIcon size={16} />
-          </>
-        ) : (
-          <>
-            Защитить сектор · {price} <CoinIcon size={16} />, 24ч
-          </>
-        )}
-      </button>
-      {showInsufficient && <InsufficientCoinsModal price={price} coins={coins} onClose={() => setShowInsufficient(false)} />}
-    </>
+    <button className="btn-primary" style={{ marginTop: 12 }} disabled={useFreeShield.isPending} onClick={() => useFreeShield.mutate(territory.id)}>
+      {t('territory.freeShield')} · {t('territory.freeShieldLeft', { count: freeShields })}
+    </button>
   )
 }
 

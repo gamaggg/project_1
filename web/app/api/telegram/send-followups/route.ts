@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { SITE_URL } from '@/lib/site'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { withErrorReport } from '@/lib/serverErrors'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
@@ -19,7 +20,7 @@ const DELAY_MINUTES = 30
 // more often than once every 30 minutes so a given chat's follow-up goes
 // out within one polling interval of its due time, not up to a full period
 // late.
-export async function GET(req: Request) {
+async function handleGET(req: Request) {
   const auth = req.headers.get('authorization')
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
@@ -60,3 +61,5 @@ export async function GET(req: Request) {
 
   return NextResponse.json({ sent })
 }
+
+export const GET = withErrorReport('telegram/send-followups', handleGET)

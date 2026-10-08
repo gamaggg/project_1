@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { SlotSymbol, slotSymbolSrc } from '@/components/app-shell/SlotSymbol'
@@ -8,7 +9,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { useSlotState, useSpinSlots, type SlotPrize, type SlotSpinResult, type SlotSymbol as SymbolId } from '@/lib/supabase/queries'
 import type { CityId } from '@/lib/data/city'
 import { JACKPOT_CHANCE } from '@/lib/data/shopItems'
-import { useI18n, type TKey } from '@/lib/i18n'
+import { useI18n, useT, type TKey } from '@/lib/i18n'
 import { hapticSuccess, hapticTap } from '@/lib/telegram/haptics'
 
 // The «Слоты» tab that replaced ДЭП: free spins only, nothing is staked.
@@ -109,6 +110,10 @@ const MOSCOW_TEXT: Partial<Record<TKey, TKey>> = {
   'slots.rewards.jackpot': 'slots.moscow.rewards.jackpot',
 }
 
+// The most shields one can hold (spin_slots: a shield won on top of a full
+// reserve pays 70 coins instead).
+const SHIELD_RESERVE_MAX = 3
+
 const RESULT_TEXT: Record<SlotPrize, TKey> = {
   jackpot: 'slots.result.jackpot',
   jackpot_coins: 'slots.result.jackpotCoins',
@@ -137,6 +142,9 @@ export function SlotsScreen({ city }: { city: CityId }) {
   const [reels, setReels] = useState<Reel[]>(() => [idleReel('lufar', 0), idleReel('katran', 1), idleReel('hex', 2)])
   const [spinning, setSpinning] = useState(false)
   const [result, setResult] = useState<SlotSpinResult | null>(null)
+  // A shield won with the reserve already full comes back as coins (spin_slots)
+  // — said in a modal, since the reserve rule isn't on the machine itself.
+  const [reserveFullCoins, setReserveFullCoins] = useState<number | null>(null)
   const stoppedRef = useRef(0)
   // The spin whose reels are still turning; null once it's been revealed.
   const activeRef = useRef<SlotSpinResult | null>(null)
@@ -205,6 +213,7 @@ export function SlotsScreen({ city }: { city: CityId }) {
     setSpinning(false)
     setResult(res)
     if (res.prize !== 'none') hapticSuccess()
+    if (res.prize === 'shield' && res.coins > 0) setReserveFullCoins(res.coins)
     queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
     queryClient.invalidateQueries({ queryKey: ['my-active-buffs', user?.id ?? null] })
     queryClient.invalidateQueries({ queryKey: ['slot-state', user?.id ?? null] })
@@ -308,7 +317,8 @@ export function SlotsScreen({ city }: { city: CityId }) {
         {result ? (
           <div key={result.reels.join() + result.left} className={`slots-result-text${result.prize === 'none' ? ' miss' : ''}`}>
             {result.coins > 0 && <CoinIcon size={20} />}
-            {t(local(RESULT_TEXT[result.prize]), { coins: result.coins })}
+            {/* A shield won with the reserve full comes back as coins — same prize, coins > 0. */}
+            {t(result.prize === 'shield' && result.coins > 0 ? 'slots.result.shieldCoins' : local(RESULT_TEXT[result.prize]), { coins: result.coins })}
           </div>
         ) : spin.isError ? (
           <div className="slots-result-text miss">{t(errorKey(spin.error))}</div>
@@ -330,7 +340,8 @@ export function SlotsScreen({ city }: { city: CityId }) {
           <span>{t('slots.giftHint')}</span>
         </div>
       )}
-      {freeShields > 0 && <div className="slots-shields">{t('slots.freeShields', { count: freeShields })}</div>}
+      {freeShields > 0 && <div className="slots-shields">{t('slots.freeShields', { count: freeShields, max: SHIELD_RESERVE_MAX })}</div>}
+      {reserveFullCoins !== null && <ReserveFullModal coins={reserveFullCoins} onClose={() => setReserveFullCoins(null)} />}
 
       <div className="slots-paytable">
         <div className="slots-paytable-head">
@@ -361,5 +372,25 @@ export function SlotsScreen({ city }: { city: CityId }) {
         ))}
       </div>
     </div>
+  )
+}
+
+function ReserveFullModal({ coins, onClose }: { coins: number; onClose: () => void }) {
+  const t = useT()
+  return createPortal(
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-title">{t('slots.reserveFull.title')}</div>
+        <div style={{ marginTop: 8, fontSize: 14, color: 'var(--ink-soft)', lineHeight: 1.5 }}>{t('slots.reserveFull.text', { max: SHIELD_RESERVE_MAX })}</div>
+        <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 18, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
+          <CoinIcon size={20} />+{coins}
+        </div>
+        <div style={{ marginTop: 8, fontSize: 12.5, color: 'var(--ink-faint)', lineHeight: 1.5 }}>{t('slots.reserveFull.hint')}</div>
+        <button className="btn-primary" style={{ marginTop: 14 }} onClick={onClose}>
+          {t('slots.reserveFull.ok')}
+        </button>
+      </div>
+    </div>,
+    document.body
   )
 }

@@ -502,8 +502,8 @@ export function ActivityScreen({
                 <div className="activity-item" key={a.id}>
                   <FeedIcon tone="red" icon={FEED_ICONS.alert} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14.5, fontWeight: 800, lineHeight: 1.35, color: '#B42318' }}>Тревога: что-то сломалось у игроков</div>
-                    <div style={{ fontSize: 13, color: 'var(--ink)', marginTop: 4, lineHeight: 1.45, overflowWrap: 'anywhere' }}>{a.alertText}</div>
+                    <div style={{ fontSize: 14.5, fontWeight: 800, lineHeight: 1.35, color: '#B42318' }}>Тревога: что-то сломалось</div>
+                    <div style={{ fontSize: 13, color: 'var(--ink)', marginTop: 4, lineHeight: 1.45, overflowWrap: 'anywhere', whiteSpace: 'pre-line' }}>{a.alertText}</div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                       {unreadIds.has(a.id) && <span className="unread-dot" />}
                       {formatWhen(a.createdAt)}

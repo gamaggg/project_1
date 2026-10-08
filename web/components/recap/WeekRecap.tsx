@@ -7,6 +7,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { useCityWeekRecap } from '@/lib/supabase/queries'
 import { recapSlides, sizedPhoto, type SlideId, type WeekRecap } from '@/lib/recap'
 import { shareImageToStory } from '@/lib/story'
+import { useUiState } from '@/lib/uiState'
 import { track } from '@/lib/analytics'
 import { useI18n } from '@/lib/i18n'
 import type { TKey } from '@/lib/i18n/core'
@@ -39,7 +40,13 @@ export function RecapBanner({ city, onFindFree }: { city: CityId; onFindFree: ()
     }, 1200)
     return () => window.clearTimeout(id)
   }, [])
-  const { data } = useCityWeekRecap(city, ready)
+  // The hidden week is kept on the account too (lib/uiState.ts): a sticker
+  // hidden on the phone stays hidden in Telegram on the desktop, and survives
+  // iPhone Telegram dropping the Mini App's localStorage. Guests: this device.
+  const ui = useUiState()
+  const remoteHidden = (ui.state?.recap_hidden as string | undefined) ?? null
+  const hiddenWeek = [hidden, remoteHidden].filter((w): w is string => !!w).sort().pop() ?? null
+  const { data } = useCityWeekRecap(city, ready && ui.ready)
   if (!data || data.catches === 0) return null
 
   // «28.09–4.10»: fits a sticker, reads the same in every language.
@@ -51,7 +58,7 @@ export function RecapBanner({ city, onFindFree }: { city: CityId; onFindFree: ()
 
   return (
     <>
-      {hidden !== data.weekStart && (
+      {hiddenWeek !== data.weekStart && (
         // A sticker slapped on the map: small, square, tilted, brand orange.
         <div className="recap-sticker-wrap">
           <button
@@ -93,6 +100,7 @@ export function RecapBanner({ city, onFindFree }: { city: CityId; onFindFree: ()
                       window.localStorage.setItem(HIDDEN_KEY, data.weekStart)
                     } catch {}
                     setHidden(data.weekStart)
+                    ui.set('recap_hidden', data.weekStart)
                     setConfirming(false)
                   }}
                 >

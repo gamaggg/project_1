@@ -2444,8 +2444,8 @@ export type CoinTransaction = {
   createdAt: string
 }
 
-// Every coin-mutating RPC (buy_shop_item, activate_buff, buy_shield,
-// swap_challenge, buy_extra_challenge, sync_my_challenges' payouts,
+// Every coin-mutating RPC (buy_shop_item, activate_buff, swap_challenge,
+// buy_extra_challenge, sync_my_challenges' payouts,
 // admin_grant_coins, admin_refund_*) logs one row here — see the
 // coin_transactions_ledger migration. RLS scopes this to the caller's own
 // rows, so no p_user_id param is needed. Refetches on every mount rather
@@ -2487,8 +2487,8 @@ export function useAdminUserCoinTransactions(userId: string | null) {
   })
 }
 
-// tide/echo/double_coins — the three buffs with no purchase-time target
-// (see buy_shield for the fourth, which needs a sector).
+// tide/echo/double_coins — bought and switched on in one go. Shields aren't
+// sold at all: they only drop in the slots (see useUseFreeShield).
 export function useActivateBuff() {
   const queryClient = useQueryClient()
   const { user } = useAuth()
@@ -2841,13 +2841,20 @@ export function useSaveDiaryDay() {
   })
 }
 
+// A whole day's entry: the note / fishing-day mark and the gallery photos of
+// that day. Catches counted in the game aren't the diary's to delete.
 export function useDeleteDiaryDay() {
   const queryClient = useQueryClient()
+  const { user } = useAuth()
   return useMutation({
     mutationFn: async (day: string) => {
       const supabase = createClient()
-      const { error } = await supabase.from('diary_days').delete().eq('day', day)
-      if (error) throw error
+      const [days, catches] = await Promise.all([
+        supabase.from('diary_days').delete().eq('user_id', user!.id).eq('day', day),
+        supabase.from('diary_catches').delete().eq('user_id', user!.id).eq('day', day),
+      ])
+      if (days.error) throw days.error
+      if (catches.error) throw catches.error
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['diary'] }),
   })
@@ -2972,22 +2979,6 @@ export function useUseFreeShield() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['territories'] })
       queryClient.invalidateQueries({ queryKey: ['slot-state', user?.id ?? null] })
-    },
-  })
-}
-
-export function useBuyShield() {
-  const queryClient = useQueryClient()
-  const { user } = useAuth()
-  return useMutation({
-    mutationFn: async (territoryId: string) => {
-      const supabase = createClient()
-      const { error } = await supabase.rpc('buy_shield', { p_territory_id: territoryId })
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['territories'] })
-      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
     },
   })
 }

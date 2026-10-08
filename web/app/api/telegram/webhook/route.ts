@@ -3,6 +3,7 @@ import { SITE_URL } from '@/lib/site'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isEmptyTelegramAccount } from '@/lib/telegram/accounts'
 import { stopFishingDay } from '@/lib/telegram/fishing'
+import { withErrorReport } from '@/lib/serverErrors'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
@@ -127,7 +128,7 @@ const WELCOME_CAPTION = `Добро пожаловать в RANGE 🎣
 // registration time, see setWebhook's `secret_token` param) is Telegram's
 // documented way to let a webhook verify a POST actually came from them —
 // without it anyone who finds this URL could send messages as our bot.
-export async function POST(req: Request) {
+async function handlePOST(req: Request) {
   const secret = req.headers.get('x-telegram-bot-api-secret-token')
   if (secret !== process.env.TELEGRAM_WEBHOOK_SECRET) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
@@ -224,3 +225,5 @@ export async function POST(req: Request) {
   // queue up retries.
   return NextResponse.json({ ok: true })
 }
+
+export const POST = withErrorReport('telegram/webhook', handlePOST)

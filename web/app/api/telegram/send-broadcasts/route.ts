@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { withErrorReport } from '@/lib/serverErrors'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
@@ -15,7 +16,7 @@ const BATCH_SIZE = 30
 // instead of one row per bot-starter). Queued by admin_post_announcement
 // when a super admin checks "Отправить в Telegram" in PostAnnouncementModal
 // — see queries.ts's useAdminPostAnnouncement.
-export async function GET(req: Request) {
+async function handleGET(req: Request) {
   const auth = req.headers.get('authorization')
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
@@ -80,3 +81,5 @@ export async function GET(req: Request) {
 
   return NextResponse.json({ sent })
 }
+
+export const GET = withErrorReport('telegram/send-broadcasts', handleGET)
