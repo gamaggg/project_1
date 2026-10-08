@@ -3914,3 +3914,9 @@ button.standing-col{cursor:pointer;}
 .gift-preview{display:flex; flex-direction:column; gap:3px; margin-top:12px; padding:12px 14px; border-radius:14px; background:var(--bg); border:1px solid var(--line); font-size:13px; color:var(--ink-soft);}
 .gift-preview b{font-size:14.5px; color:var(--ink);}
 .gift-preview-kicker{font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint);}
+
+/* Home-screen web app on an iPhone whose viewport ends short of the screen
+   (lib/standaloneViewport.ts measures it into --vp-gap, 0 everywhere else):
+   the shell and the overlays laid over the whole page reach the real bottom
+   instead of leaving a strip under them. */
+.app-shell, body > .modal-overlay, .move-sheet-overlay, .recap-player, .tour-root{bottom:calc(0px - var(--vp-gap, 0px));}
