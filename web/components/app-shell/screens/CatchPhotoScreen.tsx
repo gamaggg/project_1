@@ -146,11 +146,13 @@ export function CatchPhotoScreen({
               space the sheet's own height leaves behind, on any screen
               height. */}
           <img src={c.photoUrl} alt={c.speciesName} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-          <div style={{ position: 'absolute', top: 12, left: 12 }}>
+          {/* --standalone-top: the photo runs up under the status bar in
+              the iPhone home-screen app, the buttons stay below its blur. */}
+          <div style={{ position: 'absolute', top: 'calc(12px + var(--standalone-top, 0px))', left: 12 }}>
             <BackButton onClick={onBack} registerNative={false} />
           </div>
           {isSuperAdmin && (
-            <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 8 }}>
+            <div style={{ position: 'absolute', top: 'calc(12px + var(--standalone-top, 0px))', right: 12, display: 'flex', gap: 8 }}>
               <div className="icon-btn tap-scale" onClick={() => setEditing(true)} title="Исправить вид, размер и вес">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 20h9" />

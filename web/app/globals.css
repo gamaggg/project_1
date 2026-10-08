@@ -1119,11 +1119,20 @@ body{
 #screen-map{padding-top:0; --map-top-inset:calc(env(safe-area-inset-top) + var(--tg-safe-area-top, 0px));}
 #screen-map .map-geo-banner{padding-top:calc(11px + var(--map-top-inset));}
 #screen-map .map-geo-banner + .map-wrap{--map-top-inset:0px;}
-/* The home-screen web app: iOS lays a soft blur under the status bar that
-   reaches a little below it, so the panel starts 14px lower, clear of it. */
-@media (display-mode: standalone){
-  #screen-map{--map-top-inset:calc(env(safe-area-inset-top) + var(--tg-safe-area-top, 0px) + 14px);}
-}
+/* The home-screen web app on iPhone (.ios-standalone, lib/standaloneViewport.ts):
+   iOS lays a soft blur under the status bar that reaches a little below it.
+   Ordinary screens start 12px lower so their titles clear it; the ones that
+   open on a photo or a coloured hero — a catch, a profile, a sector's map —
+   run it up under the status bar instead and keep only their buttons below
+   the blur. The map's panel starts 14px lower for the same reason. */
+.ios-standalone{--standalone-top:calc(env(safe-area-inset-top) + 12px);}
+.ios-standalone .screen{padding-top:var(--standalone-top);}
+.ios-standalone .shop-sticky-top, .ios-standalone .clan-editor-top{--sticky-reach:var(--standalone-top);}
+.ios-standalone #screen-catch-photo, .ios-standalone #screen-profile, .ios-standalone #screen-user-profile, .ios-standalone #screen-territory{padding-top:0;}
+.ios-standalone .profile-hero{padding-top:calc(10px + var(--standalone-top));}
+.ios-standalone .sector-hero-map .territory-thumb-wrap{height:calc(230px + var(--standalone-top));}
+.ios-standalone .sector-hero-map-icons{top:calc(10px + var(--standalone-top));}
+.ios-standalone #screen-map{--map-top-inset:calc(env(safe-area-inset-top) + 14px);}
 /* Home-screen web app on an iPhone whose viewport ends the status bar's
    height short of the screen (lib/standaloneViewport.ts): iOS fills that
    bottom strip with the page's white and shows nothing there, so the menu

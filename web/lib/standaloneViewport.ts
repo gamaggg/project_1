@@ -10,6 +10,9 @@ export function installStandaloneViewportHeal(): () => void {
   const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
   const standalone = (navigator as Navigator & { standalone?: boolean }).standalone === true || window.matchMedia?.('(display-mode: standalone)').matches
   if (!ios || !standalone) return () => {}
+  // The home-screen app on iOS runs without the manifest (app/layout.tsx), so
+  // `display-mode: standalone` doesn't match there — CSS keys off this.
+  document.documentElement.classList.add('ios-standalone')
 
   let tallest = window.innerHeight
   let timer = 0
