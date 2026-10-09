@@ -5,8 +5,10 @@ import { createPortal } from 'react-dom'
 import { useI18n } from '@/lib/i18n'
 import { TOURS, TOURS_VERSION, type Tour, type TourAudience, type TourStep } from '@/lib/data/tours'
 import { useUiState } from '@/lib/uiState'
+import { releaseTour, tryLockTour } from '@/lib/tourLock'
 
 const PAD = 6
+const LOCK = 'screen-tours'
 
 type Seen = Record<string, boolean>
 const storeKey = (audience: TourAudience) => `range:tours:${TOURS_VERSION}:${audience}`
@@ -88,6 +90,8 @@ export function SpotlightTours({ screen, audience, memberSince }: { screen: stri
         if (seen[def.id] || !findTarget(def.requires)) continue
         const steps = def.steps.filter((s) => findTarget(s.target))
         if (steps.length === 0) continue
+        // The weekly hot-sector tour may hold the screen (lib/tourLock.ts).
+        if (!tryLockTour(LOCK)) return
         window.clearInterval(id)
         setIndex(0)
         setTour({ def, steps })
@@ -96,6 +100,12 @@ export function SpotlightTours({ screen, audience, memberSince }: { screen: stri
     }, 900)
     return () => window.clearInterval(id)
   }, [screen, audience, tour, memberSince, ui.ready, remoteSeenKey])
+
+  // The lock goes with the tour: finished, skipped, left or unmounted.
+  useEffect(() => {
+    if (!tour) releaseTour(LOCK)
+  }, [tour])
+  useEffect(() => () => releaseTour(LOCK), [])
 
   // Leaving the screen mid-tour closes it (it shows again next time).
   useEffect(() => {

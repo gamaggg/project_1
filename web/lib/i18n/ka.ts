@@ -113,6 +113,8 @@ export const ka: Dict = {
     badge: 'ცხელი სექტორი',
     until: '{time}-მდე',
     bonus: '×2 მონეტა დაჭერაზე, ×3 ხაზინაში',
+    bonusDoubled: '×3 მონეტა დაჭერაზე შენი ორმაგი მონეტებით, ×3 ხაზინაში',
+    noShield: 'აქ ფარს ვერ დადებ — სექტორი ყველასთვის ღიაა',
     holdReward: 'შეინარჩუნე კვირის ბოლომდე — +100 მონეტა და მედალი',
   },
   insights: {
@@ -494,5 +496,6 @@ export const ka: Dict = {
   territory: {
     freeShield: 'ფარის დადება',
     freeShieldLeft: 'მარაგში: {count}',
+    freeShieldHot: 'ცხელ სექტორზე ფარი კვირის ბოლომდე არ იდება',
   },
 }

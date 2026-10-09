@@ -112,6 +112,8 @@ export const ru = {
     badge: 'Горячий сектор',
     until: 'до {time}',
     bonus: '×2 монеты за улов, ×3 в Казну',
+    bonusDoubled: '×3 монеты за улов — вместе с твоими двойными, ×3 в Казну',
+    noShield: 'Щит сюда не поставить — сектор открыт для всех',
     holdReward: 'Удержи до конца недели — +100 монет и медаль',
   },
   insights: {
@@ -493,5 +495,6 @@ export const ru = {
   territory: {
     freeShield: 'Поставить щит',
     freeShieldLeft: 'В запасе: {count}',
+    freeShieldHot: 'На горячий сектор щит не ставится до конца недели',
   },
 }

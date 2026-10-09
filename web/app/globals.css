@@ -737,6 +737,8 @@ body{
 .sector-hot-body{min-width:0;}
 .sector-hot-title{font-size:13.5px; font-weight:800; color:#B83E00;}
 .sector-hot-text{font-size:12.5px; line-height:1.35; color:#7A3A12; margin-top:2px;}
+.btn-primary.shield-locked:disabled{background:#ECEAE5; color:#8E8A82; box-shadow:none; opacity:1;}
+.shield-hot-note{margin-top:8px; font-size:12.5px; line-height:1.4; font-weight:600; color:#B83E00; text-align:center;}
 .sector-income{display:flex; align-items:center; gap:6px; margin-top:10px; font-size:13px; font-weight:700; color:var(--ink-soft);}
 /* .leaflet-marker-icon in the selector: leaflet.css loads after this file and
    sets display:block on every marker icon, which pushed the flame into the
@@ -3652,6 +3654,7 @@ button.race-lane{cursor:pointer;}
 .double-modal-chips{display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:9px;}
 .double-modal-chips span{padding:5px 10px; border-radius:999px; background:var(--surface); box-shadow:0 1px 2px rgba(120,80,0,.12); font-size:13px; font-weight:700; color:var(--ink);}
 .double-modal-note{margin:10px 4px 16px; font-size:12px; line-height:1.4; color:var(--ink-faint); text-wrap:balance;}
+.double-modal-note b{display:block; margin-bottom:3px; font-size:13px; font-weight:800; color:#8A5A00;}
 @media (prefers-reduced-motion: reduce){.double-modal-ring-left, .double-modal-badge{animation:none;}}
 .catch-trophy-double{align-self:flex-start; margin-bottom:6px; padding:3px 9px; border-radius:999px; background:linear-gradient(160deg,#FFE08A,#F2B53A); color:#4A3000; font-size:12px; font-weight:800;}
 .treasury-sheet-body{display:flex; flex-direction:column; gap:12px; padding-bottom:18px;}
@@ -3779,6 +3782,10 @@ button.standing-col{cursor:pointer;}
    window cut with a huge spread shadow, white ring), a note beside it. */
 .tour-root{position:fixed; inset:0; z-index:2000;}
 .tour-hole{position:fixed; border-radius:16px; pointer-events:none; box-shadow:0 0 0 3px rgba(255,255,255,.95), 0 0 0 9999px rgba(8,10,14,.66);}
+.hot-tour-mask{position:fixed; inset:0; pointer-events:none;}
+.hot-tour-edge{filter:drop-shadow(0 0 7px rgba(255,122,47,.9)); animation:hot-tour-edge 1.3s ease-in-out .9s 2;}
+@keyframes hot-tour-edge{50%{opacity:.35;}}
+@media (prefers-reduced-motion: reduce){.hot-tour-edge{animation:none;}}
 .tour-tip{position:fixed; background:var(--surface); border-radius:18px; padding:16px 16px 12px; box-shadow:0 18px 40px rgba(0,0,0,.28); animation:tour-in .28s var(--ease-out) both;}
 @keyframes tour-in{from{opacity:0; transform:translateY(6px);}}
 .tour-tip.above{animation-name:tour-in-up;}

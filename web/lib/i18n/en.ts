@@ -111,6 +111,8 @@ export const en: Dict = {
     badge: 'Hot sector',
     until: 'until {time}',
     bonus: '×2 coins per catch, ×3 to the Treasury',
+    bonusDoubled: '×3 coins per catch with your double coins, ×3 to the Treasury',
+    noShield: 'No shields here: the sector is open to everyone',
     holdReward: 'Hold it to the end of the week: +100 coins and a medal',
   },
   insights: {
@@ -492,5 +494,6 @@ export const en: Dict = {
   territory: {
     freeShield: 'Put a shield on',
     freeShieldLeft: 'In reserve: {count}',
+    freeShieldHot: "A shield can't go on a hot sector until the week ends",
   },
 }

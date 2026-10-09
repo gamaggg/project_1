@@ -11,6 +11,8 @@ import { hapticTap } from '@/lib/telegram/haptics'
 // the FAQ («Что дают бафы?»).
 const DOUBLED = ['Уловы', 'Захваты', 'Челленджи', 'Достижения', 'Награды клана']
 const NOT_DOUBLED = 'Казна, ежедневная награда и слоты — без удвоения'
+// A hot sector's ×2 and this ×2 add up to ×3 for a catch, not ×4 (confirm_catch).
+const ON_HOT = 'На горячем секторе улов — ×3'
 
 // The running «Двойные монеты» (bought in the shop or won as «3 крючка» in the
 // slots): when it started and when it ends, or null if it isn't on.
@@ -133,7 +135,10 @@ function DoubleCoinsModal({ from, until, onClose }: { from: number; until: numbe
             ))}
           </div>
         </div>
-        <div className="double-modal-note">{NOT_DOUBLED}</div>
+        <div className="double-modal-note">
+          <b>{ON_HOT}</b>
+          {NOT_DOUBLED}
+        </div>
 
         <button className="btn-primary" onClick={onClose}>
           Понятно

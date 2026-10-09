@@ -37,6 +37,10 @@ export type LeafletMapHandle = {
   flyToCity: (center: [number, number], zoom: number) => void
   zoomIn: () => void
   zoomOut: () => void
+  // The hot-sector tour (HotSectorsTour): fly so these sectors fill the
+  // middle of the screen, and their hexagons' corners on the page now (px).
+  focusTerritories: (ids: string[]) => void
+  territoriesOutline: (ids: string[]) => [number, number][][] | null
 }
 
 const LABEL_MIN_ZOOM = 14
@@ -557,6 +561,34 @@ export const LeafletMap = forwardRef<
       },
       zoomOut() {
         mapRef.current?.zoomOut()
+      },
+      focusTerritories(ids: string[]) {
+        const map = mapRef.current
+        const corners = ids.flatMap((id) => territories.find((x) => x.id === id)?.corners ?? [])
+        if (!map || corners.length === 0) return
+        const lats = corners.map(([lat]) => lat)
+        const lngs = corners.map(([, lng]) => lng)
+        // Room above for the top panel and below for the tour's note and the
+        // sector cards, so the sectors land in the clear middle.
+        map.flyToBounds(
+          [
+            [Math.min(...lats), Math.min(...lngs)],
+            [Math.max(...lats), Math.max(...lngs)],
+          ],
+          { paddingTopLeft: [80, 160], paddingBottomRight: [80, 340], maxZoom: 15, duration: 0.9 }
+        )
+      },
+      territoriesOutline(ids: string[]) {
+        const map = mapRef.current
+        const shapes = ids.map((id) => territories.find((x) => x.id === id)?.corners ?? []).filter((c) => c.length > 0)
+        if (!map || shapes.length === 0) return null
+        const box = map.getContainer().getBoundingClientRect()
+        return shapes.map((c) =>
+          c.map(([lat, lng]) => {
+            const p = map.latLngToContainerPoint([lat, lng])
+            return [box.left + p.x, box.top + p.y] as [number, number]
+          })
+        )
       },
     }))
 

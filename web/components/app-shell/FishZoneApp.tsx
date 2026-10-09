@@ -33,6 +33,7 @@ import { useAchievementUnlock } from '@/lib/achievementUnlock'
 import { APP_LINK_EVENT } from '@/components/app-shell/AppLinkText'
 import { useWeekTopModal } from '@/lib/weekTopModal'
 import { useClanBattleCeremony } from '@/lib/clanBattleCeremony'
+import { HotSectorsTour, useHotSectorsTour } from '@/components/app-shell/HotSectorsTour'
 import { hasVisibleTypedText, useAppUpdate } from '@/lib/appUpdate'
 import { insideTelegram } from '@/lib/openExternal'
 import { track } from '@/lib/analytics'
@@ -220,6 +221,7 @@ export function FishZoneApp() {
   const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories, territoriesReady, city)
   const { show: showWeekTop, entry: weekTopEntry, dismiss: dismissWeekTop } = useWeekTopModal(city)
   const clanCeremony = useClanBattleCeremony(city, myProfile?.clanId ?? null)
+  const hotTour = useHotSectorsTour(territories, city)
   useRealtimeSync()
   // One «app_open» per launch, signed in or not (the funnel starts before
   // an account exists).
@@ -1956,6 +1958,26 @@ export function FishZoneApp() {
           onClose={clanCeremony.dismiss}
         />
       )}
+      {/* The week's hot sectors, once per week — a tour over the map after
+          onboarding, behind every celebration above. Seen from the moment it
+          starts: leaving the map or closing the app halfway ends it for good. */}
+      {hotTour.show &&
+        myProfile?.onboardingCompleted &&
+        currentScreen === 'screen-map' &&
+        !showWeekTop &&
+        !clanCeremony.show &&
+        !unlockedAchievement &&
+        !showingTrophyScene && (
+          <HotSectorsTour
+            sectors={hotTour.sectors}
+            map={mapHandleRef}
+            onStart={hotTour.start}
+            onDone={(finished) => {
+              hotTour.end()
+              if (finished && hotTour.sectors[0]) mapHandleRef.current?.showTerritory(hotTour.sectors[0].id)
+            }}
+          />
+        )}
 
       <SpotlightTours
         screen={currentScreen}

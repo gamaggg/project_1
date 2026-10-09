@@ -23,6 +23,7 @@ import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { TerritoryThumbnailMapView } from '@/components/app-shell/TerritoryThumbnailMapView'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { useDoubleCoinsUntil } from '@/components/app-shell/DoubleCoinsChip'
 
 export function statusBadge(status: Territory['status'], myTerritoryColor: string, myShare = false) {
   // myShare: a clan-mate's sector the viewer holds a part of.
@@ -160,17 +161,29 @@ function SectorCoords({ lat, lng, onToast }: { lat: number; lng: number; onToast
 
 // Shields aren't sold: they only drop in the Shop's slots, wait in a reserve,
 // and are put on a sector here — the one screen with a sector to put them on.
-function ShieldButton({ territory }: { territory: Territory }) {
+// A hot sector is open to everyone until the week ends: use_free_shield
+// refuses it (HOT_SECTOR), so the button stays visible but locked, with why —
+// also when the sector turned hot while this screen was open.
+function ShieldButton({ territory, hot }: { territory: Territory; hot: boolean }) {
   const { data: slotState } = useSlotState()
   const useFreeShield = useUseFreeShield()
   const freeShields = slotState?.freeShields ?? 0
   const t = useT()
 
   if (freeShields === 0) return null
+  const locked = hot || /HOT_SECTOR/.test(useFreeShield.error?.message ?? '')
   return (
-    <button className="btn-primary" style={{ marginTop: 12 }} disabled={useFreeShield.isPending} onClick={() => useFreeShield.mutate(territory.id)}>
-      {t('territory.freeShield')} · {t('territory.freeShieldLeft', { count: freeShields })}
-    </button>
+    <>
+      <button
+        className={`btn-primary${locked ? ' shield-locked' : ''}`}
+        style={{ marginTop: 12 }}
+        disabled={locked || useFreeShield.isPending}
+        onClick={() => useFreeShield.mutate(territory.id)}
+      >
+        {t('territory.freeShield')} · {t('territory.freeShieldLeft', { count: freeShields })}
+      </button>
+      {locked && <div className="shield-hot-note">{t('territory.freeShieldHot')}</div>}
+    </>
   )
 }
 
@@ -267,6 +280,8 @@ export function TerritoryScreen({
   const { t: tr, lang } = useI18n()
   const now = useNow()
   const hot = !!territory.hotUntil && new Date(territory.hotUntil).getTime() > now
+  // With «Двойные монеты» on, a catch here pays ×3 instead of ×2 (confirm_catch).
+  const doubled = useDoubleCoinsUntil() !== null
   // Казна: every sector held earns its holders 8 coins a day (×3 while hot).
   const holdsThis = territory.status === 'mine' || territory.coHolders.some((h) => h.isMe)
   const isSuperAdmin = useIsSuperAdmin()
@@ -335,8 +350,9 @@ export function TerritoryScreen({
                 <div className="sector-hot-title">
                   {tr('hot.badge')} · {tr('hot.until', { time: formatWeekdayTime(territory.hotUntil!, lang) })}
                 </div>
-                <div className="sector-hot-text">{tr('hot.bonus')}</div>
+                <div className="sector-hot-text">{tr(doubled ? 'hot.bonusDoubled' : 'hot.bonus')}</div>
                 <div className="sector-hot-text">{tr('hot.holdReward')}</div>
+                <div className="sector-hot-text">{tr('hot.noShield')}</div>
               </div>
             </div>
           )}
@@ -372,7 +388,7 @@ export function TerritoryScreen({
           )}
           {/* The owner, or a clan-mate holding a share of it (use_free_shield
               allows both). */}
-          {(territory.status === 'mine' || territory.coHolders.some((h) => h.isMe)) && <ShieldButton territory={territory} />}
+          {(territory.status === 'mine' || territory.coHolders.some((h) => h.isMe)) && <ShieldButton territory={territory} hot={hot} />}
           {isSuperAdmin && <AdminKindPicker territory={territory} />}
         </div>
 

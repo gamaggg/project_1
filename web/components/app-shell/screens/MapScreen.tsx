@@ -218,6 +218,8 @@ export const MapScreen = forwardRef<
     flyToCity: (center: [number, number], zoom: number) => mapRef.current?.flyToCity(center, zoom),
     zoomIn: () => mapRef.current?.zoomIn(),
     zoomOut: () => mapRef.current?.zoomOut(),
+    focusTerritories: (ids: string[]) => mapRef.current?.focusTerritories(ids),
+    territoriesOutline: (ids: string[]) => mapRef.current?.territoriesOutline(ids) ?? null,
     showTerritory: (id: string) => {
       handlePolygonSelect(id)
       mapRef.current?.flyToTerritory(id)
