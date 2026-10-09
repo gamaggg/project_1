@@ -10,7 +10,6 @@ export type CoastData = {
   water: number[][]
   rivers: number[][]
   streams: number[][]
-  coast: number[][]
   sectors: [string, number, number][]
 }
 
@@ -280,7 +279,7 @@ export function createCoastScene(data: CoastData, labelFont: string, onTicker: (
     }
     lines(data.streams, 'rgba(70,120,180,.45)', 1)
     lines(data.rivers, 'rgba(110,170,235,.8)', 2.2)
-    lines(data.coast, 'rgba(140,190,240,.75)', 1.8)
+    // no line along the shore — the sea's own edge draws it
 
     // sectors: free ones are outlines on the map, held ones stand in their colour
     const events: { s: Sector; local: number; name: string; col: string }[] = []

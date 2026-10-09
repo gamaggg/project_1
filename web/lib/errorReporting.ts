@@ -32,6 +32,20 @@ function requestUrl(input: RequestInfo | URL): URL | null {
   }
 }
 
+// Whether a request carried a signed-in player's token (a JWT with role
+// «authenticated»), not just the app's public key.
+function sentAsPlayer(init?: RequestInit): boolean {
+  try {
+    const token = (new Headers(init?.headers).get('Authorization') ?? '').replace(/^Bearer\s+/i, '')
+    const part = token.split('.')[1]
+    if (!part) return false
+    const payload = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/'))) as { role?: string }
+    return payload.role === 'authenticated'
+  } catch {
+    return false
+  }
+}
+
 // The Supabase client's fetch. Network failures (offline) throw and pass
 // straight through — those are the phone's, not ours.
 export function reportingFetch(report: Reporter): typeof fetch {
@@ -56,6 +70,11 @@ export function reportingFetch(report: Reporter): typeof fetch {
         message = body.message ?? ''
       } catch {}
       if (EXPECTED_CODES.has(code) || (res.status === 401 && !code)) return res
+      // «permission denied» for a request that went out without the player's
+      // session — the app woke from the background (iPhone, Telegram) and fired
+      // a request before the session was back. Nothing is broken: the data
+      // reloads a moment later. Only a refusal to a signed-in player counts.
+      if (code === '42501' && !sentAsPlayer(init)) return res
       const context = `db:${rest[1]}`.slice(0, 40)
       if (once(context + code)) report(context, [code || `HTTP ${res.status}`, message].filter(Boolean).join(': '))
     } catch {}
