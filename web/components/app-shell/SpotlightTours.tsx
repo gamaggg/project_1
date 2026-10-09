@@ -89,7 +89,7 @@ export function SpotlightTours({ screen, audience, memberSince }: { screen: stri
       }
       if (busy()) return
       for (const def of candidates) {
-        if (seen[def.id] || (seen.skip && !def.always) || !findTarget(def.requires)) continue
+        if (seen[def.id] || (def.unlessSeen && seen[def.unlessSeen]) || (seen.skip && !def.always) || !findTarget(def.requires)) continue
         const steps = def.steps.filter((s) => findTarget(s.target))
         if (steps.length === 0) continue
         // The weekly hot-sector tour may hold the screen (lib/tourLock.ts).

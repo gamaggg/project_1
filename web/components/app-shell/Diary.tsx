@@ -242,14 +242,14 @@ function DiaryStats({
 
   return (
     <div className="diary-stats">
-      <div className="diary-stats-periods" role="tablist">
+      <div className="diary-stats-periods" role="tablist" data-tour="diary-periods">
         {periods.map((p) => (
           <button key={p.id} type="button" role="tab" aria-selected={period === p.id} className={period === p.id ? 'on' : undefined} onClick={() => setPeriod(p.id)}>
             {p.label}
           </button>
         ))}
       </div>
-      <div className="diary-stats-nums">
+      <div className="diary-stats-nums" data-tour="diary-numbers">
         {tiles.map((tile) => (
           <button key={tile.id} type="button" className="tap-scale" onClick={() => setSheet(tile.id)}>
             <b>{tile.value}</b>
@@ -461,7 +461,7 @@ function DiaryDayCard({
                   <img src={thumbUrl(c.photoUrl, 200)} alt="" loading="lazy" decoding="async" />
                   <span>{c.speciesName}</span>
                 </button>
-                <time className="diary-shot-time" dateTime={c.caughtAt}>
+                <time className="diary-shot-time" data-tour="diary-time" dateTime={c.caughtAt}>
                   {timeOf(c.caughtAt, c.territoryId)}
                 </time>
               </div>
@@ -480,7 +480,7 @@ function DiaryDayCard({
                   <img src={thumbUrl(g.photoUrl, 200)} alt="" loading="lazy" decoding="async" />
                   <span>{nameOf(g.species)}</span>
                 </button>
-                <time className="diary-shot-time" dateTime={g.caughtAt}>
+                <time className="diary-shot-time" data-tour="diary-time" dateTime={g.caughtAt}>
                   {timeOf(g.caughtAt, g.territoryId)}
                 </time>
               </div>

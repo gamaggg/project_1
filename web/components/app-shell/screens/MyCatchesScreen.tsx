@@ -56,7 +56,7 @@ export function MyCatchesScreen({
             <button role="tab" aria-selected={tab === 'catches'} className={tab === 'catches' ? 'on' : undefined} onClick={() => setTab('catches')}>
               {t('diary.tabCatches')}
             </button>
-            <button role="tab" aria-selected={tab === 'diary'} className={tab === 'diary' ? 'on' : undefined} onClick={() => setTab('diary')}>
+            <button role="tab" data-tour={tab === 'catches' ? 'diary-tab' : undefined} aria-selected={tab === 'diary'} className={tab === 'diary' ? 'on' : undefined} onClick={() => setTab('diary')}>
               {t('diary.tabDiary')}
             </button>
           </div>

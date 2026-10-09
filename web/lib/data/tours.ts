@@ -41,15 +41,36 @@ export type TourKey =
   | 'boosts'
   | 'boostDouble'
   | 'boostShields'
+  | 'diaryNew'
+  | 'diaryPeriods'
+  | 'diaryNumbers'
+  | 'diaryTimes'
 export type TourStep = { target: string; key: TourKey }
 // `always`: shown even to a player who pressed «Пропустить» on the tours.
-export type Tour = { id: string; screen: string; requires: string; steps: TourStep[]; always?: boolean }
+// `unlessSeen`: not shown once the tour with that id has been seen.
+export type Tour = { id: string; screen: string; requires: string; steps: TourStep[]; always?: boolean; unlessSeen?: string }
 export type TourAudience = 'whatsNew' | 'newcomer'
 
 // 09.10: the daily reward and the Казна are collected from the coin chip on
 // the map, and «×2» / shields in reserve sit beside it. For everyone, old and
 // new; a step whose chip this player doesn't have is left out — with none
 // of them on the bar yet, the tour waits until one turns up.
+// 09.10: the diary got its stats (periods, numbers that open what's behind
+// them) and catch times under the photos. On «Мои уловы» the Diary tab is
+// pointed out first; inside it the new parts, one by one.
+const DIARY_TAB_TOUR: Tour = { id: 'diary-new-tab', screen: 'screen-catches', requires: 'diary-tab', steps: [{ target: 'diary-tab', key: 'diaryNew' }], always: true, unlessSeen: 'diary-stats' }
+const DIARY_STATS_TOUR: Tour = {
+  id: 'diary-stats',
+  screen: 'screen-catches',
+  requires: 'diary-numbers',
+  steps: [
+    { target: 'diary-periods', key: 'diaryPeriods' },
+    { target: 'diary-numbers', key: 'diaryNumbers' },
+    { target: 'diary-time', key: 'diaryTimes' },
+  ],
+  always: true,
+}
+
 const MAP_REWARDS_TOUR: Tour = {
   id: 'map-rewards',
   screen: 'screen-map',
@@ -100,6 +121,8 @@ export const TOURS: Record<TourAudience, Tour[]> = {
     // the balance — everyone who knew them as a tab is told where they went.
     { id: 'shop-slots', screen: 'screen-shop', requires: 'slots-card', steps: [{ target: 'slots-card', key: 'slotsMoved' }], always: true },
     MAP_REWARDS_TOUR,
+    DIARY_STATS_TOUR,
+    DIARY_TAB_TOUR,
   ],
   newcomer: [
     {
@@ -141,5 +164,7 @@ export const TOURS: Record<TourAudience, Tour[]> = {
     },
     { id: 'shop-slots', screen: 'screen-shop', requires: 'slots-card', steps: [{ target: 'slots-card', key: 'slots' }], always: true },
     MAP_REWARDS_TOUR,
+    DIARY_STATS_TOUR,
+    DIARY_TAB_TOUR,
   ],
 }
