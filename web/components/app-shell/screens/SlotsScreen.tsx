@@ -33,6 +33,11 @@ const NARROW = '(max-width: 380px)'
 const CENTER = (WINDOW - CELL) / 2
 const SPIN_MS = [1500, 1950, 2400]
 const STRIP_FILL = 16
+// With «Уменьшение движения» on the phone the reels still turn — a short,
+// calm roll with no blur — instead of the result just appearing: players on
+// iPhones with that setting thought the slots were broken (09.10).
+const CALM_MS = [450, 600, 750]
+const CALM_FILL = 4
 // Idle drift: every DRIFT_EVERY ms all three reels roll on to new symbols
 // together, stopping left to right like a short spin; a result stays put
 // for DRIFT_HOLD ms first so it can be read.
@@ -268,20 +273,18 @@ export function SlotsScreen({ city }: { city: CityId }) {
     spin.mutate(undefined, {
       onSuccess: (res) => {
         activeRef.current = res
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          reveal(res)
-          return
-        }
+        const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        const durations = calm ? CALM_MS : SPIN_MS
         stoppedRef.current = 0
         setSpinning(true)
         // Lay each strip out at its start position first, then move it on
         // the next frame so the browser has a "from" to transition out of.
-        const plans = reelsRef.current.map((reel, i) => rollPlan(i, reel.symbol, res.reels[i], STRIP_FILL))
+        const plans = reelsRef.current.map((reel, i) => rollPlan(i, reel.symbol, res.reels[i], calm ? CALM_FILL : STRIP_FILL))
         const laid = plans.map((plan, i): Reel => ({ strip: plan.strip, y: plan.startY, duration: 0, symbol: res.reels[i] }))
         setReels(laid)
-        fallbackRef.current = window.setTimeout(() => reveal(res), SPIN_MS[2] + 600)
+        fallbackRef.current = window.setTimeout(() => reveal(res), durations[2] + 600)
         requestAnimationFrame(() =>
-          requestAnimationFrame(() => setReels(laid.map((reel, i) => ({ ...reel, y: plans[i].endY, duration: SPIN_MS[i] }))))
+          requestAnimationFrame(() => setReels(laid.map((reel, i) => ({ ...reel, y: plans[i].endY, duration: durations[i] }))))
         )
       },
     })

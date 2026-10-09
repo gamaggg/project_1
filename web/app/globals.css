@@ -880,7 +880,7 @@ body{
   .slots-spin{padding-left:12px; padding-right:12px; font-size:14.5px; white-space:nowrap;}
 }
 @media (prefers-reduced-motion: reduce){
-  .slot-strip{transition:none !important; animation:none !important;}
+  .slot-strip{animation:none !important;}
   .slots-result-text,.slots-machine.won{animation:none;}
 }
 
