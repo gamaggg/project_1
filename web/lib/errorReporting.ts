@@ -10,6 +10,11 @@
 
 type Reporter = (context: string, message: string) => void
 
+// Only the real site reports. The dev server shares the live database, and a
+// half-saved edit there (09.10: a missing import for a few seconds, picked up
+// by hot reload) reached the super admins as a «1 игрок» alert.
+export const reportsEnabled = process.env.NODE_ENV === 'production'
+
 // A request refused because it went out as a guest while the app thinks a
 // player is signed in — lib/supabase/session.ts decides whether the session
 // is really gone and restores it. Set by AuthProvider.
@@ -111,6 +116,7 @@ export function reportingFetch(report: Reporter): typeof fetch {
 const IGNORED_JS = /^(Script error\.?|ResizeObserver loop|Load failed|Failed to fetch|NetworkError|AbortError|ChunkLoadError|Loading chunk)/i
 
 export function installGlobalErrorReporting(report: Reporter): () => void {
+  if (!reportsEnabled) return () => {}
   const send = (name: string, message: string, where: string) => {
     const text = `${name}: ${message}`.trim()
     if (!message || IGNORED_JS.test(message) || IGNORED_JS.test(name)) return

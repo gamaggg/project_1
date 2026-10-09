@@ -114,7 +114,6 @@ export const ru = {
     perkTreasury: 'в Казну',
     perkHold: 'и медаль за удержание',
     noShield: 'Щит сюда не поставить',
-    rewardRule: 'Награда — если за неделю здесь ловили',
   },
   insights: {
     title: 'Что клюёт здесь',

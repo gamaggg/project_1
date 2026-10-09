@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { reportsEnabled } from '@/lib/errorReporting'
 import { trySignInWithTelegram } from '@/lib/telegram/signIn'
 
 // The app thinks someone is signed in, but the phone has lost their session:
@@ -34,6 +35,7 @@ function diagnostics() {
 }
 
 function report(message: string) {
+  if (!reportsEnabled) return
   void createClient()
     .rpc('report_client_error', { p_context: 'auth_lost', p_message: message.slice(0, 500) })
     .then(

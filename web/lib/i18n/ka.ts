@@ -113,9 +113,8 @@ export const ka: Dict = {
     perkCatch: 'მონეტა დაჭერაზე',
     perkCatchDoubled: 'დაჭერაზე შენი ×2-ით',
     perkTreasury: 'ხაზინაში',
-    perkHold: 'და მედალი შენარჩუნებისთვის',
+    perkHold: 'და მედალი, თუ შეინარჩუნებ',
     noShield: 'აქ ფარს ვერ დადებ',
-    rewardRule: 'ჯილდო — თუ აქ კვირაში თევზაობდნენ',
   },
   insights: {
     title: 'რა იჭერს აქ',

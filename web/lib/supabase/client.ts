@@ -1,6 +1,6 @@
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@/lib/types'
-import { reportingFetch } from '@/lib/errorReporting'
+import { reportingFetch, reportsEnabled } from '@/lib/errorReporting'
 
 // Module-level singleton: a fresh client per call would each open its own
 // GoTrueClient. They'd all read/write the same cookies, but `onAuthStateChange`
@@ -15,6 +15,7 @@ export function createClient() {
       // for the super admins' alert (lib/errorReporting.ts).
       global: {
         fetch: reportingFetch((context, message) => {
+          if (!reportsEnabled) return
           void client?.rpc('report_client_error', { p_context: context, p_message: message.slice(0, 500) }).then(
             () => {},
             () => {}

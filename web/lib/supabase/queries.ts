@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type InfiniteData, type QueryKey } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { reportsEnabled } from '@/lib/errorReporting'
 import { useAuth } from '@/components/providers/AuthProvider'
 import type { Territory, TerritoryCoHolder, TerritoryStatus, Catch, ProfileSummary, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, WeeklyLeaderboardEntry, UserAward, AwardKind, CatchComment, ClanSummary, ClanDetail, ClanMember, ClanEligibility, ClanInvite, ClanChest, ClanRace, ClanChatMessage, ClanChatSummary, ClanRoleId } from '@/lib/data/types'
 import type { SpeciesCategory } from '@/lib/data/species'
@@ -3498,6 +3499,7 @@ export function useClanRace(city: CityId, enabled: boolean) {
 // alert. Fire-and-forget — reporting must never get in the way of the flow
 // that just failed.
 export function reportClientError(context: string, error: unknown) {
+  if (!reportsEnabled) return
   const e = (error ?? {}) as { code?: unknown; message?: unknown }
   const message = [e.code, e.message ?? String(error)].filter(Boolean).join(': ')
   void createClient()

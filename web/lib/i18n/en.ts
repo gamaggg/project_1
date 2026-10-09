@@ -111,9 +111,8 @@ export const en: Dict = {
     perkCatch: 'coins per catch',
     perkCatchDoubled: 'per catch with your ×2',
     perkTreasury: 'to the Treasury',
-    perkHold: 'and a medal for holding it',
+    perkHold: 'and a medal for holding',
     noShield: 'No shields here',
-    rewardRule: 'Only if someone fished here this week',
   },
   insights: {
     title: 'What’s biting here',
