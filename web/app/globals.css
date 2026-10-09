@@ -593,9 +593,12 @@ body{
 .shop-wallet-history{flex:0 0 auto; padding:7px 12px; border:1px solid rgba(138,90,12,.22); border-radius:12px; background:rgba(255,255,255,.55); font:inherit; font-size:12px; font-weight:700; color:#8A5A0C; cursor:pointer;}
 .shop-wallet .slots-card{margin-top:0; border-radius:0; box-shadow:none;}
 /* Inside the block the slots half can't shrink on press like .tap-scale does —
-   its square corners showed against the block's rounded ones. It brightens. */
+   its square corners showed against the block's rounded ones. Like the
+   «Битва кланов» pill on the map: it darkens, and the reels take the press. */
 .shop-wallet .slots-card.tap-scale{transition:filter .15s var(--ease);}
-.shop-wallet .slots-card.tap-scale:active{transform:none; filter:brightness(1.12);}
+.shop-wallet .slots-card.tap-scale:active{transform:none; filter:brightness(.9);}
+.slots-card-reels{transition:transform .15s var(--ease);}
+.shop-wallet .slots-card:active .slots-card-reels{transform:rotate(-6deg) scale(.9);}
 
 /* ---- Slots sticker on the map (see SlotsSticker.tsx) ---- */
 .slots-sticker-wrap{position:relative; align-self:flex-end; margin-left:20px; transform:rotate(5deg); animation:recap-sticker-in .45s var(--ease-out) .15s both;}
@@ -824,6 +827,8 @@ body{
 /* ---- Слоты (Shop tab that replaced ДЭП, see SlotsScreen.tsx) ----
    Reel motion adapted from StealthWorm's loader on Uiverse (MIT):
    https://uiverse.io/StealthWorm/chatty-zebra-11 */
+/* The slots screen's title, in the header row beside «Назад». */
+.slots-title{font-family:var(--font-display),'Manrope',sans-serif; font-weight:700; font-size:24px; line-height:1; text-transform:uppercase; letter-spacing:.02em; text-align:center;}
 .slots{--slot-cell:92px; display:flex; flex-direction:column; padding:8px 0 8px;}
 .slots-machine{position:relative; background:#17181B; border-radius:24px; padding:14px; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06), 0 12px 28px rgba(23,24,27,.22); transition:box-shadow .3s var(--ease);}
 .slots-machine.won{box-shadow:inset 0 0 0 2px var(--accent), 0 0 0 5px rgba(252,82,0,.16), 0 12px 28px rgba(23,24,27,.22); animation:slots-won .5s var(--ease-out);}
@@ -849,7 +854,7 @@ body{
   100%{filter:blur(0);}
 }
 @keyframes slots-won{0%{transform:scale(1);} 40%{transform:scale(1.025);} 100%{transform:scale(1);}}
-.slots-result{min-height:46px; display:flex; align-items:center; justify-content:center; margin-top:12px; text-align:center;}
+.slots-result{min-height:30px; display:flex; align-items:center; justify-content:center; margin:6px 0 4px; text-align:center;}
 .slots-result-text{display:inline-flex; align-items:center; gap:6px; font-weight:800; font-size:16px; line-height:1.25; color:var(--ink); animation:slots-pop .45s var(--ease-out);}
 .slots-result-text.miss{color:var(--ink-soft); font-weight:700;}
 @keyframes slots-pop{0%{transform:scale(.6); opacity:0;} 60%{transform:scale(1.06); opacity:1;} 100%{transform:scale(1);}}
@@ -871,7 +876,7 @@ body{
    line — so the button is back above the bottom menu. */
 @media (max-width:380px){
   .slots{padding-top:8px;}
-  .slots-result{min-height:34px; margin-top:10px;}
+  .slots-result{min-height:28px; margin-top:6px;}
   .slots-spin{padding-left:12px; padding-right:12px; font-size:14.5px; white-space:nowrap;}
 }
 @media (prefers-reduced-motion: reduce){
