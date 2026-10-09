@@ -35,8 +35,11 @@ export type TourKey =
   | 'challenges'
   | 'clan'
   | 'faq'
+  | 'slotsMoved'
+  | 'slots'
 export type TourStep = { target: string; key: TourKey }
-export type Tour = { id: string; screen: string; requires: string; steps: TourStep[] }
+// `always`: shown even to a player who pressed «Пропустить» on the tours.
+export type Tour = { id: string; screen: string; requires: string; steps: TourStep[]; always?: boolean }
 export type TourAudience = 'whatsNew' | 'newcomer'
 
 export const TOURS: Record<TourAudience, Tour[]> = {
@@ -72,6 +75,9 @@ export const TOURS: Record<TourAudience, Tour[]> = {
         { target: 'faq', key: 'faq' },
       ],
     },
+    // 09.10: the slots left the end of the Shop's tab row for a card under
+    // the balance — everyone who knew them as a tab is told where they went.
+    { id: 'shop-slots', screen: 'screen-shop', requires: 'slots-card', steps: [{ target: 'slots-card', key: 'slotsMoved' }], always: true },
   ],
   newcomer: [
     {
@@ -111,5 +117,6 @@ export const TOURS: Record<TourAudience, Tour[]> = {
         { target: 'faq', key: 'faq' },
       ],
     },
+    { id: 'shop-slots', screen: 'screen-shop', requires: 'slots-card', steps: [{ target: 'slots-card', key: 'slots' }], always: true },
   ],
 }

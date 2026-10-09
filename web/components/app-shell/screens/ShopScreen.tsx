@@ -18,9 +18,8 @@ import { HERO_BACKGROUNDS, PREMIUM_HERO_BG_IDS } from '@/lib/data/heroBackground
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { SkinPreview } from '@/components/app-shell/SkinPreview'
-import { SlotsScreen } from '@/components/app-shell/screens/SlotsScreen'
+import { SlotsCard } from '@/components/app-shell/SlotsCard'
 import { DailyRewardCard } from '@/components/app-shell/DailyRewardCard'
-import { useT } from '@/lib/i18n'
 import type { CityId } from '@/lib/data/city'
 import {
   useProfile,
@@ -56,18 +55,16 @@ function rarityClass(price: number): string {
   return 'shop-card-common'
 }
 
-type Category = 'avatar_frame' | 'hero_bg' | 'name_style' | 'territory_skin' | 'buffs' | 'slots'
+type Category = 'avatar_frame' | 'hero_bg' | 'name_style' | 'territory_skin' | 'buffs'
 const CATEGORIES: { id: Category; label: string; icon: React.ReactNode }[] = [
   { id: 'avatar_frame', label: 'Рамки', icon: SHOP_TAB_ICONS.frame },
   { id: 'hero_bg', label: 'Фоны', icon: SHOP_TAB_ICONS.background },
   { id: 'name_style', label: 'Имя', icon: SHOP_TAB_ICONS.sparkle },
   { id: 'territory_skin', label: 'Скины', icon: SHOP_TAB_ICONS.skin },
   { id: 'buffs', label: 'Бафы', icon: SHOP_TAB_ICONS.bolt },
-  { id: 'slots', label: 'Слоты', icon: SHOP_TAB_ICONS.slots },
 ]
 
-export function ShopScreen({ onBack }: { onBack: () => void }) {
-  const t = useT()
+export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpenSlots: () => void }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   // The 4th-challenge slot bought here is the account's own real weekly
@@ -155,13 +152,14 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
           </button>
         </div>
 
+        <SlotsCard city={city} onOpen={onOpenSlots} />
         <DailyRewardCard />
 
         <div className="shop-tabs">
           {CATEGORIES.map((c) => (
             <button key={c.id} className={`shop-tab${category === c.id ? ' active' : ''}`} onClick={() => setCategory(c.id)}>
               <span>{c.icon}</span>
-              {c.id === 'slots' ? t('shop.tabSlots') : c.label}
+              {c.label}
             </button>
           ))}
         </div>
@@ -182,7 +180,7 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
                 onUnequip={() => equipItem.mutate({ itemId: null, category: 'avatar_frame' })}
                 busy={buyItem.isPending || equipItem.isPending}
                 onTryOn={() => setTryOn(item)}
-                onGoSlots={() => setCategory('slots')}
+                onGoSlots={onOpenSlots}
                 onRefund={
                   isSuperAdmin && owned.has(item.id) && item.purchasable
                     ? () => setRefunding({ kind: 'item', id: item.id, name: item.name, price: item.price })
@@ -262,7 +260,6 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
           />
         )}
 
-        {category === 'slots' && <SlotsScreen city={city} />}
       </div>
 
       {purchaseModal}
@@ -287,7 +284,7 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
             const it = tryOn
             setTryOn(null)
             // A jackpot frame can't be bought — «Выбить в слотах» goes there instead.
-            if (!it.purchasable) setCategory('slots')
+            if (!it.purchasable) onOpenSlots()
             else request(it.price, it.name, () => buyItem.mutate(it.id))
           }}
           onEquip={() => {

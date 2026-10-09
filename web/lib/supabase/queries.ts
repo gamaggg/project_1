@@ -2512,7 +2512,7 @@ export type SlotPrize = 'jackpot' | 'jackpot_coins' | 'shield' | 'double' | 'luf
 export type SlotState = { total: number; used: number; left: number; bonus: number; nextReset: string; freeShields: number }
 export type SlotSpinResult = { reels: SlotSymbol[]; prize: SlotPrize; coins: number; balance: number; left: number; total: number; bonus: number; freeShields: number }
 
-// Free spins (the Shop's «Слоты» tab, which replaced ДЭП): one a day plus
+// Free spins (the Shop's slots card, once its «Слоты» tab, which replaced ДЭП): one a day plus
 // one per catch, at most 4 — get_slot_state counts them in the player's own
 // city day, spin_slots rolls the outcome and pays it.
 export function useSlotState() {

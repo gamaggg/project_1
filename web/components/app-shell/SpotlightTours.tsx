@@ -81,13 +81,15 @@ export function SpotlightTours({ screen, audience, memberSince }: { screen: stri
     const fromAccount = JSON.parse(remoteSeenKey) as Seen
     const id = window.setInterval(() => {
       const seen = { ...readSeen(audience), ...fromAccount }
-      if (seen.skip) {
+      // «Пропустить» ends the audience's tours — except the ones marked
+      // `always` (something moved: a player who skipped still needs to know).
+      if (seen.skip && !candidates.some((c) => c.always)) {
         window.clearInterval(id)
         return
       }
       if (busy()) return
       for (const def of candidates) {
-        if (seen[def.id] || !findTarget(def.requires)) continue
+        if (seen[def.id] || (seen.skip && !def.always) || !findTarget(def.requires)) continue
         const steps = def.steps.filter((s) => findTarget(s.target))
         if (steps.length === 0) continue
         // The weekly hot-sector tour may hold the screen (lib/tourLock.ts).
@@ -168,7 +170,7 @@ export function SpotlightTours({ screen, audience, memberSince }: { screen: stri
         <div className="tour-kicker">
           {tour.steps.length > 1
             ? t(audience === 'newcomer' ? 'tour.kickerTip' : 'tour.kicker', { n: index + 1, total: tour.steps.length })
-            : t('tour.kickerTipOne')}
+            : t(audience === 'newcomer' ? 'tour.kickerTipOne' : 'tour.kickerNewOne')}
         </div>
         <div className="tour-title">{t(`tour.${step.key}.title`)}</div>
         <div className="tour-text">{t(`tour.${step.key}.text`)}</div>

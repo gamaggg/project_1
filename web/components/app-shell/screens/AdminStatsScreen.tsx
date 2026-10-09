@@ -25,6 +25,7 @@ const SCREEN_NAMES: Record<string, string> = {
   'screen-achievement-detail': 'Достижение',
   'screen-last-week': 'Итоги недели',
   'screen-shop': 'Магазин',
+  'screen-slots': 'Слоты',
   'screen-challenges': 'Челленджи',
   'screen-clans': 'Кланы',
   'screen-clan': 'Клан',

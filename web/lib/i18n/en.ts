@@ -5,10 +5,8 @@ export const en: Dict = {
     coins: { one: '{count} coin', other: '{count} coins' },
     tryAgain: 'Something went wrong, try again',
   },
-  shop: {
-    tabSlots: 'Slots',
-  },
   slots: {
+    card: { prizes: 'Shields, ×2 coins and a jackpot', catchForSpin: 'Catch a fish: +1 spin', tomorrow: 'New spins after midnight' },
     title: 'Angler’s slots',
     spinsToday: 'Spins left: {left}',
     gift: 'Bonus spins: {count}',
@@ -398,6 +396,7 @@ export const en: Dict = {
     done: 'Got it',
     skip: 'Skip',
     kickerTip: 'Tip · {n} of {total}',
+    kickerNewOne: 'New',
     kickerTipOne: 'Tip',
     legend: { title: 'The city is split into sectors', text: 'Yours, others’ and free ones — each its own colour. A free sector becomes yours with your first catch.' },
     sectorCard: { title: 'Sector card', text: 'Tap a sector on the map: who holds it, how much was caught there, what bites.' },
@@ -408,6 +407,8 @@ export const en: Dict = {
     treasuryOwner: { title: 'Your sector earns coins', text: 'They pile up every day, up to 30 a day. Tap to collect.' },
     challenges: { title: 'Weekly challenges', text: '3 tasks a week for coins. New ones every Monday.' },
     clan: { title: 'Clans', text: 'Join a clan: a shared chest, the Clan battle, and sectors your clanmates don’t take.' },
+    slotsMoved: { title: 'Slots are here now', text: 'Moved from the tabs up under your balance, with the spins you have left. Tap to spin.' },
+    slots: { title: 'Fishing slots', text: 'A free spin every day and one more for each catch. Shields, ×2 coins and the jackpot drop here.' },
     faq: { title: 'How to play', text: 'Every rule as questions and answers. Look here if anything is unclear.' },
     treasury: { title: 'Treasury', text: 'Your sectors earn coins every day, up to 30 a day. They pile up here — tap to collect.' },
     forecast: { title: 'Bite forecast', text: "Today's bite from weather, pressure and the moon. Tap for hour by hour and 3 days ahead." },

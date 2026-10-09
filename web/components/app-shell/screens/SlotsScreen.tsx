@@ -13,7 +13,8 @@ import { JACKPOT_CHANCE } from '@/lib/data/shopItems'
 import { useI18n, useT, type TKey } from '@/lib/i18n'
 import { hapticSuccess, hapticTap } from '@/lib/telegram/haptics'
 
-// The «Слоты» tab that replaced ДЭП: free spins only, nothing is staked.
+// The slots that replaced ДЭП (their own screen, opened from the card under
+// the Shop's balance — SlotsCard): free spins only, nothing is staked.
 // The reel motion — strips sliding under a motion blur, the last reel running
 // against the others — is adapted from StealthWorm's "Love, Death & Robots"
 // loader on Uiverse (MIT): https://uiverse.io/StealthWorm/chatty-zebra-11
