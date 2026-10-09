@@ -3,6 +3,9 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
+import { ensureSession, flushSessionReport, setExpectedUser } from '@/lib/supabase/session'
+import { setGuestRefusalHandler } from '@/lib/errorReporting'
+import { trySignInWithTelegram } from '@/lib/telegram/signIn'
 
 type AuthState = {
   user: User | null
@@ -98,33 +101,6 @@ function applyTelegramChrome() {
   document.documentElement.style.setProperty('--tg-safe-area-bottom', `${bottom}px`)
 }
 
-// Silent sign-in for the Telegram Mini App build: initData is only ever
-// present when this page is actually running inside Telegram's WebView, so
-// this is a no-op everywhere else (regular web, PWA). See
-// app/api/auth/telegram/route.ts for the server side of this handshake.
-// `create`: false for the silent check at launch — only an account this
-// Telegram already belongs to is signed in, none is made (someone who plays
-// on the web must not get a second, empty account just by opening the Mini
-// App). True only for Welcome's explicit «start».
-async function trySignInWithTelegram(supabase: ReturnType<typeof createClient>, create: boolean) {
-  const initData = window.Telegram?.WebApp?.initData
-  if (!initData) return false
-  try {
-    const res = await fetch('/api/auth/telegram', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ initData, create }),
-    })
-    if (!res.ok) return false
-    const body = (await res.json()) as { status?: string; email?: string; token?: string }
-    if (body.status === 'no_account' || !body.email || !body.token) return false
-    const { error } = await supabase.auth.verifyOtp({ email: body.email, token: body.token, type: 'magiclink' })
-    return !error
-  } catch {
-    return false
-  }
-}
-
 // Signed in to a real (email) account inside the Mini App: tie this Telegram
 // to it (app/api/auth/telegram/link), so the next launch opens that account
 // directly and the empty one the Mini App may once have made lets go.
@@ -210,6 +186,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       webApp?.offEvent?.('safeAreaChanged', applyTelegramChrome)
       webApp?.offEvent?.('fullscreenChanged', applyTelegramChrome)
     }
+  }, [])
+
+  // The session watch (lib/supabase/session.ts) knows who should be signed
+  // in, and a guest refusal from any request sends it to check.
+  useEffect(() => {
+    setExpectedUser(user?.id ?? null)
+    if (user) flushSessionReport()
+  }, [user])
+  useEffect(() => {
+    setGuestRefusalHandler(() => void ensureSession())
+    return () => setGuestRefusalHandler(null)
   }, [])
 
   async function signOut() {

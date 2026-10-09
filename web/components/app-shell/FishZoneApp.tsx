@@ -27,6 +27,7 @@ import {
 } from '@/lib/supabase/queries'
 import { getCurrentCoords, nearestTerritory, queryGeolocationPermission } from '@/lib/geolocation'
 import { copyCatchPhotoToDiary, uploadCatchPhoto, uploadDiaryPhoto } from '@/lib/supabase/storage'
+import { ensureSession } from '@/lib/supabase/session'
 import { useAdminActionsReadState } from '@/lib/activityRead'
 import { useAchievementUnlock } from '@/lib/achievementUnlock'
 import { APP_LINK_EVENT } from '@/components/app-shell/AppLinkText'
@@ -835,7 +836,16 @@ export function FishZoneApp() {
     if (!user) return
     const seq = ++uploadSeqRef.current
     try {
-      const url = await uploadCatchPhoto(user.id, blob)
+      let url: string
+      try {
+        url = await uploadCatchPhoto(user.id, blob)
+      } catch (first) {
+        // Refused as a guest — the phone lost the session (lib/supabase/session.ts):
+        // restore it and try once more before showing an error.
+        const msg = first instanceof Error ? first.message : String(first)
+        if (!/row-level security|unauthorized|jwt/i.test(msg) || !(await ensureSession())) throw first
+        url = await uploadCatchPhoto(user.id, blob)
+      }
       if (uploadSeqRef.current !== seq) return
       setPhotoUrl(url)
       setPhotoStatus('success')

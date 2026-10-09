@@ -10,6 +10,21 @@
 
 type Reporter = (context: string, message: string) => void
 
+// A request refused because it went out as a guest while the app thinks a
+// player is signed in — lib/supabase/session.ts decides whether the session
+// is really gone and restores it. Set by AuthProvider.
+let onGuestRefusal: (() => void) | null = null
+let lastGuestRefusal = 0
+export function setGuestRefusalHandler(fn: (() => void) | null) {
+  onGuestRefusal = fn
+}
+function guestRefused() {
+  const now = Date.now()
+  if (!onGuestRefusal || now - lastGuestRefusal < 10_000) return
+  lastGuestRefusal = now
+  onGuestRefusal()
+}
+
 const EXPECTED_CODES = new Set(['P0001', '23505', 'PGRST116', 'PGRST301', 'PGRST303'])
 const REPEAT_MS = 5 * 60_000
 const lastSent = new Map<string, number>()
@@ -57,8 +72,13 @@ export function reportingFetch(report: Reporter): typeof fetch {
       if (!url || url.pathname.endsWith('/rpc/report_client_error')) return res
       const rest = url.pathname.match(/\/rest\/v1\/(?:rpc\/)?([^/]+)/)
       if (!rest) {
-        if (res.status >= 500 && url.pathname.includes('/storage/')) {
-          if (once('storage' + res.status)) report('storage', `HTTP ${res.status}`)
+        if (url.pathname.includes('/storage/')) {
+          if (res.status >= 500 && once('storage' + res.status)) report('storage', `HTTP ${res.status}`)
+          // a guest upload into a player's folder: «row-level security»
+          if ((res.status === 400 || res.status === 403) && !sentAsPlayer(init)) {
+            const text = await res.clone().text().catch(() => '')
+            if (/row-level security|unauthorized/i.test(text)) guestRefused()
+          }
         }
         return res
       }
@@ -69,12 +89,15 @@ export function reportingFetch(report: Reporter): typeof fetch {
         code = body.code ?? ''
         message = body.message ?? ''
       } catch {}
-      if (EXPECTED_CODES.has(code) || (res.status === 401 && !code)) return res
-      // «permission denied» for a request that went out without the player's
-      // session — the app woke from the background (iPhone, Telegram) and fired
-      // a request before the session was back. Nothing is broken: the data
-      // reloads a moment later. Only a refusal to a signed-in player counts.
-      if (code === '42501' && !sentAsPlayer(init)) return res
+      // Refused as a guest (no player's token): either the app woke from the
+      // background and fired before its session was back — harmless, it
+      // reloads — or the session is really gone. session.ts tells the two
+      // apart and restores it; no alert from here either way.
+      if ((res.status === 401 && !code) || (code === '42501' && !sentAsPlayer(init))) {
+        if (!sentAsPlayer(init)) guestRefused()
+        return res
+      }
+      if (EXPECTED_CODES.has(code)) return res
       const context = `db:${rest[1]}`.slice(0, 40)
       if (once(context + code)) report(context, [code || `HTTP ${res.status}`, message].filter(Boolean).join(': '))
     } catch {}
