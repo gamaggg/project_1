@@ -32,6 +32,8 @@ const DAILY_SPINS_MAX = 4
 const NARROW = '(max-width: 380px)'
 const CENTER = (WINDOW - CELL) / 2
 const SPIN_MS = [1500, 1950, 2400]
+// Reels set off left to right, a beat apart (and still stop left to right).
+const SPIN_DELAY = [0, 110, 220]
 const STRIP_FILL = 16
 // With «Уменьшение движения» on the phone the reels still turn — a short,
 // calm roll with no blur — instead of the result just appearing: players on
@@ -59,7 +61,8 @@ const IDLE_Y = CENTER - 3 * CELL
 
 // `symbol` is what the reel shows (or is rolling to); `drift` marks an idle
 // roll, whose end just settles the band instead of counting as a spin stop.
-type Reel = { strip: SymbolId[]; y: number; duration: number; symbol: SymbolId; drift?: boolean }
+// `delay`: a spin starts the reels one after another, like a real machine.
+type Reel = { strip: SymbolId[]; y: number; duration: number; symbol: SymbolId; drift?: boolean; delay?: number }
 
 function idleReel(symbol: SymbolId, reel: number): Reel {
   const k = SYMBOLS.indexOf(symbol)
@@ -68,18 +71,14 @@ function idleReel(symbol: SymbolId, reel: number): Reel {
 
 // A roll from one symbol to another: the strip starts with the band at rest
 // (the symbol and its two neighbours) and ends with the target's own band, so
-// the peeks around the payline don't jump when it starts or settles. The last
-// reel runs the other way round, like the loader's third column.
+// the peeks around the payline don't jump when it starts or settles. Every
+// reel turns the same way — the symbols run downwards, as on a real machine
+// (the third used to run the other way, after the loader this came from).
 function rollPlan(reel: number, from: SymbolId, to: SymbolId, fill: number) {
   const a = idleReel(from, reel).strip.slice(2, 5)
   const b = idleReel(to, reel).strip.slice(2, 5)
-  const path = filler(fill)
-  if (reel === 2) {
-    const strip = [...b, ...path, ...a]
-    return { strip, startY: CENTER - (strip.length - 2) * CELL, endY: CENTER - CELL }
-  }
-  const strip = [...a, ...path, ...b]
-  return { strip, startY: CENTER - CELL, endY: CENTER - (strip.length - 2) * CELL }
+  const strip = [...b, ...filler(fill), ...a]
+  return { strip, startY: CENTER - (strip.length - 2) * CELL, endY: CENTER - CELL }
 }
 
 function filler(count: number): SymbolId[] {
@@ -214,7 +213,7 @@ export function SlotsScreen({ city }: { city: CityId }) {
       setReels(laid)
       requestAnimationFrame(() =>
         requestAnimationFrame(() =>
-          setReels((prev) => prev.map((x, i) => (x.strip === laid[i].strip ? { ...x, y: plans[i].endY, duration: DRIFT_MS[i] } : x)))
+          setReels((prev) => prev.map((x, i) => (x.strip === laid[i].strip ? { ...x, y: plans[i].endY, duration: DRIFT_MS[i], delay: SPIN_DELAY[i] } : x)))
         )
       )
     }, DRIFT_EVERY)
@@ -282,9 +281,9 @@ export function SlotsScreen({ city }: { city: CityId }) {
         const plans = reelsRef.current.map((reel, i) => rollPlan(i, reel.symbol, res.reels[i], calm ? CALM_FILL : STRIP_FILL))
         const laid = plans.map((plan, i): Reel => ({ strip: plan.strip, y: plan.startY, duration: 0, symbol: res.reels[i] }))
         setReels(laid)
-        fallbackRef.current = window.setTimeout(() => reveal(res), durations[2] + 600)
+        fallbackRef.current = window.setTimeout(() => reveal(res), durations[2] + (calm ? 0 : SPIN_DELAY[2]) + 600)
         requestAnimationFrame(() =>
-          requestAnimationFrame(() => setReels(laid.map((reel, i) => ({ ...reel, y: plans[i].endY, duration: durations[i] }))))
+          requestAnimationFrame(() => setReels(laid.map((reel, i) => ({ ...reel, y: plans[i].endY, duration: durations[i], delay: calm ? 0 : SPIN_DELAY[i] }))))
         )
       },
     })
@@ -342,6 +341,8 @@ export function SlotsScreen({ city }: { city: CityId }) {
                     transform: `translateY(${reel.y * scale}px)`,
                     transitionDuration: `${reel.duration}ms`,
                     animationDuration: `${reel.duration}ms`,
+                    transitionDelay: `${reel.duration ? (reel.delay ?? 0) : 0}ms`,
+                    animationDelay: `${reel.duration ? (reel.delay ?? 0) : 0}ms`,
                   }}
                   onTransitionEnd={(e) => {
                     if (e.propertyName !== 'transform' || !reel.duration) return

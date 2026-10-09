@@ -884,20 +884,17 @@ body{
   .slots-result-text,.slots-machine.won{animation:none;}
 }
 
-/* ---- Slots «Ночной автомат» (SlotsScreen): the night-sea screen, a gold
-   cabinet with marquee bulbs. Layered over the base slots rules above. ---- */
-.slots-pips{display:flex; justify-content:center; gap:8px; margin-top:16px;}
-.slots-pip{width:18px; height:18px; border-radius:50%; border:2px dashed #E3DCD1;}
-.slots-pip.used{border-style:solid; background:#F3EEE6;}
-.slots-pip.on{border:none; background:radial-gradient(circle at 35% 30%, #FFF4C2 0%, #F7C547 45%, #C98A0E 100%); box-shadow:0 0 0 2px rgba(255,255,255,.7) inset, 0 2px 6px rgba(201,138,14,.45);}
+/* ---- Slots (SlotsScreen): the app's own light screen with a gold cabinet,
+   marquee bulbs and 3D buttons. Layered over the base slots rules above. ---- */
+.slots-pips{display:flex; justify-content:center; gap:10px; margin-top:16px;}
+.slots-pip{width:22px; height:22px; border-radius:50%; border:2px dashed #B9AE9C;}
+.slots-pip.used{border:2px solid #BFB6A8; background:#DDD6CA;}
+.slots-pip.on{border:2px solid #A86B00; background:radial-gradient(circle at 35% 30%, #FFF1A8 0%, #F6BE2C 42%, #D8900A 100%); box-shadow:inset 0 0 0 2px rgba(255,236,170,.75), 0 3px 8px rgba(168,107,0,.45);}
 
-#screen-slots{background:radial-gradient(130% 70% at 50% 16%, #1E6189 0%, #0F3A5A 42%, #08192A 100%);}
-#screen-slots .slots-title{color:#FFE3A1; text-shadow:0 0 22px rgba(255,190,80,.5);}
-#screen-slots .icon-btn{background:rgba(255,255,255,.12); box-shadow:none;}
-#screen-slots .icon-btn svg{stroke:#FFE3A1;}
+#screen-slots .slots-title{color:var(--ink);}
 /* impeccable-disable-next-line side-tab: top/bottom bevel highlights on the cabinet, not a side accent */
-.slots .slots-machine{padding:26px 12px; border-radius:30px; background:linear-gradient(180deg,#FFE9A6 0%,#F5C451 16%,#DD9A1C 58%,#B3700A 100%); box-shadow:0 22px 44px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.65), inset 0 -3px 0 rgba(110,60,0,.55);}
-.slots .slots-machine.won{box-shadow:0 0 0 4px rgba(255,214,110,.35), 0 0 46px rgba(255,190,70,.55), 0 22px 44px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.65);}
+.slots .slots-machine{padding:26px 12px; border-radius:30px; background:linear-gradient(180deg,#FFE9A6 0%,#F5C451 16%,#DD9A1C 58%,#B3700A 100%); box-shadow:0 18px 36px rgba(140,90,0,.3), 0 4px 10px rgba(140,90,0,.18), inset 0 2px 0 rgba(255,255,255,.65), inset 0 -3px 0 rgba(110,60,0,.55);}
+.slots .slots-machine.won{box-shadow:0 0 0 4px rgba(255,200,80,.45), 0 0 46px rgba(255,170,40,.55), 0 18px 36px rgba(140,90,0,.3), inset 0 2px 0 rgba(255,255,255,.65);}
 .slots .slots-glass{padding:10px; border-radius:20px; background:linear-gradient(180deg,#0A1E31,#11314C); box-shadow:inset 0 3px 10px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.45);}
 .slots .slot-reel{border-radius:14px; background:linear-gradient(180deg,#FFFDF5,#F1EADB);}
 .slots .slot-reel::before{background:linear-gradient(#FFFDF5 15%, rgba(255,253,245,0));}
@@ -930,29 +927,17 @@ body{
 /* A win flashes them all six times, then the chase picks up again. */
 .slots-machine.won .slots-bulb{animation:bulb-flash .32s steps(2) 6, bulb-marquee 2.7s linear calc(1.92s + var(--i) * .15s) infinite;}
 @keyframes bulb-flash{0%{opacity:1; background:#fff;} 50%{opacity:.25;}}
-.slots .slots-result-text{color:#FFE3A1; text-shadow:0 0 14px rgba(255,190,80,.4);}
-.slots .slots-result-text.miss{color:rgba(255,255,255,.6); text-shadow:none;}
-.slots .slots-spin{height:62px; margin-top:4px; border-radius:20px; background:linear-gradient(180deg,#FF9F55 0%,#FC5200 52%,#DE4300 100%); box-shadow:0 6px 0 #962C00, 0 16px 26px rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.4); font-family:var(--font-display),'Oswald',sans-serif; font-size:23px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; transition:transform .08s ease-out, box-shadow .08s ease-out;}
-.slots .slots-spin:active:not(:disabled){transform:translateY(5px); box-shadow:0 1px 0 #962C00, 0 6px 12px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.4);}
-.slots .slots-spin:disabled{opacity:1; background:linear-gradient(180deg,#24435E,#183049); box-shadow:0 6px 0 #0B1A28, inset 0 1px 0 rgba(255,255,255,.08); color:rgba(255,255,255,.55); font-family:inherit; font-size:15px; letter-spacing:0; text-transform:none;}
-.slots .slots-machine.spinning ~ .slots-spin:disabled{background:linear-gradient(180deg,#FF9F55 0%,#FC5200 52%,#DE4300 100%); box-shadow:0 1px 0 #962C00, 0 6px 12px rgba(0,0,0,.35); transform:translateY(5px); color:#fff;}
-.slots .slots-pip{border-color:rgba(255,227,161,.35);}
-.slots .slots-pip.used{background:rgba(255,227,161,.08); border-color:rgba(255,227,161,.25);}
-.slots .slots-pip.on{box-shadow:0 0 0 2px rgba(255,255,255,.55) inset, 0 0 12px rgba(255,200,80,.6);}
-.slots .slots-count{color:#FFE3A1;}
-.slots .slots-hint{color:rgba(255,255,255,.62);}
-.slots .slots-gift{background:rgba(255,214,110,.1); border-color:rgba(255,214,110,.35);}
-.slots .slots-gift b{color:#FFE3A1;}
-.slots .slots-gift span{color:rgba(255,255,255,.7);}
-.slots .slots-paytable{margin-top:22px; background:rgba(255,255,255,.05); border-color:rgba(255,214,120,.2);}
-.slots .slots-paytable-head{color:#E9C46A;}
-.slots .slots-pay-row{border-top-color:rgba(255,255,255,.08);}
-.slots .slots-pay-symbols{padding:4px 6px; border-radius:10px; background:#FFFDF5;}
-.slots .slots-pay-label{color:#fff;}
-.slots .slots-pay-row.jackpot{margin:0 -14px; padding-left:14px; padding-right:14px; background:linear-gradient(90deg, rgba(255,214,110,.14), rgba(255,214,110,0) 80%);}
-.slots .slots-pay-row.jackpot .slots-pay-label{color:#FFE3A1;}
-.slots .slots-pay-reward{color:rgba(255,255,255,.68);}
-.slots .slots-pay-chance{color:#FFD86B;}
+.slots .slots-result-text{color:var(--ink);}
+.slots .slots-result-text.miss{color:var(--ink-soft);}
+.slots .slots-spin{height:62px; margin-top:4px; border-radius:20px; background:linear-gradient(180deg,#FF9F55 0%,#FC5200 52%,#DE4300 100%); box-shadow:0 6px 0 #962C00, 0 14px 24px rgba(200,70,0,.28), inset 0 2px 0 rgba(255,255,255,.4); font-family:var(--font-display),'Oswald',sans-serif; font-size:23px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; transition:transform .08s ease-out, box-shadow .08s ease-out;}
+.slots .slots-spin:active:not(:disabled){transform:translateY(5px); box-shadow:0 1px 0 #962C00, 0 6px 12px rgba(200,70,0,.25), inset 0 2px 0 rgba(255,255,255,.4);}
+.slots .slots-spin:disabled{opacity:1; background:#ECE7DF; box-shadow:0 6px 0 #D8D0C3, inset 0 1px 0 rgba(255,255,255,.6); color:var(--ink-faint); font-family:inherit; font-size:15px; letter-spacing:0; text-transform:none;}
+.slots .slots-machine.spinning ~ .slots-spin:disabled{background:linear-gradient(180deg,#FF9F55 0%,#FC5200 52%,#DE4300 100%); box-shadow:0 1px 0 #962C00, 0 6px 12px rgba(200,70,0,.25); transform:translateY(5px); color:#fff;}
+.slots .slots-paytable{margin-top:22px;}
+.slots .slots-paytable-head{color:#A06B00;}
+.slots .slots-pay-row.jackpot{margin:0 -14px; padding-left:14px; padding-right:14px; background:linear-gradient(90deg, #FFF3CC, rgba(255,243,204,0) 85%);}
+.slots .slots-pay-row.jackpot .slots-pay-label{color:#8A5A00;}
+.slots .slots-pay-chance{color:#A06B00;}
 
 /* A win: a fountain out of the payline (SlotsWin.tsx). The span carries the
    sideways drift, its <i> the rise and fall — two timing curves make the arc. */
