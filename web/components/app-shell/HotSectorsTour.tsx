@@ -7,7 +7,7 @@ import { useDoubleCoinsUntil } from '@/components/app-shell/DoubleCoinsChip'
 import type { MapScreenHandle } from '@/components/app-shell/screens/MapScreen'
 import { useI18n } from '@/lib/i18n'
 import { formatWeekdayTime } from '@/lib/i18n/format'
-import { CITIES, type CityId } from '@/lib/data/city'
+import { CITIES, cityForSectorId, type CityId } from '@/lib/data/city'
 import { useUiState } from '@/lib/uiState'
 import { useNow } from '@/lib/useNow'
 import { releaseTour, tourLocked, tryLockTour } from '@/lib/tourLock'
@@ -102,7 +102,7 @@ export function HotSectorsTour({
   const [outline, setOutline] = useState<[number, number][][] | null>(null)
 
   const [a, b] = sectors
-  const until = a?.hotUntil ? formatWeekdayTime(a.hotUntil, lang) : ''
+  const until = a?.hotUntil ? formatWeekdayTime(a.hotUntil, lang, CITIES[cityForSectorId(a.id)].timezone) : ''
   const holdsIt = (t: Territory) => t.ownerId === user?.id || t.coHolders.some((h) => h.isMe)
   const holder = (t: Territory) =>
     holdsIt(t) ? 'Сейчас он твой — удержи!' : t.ownerId ? `Сейчас его держит ${t.ownerDisplayName ?? 'другой рыбак'}.` : 'Пока свободен — займи первым уловом.'

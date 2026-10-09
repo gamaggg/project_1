@@ -14,7 +14,7 @@ import { RouteModal } from '@/components/app-shell/RouteModal'
 import { HOT_FLAME_SVG } from '@/lib/map/hotFlame'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { KIND_LABEL, WATER_KINDS_BY_CITY } from '@/lib/data/species'
-import { cityForSectorId } from '@/lib/data/city'
+import { CITIES, cityForSectorId } from '@/lib/data/city'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import type { Territory, TerritoryCoHolder } from '@/lib/data/types'
@@ -345,14 +345,45 @@ export function TerritoryScreen({
           <SectorCoords lat={territory.lat} lng={territory.lng} onToast={onToast} />
           {hot && (
             <div className="sector-hot">
-              <span className="sector-hot-flame" aria-hidden dangerouslySetInnerHTML={{ __html: HOT_FLAME_SVG }} />
-              <div className="sector-hot-body">
-                <div className="sector-hot-title">
-                  {tr('hot.badge')} · {tr('hot.until', { time: formatWeekdayTime(territory.hotUntil!, lang) })}
+              <div className="sector-hot-head">
+                <span className="sector-hot-flame" aria-hidden dangerouslySetInnerHTML={{ __html: HOT_FLAME_SVG }} />
+                <span className="sector-hot-title">{tr('hot.badge')}</span>
+                <span className="sector-hot-until">
+                  {tr('hot.until', { time: formatWeekdayTime(territory.hotUntil!, lang, CITIES[cityForSectorId(territory.id)].timezone) })}
+                </span>
+              </div>
+              {/* What it pays, as three numbers to take in at a glance. */}
+              <div className="sector-hot-perks">
+                <div className="sector-hot-perk">
+                  <b>×{doubled ? 3 : 2}</b>
+                  <span>{tr(doubled ? 'hot.perkCatchDoubled' : 'hot.perkCatch')}</span>
                 </div>
-                <div className="sector-hot-text">{tr(doubled ? 'hot.bonusDoubled' : 'hot.bonus')}</div>
-                <div className="sector-hot-text">{tr('hot.holdReward')}</div>
-                <div className="sector-hot-text">{tr('hot.noShield')}</div>
+                <div className="sector-hot-perk">
+                  <b>×3</b>
+                  <span>{tr('hot.perkTreasury')}</span>
+                </div>
+                <div className="sector-hot-perk">
+                  <b>
+                    +100 <CoinIcon size={16} />
+                  </b>
+                  <span>{tr('hot.perkHold')}</span>
+                </div>
+              </div>
+              <div className="sector-hot-notes">
+                <div>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M12 2.5 19.5 5.3V11c0 4.6-3.2 8.2-7.5 10.5C7.7 19.2 4.5 15.6 4.5 11V5.3z" />
+                    <path d="m4 4 16 16" />
+                  </svg>
+                  {tr('hot.noShield')}
+                </div>
+                <div>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <circle cx="15" cy="4.5" r="1.8" />
+                    <path d="M15 6.3V14a5 5 0 0 1-10 0v-1.5l2.5 2.5" />
+                  </svg>
+                  {tr('hot.rewardRule')}
+                </div>
               </div>
             </div>
           )}

@@ -5,7 +5,7 @@ import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { MapView } from '@/components/app-shell/MapView'
 import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import type { Territory } from '@/lib/data/types'
-import { CITIES, type CityId } from '@/lib/data/city'
+import { CITIES, cityForSectorId, type CityId } from '@/lib/data/city'
 import { formatWhen } from '@/lib/format'
 import { getCurrentCoords, nearestTerritory, useGeolocationPermission, watchLiveLocation, type Coords } from '@/lib/geolocation'
 import { observeScreenActive } from '@/lib/observeScreenActive'
@@ -580,7 +580,7 @@ export const MapScreen = forwardRef<
                   <div className="map-sheet-hot">
                     <span className="map-sheet-hot-flame" aria-hidden dangerouslySetInnerHTML={{ __html: HOT_FLAME_SVG }} />
                     <b>{tr('hot.badge')}</b>
-                    <span>· {tr('hot.until', { time: formatWeekdayTime(t.hotUntil!, lang) })}</span>
+                    <span>· {tr('hot.until', { time: formatWeekdayTime(t.hotUntil!, lang, CITIES[cityForSectorId(t.id)].timezone) })}</span>
                     <span className="map-sheet-hot-bonus">×2</span>
                   </div>
                 )}

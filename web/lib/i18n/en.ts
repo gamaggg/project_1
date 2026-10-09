@@ -108,10 +108,12 @@ export const en: Dict = {
   hot: {
     badge: 'Hot sector',
     until: 'until {time}',
-    bonus: '×2 coins per catch, ×3 to the Treasury',
-    bonusDoubled: '×3 coins per catch with your double coins, ×3 to the Treasury',
-    noShield: 'No shields here: the sector is open to everyone',
-    holdReward: 'Hold it to the end of the week: +100 coins and a medal, if anyone fished here this week',
+    perkCatch: 'coins per catch',
+    perkCatchDoubled: 'per catch with your ×2',
+    perkTreasury: 'to the Treasury',
+    perkHold: 'and a medal for holding it',
+    noShield: 'No shields here',
+    rewardRule: 'Only if someone fished here this week',
   },
   insights: {
     title: 'What’s biting here',
