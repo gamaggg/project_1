@@ -34,6 +34,7 @@ import { APP_LINK_EVENT } from '@/components/app-shell/AppLinkText'
 import { useWeekTopModal } from '@/lib/weekTopModal'
 import { useClanBattleCeremony } from '@/lib/clanBattleCeremony'
 import { HotSectorsTour, useHotSectorsTour } from '@/components/app-shell/HotSectorsTour'
+import { useShopRewardsCount } from '@/lib/shopRewards'
 import { hasVisibleTypedText, useAppUpdate } from '@/lib/appUpdate'
 import { insideTelegram } from '@/lib/openExternal'
 import { track } from '@/lib/analytics'
@@ -237,6 +238,7 @@ export function FishZoneApp() {
   useClanChatLive(myProfile?.clanId ?? null)
   // Only clan members make this request — it feeds the profile tab's badge.
   const { data: clanChatSummary } = useClanChatSummary(myProfile?.clanId ?? null)
+  const shopRewards = useShopRewardsCount()
 
   // Achievement detail photos are full-bleed JPGs (~80-110KB each) fetched
   // cold on the first tap — without this the background pops in a beat after
@@ -1432,6 +1434,7 @@ export function FishZoneApp() {
             onOpenClan={openClan}
             race={myProfile?.clanId ? { city: myProfile.city, clanId: myProfile.clanId, onOpen: openClanRace } : null}
             onToast={showToast}
+            onOpenSlots={openSlots}
             newbie={isNewbie}
             nearestFreeRequest={nearestFreeRequest}
             offlinePending={offlineQueue}
@@ -2015,6 +2018,7 @@ export function FishZoneApp() {
           plusPending={locating}
           unreadCount={unreadCount}
           clanChatUnread={clanChatSummary?.unread ?? 0}
+          shopRewards={myProfile?.onboardingCompleted ? shopRewards.total : 0}
         />
       )}
     </div>

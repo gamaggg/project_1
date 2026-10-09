@@ -1,5 +1,6 @@
 'use client'
 
+import { useShopRewardsCount } from '@/lib/shopRewards'
 import { useState, type CSSProperties } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -445,6 +446,7 @@ export function ProfileScreen({
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   const { data: clanChat } = useClanChatSummary(profile?.clanId ?? null)
+  const shopRewards = useShopRewardsCount()
   const { data: myCatches = [] } = useMyCatches()
   const canModerateReports = useCanModerateReports()
   const isSuperAdmin = useIsSuperAdmin()
@@ -618,7 +620,11 @@ export function ProfileScreen({
               <path d="M9 5l7 7-7 7" />
             </svg>
           </span>
-          <span className="profile-cta-icon">{CTA_ICONS.bag}</span>
+          <span className="profile-cta-icon">
+            {CTA_ICONS.bag}
+            {/* Slot spins waiting there (lib/shopRewards.ts). */}
+            {shopRewards.total > 0 && <span className="profile-cta-badge">{shopRewards.total > 9 ? '9+' : shopRewards.total}</span>}
+          </span>
           <span className="profile-cta-title">Магазин</span>
           <span className="profile-cta-sub">Рамки, фоны, скины</span>
         </button>

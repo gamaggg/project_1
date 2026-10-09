@@ -19,7 +19,6 @@ import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { SkinPreview } from '@/components/app-shell/SkinPreview'
 import { SlotsCard } from '@/components/app-shell/SlotsCard'
-import { DailyRewardCard } from '@/components/app-shell/DailyRewardCard'
 import type { CityId } from '@/lib/data/city'
 import {
   useProfile,
@@ -138,22 +137,21 @@ export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpen
           <div style={{ fontWeight: 800, fontSize: 15 }}>Магазин</div>
           <div style={{ width: 36 }} />
         </div>
-        <div className="shop-hero">
-          <div className="shop-hero-shine" />
-          <CoinIcon size={56} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="shop-hero-balance">
+        {/* Balance and slots as one block: the balance is a number and a
+            button — it doesn't need a whole card of its own. */}
+        <div className="shop-wallet">
+          <div className="shop-wallet-balance">
+            <CoinIcon size={28} />
+            <span className="shop-wallet-num">
               <LiveCoinBalance value={coins} />
-            </div>
-            <div className="shop-hero-label">монет на счету</div>
+            </span>
+            <span className="shop-wallet-label">монет на счету</span>
+            <button className="shop-wallet-history" onClick={() => setHistoryOpen(true)}>
+              История
+            </button>
           </div>
-          <button className="shop-hero-history-btn" onClick={() => setHistoryOpen(true)}>
-            История
-          </button>
+          <SlotsCard city={city} onOpen={onOpenSlots} />
         </div>
-
-        <SlotsCard city={city} onOpen={onOpenSlots} />
-        <DailyRewardCard />
 
         <div className="shop-tabs">
           {CATEGORIES.map((c) => (

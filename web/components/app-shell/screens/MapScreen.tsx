@@ -1,6 +1,7 @@
 'use client'
 
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { useFirstSteps } from '@/lib/supabase/queries'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { MapView } from '@/components/app-shell/MapView'
 import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
@@ -21,6 +22,7 @@ import { mostPopularSectorId } from '@/lib/data/sectorOrder'
 import { MapRacePill } from '@/components/app-shell/ClanRace'
 import { TreasuryChip } from '@/components/app-shell/TreasuryChip'
 import { DoubleCoinsChip } from '@/components/app-shell/DoubleCoinsChip'
+import { SlotsSticker } from '@/components/app-shell/SlotsSticker'
 import { HOT_FLAME_SVG } from '@/lib/map/hotFlame'
 import { useI18n } from '@/lib/i18n'
 import { formatWeekdayTime } from '@/lib/i18n/format'
@@ -114,6 +116,8 @@ export const MapScreen = forwardRef<
     race?: { city: CityId; clanId: number; onOpen: () => void } | null
     // The app's toast — Казна says what happened through it.
     onToast?: (msg: string) => void
+    // The slots sticker (SlotsSticker) opens the slots screen.
+    onOpenSlots?: () => void
     // No catches yet: the «Ближайший свободный сектор» button shows.
     newbie?: boolean
     // Bumped by the onboarding's last step («Найти свободный сектор рядом»)
@@ -141,6 +145,7 @@ export const MapScreen = forwardRef<
     onOpenClan,
     race,
     onToast,
+    onOpenSlots,
     newbie,
     nearestFreeRequest,
     offlinePending,
@@ -152,6 +157,8 @@ export const MapScreen = forwardRef<
   // Казна only asks the server once there's something to earn from.
   const holdsSector = territories.some((s) => s.status === 'mine' || s.coHolders.some((h) => h.isMe))
   const now = useNow()
+  const { data: firstSteps } = useFirstSteps()
+  const firstStepsShown = !!firstSteps && firstSteps.eligible && !firstSteps.claimed
   const isHot = (s: Territory) => !!s.hotUntil && new Date(s.hotUntil).getTime() > now
   // «Кланы» layer toggle — remembered per device, a pure viewing preference.
   const [clanLayer, setClanLayer] = useState(() => {
@@ -556,6 +563,9 @@ export const MapScreen = forwardRef<
             // one row, so neither pushes the other up over the map.
             <div className="map-sheet-extras">
               {!selectedIds?.size && !pendingAddDrafts?.length && <RecapBanner city={city} onFindFree={() => void startNearestFree()} />}
+              {/* Newcomers have «Первые шаги» on this row instead — two
+                  stickers and the pill don't fit side by side. */}
+              {!selectedIds?.size && !pendingAddDrafts?.length && !firstStepsShown && onOpenSlots && <SlotsSticker city={city} onOpen={onOpenSlots} />}
               <FirstStepsPill onToast={onToast} />
             </div>
           )}

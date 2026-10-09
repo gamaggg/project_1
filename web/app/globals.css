@@ -585,6 +585,28 @@ body{
   color:#8A5A0C; cursor:pointer;
 }
 
+/* ---- Balance + slots as one block in the Shop (ShopScreen) ---- */
+.shop-wallet{border-radius:20px; overflow:hidden; box-shadow:0 6px 16px rgba(13,60,92,.18);}
+.shop-wallet-balance{display:flex; align-items:center; gap:8px; padding:9px 10px 9px 12px; background:linear-gradient(135deg,#FFF6E2,#FFE9BC);}
+.shop-wallet-num{font-family:var(--font-display),'Manrope',sans-serif; font-weight:800; font-size:24px; line-height:1; color:#8A5A0C; font-variant-numeric:tabular-nums;}
+.shop-wallet-label{flex:1; min-width:0; margin-top:3px; font-size:12.5px; font-weight:700; color:#A9760F; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.shop-wallet-history{flex:0 0 auto; padding:7px 12px; border:1px solid rgba(138,90,12,.22); border-radius:12px; background:rgba(255,255,255,.55); font:inherit; font-size:12px; font-weight:700; color:#8A5A0C; cursor:pointer;}
+.shop-wallet .slots-card{margin-top:0; border-radius:0; box-shadow:none;}
+
+/* ---- Slots sticker on the map (see SlotsSticker.tsx) ---- */
+.slots-sticker-wrap{position:relative; align-self:flex-end; margin-left:20px; transform:rotate(5deg); animation:recap-sticker-in .45s var(--ease-out) .15s both;}
+.slots-sticker{width:96px; height:96px; padding:8px 6px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; border:3px solid #fff; border-radius:22px; background:linear-gradient(150deg,#1A4D73 0%,#123A5C 60%,#0D5F78 100%); box-shadow:0 10px 20px rgba(10,40,70,.35), 0 2px 4px rgba(0,0,0,.15); color:#fff; font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent;}
+.slots-sticker:active{transform:scale(.96);}
+.recap-sticker-wrap + .slots-sticker-wrap{margin-left:6px;}
+.slots-sticker-reels{display:flex; gap:2px; padding:3px; border-radius:8px; background:linear-gradient(180deg,#FFD86B,#E39A12); box-shadow:0 2px 4px rgba(0,0,0,.25);}
+.slots-sticker-reel{width:19px; height:25px; border-radius:5px; background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden;}
+.slots-sticker-reel .slot-symbol{max-width:calc(100% - 2px);}
+.slots-sticker-title{font-family:var(--font-display),'Oswald',sans-serif; font-size:19px; line-height:1.05; text-transform:uppercase; letter-spacing:.03em;}
+.slots-sticker-count{font-size:11.5px; font-weight:800; color:#FFD86B; white-space:nowrap;}
+
+/* ---- Rewards waiting in the Shop, on the profile's Shop card ---- */
+.profile-cta-badge{position:absolute; top:-6px; right:-11px; min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:var(--accent); color:#fff; font-size:11px; font-weight:800; line-height:18px; text-align:center; box-shadow:0 0 0 2px #F4F9FF;}
+
 /* ---- Slots card under the Shop's balance (see SlotsCard.tsx) ---- */
 .slots-card{position:relative; overflow:hidden; display:flex; align-items:center; gap:14px; width:100%; margin-top:10px; padding:18px 14px 18px 16px; border:none; border-radius:20px; background:linear-gradient(135deg,#123A5C 0%,#0D5F78 100%); box-shadow:0 6px 16px rgba(13,60,92,.22); color:#fff; font:inherit; text-align:left; cursor:pointer;}
 .slots-card > *:not(.slots-card-shine){position:relative; z-index:1;}
@@ -3682,6 +3704,13 @@ button.race-lane{cursor:pointer;}
 @media (prefers-reduced-motion: reduce){.double-modal-ring-left, .double-modal-badge{animation:none;}}
 .catch-trophy-double{align-self:flex-start; margin-bottom:6px; padding:3px 9px; border-radius:999px; background:linear-gradient(160deg,#FFE08A,#F2B53A); color:#4A3000; font-size:12px; font-weight:800;}
 .treasury-sheet-body{display:flex; flex-direction:column; gap:12px; padding-bottom:18px;}
+.treasury-sheet-body .daily-card{margin-top:0;}
+.treasury-section{display:flex; flex-direction:column; gap:12px;}
+.treasury-now-text .treasury-now-kicker{font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-faint);}
+.treasury-now.ready .treasury-now-text .treasury-now-kicker{color:#C2410C;}
+.treasury-none{margin-top:6px; font-size:13px; line-height:1.4; color:var(--ink);}
+.treasury-chip{position:relative;}
+.treasury-chip-dot{position:absolute; top:-2px; right:-2px; width:9px; height:9px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 2px var(--surface);}
 .treasury-now{display:flex; align-items:center; gap:14px; padding:16px; border-radius:18px; background:#FAF8F3;}
 .treasury-now.ready{background:var(--accent-soft); box-shadow:inset 0 0 0 1.5px rgba(252,82,0,.3);}
 .treasury-now-text{display:flex; flex-direction:column; gap:2px; min-width:0;}

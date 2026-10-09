@@ -10,6 +10,7 @@ export function BottomNav({
   plusPending,
   unreadCount = 0,
   clanChatUnread = 0,
+  shopRewards = 0,
 }: {
   active: TabScreenId
   onNavigate: (id: TabScreenId) => void
@@ -19,7 +20,11 @@ export function BottomNav({
   // Unread messages in the player's clan chat — the chat is reached through
   // the profile's clan card, so its count rides on the profile tab.
   clanChatUnread?: number
+  // Slot spins waiting in the Shop (lib/shopRewards.ts) — the Shop is
+  // reached through the profile too.
+  shopRewards?: number
 }) {
+  const profileCount = clanChatUnread + shopRewards
   // The bar's real height (82px, or more with a home-indicator inset) as
   // --nav-h, so the map's sector card can sit a fixed gap above it.
   const ref = useRef<HTMLDivElement>(null)
@@ -77,9 +82,9 @@ export function BottomNav({
             <circle cx="12" cy="8" r="3.6" />
             <path d="M4.5 20c1.6-3.8 4.6-5.7 7.5-5.7s5.9 1.9 7.5 5.7" />
           </svg>
-          {clanChatUnread > 0 && (
-            <span className="nav-badge" aria-label={`Непрочитанных в чате клана: ${clanChatUnread}`}>
-              {clanChatUnread > 9 ? '9+' : clanChatUnread}
+          {profileCount > 0 && (
+            <span className="nav-badge" aria-label={`Ждут в профиле: ${profileCount}`}>
+              {profileCount > 9 ? '9+' : profileCount}
             </span>
           )}
         </span>
