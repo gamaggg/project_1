@@ -304,7 +304,6 @@ export function SlotsScreen({ city }: { city: CityId }) {
 
   return (
     <div className="slots" ref={rootRef}>
-      <div className="slots-title">{t('slots.title')}</div>
 
       <div className={`slots-machine${result && result.prize !== 'none' ? ' won' : ''}`}>
         <div

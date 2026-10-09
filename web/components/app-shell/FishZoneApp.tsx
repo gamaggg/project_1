@@ -1492,7 +1492,7 @@ export function FishZoneApp() {
             <>
               <div className="header-row">
                 <BackButton onClick={pop} registerNative={false} />
-                <div />
+                <div style={{ fontWeight: 800, fontSize: 15 }}>{tr('slots.title')}</div>
                 <div style={{ width: 36 }} />
               </div>
               <div className="screen-inner">
