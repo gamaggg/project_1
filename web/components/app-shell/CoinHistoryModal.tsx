@@ -19,7 +19,10 @@ import { formatWhen } from '@/lib/format'
 export function CoinHistoryModal({ userId, displayName, onClose }: { userId?: string; displayName?: string; onClose: () => void }) {
   const own = useMyCoinTransactions()
   const admin = useAdminUserCoinTransactions(userId ?? null)
-  const { data: transactions = [], isLoading } = userId ? admin : own
+  const transactions = userId ? (admin.data ?? []) : (own.data?.pages.flat() ?? [])
+  const isLoading = userId ? admin.isLoading : own.isLoading
+  // Your own history goes back as far as it goes, a hundred at a time.
+  const more = !userId && own.hasNextPage
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
@@ -41,6 +44,11 @@ export function CoinHistoryModal({ userId, displayName, onClose }: { userId?: st
               </div>
             </div>
           ))}
+          {more && (
+            <button className="coin-history-more" disabled={own.isFetchingNextPage} onClick={() => void own.fetchNextPage()}>
+              {own.isFetchingNextPage ? 'Загружаем…' : 'Показать ещё'}
+            </button>
+          )}
         </div>
         <button className="btn-secondary" style={{ marginTop: 14 }} onClick={onClose}>
           Закрыть

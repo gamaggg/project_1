@@ -2453,20 +2453,36 @@ export type CoinTransaction = {
 // than being wired into every mutation's onSuccess (nine call sites across
 // four screens) — the history is opened on demand, not shown live, so a
 // fresh fetch each time it opens is simpler and just as correct.
+// A hundred at a time, «Показать ещё» for older ones — each page starts
+// right after the oldest row already shown (not at an offset), so coins that
+// land while the history is open don't push a row onto the next page twice.
+// The cursor is time and id together: a catch's reward and its capture are
+// written in the same instant, and a time-only cursor dropped one of them
+// when they fell on a page's edge.
+const COIN_HISTORY_PAGE = 100
 export function useMyCoinTransactions() {
   const { user } = useAuth()
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ['my-coin-transactions', user?.id ?? null],
     enabled: !!user,
-    queryFn: async (): Promise<CoinTransaction[]> => {
+    initialPageParam: null as { at: string; id: number } | null,
+    queryFn: async ({ pageParam }): Promise<CoinTransaction[]> => {
       const supabase = createClient()
-      const { data, error } = await supabase
+      let q = supabase
         .from('coin_transactions')
         .select('id, amount, reason, label, created_at')
         .order('created_at', { ascending: false })
-        .limit(100)
+        .order('id', { ascending: false })
+        .limit(COIN_HISTORY_PAGE)
+      if (pageParam) q = q.or(`created_at.lt.${pageParam.at},and(created_at.eq.${pageParam.at},id.lt.${pageParam.id})`)
+      const { data, error } = await q
       if (error) throw error
       return data.map((r) => ({ id: r.id, amount: r.amount, reason: r.reason, label: r.label, createdAt: r.created_at }))
+    },
+    getNextPageParam: (last) => {
+      if (last.length < COIN_HISTORY_PAGE) return undefined
+      const oldest = last[last.length - 1]
+      return { at: oldest.createdAt, id: oldest.id }
     },
   })
 }
