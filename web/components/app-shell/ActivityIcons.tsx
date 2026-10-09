@@ -23,6 +23,7 @@ const AWARD_BY_TITLE: Record<string, string> = {
   'Победитель битвы кланов': 'clan_race_winner',
   // The weekly race's earlier name — medals already issued keep it.
   'Победитель регаты': 'clan_race_winner',
+  'Хозяин горячего сектора': 'hot_sector',
 }
 
 const ACHIEVEMENT_BY_TITLE: Record<string, string> = {

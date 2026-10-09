@@ -181,7 +181,7 @@ export type WeeklyLeaderboardEntry = {
 // on any profile, distinct from Achievement (progress-grid, self-computed).
 // kind drives the icon/color (see awardIcons.tsx); title/subtitle/description
 // are plain text set when the award was granted, not recomputed client-side.
-export type AwardKind = 'weekly_rank' | 'guardian' | 'catch_of_month' | 'lightning' | 'season_legend' | 'night_watch' | 'duelist' | 'clan_race_winner'
+export type AwardKind = 'weekly_rank' | 'guardian' | 'catch_of_month' | 'lightning' | 'season_legend' | 'night_watch' | 'duelist' | 'clan_race_winner' | 'hot_sector'
 export type UserAward = {
   id: number
   kind: AwardKind

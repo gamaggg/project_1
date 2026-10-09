@@ -1,5 +1,6 @@
 import type { AwardKind } from '@/lib/data/types'
 import { ACH_ICONS } from '@/components/app-shell/icons'
+import { HOT_FLAME_PATH } from '@/lib/map/hotFlame'
 
 // Circular medals, not the hex badges achievements use — a deliberate visual
 // split so the two collectible systems never look interchangeable (see the
@@ -47,6 +48,15 @@ export const AWARD_ICONS: Record<AwardKind, React.ReactNode> = {
       <path d="M3 16.8h18l-2.3 3.2H5.3Z" />
     </svg>
   ),
+  // Held a hot sector to the end of the week (settle_hot_sectors): the
+  // sector's hexagon with the hot-sector flame inside — the same flame as on
+  // the map (lib/map/hotFlame.ts), so it reads as «that» sector.
+  hot_sector: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7.5 3.5h9L21 12l-4.5 8.5h-9L3 12z" />
+      <path transform="translate(4.56 3.62) scale(.62)" fill="currentColor" stroke="none" d={HOT_FLAME_PATH} />
+    </svg>
+  ),
 }
 
 export const AWARD_COLOR: Record<AwardKind, { color: string; colorHi: string }> = {
@@ -58,6 +68,7 @@ export const AWARD_COLOR: Record<AwardKind, { color: string; colorHi: string }> 
   night_watch: { color: '#3B4B9E', colorHi: '#C9D0F2' },
   duelist: { color: '#E0483E', colorHi: '#FFD3CF' },
   clan_race_winner: { color: '#1E8FB5', colorHi: '#BFEAF7' },
+  hot_sector: { color: '#D7261E', colorHi: '#FFB38A' },
 }
 
 // A medal kind this build doesn't know yet (added server-side before the
