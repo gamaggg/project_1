@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { SlotSymbol, slotSymbolSrc } from '@/components/app-shell/SlotSymbol'
 import { useAuth } from '@/components/providers/AuthProvider'
+import { observeScreenActive } from '@/lib/observeScreenActive'
 import { useSlotState, useSpinSlots, type SlotPrize, type SlotSpinResult, type SlotSymbol as SymbolId } from '@/lib/supabase/queries'
 import type { CityId } from '@/lib/data/city'
 import { JACKPOT_CHANCE } from '@/lib/data/shopItems'
@@ -136,12 +137,13 @@ export function SlotsScreen({ city }: { city: CityId }) {
   const local = (key: TKey) => (city === 'moscow' ? (MOSCOW_TEXT[key] ?? key) : key)
   const { user } = useAuth()
   const queryClient = useQueryClient()
-  const { data: state } = useSlotState()
+  const { data: state, dataUpdatedAt, refetch } = useSlotState()
   const spin = useSpinSlots()
 
   const [reels, setReels] = useState<Reel[]>(() => [idleReel('lufar', 0), idleReel('katran', 1), idleReel('hex', 2)])
   const [spinning, setSpinning] = useState(false)
   const [result, setResult] = useState<SlotSpinResult | null>(null)
+  const [resultAt, setResultAt] = useState(0)
   // A shield won with the reserve already full comes back as coins (spin_slots)
   // — said in a modal, since the reserve rule isn't on the machine itself.
   const [reserveFullCoins, setReserveFullCoins] = useState<number | null>(null)
@@ -149,11 +151,15 @@ export function SlotsScreen({ city }: { city: CityId }) {
   // The spin whose reels are still turning; null once it's been revealed.
   const activeRef = useRef<SlotSpinResult | null>(null)
 
-  const left = result ? result.left : (state?.left ?? 0)
-  const total = result ? result.total : (state?.total ?? 1)
+  // The last spin's counts only until the server's state is newer: it used to
+  // hold them for good, so a spin at night kept «0 из 1» on screen after the
+  // morning's catches had added spins (and after midnight's reset).
+  const fromResult = !!result && (!state || resultAt > dataUpdatedAt)
+  const left = fromResult ? result!.left : (state?.left ?? 0)
+  const total = fromResult ? result!.total : (state?.total ?? 1)
   // Gift spins from a super admin: part of `left`, spent after the day's own.
-  const bonus = result ? result.bonus : (state?.bonus ?? 0)
-  const freeShields = result ? result.freeShields : (state?.freeShields ?? 0)
+  const bonus = fromResult ? result!.bonus : (state?.bonus ?? 0)
+  const freeShields = fromResult ? result!.freeShields : (state?.freeShields ?? 0)
   const canSpin = !!state && left > 0 && !spinning && !spin.isPending
 
   // A reel whose transitionend never comes (the tab went to the background
@@ -199,6 +205,24 @@ export function SlotsScreen({ city }: { city: CityId }) {
     return () => window.clearInterval(id)
   }, [busy])
 
+  // Fresh counts whenever the slots come back on screen (screens stay mounted
+  // for hours; catches made on another device add spins) and when the day
+  // resets at midnight in the player's city.
+  useEffect(() => {
+    const el = rootRef.current
+    if (!el) return
+    return observeScreenActive(el, (active) => {
+      if (active) void refetch()
+    })
+  }, [refetch])
+  useEffect(() => {
+    if (!state?.nextReset) return
+    const ms = new Date(state.nextReset).getTime() - Date.now() + 2000
+    if (ms <= 0 || ms > 2 ** 31 - 1) return
+    const id = window.setTimeout(() => void refetch(), ms)
+    return () => window.clearTimeout(id)
+  }, [state?.nextReset, refetch])
+
   // All six pictures ready before the first spin, so no cell flies past empty.
   useEffect(() => {
     for (const symbol of SYMBOLS) new Image().src = slotSymbolSrc(symbol, city)
@@ -212,6 +236,7 @@ export function SlotsScreen({ city }: { city: CityId }) {
     settledAtRef.current = Date.now()
     setSpinning(false)
     setResult(res)
+    setResultAt(Date.now())
     if (res.prize !== 'none') hapticSuccess()
     if (res.prize === 'shield' && res.coins > 0) setReserveFullCoins(res.coins)
     queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })

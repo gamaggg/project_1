@@ -9,6 +9,7 @@ import { formatWeightGrams } from '@/lib/format'
 import { HexBadge } from '@/components/app-shell/HexBadge'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { useDoubleCoinsUntil } from '@/components/app-shell/DoubleCoinsChip'
 import { StoryButton } from '@/components/app-shell/StoryButton'
 import { SpeciesPicker } from '@/components/app-shell/SpeciesPicker'
 import { DefenseShields } from '@/components/app-shell/SectorDefense'
@@ -77,6 +78,8 @@ export function ConfirmScreen({
   onShare: () => void
 }) {
   const t = useT()
+  // the coins below are already doubled — say so, players couldn't tell
+  const doubled = useDoubleCoinsUntil() !== null
   const city = cityForSectorId(territory.id)
   const categories = CATEGORIES_BY_CITY[city]
   const baits = BAITS_BY_CITY[city]
@@ -226,6 +229,7 @@ export function ConfirmScreen({
         )}
         {(speciesCoins > 0 || captureCoins > 0) && (
           <div data-tour="catch-reward" className="catch-trophy-reward">
+            {doubled && <div className="catch-trophy-double">×2 · действуют двойные монеты</div>}
             {speciesCoins > 0 && (
               <div className="catch-trophy-reward-row">
                 <span>{caughtSpeciesName ?? pendingCatch?.species}</span>

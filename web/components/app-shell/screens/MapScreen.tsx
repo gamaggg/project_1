@@ -20,6 +20,7 @@ import { sectorHoldersCapturerFirst } from '@/lib/data/sectorHolders'
 import { mostPopularSectorId } from '@/lib/data/sectorOrder'
 import { MapRacePill } from '@/components/app-shell/ClanRace'
 import { TreasuryChip } from '@/components/app-shell/TreasuryChip'
+import { DoubleCoinsChip } from '@/components/app-shell/DoubleCoinsChip'
 import { HOT_FLAME_SVG } from '@/lib/map/hotFlame'
 import { useI18n } from '@/lib/i18n'
 import { formatWeekdayTime } from '@/lib/i18n/format'
@@ -438,6 +439,7 @@ export const MapScreen = forwardRef<
             {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
             <img src="/brand/logo_2.svg" alt="RANGE" className="map-hud-logo" />
             <TreasuryChip enabled={holdsSector} onToast={(msg) => onToast?.(msg)} />
+            <DoubleCoinsChip onToast={(msg) => onToast?.(msg)} />
             <div className="map-layer-switch" role="radiogroup" aria-label="Раскраска карты">
               <button type="button" role="radio" aria-checked={!clanLayer} className={`map-layer-opt${!clanLayer ? ' on' : ''}`} onClick={() => setLayer(false)}>
                 Игроки

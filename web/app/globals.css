@@ -3629,6 +3629,12 @@ button.race-lane{cursor:pointer;}
 
 /* ===== Казна: окно с объяснением ===== */
 .treasury-chip.done{opacity:.7;}
+/* «×2» next to Казна while double coins are on (DoubleCoinsChip.tsx). */
+.double-coins-chip{display:flex; align-items:baseline; gap:4px; flex:0 0 auto; height:30px; padding:0 9px; border:none; border-radius:999px; background:linear-gradient(160deg,#FFE08A,#F2B53A); box-shadow:inset 0 0 0 1.5px rgba(196,138,0,.45); color:#4A3000; font:inherit; font-size:12px; font-weight:800; font-variant-numeric:tabular-nums; cursor:pointer; line-height:30px;}
+.double-coins-chip b{font-size:14px; font-weight:900;}
+.double-coins-chip span{font-weight:700; color:#6B4800;}
+@media (max-width:359px){.double-coins-chip{padding:0 7px;} .double-coins-chip span{display:none;} .map-hud-bar{gap:8px;}}
+.catch-trophy-double{align-self:flex-start; margin-bottom:6px; padding:3px 9px; border-radius:999px; background:linear-gradient(160deg,#FFE08A,#F2B53A); color:#4A3000; font-size:12px; font-weight:800;}
 .treasury-sheet-body{display:flex; flex-direction:column; gap:12px; padding-bottom:18px;}
 .treasury-now{display:flex; align-items:center; gap:14px; padding:16px; border-radius:18px; background:#FAF8F3;}
 .treasury-now.ready{background:var(--accent-soft); box-shadow:inset 0 0 0 1.5px rgba(252,82,0,.3);}
