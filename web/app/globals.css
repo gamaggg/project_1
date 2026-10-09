@@ -3688,6 +3688,47 @@ button.race-lane{cursor:pointer;}
 /* ===== Казна: окно с объяснением ===== */
 .treasury-chip.done{opacity:.7;}
 /* «×2» next to Казна while double coins are on (DoubleCoinsChip.tsx). */
+/* «×2» and shields as one button of two equal halves (HudBoosts.tsx). */
+.hud-boosts{display:flex; flex:0 0 auto; height:30px; padding:0; border:none; border-radius:999px; overflow:hidden; font:inherit; cursor:pointer;}
+.hud-boosts > span{display:flex; align-items:center; justify-content:center; gap:3px; width:34px; height:100%; font-size:13px; font-weight:900; font-variant-numeric:tabular-nums;}
+.hud-boosts-double{background:linear-gradient(160deg,#FFE08A,#F2B53A); color:#4A3000;}
+.hud-boosts-shields{background:linear-gradient(160deg,#5FD3C0,#0E8074); color:#fff;}
+.boosts-modal{text-align:left;}
+.boosts-modal .modal-title{text-align:center; margin-bottom:12px;}
+.boosts-section{padding:12px; border-radius:16px;}
+.boosts-section + .boosts-section{margin-top:8px;}
+.boosts-section.gold{background:#FFF8E3; box-shadow:inset 0 0 0 1px rgba(217,142,11,.18);}
+.boosts-section.teal{background:#EEF8F6; box-shadow:inset 0 0 0 1px rgba(14,128,116,.16);}
+.boosts-head{display:flex; align-items:center; gap:10px;}
+.boosts-head > div{display:flex; flex-direction:column; gap:1px; min-width:0;}
+.boosts-head b{font-size:14.5px; font-weight:800; color:var(--ink);}
+.boosts-head span{font-size:12.5px; font-weight:700; color:var(--ink-soft);}
+.boosts-badge{flex:0 0 auto; width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:900;}
+.boosts-badge.gold{background:linear-gradient(160deg,#FFD86B,#E39A12); color:#3D2700;}
+.boosts-badge.teal{background:linear-gradient(160deg,#5FD3C0,#0E8074);}
+.boosts-text{margin-top:9px; font-size:13px; line-height:1.45; color:var(--ink-soft);}
+.boosts-modal .btn-primary{margin-top:14px;}
+/* Narrow phones: logo, Казна, boosts and the layer switch on one bar. */
+@media (max-width:359px){
+  .treasury-chip-cap{display:none;}
+  .map-hud-bar .map-hud-logo{height:14px;}
+  .map-hud-bar{gap:5px; padding-left:10px;}
+  .map-hud .map-layer-opt{padding:7px 5px; font-size:11.5px;}
+  .hud-boosts > span{width:31px;}
+}
+/* Shields in the reserve, next to «×2» (ShieldsChip.tsx) — the shield's teal. */
+.shields-chip{display:flex; align-items:center; gap:3px; flex:0 0 auto; height:30px; padding:0 9px 0 8px; border:none; border-radius:999px; background:linear-gradient(160deg,#5FD3C0,#0E8074); box-shadow:inset 0 0 0 1.5px rgba(8,90,80,.35); color:#fff; font:inherit; font-size:13px; font-weight:900; font-variant-numeric:tabular-nums; cursor:pointer;}
+.reserve-modal-shields{display:flex; justify-content:center; gap:10px; margin:4px 0 10px;}
+.reserve-modal-shield{width:52px; height:52px; border-radius:16px; display:flex; align-items:center; justify-content:center; background:#EEF7F5; animation:shield-badge-pop .45s var(--ease-out) both;}
+.reserve-modal-shield svg path{fill:rgba(14,128,116,.18);}
+.reserve-modal-shield.full{background:linear-gradient(160deg,#5FD3C0,#0E8074); box-shadow:0 6px 14px rgba(14,128,116,.3);}
+.reserve-modal-shield.full svg path{fill:#fff;}
+.reserve-modal-count{margin:8px 0 10px;}
+.reserve-modal-text{font-size:14px; line-height:1.45; color:var(--ink-soft);}
+.reserve-modal-how{margin-top:10px; padding:10px 12px; border-radius:14px; background:#F2FAF8; font-size:13px; line-height:1.45; color:#0B5F56; text-align:left;}
+.reserve-modal-how b{font-weight:800;}
+.reserve-modal-note{margin:10px 0 14px; font-size:12px; line-height:1.4; color:var(--ink-faint);}
+@media (prefers-reduced-motion: reduce){.reserve-modal-shield{animation:none;}}
 .double-coins-chip{display:flex; align-items:baseline; gap:4px; flex:0 0 auto; height:30px; padding:0 9px; border:none; border-radius:999px; background:linear-gradient(160deg,#FFE08A,#F2B53A); box-shadow:inset 0 0 0 1.5px rgba(196,138,0,.45); color:#4A3000; font:inherit; font-size:12px; font-weight:800; font-variant-numeric:tabular-nums; cursor:pointer; line-height:30px;}
 .double-coins-chip b{font-size:14px; font-weight:900;}
 .double-coins-chip span{font-weight:700; color:#6B4800;}

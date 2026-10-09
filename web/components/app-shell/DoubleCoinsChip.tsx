@@ -16,7 +16,7 @@ const ON_HOT = 'На горячем секторе улов — ×3'
 
 // The running «Двойные монеты» (bought in the shop or won as «3 крючка» in the
 // slots): when it started and when it ends, or null if it isn't on.
-function useDoubleCoins(): { from: number; until: number } | null {
+export function useDoubleCoins(): { from: number; until: number } | null {
   const { data: buffs = [] } = useMyActiveBuffs()
   const now = useNow(60_000)
   let best: { from: number; until: number } | null = null

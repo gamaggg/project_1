@@ -162,7 +162,6 @@ export function SlotsScreen({ city }: { city: CityId }) {
   const earnable = Math.max(0, DAILY_SPINS_MAX - total)
   // Gift spins from a super admin: part of `left`, spent after the day's own.
   const bonus = fromResult ? result!.bonus : (state?.bonus ?? 0)
-  const freeShields = fromResult ? result!.freeShields : (state?.freeShields ?? 0)
   const canSpin = !!state && left > 0 && !spinning && !spin.isPending
 
   // A reel whose transitionend never comes (the tab went to the background
@@ -375,7 +374,7 @@ export function SlotsScreen({ city }: { city: CityId }) {
           <span>{t('slots.giftHint')}</span>
         </div>
       )}
-      {freeShields > 0 && <div className="slots-shields">{t('slots.freeShields', { count: freeShields, max: SHIELD_RESERVE_MAX })}</div>}
+      {/* Shields in the reserve: the chip in the map's top panel (ShieldsChip). */}
       {reserveFullCoins !== null && <ReserveFullModal coins={reserveFullCoins} onClose={() => setReserveFullCoins(null)} />}
 
       <div className="slots-paytable">
