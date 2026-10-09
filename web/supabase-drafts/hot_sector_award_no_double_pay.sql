@@ -4,6 +4,8 @@
 -- 50 монет (×2 с удвоением) и второе уведомление «Новая награда» — итого
 -- 150–200 монет и два сообщения в Telegram вместо обещанных +100.
 -- Для hot_sector триггер теперь ничего не делает.
+-- И в описании медали больше нет монет (просьба 09.10): «Удержал горячий
+-- сектор B1173 до конца недели.»
 
 do $mig$
 declare
@@ -18,6 +20,19 @@ $o$, $n$  -- Горячий сектор: монеты и уведомление
   end if;
   v_coins := case
 $n$);
+  execute d;
+end
+$mig$;
+
+do $mig$
+declare
+  d text := pg_get_functiondef('public.settle_hot_sectors'::regproc);
+begin
+  if position($o$'Удержал горячий сектор ' || h.territory_id || ' до конца недели — +100 монет.'$o$ in d) = 0 then
+    raise exception 'settle_hot_sectors: description not found';
+  end if;
+  d := replace(d, $o$'Удержал горячий сектор ' || h.territory_id || ' до конца недели — +100 монет.'$o$,
+                  $n$'Удержал горячий сектор ' || h.territory_id || ' до конца недели.'$n$);
   execute d;
 end
 $mig$;
