@@ -439,7 +439,7 @@ export const MapScreen = forwardRef<
             {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
             <img src="/brand/logo_2.svg" alt="RANGE" className="map-hud-logo" />
             <TreasuryChip enabled={holdsSector} onToast={(msg) => onToast?.(msg)} />
-            <DoubleCoinsChip onToast={(msg) => onToast?.(msg)} />
+            <DoubleCoinsChip />
             <div className="map-layer-switch" role="radiogroup" aria-label="Раскраска карты">
               <button type="button" role="radio" aria-checked={!clanLayer} className={`map-layer-opt${!clanLayer ? ' on' : ''}`} onClick={() => setLayer(false)}>
                 Игроки

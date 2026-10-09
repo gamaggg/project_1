@@ -157,6 +157,8 @@ export function SlotsScreen({ city }: { city: CityId }) {
   const fromResult = !!result && (!state || resultAt > dataUpdatedAt)
   const left = fromResult ? result!.left : (state?.left ?? 0)
   const total = fromResult ? result!.total : (state?.total ?? 1)
+  // Spins today's catches can still add before the daily cap.
+  const earnable = Math.max(0, DAILY_SPINS_MAX - total)
   // Gift spins from a super admin: part of `left`, spent after the day's own.
   const bonus = fromResult ? result!.bonus : (state?.bonus ?? 0)
   const freeShields = fromResult ? result!.freeShields : (state?.freeShields ?? 0)
@@ -353,11 +355,19 @@ export function SlotsScreen({ city }: { city: CityId }) {
       <button className="btn-primary slots-spin" disabled={!canSpin} onClick={start}>
         {spinning || spin.isPending ? t('slots.spinning') : left > 0 ? t('slots.spin') : t('slots.noSpins')}
       </button>
-      <div className="slots-count">{t('slots.spinsToday', { left: left - bonus, total })}</div>
-      {/* At the day's cap (DAILY_SPINS_MAX, _slot_day_state on the server) another
-          catch brings no spin, so the hint says so instead of promising one. */}
+      <div className="slots-count">{t('slots.spinsToday', { left: left - bonus })}</div>
+      {/* How many more spins catches can still bring today — at the day's cap
+          (DAILY_SPINS_MAX, _slot_day_state on the server) another catch brings
+          none, so the hint says so instead of promising one. «2 из 3» next to
+          «до 4 в день» read as a contradiction. */}
       <div className="slots-hint">
-        {left > 0 ? t('slots.perCatch') : total >= DAILY_SPINS_MAX ? t('slots.limitHint') : t('slots.noSpinsHint')}
+        {earnable > 0
+          ? left > 0
+            ? t('slots.perCatch', { count: earnable })
+            : t('slots.noSpinsHint')
+          : left > 0
+            ? t('slots.allEarned')
+            : t('slots.limitHint')}
       </div>
       {bonus > 0 && (
         <div className="slots-gift">
