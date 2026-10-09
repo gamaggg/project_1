@@ -111,7 +111,7 @@ export const en: Dict = {
     bonus: '×2 coins per catch, ×3 to the Treasury',
     bonusDoubled: '×3 coins per catch with your double coins, ×3 to the Treasury',
     noShield: 'No shields here: the sector is open to everyone',
-    holdReward: 'Hold it to the end of the week: +100 coins and a medal',
+    holdReward: 'Hold it to the end of the week: +100 coins and a medal, if anyone fished here this week',
   },
   insights: {
     title: 'What’s biting here',

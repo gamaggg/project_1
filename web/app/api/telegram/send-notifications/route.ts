@@ -222,7 +222,7 @@ function renderMessage(notification: NotificationRef): Message | null {
       if (!sectors.length) return null
       const city = sectors[0].startsWith('M') ? 'Москве' : 'Батуми'
       return {
-        text: `🔥 Горячие сектора недели в ${city}: ${sectors.join(' и ')}.\n\nДо конца воскресенья — ×2 монеты за улов (с «Двойными монетами» — ×3) и ×3 в Казну. Щиты на них не ставятся. Кто удержит сектор до конца недели, получит +100 монет и медаль.`,
+        text: `🔥 Горячие сектора недели в ${city}: ${sectors.join(' и ')}.\n\nДо конца воскресенья — ×2 монеты за улов (с «Двойными монетами» — ×3) и ×3 в Казну. Щиты на них не ставятся. Кто удержит сектор до конца недели, получит +100 монет и медаль — если за неделю на нём поймают хоть одну рыбу.`,
         buttonLabel: 'Открыть сектор',
         url: `${SITE_URL}/?territory=${encodeURIComponent(sectors[0])}`,
       }
