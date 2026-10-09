@@ -3693,21 +3693,13 @@ button.race-lane{cursor:pointer;}
 .hud-boosts > span{display:flex; align-items:center; justify-content:center; gap:3px; width:34px; height:100%; font-size:13px; font-weight:900; font-variant-numeric:tabular-nums;}
 .hud-boosts-double{background:linear-gradient(160deg,#FFE08A,#F2B53A); color:#4A3000;}
 .hud-boosts-shields{background:linear-gradient(160deg,#5FD3C0,#0E8074); color:#fff;}
-.boosts-modal{text-align:left;}
-.boosts-modal .modal-title{text-align:center; margin-bottom:12px;}
-.boosts-section{padding:12px; border-radius:16px;}
-.boosts-section + .boosts-section{margin-top:8px;}
-.boosts-section.gold{background:#FFF8E3; box-shadow:inset 0 0 0 1px rgba(217,142,11,.18);}
-.boosts-section.teal{background:#EEF8F6; box-shadow:inset 0 0 0 1px rgba(14,128,116,.16);}
-.boosts-head{display:flex; align-items:center; gap:10px;}
-.boosts-head > div{display:flex; flex-direction:column; gap:1px; min-width:0;}
-.boosts-head b{font-size:14.5px; font-weight:800; color:var(--ink);}
-.boosts-head span{font-size:12.5px; font-weight:700; color:var(--ink-soft);}
-.boosts-badge{flex:0 0 auto; width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:900;}
-.boosts-badge.gold{background:linear-gradient(160deg,#FFD86B,#E39A12); color:#3D2700;}
-.boosts-badge.teal{background:linear-gradient(160deg,#5FD3C0,#0E8074);}
-.boosts-text{margin-top:9px; font-size:13px; line-height:1.45; color:var(--ink-soft);}
-.boosts-modal .btn-primary{margin-top:14px;}
+.boosts-tabs{display:flex; gap:4px; margin:-8px 0 14px; padding:3px; border-radius:13px; background:rgba(20,30,40,.06);}
+.boosts-tab{flex:1; display:inline-flex; align-items:center; justify-content:center; gap:5px; padding:8px 6px; border:none; border-radius:10px; background:none; font:inherit; font-size:13px; font-weight:800; color:var(--ink-soft); cursor:pointer; transition:background .2s, color .2s;}
+.boosts-tab.gold.on{background:linear-gradient(160deg,#FFE08A,#F2B53A); color:#4A3000; box-shadow:0 2px 6px rgba(196,138,0,.25);}
+.boosts-tab.teal.on{background:linear-gradient(160deg,#5FD3C0,#0E8074); color:#fff; box-shadow:0 2px 6px rgba(14,128,116,.25);}
+.boosts-tab-body{animation:boosts-tab-in .25s var(--ease-out) both;}
+@keyframes boosts-tab-in{from{opacity:0; transform:translateY(4px);}}
+@media (prefers-reduced-motion: reduce){.boosts-tab-body{animation:none;}}
 /* Narrow phones: logo, Казна, boosts and the layer switch on one bar. */
 @media (max-width:359px){
   .treasury-chip-cap{display:none;}

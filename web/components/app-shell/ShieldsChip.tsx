@@ -43,32 +43,42 @@ function ShieldReserveModal({ count, onClose }: { count: number; onClose: () => 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card shield-modal reserve-modal" role="dialog" aria-label="Щиты в запасе" onClick={(e) => e.stopPropagation()}>
-        <div className="reserve-modal-shields" aria-hidden>
-          {Array.from({ length: SHIELD_RESERVE_MAX }, (_, i) => (
-            <span key={i} className={`reserve-modal-shield${i < count ? ' full' : ''}`} style={{ animationDelay: `${0.08 + i * 0.1}s` }}>
-              <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden>
-                <path d={SHIELD_PATH} />
-              </svg>
-            </span>
-          ))}
-        </div>
-        <div className="modal-title shield-modal-title">Щиты в запасе</div>
-        <div className="shield-modal-timer reserve-modal-count">
-          <b>
-            {count}
-            <small>из {SHIELD_RESERVE_MAX}</small>
-          </b>
-        </div>
-        <div className="reserve-modal-text">Щит закрывает твой сектор на 24 часа: чужой улов там не засчитается, а соклановцы ловить могут.</div>
-        <div className="reserve-modal-how">
-          Поставить — на экране своего сектора, кнопка <b>«Поставить щит»</b>. На горячий сектор щит не ставится.
-        </div>
-        <div className="reserve-modal-note">Новые щиты выпадают в слотах — «3 соты». В запасе помещается {SHIELD_RESERVE_MAX}.</div>
+        <ShieldReserveContent count={count} />
         <button className="btn-primary" onClick={onClose}>
           Понятно
         </button>
       </div>
     </div>,
     document.body
+  )
+}
+
+// The sheet's body — also the «Щиты» tab of the combined «×2 · щиты» sheet
+// (HudBoosts).
+export function ShieldReserveContent({ count }: { count: number }) {
+  return (
+    <>
+      <div className="reserve-modal-shields" aria-hidden>
+        {Array.from({ length: SHIELD_RESERVE_MAX }, (_, i) => (
+          <span key={i} className={`reserve-modal-shield${i < count ? ' full' : ''}`} style={{ animationDelay: `${0.08 + i * 0.1}s` }}>
+            <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden>
+              <path d={SHIELD_PATH} />
+            </svg>
+          </span>
+        ))}
+      </div>
+      <div className="modal-title shield-modal-title">Щиты в запасе</div>
+      <div className="shield-modal-timer reserve-modal-count">
+        <b>
+          {count}
+          <small>из {SHIELD_RESERVE_MAX}</small>
+        </b>
+      </div>
+      <div className="reserve-modal-text">Щит закрывает твой сектор на 24 часа: чужой улов там не засчитается, а соклановцы ловить могут.</div>
+      <div className="reserve-modal-how">
+        Поставить — на экране своего сектора, кнопка <b>«Поставить щит»</b>. На горячий сектор щит не ставится.
+      </div>
+      <div className="reserve-modal-note">Новые щиты выпадают в слотах — «3 соты». В запасе помещается {SHIELD_RESERVE_MAX}.</div>
+    </>
   )
 }

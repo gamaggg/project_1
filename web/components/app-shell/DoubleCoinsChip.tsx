@@ -71,6 +71,22 @@ const RING_R = 58
 const RING_C = 2 * Math.PI * RING_R
 
 function DoubleCoinsModal({ from, until, onClose }: { from: number; until: number; onClose: () => void }) {
+  return createPortal(
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card double-modal" role="dialog" aria-label="Двойные монеты" onClick={(e) => e.stopPropagation()}>
+        <DoubleCoinsContent from={from} until={until} />
+        <button className="btn-primary" onClick={onClose}>
+          Понятно
+        </button>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+// The sheet's body — also the «×2» tab of the combined «×2 · щиты» sheet
+// (HudBoosts).
+export function DoubleCoinsContent({ from, until }: { from: number; until: number }) {
   const now = useNow(30_000)
   const leftMs = Math.max(0, until - now)
   const minutes = Math.max(1, Math.ceil(leftMs / 60_000))
@@ -78,73 +94,66 @@ function DoubleCoinsModal({ from, until, onClose }: { from: number; until: numbe
   const m = minutes % 60
   const share = Math.min(1, leftMs / Math.max(1, until - from))
 
-  return createPortal(
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card double-modal" role="dialog" aria-label="Двойные монеты" onClick={(e) => e.stopPropagation()}>
-        <div className="double-modal-hero" aria-hidden>
-          <svg className="double-modal-ring" width="140" height="140" viewBox="0 0 140 140">
-            <defs>
-              <linearGradient id="double-ring-grad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stopColor="#FFD86B" />
-                <stop offset="1" stopColor="#D98E0B" />
-              </linearGradient>
-            </defs>
-            <circle cx="70" cy="70" r={RING_R} fill="none" stroke="rgba(217,142,11,.14)" strokeWidth="7" />
-            <circle
-              className="double-modal-ring-left"
-              cx="70"
-              cy="70"
-              r={RING_R}
-              fill="none"
-              stroke="url(#double-ring-grad)"
-              strokeWidth="7"
-              strokeLinecap="round"
-              strokeDasharray={RING_C}
-              strokeDashoffset={RING_C * (1 - share)}
-              style={{ ['--ring-c' as string]: RING_C }}
-              transform="rotate(-90 70 70)"
-            />
-          </svg>
-          <div className="double-modal-coin">
-            <CoinIcon size={56} animated="spin" />
-          </div>
-          <div className="double-modal-badge">×2</div>
+  return (
+    <>
+      <div className="double-modal-hero" aria-hidden>
+        <svg className="double-modal-ring" width="140" height="140" viewBox="0 0 140 140">
+          <defs>
+            <linearGradient id="double-ring-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#FFD86B" />
+              <stop offset="1" stopColor="#D98E0B" />
+            </linearGradient>
+          </defs>
+          <circle cx="70" cy="70" r={RING_R} fill="none" stroke="rgba(217,142,11,.14)" strokeWidth="7" />
+          <circle
+            className="double-modal-ring-left"
+            cx="70"
+            cy="70"
+            r={RING_R}
+            fill="none"
+            stroke="url(#double-ring-grad)"
+            strokeWidth="7"
+            strokeLinecap="round"
+            strokeDasharray={RING_C}
+            strokeDashoffset={RING_C * (1 - share)}
+            style={{ ['--ring-c' as string]: RING_C }}
+            transform="rotate(-90 70 70)"
+          />
+        </svg>
+        <div className="double-modal-coin">
+          <CoinIcon size={56} animated="spin" />
         </div>
-
-        <div className="modal-title double-modal-title">Двойные монеты</div>
-
-        <div className="double-modal-timer">
-          <b>
-            {h > 0 && (
-              <>
-                {h}
-                <small>ч</small>{' '}
-              </>
-            )}
-            {m}
-            <small>мин</small>
-          </b>
-          <span>до конца удвоения</span>
-        </div>
-
-        <div className="double-modal-what">
-          <div className="double-modal-kicker">Вдвое больше монет за</div>
-          <div className="double-modal-chips">
-            {DOUBLED.map((item) => (
-              <span key={item}>{item}</span>
-            ))}
-          </div>
-        </div>
-        <div className="double-modal-note">
-          <b>{ON_HOT}</b>
-          {NOT_DOUBLED}
-        </div>
-
-        <button className="btn-primary" onClick={onClose}>
-          Понятно
-        </button>
+        <div className="double-modal-badge">×2</div>
       </div>
-    </div>,
-    document.body
+
+      <div className="modal-title double-modal-title">Двойные монеты</div>
+
+      <div className="double-modal-timer">
+        <b>
+          {h > 0 && (
+            <>
+              {h}
+              <small>ч</small>{' '}
+            </>
+          )}
+          {m}
+          <small>мин</small>
+        </b>
+        <span>до конца удвоения</span>
+      </div>
+
+      <div className="double-modal-what">
+        <div className="double-modal-kicker">Вдвое больше монет за</div>
+        <div className="double-modal-chips">
+          {DOUBLED.map((item) => (
+            <span key={item}>{item}</span>
+          ))}
+        </div>
+      </div>
+      <div className="double-modal-note">
+        <b>{ON_HOT}</b>
+        {NOT_DOUBLED}
+      </div>
+    </>
   )
 }

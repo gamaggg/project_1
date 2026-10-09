@@ -2,15 +2,14 @@
 
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { DoubleCoinsChip, useDoubleCoins } from '@/components/app-shell/DoubleCoinsChip'
-import { SHIELD_PATH, SHIELD_RESERVE_MAX, ShieldsChip } from '@/components/app-shell/ShieldsChip'
+import { DoubleCoinsChip, DoubleCoinsContent, useDoubleCoins } from '@/components/app-shell/DoubleCoinsChip'
+import { SHIELD_PATH, ShieldReserveContent, ShieldsChip } from '@/components/app-shell/ShieldsChip'
 import { useSlotState } from '@/lib/supabase/queries'
-import { useNow } from '@/lib/useNow'
 import { hapticTap } from '@/lib/telegram/haptics'
 
 // «×2» and the shields in the reserve, in the map's top panel. A player with
 // both gets one button of two equal halves — two pills pushed the «Игроки /
-// Кланы» switch off the bar — and one sheet with both inside.
+// Кланы» switch off the bar — and one sheet with both, as two tabs.
 export function HudBoosts() {
   const buff = useDoubleCoins()
   const { data: slots } = useSlotState()
@@ -43,54 +42,37 @@ export function HudBoosts() {
           {shields}
         </span>
       </button>
-      {open && <BoostsModal until={buff.until} shields={shields} onClose={() => setOpen(false)} />}
+      {open && <BoostsModal from={buff.from} until={buff.until} shields={shields} onClose={() => setOpen(false)} />}
     </>
   )
 }
 
-function BoostsModal({ until, shields, onClose }: { until: number; shields: number; onClose: () => void }) {
-  const now = useNow(30_000)
-  const minutes = Math.max(1, Math.ceil(Math.max(0, until - now) / 60_000))
-  const h = Math.floor(minutes / 60)
-  const m = minutes % 60
+// Both sheets in one, as tabs: «×2» first, «Щиты» beside it — each tab is the
+// same sheet its own chip opens, card colours and all.
+function BoostsModal({ from, until, shields, onClose }: { from: number; until: number; shields: number; onClose: () => void }) {
+  const [tab, setTab] = useState<'double' | 'shields'>('double')
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card boosts-modal" role="dialog" aria-label="Твои бонусы" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-title">Твои бонусы</div>
-
-        <div className="boosts-section gold">
-          <div className="boosts-head">
-            <span className="boosts-badge gold">×2</span>
-            <div>
-              <b>Двойные монеты</b>
-              <span>
-                ещё {h > 0 ? `${h} ч ` : ''}
-                {m} мин
-              </span>
-            </div>
-          </div>
-          <div className="boosts-text">Вдвое больше монет за уловы, захваты, челленджи, достижения и награды клана. На горячем секторе улов — ×3.</div>
+      <div
+        className={`modal-card boosts-modal ${tab === 'double' ? 'double-modal' : 'shield-modal reserve-modal'}`}
+        role="dialog"
+        aria-label="Твои бонусы"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="boosts-tabs" role="tablist">
+          <button type="button" role="tab" aria-selected={tab === 'double'} className={`boosts-tab gold${tab === 'double' ? ' on' : ''}`} onClick={() => setTab('double')}>
+            ×2 монеты
+          </button>
+          <button type="button" role="tab" aria-selected={tab === 'shields'} className={`boosts-tab teal${tab === 'shields' ? ' on' : ''}`} onClick={() => setTab('shields')}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <path d={SHIELD_PATH} />
+            </svg>
+            Щиты · {shields}
+          </button>
         </div>
-
-        <div className="boosts-section teal">
-          <div className="boosts-head">
-            <span className="boosts-badge teal">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" aria-hidden>
-                <path d={SHIELD_PATH} />
-              </svg>
-            </span>
-            <div>
-              <b>
-                Щиты в запасе: {shields} из {SHIELD_RESERVE_MAX}
-              </b>
-              <span>щит закрывает сектор на 24 часа</span>
-            </div>
-          </div>
-          <div className="boosts-text">
-            Поставить — на экране своего сектора, кнопка «Поставить щит». На горячий сектор щит не ставится.
-          </div>
+        <div key={tab} className="boosts-tab-body">
+          {tab === 'double' ? <DoubleCoinsContent from={from} until={until} /> : <ShieldReserveContent count={shields} />}
         </div>
-
         <button className="btn-primary" onClick={onClose}>
           Понятно
         </button>
