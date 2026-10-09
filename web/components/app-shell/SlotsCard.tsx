@@ -42,7 +42,7 @@ export function SlotsCard({ city, onOpen }: { city: CityId; onOpen: () => void }
       <span className="slots-card-reels" aria-hidden>
         {(['katran', 'hook', 'hex'] as const).map((s) => (
           <span key={s} className="slots-card-reel">
-            <SlotSymbol symbol={s} city={city} size={18} />
+            <SlotSymbol symbol={s} city={city} size={22} />
           </span>
         ))}
         {left > 0 && <span className="slots-card-count">{left}</span>}

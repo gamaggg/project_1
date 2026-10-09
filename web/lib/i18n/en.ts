@@ -6,7 +6,7 @@ export const en: Dict = {
     tryAgain: 'Something went wrong, try again',
   },
   slots: {
-    card: { prizes: 'Shields, ×2 coins and a jackpot', catchForSpin: 'Catch a fish: +1 spin', tomorrow: 'New spins after midnight' },
+    card: { prizes: 'Shields, ×2 coins and a jackpot', catchForSpin: 'No spins left. A catch gives one', tomorrow: 'No spins left. New ones tomorrow' },
     title: 'Angler’s slots',
     spinsToday: 'Spins left: {left}',
     gift: 'Bonus spins: {count}',
