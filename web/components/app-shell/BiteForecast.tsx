@@ -486,6 +486,8 @@ function ForecastSheet({
                 value={t('forecast.windValue', { value: num(day.wind), dir: t(`forecast.windDirs.${compassPoint(day.windDir)}` as TKey), gusts: Math.round(day.gusts) })}
               />
               {day.wave != null && tones.wave && <FactorRow tone={tones.wave} label={t('forecast.wave')} value={t('forecast.waveValue', { value: num(day.wave) })} />}
+              {/* Sea surface temperature: shown, not scored — so neutral, like the sun. */}
+              {day.waterTemp != null && <FactorRow tone="ok" label={t('forecast.water')} value={t('forecast.waterValue', { value: num(day.waterTemp) })} />}
               <FactorRow
                 tone={tones.rain}
                 label={t('forecast.rain')}
