@@ -50,6 +50,7 @@ export function DoubleCoinsChip() {
     <>
       <button
         type="button"
+        data-tour="double"
         className="double-coins-chip tap-scale"
         aria-label={`Двойные монеты, ещё ${rest}`}
         onClick={() => {

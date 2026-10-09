@@ -22,12 +22,14 @@ export function MyCatchesScreen({
   onBack,
   onOpenPhoto,
   onOpenUser,
+  onOpenTerritory,
   onToast,
 }: {
   userId?: string
   territoryId?: string
   onBack: () => void
   onOpenPhoto: (catchId: number) => void
+  onOpenTerritory?: (id: string) => void
   onOpenUser: (id: string) => void
   onToast: (msg: string) => void
 }) {
@@ -60,7 +62,7 @@ export function MyCatchesScreen({
           </div>
         )}
         {isOwn && tab === 'diary' ? (
-          <DiaryView onOpenPhoto={onOpenPhoto} onToast={onToast} />
+          <DiaryView onOpenPhoto={onOpenPhoto} onOpenTerritory={onOpenTerritory} onToast={onToast} />
         ) : (
           <div className="card" style={{ overflow: 'hidden' }}>
             {catches.length ? (

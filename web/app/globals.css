@@ -598,7 +598,7 @@ body{
 .shop-wallet .slots-card.tap-scale{transition:filter .15s var(--ease);}
 .shop-wallet .slots-card.tap-scale:active{transform:none; filter:brightness(.9);}
 .slots-card-reels{transition:transform .15s var(--ease);}
-.shop-wallet .slots-card:active .slots-card-reels{transform:rotate(-6deg) scale(.9);}
+.shop-wallet .slots-card:active .slots-card-reels{transform:rotate(-3deg) scale(.9);}
 
 /* ---- Slots sticker on the map (see SlotsSticker.tsx) ---- */
 .slots-sticker-wrap{position:relative; align-self:flex-end; margin-left:20px; transform:rotate(5deg); animation:recap-sticker-in .45s var(--ease-out) .15s both;}
@@ -618,7 +618,7 @@ body{
 .slots-card{position:relative; overflow:hidden; display:flex; align-items:center; gap:14px; width:100%; margin-top:10px; padding:18px 14px 18px 16px; border:none; border-radius:20px; background:linear-gradient(135deg,#123A5C 0%,#0D5F78 100%); box-shadow:0 6px 16px rgba(13,60,92,.22); color:#fff; font:inherit; text-align:left; cursor:pointer;}
 .slots-card > *:not(.slots-card-shine){position:relative; z-index:1;}
 .slots-card-shine{position:absolute; inset:0; z-index:0; pointer-events:none; background:linear-gradient(115deg, transparent 40%, rgba(255,255,255,.14) 50%, transparent 60%); background-repeat:no-repeat; background-size:250% 250%; animation:shopHeroShine 4.5s ease-in-out 1.2s infinite;}
-.slots-card-reels{position:relative; flex:0 0 auto; display:flex; gap:4px; margin:0 2px 0 0; padding:5px; border-radius:13px; background:linear-gradient(180deg,#FFD86B,#E39A12); box-shadow:0 6px 14px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.5); transform:rotate(-6deg);}
+.slots-card-reels{position:relative; flex:0 0 auto; display:flex; gap:4px; margin:0 2px 0 0; padding:5px; border-radius:13px; background:linear-gradient(180deg,#FFD86B,#E39A12); box-shadow:0 6px 14px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.5); transform:rotate(-3deg);}
 .slots-card-reel{width:32px; height:42px; border-radius:7px; background:linear-gradient(180deg,#FFFFFF,#EAF2F6); box-shadow:inset 0 -2px 0 rgba(13,60,92,.12); display:flex; align-items:center; justify-content:center; overflow:hidden;}
 .slots-card-reel .slot-symbol{max-width:calc(100% - 4px);}
 .slots-card-count{position:absolute; top:-7px; right:-7px; min-width:20px; height:20px; padding:0 5px; border-radius:10px; background:linear-gradient(160deg,#FF7A2F,#E84A00); border:2px solid #123A5C; color:#fff; font-size:11.5px; font-weight:900; font-variant-numeric:tabular-nums; display:flex; align-items:center; justify-content:center; animation:shield-badge-pop .5s var(--ease-out) .2s both;}
@@ -802,7 +802,7 @@ body{
 .leaflet-territory-label.hot{display:flex; align-items:center; gap:2px; padding:2px 6px 2px 4px; background:#FC5200; box-shadow:0 0 0 1.5px #fff, 0 2px 8px rgba(252,82,0,.5);}
 .leaflet-territory-label.hot svg{flex:0 0 auto; display:block;}
 
-/* ---- Ежедневная награда (DailyRewardCard, under the Shop balance) ---- */
+/* ---- Ежедневная награда: the ten-day strip (RewardsModal.tsx) ---- */
 .daily-card{margin-top:10px; padding:12px 12px 10px; border-radius:18px; background:#fff; border:1px solid var(--line); box-shadow:var(--shadow-sm);}
 .daily-head{display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:9px;}
 .daily-title{font-weight:800; font-size:14px;}
@@ -828,7 +828,7 @@ body{
    Reel motion adapted from StealthWorm's loader on Uiverse (MIT):
    https://uiverse.io/StealthWorm/chatty-zebra-11 */
 /* The slots screen's title, in the header row beside «Назад». */
-.slots-title{font-family:var(--font-display),'Manrope',sans-serif; font-weight:700; font-size:24px; line-height:1; text-transform:uppercase; letter-spacing:.02em; text-align:center;}
+.slots-title{margin:-6px 0 6px; font-family:var(--font-display),'Manrope',sans-serif; font-weight:700; font-size:clamp(28px, 9.6vw, 40px); line-height:1.05; text-transform:uppercase; letter-spacing:.03em; text-align:center; white-space:nowrap;}
 .slots{--slot-cell:92px; display:flex; flex-direction:column; padding:8px 0 8px;}
 .slots-machine{position:relative; background:#17181B; border-radius:24px; padding:14px; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06), 0 12px 28px rgba(23,24,27,.22); transition:box-shadow .3s var(--ease);}
 .slots-machine.won{box-shadow:inset 0 0 0 2px var(--accent), 0 0 0 5px rgba(252,82,0,.16), 0 12px 28px rgba(23,24,27,.22); animation:slots-won .5s var(--ease-out);}
@@ -882,6 +882,129 @@ body{
 @media (prefers-reduced-motion: reduce){
   .slot-strip{transition:none !important; animation:none !important;}
   .slots-result-text,.slots-machine.won{animation:none;}
+}
+
+/* ---- Slots «Ночной автомат» (SlotsScreen): the night-sea screen, a gold
+   cabinet with marquee bulbs. Layered over the base slots rules above. ---- */
+.slots-pips{display:flex; justify-content:center; gap:8px; margin-top:16px;}
+.slots-pip{width:18px; height:18px; border-radius:50%; border:2px dashed #E3DCD1;}
+.slots-pip.used{border-style:solid; background:#F3EEE6;}
+.slots-pip.on{border:none; background:radial-gradient(circle at 35% 30%, #FFF4C2 0%, #F7C547 45%, #C98A0E 100%); box-shadow:0 0 0 2px rgba(255,255,255,.7) inset, 0 2px 6px rgba(201,138,14,.45);}
+
+#screen-slots{background:radial-gradient(130% 70% at 50% 16%, #1E6189 0%, #0F3A5A 42%, #08192A 100%);}
+#screen-slots .slots-title{color:#FFE3A1; text-shadow:0 0 22px rgba(255,190,80,.5);}
+#screen-slots .icon-btn{background:rgba(255,255,255,.12); box-shadow:none;}
+#screen-slots .icon-btn svg{stroke:#FFE3A1;}
+/* impeccable-disable-next-line side-tab: top/bottom bevel highlights on the cabinet, not a side accent */
+.slots .slots-machine{padding:26px 12px; border-radius:30px; background:linear-gradient(180deg,#FFE9A6 0%,#F5C451 16%,#DD9A1C 58%,#B3700A 100%); box-shadow:0 22px 44px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.65), inset 0 -3px 0 rgba(110,60,0,.55);}
+.slots .slots-machine.won{box-shadow:0 0 0 4px rgba(255,214,110,.35), 0 0 46px rgba(255,190,70,.55), 0 22px 44px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.65);}
+.slots .slots-glass{padding:10px; border-radius:20px; background:linear-gradient(180deg,#0A1E31,#11314C); box-shadow:inset 0 3px 10px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.45);}
+.slots .slot-reel{border-radius:14px; background:linear-gradient(180deg,#FFFDF5,#F1EADB);}
+.slots .slot-reel::before{background:linear-gradient(#FFFDF5 15%, rgba(255,253,245,0));}
+.slots .slot-reel::after{background:linear-gradient(rgba(241,234,219,0), #F1EADB 85%);}
+.slots .slots-payline{left:-10px; right:-10px; height:3px; margin-top:-1.5px; background:#FF6A1F; opacity:1; box-shadow:0 0 10px rgba(255,106,31,.85);}
+.slots .slots-machine.won .slots-payline{animation:payline-flash .32s steps(2) 6;}
+@keyframes payline-flash{50%{opacity:.3;}}
+.slots .slots-payline::before,.slots .slots-payline::after{content:''; position:absolute; top:50%; margin-top:-6px; border-top:6px solid transparent; border-bottom:6px solid transparent;}
+/* impeccable-disable-next-line side-tab: a CSS border triangle (payline arrow), not a card edge */
+.slots .slots-payline::before{left:-1px; border-left:8px solid #FF6A1F;}
+/* impeccable-disable-next-line side-tab: a CSS border triangle (payline arrow), not a card edge */
+.slots .slots-payline::after{right:-1px; border-right:8px solid #FF6A1F;}
+.slots-bulbs{position:absolute; left:22px; right:22px; display:flex; justify-content:space-between; pointer-events:none;}
+.slots-bulbs.top{top:9px;}
+.slots-bulbs.bottom{bottom:9px;}
+/* At rest two lights chase round the marquee for good — each bulb flares as
+   they pass and goes dim behind them (--i runs clockwise: the top row left
+   to right, the bottom right to left). A spin speeds the chase up. */
+.slots-bulb{width:8px; height:8px; border-radius:50%; background:#FFF8DD; box-shadow:0 0 6px 1px rgba(255,236,170,.9), inset 0 -1px 1px rgba(180,110,0,.35); opacity:.3; transform:scale(.85); animation:bulb-marquee 2.7s linear infinite; animation-delay:calc(var(--i) * .15s - 2.7s);}
+@keyframes bulb-marquee{
+  0%{opacity:1; transform:scale(1.15);}
+  9%{opacity:.6; transform:scale(1);}
+  20%,50%{opacity:.3; transform:scale(.85);}
+  50.01%{opacity:1; transform:scale(1.15);}
+  59%{opacity:.6; transform:scale(1);}
+  70%,100%{opacity:.3; transform:scale(.85);}
+}
+.slots-machine.spinning .slots-bulb{animation:bulb-chase .9s linear infinite; animation-delay:calc(var(--i) * .05s);}
+@keyframes bulb-chase{0%,100%{opacity:.35; transform:scale(.85);} 10%{opacity:1; transform:scale(1.2);} 30%{opacity:.35; transform:scale(.85);}}
+/* A win flashes them all six times, then the chase picks up again. */
+.slots-machine.won .slots-bulb{animation:bulb-flash .32s steps(2) 6, bulb-marquee 2.7s linear calc(1.92s + var(--i) * .15s) infinite;}
+@keyframes bulb-flash{0%{opacity:1; background:#fff;} 50%{opacity:.25;}}
+.slots .slots-result-text{color:#FFE3A1; text-shadow:0 0 14px rgba(255,190,80,.4);}
+.slots .slots-result-text.miss{color:rgba(255,255,255,.6); text-shadow:none;}
+.slots .slots-spin{height:62px; margin-top:4px; border-radius:20px; background:linear-gradient(180deg,#FF9F55 0%,#FC5200 52%,#DE4300 100%); box-shadow:0 6px 0 #962C00, 0 16px 26px rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.4); font-family:var(--font-display),'Oswald',sans-serif; font-size:23px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; transition:transform .08s ease-out, box-shadow .08s ease-out;}
+.slots .slots-spin:active:not(:disabled){transform:translateY(5px); box-shadow:0 1px 0 #962C00, 0 6px 12px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.4);}
+.slots .slots-spin:disabled{opacity:1; background:linear-gradient(180deg,#24435E,#183049); box-shadow:0 6px 0 #0B1A28, inset 0 1px 0 rgba(255,255,255,.08); color:rgba(255,255,255,.55); font-family:inherit; font-size:15px; letter-spacing:0; text-transform:none;}
+.slots .slots-machine.spinning ~ .slots-spin:disabled{background:linear-gradient(180deg,#FF9F55 0%,#FC5200 52%,#DE4300 100%); box-shadow:0 1px 0 #962C00, 0 6px 12px rgba(0,0,0,.35); transform:translateY(5px); color:#fff;}
+.slots .slots-pip{border-color:rgba(255,227,161,.35);}
+.slots .slots-pip.used{background:rgba(255,227,161,.08); border-color:rgba(255,227,161,.25);}
+.slots .slots-pip.on{box-shadow:0 0 0 2px rgba(255,255,255,.55) inset, 0 0 12px rgba(255,200,80,.6);}
+.slots .slots-count{color:#FFE3A1;}
+.slots .slots-hint{color:rgba(255,255,255,.62);}
+.slots .slots-gift{background:rgba(255,214,110,.1); border-color:rgba(255,214,110,.35);}
+.slots .slots-gift b{color:#FFE3A1;}
+.slots .slots-gift span{color:rgba(255,255,255,.7);}
+.slots .slots-paytable{margin-top:22px; background:rgba(255,255,255,.05); border-color:rgba(255,214,120,.2);}
+.slots .slots-paytable-head{color:#E9C46A;}
+.slots .slots-pay-row{border-top-color:rgba(255,255,255,.08);}
+.slots .slots-pay-symbols{padding:4px 6px; border-radius:10px; background:#FFFDF5;}
+.slots .slots-pay-label{color:#fff;}
+.slots .slots-pay-row.jackpot{margin:0 -14px; padding-left:14px; padding-right:14px; background:linear-gradient(90deg, rgba(255,214,110,.14), rgba(255,214,110,0) 80%);}
+.slots .slots-pay-row.jackpot .slots-pay-label{color:#FFE3A1;}
+.slots .slots-pay-reward{color:rgba(255,255,255,.68);}
+.slots .slots-pay-chance{color:#FFD86B;}
+
+/* A win: a fountain out of the payline (SlotsWin.tsx). The span carries the
+   sideways drift, its <i> the rise and fall — two timing curves make the arc. */
+.win-burst{position:absolute; left:50%; top:50%; width:0; height:0; z-index:6; pointer-events:none;}
+.win-piece{position:absolute; left:0; top:0; animation:win-x 1.7s linear both;}
+.win-piece > i{display:block; margin:-15px 0 0 -15px; animation:win-y 1.7s both;}
+.win-piece .coin-icon, .win-piece .slot-symbol{display:block; filter:drop-shadow(0 3px 4px rgba(0,0,0,.35));}
+/* The base rule caps a symbol at its parent's width — a flying piece has none. */
+.win-piece .slot-symbol{max-width:none;}
+.win-piece > i.symbol{margin:-18px 0 0 -27px;}
+@keyframes win-x{0%{transform:translateX(0);} 100%{transform:translateX(var(--dx));}}
+@keyframes win-y{
+  0%{transform:translateY(0) scale(.3) rotate(0); opacity:0; animation-timing-function:cubic-bezier(.2,.8,.4,1);}
+  8%{opacity:1;}
+  32%{transform:translateY(var(--dy)) scale(var(--s)) rotate(calc(var(--rot) * .35)); animation-timing-function:cubic-bezier(.55,0,.9,.5);}
+  88%{opacity:1;}
+  100%{transform:translateY(calc(var(--dy) + 520px)) scale(var(--s)) rotate(var(--rot)); opacity:0;}
+}
+.slots .slots-machine.jackpot{animation:jp-shake .6s cubic-bezier(.36,.07,.19,.97) both;}
+@keyframes jp-shake{10%,90%{transform:translateX(-2px);} 20%,80%{transform:translateX(4px);} 30%,50%,70%{transform:translateX(-7px) rotate(-.6deg);} 40%,60%{transform:translateX(7px) rotate(.6deg);}}
+
+/* The jackpot: the whole screen (SlotsWin.tsx JackpotCelebration). */
+.jackpot-overlay{position:fixed; inset:0; z-index:3000; display:flex; align-items:center; justify-content:center; padding:24px; overflow:hidden; background:radial-gradient(circle at 50% 42%, rgba(120,70,0,.92) 0%, rgba(40,24,6,.95) 34%, rgba(6,16,28,.98) 66%); animation:jp-in .35s ease-out both;}
+.jackpot-overlay::before{content:''; position:absolute; inset:0; background:#FFF4CF; pointer-events:none; animation:jp-flash .6s ease-out both;}
+@keyframes jp-in{from{opacity:0;}}
+@keyframes jp-flash{0%{opacity:.95;} 100%{opacity:0;}}
+.jackpot-rays{position:absolute; left:50%; top:42%; width:200vmax; height:200vmax; margin:-100vmax 0 0 -100vmax; pointer-events:none; background:repeating-conic-gradient(from 0deg, rgba(255,214,110,.26) 0deg 8deg, rgba(255,214,110,0) 8deg 22.5deg); -webkit-mask-image:radial-gradient(circle, #000 0%, rgba(0,0,0,.6) 18%, transparent 42%); mask-image:radial-gradient(circle, #000 0%, rgba(0,0,0,.6) 18%, transparent 42%); animation:jp-rays 16s linear infinite;}
+@keyframes jp-rays{to{transform:rotate(360deg);}}
+.jackpot-rain{position:absolute; inset:0; z-index:0; pointer-events:none;}
+.jackpot-rain > span{position:absolute; top:-40px; animation-name:jp-fall; animation-timing-function:linear; animation-iteration-count:infinite; animation-fill-mode:both;}
+@keyframes jp-fall{0%{transform:translateY(0) rotate(0);} 100%{transform:translateY(calc(100vh + 80px)) rotate(var(--rot));}}
+.jackpot-card{position:relative; z-index:2; width:100%; max-width:340px; text-align:center;}
+.jackpot-symbols{display:flex; justify-content:center; gap:8px;}
+.jackpot-symbols > span{width:74px; height:74px; display:flex; align-items:center; justify-content:center; border-radius:18px; background:linear-gradient(180deg,#FFFDF5,#F1EADB); box-shadow:0 0 0 3px #F5C451, 0 10px 24px rgba(0,0,0,.45), 0 0 26px rgba(255,200,80,.55); animation:jp-drop .55s cubic-bezier(.2,1.5,.4,1) both;}
+.jackpot-symbols .slot-symbol{max-width:62px;}
+@keyframes jp-drop{0%{transform:translateY(-60px) scale(.4); opacity:0;} 100%{transform:none; opacity:1;}}
+.jackpot-title{margin-top:22px; font-family:var(--font-display),'Oswald',sans-serif; font-size:64px; font-weight:700; line-height:1; letter-spacing:.04em; text-transform:uppercase; color:#FFE08A; text-shadow:0 4px 0 #B3700A, 0 0 34px rgba(255,190,60,.85); animation:jp-slam .6s cubic-bezier(.2,1.6,.4,1) .5s both;}
+@keyframes jp-slam{0%{transform:scale(3.2); opacity:0;} 55%{transform:scale(.9); opacity:1;} 100%{transform:scale(1);}}
+.jackpot-prize{margin-top:14px; font-size:18px; font-weight:800; line-height:1.35; color:#fff; text-wrap:balance; animation:jp-up .45s var(--ease-out) .95s both;}
+@keyframes jp-up{from{opacity:0; transform:translateY(10px);}}
+/* «В историю» / «Скачать» pinned to the very bottom of the screen. */
+.jackpot-bottom{position:absolute; left:20px; right:20px; bottom:calc(env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px) + 20px); z-index:2; display:flex; flex-direction:column; align-items:center;}
+.jackpot-share{display:flex; gap:10px; width:100%; max-width:400px; animation:jp-up .45s var(--ease-out) 1.4s both;}
+.jackpot-share button{flex:1; display:flex; align-items:center; justify-content:center; gap:7px; height:48px; border-radius:15px; border:1.5px solid rgba(255,214,110,.6); background:rgba(28,20,8,.88); color:#FFE3A1; font:inherit; font-size:14.5px; font-weight:800; cursor:pointer; transition:background .15s, transform .08s;}
+.jackpot-share button:active:not(:disabled){transform:scale(.97); background:rgba(60,42,12,.92);}
+.jackpot-share button:disabled{opacity:.6; cursor:default;}
+.jackpot-note{margin-top:10px; font-size:13px; font-weight:700; color:rgba(255,227,161,.85);}
+.jackpot-take{height:62px; margin-top:26px; border-radius:20px; background:linear-gradient(180deg,#FF9F55 0%,#FC5200 52%,#DE4300 100%); box-shadow:0 6px 0 #962C00, 0 16px 30px rgba(0,0,0,.45), inset 0 2px 0 rgba(255,255,255,.4); font-family:var(--font-display),'Oswald',sans-serif; font-size:24px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; animation:jp-up .45s var(--ease-out) 1.25s both; transition:transform .08s ease-out, box-shadow .08s ease-out;}
+.jackpot-take:active{transform:translateY(5px); box-shadow:0 1px 0 #962C00, 0 6px 12px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.4);}
+@media (prefers-reduced-motion: reduce){
+  .slots-bulb,.slots-machine.won .slots-payline,.win-piece,.win-piece > i,.slots .slots-machine.jackpot,.jackpot-rays,.jackpot-rain,.jackpot-title,.jackpot-symbols > span,.jackpot-prize,.jackpot-take,.jackpot-share{animation:none !important;}
+  .win-burst,.jackpot-rain{display:none;}
 }
 
 /* ---- Species collection ---- */
@@ -3564,6 +3687,40 @@ button.race-lane{cursor:pointer;}
 .catch-conditions.compact{margin-top:8px;}
 .catch-conditions.compact .catch-conditions-chips{margin-top:0;}
 .diary-day-catches{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; margin-top:10px;}
+/* A photo and, under it, when the fish was caught. */
+.diary-shot{display:flex; flex-direction:column; gap:4px; min-width:0;}
+.diary-shot-time{font-size:11.5px; font-weight:700; line-height:1; color:var(--ink-soft); text-align:center; font-variant-numeric:tabular-nums;}
+/* The diary's stats card, above everything (Diary.tsx DiaryStats). */
+.diary-stats{margin-bottom:14px; padding:14px 14px 12px; border-radius:var(--radius-l); background:var(--surface); box-shadow:var(--shadow-sm);}
+.diary-stats-nums{display:grid; grid-template-columns:repeat(4,minmax(0,1fr));}
+.diary-stats-nums > button{display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0; padding:6px 4px; border:none; border-radius:12px; background:none; font:inherit; color:inherit; cursor:pointer;}
+.diary-stats-nums > button + button{border-left:1px solid var(--line); border-radius:0;}
+.diary-stats-nums > button:active{background:#F5F3EF;}
+.diary-stats-periods{display:flex; gap:3px; margin:-2px -2px 12px; padding:3px; border-radius:12px; background:#F3F1EC;}
+.diary-stats-periods button{flex:1; padding:7px 4px; border:none; border-radius:9px; background:none; font:inherit; font-size:12.5px; font-weight:800; color:var(--ink-soft); cursor:pointer; transition:background .15s, color .15s;}
+.diary-stats-periods button.on{background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(20,30,40,.12);}
+/* What's behind a stat (the sheet a number opens). */
+.diary-stat-list{display:flex; flex-direction:column;}
+.diary-stat-row{display:flex; align-items:center; gap:12px; width:100%; padding:11px 2px; border:none; border-bottom:1px solid var(--line); background:none; font:inherit; color:var(--ink); text-align:left; cursor:pointer;}
+.diary-stat-row:last-child{border-bottom:none;}
+.diary-stat-row:disabled{cursor:default;}
+.diary-stat-main{flex:1; min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:4px;}
+.diary-stat-main b{font-size:14px; font-weight:800;}
+.diary-stat-main > span:not(.diary-sector):not(.diary-stat-bar){font-size:12.5px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;}
+.diary-stat-side{flex:0 0 auto; display:flex; flex-direction:column; align-items:flex-end; gap:2px; font-size:12.5px; font-weight:700; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+.diary-stat-side b{font-size:16px; font-weight:800; color:var(--ink);}
+.diary-stat-bar{display:block; width:100%; height:6px; border-radius:3px; background:#F1EFEA; overflow:hidden;}
+.diary-stat-bar i{display:block; height:100%; border-radius:3px; background:var(--accent);}
+.diary-stats-nums b{font-family:var(--font-display),'Oswald',sans-serif; font-size:28px; font-weight:700; line-height:1; color:var(--ink); font-variant-numeric:tabular-nums;}
+.diary-stats-nums span{font-size:11.5px; font-weight:700; color:var(--ink-soft); white-space:nowrap;}
+.diary-stats-lines{display:flex; flex-direction:column; gap:6px; margin-top:12px; padding-top:12px; border-top:1px solid var(--line);}
+.diary-stats-line{display:flex; align-items:center; gap:9px; width:100%; min-width:0; padding:0; border:none; background:none; font:inherit; text-align:left; color:var(--ink);}
+button.diary-stats-line{cursor:pointer;}
+button.diary-stats-line:disabled{cursor:default;}
+.diary-stats-icon{flex:0 0 auto; width:28px; height:28px; border-radius:9px; display:flex; align-items:center; justify-content:center; background:#EEF4F8; color:#1D5C80;}
+.diary-stats-icon.gold{background:#FFF3D1; color:#A06B00;}
+.diary-stats-label{flex:0 0 auto; font-size:13px; font-weight:700; color:var(--ink-soft);}
+.diary-stats-line b{flex:1; min-width:0; font-size:13.5px; font-weight:800; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .diary-thumb{position:relative; aspect-ratio:1; padding:0; border:none; border-radius:12px; overflow:hidden; background:#EEE; cursor:pointer;}
 .diary-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
 .diary-thumb span{position:absolute; left:0; right:0; bottom:0; padding:12px 4px 3px; background:linear-gradient(transparent, rgba(0,0,0,.6)); color:#fff; font-size:10px; font-weight:700; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
@@ -3697,6 +3854,10 @@ button.race-lane{cursor:pointer;}
 .boosts-tab{flex:1; display:inline-flex; align-items:center; justify-content:center; gap:5px; padding:8px 6px; border:none; border-radius:10px; background:none; font:inherit; font-size:13px; font-weight:800; color:var(--ink-soft); cursor:pointer; transition:background .2s, color .2s;}
 .boosts-tab.gold.on{background:linear-gradient(160deg,#FFE08A,#F2B53A); color:#4A3000; box-shadow:0 2px 6px rgba(196,138,0,.25);}
 .boosts-tab.teal.on{background:linear-gradient(160deg,#5FD3C0,#0E8074); color:#fff; box-shadow:0 2px 6px rgba(14,128,116,.25);}
+.boosts-tab{position:relative;}
+.boosts-tab.orange.on{background:linear-gradient(160deg,#FF8A3D,#FC5200); color:#fff; box-shadow:0 2px 6px rgba(252,82,0,.28);}
+.boosts-tab-dot{width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 2px #fff;}
+.boosts-tab.on .boosts-tab-dot{background:#fff; box-shadow:none;}
 .boosts-tab-body{animation:boosts-tab-in .25s var(--ease-out) both;}
 @keyframes boosts-tab-in{from{opacity:0; transform:translateY(4px);}}
 @media (prefers-reduced-motion: reduce){.boosts-tab-body{animation:none;}}
@@ -3747,6 +3908,23 @@ button.race-lane{cursor:pointer;}
 @media (prefers-reduced-motion: reduce){.double-modal-ring-left, .double-modal-badge{animation:none;}}
 .catch-trophy-double{align-self:flex-start; margin-bottom:6px; padding:3px 9px; border-radius:999px; background:linear-gradient(160deg,#FFE08A,#F2B53A); color:#4A3000; font-size:12px; font-weight:800;}
 .treasury-sheet-body{display:flex; flex-direction:column; gap:12px; padding-bottom:18px;}
+/* The coin chip's sheet (RewardsModal.tsx): daily reward and Казна as tabs. */
+.rewards-hero{margin-bottom:6px;}
+.rewards-dot{position:absolute; width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:50%; background:rgba(217,142,11,.18);}
+.rewards-dot.done{background:linear-gradient(160deg,#FFD86B,#E39A12);}
+.rewards-dot.last:not(.done){background:#FFF1C9; box-shadow:inset 0 0 0 2px #E39A12;}
+.rewards-dot.current{width:16px; height:16px; margin:-8px 0 0 -8px; background:var(--accent); box-shadow:0 0 0 4px rgba(252,82,0,.2); animation:dailyPulse 1.8s ease-in-out infinite;}
+.rewards-strip{margin:0 0 14px;}
+.rewards-ready-num{display:inline-flex; align-items:center; gap:6px;}
+.rewards-take{display:flex; align-items:center; justify-content:center; gap:6px;}
+.rewards-done{display:flex; align-items:center; justify-content:center; gap:6px; padding:12px; border-radius:14px; background:var(--green-soft); color:var(--green); font-size:14px; font-weight:800;}
+.rewards-note{margin:10px 4px 0; font-size:12px; line-height:1.4; color:var(--ink-faint); text-wrap:balance;}
+.rewards-note-big{margin:8px 4px 12px; font-size:13.5px; color:var(--ink-soft);}
+.rewards-chips{margin:0 0 14px;}
+.rewards-coin-idle{filter:grayscale(.5); opacity:.8;}
+.rewards-loading{height:320px;}
+.rewards-modal .shield-modal-close{margin-top:6px;}
+@media (prefers-reduced-motion: reduce){.rewards-dot.current{animation:none;}}
 .treasury-sheet-body .daily-card{margin-top:0;}
 .treasury-section{display:flex; flex-direction:column; gap:12px;}
 .treasury-now-text .treasury-now-kicker{font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-faint);}

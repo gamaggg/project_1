@@ -116,6 +116,18 @@
         "value": "cubic-bezier(.2, .9, .3, 1.25)",
         "createdAt": "2026-09-30T10:11:09.313Z",
         "reason": "User confirmed (2026-09-27): overshoot on rewards/ceremonies/avatar pop-ins is intentional game feel — clan battle podium ceremony, sector thumbnail avatar pop"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.2, 1.5, .4, 1)",
+        "createdAt": "2026-10-09T10:20:18.576Z",
+        "reason": "Slots jackpot: symbols drop in with a bounce — a deliberate game-style overshoot the user asked for"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.2, 1.6, .4, 1)",
+        "createdAt": "2026-10-09T10:20:18.601Z",
+        "reason": "Slots jackpot: «ДЖЕКПОТ!» slams in with an overshoot — a deliberate game-style effect the user asked for"
       }
     ]
   }

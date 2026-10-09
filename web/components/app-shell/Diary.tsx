@@ -24,6 +24,7 @@ import { formatCatchMeta } from '@/lib/format'
 import { downscaleToJpeg, readPhotoMeta } from '@/lib/exif'
 import { nearestTerritory } from '@/lib/geolocation'
 import { useI18n } from '@/lib/i18n'
+import { useNow } from '@/lib/useNow'
 import type { Catch } from '@/lib/data/types'
 
 // Дневник рыбака: fishing days, newest first. A day gathers the real
@@ -41,12 +42,27 @@ type Day = {
 }
 
 const isoDay = (d: Date, timeZone?: string) => new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d)
+// «07:42» — when a fish was caught, in its sector's city time (a gallery
+// photo without a sector: this phone's time).
+const timeOf = (iso: string, territoryId: string | null) =>
+  new Intl.DateTimeFormat('ru', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: territoryId ? CITIES[cityForSectorId(territoryId)].timezone : undefined }).format(new Date(iso))
+const hourOf = (iso: string, territoryId: string | null) =>
+  Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false, timeZone: territoryId ? CITIES[cityForSectorId(territoryId)].timezone : undefined }).format(new Date(iso))) % 24
+
 const localInputValue = (d: Date) => {
   const p = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
 }
 
-export function DiaryView({ onOpenPhoto, onToast }: { onOpenPhoto: (catchId: number) => void; onToast: (msg: string) => void }) {
+export function DiaryView({
+  onOpenPhoto,
+  onOpenTerritory,
+  onToast,
+}: {
+  onOpenPhoto: (catchId: number) => void
+  onOpenTerritory?: (id: string) => void
+  onToast: (msg: string) => void
+}) {
   const { t, lang } = useI18n()
   const { data: myCatches = [] } = useMyCatches()
   const { data: diary } = useDiary(true)
@@ -98,6 +114,9 @@ export function DiaryView({ onOpenPhoto, onToast }: { onOpenPhoto: (catchId: num
 
   return (
     <>
+      {days.length > 0 && (
+        <DiaryStats days={days} nameOf={nameOf} dayLabel={dayLabel} onOpenPhoto={onOpenPhoto} onOpenGallery={setOpenGallery} onOpenTerritory={onOpenTerritory} />
+      )}
       <div className="diary-actions">
         <button className="diary-action tap-scale" onClick={() => setAdding('trip')}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -128,6 +147,233 @@ export function DiaryView({ onOpenPhoto, onToast }: { onOpenPhoto: (catchId: num
       {adding === 'gallery' && <GallerySheet onClose={() => setAdding(null)} onToast={onToast} />}
       {openGallery && <GalleryCatchSheet item={openGallery} name={nameOf(openGallery.species)} onClose={() => setOpenGallery(null)} onToast={onToast} />}
     </>
+  )
+}
+
+// The top of the diary: four numbers for the chosen period (all time, the
+// last 7 or 30 days), the record fish (heaviest; longest when no weights were
+// given) and the hours it bites best for this angler — the three-hour window
+// with the most catches. Each number opens what's behind it.
+type StatEntry = { id: number; real: boolean; species: string; name: string; lengthCm: number | null; weightKg: number | null; at: string; place: string | null; day: string; photoUrl: string; gallery: DiaryCatch | null }
+type Period = 'all' | 'week' | 'month'
+type StatSheet = 'trips' | 'catches' | 'species' | 'places'
+const SHEET_TITLE = { trips: 'diary.sheetTrips', catches: 'diary.sheetCatches', species: 'diary.sheetSpecies', places: 'diary.sheetPlaces' } as const
+
+function DiaryStats({
+  days,
+  nameOf,
+  dayLabel,
+  onOpenPhoto,
+  onOpenGallery,
+  onOpenTerritory,
+}: {
+  days: Day[]
+  nameOf: (key: string) => string
+  dayLabel: (day: string) => string
+  onOpenPhoto: (catchId: number) => void
+  onOpenGallery: (g: DiaryCatch) => void
+  onOpenTerritory?: (id: string) => void
+}) {
+  const { t } = useI18n()
+  const [period, setPeriod] = useState<Period>('all')
+  const [sheet, setSheet] = useState<StatSheet | null>(null)
+
+  // The last 7 / 30 days, today included, on this phone's calendar.
+  const now = useNow(3_600_000)
+  const since = period === 'all' ? null : isoDay(new Date(now - (period === 'week' ? 6 : 29) * 86_400_000))
+  const shown = since ? days.filter((d) => d.day >= since) : days
+  const all: StatEntry[] = shown.flatMap((d) => [
+    ...d.catches.map((c) => ({ id: c.id, real: true, species: c.species, name: c.speciesName, lengthCm: c.lengthCm, weightKg: c.weightKg, at: c.caughtAt, place: c.territoryId as string | null, day: d.day, photoUrl: c.photoUrl, gallery: null })),
+    ...d.gallery.map((g) => ({ id: g.id, real: false, species: g.species, name: nameOf(g.species), lengthCm: g.lengthCm, weightKg: g.weightKg, at: g.caughtAt, place: g.territoryId, day: d.day, photoUrl: g.photoUrl, gallery: g })),
+  ])
+  all.sort((a, b) => (a.at < b.at ? 1 : -1))
+
+  const speciesRows = [...all.reduce((m, c) => m.set(c.species, [...(m.get(c.species) ?? []), c]), new Map<string, StatEntry[]>()).entries()]
+    .map(([key, list]) => {
+      const weighed = list.filter((c) => c.weightKg)
+      const best = weighed.length ? weighed.reduce((a, b) => (b.weightKg! > a.weightKg! ? b : a)) : list.filter((c) => c.lengthCm).reduce<StatEntry | null>((a, b) => (!a || b.lengthCm! > a.lengthCm! ? b : a), null)
+      return { key, name: list[0].name, count: list.length, best }
+    })
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+  const placeRows = [...shown.reduce((m, d) => {
+    for (const p of d.places) m.set(p, { count: m.get(p)?.count ?? 0, last: m.get(p)?.last && m.get(p)!.last > d.day ? m.get(p)!.last : d.day })
+    return m
+  }, new Map<string, { count: number; last: string }>()).entries()]
+  for (const c of all) {
+    const row = placeRows.find(([id]) => id === c.place)
+    if (row) row[1].count += 1
+  }
+  placeRows.sort((a, b) => b[1].count - a[1].count || (a[1].last < b[1].last ? 1 : -1))
+
+  const weighed = all.filter((c) => c.weightKg)
+  const record = weighed.length ? weighed.reduce((a, b) => (b.weightKg! > a.weightKg! ? b : a)) : all.filter((c) => c.lengthCm).reduce<StatEntry | null>((a, b) => (!a || b.lengthCm! > a.lengthCm! ? b : a), null)
+  const hours = new Array<number>(24).fill(0)
+  for (const c of all) hours[hourOf(c.at, c.place)] += 1
+  let best = -1
+  let bestCount = 0
+  for (let h = 0; h < 24; h++) {
+    const n = hours[h] + hours[(h + 1) % 24] + hours[(h + 2) % 24]
+    if (n > bestCount) {
+      bestCount = n
+      best = h
+    }
+  }
+  const pad = (h: number) => `${String(h % 24).padStart(2, '0')}:00`
+  const sizeOf = (c: StatEntry) => formatCatchMeta(c.weightKg ? null : c.lengthCm, c.weightKg)
+  const shortDay = (day: string) => new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'short' }).format(new Date(`${day}T12:00:00`))
+  const openEntry = (c: StatEntry) => {
+    setSheet(null)
+    if (c.real) onOpenPhoto(c.id)
+    else if (c.gallery) onOpenGallery(c.gallery)
+  }
+
+  const tiles: { id: StatSheet; value: number; label: string }[] = [
+    { id: 'trips', value: shown.length, label: t('diary.statTrips', { count: shown.length }) },
+    { id: 'catches', value: all.length, label: t('diary.statCatches', { count: all.length }) },
+    { id: 'species', value: speciesRows.length, label: t('diary.statSpecies', { count: speciesRows.length }) },
+    { id: 'places', value: placeRows.length, label: t('diary.statPlaces', { count: placeRows.length }) },
+  ]
+  const periods: { id: Period; label: string }[] = [
+    { id: 'all', label: t('diary.periodAll') },
+    { id: 'week', label: t('diary.periodWeek') },
+    { id: 'month', label: t('diary.periodMonth') },
+  ]
+  const periodLabel = periods.find((p) => p.id === period)!.label
+
+  return (
+    <div className="diary-stats">
+      <div className="diary-stats-periods" role="tablist">
+        {periods.map((p) => (
+          <button key={p.id} type="button" role="tab" aria-selected={period === p.id} className={period === p.id ? 'on' : undefined} onClick={() => setPeriod(p.id)}>
+            {p.label}
+          </button>
+        ))}
+      </div>
+      <div className="diary-stats-nums">
+        {tiles.map((tile) => (
+          <button key={tile.id} type="button" className="tap-scale" onClick={() => setSheet(tile.id)}>
+            <b>{tile.value}</b>
+            <span>{tile.label}</span>
+          </button>
+        ))}
+      </div>
+      {(record || best >= 0) && (
+        <div className="diary-stats-lines">
+          {record && (
+            <button type="button" className="diary-stats-line tap-scale" onClick={() => openEntry(record)}>
+              <span className="diary-stats-icon gold" aria-hidden>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z" />
+                  <path d="M17 6h3v2a3 3 0 0 1-3 3M7 6H4v2a3 3 0 0 0 3 3" />
+                </svg>
+              </span>
+              <span className="diary-stats-label">{t('diary.statRecord')}</span>
+              <b>
+                {record.name} · {sizeOf(record)}
+              </b>
+            </button>
+          )}
+          {best >= 0 && (
+            <div className="diary-stats-line">
+              <span className="diary-stats-icon" aria-hidden>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" />
+                </svg>
+              </span>
+              <span className="diary-stats-label">{t('diary.statBestTime')}</span>
+              <b>
+                {pad(best)}–{pad(best + 3)}
+              </b>
+            </div>
+          )}
+        </div>
+      )}
+
+      {sheet && (
+        <Sheet title={`${t(SHEET_TITLE[sheet])} · ${periodLabel.toLowerCase()}`} onClose={() => setSheet(null)}>
+          {(sheet === 'trips' ? shown.length : sheet === 'places' ? placeRows.length : all.length) === 0 ? (
+            <div className="diary-empty">{t('diary.periodEmpty')}</div>
+          ) : sheet === 'trips' ? (
+            <div className="diary-stat-list">
+              {shown.map((d) => {
+                const n = d.catches.length + d.gallery.length
+                return (
+                  <button
+                    key={d.day}
+                    type="button"
+                    className="diary-stat-row tap-scale"
+                    onClick={() => {
+                      setSheet(null)
+                      requestAnimationFrame(() => document.getElementById(`diary-day-${d.day}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+                    }}
+                  >
+                    <span className="diary-stat-main">
+                      <b>{dayLabel(d.day)}</b>
+                      {d.places.length > 0 && <span>{d.places.join(', ')}</span>}
+                    </span>
+                    <span className="diary-stat-side">{n ? t('diary.catchCount', { count: n }) : t('diary.noCatch')}</span>
+                  </button>
+                )
+              })}
+            </div>
+          ) : sheet === 'catches' ? (
+            <div className="diary-day-catches">
+              {all.map((c) => (
+                <div key={`${c.real ? 'c' : 'g'}${c.id}`} className="diary-shot">
+                  <button type="button" className={`diary-thumb tap-scale${c.real ? '' : ' private'}`} onClick={() => openEntry(c)} aria-label={c.name}>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- catch thumbnail */}
+                    <img src={thumbUrl(c.photoUrl, 200)} alt="" loading="lazy" decoding="async" />
+                    <span>{c.name}</span>
+                  </button>
+                  <time className="diary-shot-time" dateTime={c.at}>
+                    {shortDay(c.day)} · {timeOf(c.at, c.place)}
+                  </time>
+                </div>
+              ))}
+            </div>
+          ) : sheet === 'species' ? (
+            <div className="diary-stat-list">
+              {speciesRows.map((r) => (
+                <button key={r.key} type="button" className="diary-stat-row tap-scale" disabled={!r.best} onClick={() => r.best && openEntry(r.best)}>
+                  <span className="diary-stat-main">
+                    <b>{r.name}</b>
+                    <span className="diary-stat-bar">
+                      <i style={{ width: `${Math.max(6, (r.count / speciesRows[0].count) * 100)}%` }} />
+                    </span>
+                  </span>
+                  <span className="diary-stat-side">
+                    <b>{r.count}</b>
+                    {r.best && <span>{sizeOf(r.best)}</span>}
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="diary-stat-list">
+              {placeRows.map(([id, row]) => (
+                <button
+                  key={id}
+                  type="button"
+                  className="diary-stat-row tap-scale"
+                  disabled={!onOpenTerritory}
+                  onClick={() => {
+                    setSheet(null)
+                    onOpenTerritory?.(id)
+                  }}
+                >
+                  <span className="diary-stat-main">
+                    <span className="diary-sector">{id}</span>
+                    <span>{t('diary.lastTime', { day: shortDay(row.last) })}</span>
+                  </span>
+                  <span className="diary-stat-side">{row.count ? t('diary.catchCount', { count: row.count }) : t('diary.noCatch')}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </Sheet>
+      )}
+    </div>
   )
 }
 
@@ -181,7 +427,7 @@ function DiaryDayCard({
     // A day reads top-down: when and what the weather was, then what counted
     // in the game, then what lives only in the diary (gallery photos), then
     // the note. A fishing day without a catch is a tinted card of its own.
-    <section className={`diary-day${total === 0 ? ' trip' : ''}`}>
+    <section id={`diary-day-${day.day}`} className={`diary-day${total === 0 ? ' trip' : ''}`}>
       <div className="diary-day-head">
         <span className="diary-day-date">{label}</span>
         {total === 0 ? <span className="diary-day-tag">{t('diary.noCatch')}</span> : <span className="diary-day-count">{t('diary.catchCount', { count: total })}</span>}
@@ -209,11 +455,16 @@ function DiaryDayCard({
           </div>
           <div className="diary-day-catches">
             {day.catches.map((c) => (
-              <button key={`c${c.id}`} className="diary-thumb tap-scale" onClick={() => onOpenPhoto(c.id)} aria-label={c.speciesName}>
-                {/* eslint-disable-next-line @next/next/no-img-element -- catch thumbnail */}
-                <img src={thumbUrl(c.photoUrl, 200)} alt="" loading="lazy" decoding="async" />
-                <span>{c.speciesName}</span>
-              </button>
+              <div key={`c${c.id}`} className="diary-shot">
+                <button className="diary-thumb tap-scale" onClick={() => onOpenPhoto(c.id)} aria-label={c.speciesName}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- catch thumbnail */}
+                  <img src={thumbUrl(c.photoUrl, 200)} alt="" loading="lazy" decoding="async" />
+                  <span>{c.speciesName}</span>
+                </button>
+                <time className="diary-shot-time" dateTime={c.caughtAt}>
+                  {timeOf(c.caughtAt, c.territoryId)}
+                </time>
+              </div>
             ))}
           </div>
         </div>
@@ -223,11 +474,16 @@ function DiaryDayCard({
           <div className="diary-group-head">{t('diary.diaryOnly')}</div>
           <div className="diary-day-catches">
             {day.gallery.map((g) => (
-              <button key={`g${g.id}`} className="diary-thumb private tap-scale" onClick={() => onOpenGallery(g)} aria-label={nameOf(g.species)}>
-                {/* eslint-disable-next-line @next/next/no-img-element -- diary photo thumbnail */}
-                <img src={thumbUrl(g.photoUrl, 200)} alt="" loading="lazy" decoding="async" />
-                <span>{nameOf(g.species)}</span>
-              </button>
+              <div key={`g${g.id}`} className="diary-shot">
+                <button className="diary-thumb private tap-scale" onClick={() => onOpenGallery(g)} aria-label={nameOf(g.species)}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- diary photo thumbnail */}
+                  <img src={thumbUrl(g.photoUrl, 200)} alt="" loading="lazy" decoding="async" />
+                  <span>{nameOf(g.species)}</span>
+                </button>
+                <time className="diary-shot-time" dateTime={g.caughtAt}>
+                  {timeOf(g.caughtAt, g.territoryId)}
+                </time>
+              </div>
             ))}
           </div>
         </div>

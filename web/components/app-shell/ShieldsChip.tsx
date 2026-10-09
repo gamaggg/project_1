@@ -22,6 +22,7 @@ export function ShieldsChip() {
     <>
       <button
         type="button"
+        data-tour="shields"
         className="shields-chip tap-scale"
         aria-label={`Щитов в запасе: ${count} из ${SHIELD_RESERVE_MAX}`}
         onClick={() => {

@@ -79,6 +79,8 @@ declare global {
         // Bot API 7.8+ — opens Telegram's story editor with a public image.
         // widget_link (a tappable link sticker) needs Telegram Premium.
         shareToStory?: (mediaUrl: string, params?: { text?: string; widget_link?: { url: string; name?: string } }) => void
+        // Bot API 8.0+ — Telegram's own «save file» prompt for a public URL.
+        downloadFile?: (params: { url: string; file_name: string }, callback?: (accepted: boolean) => void) => void
       }
     }
   }

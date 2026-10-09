@@ -1,0 +1,29 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.2, 1.5, .4, 1)",
+        "createdAt": "2026-10-09T10:31:11.794Z",
+        "reason": "Slots jackpot: symbols drop in with a bounce — a deliberate game-style overshoot the user asked for"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.2, 1.6, .4, 1)",
+        "createdAt": "2026-10-09T10:31:11.825Z",
+        "reason": "Slots jackpot: «ДЖЕКПОТ!» slams in with an overshoot — a deliberate game-style effect the user asked for"
+      },
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "app/api/jackpot-card/route.tsx"
+        ],
+        "createdAt": "2026-10-09T10:35:08.177Z",
+        "reason": "Server image card: every <img> gets a data: URL and renders only when it loaded"
+      }
+    ]
+  }
+}

@@ -443,7 +443,7 @@ export const MapScreen = forwardRef<
             floating at different sizes — brand + «Игроки | Кланы» on the
             first line, what the colours mean right under it, and for clan
             members the clan battle as the panel's own orange footer. */}
-        <div className="map-hud">
+        <div className="map-hud" data-tour="map-hud">
           <div className="map-hud-bar">
             {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
             <img src="/brand/logo_2.svg" alt="RANGE" className="map-hud-logo" />

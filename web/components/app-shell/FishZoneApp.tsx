@@ -1492,10 +1492,12 @@ export function FishZoneApp() {
             <>
               <div className="header-row">
                 <BackButton onClick={pop} registerNative={false} />
-                <div className="slots-title">{tr('slots.title')}</div>
+                <div />
                 <div style={{ width: 36 }} />
               </div>
               <div className="screen-inner">
+                {/* The machine's sign: its own line under «Назад», full size. */}
+                <div className="slots-title">{tr('slots.title')}</div>
                 <SlotsScreen city={myProfile.city} />
               </div>
             </>
@@ -1553,7 +1555,7 @@ export function FishZoneApp() {
         </Screen>
         <Screen id="screen-catches" current={currentScreen} onBack={pop}>
           {(catchesUserId || catchesTerritoryId) && (
-            <MyCatchesScreen userId={catchesUserId} territoryId={catchesTerritoryId} onBack={pop} onOpenPhoto={openCatchPhoto} onOpenUser={openUserProfile} onToast={showToast} />
+            <MyCatchesScreen userId={catchesUserId} territoryId={catchesTerritoryId} onBack={pop} onOpenPhoto={openCatchPhoto} onOpenUser={openUserProfile} onOpenTerritory={openTerritory} onToast={showToast} />
           )}
         </Screen>
         <Screen id="screen-catch-photo" current={currentScreen} onBack={pop}>

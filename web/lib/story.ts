@@ -43,6 +43,31 @@ export async function shareImageToStory(imageUrl: string, caption: string, link:
   }
 }
 
+// «Скачать»: inside Telegram its own save prompt (Bot API 8.0+ — a Mini App
+// can't save a file any other way); in a browser a plain download.
+export async function downloadImage(imageUrl: string, filename: string): Promise<'telegram' | 'downloaded' | 'failed'> {
+  const webApp = window.Telegram?.WebApp
+  if (insideTelegram() && webApp?.downloadFile && (webApp.isVersionAtLeast?.('8.0') ?? false)) {
+    webApp.downloadFile({ url: imageUrl, file_name: filename })
+    return 'telegram'
+  }
+  try {
+    const res = await fetch(imageUrl)
+    if (!res.ok) return 'failed'
+    const blob = await res.blob()
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(a.href), 10_000)
+    return 'downloaded'
+  } catch {
+    return 'failed'
+  }
+}
+
 export function shareCatchStory(catchId: number, lang: Lang, caption: string): Promise<StoryResult> {
   const origin = window.location.origin
   return shareImageToStory(`${origin}/api/story/${catchId}?lang=${lang}`, caption, `${origin}${window.location.pathname}?catch=${catchId}`, `range-${catchId}.png`)

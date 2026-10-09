@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { JackpotCelebration, WinBurst } from '@/components/app-shell/SlotsWin'
 import { SlotSymbol, slotSymbolSrc } from '@/components/app-shell/SlotSymbol'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { observeScreenActive } from '@/lib/observeScreenActive'
@@ -110,6 +111,7 @@ const MOSCOW_TEXT: Partial<Record<TKey, TKey>> = {
   'slots.result.lufar': 'slots.moscow.result.lufar',
   'slots.result.jackpot': 'slots.moscow.result.jackpot',
   'slots.rewards.jackpot': 'slots.moscow.rewards.jackpot',
+  'slots.jackpot.frame': 'slots.moscow.jackpotFrame',
 }
 
 // The most shields one can hold (spin_slots: a shield won on top of a full
@@ -133,6 +135,11 @@ function errorKey(error: unknown): TKey {
   return msg.includes('SLOTS:no_spins') ? 'slots.noSpins' : 'common.tryAgain'
 }
 
+// «Ночной автомат» (picked 09.10 from two looks): the screen is the night sea,
+// the machine a gold cabinet whose marquee bulbs twinkle at rest, chase round
+// on a spin and flash on a win.
+const BULBS = 9
+
 export function SlotsScreen({ city }: { city: CityId }) {
   const { t, lang } = useI18n()
   const local = (key: TKey) => (city === 'moscow' ? (MOSCOW_TEXT[key] ?? key) : key)
@@ -148,6 +155,8 @@ export function SlotsScreen({ city }: { city: CityId }) {
   // A shield won with the reserve already full comes back as coins (spin_slots)
   // — said in a modal, since the reserve rule isn't on the machine itself.
   const [reserveFullCoins, setReserveFullCoins] = useState<number | null>(null)
+  // The jackpot's own celebration, over the whole screen, until «Забрать!».
+  const [jackpot, setJackpot] = useState<SlotSpinResult | null>(null)
   const stoppedRef = useRef(0)
   // The spin whose reels are still turning; null once it's been revealed.
   const activeRef = useRef<SlotSpinResult | null>(null)
@@ -241,6 +250,7 @@ export function SlotsScreen({ city }: { city: CityId }) {
     setResultAt(Date.now())
     if (res.prize !== 'none') hapticSuccess()
     if (res.prize === 'shield' && res.coins > 0) setReserveFullCoins(res.coins)
+    if (res.prize === 'jackpot' || res.prize === 'jackpot_coins') setJackpot(res)
     queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
     queryClient.invalidateQueries({ queryKey: ['my-active-buffs', user?.id ?? null] })
     queryClient.invalidateQueries({ queryKey: ['slot-state', user?.id ?? null] })
@@ -300,42 +310,54 @@ export function SlotsScreen({ city }: { city: CityId }) {
   }, [])
 
   const percent = new Intl.NumberFormat(lang, { style: 'percent', maximumFractionDigits: 1 })
+  const won = !!result && result.prize !== 'none'
+  const isJackpot = !!result && (result.prize === 'jackpot' || result.prize === 'jackpot_coins')
 
   return (
     <div className="slots" ref={rootRef}>
 
-      <div className={`slots-machine${result && result.prize !== 'none' ? ' won' : ''}`}>
-        <div
-          ref={windowRef}
-          className="slots-window"
-          style={{ height: WINDOW * scale, '--slot-cell': `${CELL * scale}px` } as CSSProperties}
-        >
-          {reels.map((reel, i) => (
-            <div key={i} className="slot-reel">
-              <div
-                className={`slot-strip${reel.duration ? ` moving${reel.drift ? ' drift' : ''}` : ''}`}
-                style={{
-                  transform: `translateY(${reel.y * scale}px)`,
-                  transitionDuration: `${reel.duration}ms`,
-                  animationDuration: `${reel.duration}ms`,
-                }}
-                onTransitionEnd={(e) => {
-                  if (e.propertyName !== 'transform' || !reel.duration) return
-                  // An idle roll just settles into the new symbol's band (same
-                  // picture, short strip again); a spin's stop counts to the reveal.
-                  if (reel.drift) setReels((prev) => prev.map((x, j) => (j === i && x.strip === reel.strip ? idleReel(x.symbol, i) : x)))
-                  else onReelStop()
-                }}
-              >
-                {reel.strip.map((symbol, j) => (
-                  <div key={j} className="slot-cell">
-                    <SlotSymbol symbol={symbol} city={city} size={Math.round(66 * scale)} />
-                  </div>
-                ))}
+      <div className={`slots-machine${won ? ' won' : ''}${won && isJackpot ? ' jackpot' : ''}${busy ? ' spinning' : ''}`}>
+        {won && !isJackpot && <WinBurst key={resultAt} prize={result!.prize} coins={result!.coins} city={city} />}
+        {(['top', 'bottom'] as const).map((side) => (
+          <div key={side} className={`slots-bulbs ${side}`} aria-hidden>
+            {Array.from({ length: BULBS }, (_, i) => (
+              <span key={i} className="slots-bulb" style={{ '--i': side === 'top' ? i : 2 * BULBS - 1 - i } as CSSProperties} />
+            ))}
+          </div>
+        ))}
+        <div className="slots-glass">
+          <div
+            ref={windowRef}
+            className="slots-window"
+            style={{ height: WINDOW * scale, '--slot-cell': `${CELL * scale}px` } as CSSProperties}
+          >
+            {reels.map((reel, i) => (
+              <div key={i} className="slot-reel">
+                <div
+                  className={`slot-strip${reel.duration ? ` moving${reel.drift ? ' drift' : ''}` : ''}`}
+                  style={{
+                    transform: `translateY(${reel.y * scale}px)`,
+                    transitionDuration: `${reel.duration}ms`,
+                    animationDuration: `${reel.duration}ms`,
+                  }}
+                  onTransitionEnd={(e) => {
+                    if (e.propertyName !== 'transform' || !reel.duration) return
+                    // An idle roll just settles into the new symbol's band (same
+                    // picture, short strip again); a spin's stop counts to the reveal.
+                    if (reel.drift) setReels((prev) => prev.map((x, j) => (j === i && x.strip === reel.strip ? idleReel(x.symbol, i) : x)))
+                    else onReelStop()
+                  }}
+                >
+                  {reel.strip.map((symbol, j) => (
+                    <div key={j} className="slot-cell">
+                      <SlotSymbol symbol={symbol} city={city} size={Math.round(66 * scale)} />
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-          <div className="slots-payline" />
+            ))}
+            <div className="slots-payline" />
+          </div>
         </div>
       </div>
 
@@ -354,6 +376,13 @@ export function SlotsScreen({ city }: { city: CityId }) {
       <button className="btn-primary slots-spin" disabled={!canSpin} onClick={start}>
         {spinning || spin.isPending ? t('slots.spinning') : left > 0 ? t('slots.spin') : t('slots.noSpins')}
       </button>
+      {/* Today's spins as tokens: lit — left to spin, dim — spent, dashed —
+          still to be earned by catches (up to DAILY_SPINS_MAX). */}
+      <div className="slots-pips" aria-hidden>
+        {Array.from({ length: DAILY_SPINS_MAX }, (_, i) => (
+          <span key={i} className={`slots-pip${i < left - bonus ? ' on' : i < total ? ' used' : ''}`} />
+        ))}
+      </div>
       <div className="slots-count">{t('slots.spinsToday', { left: left - bonus })}</div>
       {/* How many more spins catches can still bring today — at the day's cap
           (DAILY_SPINS_MAX, _slot_day_state on the server) another catch brings
@@ -376,6 +405,17 @@ export function SlotsScreen({ city }: { city: CityId }) {
       )}
       {/* Shields in the reserve: the chip in the map's top panel (ShieldsChip). */}
       {reserveFullCoins !== null && <ReserveFullModal coins={reserveFullCoins} onClose={() => setReserveFullCoins(null)} />}
+      {jackpot && (
+        <JackpotCelebration
+          city={city}
+          title={t('slots.jackpot.title')}
+          prize={jackpot.prize === 'jackpot' ? t(local('slots.jackpot.frame')) : t('slots.jackpot.coins', { coins: jackpot.coins })}
+          take={t('slots.jackpot.take')}
+          cardUrl={`${window.location.origin}/api/jackpot-card?city=${city}&prize=${jackpot.prize === 'jackpot' ? 'frame' : 'coins'}&coins=${jackpot.coins}&lang=${lang}${user ? `&u=${user.id}` : ''}`}
+          link={`${window.location.origin}/`}
+          onClose={() => setJackpot(null)}
+        />
+      )}
 
       <div className="slots-paytable">
         <div className="slots-paytable-head">
@@ -383,7 +423,7 @@ export function SlotsScreen({ city }: { city: CityId }) {
           <span>{t('slots.chance')}</span>
         </div>
         {PAY_ROWS.map((row) => (
-          <div key={row.prize} className="slots-pay-row">
+          <div key={row.prize} className={`slots-pay-row${row.prize === 'jackpot' ? ' jackpot' : ''}`}>
             <div className="slots-pay-symbols">
               {row.symbols.map((symbol, i) => (
                 <SlotSymbol key={i} symbol={symbol} city={city} size={20} />

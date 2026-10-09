@@ -27,6 +27,7 @@ export function HudBoosts() {
     <>
       <button
         type="button"
+        data-tour="boosts"
         className="hud-boosts tap-scale"
         aria-label={`Двойные монеты и щиты в запасе: ${shields}`}
         onClick={() => {

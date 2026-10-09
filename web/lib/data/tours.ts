@@ -37,10 +37,31 @@ export type TourKey =
   | 'faq'
   | 'slotsMoved'
   | 'slots'
+  | 'rewardsHere'
+  | 'boosts'
+  | 'boostDouble'
+  | 'boostShields'
 export type TourStep = { target: string; key: TourKey }
 // `always`: shown even to a player who pressed «Пропустить» on the tours.
 export type Tour = { id: string; screen: string; requires: string; steps: TourStep[]; always?: boolean }
 export type TourAudience = 'whatsNew' | 'newcomer'
+
+// 09.10: the daily reward and the Казна are collected from the coin chip on
+// the map, and «×2» / shields in reserve sit beside it. For everyone, old and
+// new; a step whose chip this player doesn't have is left out — with none
+// of them on the bar yet, the tour waits until one turns up.
+const MAP_REWARDS_TOUR: Tour = {
+  id: 'map-rewards',
+  screen: 'screen-map',
+  requires: 'map-hud',
+  steps: [
+    { target: 'treasury', key: 'rewardsHere' },
+    { target: 'boosts', key: 'boosts' },
+    { target: 'double', key: 'boostDouble' },
+    { target: 'shields', key: 'boostShields' },
+  ],
+  always: true,
+}
 
 export const TOURS: Record<TourAudience, Tour[]> = {
   whatsNew: [
@@ -78,6 +99,7 @@ export const TOURS: Record<TourAudience, Tour[]> = {
     // 09.10: the slots left the end of the Shop's tab row for a card under
     // the balance — everyone who knew them as a tab is told where they went.
     { id: 'shop-slots', screen: 'screen-shop', requires: 'slots-card', steps: [{ target: 'slots-card', key: 'slotsMoved' }], always: true },
+    MAP_REWARDS_TOUR,
   ],
   newcomer: [
     {
@@ -118,5 +140,6 @@ export const TOURS: Record<TourAudience, Tour[]> = {
       ],
     },
     { id: 'shop-slots', screen: 'screen-shop', requires: 'slots-card', steps: [{ target: 'slots-card', key: 'slots' }], always: true },
+    MAP_REWARDS_TOUR,
   ],
 }
