@@ -4258,7 +4258,10 @@ button.standing-col{cursor:pointer;}
 .pano-fallback img{display:block; height:100%; width:auto; max-width:none;}
 
 /* Before the answer. */
-.geo-stage{position:relative; height:clamp(340px, calc(100dvh - 340px), 620px); overflow:hidden; border-radius:24px; background:#0E2235; box-shadow:0 2px 6px rgba(14,34,53,.12), 0 18px 40px rgba(14,34,53,.22);}
+/* The panorama takes what's left of the screen once the header, Telegram's
+   own top bar, the goal, the button and the menu are counted — the button
+   must stay in view on a phone. */
+.geo-stage{position:relative; height:clamp(220px, calc(100dvh - env(safe-area-inset-top) - var(--tg-safe-area-top, 0px) - var(--nav-h, 82px) - 290px), 620px); overflow:hidden; border-radius:24px; background:#0E2235; box-shadow:0 2px 6px rgba(14,34,53,.12), 0 18px 40px rgba(14,34,53,.22);}
 .geo-stage .geo-pano{position:absolute; inset:0;}
 .geo-pano-still{background-size:auto 100%; background-position:50% 50%;}
 .geo-stage-chip{position:absolute; top:12px; left:12px; padding:6px 11px; border-radius:999px; background:rgba(8,18,28,.5); color:#fff; font-size:12px; font-weight:800; pointer-events:none; backdrop-filter:blur(8px);}
