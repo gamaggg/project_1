@@ -1,7 +1,7 @@
 import type { Database } from '@/lib/types'
 import type { CityId } from '@/lib/data/city'
 
-// Species (now 59 total across both cities) live in the `species` table
+// Species (now 60 total across both cities) live in the `species` table
 // (public, read-only for clients) — not hardcoded here. See DECISIONS.md.
 // Batumi's sea sectors split species by water type (marine/freshwater);
 // Moscow has no sea, so its species split by feeding behavior instead
@@ -43,7 +43,7 @@ export function categoryForKind(kind: Database['public']['Enums']['territory_kin
 export const METHODS = ['Спиннинг', 'Донная снасть', 'Поплавочная удочка', 'Нахлыст', 'Тенкара']
 
 export const BAITS_BY_CITY: Record<CityId, string[]> = {
-  batumi: ['Микроджиг', 'Силикон', 'Блесна', 'Воблер', 'Креветка', 'Морской червь', 'Вертушка', 'Бомбарда', 'Пилькер', 'Булер', 'Мормышка', 'Мушка', 'Хлеб (тесто)'],
+  batumi: ['Микроджиг', 'Силикон', 'Блесна', 'Воблер', 'Креветка', 'Морской червь', 'Навозный червь', 'Вертушка', 'Бомбарда', 'Пилькер', 'Булер', 'Мормышка', 'Мушка', 'Хлеб (тесто)'],
   moscow: ['Микроджиг', 'Блесна', 'Воблер', 'Червь', 'Опарыш', 'Кукуруза', 'Мушка', 'Хлеб (тесто)'],
 }
 
