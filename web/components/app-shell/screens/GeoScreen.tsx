@@ -9,6 +9,7 @@ import type { Territory } from '@/lib/data/types'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { GEO_BONUS, GEO_COINS, GEO_NEIGHBOUR_M, GEO_RECORD_MIN_CM, GEO_RECORD_MIN_KG, formatGeoDistance, geoImageUrl, type GeoResult, type GeoToday } from '@/lib/geo'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
+import { LegendWreath } from '@/components/app-shell/SectorInsights'
 import { useNow } from '@/lib/useNow'
 
 const IN_CITY: Record<CityId, string> = { batumi: 'Батуми', moscow: 'Москве' }
@@ -529,9 +530,17 @@ function SectorStory({
               )}
               {insights?.legend && (
                 <button className="geo-fact" onClick={() => onOpenUser(insights.legend!.id)}>
-                  <span className="geo-fact-icon laurel" aria-hidden>
-                    <LaurelIcon />
-                  </span>
+                  {/* The legend as on the sector's own screen: their face in the laurel wreath. */}
+                  <LegendWreath size={40}>
+                    <span className="standing-avatar geo-legend-avatar">
+                      {insights.legend.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- small avatar thumbnail, as on the sector screen
+                        <img src={thumbUrl(insights.legend.avatarUrl, 96)} alt="" />
+                      ) : (
+                        (insights.legend.name ?? '?').slice(0, 2).toUpperCase()
+                      )}
+                    </span>
+                  </LegendWreath>
                   <span>
                     <small>Легенда сектора</small>
                     <b>{insights.legend.name ?? 'Рыбак'}</b>
@@ -648,14 +657,6 @@ function ClockIcon() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
       <circle cx="12" cy="12" r="8.5" />
       <path d="M12 7.5V12l3 2" />
-    </svg>
-  )
-}
-function LaurelIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M7 20c-3-3-4-8-1-13M17 20c3-3 4-8 1-13" />
-      <path d="M5 13c1.5 0 2.5-.8 3-2M4.5 9c1.4.2 2.5-.4 3.2-1.5M19 13c-1.5 0-2.5-.8-3-2M19.5 9c-1.4.2-2.5-.4-3.2-1.5" />
     </svg>
   )
 }

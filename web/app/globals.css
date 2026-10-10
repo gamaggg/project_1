@@ -4374,7 +4374,7 @@ button.geo-fact{cursor:pointer;}
 .geo-fact-icon{display:grid; flex:0 0 auto; place-items:center; width:36px; height:36px; border-radius:11px; background:#fff;}
 .geo-fact-icon.gold{color:#C98A00;}
 .geo-fact-icon.blue{color:#1D6FC9;}
-.geo-fact-icon.laurel{color:#2E8B57;}
+.geo-legend-avatar{width:25px; height:25px;}
 /* The last catches: a line drawn down, the catches sliding in along it. */
 .geo-timeline{position:relative; display:flex; flex-direction:column; gap:10px; margin:0; padding:0 0 0 20px; list-style:none;}
 .geo-timeline::before{content:''; position:absolute; top:12px; bottom:12px; left:5px; width:2px; border-radius:1px; background:linear-gradient(#1D6FC9,#BFD8F2); transform-origin:top; animation:geo-line .9s var(--ease-out) .4s both;}
