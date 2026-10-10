@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useI18n } from '@/lib/i18n'
 import { TOURS, TOURS_VERSION, type Tour, type TourAudience, type TourStep } from '@/lib/data/tours'
@@ -54,6 +54,9 @@ export function SpotlightTours({ screen, audience, memberSince }: { screen: stri
   const [tour, setTour] = useState<{ def: Tour; steps: TourStep[] } | null>(null)
   const [index, setIndex] = useState(0)
   const [rect, setRect] = useState<DOMRect | null>(null)
+  // The note's own height, measured — so it can be kept on screen.
+  const tipRef = useRef<HTMLDivElement>(null)
+  const [tipH, setTipH] = useState(200)
   // Seen tours are kept on the account too (lib/uiState.ts), so a tour
   // finished on the phone doesn't start over in Telegram on the desktop.
   const ui = useUiState()
@@ -126,6 +129,7 @@ export function SpotlightTours({ screen, audience, memberSince }: { screen: stri
     const tick = () => {
       const now = findTarget(step.target)
       setRect(now ? now.getBoundingClientRect() : null)
+      if (tipRef.current) setTipH(tipRef.current.offsetHeight)
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
@@ -157,16 +161,26 @@ export function SpotlightTours({ screen, audience, memberSince }: { screen: stri
   const tipLeft = Math.max(minX, Math.min(center - tipW / 2, maxX - tipW))
   const below = vh - (hole.top + hole.height) > 210 || hole.top < 210
   const arrowX = Math.max(20, Math.min(center - tipLeft, tipW - 20))
+  // Never off screen, whatever the target: a section taller than the phone
+  // put the note — and its buttons — below the bottom edge, with no way to
+  // go on or close (and the tour blocks scrolling). Kept between Telegram's
+  // top bar and the bottom edge; on a tall target it covers part of it.
+  const topInset = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tg-safe-area-top')) || 0) + 12
+  const bottomInset = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tg-safe-area-bottom')) || 0) + 16
+  const tipTop = below ? hole.top + hole.height + 14 : hole.top - 14 - tipH
+  const clampedTop = Math.max(topInset, Math.min(tipTop, vh - bottomInset - tipH))
+  const clamped = clampedTop !== tipTop
 
   return createPortal(
     <div className="tour-root" role="dialog" aria-modal="true" aria-label={t(`tour.${step.key}.title`)}>
       <div className="tour-hole" style={hole} />
       <div
         key={`${tour.def.id}-${index}`}
+        ref={tipRef}
         className={`tour-tip ${below ? 'below' : 'above'}`}
-        style={{ left: tipLeft, width: tipW, ...(below ? { top: hole.top + hole.height + 14 } : { bottom: vh - hole.top + 14 }) }}
+        style={{ left: tipLeft, width: tipW, top: clampedTop }}
       >
-        <span className="tour-arrow" style={{ left: arrowX - 7 }} />
+        {!clamped && <span className="tour-arrow" style={{ left: arrowX - 7 }} />}
         <div className="tour-kicker">
           {tour.steps.length > 1
             ? t(audience === 'newcomer' ? 'tour.kickerTip' : 'tour.kicker', { n: index + 1, total: tour.steps.length })

@@ -298,8 +298,10 @@ function GeoResultView({
       {result.territoryId && <SectorStory id={result.territoryId} sector={sector} onOpenTerritory={onOpenTerritory} onOpenCatch={onOpenCatch} onOpenUser={onOpenUser} />}
 
       {board && board.length > 0 && (
-        <section className="geo-board" data-tour="geo-board">
-          <div className="geo-section-title">Сегодня в {IN_CITY[city]}</div>
+        <section className="geo-board">
+          <div className="geo-section-title" data-tour="geo-board">
+            Сегодня в {IN_CITY[city]}
+          </div>
           {board.map((r, i) => {
             // Your own row has your face too, even before the board brings it.
             const avatar = r.avatarUrl ?? (r.isMe ? (me?.avatarUrl ?? null) : null)
@@ -393,8 +395,9 @@ function SectorStory({
   const maxSpecies = Math.max(1, ...story.species.map((s) => s.count))
 
   return (
-    <section className="geo-story" data-tour="geo-story">
-      <button className="geo-story-head" onClick={() => onOpenTerritory(id)}>
+    <section className="geo-story">
+      {/* The tip points at the head — the whole story is taller than a phone. */}
+      <button className="geo-story-head" data-tour="geo-story" onClick={() => onOpenTerritory(id)}>
         <span className={`geo-story-hex ${status}`} aria-hidden />
         <span className="geo-story-title">
           <small>{sector ? KIND[sector.kind] : 'Сектор'}</small>
