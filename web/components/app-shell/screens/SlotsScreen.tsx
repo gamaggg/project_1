@@ -258,6 +258,9 @@ export function SlotsScreen({ city }: { city: CityId }) {
     queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
     queryClient.invalidateQueries({ queryKey: ['my-active-buffs', user?.id ?? null] })
     queryClient.invalidateQueries({ queryKey: ['slot-state', user?.id ?? null] })
+    // The jackpot frame is in the inventory now — without this the Shop kept
+    // showing it as «выбейте в прокрутках», with no «Надеть», until a restart.
+    if (res.prize === 'jackpot') queryClient.invalidateQueries({ queryKey: ['my-inventory', user?.id ?? null] })
   }
 
   function onReelStop() {

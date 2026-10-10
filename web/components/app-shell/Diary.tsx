@@ -1,5 +1,6 @@
 'use client'
 
+import { SkeletonBlock } from '@/components/app-shell/Skeleton'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CatchConditions } from '@/components/app-shell/CatchConditions'
@@ -64,8 +65,11 @@ export function DiaryView({
   onToast: (msg: string) => void
 }) {
   const { t, lang } = useI18n()
-  const { data: myCatches = [] } = useMyCatches()
-  const { data: diary } = useDiary(true)
+  const { data: myCatches = [], isPending: catchesPending } = useMyCatches()
+  const { data: diary, isPending: diaryPending } = useDiary(true)
+  // Both halves of the diary in before anything is drawn from them — not
+  // the catches' days first and the trips and gallery popping in after.
+  const loading = catchesPending || diaryPending
   const { data: species = [] } = useSpecies()
   const [adding, setAdding] = useState<'trip' | 'gallery' | null>(null)
   const [openGallery, setOpenGallery] = useState<DiaryCatch | null>(null)
@@ -114,7 +118,17 @@ export function DiaryView({
 
   return (
     <>
-      {days.length > 0 && (
+      {loading && (
+        <div className="diary-stats" aria-busy="true">
+          <SkeletonBlock height={30} radius={10} style={{ marginBottom: 12 }} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
+            {[0, 1, 2, 3].map((i) => (
+              <SkeletonBlock key={i} height={54} radius={12} />
+            ))}
+          </div>
+        </div>
+      )}
+      {!loading && days.length > 0 && (
         <DiaryStats days={days} nameOf={nameOf} dayLabel={dayLabel} onOpenPhoto={onOpenPhoto} onOpenGallery={setOpenGallery} onOpenTerritory={onOpenTerritory} />
       )}
       <div className="diary-actions">
@@ -135,7 +149,17 @@ export function DiaryView({
       </div>
       <div className="diary-hint">{t('diary.privateHint')}</div>
 
-      {days.length === 0 ? (
+      {loading ? (
+        [0, 1].map((i) => (
+          <div key={i} className="diary-day" aria-busy="true">
+            <SkeletonBlock height={14} width="40%" radius={7} style={{ marginBottom: 12 }} />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <SkeletonBlock height={92} width={92} radius={14} />
+              <SkeletonBlock height={92} width={92} radius={14} />
+            </div>
+          </div>
+        ))
+      ) : days.length === 0 ? (
         <div className="diary-empty">{t('diary.empty')}</div>
       ) : (
         days.map((d) => (

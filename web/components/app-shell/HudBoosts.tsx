@@ -71,8 +71,16 @@ function BoostsModal({ from, until, shields, onClose }: { from: number; until: n
             Щиты · {shields}
           </button>
         </div>
-        <div key={tab} className="boosts-tab-body">
-          {tab === 'double' ? <DoubleCoinsContent from={from} until={until} /> : <ShieldReserveContent count={shields} />}
+        {/* Both tabs in one cell: the open one shown, the other laid out
+            invisibly under it — the sheet is as tall as the taller of the
+            two, so it doesn't jump when the tab changes. */}
+        <div className="boosts-tab-stack">
+          <div key={tab} className="boosts-tab-body">
+            {tab === 'double' ? <DoubleCoinsContent from={from} until={until} /> : <ShieldReserveContent count={shields} />}
+          </div>
+          <div className="boosts-tab-sizer" aria-hidden>
+            {tab === 'double' ? <ShieldReserveContent count={shields} /> : <DoubleCoinsContent from={from} until={until} />}
+          </div>
         </div>
         <button className="btn-primary" onClick={onClose}>
           Понятно

@@ -1,5 +1,6 @@
 'use client'
 
+import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useState } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { formatCoords } from '@/lib/openExternal'
@@ -202,7 +203,7 @@ export function CatcherLabel({ userId, mine, onOpenUser }: { userId: string; min
           click (TerritoryScreen/MyCatchesScreen) — stop the click here so
           tapping the name opens the profile, not the photo underneath it. */}
       <button className="activity-who-btn" onClick={(e) => { e.stopPropagation(); onOpenUser(userId) }}>
-        {profile?.displayName ?? '…'}
+        {profile?.displayName ?? <span className="skel" style={{ display: 'inline-block', width: 64, height: 9, verticalAlign: 'middle' }} />}
       </button>
     </div>
   )
@@ -469,10 +470,14 @@ export function TerritoryScreen({
           })
         ) : (
           // While the list is still loading, "no catches" would contradict the
-          // catch count right above it — same box, neutral text instead.
-          <div style={{ padding: '22px 0', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>
-            {catchesPending ? 'Загрузка…' : 'Пока нет уловов в этом секторе'}
-          </div>
+          // catch count right above it — the rows' shape instead.
+          catchesPending && territory.catchCount > 0 ? (
+            <SkeletonRows count={Math.min(3, territory.catchCount)} className="sector-skel" />
+          ) : (
+            <div style={{ padding: '22px 0', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>
+              {catchesPending ? '' : 'Пока нет уловов в этом секторе'}
+            </div>
+          )
         )}
 
         {isSuperAdmin && (

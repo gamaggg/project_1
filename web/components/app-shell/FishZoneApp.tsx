@@ -23,6 +23,7 @@ import {
   useClanChatLive,
   useClanChatSummary,
   useClaimReferral,
+  useSubmitGeoGuess,
   reportClientError,
 } from '@/lib/supabase/queries'
 import { getCurrentCoords, nearestTerritory, queryGeolocationPermission } from '@/lib/geolocation'
@@ -51,10 +52,12 @@ import { draftHexAt } from '@/lib/data/hexGrid'
 import { CITIES, cityFirst, cityForSectorId, loadStoredCity, storeCity, type CityId } from '@/lib/data/city'
 import { ShieldedSectorModal } from '@/components/app-shell/ShieldedSectorModal'
 import { mostPopularSectorId } from '@/lib/data/sectorOrder'
-import type { PendingCatch, TerritoryStatus } from '@/lib/data/types'
+import type { PendingCatch, Territory, TerritoryStatus } from '@/lib/data/types'
 import { OnboardingFlow } from '@/components/app-shell/onboarding/OnboardingFlow'
 import { useTelegramBackButton } from '@/lib/telegram/useTelegramBackButton'
-import { hapticBuildUp, hapticTap } from '@/lib/telegram/haptics'
+import { hapticBuildUp, hapticSuccess, hapticTap } from '@/lib/telegram/haptics'
+import { GeoMapOverlay } from '@/components/app-shell/GeoMapOverlay'
+import { GEO_AREA_MAX_LAT, GEO_NEIGHBOUR_M, type GeoResult } from '@/lib/geo'
 import { BottomNav } from '@/components/app-shell/BottomNav'
 import { SpotlightTours } from '@/components/app-shell/SpotlightTours'
 import {
@@ -90,6 +93,8 @@ import { TerritoryScreen } from '@/components/app-shell/screens/TerritoryScreen'
 import { TerritoriesListScreen, type Mode as RatingMode } from '@/components/app-shell/screens/TerritoriesListScreen'
 import { ShopScreen } from '@/components/app-shell/screens/ShopScreen'
 import { SlotsScreen } from '@/components/app-shell/screens/SlotsScreen'
+import { GeoScreen } from '@/components/app-shell/screens/GeoScreen'
+import { AdminGeoScreen } from '@/components/app-shell/screens/AdminGeoScreen'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { ChallengesScreen } from '@/components/app-shell/screens/ChallengesScreen'
 import { AdminStatsScreen } from '@/components/app-shell/screens/AdminStatsScreen'
@@ -136,6 +141,8 @@ export type ScreenId =
   | 'screen-last-week'
   | 'screen-shop'
   | 'screen-slots'
+  | 'screen-geo'
+  | 'screen-admin-geo'
   | 'screen-challenges'
   | 'screen-clans'
   | 'screen-clan'
@@ -174,6 +181,8 @@ type StackEntry =
   | { screen: 'screen-last-week' }
   | { screen: 'screen-shop' }
   | { screen: 'screen-slots' }
+  | { screen: 'screen-geo' }
+  | { screen: 'screen-admin-geo' }
   | { screen: 'screen-challenges' }
   | { screen: 'screen-clans' }
   | { screen: 'screen-clan'; clanId: number }
@@ -329,6 +338,8 @@ export function FishZoneApp() {
   }
   const [changingCity, setChangingCity] = useState(false)
   const cityTerritories = useMemo(() => territories.filter((t) => cityForSectorId(t.id) === city), [territories, city])
+  // «Где это?» is played in the player's own city, whichever one the map shows.
+  const geoSectors = useMemo(() => territories.filter((t) => cityForSectorId(t.id) === (myProfile?.city ?? city)), [territories, myProfile?.city, city])
   const mostPopularId = useMemo(() => mostPopularSectorId(cityTerritories), [cityTerritories])
   // The player's sectors in the other city — «Мои» on the territories list
   // shows them after this city's, so it matches the profile.
@@ -672,6 +683,83 @@ export function FishZoneApp() {
   }
   function openChallenges() {
     push({ screen: 'screen-challenges' })
+  }
+  function openGeo() {
+    push({ screen: 'screen-geo' })
+  }
+  // «Где это?» on the app's own map: the pick, then the reveal (GeoMapOverlay).
+  const [geoPlay, setGeoPlay] = useState<
+    | { phase: 'pick'; picked: string | null; panorama: { image: string; heading: number } | null }
+    | { phase: 'reveal'; result: GeoResult; panorama: { image: string; heading: number } | null }
+    | null
+  >(null)
+  const [geoError, setGeoError] = useState<string | null>(null)
+  const submitGeo = useSubmitGeoGuess()
+  const geoCity = myProfile?.city ?? city
+  function startGeoPick(panorama: { image: string; heading: number }) {
+    setGeoError(null)
+    setGeoPlay({ phase: 'pick', picked: null, panorama })
+    if (city !== geoCity) setCity(geoCity)
+    // The whole of the city's play area, zoomed out and already there when
+    // the map shows (no fly) — opening on the centre, or flying out over the
+    // sectors, looked like a hint. Again a frame later, once it's visible.
+    const area = geoSectors.filter((t) => t.lat <= GEO_AREA_MAX_LAT[geoCity]).flatMap((t) => t.corners)
+    const showArea = () => (area.length ? mapHandleRef.current?.showArea(area, 11) : mapHandleRef.current?.flyToView(CITIES[geoCity].center, 12))
+    showArea()
+    navClick('screen-map')
+    requestAnimationFrame(showArea)
+  }
+  function revealGeo(result: GeoResult, panorama: { image: string; heading: number } | null) {
+    setGeoPlay({ phase: 'reveal', result, panorama })
+    requestAnimationFrame(() => mapHandleRef.current?.focusTerritories([result.guessTerritoryId, result.territoryId ?? result.guessTerritoryId]))
+  }
+  // «На карте» from the result screen: the usual map, out of the game, with
+  // the answer's sector flown to and its card up — as if tapped there.
+  function showGeoOnMap(result: GeoResult) {
+    const id = result.territoryId ?? result.guessTerritoryId
+    setGeoPlay(null)
+    // The answer's own city — the player may have moved since answering.
+    const answerCity = cityForSectorId(id)
+    if (city !== answerCity) setCity(answerCity)
+    showTerritoryOnMap(id)
+  }
+  function sendGeoGuess() {
+    if (geoPlay?.phase !== 'pick' || !geoPlay.picked) return
+    const panorama = geoPlay.panorama
+    setGeoError(null)
+    submitGeo.mutate(geoPlay.picked, {
+      onSuccess: (res) => {
+        if (res.correct) hapticSuccess()
+        else hapticBuildUp()
+        queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
+        revealGeo(res, panorama)
+      },
+      onError: (e) => {
+        if ((e as { message?: string }).message?.includes('GEO:already')) {
+          queryClient.invalidateQueries({ queryKey: ['geo-today'] })
+          endGeoPlay()
+        } else setGeoError('Не получилось отправить — попробуй ещё раз')
+      },
+    })
+  }
+  function endGeoPlay() {
+    setGeoPlay(null)
+    push({ screen: 'screen-geo' })
+  }
+  // «Где это?»'s result — a line or two and the link that opens the game.
+  async function shareGeo(text: string) {
+    const url = `${window.location.origin}${window.location.pathname}?geo=1${refParam(myProfile?.publicId)}`
+    const webApp = window.Telegram?.WebApp
+    if (insideTelegram() && webApp?.openTelegramLink) {
+      webApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`)
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`)
+      showToast('Скопировано — отправь друзьям')
+    } catch {
+      showToast('Не удалось скопировать')
+    }
   }
   function openTerritory(id: string) {
     // A "Последние действия"/activity link can point at a sector a super
@@ -1271,6 +1359,18 @@ export function FishZoneApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
+  // Opens a ?geo=1 link (a shared «Где это?» result) straight into the game.
+  const geoDeepLinkOpened = useRef(false)
+  useEffect(() => {
+    if (geoDeepLinkOpened.current || !user) return
+    if (new URLSearchParams(window.location.search).get('geo') !== '1') return
+    geoDeepLinkOpened.current = true
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens a screen once from the launch URL (external input)
+    openGeo()
+    window.history.replaceState(null, '', window.location.pathname)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
   // Opens a ?clanchat=<id> link (from a clan_chat_mention Telegram
   // notification) straight into that clan's chat.
   const clanChatDeepLinkOpened = useRef(false)
@@ -1435,9 +1535,17 @@ export function FishZoneApp() {
             race={myProfile?.clanId ? { city: myProfile.city, clanId: myProfile.clanId, onOpen: openClanRace } : null}
             onToast={showToast}
             onOpenSlots={openSlots}
+            onOpenGeo={openGeo}
             newbie={isNewbie}
             nearestFreeRequest={nearestFreeRequest}
             offlinePending={offlineQueue}
+            geo={
+              geoPlay?.phase === 'pick'
+                ? { picked: geoPlay.picked, answer: null, spot: null, dim: false, onPick: (id) => setGeoPlay({ ...geoPlay, picked: id }) }
+                : geoPlay?.phase === 'reveal'
+                  ? { picked: geoPlay.result.guessTerritoryId, answer: geoPlay.result.territoryId, spot: [geoPlay.result.answerLat, geoPlay.result.answerLng], dim: true }
+                  : null
+            }
           />
         </Screen>
         <Screen id="screen-territory" current={currentScreen} onBack={pop}>
@@ -1499,6 +1607,30 @@ export function FishZoneApp() {
                 {/* The machine's sign: its own line under «Назад», full size. */}
                 <div className="slots-title">{tr('slots.title')}</div>
                 <SlotsScreen city={myProfile.city} />
+              </div>
+            </>
+          )}
+        </Screen>
+        {/* «Где это?» — the panorama of the day; the profile's card opens it. */}
+        <Screen id="screen-geo" current={currentScreen} onBack={pop}>
+          {myProfile && (
+            <>
+              <div className="header-row">
+                <BackButton onClick={pop} registerNative={false} />
+                <div className="geo-header-title">Где это?</div>
+                <div style={{ width: 36 }} />
+              </div>
+              <div className="screen-inner geo-inner">
+                <GeoScreen
+                  sectors={territories}
+                  active={currentScreen === 'screen-geo'}
+                  onStartPick={startGeoPick}
+                  onShowOnMap={showGeoOnMap}
+                  onOpenTerritory={openTerritory}
+                  onOpenCatch={openCatchPhoto}
+                  onOpenUser={openUserProfile}
+                  onShare={(text) => void shareGeo(text)}
+                />
               </div>
             </>
           )}
@@ -1674,6 +1806,8 @@ export function FishZoneApp() {
             onOpenChallenges={openChallenges}
             onOpenClans={openClans}
             onOpenClan={openClan}
+            onOpenGeo={openGeo}
+            onOpenAdminGeo={() => push({ screen: 'screen-admin-geo' })}
           />
         </Screen>
         <Screen id="screen-user-profile" current={currentScreen} onBack={pop}>
@@ -1733,6 +1867,20 @@ export function FishZoneApp() {
         </Screen>
         <Screen id="screen-faq" current={currentScreen} onBack={pop}>
           <FaqScreen onBack={pop} onToast={showToast} chatTicketId={supportChatId} onChatChange={setSupportChatId} />
+        </Screen>
+        <Screen id="screen-admin-geo" current={currentScreen} onBack={pop}>
+          {isSuperAdmin && (
+            <>
+              <div className="header-row">
+                <BackButton onClick={pop} registerNative={false} />
+                <div style={{ fontWeight: 800, fontSize: 15 }}>Панорамы «Где это?»</div>
+                <div style={{ width: 36 }} />
+              </div>
+              <div className="screen-inner">
+                <AdminGeoScreen active={currentScreen === 'screen-admin-geo'} />
+              </div>
+            </>
+          )}
         </Screen>
         <Screen id="screen-admin-stats" current={currentScreen} onBack={pop}>
           {isSuperAdmin && <AdminStatsScreen onBack={pop} active={currentScreen === 'screen-admin-stats'} />}
@@ -1990,6 +2138,7 @@ export function FishZoneApp() {
           onboarding, behind every celebration above. Seen from the moment it
           starts: leaving the map or closing the app halfway ends it for good. */}
       {hotTour.show &&
+        !geoPlay &&
         myProfile?.onboardingCompleted &&
         currentScreen === 'screen-map' &&
         !showWeekTop &&
@@ -2007,12 +2156,28 @@ export function FishZoneApp() {
           />
         )}
 
+      {geoPlay && currentScreen === 'screen-map' && (
+        <GeoMapOverlay
+          city={geoCity}
+          phase={geoPlay.phase}
+          panorama={geoPlay.panorama}
+          picked={geoPlay.phase === 'pick' && geoPlay.picked ? (geoSectors.find((t) => t.id === geoPlay.picked) ?? null) : null}
+          result={geoPlay.phase === 'reveal' ? geoPlay.result : null}
+          neighbour={geoPlay.phase === 'reveal' && isGeoNeighbour(geoPlay.result, geoSectors)}
+          sending={submitGeo.isPending}
+          error={geoError}
+          onSend={sendGeoGuess}
+          onBack={endGeoPlay}
+          onStory={endGeoPlay}
+        />
+      )}
+
       <SpotlightTours
-        screen={currentScreen}
+        screen={geoPlay ? 'screen-geo' : currentScreen}
         audience={!myProfile?.onboardingCompleted || firstSteps === undefined ? null : firstSteps?.eligible ? 'newcomer' : 'whatsNew'}
         memberSince={myProfile?.createdAt ?? null}
       />
-      {currentScreen !== 'screen-camera' && currentScreen !== 'screen-clan-editor' && currentScreen !== 'screen-clan-chat' && !showingTrophyScene && (
+      {currentScreen !== 'screen-camera' && currentScreen !== 'screen-clan-editor' && currentScreen !== 'screen-clan-chat' && !showingTrophyScene && !(geoPlay && currentScreen === 'screen-map') && (
         <BottomNav
           active={NAV_SCREENS.includes(currentScreen) ? (currentScreen as TabScreenId) : navScreen}
           onNavigate={navClick}
@@ -2091,6 +2256,8 @@ function resumeUrlFor(entry: StackEntry, userPublicId: string | null): string {
       return `${path}?lastweek=1`
     case 'screen-challenges':
       return `${path}?challenges=1`
+    case 'screen-geo':
+      return `${path}?geo=1`
     default:
       return path
   }
@@ -2124,4 +2291,16 @@ function ClanEditorHost({
   const { data: clan } = useClan(mode === 'edit' ? clanId : null)
   if (mode === 'edit' && !clan) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Загрузка…</div>
   return <ClanEditorScreen mode={mode} clan={clan ?? null} onBack={onBack} onDone={onDone} onShareClan={onShareClan} />
+}
+
+// Sector centres are 600 m apart — a guess this close to the answer was the
+// cell next door.
+function isGeoNeighbour(result: GeoResult, sectors: Territory[]): boolean {
+  if (result.correct) return false
+  const a = sectors.find((t) => t.id === result.guessTerritoryId)
+  const b = sectors.find((t) => t.id === result.territoryId)
+  if (!a || !b) return false
+  const r = (d: number) => (d * Math.PI) / 180
+  const h = Math.sin(r(b.lat - a.lat) / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(r(b.lng - a.lng) / 2) ** 2
+  return 2 * 6371008.8 * Math.asin(Math.min(1, Math.sqrt(h))) <= GEO_NEIGHBOUR_M
 }

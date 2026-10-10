@@ -35,13 +35,20 @@ export type LeafletMapHandle = {
   showUserLocation: (lat: number, lng: number) => void
   flyToLocation: (lat: number, lng: number) => void
   flyToCity: (center: [number, number], zoom: number) => void
+  // A plain, quick flight to a view in the same city («Где это?»'s start).
+  flyToView: (center: [number, number], zoom: number) => void
   zoomIn: () => void
   zoomOut: () => void
   // The hot-sector tour (HotSectorsTour): fly so these sectors fill the
   // middle of the screen, and their hexagons' corners on the page now (px).
   focusTerritories: (ids: string[]) => void
+  // «Где это?»: the whole of an area (corner points) in view, between the
+  // panel on top and the hint below — not zoomed below minZoom; no animation.
+  showArea: (points: [number, number][], minZoom: number) => void
   territoriesOutline: (ids: string[]) => [number, number][][] | null
 }
+
+export type GeoMarks = { picked: string | null; answer: string | null; spot: [number, number] | null; dim: boolean }
 
 const LABEL_MIN_ZOOM = 14
 
@@ -66,8 +73,8 @@ function avatarInnerHtml(avatarUrl: string | null, displayName: string | null): 
 // A hot sector's id label turns brand orange with a flame in front of the
 // number — part of the label itself, so it sits under the avatar at every
 // zoom instead of competing with it for the centre.
-function idLabelHtml(t: Territory): string {
-  return isHotNow(t)
+function idLabelHtml(t: Territory, plain = false): string {
+  return !plain && isHotNow(t)
     ? `<div class="leaflet-territory-label hot">${hotFlameSvg(9, '#fff')}${escapeHtml(t.id)}</div>`
     : `<div class="leaflet-territory-label">${escapeHtml(t.id)}</div>`
 }
@@ -76,9 +83,12 @@ function isHotNow(t: Territory): boolean {
   return !!t.hotUntil && new Date(t.hotUntil).getTime() > Date.now()
 }
 
-function territoryMarkerHtml(t: Territory, clanLayer: boolean): string {
-  const label = idLabelHtml(t)
-  if (t.status === 'free' || !t.ownerId) return `<div class="leaflet-territory-marker">${label}</div>`
+// `plain`: «Где это?» — only the sector's number: whose it is (faces,
+// initials, crests) and what's hot have nothing to do with where a
+// panorama was taken.
+function territoryMarkerHtml(t: Territory, clanLayer: boolean, plain = false): string {
+  const label = idLabelHtml(t, plain)
+  if (plain || t.status === 'free' || !t.ownerId) return `<div class="leaflet-territory-marker">${label}</div>`
   // Clan layer: the owner's clan crest takes the avatar's place.
   if (clanLayer && t.ownerClanCrest) {
     return `<div class="leaflet-territory-marker"><div class="leaflet-territory-crest">${crestSvgMarkup(t.ownerClanCrest, 30)}</div>${label}</div>`
@@ -177,6 +187,11 @@ export const LeafletMap = forwardRef<
     // «Кланы» layer: sectors take their owner's clan colour, solo owners go
     // grey, and labels show the clan crest instead of the avatar.
     clanLayer?: boolean
+    // «Где это?» on this map: the sector picked (orange), the right one
+    // (green) with the spot the panorama was taken from, and with `dim` the
+    // rest of the map shaded so those two stand out — drawn on the map, so
+    // it moves with it. Takes the place of the tap highlight while it's set.
+    geo?: GeoMarks | null
   }
 >(function LeafletMap(
   {
@@ -192,11 +207,16 @@ export const LeafletMap = forwardRef<
     fallbackZoom,
     highlightedId,
     clanLayer = false,
+    geo = null,
   },
   ref
 ) {
     const clanLayerRef = useRef(clanLayer)
     clanLayerRef.current = clanLayer
+    // «Где это?» on the map: sectors by number only (territoryMarkerHtml).
+    const plain = !!geo
+    const plainRef = useRef(plain)
+    plainRef.current = plain
     const containerRef = useRef<HTMLDivElement>(null)
     const mapRef = useRef<L.Map | null>(null)
     const leafletRef = useRef<typeof import('leaflet') | null>(null)
@@ -409,7 +429,7 @@ export const LeafletMap = forwardRef<
       // stays free of animation.
       const hotBadges = hotBadgesLayerRef.current
       hotBadges?.clearLayers()
-      territories.filter(isHotNow).forEach((t) => {
+      territories.filter((t) => !plainRef.current && isHotNow(t)).forEach((t) => {
         L.polygon(t.corners, { color: HOT_COLOR, weight: 9, opacity: 0.22, fill: false, interactive: false }).addTo(markersLayer)
         L.polygon(t.corners, { color: HOT_COLOR, weight: 3, opacity: 1, fill: false, interactive: false }).addTo(markersLayer)
         if (hotBadges) {
@@ -444,12 +464,12 @@ export const LeafletMap = forwardRef<
       const bounds = map.getBounds().pad(0.3)
       territoriesRef.current.forEach((t) => {
         if (!bounds.contains([t.lat, t.lng])) return
-        const isOccupied = t.status !== 'free' && !!t.ownerId
+        const isOccupied = t.status !== 'free' && !!t.ownerId && !plainRef.current
         // Shared sector: the id stays at the center, and every holder's
         // avatar sits in the middle of their own part — sized to the part,
         // so four still fit at the zoom labels first appear. The «Кланы»
         // layer keeps the single crest: the holders are one clan anyway.
-        const split = !clanLayerRef.current && !selectedIdsRef.current?.has(t.id) ? sectorSplit(t) : null
+        const split = !clanLayerRef.current && !plainRef.current && !selectedIdsRef.current?.has(t.id) ? sectorSplit(t) : null
         if (split) {
           L.marker([t.lat, t.lng], {
             icon: L.divIcon({
@@ -477,7 +497,7 @@ export const LeafletMap = forwardRef<
         L.marker([t.lat, t.lng], {
           icon: L.divIcon({
             className: 'leaflet-territory-marker-wrap',
-            html: territoryMarkerHtml(t, clanLayerRef.current),
+            html: territoryMarkerHtml(t, clanLayerRef.current, plainRef.current),
             iconSize: isOccupied ? [40, 40] : [40, 18],
           }),
           interactive: false,
@@ -523,6 +543,9 @@ export const LeafletMap = forwardRef<
         map.flyTo([t.lat, t.lng], targetZoom, { duration: 0.5 })
       },
       showUserLocation: placeUserMarker,
+      flyToView(center: [number, number], zoom: number) {
+        mapRef.current?.flyTo(center, zoom, { duration: 0.8 })
+      },
       flyToLocation(lat: number, lng: number) {
         const map = mapRef.current
         if (!map) return
@@ -577,6 +600,21 @@ export const LeafletMap = forwardRef<
           ],
           { paddingTopLeft: [80, 160], paddingBottomRight: [80, 340], maxZoom: 15, duration: 0.9 }
         )
+      },
+      showArea(points: [number, number][], minZoom: number) {
+        const map = mapRef.current
+        const L = leafletRef.current
+        if (!map || !L || points.length === 0) return
+        const lats = points.map(([lat]) => lat)
+        const lngs = points.map(([, lng]) => lng)
+        const south = Math.min(...lats)
+        const north = Math.max(...lats)
+        const west = Math.min(...lngs)
+        const east = Math.max(...lngs)
+        // Room for the question panel on top and the hint below.
+        const zoom = Math.max(minZoom, map.getBoundsZoom([[south, west], [north, east]], false, L.point(40, 220)))
+        // At once, no fly: the zoom-out passing over sectors read as a hint.
+        map.setView([(south + north) / 2, (west + east) / 2], zoom, { animate: false })
       },
       territoriesOutline(ids: string[]) {
         const map = mapRef.current
@@ -800,8 +838,9 @@ export const LeafletMap = forwardRef<
       if (!mapRef.current) return
       draw(territories)
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [territories, myTerritoryColor, selectedIds, pendingAddDrafts, skinAssetsVersion, zoomTick, clanLayer])
+    }, [territories, myTerritoryColor, selectedIds, pendingAddDrafts, skinAssetsVersion, zoomTick, clanLayer, plain])
 
+    const geoKey = geo ? `${geo.picked}|${geo.answer}|${geo.dim}|${geo.spot?.join(',')}` : null
     // Kept separate from the effect above — retargeting the highlight on
     // every tap shouldn't re-run a full ~700-polygon canvas redraw.
     useEffect(() => {
@@ -810,6 +849,41 @@ export const LeafletMap = forwardRef<
       const renderer = svgRendererRef.current
       if (!L || !layer || !renderer) return
       layer.clearLayers()
+      if (geo) {
+        const picked = geo.picked ? territories.find((x) => x.id === geo.picked) : null
+        const answer = geo.answer ? territories.find((x) => x.id === geo.answer) : null
+        if (geo.dim) {
+          // The whole world with the two hexes cut out of it.
+          // Once per sector: the same hole twice cancels out (even-odd fill).
+          const holes = [...new Set([picked, answer].filter((x): x is Territory => !!x))].map((x) => x.corners)
+          L.polygon(
+            [
+              [
+                [-85, -180],
+                [-85, 180],
+                [85, 180],
+                [85, -180],
+              ],
+              ...holes,
+            ],
+            { renderer, stroke: false, fillColor: '#0A1622', fillOpacity: 0.58, interactive: false, className: 'geo-dim' }
+          ).addTo(layer)
+        }
+        if (answer) {
+          L.polygon(answer.corners, { renderer, className: 'geo-mark-answer', color: '#22C55E', weight: 4, fillColor: '#22C55E', fillOpacity: 0.28, interactive: false }).addTo(layer)
+        }
+        if (picked && picked.id !== answer?.id) {
+          L.polygon(picked.corners, { renderer, className: 'geo-mark-picked', color: '#FC5200', weight: 4, fillColor: '#FC5200', fillOpacity: geo.answer ? 0.22 : 0.32, interactive: false }).addTo(layer)
+        }
+        if (geo.spot) {
+          L.marker(geo.spot, {
+            icon: L.divIcon({ className: 'geo-spot', html: '<span></span>', iconSize: [20, 20], iconAnchor: [10, 10] }),
+            interactive: false,
+            zIndexOffset: 1000,
+          }).addTo(layer)
+        }
+        return
+      }
       const t = highlightedId ? territories.find((x) => x.id === highlightedId) : null
       if (!t) return
       L.polygon(t.corners, {
@@ -820,7 +894,10 @@ export const LeafletMap = forwardRef<
         fill: false,
         interactive: false,
       }).addTo(layer)
-    }, [highlightedId, territories])
+      // The marks are redrawn when what they show changes, not on every new
+      // `geo` object a parent render makes.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [highlightedId, territories, geoKey])
 
     return <div id="leafletMap" ref={containerRef} />
   }

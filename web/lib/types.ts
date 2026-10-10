@@ -1886,6 +1886,43 @@ export type Database = {
       }
       create_telegram_link_token: { Args: Record<string, never>; Returns: string }
       get_slot_state: { Args: Record<string, never>; Returns: Json }
+      get_geo_today: { Args: Record<string, never>; Returns: Json }
+      get_geo_sector: { Args: { p_territory_id: string }; Returns: Json }
+      submit_geo_guess: { Args: { p_territory_id: string }; Returns: Json }
+      get_geo_board: {
+        Args: Record<string, never>
+        Returns: { user_id: string; display_name: string | null; avatar_url: string | null; equipped_frame: string | null; territory_id: string; correct: boolean; distance_m: number; coins: number; is_me: boolean }[]
+      }
+      admin_geo_list: {
+        Args: { p_status: string }
+        Returns: {
+          id: number
+          city: string
+          lat: number
+          lng: number
+          territory_id: string | null
+          image_path: string
+          heading: number
+          north: number
+          source: string
+          source_id: string | null
+          author: string | null
+          captured_at: string | null
+          status: string
+          shown: number
+          last_shown: string | null
+          quality: number | null
+          water_m: number | null
+          next_day: string | null
+        }[]
+      }
+      admin_geo_review: { Args: { p_id: number; p_status: string; p_heading?: number }; Returns: undefined }
+      admin_geo_plan: {
+        Args: { p_city: string; p_days?: number }
+        Returns: { day: string; panorama_id: number | null; image_path: string | null; territory_id: string | null; heading: number | null; locked: boolean }[]
+      }
+      admin_geo_set_day: { Args: { p_city: string; p_day: string; p_panorama_id: number | null }; Returns: undefined }
+      admin_geo_fill: { Args: { p_city: string; p_days?: number }; Returns: number }
       get_daily_reward_state: { Args: Record<string, never>; Returns: Json }
       claim_daily_reward: { Args: Record<string, never>; Returns: Json }
       get_treasury: { Args: Record<string, never>; Returns: Json }

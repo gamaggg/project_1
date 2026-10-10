@@ -1,10 +1,10 @@
 'use client'
 
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useFirstSteps } from '@/lib/supabase/queries'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { MapView } from '@/components/app-shell/MapView'
-import type { LeafletMapHandle } from '@/components/app-shell/LeafletMap'
+import type { GeoMarks, LeafletMapHandle } from '@/components/app-shell/LeafletMap'
 import type { Territory } from '@/lib/data/types'
 import { CITIES, cityForSectorId, type CityId } from '@/lib/data/city'
 import { formatWhen } from '@/lib/format'
@@ -22,33 +22,12 @@ import { mostPopularSectorId } from '@/lib/data/sectorOrder'
 import { MapRacePill } from '@/components/app-shell/ClanRace'
 import { TreasuryChip } from '@/components/app-shell/TreasuryChip'
 import { SlotsSticker } from '@/components/app-shell/SlotsSticker'
+import { GeoSticker } from '@/components/app-shell/GeoSticker'
 import { HudBoosts } from '@/components/app-shell/HudBoosts'
 import { HOT_FLAME_SVG } from '@/lib/map/hotFlame'
 import { useI18n } from '@/lib/i18n'
 import { formatWeekdayTime } from '@/lib/i18n/format'
 import { useNow } from '@/lib/useNow'
-
-// Native scrollIntoView({behavior:'smooth'}) paces itself by distance, not
-// time — fine for the carousel's own drag-driven scrolling, but a map tap
-// can jump from the first sector to the last one, and that native scroll
-// then visibly grinds along for seconds. A fixed short duration keeps a
-// map-triggered jump feeling equally snappy regardless of how far apart the
-// two sectors are.
-function scrollToCardFast(row: HTMLElement, card: HTMLElement, duration = 280) {
-  const start = row.scrollLeft
-  const max = row.scrollWidth - row.clientWidth
-  const target = Math.max(0, Math.min(max, card.offsetLeft - (row.clientWidth - card.offsetWidth) / 2))
-  const distance = target - start
-  if (Math.abs(distance) < 1) return
-  const startTime = performance.now()
-  function step(now: number) {
-    const t = Math.min(1, (now - startTime) / duration)
-    const eased = 1 - Math.pow(1 - t, 3)
-    row.scrollLeft = start + distance * eased
-    if (t < 1) requestAnimationFrame(step)
-  }
-  requestAnimationFrame(step)
-}
 
 function statusBadge(status: Territory['status'], myTerritoryColor: string, myShare = false) {
   // myShare: a clan-mate's sector the viewer holds a part of.
@@ -64,12 +43,6 @@ function statusBadge(status: Territory['status'], myTerritoryColor: string, mySh
   if (status === 'other') return null
   return <span className="badge badge-neutral">Свободна</span>
 }
-
-// How many cards either side of the centered one get their contents rendered.
-// Only one is ever on screen (cards are full-row width), so this is purely
-// headroom for a fast flick landing a few cards over before the next scroll
-// event fires.
-const SHEET_WINDOW = 3
 
 // Under a shield: the icon and how long is left («18 ч»), not «Под щитом» —
 // the words took the room the owner's name needs.
@@ -118,6 +91,8 @@ export const MapScreen = forwardRef<
     onToast?: (msg: string) => void
     // The slots sticker (SlotsSticker) opens the slots screen.
     onOpenSlots?: () => void
+    // The «Где это?» sticker (GeoSticker) opens the game.
+    onOpenGeo?: () => void
     // No catches yet: the «Ближайший свободный сектор» button shows.
     newbie?: boolean
     // Bumped by the onboarding's last step («Найти свободный сектор рядом»)
@@ -125,6 +100,10 @@ export const MapScreen = forwardRef<
     nearestFreeRequest?: number
     // Catches saved without a connection, still waiting to go out.
     offlinePending?: { count: number; syncing: boolean }
+    // «Где это?» played on this map (GeoMapOverlay): a tap picks the sector
+    // instead of opening its card, the map's own chrome steps aside, and
+    // the picked / right sectors are drawn on it.
+    geo?: (GeoMarks & { onPick?: (id: string) => void }) | null
   }
 >(function MapScreen(
   {
@@ -146,9 +125,11 @@ export const MapScreen = forwardRef<
     race,
     onToast,
     onOpenSlots,
+    onOpenGeo,
     newbie,
     nearestFreeRequest,
     offlinePending,
+    geo = null,
   },
   forwardedRef
 ) {
@@ -223,9 +204,11 @@ export const MapScreen = forwardRef<
     showUserLocation: (lat: number, lng: number) => mapRef.current?.showUserLocation(lat, lng),
     flyToLocation: (lat: number, lng: number) => mapRef.current?.flyToLocation(lat, lng),
     flyToCity: (center: [number, number], zoom: number) => mapRef.current?.flyToCity(center, zoom),
+    flyToView: (center: [number, number], zoom: number) => mapRef.current?.flyToView(center, zoom),
     zoomIn: () => mapRef.current?.zoomIn(),
     zoomOut: () => mapRef.current?.zoomOut(),
     focusTerritories: (ids: string[]) => mapRef.current?.focusTerritories(ids),
+    showArea: (points: [number, number][], minZoom: number) => mapRef.current?.showArea(points, minZoom),
     territoriesOutline: (ids: string[]) => mapRef.current?.territoriesOutline(ids) ?? null,
     showTerritory: (id: string) => {
       handlePolygonSelect(id)
@@ -244,18 +227,6 @@ export const MapScreen = forwardRef<
     mapRef.current?.flyToCity(CITIES[city].center, CITIES[city].zoom)
   }, [city])
 
-  const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // Set by a real touch/wheel gesture starting on the carousel, consumed (and
-  // cleared) the next time a scroll settles — distinguishes an actual swipe
-  // from the browser just firing 'scroll' because `territories` re-sorted out
-  // from under the current scrollLeft (it's sorted by catch count; realtime
-  // now reorders it for every connected client, not just the one who caught
-  // something — see DECISIONS.md). Without this, another user's catch could
-  // reshuffle the cards under a client that never touched the carousel, and
-  // whichever card ended up nearest the old scrollLeft would yank their map
-  // to an unrelated sector.
-  const userScrollRef = useRef(false)
-
   // Self-contained "locate me" button — just recenters the map on the
   // visitor's position, unrelated to the "+" catch flow (no sector matching,
   // no camera). Silently no-ops on denial/error, same as the geolocation used
@@ -267,11 +238,7 @@ export const MapScreen = forwardRef<
     mapRef.current?.flyToLocation(coords.lat, coords.lng)
   }
 
-  function markUserScroll() {
-    userScrollRef.current = true
-    lastBrowseRef.current = Date.now()
-  }
-  // When the player last flicked through the cards or picked a sector —
+  // When the player last picked a sector —
   // walking into another sector doesn't yank the sheet away from that.
   const lastBrowseRef = useRef(0)
 
@@ -307,13 +274,8 @@ export const MapScreen = forwardRef<
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nearestFreeRequest])
 
-  const sheetRowRef = useRef<HTMLDivElement>(null)
-  // A fast fixed-duration scroll (see scrollToCardFast) barely reads as
-  // "something moved" when the target card was already near the viewport —
-  // the id text changing is easy to miss entirely. This flashes a ring
-  // around whichever card a map tap landed on, independent of the scroll
-  // itself, so the "which one did I just pick" question has an answer even
-  // when the scroll distance was tiny or zero.
+  // A ring flashed round the card when a map tap changes it, on top of the
+  // contents' own change — «which one did I just pick» answered either way.
   const [justSelectedId, setJustSelectedId] = useState<string | null>(null)
   // Separate from justSelectedId on purpose — that one self-clears the
   // instant its one-shot pulse animation ends (see onAnimationEnd below),
@@ -321,27 +283,22 @@ export const MapScreen = forwardRef<
   // for longer than that pulse lasts.
   const [highlightedSectorId, setHighlightedSectorId] = useState<string | null>(null)
   // A plain tap on a sector used to jump straight into its full screen — too
-  // heavy for "just checking if there's fish there". The sheet carousel
-  // below already shows exactly that summary per sector (id/status/catch
-  // count), just never driven by a map tap (only the reverse: scrolling the
-  // carousel flies the map, see handleScroll) — so a tap now brings that
-  // card into view instead, and its own "Подробнее о секторе" button (still
-  // onOpenTerritory, unchanged) is the explicit way to actually drill in.
+  // heavy for "just checking if there's fish there". It puts that sector on
+  // the card at the bottom instead (id, holder, catches), and the card's own
+  // "Подробнее о секторе" (onOpenTerritory) is the way in.
   function handlePolygonSelect(id: string) {
+    if (geo) {
+      geo.onPick?.(id)
+      return
+    }
     if (selectedIds && selectedIds.size > 0) {
       // Active bulk-selection (super admin, long-press to start) — a plain
       // tap toggles the selection like before, no preview involved.
       onOpenTerritory(id)
       return
     }
-    // Ahead of the scroll, not as a result of it: the card has to have its
-    // contents by the time the animation lands on it.
     lastBrowseRef.current = Date.now()
-    const targetIndex = cards.findIndex((t) => t.id === id)
-    if (targetIndex >= 0) setCenterIndex(targetIndex)
-    const row = sheetRowRef.current
-    const card = row?.querySelector<HTMLElement>(`[data-id="${id}"]`)
-    if (row && card) scrollToCardFast(row, card)
+    setShownId(id)
     setJustSelectedId(id)
     setHighlightedSectorId(id)
   }
@@ -351,58 +308,29 @@ export const MapScreen = forwardRef<
   // it on the map, unless you've been browsing the cards in the last minute.
   useEffect(() => {
     if (Date.now() - lastBrowseRef.current < 60_000) return
-    const row = sheetRowRef.current
-    const first = row?.querySelector<HTMLElement>('.map-sheet-card')
-    if (!row || !first) return
-    setCenterIndex(0)
-    scrollToCardFast(row, first)
+    setShownId(null)
     setHighlightedSectorId(hereId)
   }, [hereId])
 
-  // Which carousel card's contents are actually rendered (see the sheet's
-  // own comment below). Updated synchronously on every scroll event, unlike
-  // the debounced fly-to below — a card has to be filled in *before* it
-  // scrolls into view, not 120ms after.
-  const [centerIndex, setCenterIndex] = useState(0)
-  const cardPitchRef = useRef(0)
-
-  // Arithmetic rather than measuring every card: they're all `flex:0 0 100%`,
-  // so one pitch (card width + row gap) describes the whole strip, and this
-  // runs on each scroll event where a 560-card measuring loop would not.
-  function updateCenterIndex(wrap: HTMLDivElement) {
-    if (!cardPitchRef.current) {
-      const first = wrap.querySelector<HTMLElement>('.map-sheet-card')
-      const second = first?.nextElementSibling as HTMLElement | null
-      cardPitchRef.current = first && second ? second.offsetLeft - first.offsetLeft : (first?.offsetWidth ?? 0)
+  // The one sector on the card: the one tapped on the map, or (null) the
+  // first in line — the sector you're in, or the freshest catch.
+  const [shownId, setShownId] = useState<string | null>(null)
+  const shown = (shownId ? cards.find((t) => t.id === shownId) : undefined) ?? cards[0]
+  const shownCards = shown ? [shown] : []
+  // The card's height follows its contents (a hot sector has a line more):
+  // eased from the old height to the new one instead of jumping.
+  const cardRef = useRef<HTMLDivElement>(null)
+  const cardHeightRef = useRef(0)
+  useLayoutEffect(() => {
+    const el = cardRef.current
+    if (!el) return
+    const prev = cardHeightRef.current
+    const next = el.offsetHeight
+    cardHeightRef.current = next
+    if (prev && Math.abs(prev - next) > 1 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.animate([{ height: `${prev}px`, overflow: 'hidden' }, { height: `${next}px`, overflow: 'hidden' }], { duration: 280, easing: 'cubic-bezier(.23,1,.32,1)' })
     }
-    const pitch = cardPitchRef.current
-    if (!pitch) return
-    const idx = Math.max(0, Math.min(cards.length - 1, Math.round(wrap.scrollLeft / pitch)))
-    setCenterIndex((cur) => (cur === idx ? cur : idx))
-  }
-
-  function handleScroll(e: React.UIEvent<HTMLDivElement>) {
-    const wrap = e.currentTarget
-    updateCenterIndex(wrap)
-    if (scrollTimer.current) clearTimeout(scrollTimer.current)
-    scrollTimer.current = setTimeout(() => {
-      const wasUserScroll = userScrollRef.current
-      userScrollRef.current = false
-      if (!wasUserScroll) return
-      const cards = wrap.querySelectorAll<HTMLElement>('.map-sheet-card')
-      let closest = 0
-      let min = Infinity
-      cards.forEach((c, i) => {
-        const d = Math.abs(c.offsetLeft - wrap.scrollLeft)
-        if (d < min) {
-          min = d
-          closest = i
-        }
-      })
-      const t = cards[closest]
-      if (t) mapRef.current?.flyToTerritory(t.id)
-    }, 120)
-  }
+  }, [shown?.id])
 
   // The cards come freshest catch first (see useTerritories), so the most
   // caught sector is looked up rather than taken from the front. Null in an
@@ -410,7 +338,7 @@ export const MapScreen = forwardRef<
   const mostPopularId = useMemo(() => mostPopularSectorId(territories), [territories])
 
   return (
-    <div ref={rootRef} className="screen-inner" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}>
+    <div ref={rootRef} className={`screen-inner${geo ? ' map-geo-mode' : ''}`} style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}>
       {(geoPermission === 'prompt' || geoPermission === 'denied') && (
         <div className="map-geo-banner">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flex: '0 0 auto' }}>
@@ -438,6 +366,7 @@ export const MapScreen = forwardRef<
           fallbackZoom={CITIES[city].zoom}
           highlightedId={highlightedSectorId}
           clanLayer={clanLayer}
+          geo={geo ? { picked: geo.picked, answer: geo.answer, spot: geo.spot, dim: geo.dim } : null}
         />
         {/* Map chrome, top: ONE panel on a single edge instead of pieces
             floating at different sizes — brand + «Игроки | Кланы» on the
@@ -566,26 +495,24 @@ export const MapScreen = forwardRef<
               {/* Newcomers have «Первые шаги» on this row instead — two
                   stickers and the pill don't fit side by side. */}
               {!selectedIds?.size && !pendingAddDrafts?.length && !firstStepsShown && onOpenSlots && <SlotsSticker city={city} onOpen={onOpenSlots} />}
+              {!selectedIds?.size && !pendingAddDrafts?.length && !firstStepsShown && onOpenGeo && <GeoSticker onOpen={onOpenGeo} />}
               <FirstStepsPill onToast={onToast} />
             </div>
           )}
-          <div className="map-sheet-row" ref={sheetRowRef} onScroll={handleScroll} onPointerDown={markUserScroll} onWheel={markUserScroll}>
-            {cards.map((t, i) => (
+          {/* One card, no strip to swipe: a map tap changes what it shows,
+              the card itself stays put and its contents cross over. */}
+          <div className="map-sheet-row">
+            {shownCards.map((t) => (
               <div
+                ref={cardRef}
                 data-tour="sector-card" className={`map-sheet-card${t.id === justSelectedId ? ' map-sheet-card-pulse' : ''}`}
-                key={t.id}
+                key="card"
                 data-id={t.id}
-                onAnimationEnd={() => setJustSelectedId((cur) => (cur === t.id ? null : cur))}
+                onAnimationEnd={(e) => {
+                  if (e.target === e.currentTarget) setJustSelectedId((cur) => (cur === t.id ? null : cur))
+                }}
               >
-                {/* Every card keeps its wrapper (fixed `flex:0 0 100%` width),
-                    so scroll offsets, snap points and the [data-id] lookup in
-                    handlePolygonSelect are exactly what they'd be with all of
-                    them filled in — only the contents are windowed. Filling
-                    all ~560 cost ~5000 DOM nodes on the home screen for one
-                    visible card, which is what made the map jank (and, in
-                    Telegram's iOS WebView, crash) on phones. */}
-                {Math.abs(i - centerIndex) <= SHEET_WINDOW && (
-                <>
+                <div key={t.id} className="map-sheet-card-body">
                 {isHot(t) && (
                   <div className="map-sheet-hot">
                     <span className="map-sheet-hot-flame" aria-hidden dangerouslySetInnerHTML={{ __html: HOT_FLAME_SVG }} />
@@ -658,8 +585,7 @@ export const MapScreen = forwardRef<
                 <button className="btn-primary" style={{ marginTop: 'auto' }} onClick={() => onOpenTerritory(t.id)}>
                   Подробнее о секторе
                 </button>
-                </>
-                )}
+                </div>
               </div>
             ))}
           </div>

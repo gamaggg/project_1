@@ -1,5 +1,6 @@
 'use client'
 
+import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useRef, useState, type CSSProperties } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import {
@@ -105,7 +106,7 @@ export function UserProfileScreen({
 }) {
   const { data: profile } = useProfile(userId)
   const equippedFrame = resolveAvatarFrame(profile?.equippedFrame)
-  const { data: catches = [] } = useCatchesByUser(userId)
+  const { data: catches = [], isPending: catchesPending } = useCatchesByUser(userId)
   const { data: isFollowing, isLoading: followLoading } = useIsFollowing(userId)
   const setFollowing = useSetFollowing()
   const isAdmin = useIsAdmin()
@@ -311,11 +312,12 @@ export function UserProfileScreen({
             <span>{pluralTerritories(territories.length)}</span>
           </button>
           <button className="hero-stat" onClick={onOpenAllCatches}>
-            <b>{catches.length}</b>
+            {/* Not «0» before the catches are in — a grey bar until they are. */}
+            <b>{catchesPending ? <span className="skel hero-stat-skel" /> : catches.length}</b>
             <span>Уловов</span>
           </button>
           <button className="hero-stat" onClick={() => onOpenSpecies(catchSpecies)}>
-            <b>{speciesCount}</b>
+            <b>{catchesPending ? <span className="skel hero-stat-skel" /> : speciesCount}</b>
             <span>{pluralSpecies(speciesCount)} рыб</span>
           </button>
           <button
@@ -375,6 +377,8 @@ export function UserProfileScreen({
                 </div>
               )
             })
+          ) : catchesPending ? (
+            <SkeletonRows count={3} />
           ) : (
             <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет уловов</div>
           )}

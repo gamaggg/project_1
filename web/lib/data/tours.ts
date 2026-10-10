@@ -45,6 +45,15 @@ export type TourKey =
   | 'diaryPeriods'
   | 'diaryNumbers'
   | 'diaryTimes'
+  | 'geoCard'
+  | 'geoPano'
+  | 'geoGoal'
+  | 'geoCta'
+  | 'geoWindow'
+  | 'geoHint'
+  | 'geoQuest'
+  | 'geoStory'
+  | 'geoBoard'
 export type TourStep = { target: string; key: TourKey }
 // `always`: shown even to a player who pressed «Пропустить» on the tours.
 // `unlessSeen`: not shown once the tour with that id has been seen.
@@ -83,6 +92,47 @@ const MAP_REWARDS_TOUR: Tour = {
   ],
   always: true,
 }
+
+// 10.10: «Где это?», the daily panorama game. Its card on the profile is
+// pointed out to everyone; then, once each, how to play: the screen before
+// the answer, the map while picking (SpotlightTours is told 'screen-geo'
+// then too), and the result with the day's quest. Marked `always` — it's
+// how the game works, a player who skipped the tours still needs it.
+const GEO_TOURS: Tour[] = [
+  { id: 'geo-card', screen: 'screen-profile', requires: 'geo', steps: [{ target: 'geo', key: 'geoCard' }], always: true },
+  {
+    id: 'geo-intro',
+    screen: 'screen-geo',
+    requires: 'geo-cta',
+    steps: [
+      { target: 'geo-pano', key: 'geoPano' },
+      { target: 'geo-goal', key: 'geoGoal' },
+      { target: 'geo-cta', key: 'geoCta' },
+    ],
+    always: true,
+  },
+  {
+    id: 'geo-pick',
+    screen: 'screen-geo',
+    requires: 'geo-window',
+    steps: [
+      { target: 'geo-window', key: 'geoWindow' },
+      { target: 'geo-hint', key: 'geoHint' },
+    ],
+    always: true,
+  },
+  {
+    id: 'geo-result',
+    screen: 'screen-geo',
+    requires: 'geo-quest',
+    steps: [
+      { target: 'geo-quest', key: 'geoQuest' },
+      { target: 'geo-story', key: 'geoStory' },
+      { target: 'geo-board', key: 'geoBoard' },
+    ],
+    always: true,
+  },
+]
 
 export const TOURS: Record<TourAudience, Tour[]> = {
   whatsNew: [
@@ -123,6 +173,7 @@ export const TOURS: Record<TourAudience, Tour[]> = {
     MAP_REWARDS_TOUR,
     DIARY_STATS_TOUR,
     DIARY_TAB_TOUR,
+    ...GEO_TOURS,
   ],
   newcomer: [
     {
@@ -166,5 +217,6 @@ export const TOURS: Record<TourAudience, Tour[]> = {
     MAP_REWARDS_TOUR,
     DIARY_STATS_TOUR,
     DIARY_TAB_TOUR,
+    ...GEO_TOURS,
   ],
 }

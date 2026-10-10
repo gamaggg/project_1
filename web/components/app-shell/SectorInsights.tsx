@@ -1,5 +1,6 @@
 'use client'
 
+import { SkeletonBlock } from '@/components/app-shell/Skeleton'
 import { useSectorInsights, useSpecies, type SectorInsights as Insights } from '@/lib/supabase/queries'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useT } from '@/lib/i18n'
@@ -102,10 +103,28 @@ const hh = (h: number) => `${String(h).padStart(2, '0')}:00`
 
 export function SectorInsightsCard({ territory }: { territory: Territory }) {
   const t = useT()
-  const { data } = useSectorInsights(territory.id)
+  const { data, isPending } = useSectorInsights(territory.id)
   const { data: species = [] } = useSpecies()
   // Nobody has fished here: nothing to say about this spot (the catches
   // list below already says it's empty).
+  if (territory.catchCount === 0) return null
+  // Still loading: the card's shape, so it doesn't pop in and push the
+  // catches list down.
+  if (isPending) {
+    return (
+      <div className="insights-card" aria-busy="true">
+        <div className="insights-head">
+          <span className="insights-title">{t('insights.title')}</span>
+        </div>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+          <SkeletonBlock height={26} width={84} radius={13} />
+          <SkeletonBlock height={26} width={70} radius={13} />
+          <SkeletonBlock height={26} width={92} radius={13} />
+        </div>
+        <SkeletonBlock height={56} radius={10} />
+      </div>
+    )
+  }
   if (!data || data.total === 0) return null
 
   return (
@@ -200,7 +219,11 @@ export function SectorLegendRow({
   const isMe = !!legend && legend.id === user?.id
 
   const column = !data ? (
-    <div className="standing-col standing-col-legend" />
+    <div className="standing-col standing-col-legend" aria-busy="true">
+      <SkeletonBlock height={10} width={70} radius={5} />
+      <SkeletonBlock height={42} width={42} radius={21} />
+      <SkeletonBlock height={10} width={96} radius={5} />
+    </div>
   ) : legend ? (
     <button className="standing-col standing-col-legend tap-scale" onClick={() => onOpenUser(legend.id)}>
       <span className="standing-head">{t('legend.title')}</span>

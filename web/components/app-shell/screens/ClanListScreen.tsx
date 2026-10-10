@@ -1,5 +1,6 @@
 'use client'
 
+import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useClanList, useProfile, useMyClanInvites, useClanEligibility } from '@/lib/supabase/queries'
@@ -109,7 +110,7 @@ export function ClanListScreen({
           <div className="section-title">{debounced ? 'Найдено' : 'Все кланы'}</div>
         </div>
         {isLoading ? (
-          <div style={{ padding: 20, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Загрузка…</div>
+          <SkeletonRows count={6} thumb={40} round />
         ) : clans.length === 0 ? (
           <div className="clan-empty">
             {debounced ? 'Клана с таким названием или ID нет' : 'В городе пока нет ни одного клана — стань первым'}

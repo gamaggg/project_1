@@ -56,30 +56,72 @@ function ShieldReserveModal({ count, onClose }: { count: number; onClose: () => 
 
 // The sheet's body — also the «Щиты» tab of the combined «×2 · щиты» sheet
 // (HudBoosts).
+// Built like the «×2» tab (DoubleCoinsContent), in the shield's teal: the
+// reserve as a ring of three around a shield, the count big, what a shield
+// does as chips, then how to put one up.
+const RING_R = 58
+const RING_C = 2 * Math.PI * RING_R
+const SEG_GAP = 14
+
 export function ShieldReserveContent({ count }: { count: number }) {
+  const seg = RING_C / SHIELD_RESERVE_MAX - SEG_GAP
   return (
     <>
-      <div className="reserve-modal-shields" aria-hidden>
-        {Array.from({ length: SHIELD_RESERVE_MAX }, (_, i) => (
-          <span key={i} className={`reserve-modal-shield${i < count ? ' full' : ''}`} style={{ animationDelay: `${0.08 + i * 0.1}s` }}>
-            <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden>
-              <path d={SHIELD_PATH} />
-            </svg>
-          </span>
-        ))}
+      <div className="double-modal-hero" aria-hidden>
+        <svg className="double-modal-ring" width="140" height="140" viewBox="0 0 140 140">
+          <defs>
+            <linearGradient id="reserve-ring-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#5FD3C0" />
+              <stop offset="1" stopColor="#0E8074" />
+            </linearGradient>
+          </defs>
+          {Array.from({ length: SHIELD_RESERVE_MAX }, (_, i) => (
+            <circle
+              key={i}
+              className={`reserve-ring-seg${i < count ? ' full' : ''}`}
+              cx="70"
+              cy="70"
+              r={RING_R}
+              fill="none"
+              stroke={i < count ? 'url(#reserve-ring-grad)' : 'rgba(14,128,116,.14)'}
+              strokeWidth="7"
+              strokeLinecap="round"
+              strokeDasharray={`${seg} ${RING_C - seg}`}
+              transform={`rotate(${-90 + (360 / SHIELD_RESERVE_MAX) * i + ((SEG_GAP / RING_C) * 360) / 2} 70 70)`}
+              style={{ animationDelay: `${0.12 + i * 0.12}s` }}
+            />
+          ))}
+        </svg>
+        <div className="double-modal-coin reserve-modal-coin">
+          <svg width="46" height="46" viewBox="0 0 24 24" aria-hidden>
+            <path d={SHIELD_PATH} />
+          </svg>
+        </div>
+        <div className="double-modal-badge reserve-modal-badge">24 ч</div>
       </div>
-      <div className="modal-title shield-modal-title">Щиты в запасе</div>
-      <div className="shield-modal-timer reserve-modal-count">
+
+      <div className="modal-title double-modal-title">Щиты в запасе</div>
+
+      <div className="double-modal-timer reserve-modal-timer">
         <b>
           {count}
           <small>из {SHIELD_RESERVE_MAX}</small>
         </b>
+        <span>{count > 0 ? 'можно поставить на свой сектор' : 'щиты выпадают в слотах'}</span>
       </div>
-      <div className="reserve-modal-text">Щит закрывает твой сектор на 24 часа: чужой улов там не засчитается, а соклановцы ловить могут.</div>
-      <div className="reserve-modal-how">
-        Поставить — на экране своего сектора, кнопка <b>«Поставить щит»</b>. На горячий сектор щит не ставится.
+
+      <div className="double-modal-what reserve-modal-what">
+        <div className="double-modal-kicker">Щит на твоём секторе</div>
+        <div className="double-modal-chips">
+          <span>24 часа</span>
+          <span>Соклановцы ловят</span>
+          <span>Чужой улов не в счёт</span>
+        </div>
       </div>
-      <div className="reserve-modal-note">Новые щиты выпадают в слотах — «3 соты». В запасе помещается {SHIELD_RESERVE_MAX}.</div>
+      <div className="double-modal-note reserve-modal-note">
+        <b>Поставить — «Поставить щит» на экране своего сектора</b>
+        На горячий сектор щит не ставится. Новые щиты выпадают в слотах — «3 соты».
+      </div>
     </>
   )
 }

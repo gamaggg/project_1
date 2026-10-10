@@ -1,5 +1,6 @@
 'use client'
 
+import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useState } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useClanBadges, useWeeklyLeaderboard } from '@/lib/supabase/queries'
@@ -114,7 +115,7 @@ export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUs
       </div>
 
       {isLoading ? (
-        <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Загрузка…</div>
+        <SkeletonRows count={6} thumb={40} round />
       ) : entries.length === 0 ? (
         <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>
           {scope === 'friends' ? 'Никто из тех, на кого ты подписан, ещё не рыбачил на этой неделе' : 'На этой неделе пока никто не захватил сектор — начни первым'}

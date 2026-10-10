@@ -2,6 +2,7 @@
 
 import { memo, useEffect, useState } from 'react'
 import { useClanRace } from '@/lib/supabase/queries'
+import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { resolveCrest, shadeHex } from '@/lib/data/clanCrests'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { ChallengeCountdown } from '@/components/app-shell/ChallengeCountdown'
@@ -148,7 +149,42 @@ export function ClanRacePreview({ city, clanId, onOpenRace }: { city: CityId; cl
           </button>
         </div>
       </div>
+      {/* Each member's metres this week — like the chest's points (the server
+          counts them for the viewer's own clan only). */}
+      {race.myClanId === clanId && <RaceRowers rowers={race.myRowers} />}
       <RaceRulesCard />
+    </div>
+  )
+}
+
+function RaceRowers({ rowers }: { rowers: ClanRace['myRowers'] }) {
+  const max = Math.max(1, ...rowers.map((r) => r.meters))
+  return (
+    <div className="clan-card">
+      <div className="clan-card-title">Вклад участников</div>
+      {rowers.length === 0 ? (
+        <div className="clan-empty" style={{ padding: '14px 0' }}>
+          Пока никто не грёб на этой неделе — лови и захватывай!
+        </div>
+      ) : (
+        rowers.map((r, i) => (
+          <div key={r.userId} className="clan-member-row" style={{ animationDelay: `${Math.min(i, 12) * 35}ms` }}>
+            <div className="avatar clan-member-avatar" style={{ cursor: 'default' }}>
+              {r.avatarUrl ? <img src={thumbUrl(r.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : r.displayName.slice(0, 1).toUpperCase()}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="clan-member-name">{r.displayName}</div>
+              <div className="clan-contrib-bar">
+                <div className="clan-contrib-fill" style={{ transform: `scaleX(${r.meters / max})`, animationDelay: `${Math.min(i, 12) * 50}ms` }} />
+              </div>
+            </div>
+            <div className="clan-member-stats">
+              <b>{r.meters}</b>
+              <span>м</span>
+            </div>
+          </div>
+        ))
+      )}
     </div>
   )
 }

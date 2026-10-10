@@ -300,6 +300,15 @@ function renderMessage(notification: NotificationRef): Message | null {
         url: SITE_URL,
       }
     }
+    case 'geo_bonus': {
+      // «Где это?»'s quest done: a catch in the day's panorama sector.
+      const coins = Number(notification.payload?.coins ?? 50)
+      return {
+        text: `🎯 Задание «Где это?» выполнено: улов в секторе ${notification.territory_id ?? ''} — +${coins} ${pluralRu(coins, ['монета', 'монеты', 'монет'])}`,
+        buttonLabel: 'Открыть RANGE',
+        url: `${SITE_URL}/?geo=1`,
+      }
+    }
     case 'daily_reward_reminder': {
       const day = notification.payload?.day as number | undefined
       const coins = notification.payload?.coins as number | undefined

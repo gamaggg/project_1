@@ -1,5 +1,6 @@
 'use client'
 
+import { SkeletonBlock, SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
@@ -218,7 +219,14 @@ export function ClanScreen({
           <div />
           <div style={{ width: 36 }} />
         </div>
-        <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>{isLoading ? 'Загрузка…' : 'Клан не найден'}</div>
+        {isLoading ? (
+          <div className="screen-inner" aria-busy="true">
+            <SkeletonBlock height={190} radius={24} style={{ marginBottom: 14 }} />
+            <SkeletonRows count={5} thumb={40} round />
+          </div>
+        ) : (
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Клан не найден</div>
+        )}
       </>
     )
   }

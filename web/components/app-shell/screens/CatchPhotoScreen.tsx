@@ -1,5 +1,6 @@
 'use client'
 
+import { SkeletonBlock } from '@/components/app-shell/Skeleton'
 import { useRef, useState } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useCatchById, useCatchesByTerritory, useCatchLikes, useToggleCatchLike, useIsSuperAdmin, useCatchComments } from '@/lib/supabase/queries'
@@ -106,7 +107,29 @@ export function CatchPhotoScreen({
     else if (dx > 0 && prevCatch) goTo(prevCatch.id)
   }
 
-  if (!c) return null
+  // Opened by link (or a catch not in any list yet): the photo's dark frame
+  // and the sheet's lines while it loads, not an empty screen.
+  if (!c) {
+    return (
+      <div className="screen-inner" style={{ padding: 0, display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0 }} aria-busy="true">
+        <div className="catch-photo-skel" style={{ position: 'relative', flex: '1 1 auto', minHeight: 0 }}>
+          <div style={{ position: 'absolute', top: 'calc(12px + var(--standalone-top, 0px))', left: 12 }}>
+            <BackButton onClick={onBack} registerNative={false} />
+          </div>
+        </div>
+        <div style={{ position: 'relative', flex: '0 0 auto', marginTop: -18, borderRadius: '20px 20px 0 0', background: 'var(--surface)', padding: '18px 20px 100px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <SkeletonBlock height={11} width={90} radius={6} />
+          <SkeletonBlock height={24} width="46%" radius={8} />
+          <SkeletonBlock height={14} width="58%" radius={7} />
+          <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+            <SkeletonBlock height={28} width={64} radius={14} />
+            <SkeletonBlock height={28} width={88} radius={14} />
+            <SkeletonBlock height={28} width={110} radius={14} />
+          </div>
+        </div>
+      </div>
+    )
+  }
   const meta = formatCatchMeta(c.lengthCm, c.weightKg)
   const likedByMe = likes?.likedByMe ?? false
   const commentCount = comments.filter((cm) => !cm.deleted).length

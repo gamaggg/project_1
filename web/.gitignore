@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# geo-water.mjs downloads (OpenStreetMap water lines)
+/scripts/.cache/

@@ -1,5 +1,6 @@
 'use client'
 
+import { SkeletonBlock } from '@/components/app-shell/Skeleton'
 import { useEffect, useRef, useState } from 'react'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { ChallengeCompletionModal } from '@/components/app-shell/ChallengeCompletionModal'
@@ -103,6 +104,16 @@ export function ChallengesScreen({ onBack, active }: { onBack: () => void; activ
         <div style={{ width: 36 }} />
       </div>
       <div className="screen-inner">
+        {/* The week card and three task cards in outline while they load —
+            not an empty screen they then pop into. */}
+        {isLoading && (
+          <div aria-busy="true">
+            <SkeletonBlock height={150} radius={22} style={{ marginBottom: 14 }} />
+            {[0, 1, 2].map((i) => (
+              <SkeletonBlock key={i} height={104} radius={18} style={{ marginBottom: 10 }} />
+            ))}
+          </div>
+        )}
         {!isLoading && total > 0 && (
           <div className="challenges-week-card">
             <div className="challenges-week-pattern" />

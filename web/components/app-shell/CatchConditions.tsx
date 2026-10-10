@@ -9,11 +9,25 @@ import type { TKey } from '@/lib/i18n/core'
 
 // «Погода во время улова» — one short line under the catch's sector and
 // time: sky and air, water (by the sea), wind, pressure and where it was
-// heading, waves. Nothing at all while it loads or if the
+// heading, waves. While it loads, grey pills where the chips will be (the
+// weather archive answers a moment after the card opens), so the block
+// doesn't pop in and push everything under it down; nothing at all if the
 // archive has nothing for that hour.
 export function CatchConditions({ catchId, caughtAt, territoryId, compact = false }: { catchId: number; caughtAt: string; territoryId: string; compact?: boolean }) {
   const { t, lang } = useI18n()
-  const { data: c } = useCatchConditions(catchId)
+  const { data: c, isPending } = useCatchConditions(catchId)
+  if (isPending) {
+    return (
+      <div className={`catch-conditions loading${compact ? ' compact' : ''}`} aria-busy="true" aria-label={t('conditions.title')}>
+        {!compact && <div className="catch-conditions-title">{t('conditions.title')}</div>}
+        <div className="catch-conditions-chips" aria-hidden>
+          {[54, 78, 104, 116, 70].map((w, i) => (
+            <span key={i} className="catch-conditions-chip skeleton" style={{ width: compact ? w * 0.8 : w, animationDelay: `${i * 90}ms` }} />
+          ))}
+        </div>
+      </div>
+    )
+  }
   if (!c) return null
   const num = (n: number) => new Intl.NumberFormat(lang, { maximumFractionDigits: 1 }).format(n)
   const [lat, lng] = CITIES[cityForSectorId(territoryId)].center
@@ -43,8 +57,8 @@ export function CatchConditions({ catchId, caughtAt, territoryId, compact = fals
     <div className={`catch-conditions${compact ? ' compact' : ''}`}>
       {!compact && <div className="catch-conditions-title">{t('conditions.title')}</div>}
       <div className="catch-conditions-chips">
-        {chips.map((ch) => (
-          <span key={ch.key} className="catch-conditions-chip">
+        {chips.map((ch, i) => (
+          <span key={ch.key} className="catch-conditions-chip in" style={{ animationDelay: `${i * 40}ms` }}>
             {ch.icon}
             {ch.text}
           </span>

@@ -1,5 +1,6 @@
 'use client'
 
+import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
@@ -36,9 +37,10 @@ export function MyCatchesScreen({
   const t = useT()
   const [tab, setTab] = useState<'catches' | 'diary'>('catches')
   const { user } = useAuth()
-  const { data: byUser = [] } = useCatchesByUser(territoryId ? null : (userId ?? null))
-  const { data: byTerritory = [] } = useCatchesByTerritory(territoryId ?? null)
+  const { data: byUser = [], isPending: byUserPending } = useCatchesByUser(territoryId ? null : (userId ?? null))
+  const { data: byTerritory = [], isPending: byTerritoryPending } = useCatchesByTerritory(territoryId ?? null)
   const catches = territoryId ? byTerritory : byUser
+  const catchesPending = territoryId ? byTerritoryPending : byUserPending
   const isOwn = !territoryId && userId === user?.id
   const { data: profile } = useProfile(!territoryId && !isOwn ? (userId ?? null) : null)
   const title = territoryId ? `Уловы: ${territoryId}` : isOwn ? 'Мои уловы' : `Уловы: ${profile?.displayName ?? '…'}`
@@ -94,7 +96,11 @@ export function MyCatchesScreen({
                 )
               })
             ) : (
-              <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет уловов</div>
+              catchesPending ? (
+                <SkeletonRows count={5} />
+              ) : (
+                <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет уловов</div>
+              )
             )}
           </div>
         )}

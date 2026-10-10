@@ -1,5 +1,7 @@
 'use client'
 
+import { geoImageUrl } from '@/lib/geo'
+import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useShopRewardsCount } from '@/lib/shopRewards'
 import { useState, type CSSProperties } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
@@ -19,6 +21,7 @@ import {
   useSetTelegramNotifications,
   useCreateTelegramLink,
   useClanChatSummary,
+  useGeoToday,
 } from '@/lib/supabase/queries'
 import { AwardsRing } from '@/components/app-shell/AwardsRing'
 import { uploadAvatar } from '@/lib/supabase/storage'
@@ -56,7 +59,16 @@ function TelegramNotificationsRow() {
   const createLink = useCreateTelegramLink()
   const [linkError, setLinkError] = useState(false)
 
-  if (!state) return null
+  // The row's shape while the bot's state is asked for, so the settings
+  // under it don't jump.
+  if (!state) {
+    return (
+      <div className="perm-switch-row" style={{ borderBottom: 'none', padding: 0 }} aria-busy="true">
+        <span className="skel" style={{ width: 170, height: 14 }} />
+        <span className="skel" style={{ width: 46, height: 28, borderRadius: 14 }} />
+      </div>
+    )
+  }
 
   const reachable = state.linked && state.botStarted && !state.unreachable
 
@@ -407,6 +419,8 @@ export function ProfileScreen({
   onOpenChallenges,
   onOpenClans,
   onOpenClan,
+  onOpenGeo,
+  onOpenAdminGeo,
 }: {
   myTerritories: Territory[]
   allTerritories: Territory[]
@@ -442,14 +456,20 @@ export function ProfileScreen({
   onOpenChallenges: () => void
   onOpenClans: () => void
   onOpenClan: (id: number) => void
+  onOpenGeo: () => void
+  onOpenAdminGeo: () => void
 }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
+  const { data: geo, isPending: geoPending } = useGeoToday()
   const { data: clanChat } = useClanChatSummary(profile?.clanId ?? null)
   const shopRewards = useShopRewardsCount()
-  const { data: myCatches = [] } = useMyCatches()
+  const { data: myCatches = [], isPending: myCatchesPending } = useMyCatches()
   const canModerateReports = useCanModerateReports()
   const isSuperAdmin = useIsSuperAdmin()
+  // «Где это?» once the city has a panorama of the day (or for a super
+  // admin, who fills the game).
+  const showGeoCard = !!geo?.panorama || isSuperAdmin
   const { data: reports = [] } = useReports()
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(user?.id ?? null)
   const { data: awards = [] } = useUserAwards(user?.id ?? null)
@@ -578,7 +598,7 @@ export function ProfileScreen({
           <span>{pluralTerritories(myTerritories.length)}</span>
         </button>
         <button data-tour="diary" className="hero-stat" onClick={onOpenAllCatches}>
-          <b>{myCatches.length}</b>
+          <b>{myCatchesPending ? <span className="skel hero-stat-skel" /> : myCatches.length}</b>
           <span>{pluralCatches(myCatches.length)}</span>
         </button>
         <button className="hero-stat" onClick={() => onOpenSpecies(mySpecies)}>
@@ -601,7 +621,7 @@ export function ProfileScreen({
         </div>
       )}
 
-      <div className="profile-cta-row" style={{ marginTop: 24 }}>
+      <div className="profile-cta-row">
         <button data-tour="challenges" className="profile-cta-btn profile-cta-challenges tap-scale" onClick={onOpenChallenges}>
           <div className="profile-cta-pattern" />
           <span className="profile-cta-arrow">
@@ -630,6 +650,9 @@ export function ProfileScreen({
         </button>
       </div>
 
+      {/* The clan and «Где это?» side by side, half each, like «Челленджи» and
+          «Магазин» above — the clan alone takes the whole row. */}
+      <div className={`profile-duo${showGeoCard || geoPending ? '' : ' single'}`}>
       {profile?.clanId ? (
         <button
           data-tour="clan" className="profile-clan-card tap-scale"
@@ -673,6 +696,36 @@ export function ProfileScreen({
           </span>
         </button>
       )}
+
+      {/* «Где это?» — shown once the city has a panorama of the day (or to a
+          super admin, who fills the game). */}
+      {geoPending && !showGeoCard && <span className="skel profile-geo-skel" aria-hidden />}
+      {showGeoCard && (
+        <button
+          data-tour="geo"
+          className="profile-geo-card tap-scale"
+          // The day's panorama itself behind the card (its small copy, where
+          // the view opens), darkened towards the words.
+          style={geo?.panorama ? ({ '--geo-bg': `url(${geoImageUrl(geo.panorama.image, 'small')})`, '--geo-x': `${50 + (geo.panorama.heading / 360) * 100}%` } as React.CSSProperties) : undefined}
+          onClick={onOpenGeo}
+        >
+          <span className="profile-geo-art" aria-hidden>
+            <GeoHex />
+            <span className="profile-geo-q">?</span>
+          </span>
+          <span className="profile-clan-text">
+            <span className="profile-clan-kicker">Игра дня</span>
+            <span className="profile-clan-name">Где это?</span>
+          </span>
+          {geo?.panorama && !geo.result && <span className="profile-geo-dot" aria-label="Панорама дня ждёт" />}
+          <span className="profile-cta-arrow" style={{ position: 'static' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+        </button>
+      )}
+      </div>
 
       <div className="section-title-row" style={{ marginTop: 24 }}>
         <div className="section-title">Достижения</div>
@@ -728,7 +781,11 @@ export function ProfileScreen({
             )
           })
         ) : (
-          <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет уловов</div>
+          myCatchesPending ? (
+            <SkeletonRows count={3} />
+          ) : (
+            <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет уловов</div>
+          )
         )}
       </div>
 
@@ -802,6 +859,11 @@ export function ProfileScreen({
           <div style={{ marginTop: 12 }}>
             <button className="btn-secondary" onClick={onOpenAdminStats}>
               Статистика
+            </button>
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <button className="btn-secondary" onClick={onOpenAdminGeo}>
+              Панорамы «Где это?»
             </button>
           </div>
           <div className="btn-wrap" style={{ marginTop: 12 }}>
@@ -891,5 +953,27 @@ export function ProfileScreen({
       </div>
       </div>
     </div>
+  )
+}
+
+// «Где это?»'s mark: a sector as the map draws it — a regular flat-top
+// hexagon — in the brand's orange, with a question mark (the card's own text).
+function GeoHex() {
+  return (
+    <svg className="profile-geo-hex" viewBox="0 0 56 48.5" aria-hidden>
+      <defs>
+        <linearGradient id="profile-geo-hex-fill" x1="0" y1="0" x2=".35" y2="1">
+          <stop offset="0" stopColor="#FFA24D" />
+          <stop offset=".55" stopColor="#FC5200" />
+          <stop offset="1" stopColor="#D94400" />
+        </linearGradient>
+        <radialGradient id="profile-geo-hex-gloss" cx=".32" cy=".12" r=".6">
+          <stop offset="0" stopColor="#fff" stopOpacity=".5" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <polygon points="2,24.25 15,1.73 41,1.73 54,24.25 41,46.77 15,46.77" fill="url(#profile-geo-hex-fill)" stroke="#fff" strokeWidth="2.5" strokeLinejoin="round" />
+      <polygon points="2,24.25 15,1.73 41,1.73 54,24.25 41,46.77 15,46.77" fill="url(#profile-geo-hex-gloss)" />
+    </svg>
   )
 }

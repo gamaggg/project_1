@@ -1,5 +1,6 @@
 'use client'
 
+import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useMemo } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useWeeklyLeaderboard } from '@/lib/supabase/queries'
@@ -62,7 +63,7 @@ export function LastWeekScreen({
           </div>
 
           {isLoading ? (
-            <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Загрузка…</div>
+            <SkeletonRows count={6} thumb={40} round />
           ) : entries.length === 0 ? (
             <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>На прошлой неделе никто не захватил сектор</div>
           ) : (

@@ -148,13 +148,15 @@ export function ForecastChip({ city }: { city: CityId }) {
     enabled: ready,
   })
   const today = days?.[0]
-  if (!today) return null
+  // Its place in the panel held while the forecast loads (it starts a
+  // moment after the map, on purpose), so the chip doesn't pop in.
+  if (!today) return <span className="forecast-chip forecast-chip-skel skel" aria-hidden />
 
   return (
     <>
       <button
         type="button"
-        data-tour="forecast" className="forecast-chip tap-scale"
+        data-tour="forecast" className="forecast-chip tap-scale skel-in"
         onClick={() => {
           hapticTap()
           setOpen(true)

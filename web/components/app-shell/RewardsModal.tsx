@@ -12,9 +12,11 @@ import { useNow } from '@/lib/useNow'
 import { hapticSuccess } from '@/lib/telegram/haptics'
 
 // The coin chip's sheet (TreasuryChip): today's login reward and the Казна,
-// as two tabs of one card in the style of the «×2» and shields sheets — a
-// coin in a ring up top, the number that matters big, one «Забрать» each.
-// Opens on the tab with something to take.
+// as two tabs of one card built like the «×2 | Щиты» sheet (HudBoosts): a
+// coin in a ring up top, the title, the number that matters big, a soft card
+// (the ten-day run / the sectors) with its gold «Забрать», a note, and
+// «Понятно» at the bottom. Both tabs share one height (one laid out
+// invisibly under the other). Opens on the tab with something to take.
 export function RewardsModal({ treasury, onClose, onToast }: { treasury: TreasuryState | null; onClose: () => void; onToast: (msg: string) => void }) {
   const { t } = useI18n()
   const { data: daily } = useDailyRewardState()
@@ -35,11 +37,16 @@ export function RewardsModal({ treasury, onClose, onToast }: { treasury: Treasur
             {treasuryReady && <span className="boosts-tab-dot" aria-hidden />}
           </button>
         </div>
-        <div key={tab} className="boosts-tab-body">
-          {tab === 'daily' ? <DailyTab onToast={onToast} /> : <TreasuryTab data={treasury} onToast={onToast} />}
+        <div className="boosts-tab-stack">
+          <div key={tab} className="boosts-tab-body">
+            {tab === 'daily' ? <DailyTab onToast={onToast} /> : <TreasuryTab data={treasury} onToast={onToast} />}
+          </div>
+          <div className="boosts-tab-sizer" aria-hidden>
+            {tab === 'daily' ? <TreasuryTab data={treasury} onToast={onToast} /> : <DailyTab onToast={onToast} />}
+          </div>
         </div>
-        <button className="shield-modal-close" onClick={onClose}>
-          {t('treasury.close')}
+        <button className="btn-primary" onClick={onClose}>
+          Понятно
         </button>
       </div>
     </div>,
@@ -92,6 +99,8 @@ function DailyTab({ onToast }: { onToast: (msg: string) => void }) {
         <span>{claimed ? t('daily.tomorrow', { coins: state.amounts[nextDay - 1] }) : t('daily.streakDay')}</span>
       </div>
 
+      <div className="double-modal-what rewards-what">
+      <div className="double-modal-kicker">{t('daily.streakTitle')}</div>
       <div className="daily-strip rewards-strip">
         {state.amounts.map((c, i) => {
           const day = i + 1
@@ -120,7 +129,7 @@ function DailyTab({ onToast }: { onToast: (msg: string) => void }) {
         </div>
       ) : (
         <button
-          className="btn-primary rewards-take"
+          className="rewards-take"
           disabled={claim.isPending}
           onClick={() =>
             claim.mutate(undefined, {
@@ -142,7 +151,8 @@ function DailyTab({ onToast }: { onToast: (msg: string) => void }) {
           )}
         </button>
       )}
-      <div className="rewards-note">{state.broken && !claimed ? t('daily.broken') : t('daily.hint')}</div>
+      </div>
+      <div className="double-modal-note rewards-note">{state.broken && !claimed ? t('daily.broken') : t('daily.hint')}</div>
     </>
   )
 }
@@ -249,6 +259,8 @@ function TreasuryTab({ data, onToast }: { data: TreasuryState | null; onToast: (
         </span>
       </div>
 
+      <div className="double-modal-what rewards-what">
+      <div className="double-modal-kicker">{t('treasury.kicker')}</div>
       <div className="double-modal-chips rewards-chips">
         <span>{t('treasury.sectors', { count: data.sectors })}</span>
         <span>{incomeLine}</span>
@@ -256,7 +268,7 @@ function TreasuryTab({ data, onToast }: { data: TreasuryState | null; onToast: (
 
       {ready && (
         <button
-          className="btn-primary rewards-take"
+          className="rewards-take"
           disabled={collect.isPending}
           onClick={() =>
             collect.mutate(undefined, {
@@ -272,7 +284,8 @@ function TreasuryTab({ data, onToast }: { data: TreasuryState | null; onToast: (
           {t('treasury.collectBtn', { coins: data.available })} <CoinIcon size={16} />
         </button>
       )}
-      <div className="rewards-note">{t('treasury.how1')}</div>
+      </div>
+      <div className="double-modal-note rewards-note">{t('treasury.how1')}</div>
     </>
   )
 }

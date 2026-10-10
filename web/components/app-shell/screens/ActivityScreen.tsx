@@ -1,5 +1,6 @@
 'use client'
 
+import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useEffect, useMemo, useState } from 'react'
 import { useActivity, useCityFeed, useMarkNotificationsRead } from '@/lib/supabase/queries'
 import type { CityId } from '@/lib/data/city'
@@ -323,7 +324,7 @@ export function ActivityScreen({
           </div>
         )}
         {isLoading ? (
-          <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Загрузка…</div>
+          <SkeletonRows count={6} thumb={40} round />
         ) : list.length ? (
           display.map((a) => {
             if ('items' in a) {
@@ -475,6 +476,13 @@ export function ActivityScreen({
                   .join(' · ')
                 if (typeof p.note === 'string' && p.note) sub = `${tr('activity.giftTitle')}: ${sub}`
                 action = onOpenShop
+              } else if (ev.kind === 'geo_bonus') {
+                // «Где это?»'s quest: a catch in the day's panorama sector.
+                tone = 'gold'
+                icon = FEED_ICONS.gift
+                title = `Задание «Где это?» выполнено`
+                sub = `Улов в секторе ${a.territoryId ?? ''} — +${n('coins') || 50} монет`
+                if (a.territoryId) action = () => onOpenTerritory(a.territoryId!)
               } else if (ev.kind === 'daily_reward_reminder') {
                 tone = 'green'
                 icon = FEED_ICONS.gift
