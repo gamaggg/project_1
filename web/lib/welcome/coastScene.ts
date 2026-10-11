@@ -140,6 +140,9 @@ export function createCoastScene(data: CoastData, labelFont: string, onTicker: (
   })
   const byId = new Map(W.map((s) => [s.id, s]))
   const PATH = PATH_IDS.map((id) => byId.get(id)).filter((s): s is Sector => !!s)
+  // The route's sectors are in the data file; if one day they aren't, start
+  // from any sector rather than throw.
+  if (PATH.length === 0 && W.length > 0) PATH.push(W[Math.floor(W.length / 2)])
   const ORDER = [...PATH.keys(), ...[...PATH.keys()].slice(1, -1).reverse()]
   const taker = (n: number) => NAMES[(n * 5 + 3) % NAMES.length]
   // far to near along the turned board — sorted once, the yaw never changes
@@ -151,7 +154,12 @@ export function createCoastScene(data: CoastData, labelFont: string, onTicker: (
   let lastT = -1
   let lastLine = ''
 
-  return function draw(ctx: CanvasRenderingContext2D, t: number, view: CoastView, still: boolean) {
+  return function draw(ctx: CanvasRenderingContext2D, time: number, view: CoastView, still: boolean) {
+    // Never before the start: Telegram's iOS web view can stamp the first
+    // frame a moment before the effect's performance.now(), and a negative
+    // time made the step -1 — ORDER[-1] is undefined and the frame threw
+    // («reading 'x'»). Not a number at all would do the same.
+    const t = Number.isFinite(time) ? Math.max(0, time) : 0
     const { w, h, clearTop, clearBottom } = view
     const dt = lastT < 0 ? 0 : Math.min(0.05, Math.max(0, t - lastT))
     lastT = t

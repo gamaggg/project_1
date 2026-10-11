@@ -39,7 +39,8 @@ export function WelcomeMap({ headRef, footRef, onTicker }: { headRef: RefObject<
 
     const frame = (now: number) => {
       if (!draw) return
-      draw(ctx, reduced ? COAST_STILL_AT : (now - t0) / 1000, view, reduced)
+      // A frame's stamp can come a moment before t0 (iOS Telegram).
+      draw(ctx, reduced ? COAST_STILL_AT : Math.max(0, now - t0) / 1000, view, reduced)
     }
     const loop = (now: number) => {
       frame(now)
