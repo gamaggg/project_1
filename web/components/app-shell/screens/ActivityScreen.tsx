@@ -692,7 +692,7 @@ export function ActivityScreen({
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>Новая награда: {a.awardTitle}</div>
                     {a.awardSubtitle && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{a.awardSubtitle}</div>}
-                    {a.awardCoins != null && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>+{a.awardCoins} монет</div>}
+                    {!!a.awardCoins && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>+{a.awardCoins} монет</div>}
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                       {unreadIds.has(a.id) && <span className="unread-dot" />}
                       {formatWhen(a.createdAt)}
@@ -707,7 +707,7 @@ export function ActivityScreen({
                   <FeedIcon tone="accent" icon={FEED_ICONS.target} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>Выполнен челлендж: {a.challengeTitle}</div>
-                    {a.challengeCoins != null && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>+{a.challengeCoins} монет</div>}
+                    {!!a.challengeCoins && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>+{a.challengeCoins} монет</div>}
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                       {unreadIds.has(a.id) && <span className="unread-dot" />}
                       {formatWhen(a.createdAt)}
@@ -722,7 +722,7 @@ export function ActivityScreen({
                   <FeedIcon tone="accent" icon={FEED_ICONS.targetDone} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>Все челленджи недели выполнены!</div>
-                    {a.challengeCoins != null && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>+{a.challengeCoins} монет за неделю</div>}
+                    {!!a.challengeCoins && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>+{a.challengeCoins} монет за неделю</div>}
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                       {unreadIds.has(a.id) && <span className="unread-dot" />}
                       {formatWhen(a.createdAt)}
