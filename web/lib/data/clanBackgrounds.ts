@@ -116,24 +116,32 @@ export const CLAN_BACKGROUNDS: ClanBackground[] = [
     id: 'reeds',
     label: 'Камыш',
     level: 1,
-    base: 'linear-gradient(180deg,#1A2A2E,#0C1517 85%)',
-    css: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='76' viewBox='0 0 160 76'><g fill='none' stroke='%23060D0F' stroke-linecap='round'><path d='M12 76Q14 46 10 16' stroke-width='2.2'/><path d='M22 76Q21 52 26 30' stroke-width='1.8'/><path d='M30 76Q34 50 42 36' stroke-width='1.4'/><path d='M58 76Q56 44 60 10' stroke-width='2.4'/><path d='M70 76Q72 56 66 38' stroke-width='1.6'/><path d='M96 76Q98 48 92 22' stroke-width='2.2'/><path d='M108 76Q104 58 114 40' stroke-width='1.5'/><path d='M132 76Q130 50 136 18' stroke-width='2.2'/><path d='M146 76Q150 60 156 50' stroke-width='1.4'/></g><g fill='%23060D0F'><rect x='7.5' y='14' width='5.5' height='17' rx='2.75'/><rect x='57' y='8' width='6' height='18' rx='3'/><rect x='89.5' y='20' width='5.5' height='16' rx='2.75'/><rect x='133.5' y='16' width='5.5' height='17' rx='2.75'/></g></svg>\") left bottom/112px 53px repeat-x, radial-gradient(120% 70% at 50% 100%, rgba(255,170,80,.30), rgba(255,170,80,0) 62%), linear-gradient(180deg,#1A2A2E,#0C1517 85%)",
+    // Live (PremiumBackgrounds' reeds scene): stems swaying in the wind.
+    base: 'radial-gradient(120% 70% at 50% 100%, rgba(255,170,80,.30), rgba(255,170,80,0) 62%), linear-gradient(180deg,#1A2A2E,#0C1517 85%)',
+    css: 'radial-gradient(120% 70% at 50% 100%, rgba(255,170,80,.30), rgba(255,170,80,0) 62%), linear-gradient(180deg,#1A2A2E,#0C1517 85%)',
     accentRgb: '255,170,80',
+    animated: true,
+    kind: 'reeds',
   },
   {
     id: 'rain',
     label: 'Дождь',
     level: 1,
+    // Live (PremiumBackgrounds' rain scene): falling streaks, rings on the water.
     base: 'linear-gradient(180deg,#26343F,#111A21 85%)',
-    css: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 80' preserveAspectRatio='none'><g fill='none' stroke='%23CFE6F5' stroke-width='1'><ellipse cx='60' cy='52' rx='14' ry='3.2' stroke-opacity='.28'/><ellipse cx='60' cy='52' rx='28' ry='6.4' stroke-opacity='.14'/><ellipse cx='210' cy='30' rx='11' ry='2.6' stroke-opacity='.28'/><ellipse cx='210' cy='30' rx='22' ry='5.1' stroke-opacity='.14'/><ellipse cx='330' cy='58' rx='15' ry='3.5' stroke-opacity='.28'/><ellipse cx='330' cy='58' rx='31' ry='7.0' stroke-opacity='.14'/><ellipse cx='140' cy='68' rx='8' ry='1.9' stroke-opacity='.28'/><ellipse cx='140' cy='68' rx='17' ry='3.8' stroke-opacity='.14'/></g></svg>\") left bottom/100% 70px no-repeat, url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><g stroke='%23CFE6F5' stroke-opacity='.24' stroke-width='1' stroke-linecap='round'><path d='M10 4l-2 9M34 18l-2 9M58 2l-2 9M72 30l-2 9M22 40l-2 9M46 52l-2 9M66 64l-2 9M8 62l-2 9M38 72l-2 9M54 26l-2 9'/></g></svg>\") 0 0/80px 80px, linear-gradient(180deg,#26343F,#111A21 85%)",
+    css: 'linear-gradient(180deg,#26343F,#111A21 85%)',
     accentRgb: '160,200,230',
+    animated: true,
+    kind: 'rain',
   },
   {
     id: 'scales',
     label: 'Чешуя',
     level: 2,
     base: 'linear-gradient(180deg,#26303A,#10161C 85%)',
-    css: 'radial-gradient(circle at 50% 100%, transparent 8px, rgba(255,255,255,.09) 9px, transparent 10.5px) 0 0/20px 12px, radial-gradient(circle at 50% 100%, transparent 8px, rgba(255,255,255,.09) 9px, transparent 10.5px) 10px 6px/20px 12px, linear-gradient(180deg,#26303A,#10161C 85%)',
+    // Even rows of half-rings, each row offset by half a scale, the arcs
+    // meeting end to end — no ring drawn over its neighbours.
+    css: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><path d='M0 0a12 12 0 0 0 24 0M-12 12a12 12 0 0 0 24 0M12 12a12 12 0 0 0 24 0' fill='none' stroke='%23FFFFFF' stroke-opacity='.11' stroke-width='1.2'/></svg>\") 0 0/22px 22px, linear-gradient(180deg,#26303A,#10161C 85%)",
     accentRgb: '140,170,200',
   },
   {

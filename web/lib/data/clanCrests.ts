@@ -375,6 +375,7 @@ export function resolveCrest(raw: unknown): ClanCrest {
 // rather than a React element (the map's Leaflet divIcon labels). Every
 // value interpolated here comes out of resolveCrest, so it's a known id's
 // path data or a validated #RRGGBB colour.
+let crestMarkupSeq = 0
 export function crestSvgMarkup(raw: unknown, size: number): string {
   const c = resolveCrest(raw)
   const shape = crestShape(c.shape)
@@ -392,7 +393,13 @@ export function crestSvgMarkup(raw: unknown, size: number): string {
       return `<path d="${p.d}" fill="none" stroke="${p.mode === 'stroke' ? '#fff' : c.primary}" stroke-width="${'w' in p ? (p.w ?? 3) : 3}" stroke-linecap="round" stroke-linejoin="round"/>`
     })
     .join('')
-  const ring = size > 18 ? `<g transform="translate(50 50) scale(.8) translate(-50 -50)"><path d="${shape.d}" fill="none" stroke="${c.secondary}" stroke-width="6.5" stroke-linejoin="round"/></g>` : ''
+  // The inner ring the same distance from the edge all round (see ClanCrest);
+  // ids unique per call — many of these sit on the map at once.
+  const id = `crm${++crestMarkupSeq}`
+  const ring =
+    size > 18
+      ? `<defs><clipPath id="${id}c"><path d="${shape.d}"/></clipPath><mask id="${id}m" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><path d="${shape.d}" fill="none" stroke="#fff" stroke-width="22.5" stroke-linejoin="round"/><path d="${shape.d}" fill="none" stroke="#000" stroke-width="9.5" stroke-linejoin="round"/></mask></defs><g clip-path="url(#${id}c)"><rect x="0" y="0" width="100" height="100" fill="${c.secondary}" mask="url(#${id}m)"/></g>`
+      : ''
   return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" aria-hidden="true"><path d="${shape.d}" fill="${c.primary}" stroke="${edge}" stroke-width="5" stroke-linejoin="round"/>${ring}<g transform="translate(22.4 22.4) scale(1.15)">${parts}</g></svg>`
 }
 

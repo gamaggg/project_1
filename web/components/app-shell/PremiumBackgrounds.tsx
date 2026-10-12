@@ -378,7 +378,101 @@ const goldScene: Scene = (ctx, w, h) => {
   }
 }
 
-const SCENES = { deep: deepScene, moonpath: moonScene, school: schoolScene, golddust: goldScene }
+// «Камыш» (clan background): reeds and cattails standing in a warm evening
+// glow, swaying — a gust runs across them, each stem with its own little
+// flutter on top. Two depths: paler ones behind, dark silhouettes in front.
+function reedsScene(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const r = rand(7)
+  const band = Math.min(h * 0.62, 150)
+  const stems = Array.from({ length: Math.round(w / 6) }, () => {
+    const front = r() > 0.42
+    return {
+      x: r() * w,
+      height: band * (0.35 + r() * 0.65) * (front ? 1 : 0.8),
+      width: (front ? 1.5 : 1) + r() * 1.2,
+      bend: (r() - 0.5) * 0.4,
+      head: r() < 0.3,
+      phase: r() * Math.PI * 2,
+      amp: 0.04 + r() * 0.05,
+      front,
+    }
+  }).sort((a, b) => Number(a.front) - Number(b.front))
+  return (t: number) => {
+    ctx.clearRect(0, 0, w, h)
+    ctx.lineCap = 'round'
+    for (const s of stems) {
+      const lean = s.bend * 0.3 + s.amp * Math.sin(t * 0.9 - s.x / 90 + s.phase * 0.3) + 0.025 * Math.sin(t * 2.2 + s.phase)
+      const tipX = s.x + lean * s.height
+      const tipY = h - s.height
+      const cx = s.x + lean * s.height * 0.15
+      const cy = h - s.height * 0.55
+      ctx.strokeStyle = s.front ? '#060D0F' : 'rgba(6,13,15,.5)'
+      ctx.fillStyle = ctx.strokeStyle
+      ctx.lineWidth = s.width
+      ctx.beginPath()
+      ctx.moveTo(s.x, h + 2)
+      ctx.quadraticCurveTo(cx, cy, tipX, tipY)
+      ctx.stroke()
+      if (s.head) {
+        // The cattail sits a little below the tip, along the stem.
+        const u = 0.86
+        const px = (1 - u) * (1 - u) * s.x + 2 * (1 - u) * u * cx + u * u * tipX
+        const py = (1 - u) * (1 - u) * (h + 2) + 2 * (1 - u) * u * cy + u * u * tipY
+        const angle = Math.atan2(tipY - cy, tipX - cx) + Math.PI / 2
+        ctx.beginPath()
+        ctx.ellipse(px, py, s.width + 1.6, s.height * 0.09, angle, 0, Math.PI * 2)
+        ctx.fill()
+      }
+    }
+  }
+}
+
+// «Дождь» (clan background): slanted streaks falling, and rings spreading
+// on the water below — each ring somewhere new every time it comes round.
+function rainScene(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const r = rand(11)
+  const slant = 0.22
+  const drops = Array.from({ length: Math.round(Math.min(140, Math.max(40, (w * h) / 1400))) }, () => ({
+    x: r() * w,
+    y: r() * (h + 40),
+    length: 7 + r() * 8,
+    speed: 260 + r() * 140,
+    alpha: 0.12 + r() * 0.18,
+  }))
+  const rings = Array.from({ length: 6 }, (_, i) => ({ seed: 101 + i * 31, period: 1.8 + r() * 1.4, phase: r() * 3, size: 10 + r() * 16 }))
+  return (t: number) => {
+    ctx.clearRect(0, 0, w, h)
+    ctx.lineCap = 'round'
+    ctx.lineWidth = 1
+    for (const d of drops) {
+      const y = ((d.y + t * d.speed) % (h + 40)) - 20
+      const x = (((d.x - y * slant) % w) + w) % w
+      ctx.strokeStyle = `rgba(207,230,245,${d.alpha})`
+      ctx.beginPath()
+      ctx.moveTo(x, y)
+      ctx.lineTo(x - d.length * slant, y + d.length)
+      ctx.stroke()
+    }
+    for (const ring of rings) {
+      const cycle = Math.floor((t + ring.phase) / ring.period)
+      const k = ((t + ring.phase) % ring.period) / ring.period
+      const at = rand(ring.seed + cycle * 97)
+      const x = at() * w
+      const y = h * (0.55 + at() * 0.4)
+      for (const lag of [0, 0.28]) {
+        const q = k - lag
+        if (q <= 0) continue
+        const rx = ring.size * q * 1.6
+        ctx.strokeStyle = `rgba(207,230,245,${0.35 * (1 - q)})`
+        ctx.beginPath()
+        ctx.ellipse(x, y, rx, rx * 0.24, 0, 0, Math.PI * 2)
+        ctx.stroke()
+      }
+    }
+  }
+}
+
+const SCENES = { deep: deepScene, moonpath: moonScene, school: schoolScene, golddust: goldScene, reeds: reedsScene, rain: rainScene }
 export type PremiumBackgroundKind = keyof typeof SCENES
 
 export function PremiumBackground({ kind }: { kind: PremiumBackgroundKind }) {

@@ -3,6 +3,11 @@
 import { memo, useId } from 'react'
 import { crestShape, crestSymbol, resolveCrest, shadeHex } from '@/lib/data/clanCrests'
 
+// The inner ring's band, in the 100-unit box: from how far inside the edge
+// to how far (big crests / small ones, whose ring is drawn thicker).
+const RING: [number, number] = [5.75, 10.25]
+const RING_SMALL: [number, number] = [4.75, 11.25]
+
 type Part = ReturnType<typeof crestSymbol>['parts'][number]
 
 function SymbolParts({ parts, fg, bg }: { parts: Part[]; fg: string; bg: string }) {
@@ -70,23 +75,32 @@ export const ClanCrest = memo(function ClanCrest({
       aria-hidden={title ? undefined : true}
     >
       <svg viewBox="0 0 100 100" width={size} height={size}>
-        {!small && (
-          <defs>
+        <defs>
+          {!small && (
             <linearGradient id={`cg${uid}`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" stopColor={top} />
               <stop offset="0.65" stopColor={c.primary} />
               <stop offset="1" stopColor={shadeHex(c.primary, -0.12)} />
             </linearGradient>
-            <clipPath id={`cc${uid}`}>
-              <path d={shape.d} />
-            </clipPath>
-          </defs>
-        )}
+          )}
+          <clipPath id={`cc${uid}`}>
+            <path d={shape.d} />
+          </clipPath>
+          {/* The inner ring, the same distance from the edge all round —
+              a scaled-down copy of the shape ran into the edge where it
+              isn't round (the «Волна»'s dip). */}
+          {!tiny && (
+            <mask id={`cr${uid}`} maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+              <path d={shape.d} fill="none" stroke="#fff" strokeWidth={2 * (small ? RING_SMALL[1] : RING[1])} strokeLinejoin="round" />
+              <path d={shape.d} fill="none" stroke="#000" strokeWidth={2 * (small ? RING_SMALL[0] : RING[0])} strokeLinejoin="round" />
+            </mask>
+          )}
+        </defs>
         {golden && <path d={shape.d} fill="none" stroke="#F0C35A" strokeWidth={11} strokeLinejoin="round" />}
         <path d={shape.d} fill={small ? c.primary : `url(#cg${uid})`} stroke={edge} strokeWidth={small ? 5 : 3.5} strokeLinejoin="round" />
         {!tiny && (
-          <g transform="translate(50 50) scale(.8) translate(-50 -50)">
-            <path d={shape.d} fill="none" stroke={c.secondary} strokeWidth={small ? 6.5 : 4.5} strokeLinejoin="round" />
+          <g clipPath={`url(#cc${uid})`}>
+            <rect x="0" y="0" width="100" height="100" fill={c.secondary} mask={`url(#cr${uid})`} />
           </g>
         )}
         {!small && (
