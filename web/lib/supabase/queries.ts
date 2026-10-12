@@ -668,8 +668,9 @@ export type LastCatchChoices = {
   lastSpecies: { key: string; caughtAt: string } | null
   // Species keys by how often this person caught them, most first.
   frequentSpecies: string[]
-  // Baits the same way — the bait sheet's «Часто берёшь».
+  // Baits and methods the same way — the sheets' «Часто…».
   frequentBaits: string[]
+  frequentMethods: string[]
 }
 
 // The caller's recently used methods, baits and species, newest first, so
@@ -699,11 +700,13 @@ export function useLastCatchChoices() {
       const baits: string[] = []
       const counts = new Map<string, number>()
       const baitCounts = new Map<string, number>()
+      const methodCounts = new Map<string, number>()
       for (const row of data) {
         if (row.method && !methods.includes(row.method)) methods.push(row.method)
         if (row.bait && !baits.includes(row.bait)) baits.push(row.bait)
         if (row.species) counts.set(row.species, (counts.get(row.species) ?? 0) + 1)
         if (row.bait) baitCounts.set(row.bait, (baitCounts.get(row.bait) ?? 0) + 1)
+        if (row.method) methodCounts.set(row.method, (methodCounts.get(row.method) ?? 0) + 1)
       }
       const last = data[0]
       return {
@@ -712,6 +715,7 @@ export function useLastCatchChoices() {
         lastSpecies: last?.species ? { key: last.species, caughtAt: last.caught_at } : null,
         frequentSpecies: [...counts.entries()].sort((x, y) => y[1] - x[1]).map(([key]) => key),
         frequentBaits: [...baitCounts.entries()].sort((x, y) => y[1] - x[1]).map(([bait]) => bait),
+        frequentMethods: [...methodCounts.entries()].sort((x, y) => y[1] - x[1]).map(([method]) => method),
       }
     },
   })

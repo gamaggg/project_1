@@ -9,7 +9,7 @@ import { KIND_LABEL } from '@/lib/data/species'
 import { sectorCapturer } from '@/lib/data/sectorHolders'
 import type { ClanDetail } from '@/lib/data/types'
 
-export type ClanInfoKind = 'level' | 'league' | 'sectors'
+export type ClanInfoKind = 'level' | 'league' | 'sectors' | 'race'
 
 // What a clan level brings: more members, new crest shapes, symbols and
 // backgrounds (the same `level` fields the editor locks by), the golden
@@ -158,6 +158,28 @@ function SectorsInfo({ clan, onOpenTerritory }: { clan: ClanDetail; onOpenTerrit
   )
 }
 
+// The battle wins chip: what it counts and where the battle is.
+function RaceInfo({ clan, onOpenRace }: { clan: ClanDetail; onOpenRace: () => void }) {
+  return (
+    <>
+      <div className="clan-info-head">
+        <div className="clan-info-title">
+          {clan.raceWins} {clan.raceWins % 10 === 1 && clan.raceWins % 100 !== 11 ? 'победа' : clan.raceWins % 10 >= 2 && clan.raceWins % 10 <= 4 && (clan.raceWins % 100 < 10 || clan.raceWins % 100 >= 20) ? 'победы' : 'побед'} в битве кланов
+        </div>
+        <div className="clan-info-sub">{clan.wonLastWeek ? 'Клан выиграл битву на прошлой неделе' : 'Столько недель клан выигрывал битву кланов'}</div>
+      </div>
+      <div className="clan-info-section">Как выигрывают</div>
+      <ul className="clan-info-rules">
+        <li>Каждую неделю лодка клана плывёт за уловы, захваты и челленджи участников.</li>
+        <li>Побеждает клан, который первым доплыл до финиша, — эта плашка считает такие недели.</li>
+      </ul>
+      <button className="btn-primary clan-info-action" onClick={onOpenRace}>
+        Открыть битву кланов
+      </button>
+    </>
+  )
+}
+
 // Tapping a chip in the clan hero (level, league, members, sectors) opens
 // what's behind the number, instead of leaving it a bare figure.
 export function ClanInfoSheet({
@@ -165,13 +187,15 @@ export function ClanInfoSheet({
   clan,
   onClose,
   onOpenTerritory,
+  onOpenRace,
 }: {
   kind: ClanInfoKind
   clan: ClanDetail
   onClose: () => void
   onOpenTerritory: (id: string) => void
+  onOpenRace: () => void
 }) {
-  const title = kind === 'level' ? 'Уровень клана' : kind === 'league' ? 'Лига клана' : 'Сектора клана'
+  const title = kind === 'level' ? 'Уровень клана' : kind === 'league' ? 'Лига клана' : kind === 'race' ? 'Битва кланов' : 'Сектора клана'
   return createPortal(
     <div className="move-sheet-overlay" onClick={onClose}>
       <div className="move-sheet clan-info-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
@@ -179,6 +203,15 @@ export function ClanInfoSheet({
         <div className="clan-info-scroll">
           {kind === 'level' && <LevelInfo clan={clan} />}
           {kind === 'league' && <LeagueInfo clan={clan} />}
+          {kind === 'race' && (
+            <RaceInfo
+              clan={clan}
+              onOpenRace={() => {
+                onClose()
+                onOpenRace()
+              }}
+            />
+          )}
           {kind === 'sectors' && (
             <SectorsInfo
               clan={clan}

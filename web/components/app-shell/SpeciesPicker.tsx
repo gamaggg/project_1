@@ -50,6 +50,20 @@ export function BaitPicker({ baits, value, frequent, onChange }: { baits: string
   )
 }
 
+// The fishing method, the same way (optional too).
+export function MethodPicker({ methods, value, frequent, onChange }: { methods: string[]; value: string; frequent: string[]; onChange: (method: string) => void }) {
+  const options = useMemo(() => methods.map((m) => ({ key: m, name: m })), [methods])
+  return (
+    <OptionPicker
+      options={options}
+      value={value}
+      frequent={frequent}
+      onChange={onChange}
+      text={{ id: 'method', title: 'Способ ловли', placeholder: 'Не указано', frequentTitle: 'Часто ловишь так', noneLabel: 'Не указано' }}
+    />
+  )
+}
+
 function OptionPicker({
   options,
   value,

@@ -612,7 +612,7 @@ body{
 .slots-sticker-reel .slot-symbol{max-width:calc(100% - 2px);}
 .slots-sticker-title{font-family:var(--font-display),'Oswald',sans-serif; font-size:19px; line-height:1.05; text-transform:uppercase; letter-spacing:.03em;}
 .slots-sticker-count{font-size:11.5px; font-weight:800; color:#FFD86B; white-space:nowrap;}
-.geo-sticker-wrap{position:relative; align-self:flex-start; margin-left:20px; transform:rotate(-4deg); animation:recap-sticker-in .45s var(--ease-out) .3s both;}
+.geo-sticker-wrap{position:relative; align-self:flex-end; margin-left:20px; transform:rotate(-4deg); animation:recap-sticker-in .45s var(--ease-out) .3s both;}
 .geo-sticker{width:96px; height:96px; padding:8px 6px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; border:3px solid #fff; border-radius:22px; background:linear-gradient(150deg,#2BC4B4 0%,#0E9384 55%,#0B6E78 100%); box-shadow:0 10px 20px rgba(8,80,80,.35), 0 2px 4px rgba(0,0,0,.15); color:#fff; font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent;}
 .geo-sticker:active{transform:scale(.96);}
 .recap-sticker-wrap + .geo-sticker-wrap,.slots-sticker-wrap + .geo-sticker-wrap{margin-left:6px;}
@@ -1617,6 +1617,7 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
   padding:9px 16px; border-radius:12px; cursor:pointer;
 }
 .confirm-photo-retry:active{transform:scale(0.96);}
+.confirm-photo-retake{position:absolute; right:10px; bottom:10px; z-index:3; display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:none; border-radius:999px; background:rgba(8,18,28,.62); color:#fff; font:inherit; font-size:13px; font-weight:800; cursor:pointer; backdrop-filter:blur(8px);}
 .spinner{
   width:24px; height:24px; border-radius:50%;
   border:3px solid rgba(255,255,255,0.35); border-top-color:#fff;
@@ -3493,6 +3494,7 @@ button.race-lane{cursor:pointer;}
 .clan-info-sector-meta{min-width:0; font-size:12.5px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .clan-info-sector-count{font-size:12.5px; font-weight:800; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
 .clan-info-close{margin:12px 20px 14px; width:auto;}
+.clan-info-action{width:100%; margin-top:14px;}
 .clan-admin-slots{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
 .clan-admin-slots-text{flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;}
 .clan-admin-slots-text b{font-size:14.5px; color:var(--ink);}

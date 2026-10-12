@@ -344,15 +344,20 @@ export function ClanScreen({
             ID {clan.id}
           </button>
           {clan.raceWins > 0 && (
-            <span className={`clan-chip clan-chip-race${clan.wonLastWeek ? ' fresh' : ''}`} title="Побед в битве кланов">
+            <button
+              type="button"
+              className={`clan-chip clan-chip-race tap-scale${clan.wonLastWeek ? ' fresh' : ''}`}
+              onClick={() => setInfo('race')}
+              aria-label={`Побед в битве кланов: ${clan.raceWins}`}
+            >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                 <path d="M12.6 3.2c3.9 2.4 5.9 6.3 6.1 11.3h-6.1Z" />
                 <path d="M11 6.2 6 14.5h5Z" opacity=".75" />
                 <path d="M3 16.8h18l-2.3 3.2H5.3Z" />
               </svg>
-              {clan.wonLastWeek ? 'Победитель битвы кланов' : 'Битва кланов'}
-              {clan.raceWins > 1 || !clan.wonLastWeek ? ` ×${clan.raceWins}` : ''}
-            </span>
+              {clan.wonLastWeek ? 'Победитель битвы кланов' : 'Побед в битве'}
+              {clan.raceWins > 1 || !clan.wonLastWeek ? ` · ${clan.raceWins}` : ''}
+            </button>
           )}
         </div>
         {isMember && (
@@ -638,7 +643,7 @@ export function ClanScreen({
         )}
       </div>
 
-      {info && <ClanInfoSheet kind={info} clan={clan} onClose={() => setInfo(null)} onOpenTerritory={onOpenTerritory} />}
+      {info && <ClanInfoSheet kind={info} clan={clan} onClose={() => setInfo(null)} onOpenTerritory={onOpenTerritory} onOpenRace={onOpenRace} />}
 
       {confirm &&
         createPortal(

@@ -11,7 +11,7 @@ import { BackButton } from '@/components/app-shell/BackButton'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { useDoubleCoinsUntil } from '@/components/app-shell/DoubleCoinsChip'
 import { StoryButton } from '@/components/app-shell/StoryButton'
-import { BaitPicker, SpeciesPicker } from '@/components/app-shell/SpeciesPicker'
+import { BaitPicker, MethodPicker, SpeciesPicker } from '@/components/app-shell/SpeciesPicker'
 import { DefenseShields } from '@/components/app-shell/SectorDefense'
 import { useT } from '@/lib/i18n'
 import type { PendingCatch, Territory } from '@/lib/data/types'
@@ -93,6 +93,7 @@ export function ConfirmScreen({
   const [lengthCm, setLengthCm] = useState('')
   const [weightG, setWeightG] = useState('')
   const [method, setMethod] = useState('')
+  const [methodFromLast, setMethodFromLast] = useState(false)
   const [bait, setBait] = useState('')
   const [baitFromLast, setBaitFromLast] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -111,7 +112,10 @@ export function ConfirmScreen({
     setPrefilled(true)
     const lastMethod = lastChoices.methods.find((m) => METHODS.includes(m))
     const lastBait = lastChoices.baits.find((b) => baits.includes(b))
-    if (lastMethod && !method) setMethod(lastMethod)
+    if (lastMethod && !method) {
+      setMethod(lastMethod)
+      setMethodFromLast(true)
+    }
     if (lastBait && !bait) {
       setBait(lastBait)
       setBaitFromLast(true)
@@ -278,6 +282,16 @@ export function ConfirmScreen({
         <form onSubmit={handleSubmit}>
           <div className="confirm-photo">
             {previewUrl && <img src={previewUrl} alt="Улов" className="confirm-photo-img" />}
+            {/* Back to the camera for another shot — the same as the back arrow, said out loud. */}
+            {!pending && (
+              <button type="button" className="confirm-photo-retake tap-scale" onClick={onBack}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.8l1.5-2h6.4l1.5 2h1.8A2.5 2.5 0 0 1 21 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5Z" />
+                  <circle cx="12" cy="13" r="3.6" />
+                </svg>
+                Переснять
+              </button>
+            )}
             {photoStatus === 'uploading' && (
               <div className="confirm-photo-status">
                 <div className="spinner" />
@@ -342,15 +356,19 @@ export function ConfirmScreen({
           </div>
 
           <div className="auth-field">
-            <label htmlFor="method">Способ ловли</label>
-            <select id="method" value={method} onChange={(e) => setMethod(e.target.value)}>
-              <option value="">Не указано</option>
-              {METHODS.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
+            <label htmlFor="method">
+              Способ ловли
+              {methodFromLast && <span className="species-guess-badge">как в прошлый раз</span>}
+            </label>
+            <MethodPicker
+              methods={METHODS}
+              value={method}
+              frequent={(lastChoices?.frequentMethods ?? []).filter((m) => METHODS.includes(m))}
+              onChange={(m) => {
+                setMethodFromLast(false)
+                setMethod(m)
+              }}
+            />
           </div>
 
           <div className="auth-field">
