@@ -13,7 +13,20 @@ type Part =
   | { d: string; mode: 'stroke' | 'stroke-bg'; w?: number }
   | { circle: [number, number, number]; mode: 'fill' | 'fill-bg' | 'stroke'; w?: number }
 
-export type CrestShape = { id: string; label: string; level: number; d: string }
+// cx/cy: where the symbol goes — the shape's visual centre, the middle of
+// the biggest circle that fits inside it (worked out from the path), not the
+// box's: a wave or a crown has its body lower down, a shield higher up.
+// k: the symbol a little smaller in the tighter shapes (diamond, crown…),
+// so it keeps clear of the ring.
+export type CrestShape = { id: string; label: string; level: number; d: string; cx: number; cy: number; k?: number }
+
+// The symbol is drawn in a 48-unit box scaled by 1.15 — placed so its centre
+// lands on the shape's (cx, cy).
+export function crestSymbolTransform(shape: CrestShape, dy = 0): string {
+  const scale = 1.15 * (shape.k ?? 1)
+  const half = 24 * scale
+  return `translate(${(shape.cx - half).toFixed(1)} ${(shape.cy - half + dy).toFixed(1)}) scale(${scale.toFixed(3)})`
+}
 export type CrestSymbol = { id: string; label: string; level: number; parts: Part[] }
 
 function rosettePath(): string {
@@ -51,16 +64,16 @@ function helmParts(): Part[] {
 }
 
 export const CREST_SHAPES: CrestShape[] = [
-  { id: 'shield', label: 'Щит', level: 1, d: 'M50 4 90 16v32c0 24-18 40-40 48C28 88 10 72 10 48V16Z' },
-  { id: 'round', label: 'Круг', level: 1, d: 'M50 4a46 46 0 1 1 0 92a46 46 0 1 1 0-92Z' },
-  { id: 'hex', label: 'Сектор', level: 1, d: 'M50 4 90 27v46L50 96 10 73V27Z' },
-  { id: 'diamond', label: 'Ромб', level: 1, d: 'M50 3 97 50 50 97 3 50Z' },
-  { id: 'pennant', label: 'Вымпел', level: 2, d: 'M14 5h72v69L50 96 14 74Z' },
-  { id: 'wave', label: 'Волна', level: 2, d: 'M11 24Q30 8 50 22T89 24v44Q89 90 50 96 11 90 11 68Z' },
-  { id: 'rosette', label: 'Розетка', level: 4, d: rosettePath() },
-  { id: 'anchor_frame', label: 'Иллюминатор', level: 4, d: 'M31 4h38l27 27v38L69 96H31L4 69V31Z' },
-  { id: 'crown', label: 'Корона', level: 6, d: 'M10 30 28 12l22 16 22-16 18 18v26c0 20-18 34-40 40C28 90 10 76 10 56Z' },
-  { id: 'bastion', label: 'Бастион', level: 8, d: 'M10 8h15v9h13V8h24v9h13V8h15v52c0 18-18 32-40 36C28 92 10 78 10 60Z' },
+  { id: 'shield', label: 'Щит', level: 1, d: 'M50 4 90 16v32c0 24-18 40-40 48C28 88 10 72 10 48V16Z', cx: 50, cy: 47 },
+  { id: 'round', label: 'Круг', level: 1, d: 'M50 4a46 46 0 1 1 0 92a46 46 0 1 1 0-92Z', cx: 50, cy: 50 },
+  { id: 'hex', label: 'Сектор', level: 1, d: 'M50 4 90 27v46L50 96 10 73V27Z', cx: 50, cy: 50 },
+  { id: 'diamond', label: 'Ромб', level: 1, d: 'M50 3 97 50 50 97 3 50Z', cx: 50, cy: 50, k: 0.88 },
+  { id: 'pennant', label: 'Вымпел', level: 2, d: 'M14 5h72v69L50 96 14 74Z', cx: 50, cy: 48, k: 0.95 },
+  { id: 'wave', label: 'Волна', level: 2, d: 'M11 24Q30 8 50 22T89 24v44Q89 90 50 96 11 90 11 68Z', cx: 48.5, cy: 59, k: 0.95 },
+  { id: 'rosette', label: 'Розетка', level: 4, d: rosettePath(), cx: 50, cy: 50 },
+  { id: 'anchor_frame', label: 'Иллюминатор', level: 4, d: 'M31 4h38l27 27v38L69 96H31L4 69V31Z', cx: 50, cy: 50 },
+  { id: 'crown', label: 'Корона', level: 6, d: 'M10 30 28 12l22 16 22-16 18 18v26c0 20-18 34-40 40C28 90 10 76 10 56Z', cx: 50, cy: 60.5, k: 0.9 },
+  { id: 'bastion', label: 'Бастион', level: 8, d: 'M10 8h15v9h13V8h24v9h13V8h15v52c0 18-18 32-40 36C28 92 10 78 10 60Z', cx: 50, cy: 53 },
 ]
 
 export const CREST_SYMBOLS: CrestSymbol[] = [
@@ -400,7 +413,7 @@ export function crestSvgMarkup(raw: unknown, size: number): string {
     size > 18
       ? `<defs><clipPath id="${id}c"><path d="${shape.d}"/></clipPath><mask id="${id}m" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><path d="${shape.d}" fill="none" stroke="#fff" stroke-width="22.5" stroke-linejoin="round"/><path d="${shape.d}" fill="none" stroke="#000" stroke-width="9.5" stroke-linejoin="round"/></mask></defs><g clip-path="url(#${id}c)"><rect x="0" y="0" width="100" height="100" fill="${c.secondary}" mask="url(#${id}m)"/></g>`
       : ''
-  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" aria-hidden="true"><path d="${shape.d}" fill="${c.primary}" stroke="${edge}" stroke-width="5" stroke-linejoin="round"/>${ring}<g transform="translate(22.4 22.4) scale(1.15)">${parts}</g></svg>`
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" aria-hidden="true"><path d="${shape.d}" fill="${c.primary}" stroke="${edge}" stroke-width="5" stroke-linejoin="round"/>${ring}<g transform="${crestSymbolTransform(shape)}">${parts}</g></svg>`
 }
 
 // Mixes a #RRGGBB colour toward black (amount < 0) or white (amount > 0).

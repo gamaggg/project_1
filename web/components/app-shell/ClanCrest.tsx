@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useId } from 'react'
-import { crestShape, crestSymbol, resolveCrest, shadeHex } from '@/lib/data/clanCrests'
+import { crestShape, crestSymbol, crestSymbolTransform, resolveCrest, shadeHex } from '@/lib/data/clanCrests'
 
 // The inner ring's band, in the 100-unit box: from how far inside the edge
 // to how far (big crests / small ones, whose ring is drawn thicker).
@@ -104,11 +104,11 @@ export const ClanCrest = memo(function ClanCrest({
           </g>
         )}
         {!small && (
-          <g transform="translate(22.4 23.8) scale(1.15)" opacity={0.3}>
+          <g transform={crestSymbolTransform(shape, 1.4)} opacity={0.3}>
             <SymbolParts parts={symbol.parts} fg={edge} bg={edge} />
           </g>
         )}
-        <g transform="translate(22.4 22.4) scale(1.15)">
+        <g transform={crestSymbolTransform(shape)}>
           <SymbolParts parts={symbol.parts} fg="#FFFFFF" bg={c.primary} />
         </g>
         {!small && (
