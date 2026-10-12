@@ -12,6 +12,7 @@ import {
   useMyCatches,
   useUpdateProfile,
   useCanModerateReports,
+  useCanReviewPanoramas,
   useIsSuperAdmin,
   useReports,
   useHasClaimedFromOthers,
@@ -466,6 +467,7 @@ export function ProfileScreen({
   const shopRewards = useShopRewardsCount()
   const { data: myCatches = [], isPending: myCatchesPending } = useMyCatches()
   const canModerateReports = useCanModerateReports()
+  const canReviewPanoramas = useCanReviewPanoramas()
   const isSuperAdmin = useIsSuperAdmin()
   // «Где это?» once the city has a panorama of the day (or for a super
   // admin, who fills the game).
@@ -849,6 +851,15 @@ export function ProfileScreen({
           {reports.length > 0 && <span className="btn-badge">{reports.length}</span>}
         </div>
       )}
+      {/* An admin given the panoramas permission; the super admin has the
+          same button in its own block below. */}
+      {canReviewPanoramas && !isSuperAdmin && (
+        <div style={{ marginTop: canModerateReports ? 12 : 24 }}>
+          <button className="btn-secondary" onClick={onOpenAdminGeo}>
+            Панорамы «Где это?»
+          </button>
+        </div>
+      )}
       {isSuperAdmin && (
         <>
           <div style={{ marginTop: 12 }}>
@@ -939,14 +950,14 @@ export function ProfileScreen({
       )}
 
       {showAddToHomeScreen && (
-        <div style={{ marginTop: isTelegramAccount || canModerateReports || isSuperAdmin ? 12 : 24 }}>
+        <div style={{ marginTop: isTelegramAccount || canModerateReports || canReviewPanoramas || isSuperAdmin ? 12 : 24 }}>
           <button className="btn-secondary" onClick={promptAddToHomeScreen}>
             Добавить RANGE на главный экран
           </button>
         </div>
       )}
 
-      <div style={{ marginTop: showAddToHomeScreen || isTelegramAccount || canModerateReports || isSuperAdmin ? 12 : 24, paddingBottom: 24 }}>
+      <div style={{ marginTop: showAddToHomeScreen || isTelegramAccount || canModerateReports || canReviewPanoramas || isSuperAdmin ? 12 : 24, paddingBottom: 24 }}>
         <button className="btn-secondary" onClick={onSignOut}>
           Выйти
         </button>

@@ -118,6 +118,7 @@ export type Profile = {
   canAddCatchManually: boolean | null
   canViewAllUsers: boolean | null
   canAddCatchFromGallery: boolean | null
+  canReviewPanoramas: boolean | null
   // Owned avatar frame (see lib/data/shopItems.ts), shown to every viewer
   // like heroBg — null means no frame equipped.
   equippedFrame: string | null
@@ -149,6 +150,7 @@ export type AdminPermissions = {
   canAddCatchManually: boolean
   canViewAllUsers: boolean
   canAddCatchFromGallery: boolean
+  canReviewPanoramas: boolean
 }
 
 // One row from profiles_with_stats for the admin "Все пользователи" list —

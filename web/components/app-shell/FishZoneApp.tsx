@@ -15,6 +15,7 @@ import {
   useRealtimeSync,
   useIsSuperAdmin,
   useCanAddCatchFromGallery,
+  useCanReviewPanoramas,
   useAllTerritoryIds,
   useFindUserByPublicId,
   useUnreadNotificationCount,
@@ -202,6 +203,7 @@ export function FishZoneApp() {
   const { data: territories = [], isLoading: territoriesLoading, isSuccess: territoriesReady } = useTerritories()
   const isSuperAdmin = useIsSuperAdmin()
   const canAddCatchFromGallery = useCanAddCatchFromGallery()
+  const canReviewPanoramas = useCanReviewPanoramas()
   const { data: allTerritoryIds = [] } = useAllTerritoryIds()
   const confirmCatchMutation = useConfirmCatch()
   const addDiaryCatch = useAddDiaryCatch()
@@ -1869,7 +1871,7 @@ export function FishZoneApp() {
           <FaqScreen onBack={pop} onToast={showToast} chatTicketId={supportChatId} onChatChange={setSupportChatId} />
         </Screen>
         <Screen id="screen-admin-geo" current={currentScreen} onBack={pop}>
-          {isSuperAdmin && (
+          {canReviewPanoramas && (
             <>
               <div className="header-row">
                 <BackButton onClick={pop} registerNative={false} />
