@@ -139,10 +139,13 @@ export const CLAN_BACKGROUNDS: ClanBackground[] = [
     label: 'Чешуя',
     level: 2,
     base: 'linear-gradient(180deg,#26303A,#10161C 85%)',
-    // Even rows of half-rings, each row offset by half a scale, the arcs
-    // meeting end to end — no ring drawn over its neighbours.
+    // Still version (reduced motion draws the scene's own frame): even rows
+    // of half-rings, each row offset by half a scale, arcs meeting end to end.
     css: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><path d='M0 0a12 12 0 0 0 24 0M-12 12a12 12 0 0 0 24 0M12 12a12 12 0 0 0 24 0' fill='none' stroke='%23FFFFFF' stroke-opacity='.11' stroke-width='1.2'/></svg>\") 0 0/22px 22px, linear-gradient(180deg,#26303A,#10161C 85%)",
     accentRgb: '140,170,200',
+    // Live (PremiumBackgrounds' scales scene): a sheen runs over the scales.
+    animated: true,
+    kind: 'scales',
   },
   {
     id: 'bubbles',

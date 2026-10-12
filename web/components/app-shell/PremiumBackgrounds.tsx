@@ -472,7 +472,40 @@ function rainScene(ctx: CanvasRenderingContext2D, w: number, h: number) {
   }
 }
 
-const SCENES = { deep: deepScene, moonpath: moonScene, school: schoolScene, golddust: goldScene, reeds: reedsScene, rain: rainScene }
+// «Чешуя» (clan background): even rows of scales, a sheen sweeping across
+// them on the slant and now and then a single scale catching the light.
+function scalesScene(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const R = 11
+  const r = rand(23)
+  const scales: { x: number; y: number; glint: number; every: number }[] = []
+  for (let row = 0; row * R <= h + R; row++) {
+    for (let x = row % 2 ? R : 0; x <= w + R; x += 2 * R) scales.push({ x, y: row * R, glint: r() * 9, every: 5 + r() * 7 })
+  }
+  const span = w + h
+  return (t: number) => {
+    ctx.clearRect(0, 0, w, h)
+    ctx.lineWidth = 1.2
+    // The sheen: a soft band across the diagonal, once every 6 s or so.
+    const band = ((t / 6) % 1) * (span + 240) - 120
+    for (const s of scales) {
+      const d = (s.x + s.y * 0.6 - band) / 70
+      const sheen = Math.exp(-d * d)
+      const g = (t + s.glint) % s.every
+      const glint = g < 0.9 ? Math.sin((g / 0.9) * Math.PI) : 0
+      const light = Math.min(1, sheen * 0.8 + glint)
+      ctx.beginPath()
+      ctx.arc(s.x, s.y, R, 0, Math.PI)
+      if (light > 0.02) {
+        ctx.fillStyle = `rgba(190,215,240,${0.07 * light})`
+        ctx.fill()
+      }
+      ctx.strokeStyle = `rgba(220,235,250,${0.11 + 0.38 * light})`
+      ctx.stroke()
+    }
+  }
+}
+
+const SCENES = { deep: deepScene, moonpath: moonScene, school: schoolScene, golddust: goldScene, reeds: reedsScene, rain: rainScene, scales: scalesScene }
 export type PremiumBackgroundKind = keyof typeof SCENES
 
 export function PremiumBackground({ kind }: { kind: PremiumBackgroundKind }) {
