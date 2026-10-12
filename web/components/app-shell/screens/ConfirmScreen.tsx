@@ -11,7 +11,7 @@ import { BackButton } from '@/components/app-shell/BackButton'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { useDoubleCoinsUntil } from '@/components/app-shell/DoubleCoinsChip'
 import { StoryButton } from '@/components/app-shell/StoryButton'
-import { SpeciesPicker } from '@/components/app-shell/SpeciesPicker'
+import { BaitPicker, SpeciesPicker } from '@/components/app-shell/SpeciesPicker'
 import { DefenseShields } from '@/components/app-shell/SectorDefense'
 import { useT } from '@/lib/i18n'
 import type { PendingCatch, Territory } from '@/lib/data/types'
@@ -94,6 +94,7 @@ export function ConfirmScreen({
   const [weightG, setWeightG] = useState('')
   const [method, setMethod] = useState('')
   const [bait, setBait] = useState('')
+  const [baitFromLast, setBaitFromLast] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const touchedSpeciesRef = useRef(false)
 
@@ -111,7 +112,10 @@ export function ConfirmScreen({
     const lastMethod = lastChoices.methods.find((m) => METHODS.includes(m))
     const lastBait = lastChoices.baits.find((b) => baits.includes(b))
     if (lastMethod && !method) setMethod(lastMethod)
-    if (lastBait && !bait) setBait(lastBait)
+    if (lastBait && !bait) {
+      setBait(lastBait)
+      setBaitFromLast(true)
+    }
     const last = lastChoices.lastSpecies
     if (
       last &&
@@ -350,15 +354,19 @@ export function ConfirmScreen({
           </div>
 
           <div className="auth-field">
-            <label htmlFor="bait">Приманка</label>
-            <select id="bait" value={bait} onChange={(e) => setBait(e.target.value)}>
-              <option value="">Не указано</option>
-              {baits.map((b) => (
-                <option key={b} value={b}>
-                  {b}
-                </option>
-              ))}
-            </select>
+            <label htmlFor="bait">
+              Приманка
+              {baitFromLast && <span className="species-guess-badge">как в прошлый раз</span>}
+            </label>
+            <BaitPicker
+              baits={baits}
+              value={bait}
+              frequent={(lastChoices?.frequentBaits ?? []).filter((b) => baits.includes(b))}
+              onChange={(b) => {
+                setBaitFromLast(false)
+                setBait(b)
+              }}
+            />
           </div>
 
           <div style={{ marginTop: 10 }}>

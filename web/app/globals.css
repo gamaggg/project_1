@@ -4016,6 +4016,7 @@ button.diary-stats-line:disabled{cursor:default;}
 .species-search input:focus{border-color:var(--accent);}
 .species-list{padding-bottom:18px;}
 .species-letter{font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); padding:12px 2px 4px;}
+.species-row-none{color:var(--ink-soft);}
 .species-chips{display:flex; flex-wrap:wrap; gap:8px; padding-bottom:4px;}
 .species-chips .filter-chip{font:inherit; font-size:13px; font-weight:700; cursor:pointer;}
 .species-row{
