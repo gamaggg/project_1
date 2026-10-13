@@ -9,6 +9,8 @@
 // night window, matching its «Что клюёт здесь». Deliberately simple and readable: it has to explain
 // itself in the sheet's factor rows, not be a black box.
 
+import { fetchOpenMeteo } from '@/lib/forecast/openMeteo'
+
 export type ForecastPoint = { lat: number; lng: number }
 
 export type RawForecast = {
@@ -73,7 +75,7 @@ export type ForecastDay = {
 }
 
 async function getJson(url: string): Promise<Record<string, unknown>> {
-  const res = await fetch(url)
+  const res = await fetchOpenMeteo(url)
   if (!res.ok) throw new Error(`open-meteo ${res.status}`)
   return res.json()
 }

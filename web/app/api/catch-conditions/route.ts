@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { withErrorReport } from '@/lib/serverErrors'
+import { fetchOpenMeteo } from '@/lib/forecast/openMeteo'
 
 // «Погода во время улова»: the weather at the sector in the hour of the
 // catch, fetched once from Open-Meteo's archive and kept in
@@ -14,7 +15,7 @@ type Hourly = Record<string, (number | null)[]> & { time: string[] }
 
 async function hourly(url: string): Promise<Hourly | null> {
   try {
-    const res = await fetch(url, { cache: 'no-store' })
+    const res = await fetchOpenMeteo(url, { cache: 'no-store' })
     if (!res.ok) return null
     const data = (await res.json()) as { hourly?: Hourly }
     return data.hourly ?? null
