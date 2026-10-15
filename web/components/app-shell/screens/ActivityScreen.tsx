@@ -483,6 +483,15 @@ export function ActivityScreen({
                 title = `Задание «Где это?» выполнено`
                 sub = `Улов в секторе ${a.territoryId ?? ''} — +${n('coins') || 50} монет`
                 if (a.territoryId) action = () => onOpenTerritory(a.territoryId!)
+              } else if (ev.kind === 'catch_edited') {
+                // Super admins: a player changed the numbers of their catch
+                // (edit_my_catch) — what changed, one tap to the catch.
+                tone = 'blue'
+                icon = FEED_ICONS.pencil
+                title = `${a.who || tr('activity.someone')} изменил улов`
+                const changes = Array.isArray(p.changes) ? (p.changes as string[]).join('; ') : ''
+                sub = [typeof p.species === 'string' ? p.species : null, a.territoryId ? `сектор ${a.territoryId}` : null].filter(Boolean).join(' · ') + (changes ? `: ${changes}` : '')
+                if (a.catchId) action = () => onOpenPhoto(a.catchId!)
               } else if (ev.kind === 'daily_reward_reminder') {
                 tone = 'green'
                 icon = FEED_ICONS.gift

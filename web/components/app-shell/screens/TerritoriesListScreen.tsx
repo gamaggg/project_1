@@ -8,6 +8,7 @@ import { useCanViewAllUsers } from '@/lib/supabase/queries'
 import { resolveTerritoryColor } from '@/lib/data/territoryColors'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { WeeklyLeaderboard } from '@/components/app-shell/screens/WeeklyLeaderboard'
+import { PlayersDirectory } from '@/components/app-shell/screens/PlayersDirectory'
 import { ClanRating } from '@/components/app-shell/screens/ClanRating'
 import { compareSectors, SECTOR_SORT_LABEL, type SectorSort } from '@/lib/data/sectorOrder'
 import { SortMenu } from '@/components/app-shell/SortMenu'
@@ -52,6 +53,8 @@ export function TerritoriesListScreen({
   heldElsewhere?: Territory[]
 }) {
   const [mode, setMode] = useState<Mode>('territories')
+  // The Рейтинг tab: this week's leaderboard, or everyone in the city.
+  const [ratingView, setRatingView] = useState<'week' | 'players'>('week')
   const [filter, setFilter] = useState<Filter>(initialFilter ?? 'all')
   // This screen (like every other one in the app-shell) never unmounts — only
   // its CSS 'active' class toggles — so the useState initial values above only
@@ -127,7 +130,17 @@ export function TerritoriesListScreen({
       {mode === 'clans' ? (
         <ClanRating city={city} onOpenClan={onOpenClan} onOpenClans={onOpenClans} />
       ) : mode === 'rating' ? (
-        <WeeklyLeaderboard city={city} onOpenUser={onOpenUser} />
+        <>
+          <div className="rating-views" role="tablist" aria-label="Рейтинг">
+            <button role="tab" aria-selected={ratingView === 'week'} className={`rating-view${ratingView === 'week' ? ' on' : ''}`} onClick={() => setRatingView('week')}>
+              Неделя
+            </button>
+            <button role="tab" aria-selected={ratingView === 'players'} className={`rating-view${ratingView === 'players' ? ' on' : ''}`} onClick={() => setRatingView('players')}>
+              Все игроки
+            </button>
+          </div>
+          {ratingView === 'week' ? <WeeklyLeaderboard city={city} onOpenUser={onOpenUser} /> : <PlayersDirectory onOpenUser={onOpenUser} />}
+        </>
       ) : (
         <>
           {canViewAllUsers && (
@@ -163,7 +176,7 @@ export function TerritoriesListScreen({
                     className="hex-aspect hex-shape"
                     style={{
                       width: 12,
-                      background: share ? myTerritoryColor : resolveTerritoryColor(t.status, myTerritoryColor),
+                      background: share ? myTerritoryColor : resolveTerritoryColor(t.status, myTerritoryColor, t.ownerColor),
                       flex: '0 0 auto',
                       alignSelf: 'flex-start',
                       marginTop: 4,

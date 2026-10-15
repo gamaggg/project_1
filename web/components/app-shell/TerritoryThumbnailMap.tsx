@@ -32,12 +32,12 @@ export function TerritoryThumbnailMap({
   // (fitBounds below) and stays put when the box resizes.
   const holders = territory.ownerId
     ? [
-        { id: territory.ownerId, avatarUrl: ownerAvatarUrl ?? null, initials: ownerInitials ?? '', isMe: territory.status === 'mine' },
-        ...territory.coHolders.map((h) => ({ id: h.id, avatarUrl: h.avatarUrl, initials: (h.displayName ?? 'Рыбак').slice(0, 2).toUpperCase(), isMe: h.isMe })),
+        { id: territory.ownerId, avatarUrl: ownerAvatarUrl ?? null, initials: ownerInitials ?? '', isMe: territory.status === 'mine', color: territory.ownerColor },
+        ...territory.coHolders.map((h) => ({ id: h.id, avatarUrl: h.avatarUrl, initials: (h.displayName ?? 'Рыбак').slice(0, 2).toUpperCase(), isMe: h.isMe, color: h.color })),
       ]
     : []
   const shared = holders.length > 1
-  const holdersKey = holders.map((h) => `${h.id}:${h.isMe}`).join(',')
+  const holdersKey = holders.map((h) => `${h.id}:${h.isMe}:${h.color ?? ''}`).join(',')
   const [partOffsets, setPartOffsets] = useState<{ key: string; offsets: { x: number; y: number }[] } | null>(null)
 
   useEffect(() => {
@@ -58,13 +58,13 @@ export function TerritoryThumbnailMap({
       })
       mapRef.current = map
       L.tileLayer(previewTileUrl(), { tileSize: 256 }).addTo(map)
-      const color = resolveTerritoryColor(territory.status, myTerritoryColor)
+      const color = resolveTerritoryColor(territory.status, myTerritoryColor, territory.ownerColor)
       const fillOpacity = territory.status === 'free' ? 0.22 : 0.32
       const split = shared ? splitSector(territory.corners, holders.length) : null
       split?.parts.forEach((part, i) => {
         L.polygon(part, {
           stroke: false,
-          fillColor: i === 0 ? color : holders[i].isMe ? myTerritoryColor : OTHER_TERRITORY_COLOR,
+          fillColor: i === 0 ? color : holders[i].isMe ? myTerritoryColor : (holders[i].color ?? OTHER_TERRITORY_COLOR),
           fillOpacity,
           interactive: false,
         }).addTo(map)

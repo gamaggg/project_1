@@ -61,6 +61,10 @@ function shieldBadge(shieldUntil: string | null) {
 
 // showTerritory: fly to a sector and bring its carousel card up, exactly as
 // a tap on it on the map would — for «open on the map» from a sector screen.
+// Other players' sectors come in the colours they chose — the legend's
+// swatch for them is the palette's own hues.
+const PLAYER_COLORS_SWATCH = 'conic-gradient(#FF6B6B, #FFD60A, #7EF5A0, #4CC9F0, #A88EF5, #EEAAE3, #FF6B6B)'
+
 export type MapScreenHandle = LeafletMapHandle & { showTerritory: (id: string) => void }
 
 // forwardRef so FishZoneApp can fly the map to a geolocated sector (from the
@@ -401,7 +405,7 @@ export const MapScreen = forwardRef<
                 ))}
                 {clanStandings.length === 0 && <span className="map-legend-item">Кланов пока нет</span>}
                 <span className="map-legend-item">
-                  <span className="legend-dot hex-aspect hex-shape" style={{ background: '#9A9CA3' }} />
+                  <span className="legend-dot hex-aspect hex-shape" style={{ background: PLAYER_COLORS_SWATCH }} />
                   Без клана {soloCount}
                 </span>
               </>
@@ -412,7 +416,7 @@ export const MapScreen = forwardRef<
                   Мои
                 </span>
                 <span className="map-legend-item">
-                  <span className="legend-dot hex-aspect hex-shape" style={{ background: 'var(--blue)' }} />
+                  <span className="legend-dot hex-aspect hex-shape" style={{ background: PLAYER_COLORS_SWATCH }} />
                   Чужие
                 </span>
                 <span className="map-legend-item">

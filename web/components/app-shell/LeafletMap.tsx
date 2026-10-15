@@ -107,7 +107,7 @@ function sectorSplit(t: Territory) {
 // splitSector hands the parts out in.
 function sectorHolders(t: Territory) {
   return [
-    { avatarUrl: t.ownerAvatarUrl, displayName: t.ownerDisplayName, isMe: t.status === 'mine', equippedSkin: t.ownerEquippedSkin },
+    { avatarUrl: t.ownerAvatarUrl, displayName: t.ownerDisplayName, isMe: t.status === 'mine', equippedSkin: t.ownerEquippedSkin, color: t.ownerColor },
     ...t.coHolders,
   ]
 }
@@ -290,11 +290,11 @@ export const LeafletMap = forwardRef<
       // an admin's picks for deletion on top): the canvas paints in order, so
       // where two sectors share an edge the later outline covers the earlier
       // one — a coloured edge mustn't vanish under a grey neighbour's. On the
-      // «Кланы» layer players without a clan are grey too. sort() is stable,
-      // so each group keeps its order.
-      const isGrey = (t: Territory) =>
-        t.status === 'free' || (clanLayerRef.current && (!t.ownerId || !t.ownerClanCrest))
-      const drawRank = (t: Territory) => (selectedIds?.has(t.id) ? 3 : isGrey(t) ? 0 : t.status === 'mine' ? 2 : 1)
+      // «Кланы» layer clan sectors go over those of players without a clan
+      // (who stay on the map in their own colour, just without a crest).
+      // sort() is stable, so each group keeps its order.
+      const drawRank = (t: Territory) =>
+        selectedIds?.has(t.id) ? 4 : t.status === 'free' ? 0 : clanLayerRef.current && !t.ownerClanCrest ? 1 : t.status === 'mine' ? 3 : 2
       const drawOrder = [...territories].sort((a, b) => drawRank(a) - drawRank(b))
       drawOrder.forEach((t) => {
         const isSelectedForDeletion = selectedIds?.has(t.id) ?? false
@@ -306,8 +306,8 @@ export const LeafletMap = forwardRef<
               ? FREE_TERRITORY_COLOR
               : t.ownerClanCrest
                 ? resolveCrest(t.ownerClanCrest).primary
-                : SOLO_OWNER_COLOR
-            : resolveTerritoryColor(t.status, myTerritoryColor)
+                : t.ownerColor ?? SOLO_OWNER_COLOR
+            : resolveTerritoryColor(t.status, myTerritoryColor, t.ownerColor)
         // A holder's equipped skin, tinted with the colour their sector (or
         // their part of a shared one) already renders in — their own colour
         // if it's the viewer, the fixed "other" colour otherwise — so a skin
@@ -351,7 +351,7 @@ export const LeafletMap = forwardRef<
         if (split) {
           const holders = sectorHolders(t)
           split.parts.forEach((part, i) => {
-            const partColor = inClanView ? color : i === 0 ? color : holders[i].isMe ? myTerritoryColor : OTHER_TERRITORY_COLOR
+            const partColor = inClanView ? color : i === 0 ? color : holders[i].isMe ? myTerritoryColor : (holders[i].color ?? OTHER_TERRITORY_COLOR)
             const partPattern = skinPattern(holders[i].equippedSkin, partColor)
             L.polygon(part, {
               stroke: false,

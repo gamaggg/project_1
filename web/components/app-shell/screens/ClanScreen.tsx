@@ -470,11 +470,11 @@ export function ClanScreen({
           <button className={`clan-tab${tab === 'members' ? ' on' : ''}`} onClick={() => setTab('members')}>
             Участники
           </button>
-          <button className={`clan-tab${tab === 'chest' ? ' on' : ''}`} onClick={() => setTab('chest')}>
-            Сундук
-          </button>
           <button className={`clan-tab${tab === 'race' ? ' on' : ''}`} onClick={() => setTab('race')}>
             Битва кланов
+          </button>
+          <button className={`clan-tab${tab === 'chest' ? ' on' : ''}`} onClick={() => setTab('chest')}>
+            Сундук
           </button>
         </div>
 
@@ -590,8 +590,8 @@ export function ClanScreen({
           </div>
         )}
 
-        {tab === 'chest' && <ClanChestPanel key="chest" clanId={clan.id} isMember={isMember} />}
         {tab === 'race' && <ClanRacePreview key="race" city={clan.city} clanId={clan.id} onOpenRace={onOpenRace} />}
+        {tab === 'chest' && <ClanChestPanel key="chest" clanId={clan.id} isMember={isMember} />}
 
         {isSuperAdmin && !clan.disbanded && (
           <div className="clan-card clan-admin">

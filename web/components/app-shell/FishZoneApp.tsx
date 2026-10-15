@@ -543,7 +543,19 @@ export function FishZoneApp() {
   // API doesn't cover — that's a WebApp-chrome button, not the OS one) closes
   // this screen instead of leaving the page entirely. See the popstate
   // listener below for the other half of this.
+  // An identical entry is never pushed on top of itself, nor the same one
+  // twice in a quick double tap (the second tap lands before the first
+  // render has updated stackRef): two chats stacked up front made «назад»
+  // close only one of them — the same chat stayed on screen while the page
+  // under it rolled back.
+  const lastPushRef = useRef<{ key: string; at: number } | null>(null)
   function push(entry: StackEntry) {
+    const key = JSON.stringify(entry)
+    const top = stackRef.current[stackRef.current.length - 1]
+    if (top && JSON.stringify(top) === key) return
+    const last = lastPushRef.current
+    if (last && last.key === key && Date.now() - last.at < 800) return
+    lastPushRef.current = { key, at: Date.now() }
     window.history.pushState({ rangeDepth: stackRef.current.length }, '')
     setStack((s) => [...s, entry])
   }
@@ -1696,6 +1708,7 @@ export function FishZoneApp() {
           {viewingCatchId !== null && (
             <CatchPhotoScreen
               catchId={viewingCatchId}
+              active={currentScreen === 'screen-catch-photo'}
               onBack={pop}
               onOpenUser={openUserProfile}
               onOpenTerritory={openTerritory}

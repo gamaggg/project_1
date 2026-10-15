@@ -47,7 +47,8 @@ import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
 import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
 import { useTelegramHomeScreen } from '@/lib/telegram/useTelegramHomeScreen'
 import { LaurelIcon } from '@/components/app-shell/SectorInsights'
-import { useT } from '@/lib/i18n'
+import { useT, TRANSLATION_READY } from '@/lib/i18n'
+import { LanguagePicker } from '@/components/app-shell/LanguagePicker'
 
 // Telegram notifications, as one row rather than a screen of its own —
 // there's a single setting to make so far. Which control it shows depends on
@@ -940,6 +941,8 @@ export function ProfileScreen({
       <div style={{ marginTop: 12 }}>
         <TelegramNotificationsRow />
       </div>
+
+      {(TRANSLATION_READY || isSuperAdmin) && <LanguagePicker />}
 
       {isTelegramAccount && (
         <div style={{ marginTop: 12 }}>

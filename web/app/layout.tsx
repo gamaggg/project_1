@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Manrope, Oswald, Unbounded } from 'next/font/google'
+import { Manrope, Noto_Sans_Georgian, Oswald, Unbounded } from 'next/font/google'
 import Script from 'next/script'
 import { Analytics } from '@vercel/analytics/next'
 import { QueryProvider } from '@/components/providers/QueryProvider'
@@ -26,6 +26,17 @@ const unbounded = Unbounded({
   subsets: ['latin', 'cyrillic'],
   weight: '900',
   variable: '--font-welcome',
+  preload: false,
+})
+
+// Manrope, Oswald and Unbounded have no Georgian letters. This one comes right
+// after them in every font stack, so the browser takes Georgian text from it
+// glyph by glyph and Russian and English stay as they were. Not preloaded:
+// the file is fetched only when a Georgian letter is on screen.
+const notoGeorgian = Noto_Sans_Georgian({
+  subsets: ['georgian'],
+  weight: ['500', '600', '700', '800'],
+  variable: '--font-georgian',
   preload: false,
 })
 
@@ -99,8 +110,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ru" suppressHydrationWarning>
       <body
-        className={`${manrope.variable} ${oswald.variable} ${unbounded.variable}`}
-        style={{ fontFamily: 'var(--font-manrope), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}
+        className={`${manrope.variable} ${oswald.variable} ${unbounded.variable} ${notoGeorgian.variable}`}
+        style={{ fontFamily: 'var(--font-manrope), var(--font-georgian), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}
       >
         <Script id="ios-standalone" strategy="beforeInteractive">
           {IOS_STANDALONE}

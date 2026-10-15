@@ -1,11 +1,10 @@
 import type { TerritoryStatus } from '@/lib/data/types'
 
-// Chosen once during onboarding (ColorStep), painted on the map wherever the
-// viewer's OWN territories render — see DECISIONS.md for why this doesn't
-// extend to showing every player's own color (would need a new join in
-// useTerritories()/territories_with_stats, out of scope for now). None of
-// these overlap the fixed "someone else's territory" blue (#3E7BFA) or the
-// error red (#D33), so a viewer's own color is never confused with either.
+// Chosen once during onboarding (ColorStep), painted on the map on a player's
+// own sectors — for the viewer from their profile, for everyone else from
+// territories_with_stats.owner_territory_color (since 16.10.2026; before
+// that other people's sectors were all one blue). The fixed "someone else's
+// territory" blue (#3E7BFA) is now only for owners who never picked a colour.
 export const TERRITORY_COLORS: { id: string; hex: string; label: string }[] = [
   { id: 'coral', hex: '#FF6B6B', label: 'Коралловый' },
   { id: 'orange', hex: '#FB6A16', label: 'Оранжевый' },
@@ -29,9 +28,12 @@ export const DEFAULT_TERRITORY_COLOR = '#2FA84F'
 export const OTHER_TERRITORY_COLOR = '#3E7BFA'
 export const FREE_TERRITORY_COLOR = '#7C7E86'
 
-export function resolveTerritoryColor(status: TerritoryStatus, myTerritoryColor: string): string {
+// `ownerColor` is the colour the sector's owner chose (territories_with_stats
+// .owner_territory_color): every player's sectors show in their own colour,
+// the way their skin shows. The blue is for owners who never picked one.
+export function resolveTerritoryColor(status: TerritoryStatus, myTerritoryColor: string, ownerColor?: string | null): string {
   if (status === 'mine') return myTerritoryColor
-  if (status === 'other') return OTHER_TERRITORY_COLOR
+  if (status === 'other') return ownerColor ?? OTHER_TERRITORY_COLOR
   return FREE_TERRITORY_COLOR
 }
 

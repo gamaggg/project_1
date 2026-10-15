@@ -317,7 +317,7 @@ function RecapPlayer({ city, data, onClose, onFindFree }: { city: CityId; data: 
               anim,
               img: (u, w, h) => sizedPhoto(u, w, h),
               logo: '/brand/logo_2.svg',
-              fonts: { display: 'var(--font-display), Oswald, sans-serif', body: 'var(--font-manrope), Manrope, sans-serif' },
+              fonts: { display: 'var(--font-display), var(--font-georgian), Oswald, sans-serif', body: 'var(--font-manrope), var(--font-georgian), Manrope, sans-serif' },
               decor: <RecapDecor />,
               canvas,
             }}

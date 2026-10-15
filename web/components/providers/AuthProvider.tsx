@@ -41,6 +41,10 @@ declare global {
         ready: () => void
         expand: () => void
         requestFullscreen?: () => void
+        exitFullscreen?: () => void
+        // 'ios' | 'android' | 'android_x' | 'tdesktop' | 'macos' | 'weba' |
+        // 'webk' | 'unigram' | 'unknown'
+        platform?: string
         // Bot API 7.10+: the strip Telegram draws below the page on iOS (by
         // the home indicator) — white unless the app colours it.
         setBottomBarColor?: (color: string) => void
@@ -148,8 +152,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // so isVersionAtLeast has to gate the call, not just optional-chaining;
     // the try/catch is a second net in case some other client version does
     // the same for a method this build doesn't yet know to gate.
+    // Only on a phone: on Telegram Desktop / macOS / Web the same request
+    // turns the whole window fullscreen, which nobody wants for a map app
+    // (asked 16.10.2026) — there, a launch-mode fullscreen is also undone.
     try {
-      if (webApp?.isVersionAtLeast?.('8.0')) webApp.requestFullscreen?.()
+      if (webApp?.isVersionAtLeast?.('8.0')) {
+        if (webApp.platform === 'ios' || webApp.platform === 'android' || webApp.platform === 'android_x') webApp.requestFullscreen?.()
+        else if (webApp.isFullscreen) webApp.exitFullscreen?.()
+      }
     } catch {}
     applyTelegramChrome()
     webApp?.onEvent?.('contentSafeAreaChanged', applyTelegramChrome)

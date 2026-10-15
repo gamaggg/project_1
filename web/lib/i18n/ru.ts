@@ -5,6 +5,7 @@ export const ru = {
   common: {
     coins: { one: '{count} монета', few: '{count} монеты', many: '{count} монет', other: '{count} монеты' },
     tryAgain: 'Не получилось, попробуй ещё раз',
+    language: 'Язык',
   },
   slots: {
     jackpot: { title: 'Джекпот!', frame: 'Рамка «Катран» — твоя', coins: 'Рамка уже есть — держи +{coins} монет', take: 'Забрать!', cardSub: 'в Рыбацких слотах RANGE', story: 'В историю', download: 'Скачать', preparing: 'Готовим…', saved: 'Картинка сохранена', failed: 'Не получилось — попробуй ещё раз', caption: 'Джекпот в Рыбацких слотах RANGE!' },

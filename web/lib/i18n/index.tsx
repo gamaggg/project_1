@@ -23,16 +23,23 @@ const I18nContext = createContext<I18n>({
 // 11, decided 06.10): most screens are still Russian in code, so following an
 // English or Georgian Telegram would mix translated new screens with the
 // Russian rest. Flip this on together with the full translation.
-const TRANSLATION_READY = false
+export const TRANSLATION_READY = false
 
-// First visit: the language Telegram reports for the person, else the
-// browser's. After that, whatever they picked (stored on the device).
+// An explicit choice is always honoured: «?lang=ka» in the link (remembered
+// on the device — how the translation is tried before it is switched on) or
+// what was picked in the profile. Without one, the language Telegram reports
+// for the person, else the browser's — but only once the translation is ready.
 function detectLang(): Lang {
-  if (!TRANSLATION_READY) return 'ru'
   try {
+    const fromLink = new URLSearchParams(window.location.search).get('lang')
+    if (isLang(fromLink)) {
+      localStorage.setItem(STORAGE_KEY, fromLink)
+      return fromLink
+    }
     const saved = localStorage.getItem(STORAGE_KEY)
     if (isLang(saved)) return saved
   } catch {}
+  if (!TRANSLATION_READY) return 'ru'
   const telegram = window.Telegram?.WebApp?.initDataUnsafe?.user?.language_code
   return langFromLocale(telegram ?? navigator.language)
 }

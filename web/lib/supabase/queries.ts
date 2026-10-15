@@ -5,7 +5,7 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type InfiniteD
 import { createClient } from '@/lib/supabase/client'
 import { reportsEnabled } from '@/lib/errorReporting'
 import { useAuth } from '@/components/providers/AuthProvider'
-import type { Territory, TerritoryCoHolder, TerritoryStatus, Catch, ProfileSummary, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, WeeklyLeaderboardEntry, UserAward, AwardKind, CatchComment, ClanSummary, ClanDetail, ClanMember, ClanEligibility, ClanInvite, ClanChest, ClanRace, ClanChatMessage, ClanChatSummary, ClanRoleId } from '@/lib/data/types'
+import type { Territory, TerritoryCoHolder, TerritoryStatus, Catch, ProfileSummary, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, CityPlayer, WeeklyLeaderboardEntry, UserAward, AwardKind, CatchComment, ClanSummary, ClanDetail, ClanMember, ClanEligibility, ClanInvite, ClanChest, ClanRace, ClanChatMessage, ClanChatSummary, ClanRoleId } from '@/lib/data/types'
 import type { SpeciesCategory } from '@/lib/data/species'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { compareSectors } from '@/lib/data/sectorOrder'
@@ -58,7 +58,7 @@ function toCoHolders(raw: unknown, myId: string | undefined): TerritoryCoHolder[
   if (!Array.isArray(raw)) return []
   return raw
     .filter(
-      (h): h is { id: string; avatar_url?: string | null; display_name?: string | null; equipped_skin?: string | null } =>
+      (h): h is { id: string; avatar_url?: string | null; display_name?: string | null; equipped_skin?: string | null; territory_color?: string | null } =>
         typeof h?.id === 'string'
     )
     .map((h) => ({
@@ -67,6 +67,7 @@ function toCoHolders(raw: unknown, myId: string | undefined): TerritoryCoHolder[
       displayName: h.display_name ?? null,
       isMe: h.id === myId,
       equippedSkin: h.equipped_skin ?? null,
+      color: h.territory_color ?? null,
     }))
 }
 
@@ -81,7 +82,7 @@ export function useTerritories() {
     queryFn: async (): Promise<Territory[]> => {
       const supabase = createClient()
       const columns =
-        'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted, shield_until, owner_equipped_skin, owner_clan_id, owner_clan_name, owner_clan_crest, co_holders, capturer_id, hot_until, legend_id, defense'
+        'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted, shield_until, owner_equipped_skin, owner_territory_color, owner_clan_id, owner_clan_name, owner_clan_crest, co_holders, capturer_id, hot_until, legend_id, defense'
       // PostgREST caps a single response at 1000 rows by default and stays
       // silent about it (no error, just a truncated array) — the table
       // crossed that count once admin-added sectors piled up, which is how
@@ -135,6 +136,7 @@ export function useTerritories() {
           lastCatchAt: row?.last_catch_at ?? null,
           shieldUntil: row?.shield_until ?? null,
           ownerEquippedSkin: row?.owner_equipped_skin ?? null,
+          ownerColor: row?.owner_territory_color ?? null,
           ownerClanId: row?.owner_clan_id ?? null,
           ownerClanName: row?.owner_clan_name ?? null,
           ownerClanCrest: row?.owner_clan_crest ?? null,
@@ -734,7 +736,7 @@ export function useLastCatchChoices() {
 // user would multiply writes for no gain — so they're fetched globally and
 // merged back in at the right chronological spot.
 // Game notifications drawn as one generic row in «Активность».
-const GAME_EVENT_KINDS = new Set(['hot_sector_week', 'hot_sector_won', 'legend_gained', 'legend_lost', 'bite_forecast', 'daily_reward_reminder', 'sector_attacked', 'support_reply', 'admin_gift', 'geo_bonus'])
+const GAME_EVENT_KINDS = new Set(['hot_sector_week', 'hot_sector_won', 'legend_gained', 'legend_lost', 'bite_forecast', 'daily_reward_reminder', 'sector_attacked', 'support_reply', 'admin_gift', 'geo_bonus', 'catch_edited'])
 
 export function useActivity() {
   const { user } = useAuth()
@@ -1160,6 +1162,42 @@ export function useAllUsers() {
           territoriesCount: r.territories_count ?? 0,
         })
       )
+    },
+  })
+}
+
+// «Все игроки» in the Рейтинг tab: everyone who plays, in every city (each
+// profile carries its city), with their all-time sectors and catches —
+// sorted, filtered by city and searched on the phone. A few hundred small
+// rows, fetched only once the list is opened.
+export function useAllPlayers(enabled: boolean) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['all-players'],
+    enabled: enabled && !!user,
+    staleTime: 60_000,
+    queryFn: async (): Promise<CityPlayer[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('profiles_with_stats')
+        .select('id, display_name, avatar_url, catches_count, territories_count, clan_crest, is_blocked, city, created_at')
+        .order('id')
+        .limit(3000)
+      if (error) throw error
+      return data
+        .filter((r) => !r.is_blocked)
+        .map(
+          (r): CityPlayer => ({
+            id: r.id!,
+            displayName: r.display_name ?? 'Рыбак',
+            avatarUrl: r.avatar_url,
+            catchesCount: r.catches_count ?? 0,
+            territoriesCount: r.territories_count ?? 0,
+            clanCrest: r.clan_crest ?? null,
+            city: (r.city as CityId) ?? 'batumi',
+            createdAt: r.created_at ?? '',
+          })
+        )
     },
   })
 }
@@ -1868,6 +1906,33 @@ export function useAdminEditCatch() {
       queryClient.invalidateQueries({ queryKey: ['my-challenges'] })
       queryClient.invalidateQueries({ queryKey: ['challenge-week-state'] })
       queryClient.invalidateQueries({ queryKey: ['admin-actions'] })
+    },
+  })
+}
+
+// The angler's own correction of a catch after the fact — size, weight, bait
+// and method (edit_my_catch; the species stays, the coins were paid for it).
+export function useEditMyCatch() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ catchId, lengthCm, weightKg, bait, method }: { catchId: number; lengthCm: number | null; weightKg: number | null; bait: string | null; method: string | null }) => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('edit_my_catch', {
+        p_catch_id: catchId,
+        p_length_cm: lengthCm,
+        p_weight_kg: weightKg,
+        p_bait: bait,
+        p_method: method,
+      })
+      if (error) throw error
+      return (data as { changes?: string[] } | null)?.changes ?? []
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['catches'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
+      queryClient.invalidateQueries({ queryKey: ['my-challenges'] })
+      queryClient.invalidateQueries({ queryKey: ['challenge-week-state'] })
     },
   })
 }

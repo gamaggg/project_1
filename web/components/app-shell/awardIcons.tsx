@@ -39,13 +39,14 @@ export const AWARD_ICONS: Record<AwardKind, React.ReactNode> = {
       <path d="M5 5l14 14M19 5L5 19" />
     </svg>
   ),
-  // The clan's boat crossing first — same sail silhouette as the map's
-  // regatta pill (see ClanRace.tsx).
+  // The clan's rowing boat crossing first (the regatta boat, see
+  // ClanRace.tsx): a rower in a hull, the oar in the water.
   clan_race_winner: (
     <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-      <path d="M12.6 3.2c3.9 2.4 5.9 6.3 6.1 11.3h-6.1Z" />
-      <path d="M11 6.2 6 14.5h5Z" opacity=".75" />
-      <path d="M3 16.8h18l-2.3 3.2H5.3Z" />
+      <circle cx="12.4" cy="5.8" r="2.2" />
+      <path d="M9.4 14.2 11 8.9h2.7l.9 3.1-.5 2.2Z" />
+      <path d="M2.5 15.4h19l-2.8 4H5.3Z" />
+      <path d="M8 13.6 18.8 20.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" />
     </svg>
   ),
   // Held a hot sector to the end of the week (settle_hot_sectors): the

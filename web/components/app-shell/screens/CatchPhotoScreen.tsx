@@ -10,6 +10,8 @@ import { CatchConditions } from '@/components/app-shell/CatchConditions'
 import { StoryButton } from '@/components/app-shell/StoryButton'
 import { CatcherLabel } from '@/components/app-shell/screens/TerritoryScreen'
 import { BackButton } from '@/components/app-shell/BackButton'
+import { PhotoViewer } from '@/components/app-shell/PhotoViewer'
+import { EditMyCatchSheet } from '@/components/app-shell/EditMyCatchSheet'
 import { EditCatchSheet, MoveCatchSheet } from '@/components/app-shell/lazyScreens'
 import type { ProfileSummary } from '@/lib/data/types'
 
@@ -32,6 +34,7 @@ function likersSummary(likers: ProfileSummary[]): string {
 // shared link may open straight into this screen with nothing else loaded.
 export function CatchPhotoScreen({
   catchId,
+  active,
   onBack,
   onOpenUser,
   onOpenTerritory,
@@ -43,6 +46,9 @@ export function CatchPhotoScreen({
   onOpenComments,
 }: {
   catchId: number
+  // False once the screen is no longer the one on top (the screens stay
+  // mounted) — an open photo viewer goes with it.
+  active: boolean
   onBack: () => void
   onOpenUser: (id: string) => void
   onOpenTerritory: (id: string) => void
@@ -79,7 +85,10 @@ export function CatchPhotoScreen({
   // not once the network round-trip resolves.
   const [justLiked, setJustLiked] = useState(false)
   const [moving, setMoving] = useState(false)
+  const [zoomed, setZoomed] = useState(false)
+  if (zoomed && !active) setZoomed(false)
   const [editing, setEditing] = useState(false)
+  const [editingMine, setEditingMine] = useState(false)
 
   const sectorIndex = sectorCatches.findIndex((sc) => sc.id === activeId)
   const prevCatch = sectorIndex > 0 ? sectorCatches[sectorIndex - 1] : null
@@ -168,7 +177,7 @@ export function CatchPhotoScreen({
               action row below the fold — flex:1 above fills exactly the
               space the sheet's own height leaves behind, on any screen
               height. */}
-          <img src={c.photoUrl} alt={c.speciesName} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <img src={c.photoUrl} alt={c.speciesName} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', cursor: 'zoom-in' }} onClick={() => setZoomed(true)} />
           {/* --standalone-top: the photo runs up under the status bar in
               the iPhone home-screen app, the buttons stay below its blur. */}
           <div style={{ position: 'absolute', top: 'calc(12px + var(--standalone-top, 0px))', left: 12 }}>
@@ -194,6 +203,18 @@ export function CatchPhotoScreen({
               </div>
             </div>
           )}
+          {zoomed && <PhotoViewer src={c.photoUrl} alt={c.speciesName} onClose={() => setZoomed(false)} />}
+          {c.mine && !isSuperAdmin && (
+            <div style={{ position: 'absolute', top: 'calc(12px + var(--standalone-top, 0px))', right: 12 }}>
+              <div className="icon-btn tap-scale" onClick={() => setEditingMine(true)} title="Дополнить данные улова" aria-label="Дополнить данные улова">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+                </svg>
+              </div>
+            </div>
+          )}
+          {editingMine && <EditMyCatchSheet c={c} onClose={() => setEditingMine(false)} />}
           {moving && <MoveCatchSheet c={c} onClose={() => setMoving(false)} />}
           {editing && <EditCatchSheet c={c} onClose={() => setEditing(false)} />}
           {prevCatch && (
@@ -348,7 +369,7 @@ export function CatchPhotoScreen({
 
           <div style={{ height: 1, background: 'var(--line)', margin: '16px 0' }} />
 
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div className="catch-actions" style={{ display: 'flex', gap: 8 }}>
             {user && !c.mine && (
               <button className="btn-secondary" style={{ flex: 1, padding: '9px 14px', fontSize: 13 }} onClick={() => onReportPhoto(c.id)}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -369,6 +390,15 @@ export function CatchPhotoScreen({
               Поделиться
             </button>
             {c.mine && <StoryButton catchId={c.id} caption={`${c.speciesName}${meta ? ` ${meta}` : ''}`} onToast={onToast} />}
+            {c.mine && (
+              <button className="btn-secondary" style={{ flex: 1, fontSize: 13 }} onClick={() => setEditingMine(true)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+                </svg>
+                {c.lengthCm == null && c.weightKg == null ? 'Размер, вес' : 'Изменить'}
+              </button>
+            )}
           </div>
         </div>
       </div>

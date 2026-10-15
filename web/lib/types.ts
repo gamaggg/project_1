@@ -1599,6 +1599,7 @@ export type Database = {
           owner_id: string | null
           shield_until: string | null
           owner_equipped_skin: string | null
+          owner_territory_color: string | null
         }
         Relationships: [
           {
@@ -1777,6 +1778,7 @@ export type Database = {
       admin_delete_catch: { Args: { p_catch_id: number }; Returns: undefined }
       admin_move_catch: { Args: { p_catch_id: number; p_territory_id: string }; Returns: Json }
       admin_edit_catch: { Args: { p_catch_id: number; p_species: string; p_length_cm: number | null; p_weight_kg: number | null }; Returns: Json }
+      edit_my_catch: { Args: { p_catch_id: number; p_length_cm: number | null; p_weight_kg: number | null; p_bait: string | null; p_method: string | null }; Returns: Json }
       admin_delete_territory: {
         Args: { p_territory_id: string }
         Returns: undefined

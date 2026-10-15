@@ -20,44 +20,76 @@ export function formatMeters(m: number): string {
   return m >= 10_000 ? `${(m / 1000).toFixed(1).replace('.', ',')} км` : `${m.toLocaleString('ru-RU')} м`
 }
 
-// A side-on sailing boat: the sail is the clan's own canvas (its secondary
-// colour) carrying the crest, the hull and pennant are the primary colour.
-export const RaceBoat = memo(function RaceBoat({ crest, size = 52 }: { crest: unknown; size?: number }) {
+// A side-on rowing boat — we are rowers: a long hull in the clan's primary
+// colour with its secondary stripe, two rowers (a team) in the clan's colours
+// pulling their oars (the oars sweep back and forth), and the clan's crest
+// flying from the stern pole. The bow points right, at the finish.
+const SKIN = '#F0C9A0'
+const SKIN_EDGE = '#C99A6B'
+const WOOD = '#B98A55'
+
+// One rower facing the bow: hips at x, hands on the oar's handle, the oar
+// passing through the oarlock on the gunwale and dipping behind into the water.
+function Rower({ x, jersey, cap, blade }: { x: number; jersey: string; cap: string; blade: string }) {
+  const sh = x + 5
+  const lock = x + 2.5
+  const handle = x + 16
+  const bladeX = lock - 15.5
+  return (
+    <>
+      <path d={`M${x} 29.5 L${x + 10} 28.2 L${x + 11.5} 31.6`} stroke="#2C3340" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d={`M${x} 29 L${sh} 17.5`} stroke={jersey} strokeWidth="6.4" strokeLinecap="round" />
+      <circle cx={sh + 1.6} cy="12.2" r="3.9" fill={SKIN} />
+      <path d={`M${sh - 2.3} 11.8Q${sh - 1.8} 6.8 ${sh + 1.8} 7.3Q${sh + 5.2} 7.6 ${sh + 5.5} 11.8Z`} fill={cap} />
+      <path d={`M${sh + 4.6} 11.4H${sh + 8.4}`} stroke={cap} strokeWidth="1.7" strokeLinecap="round" />
+      {/* the arm has its own darker edge, so a pale shirt never swallows it */}
+      <path d={`M${sh + 0.5} 19.6 L${sh + 8} 23.2`} stroke={SKIN_EDGE} strokeWidth="3.4" strokeLinecap="round" />
+      <path d={`M${sh + 0.5} 19.6 L${sh + 8} 23.2`} stroke={SKIN} strokeWidth="2.2" strokeLinecap="round" />
+      <g className="race-oar" style={{ transformOrigin: `${lock}px 29.2px` }}>
+        <path d={`M${handle} 22.5 L${bladeX + 0.5} 38`} stroke={WOOD} strokeWidth="1.7" strokeLinecap="round" />
+        <ellipse cx={bladeX} cy="38" rx="5.6" ry="2" transform={`rotate(-28 ${bladeX} 38)`} fill={blade} stroke="rgba(0,0,0,.25)" strokeWidth=".6" />
+      </g>
+    </>
+  )
+}
+
+export const RaceBoat = memo(function RaceBoat({ crest, size = 56 }: { crest: unknown; size?: number }) {
   const c = resolveCrest(crest)
   const hull = shadeHex(c.primary, -0.18)
+  const height = size * 0.625
+  const flag = Math.round(size * 0.3)
   return (
-    <span className="race-boat" style={{ width: size, height: size * 0.93 }}>
-      <svg viewBox="0 0 60 56" width={size} height={size * 0.93} aria-hidden>
-        <path d="M31 2.5 41 5.2 31 8Z" fill={c.primary} />
-        <rect x="29.2" y="2" width="1.8" height="40" rx=".9" fill="#3B2E25" />
-        <path d="M13 9Q30 4.5 47 9Q51.5 22 47 35Q30 31 13 35Q17 22 13 9Z" fill={c.secondary} />
-        <path d="M13 9Q30 4.5 47 9Q51.5 22 47 35Q30 31 13 35Q17 22 13 9Z" fill="none" stroke="rgba(0,0,0,.12)" strokeWidth="1" />
-        <path d="M3 39.5H57L50.5 51Q30 55.5 9.5 51Z" fill={hull} />
-        <path d="M5.2 43.5H54.8" stroke={c.primary} strokeWidth="2.2" />
-        <path d="M9 51Q30 54.5 51 51" stroke="rgba(0,0,0,.18)" strokeWidth="1.2" fill="none" />
+    <span className="race-boat" style={{ width: size, height }}>
+      <svg viewBox="0 0 80 50" width={size} height={height} aria-hidden>
+        <rect x="8.2" y="9" width="1.6" height="22" rx=".8" fill="#3B2E25" />
+        <path d="M4 30H76Q70 41.5 54 42.5H24Q11 41.5 4 30Z" fill={hull} />
+        <path d="M7.5 34H72.5" stroke={c.secondary} strokeWidth="2.2" strokeLinecap="round" />
+        <path d="M13 40.2Q40 43 67 40.2" stroke="rgba(0,0,0,.18)" strokeWidth="1.2" fill="none" />
+        <Rower x={24} jersey={shadeHex(c.primary, 0.2)} cap={c.secondary} blade={c.secondary} />
+        <Rower x={46} jersey={shadeHex(c.primary, -0.06)} cap={c.secondary} blade={c.secondary} />
       </svg>
-      <span className="race-boat-crest" style={{ left: size * 0.335, top: size * 0.19 }}>
-        <ClanCrest crest={crest} size={Math.round(size * 0.36)} />
+      <span className="race-boat-crest" style={{ left: size * 0.1 - flag / 2 + 1, top: size * 0.02 }}>
+        <ClanCrest crest={crest} size={flag} />
       </span>
     </span>
   )
 })
 
 // The river itself: one lane per clan in race order, the start on the left
-// and a chequered finish line on the right. Boats sail in from the start on
+// and a chequered finish line on the right. Boats row in from the start on
 // first paint, then glide when their position changes (transform only).
 export function RaceRiver({
   clans,
   highlightId,
   onOpenClan,
-  boatSize = 52,
+  boatSize = 70,
 }: {
   clans: ClanRaceEntry[]
   highlightId?: number | null
   onOpenClan?: (id: number) => void
   boatSize?: number
 }) {
-  const laneHeight = Math.round(boatSize * 1.08)
+  const laneHeight = Math.round(boatSize * 0.86)
   return (
     <div className="race-river" style={{ ['--boat' as string]: `${boatSize}px`, ['--lane' as string]: `${laneHeight}px` }}>
       <div className="race-river-flow" aria-hidden />
@@ -124,7 +156,7 @@ export function ClanRacePreview({ city, clanId, onOpenRace }: { city: CityId; cl
           </div>
           <ChallengeCountdown endsAt={race.weekEnd} />
         </div>
-        <RaceRiver clans={lanes} highlightId={clanId} boatSize={44} />
+        <RaceRiver clans={lanes} highlightId={clanId} boatSize={62} />
         <div className="race-card-line">
           <span>
             {mine ? (

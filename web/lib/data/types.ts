@@ -27,6 +27,10 @@ export type Territory = {
   // — public, drives the sector's fill pattern on the map for everyone, not
   // just the owner.
   ownerEquippedSkin: string | null
+  // The colour the owner chose for their sectors (profiles.territory_color,
+  // territories_with_stats.owner_territory_color) — what the map paints this
+  // sector in for everyone; null when they never picked one.
+  ownerColor: string | null
   // The owner's current clan (see territories_with_stats) — drives the map's
   // «Кланы» layer and the sector screen's clan line.
   ownerClanId: number | null
@@ -64,6 +68,8 @@ export type TerritoryCoHolder = {
   // Their equipped territory skin — fills their part of the sector on the
   // map, the way ownerEquippedSkin fills the owner's.
   equippedSkin: string | null
+  // Their chosen sector colour (null — never picked).
+  color: string | null
 }
 
 export type Species = {
@@ -151,6 +157,19 @@ export type AdminPermissions = {
   canViewAllUsers: boolean
   canAddCatchFromGallery: boolean
   canReviewPanoramas: boolean
+}
+
+// One player in the Рейтинг tab's «Все игроки» list (useAllPlayers).
+export type CityPlayer = {
+  id: string
+  displayName: string
+  avatarUrl: string | null
+  catchesCount: number
+  territoriesCount: number
+  // The clan's crest jsonb (read through resolveCrest) — null without a clan.
+  clanCrest: unknown
+  city: CityId
+  createdAt: string
 }
 
 // One row from profiles_with_stats for the admin "Все пользователи" list —

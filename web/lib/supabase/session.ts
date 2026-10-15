@@ -9,7 +9,7 @@ import { trySignInWithTelegram } from '@/lib/telegram/signIn'
 // was gone 5 s after a silent Telegram sign-in). On the first such refusal
 // this restores the session — silently through Telegram inside the Mini
 // App — or, when it can't, signs out on this device so the player lands on
-// the sign-in screen instead of a broken app. Either way it's reported.
+// the sign-in screen instead of a broken app. Only the latter is reported.
 
 let expectedUserId: string | null = null
 let signedInAt = 0
@@ -56,10 +56,10 @@ export function ensureSession(): Promise<boolean> {
     const why = diagnostics()
     if (await trySignInWithTelegram(supabase, false)) {
       const { data: again } = await supabase.auth.getSession()
-      if (again.session?.user.id === expected) {
-        report(`сессия пропала ${why} — восстановлена через Telegram`)
-        return true
-      }
+      // Restored silently: nobody needs an alarm for something that healed
+      // itself (it fired for every such case until 16.10). Only a player we
+      // couldn't bring back is reported, below.
+      if (again.session?.user.id === expected) return true
     }
     // Nothing to restore it with: back to the sign-in screen on this device
     // (AuthProvider hears SIGNED_OUT). The report can't go out as a guest, so

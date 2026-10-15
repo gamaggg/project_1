@@ -9,6 +9,7 @@ function sectorHolders(t: Territory): TerritoryCoHolder[] {
     displayName: t.ownerDisplayName,
     isMe: t.status === 'mine',
     equippedSkin: t.ownerEquippedSkin,
+    color: t.ownerColor,
   }
   return [owner, ...t.coHolders]
 }

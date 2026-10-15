@@ -5,9 +5,11 @@ import { useTelegramBackButton } from '@/lib/telegram/useTelegramBackButton'
 
 // Long side of the saved photo. Was 1280 on the width alone — and with no
 // resolution asked of the camera, phones streamed 640×480 anyway: catch
-// photos averaged 126 KB (05.10), soft and grainy.
-const MAX_PHOTO_SIDE = 1920
-const JPEG_QUALITY = 0.88
+// photos averaged 126 KB (05.10), soft and grainy. Then 1920 / 0.88 made them
+// ~700 KB and the storage filled by ~28 MB a day (16.10): 1600 / 0.82 is still
+// sharp on a phone and about half the size.
+const MAX_PHOTO_SIDE = 1600
+const JPEG_QUALITY = 0.82
 const CAMERA_GRANTED_KEY = 'fishzone:cameraGranted'
 
 type CameraState = 'intro' | 'requesting' | 'live' | 'denied'

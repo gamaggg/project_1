@@ -309,6 +309,17 @@ function renderMessage(notification: NotificationRef): Message | null {
         url: `${SITE_URL}/?geo=1`,
       }
     }
+    case 'catch_edited': {
+      // Super admins: a player changed the numbers of their catch (edit_my_catch).
+      if (!notification.catch_id) return null
+      const changes = Array.isArray(notification.payload?.changes) ? (notification.payload.changes as string[]).join('; ') : ''
+      const species = notification.payload?.species as string | undefined
+      return {
+        text: `✏️ ${actorName} изменил улов${species ? ` (${species})` : ''}${notification.territory_id ? ` на секторе ${notification.territory_id}` : ''}${changes ? `: ${changes}` : ''}`,
+        buttonLabel: 'Посмотреть улов',
+        url: `${SITE_URL}/?catch=${notification.catch_id}`,
+      }
+    }
     case 'daily_reward_reminder': {
       const day = notification.payload?.day as number | undefined
       const coins = notification.payload?.coins as number | undefined

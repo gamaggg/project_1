@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:contract": "node ../tools/db-contract/check-rpc-contract.mjs"
+    "db:contract": "node ../tools/db-contract/check-rpc-contract.mjs",
+    "i18n:audit": "node scripts/i18n-audit.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",

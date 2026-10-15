@@ -123,7 +123,7 @@ export function downscaleToJpeg(file: Blob, maxSide = 1600): Promise<Blob> {
       canvas.height = Math.round(img.naturalHeight * scale)
       canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height)
       URL.revokeObjectURL(url)
-      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('toBlob failed'))), 'image/jpeg', 0.85)
+      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('toBlob failed'))), 'image/jpeg', 0.82)
     }
     img.onerror = () => {
       URL.revokeObjectURL(url)

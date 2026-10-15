@@ -6,6 +6,7 @@ export const ka: Dict = {
   common: {
     coins: { one: '{count} მონეტა', other: '{count} მონეტა' },
     tryAgain: 'ვერ მოხერხდა, სცადე ხელახლა',
+    language: 'ენა',
   },
   slots: {
     jackpot: { title: 'ჯეკპოტი!', frame: 'ჩარჩო „კატრანი“ შენია', coins: 'ჩარჩო უკვე გაქვს — აიღე +{coins} მონეტა', take: 'აიღე!', cardSub: 'RANGE-ის სათევზაო სლოტებში', story: 'ისტორიაში', download: 'ჩამოტვირთვა', preparing: 'ვამზადებთ…', saved: 'სურათი შენახულია', failed: 'ვერ მოხერხდა — სცადე ხელახლა', caption: 'ჯეკპოტი RANGE-ის სათევზაო სლოტებში!' },

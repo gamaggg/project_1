@@ -4,6 +4,7 @@ export const en: Dict = {
   common: {
     coins: { one: '{count} coin', other: '{count} coins' },
     tryAgain: 'Something went wrong, try again',
+    language: 'Language',
   },
   slots: {
     jackpot: { title: 'Jackpot!', frame: 'The Katran frame is yours', coins: 'You have the frame — take +{coins} coins', take: 'Take it!', cardSub: 'in the RANGE fishing slots', story: 'To story', download: 'Download', preparing: 'Preparing…', saved: 'Picture saved', failed: 'Didn’t work — try again', caption: 'Jackpot in the RANGE fishing slots!' },

@@ -120,6 +120,12 @@ export const FEED_ICONS = {
       <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12Z" />
     </svg>
   ),
+  pencil: (
+    <Svg>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+    </Svg>
+  ),
   gift: (
     <Svg>
       <path d="M4 11h16v9H4zM3 7.5h18V11H3zM12 7.5V20" />
