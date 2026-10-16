@@ -50,3 +50,32 @@ export function useKeyboardInset(ref: RefObject<HTMLElement | null>): number {
   }, [ref])
   return inset
 }
+
+// The part of the screen the player can actually see while the on-screen
+// keyboard is up: {top, height} of the visual viewport, or null while it is
+// down. For a full-screen layer (the comments sheet) that should simply BE the
+// visible part: the layer is given this box and nothing is added on top.
+// useKeyboardInset above lifts a bar by a gap it measures from the frame, and
+// in Telegram on iPhone the frame itself shrinks a moment after the keyboard
+// opens — the gap measured just before that stayed, and the sheet was lifted
+// twice, ending up at the top of the screen under Telegram's buttons.
+export function useVisibleViewport(): { top: number; height: number } | null {
+  const [box, setBox] = useState<{ top: number; height: number } | null>(null)
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    // The height with no keyboard: what the viewport was when the layer opened.
+    let baseline = vv.height
+    const update = () => {
+      baseline = Math.max(baseline, vv.height)
+      setBox(vv.height < baseline - 100 ? { top: Math.round(vv.offsetTop), height: Math.round(vv.height) } : null)
+    }
+    vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+    }
+  }, [])
+  return box
+}

@@ -19,7 +19,7 @@ import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { formatShortAgo } from '@/lib/format'
 import { COMMENT_MAX_LENGTH, moderationMessage, mutedMessage, quickCheck } from '@/lib/moderation'
 import { renderWithAppLinks } from '@/components/app-shell/AppLinkText'
-import { useKeyboardInset } from '@/lib/useKeyboardInset'
+import { useVisibleViewport } from '@/lib/useKeyboardInset'
 import { COMMENT_REPORT_REASONS, reportReasonLabel } from '@/lib/data/reportReasons'
 import { tn } from '@/lib/i18n'
 import type { CatchComment } from '@/lib/data/types'
@@ -72,9 +72,9 @@ export function CommentsSheet({
   const [closing, setClosing] = useState(false)
   const [dragY, setDragY] = useState(0)
   const [dragging, setDragging] = useState(false)
-  // Lifts the input bar above the on-screen keyboard.
-  const overlayRef = useRef<HTMLDivElement>(null)
-  const keyboardInset = useKeyboardInset(overlayRef)
+  // With the keyboard up the layer is the visible part of the screen, so the sheet
+  // (and its input bar) stays above the keyboard.
+  const visible = useVisibleViewport()
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const dragStartY = useRef<number | null>(null)
@@ -292,11 +292,14 @@ export function CommentsSheet({
   const over = text.length > COMMENT_MAX_LENGTH
 
   return (
-    <div ref={overlayRef} className={`comments-overlay${closing ? ' is-closing' : ''}`} onClick={close}>
+    <div
+      className={`comments-overlay${closing ? ' is-closing' : ''}`}
+      style={visible ? { top: visible.top, height: visible.height, bottom: 'auto' } : undefined}
+      onClick={close}
+    >
       <div
         className={`comments-sheet${closing ? ' is-closing' : ''}`}
         style={{
-          marginBottom: keyboardInset,
           transform: dragY ? `translateY(${dragY}px)` : undefined,
           transition: dragging ? 'none' : undefined,
         }}
