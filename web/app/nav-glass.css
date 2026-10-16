@@ -1393,3 +1393,6 @@ html[lang="ka"] .challenges-week-top { padding-top: 40px; }
 .map-hud .legend-dot { filter: drop-shadow(0 0 0.7px rgba(23, 24, 27, 0.6)); }
 .map-hud .map-legend-row { --hud-ink: #34363E; }
 .map-sheet-card .badge:not(.badge-shield) { box-shadow: 0 0 0 1px rgba(23, 24, 27, 0.1) inset; }
+
+/* The iPhone home-screen app: globals.css pins the old full-width bar to the real bottom (bottom: -vp-gap), which beat the floating bar's own offset and glued it to the edge, over the home indicator. The floating bar keeps its offset (the gap under it, the safe area) and only takes the viewport's missing height off it. */
+html.ios-standalone .bottomnav { bottom: calc(var(--nav-bottom) - var(--vp-gap)); }
