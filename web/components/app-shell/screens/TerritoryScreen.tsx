@@ -324,7 +324,7 @@ export function TerritoryScreen({
           </div>
         </div>
       </div>
-      <div style={{ padding: '0 20px 100px' }}>
+      <div style={{ padding: '0 20px calc(var(--nav-h, 82px) + 18px)' }}>
         <div className="sector-dock-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
             {/* "Сектор" and the id forced onto their own lines so the id

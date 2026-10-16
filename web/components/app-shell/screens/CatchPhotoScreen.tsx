@@ -127,7 +127,7 @@ export function CatchPhotoScreen({
             <BackButton onClick={onBack} registerNative={false} />
           </div>
         </div>
-        <div style={{ position: 'relative', flex: '0 0 auto', marginTop: -18, borderRadius: '20px 20px 0 0', background: 'var(--surface)', padding: '18px 20px 100px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ position: 'relative', flex: '0 0 auto', marginTop: -18, borderRadius: '20px 20px 0 0', background: 'var(--surface)', padding: '18px 20px calc(var(--nav-h, 82px) + 18px)', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <SkeletonBlock height={11} width={90} radius={6} />
           <SkeletonBlock height={24} width="46%" radius={8} />
           <SkeletonBlock height={14} width="58%" radius={7} />
@@ -263,7 +263,8 @@ export function CatchPhotoScreen({
             borderRadius: '20px 20px 0 0',
             background: 'var(--surface)',
             boxShadow: '0 -6px 18px rgba(23,24,27,0.07)',
-            padding: '18px 20px 100px',
+            // Clear of the floating menu (--nav-h: its height and the gap under it) plus some air.
+            padding: '18px 20px calc(var(--nav-h, 82px) + 18px)',
           }}
         >
           {/* Identity + reaction share one row (like reads as a lightweight
