@@ -42,3 +42,5 @@ next-env.d.ts
 
 # geo-water.mjs downloads (OpenStreetMap water lines)
 /scripts/.cache/
+.next-prod/
+.next-off/

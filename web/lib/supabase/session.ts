@@ -48,6 +48,9 @@ function report(message: string) {
 // concurrent callers share one check.
 export function ensureSession(): Promise<boolean> {
   if (!expectedUserId) return Promise.resolve(false)
+  // No network: nothing can be checked, and a session that can't be refreshed
+  // right now is not a lost one — never sign anybody out for that.
+  if (typeof navigator !== 'undefined' && !navigator.onLine) return Promise.resolve(true)
   inflight ??= (async () => {
     const supabase = createClient()
     const expected = expectedUserId

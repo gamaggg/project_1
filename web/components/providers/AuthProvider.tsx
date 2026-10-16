@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { ensureSession, flushSessionReport, setExpectedUser } from '@/lib/supabase/session'
 import { setGuestRefusalHandler } from '@/lib/errorReporting'
 import { trySignInWithTelegram } from '@/lib/telegram/signIn'
+import { forgetOfflineData, lastKnownUser, rememberUser } from '@/lib/offlineCache'
 
 type AuthState = {
   user: User | null
@@ -166,7 +167,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     webApp?.onEvent?.('safeAreaChanged', applyTelegramChrome)
     webApp?.onEvent?.('fullscreenChanged', applyTelegramChrome)
 
-    supabase.auth.getUser().then(async ({ data }) => {
+    // Who is signed in, asked of the auth server. A player the phone already
+    // knows (lib/offlineCache.ts) is not kept waiting for it: with no network,
+    // or an answer that takes over 5 s (the auth library retries an expired
+    // session for minutes), they are taken as signed in at once and the app
+    // opens from what the phone kept; the real answer follows by itself.
+    const kept = lastKnownUser<User>()
+    const ask = supabase.auth.getUser()
+    const answer = kept
+      ? Promise.race([ask, new Promise<'later'>((resolve) => setTimeout(() => resolve('later'), navigator.onLine ? 5000 : 0))])
+      : ask
+    answer.then(async (res) => {
+      if (res === 'later') {
+        setUser(kept)
+        setLoading(false)
+        setSessionReady(true)
+        return
+      }
+      const { data, error } = res
+      if (!data.user && kept && (!navigator.onLine || error?.name === 'AuthRetryableFetchError')) {
+        setUser(kept)
+        setLoading(false)
+        setSessionReady(true)
+        return
+      }
       if (!data.user && (await trySignInWithTelegram(supabase, false))) {
         const { data: refreshed } = await supabase.auth.getUser()
         setUser(refreshed.user)
@@ -179,8 +203,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let linkTried = false
     const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
+      // With no network a session that can't be refreshed is not a sign-out:
+      // keep the player (an explicit SIGNED_OUT still ends it).
+      // (A late, empty INITIAL_SESSION is the auth library giving up on an
+      // expired session it could not refresh — getUser above decides that case.)
+      if (!session && event !== 'SIGNED_OUT' && lastKnownUser<User>() && (!navigator.onLine || event === 'INITIAL_SESSION')) return
       setUser(session?.user ?? null)
       setSessionReady(true)
+      if (session) rememberUser(session.user)
+      else if (event === 'SIGNED_OUT') forgetOfflineData()
       if (
         !linkTried &&
         session &&
@@ -214,6 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signOut() {
     const supabase = createClient()
     await supabase.auth.signOut()
+    forgetOfflineData()
     setUser(null)
   }
 

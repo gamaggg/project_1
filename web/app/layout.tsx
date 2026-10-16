@@ -4,6 +4,7 @@ import Script from 'next/script'
 import { Analytics } from '@vercel/analytics/next'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
+import { ServiceWorkerRegister } from '@/components/providers/ServiceWorkerRegister'
 import { I18nProvider } from '@/lib/i18n'
 import { SITE_URL } from '@/lib/site'
 import './globals.css'
@@ -126,6 +127,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <QueryProvider>
           <AuthProvider>
             <I18nProvider>{children}</I18nProvider>
+            <ServiceWorkerRegister />
           </AuthProvider>
         </QueryProvider>
         <Analytics />

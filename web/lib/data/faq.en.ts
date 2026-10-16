@@ -58,6 +58,7 @@ export const FAQ_EN: FaqSection[] = [
         a: [
           'Photograph the fish as usual and tap «Save offline». The catch waits on your phone and goes out by itself when you are back online — within a day.',
           'It counts by the time of the photo. The sector becomes yours only if nobody else has caught there since the photo.',
+          'The app also opens with no internet: it keeps the last data — the map, your profile, the diary, the challenges. For that, open it once with a connection and add RANGE to your phone’s home screen. What the server decides (rating, chats, the shop, claiming against rivals) does not work offline; in Telegram on an iPhone a fully closed app will not start without a connection.',
         ],
       },
     ],

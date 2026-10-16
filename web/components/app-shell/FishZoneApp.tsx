@@ -489,6 +489,24 @@ export function FishZoneApp() {
     }
   }, [darkScreen, showingTrophyScene])
   const online = useOnline()
+  // Offline mode: a word when the connection goes or comes back, and one at
+  // launch when there is none — the screens then show what the phone kept.
+  const wasOnlineRef = useRef(true)
+  useEffect(() => {
+    if (wasOnlineRef.current === online) return
+    wasOnlineRef.current = online
+    // Next tick, not inside the effect itself: the toast sets state.
+    const id = window.setTimeout(() => showToast(online ? tr('offline.backOnline') : tr('offline.noticeOff')), 0)
+    return () => window.clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online])
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || navigator.onLine) return
+    wasOnlineRef.current = false
+    const id = window.setTimeout(() => showToast(tr('offline.noticeOff')), 400)
+    return () => window.clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   // Every bottom sheet closes with a swipe down too (see the hook).
   useSheetSwipeToClose()
   const offlineMode = photoStatus === 'error' && (!online || uploadNetworkFail)

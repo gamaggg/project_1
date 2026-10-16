@@ -405,6 +405,12 @@ export const en: Dict = {
     sentLate: 'Offline catch sent: {species}. Someone took the sector meanwhile — counted without the capture',
     expired: 'An offline catch wasn’t sent — more than a day has passed',
     rejected: 'An offline catch wasn’t accepted',
+    noticeOff: 'No connection — showing what is saved. You can still save a catch on your phone',
+    backOnline: 'Back online',
+    installTitle: 'Install the app',
+    installSub: 'It opens even with no internet',
+    installIos: 'Tap «Share» in Safari and choose «Add to Home Screen»',
+    installAndroid: 'Browser menu → «Install app»',
   },
   defense: {
     label: 'Sector defense: {value} of 3',

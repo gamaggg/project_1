@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { installGlobalErrorReporting } from '@/lib/errorReporting'
 import { installStandaloneViewportHeal } from '@/lib/standaloneViewport'
+import { installOfflineCache } from '@/lib/offlineCache'
 import { reportClientError } from '@/lib/supabase/queries'
 
 export function QueryProvider({ children }: { children: ReactNode }) {
@@ -27,5 +28,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
   // (lib/errorReporting.ts) — once per session per message.
   useEffect(() => installGlobalErrorReporting((context, message) => reportClientError(context, { message })), [])
   useEffect(() => installStandaloneViewportHeal(), [])
+  // The main screens' data kept on the phone, for opening with no network.
+  useEffect(() => installOfflineCache(client), [client])
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>
 }
