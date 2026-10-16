@@ -46,7 +46,7 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('message', (event) => {
   if (!event.data) return
-  if (event.data.type === 'sync') event.waitUntil(syncAssets().catch(() => {}))
+  if (event.data.type === 'sync') event.waitUntil(syncAssets(event.data.urls).catch(() => {}))
   if (event.data.type === 'simulate-offline') simulateOffline = !!event.data.on
 })
 
@@ -54,18 +54,39 @@ self.addEventListener('message', (event) => {
 
 // The app's files for this build, kept in STATIC; what an older build left is
 // removed. Skipped when this build is already in (one tiny request).
-async function syncAssets() {
+async function syncAssets(seen) {
   // A phone on the data saver doesn't get ten megabytes pushed at it.
   if (self.navigator && self.navigator.connection && self.navigator.connection.saveData) return
-  const res = await netFetch('/_next/static/precache.json', { cache: 'no-store' })
-  if (!res.ok) return
-  const { version, urls } = await res.json()
   const cache = await caches.open(STATIC)
-  const marker = await cache.match(VERSION_KEY)
-  const have = marker ? await marker.text() : null
-
   // The page itself, so a launch with no network has something to open.
   await refreshShell()
+
+  let manifest = null
+  try {
+    const res = await netFetch('/_next/static/precache.json', { cache: 'no-store' })
+    if (res.ok) manifest = await res.json()
+  } catch {
+    // no network, or no list in this deploy: below
+  }
+
+  if (!manifest) {
+    // No list of the build's files: keep at least what the page itself loaded
+    // (it sends the addresses of its scripts, styles, fonts and pictures).
+    for (const u of Array.isArray(seen) ? seen : []) {
+      if (typeof u !== 'string' || !u.startsWith('/') || (await cache.match(u, { ignoreSearch: true }))) continue
+      try {
+        const r = await netFetch(u)
+        if (r.ok) await cache.put(u, r)
+      } catch {
+        return
+      }
+    }
+    return
+  }
+
+  const { version, urls } = manifest
+  const marker = await cache.match(VERSION_KEY)
+  const have = marker ? await marker.text() : null
   if (have === version) return
 
   const wanted = new Set(urls)

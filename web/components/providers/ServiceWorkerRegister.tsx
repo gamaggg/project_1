@@ -29,6 +29,21 @@ function manualFlag(): boolean {
   }
 }
 
+// The app's own scripts, styles, fonts and pictures this page has loaded so far
+// — what the worker keeps when the deploy has no ready-made file list.
+function loadedFiles(): string[] {
+  const out = new Set<string>()
+  for (const e of performance.getEntriesByType('resource')) {
+    try {
+      const u = new URL(e.name)
+      if (u.origin === location.origin && /^\/(_next\/static|brand|skins|slots|welcome|data)\//.test(u.pathname)) out.add(u.pathname)
+    } catch {
+      // not a URL
+    }
+  }
+  return [...out]
+}
+
 export function ServiceWorkerRegister() {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
@@ -48,7 +63,7 @@ export function ServiceWorkerRegister() {
         navigator.serviceWorker
           .register('/sw.js', { scope: '/' })
           .then(() => navigator.serviceWorker.ready)
-          .then((reg) => reg.active?.postMessage({ type: 'sync' }))
+          .then((reg) => reg.active?.postMessage({ type: 'sync', urls: loadedFiles() }))
           .catch(() => {})
       }, 2500)
     }

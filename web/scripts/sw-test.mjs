@@ -195,5 +195,19 @@ await w5.fire('install', {})
 assert.equal(calls.length, 0)
 ok('data saver: nothing fetched')
 
+// 13. no precache.json in the deploy: the page's own list is kept
+const netNoList = async (input) => {
+  const path = (typeof input === 'string' ? input : input.url).replace(ORIGIN, '')
+  if (path.startsWith('/_next/static/precache.json')) return body('Not Found', 404)
+  return net(input)
+}
+online = true
+const w6 = makeWorker(netNoList)
+await w6.fire('message', { data: { type: 'sync', urls: ['/_next/static/chunks/x.js', '/brand/logo.svg', 'https://evil.test/a.js', 7] } })
+const k6 = (await w6.stores.get('range-static-v1').keys()).map((k) => new URL(k.url).pathname)
+assert.deepEqual(k6.sort(), ['/_next/static/chunks/x.js', '/brand/logo.svg'])
+assert.ok(await w6.stores.get('range-shell-v1').match('/'))
+ok('no file list in the deploy: the page\'s own files and the page itself are kept, foreign addresses ignored')
+
 console.log('ALL OK')
 process.exit(0)
