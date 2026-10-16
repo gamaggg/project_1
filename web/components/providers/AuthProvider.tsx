@@ -106,6 +106,9 @@ function applyTelegramChrome() {
   const bottom = webApp.contentSafeAreaInset?.bottom ?? webApp.safeAreaInset?.bottom ?? 0
   document.documentElement.style.setProperty('--tg-safe-area-top', `${top}px`)
   document.documentElement.style.setProperty('--tg-safe-area-bottom', `${bottom}px`)
+  // Telegram fullscreen: its own buttons float over the top band, and the screens
+  // with a picture or a coloured banner at the top run up under it (globals/nav-glass .tg-band).
+  document.documentElement.classList.toggle('tg-band', top > 0)
 }
 
 // Signed in to a real (email) account inside the Mini App: tie this Telegram

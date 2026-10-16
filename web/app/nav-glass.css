@@ -1396,3 +1396,14 @@ html[lang="ka"] .challenges-week-top { padding-top: 40px; }
 
 /* The iPhone home-screen app: globals.css pins the old full-width bar to the real bottom (bottom: -vp-gap), which beat the floating bar's own offset and glued it to the edge, over the home indicator. The floating bar keeps its offset (the gap under it, the safe area) and only takes the viewport's missing height off it. */
 html.ios-standalone .bottomnav { bottom: calc(var(--nav-bottom) - var(--vp-gap)); }
+
+/* Telegram fullscreen (class set in AuthProvider.applyTelegramChrome): its «Назад» / «⋯» float over a band at the top (--tg-safe-area-top). Screens that open with a picture or a coloured banner — the catch photo, the profile (own and another's), the sector, the clan — run up under that band instead of starting below it on a blank white strip, the way the map and the iPhone home-screen app already do. Their top buttons are moved down by the band. */
+html.tg-band {
+  --band: calc(env(safe-area-inset-top) + var(--tg-safe-area-top, 0px));
+  --standalone-top: calc(var(--band) + 6px);
+}
+html.tg-band :is(#screen-catch-photo, #screen-profile, #screen-user-profile, #screen-territory, #screen-clan) { padding-top: 0; }
+html.tg-band .profile-hero { padding-top: calc(10px + var(--band)); }
+html.tg-band .sector-hero-map .territory-thumb-wrap { height: calc(230px + var(--band)); }
+html.tg-band .sector-hero-map-icons { top: calc(10px + var(--band)); }
+html.tg-band #screen-clan .clan-hero { margin-top: 0; margin-left: 0; margin-right: 0; border-radius: 0 0 22px 22px; padding-top: calc(12px + var(--band)); }
