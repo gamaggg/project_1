@@ -1407,3 +1407,6 @@ html.tg-band .profile-hero { padding-top: calc(10px + var(--band)); }
 html.tg-band .sector-hero-map .territory-thumb-wrap { height: calc(230px + var(--band)); }
 html.tg-band .sector-hero-map-icons { top: calc(10px + var(--band)); }
 html.tg-band #screen-clan .clan-hero { margin-top: 0; margin-left: 0; margin-right: 0; border-radius: 0 0 22px 22px; padding-top: calc(12px + var(--band)); }
+/* The iPhone home-screen app: the clan banner runs up under the status bar too (the profile, the sector and the catch photo already do, globals.css). */
+html.ios-standalone #screen-clan { padding-top: 0; }
+html.ios-standalone #screen-clan .clan-hero { margin-top: 0; margin-left: 0; margin-right: 0; border-radius: 0 0 22px 22px; padding-top: calc(12px + var(--standalone-top)); }
