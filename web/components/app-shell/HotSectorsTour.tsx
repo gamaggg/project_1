@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, type RefObject } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useDoubleCoinsUntil } from '@/components/app-shell/DoubleCoinsChip'
@@ -133,6 +133,13 @@ export function HotSectorsTour({
     : []
   const step = steps[index]
   const stepKey = step?.ids.join(',') ?? ''
+  // The note's real height (its text can be long), so it can be placed where
+  // it fits and never run off the screen with its buttons.
+  const tipRef = useRef<HTMLDivElement>(null)
+  const [tipH, setTipH] = useState(330)
+  useLayoutEffect(() => {
+    if (tipRef.current) setTipH(tipRef.current.offsetHeight)
+  }, [settled, stepKey, lang])
 
   // Wait for the screen to be free, then take the one-tour lock.
   useEffect(() => {
@@ -163,7 +170,23 @@ export function HotSectorsTour({
     // eslint-disable-next-line react-hooks/set-state-in-effect -- a new step hides the note until the map lands
     setSettled(false)
     map.current?.focusTerritories(ids)
-    const landed = window.setTimeout(() => setSettled(true), 950)
+    // The note comes in once the map has landed. If the sectors didn't end up
+    // in the clear middle (a flight cut short — a sector card opening, the map
+    // following the player), fly there once more before showing it.
+    let retried = false
+    let landed = 0
+    const check = () => {
+      const ys = (map.current?.territoriesOutline(ids) ?? []).flat().map(([, y]) => y)
+      const mid = ys.length ? (Math.min(...ys) + Math.max(...ys)) / 2 : 0
+      if (!retried && ys.length && (mid < 100 || mid > window.innerHeight - 260)) {
+        retried = true
+        map.current?.focusTerritories(ids)
+        landed = window.setTimeout(check, 1100)
+        return
+      }
+      setSettled(true)
+    }
+    landed = window.setTimeout(check, 950)
     let raf = 0
     const tick = () => {
       setOutline(map.current?.territoriesOutline(ids) ?? null)
@@ -202,7 +225,16 @@ export function HotSectorsTour({
   const tipW = Math.min(300, maxX - minX)
   const center = rect.left + rect.width / 2
   const tipLeft = Math.max(minX, Math.min(center - tipW / 2, maxX - tipW))
-  const below = vh - (hole.top + hole.height) > 230 || hole.top < 230
+  const GAP = 14
+  const EDGE = 16
+  const roomBelow = vh - (hole.top + hole.height) - GAP - EDGE
+  const roomAbove = hole.top - GAP - EDGE
+  const below = roomBelow >= tipH || (roomAbove < tipH && roomBelow >= roomAbove)
+  const naturalTop = below ? hole.top + hole.height + GAP : hole.top - GAP - tipH
+  // Neither side has room for the whole note: keep it fully on screen over the
+  // window's edge (and drop the arrow, which would point at the wrong place).
+  const tipTop = Math.max(EDGE, Math.min(naturalTop, vh - tipH - EDGE))
+  const pinned = Math.abs(tipTop - naturalTop) > 1
   const arrowX = Math.max(20, Math.min(center - tipLeft, tipW - 20))
 
   return createPortal(
@@ -214,10 +246,11 @@ export function HotSectorsTour({
       {settled && (
         <div
           key={stepKey}
+          ref={tipRef}
           className={`tour-tip ${below ? 'below' : 'above'}`}
-          style={{ left: tipLeft, width: tipW, ...(below ? { top: hole.top + hole.height + 14 } : { bottom: vh - hole.top + 14 }) }}
+          style={{ left: tipLeft, width: tipW, top: tipTop, maxHeight: vh - EDGE * 2, overflowY: 'auto' }}
         >
-          <span className="tour-arrow" style={{ left: arrowX - 7 }} />
+          {!pinned && <span className="tour-arrow" style={{ left: arrowX - 7 }} />}
           <div className="tour-kicker">
             Горячие сектора · {index + 1} из {steps.length}
           </div>
