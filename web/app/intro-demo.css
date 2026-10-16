@@ -1,0 +1,196 @@
+/* The two post-signup intro screens, dressed like the welcome screen: the night
+   coast map (IntroMap, a canvas) behind, frosted-dark chips over it, the same
+   glossy orange button. TerritoryIntroStep lets you tap sectors; CatchIntroStep
+   has the shutter. */
+.intro-screen--night {
+  background: #050C14;
+  color: #F4F6FA;
+  overflow: hidden;
+  isolation: isolate;
+  height: 100dvh;
+  min-height: 0;
+}
+.intro-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  display: block;
+  touch-action: manipulation;
+}
+.intro-screen--night > :not(.intro-map) { z-index: 1; }
+.intro-screen--night .intro-illustration { pointer-events: none; }
+.intro-screen--night .intro-back {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset, 0 4px 12px rgba(0, 0, 0, 0.3);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+.intro-screen--night .intro-copy {
+  padding: 22px 24px 0;
+  background: linear-gradient(180deg, rgba(5, 12, 20, 0) 0%, rgba(5, 12, 20, 0.86) 20%, #050C14 38%);
+}
+.intro-screen--night .intro-title { color: #F4F6FA; text-wrap: balance; }
+.intro-screen--night .intro-sub { color: #B9C4D2; }
+.intro-screen--night .intro-cta {
+  background: linear-gradient(160deg, #FF6A1F, #FC5200 65%);
+  color: #fff;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 12px 26px rgba(252, 82, 0, 0.38), 0 2px 4px rgba(120, 30, 0, 0.3);
+}
+
+/* The chip under the back button, level with it. */
+.inn-top {
+  display: flex;
+  justify-content: center;
+  padding: calc(18px + env(safe-area-inset-top) + var(--tg-safe-area-top, 0px)) 64px 0;
+  pointer-events: none;
+}
+.inn-top--empty { min-height: calc(18px + 34px + env(safe-area-inset-top) + var(--tg-safe-area-top, 0px)); }
+/* The territory stop: the chip with the legend under it, a little below the back
+   button (not up level with it) so the top of the map breathes. */
+.inn-top--stack {
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: calc(66px + env(safe-area-inset-top) + var(--tg-safe-area-top, 0px)) 16px 0;
+}
+.inn-top--stack .inn-legend { margin: 0; }
+.inn-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px 8px 11px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #D6DFEA;
+  white-space: nowrap;
+  background: rgba(20, 32, 48, 0.72);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1) inset, 0 0 0 1px rgba(140, 175, 220, 0.2);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
+}
+.inn-chip-hex {
+  width: 14px;
+  aspect-ratio: 2 / 1.7320508;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  background: #FF7A1F;
+  flex: 0 0 auto;
+}
+.inn-chip--state { animation: inn-pop 0.4s var(--ease-out) both; }
+.inn-chip--state.mine { color: #121822; background: #F4F6FA; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35); }
+@keyframes inn-pop { from { opacity: 0; transform: translateY(6px) scale(0.94); } }
+
+.inn-cap {
+  /* Room for the longest caption, so the button doesn't jump as it changes. */
+  min-height: 150px;
+  animation: inn-cap-in 0.4s var(--ease-out) both;
+}
+@keyframes inn-cap-in { from { opacity: 0; transform: translateY(8px); } }
+.inn-hint {
+  min-height: 18px;
+  margin-bottom: 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #B9C4D2;
+  animation: inn-hint 1.8s ease-in-out infinite;
+}
+@keyframes inn-hint { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+.inn-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-bottom: 16px; }
+.inn-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px 5px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #D6DFEA;
+  background: rgba(20, 32, 48, 0.72);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 0 0 1px rgba(140, 175, 220, 0.18);
+  font-variant-numeric: tabular-nums;
+}
+.inn-sw {
+  width: 12px;
+  aspect-ratio: 2 / 1.7320508;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+.inn-sw--free { background: rgba(150, 185, 225, 0.55); }
+.inn-sw--other { background: #4C9BFF; }
+.inn-sw--mine { background: #FF7A1F; }
+
+/* The demo's pointer on the territory stop: a soft glowing point that glides
+   over the map and shrinks a little on the «click». */
+.id-cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: transform 1s cubic-bezier(0.5, 0, 0.2, 1), opacity 0.35s;
+}
+.id-cursor i {
+  position: absolute;
+  left: -24px;
+  top: -24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  /* no outline: a bright point, a warm halo, fading out */
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 9%, rgba(255, 214, 178, 0.5) 10% 30%, rgba(255, 122, 31, 0.2) 31% 55%, rgba(255, 122, 31, 0) 70%);
+  transition: transform 0.16s ease, opacity 0.16s ease;
+}
+.id-cursor.show { opacity: 1; }
+.id-cursor.tap i { transform: scale(0.62); opacity: 0.9; }
+/* The photo and the flash on screen 2. */
+.ic-photo {
+  position: absolute;
+  z-index: 4;
+  width: 68px;
+  height: 68px;
+  padding: 6px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 1px 0 #fff inset, 0 14px 26px -8px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  animation: ic-photo 1s cubic-bezier(0.4, 0.05, 0.2, 1) both;
+}
+.ic-photo-inner { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border-radius: 9px; }
+@keyframes ic-photo {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.6) rotate(-8deg); }
+  15% { opacity: 1; transform: translate(0, -16px) scale(1) rotate(-6deg); }
+  72% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(0.8) rotate(2deg); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.35) rotate(0deg); }
+}
+.ic-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  background: #fff;
+  animation: ic-flash 0.5s ease-out both;
+}
+@keyframes ic-flash { 0% { opacity: 0.85; } 100% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .inn-hint, .inn-cap, .ic-flash, .inn-chip--state { animation: none; }
+  .ic-photo { display: none; }
+}
+
+/* Short phones (iPhone SE, 568px): the registration steps carry a decorative
+   hexagon above their fields; make it smaller so the fields and the button fit
+   without scrolling. */
+@media (max-height: 640px) {
+  .sector-stage { height: 92px; margin-top: 24px; }
+  .sector-hex-wrap { width: 76px; }
+  /* the colour grid: nine swatches, three rows */
+  .color-grid { gap: 18px 18px; margin: 16px 0 14px; }
+  .color-swatch { width: 52px; height: 52px; }
+}

@@ -25,6 +25,7 @@ import { formatCatchMeta } from '@/lib/format'
 import { downscaleToJpeg, readPhotoMeta } from '@/lib/exif'
 import { nearestTerritory } from '@/lib/geolocation'
 import { useI18n } from '@/lib/i18n'
+import { currentLocale } from '@/lib/i18n/runtime'
 import { useNow } from '@/lib/useNow'
 import type { Catch } from '@/lib/data/types'
 
@@ -46,7 +47,7 @@ const isoDay = (d: Date, timeZone?: string) => new Intl.DateTimeFormat('en-CA', 
 // «07:42» — when a fish was caught, in its sector's city time (a gallery
 // photo without a sector: this phone's time).
 const timeOf = (iso: string, territoryId: string | null) =>
-  new Intl.DateTimeFormat('ru', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: territoryId ? CITIES[cityForSectorId(territoryId)].timezone : undefined }).format(new Date(iso))
+  new Intl.DateTimeFormat(currentLocale(), { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: territoryId ? CITIES[cityForSectorId(territoryId)].timezone : undefined }).format(new Date(iso))
 const hourOf = (iso: string, territoryId: string | null) =>
   Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false, timeZone: territoryId ? CITIES[cityForSectorId(territoryId)].timezone : undefined }).format(new Date(iso))) % 24
 
@@ -244,7 +245,7 @@ function DiaryStats({
   }
   const pad = (h: number) => `${String(h % 24).padStart(2, '0')}:00`
   const sizeOf = (c: StatEntry) => formatCatchMeta(c.weightKg ? null : c.lengthCm, c.weightKg)
-  const shortDay = (day: string) => new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'short' }).format(new Date(`${day}T12:00:00`))
+  const shortDay = (day: string) => new Intl.DateTimeFormat(currentLocale(), { day: 'numeric', month: 'short' }).format(new Date(`${day}T12:00:00`))
   const openEntry = (c: StatEntry) => {
     setSheet(null)
     if (c.real) onOpenPhoto(c.id)

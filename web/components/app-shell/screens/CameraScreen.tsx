@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useTelegramBackButton } from '@/lib/telegram/useTelegramBackButton'
+import { tn } from '@/lib/i18n'
 
 // Long side of the saved photo. Was 1280 on the width alone — and with no
 // resolution asked of the camera, phones streamed 640×480 anyway: catch
@@ -257,13 +258,13 @@ export function CameraScreen({
             <div className="camera-hint">
               {state === 'denied' ? (
                 <>
-                  <div className="h1">Нет доступа к камере</div>
-                  <div className="h2">Разреши доступ в настройках браузера — без фото улова сектор нельзя закрепить за собой.</div>
+                  <div className="h1">{tn('catch.cameraNoAccess')}</div>
+                  <div className="h2">{tn('catch.cameraNoAccessText')}</div>
                 </>
               ) : (
                 <>
-                  <div className="h1">Доступ к камере</div>
-                  <div className="h2">Нужен, чтобы сфотографировать улов на месте — фото подтверждает поимку и закрепляет сектор за тобой.</div>
+                  <div className="h1">{tn('catch.cameraAccess')}</div>
+                  <div className="h2">{tn('catch.cameraAccessText')}</div>
                 </>
               )}
             </div>
@@ -275,7 +276,7 @@ export function CameraScreen({
           <>
             <div className={`shutter tap-scale${shooting ? ' busy' : ''}`} onClick={shoot} />
             {allowGallery && (
-              <div className="cam-round-btn camera-gallery-btn tap-scale" onClick={() => galleryInputRef.current?.click()} aria-label="Выбрать из галереи">
+              <div className="cam-round-btn camera-gallery-btn tap-scale" onClick={() => galleryInputRef.current?.click()} aria-label={tn('catch.fromGalleryAria')}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="4" width="18" height="16" rx="2" />
                   <circle cx="9" cy="10" r="1.6" fill="#fff" stroke="none" />
@@ -287,11 +288,11 @@ export function CameraScreen({
         ) : (
           <div className="camera-controls-btn">
             <button className="btn-primary" disabled={state === 'requesting'} onClick={requestCamera}>
-              {state === 'requesting' ? 'Запрашиваем доступ…' : state === 'denied' ? 'Запросить доступ снова' : 'Разрешить доступ к камере'}
+              {state === 'requesting' ? tn('catch.requesting') : state === 'denied' ? tn('catch.askAgain') : tn('catch.allowCamera')}
             </button>
             {allowGallery && (
               <button className="btn-secondary" style={{ marginTop: 10 }} onClick={() => galleryInputRef.current?.click()}>
-                Выбрать фото из галереи
+                {tn('catch.pickGallery')}
               </button>
             )}
           </div>

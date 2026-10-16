@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { tn } from '@/lib/i18n'
 
 const MAX_SCALE = 6
 const DOUBLE_TAP_SCALE = 2.5
@@ -151,7 +152,7 @@ export function PhotoViewer({ src, alt, onClose }: { src: string; alt: string; o
   const stop = (e: React.SyntheticEvent) => e.stopPropagation()
 
   return createPortal(
-    <div className="photo-viewer" onTouchStart={stop} onTouchEnd={stop} onClick={stop} role="dialog" aria-label="Фото улова">
+    <div className="photo-viewer" onTouchStart={stop} onTouchEnd={stop} onClick={stop} role="dialog" aria-label={tn('catch.viewerAria')}>
       <div
         ref={stageRef}
         className="photo-viewer-stage"
@@ -170,12 +171,12 @@ export function PhotoViewer({ src, alt, onClose }: { src: string; alt: string; o
           style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.s})` }}
         />
       </div>
-      <button type="button" className="photo-viewer-close tap-scale" onClick={onClose} aria-label="Закрыть">
+      <button type="button" className="photo-viewer-close tap-scale" onClick={onClose} aria-label={tn('common.close')}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round">
           <path d="M6 6l12 12M18 6 6 18" />
         </svg>
       </button>
-      {hint && <div className="photo-viewer-hint">Двумя пальцами или двойным касанием — приблизить</div>}
+      {hint && <div className="photo-viewer-hint">{tn('catch.zoomHint')}</div>}
     </div>,
     document.body
   )

@@ -1,4 +1,8 @@
 import type { Lang } from '@/lib/i18n/core'
+import { BATUMI_ROWS, MOSCOW_ROWS } from '@/lib/data/faq.rows'
+import { FAQ_EN } from '@/lib/data/faq.en'
+import { FAQ_KA } from '@/lib/data/faq.ka'
+import { localSpeciesNameLoose } from '@/lib/data/species'
 
 // «Вопросы и ответы» (FaqScreen): every game mechanic in plain words, for
 // newcomers. The numbers here are the live rules (checked against the
@@ -11,8 +15,9 @@ import type { Lang } from '@/lib/i18n/core'
 // RULE (05.10): every new feature or change to a rule, price, reward, limit
 // or timing updates this file in the same change — take the numbers from the
 // code/database, never from memory.
-// An answer is paragraphs, bullet lists and price tables. Russian only for
-// now; the other languages fall back to it until the app is translated.
+// An answer is paragraphs, bullet lists and price tables. The English and
+// Georgian texts are faq.en.ts / faq.ka.ts — they mirror this file, so a rule
+// change goes into all three.
 
 // A titled two-column table: coins on the left, what they're for on the right.
 export type FaqTable = { title: string; rows: [number, string][] }
@@ -160,32 +165,11 @@ const RU: FaqSection[] = [
           'Монеты за улов зависят только от вида рыбы — размер и вес не важны. Чем реже рыба, тем дороже.',
           {
             title: 'Батуми',
-            rows: [
-              [5, 'барабуля, марамойка, морская собачка, ставрида'],
-              [10, 'зеленушка, морской бычок, окунь, скорпена'],
-              [15, 'смарида'],
-              [20, 'карась, кефаль, морской карась'],
-              [25, 'голавль, луфарь, морской дракон, сарган'],
-              [50, 'амур, звездочёт, каменный окунь, карп, корейский окунь, мармир, толстолобик, усач, черноморская сельдь, щука'],
-              [75, 'зубарь, пеламида, судак'],
-              [100, 'горбыль, радужная форель, речная форель, сазан, сибас'],
-              [150, 'катран, кумжа, скат, сом'],
-              [250, 'морской петух, черноморская форель'],
-            ],
+            rows: BATUMI_ROWS,
           },
           {
             title: 'Москва',
-            rows: [
-              [5, 'ёрш, пескарь, плотва, ротан, уклейка'],
-              [10, 'бычок, густера, красноперка'],
-              [15, 'окунь'],
-              [20, 'карась'],
-              [25, 'голавль, лещ, линь, язь'],
-              [50, 'амур, берш, карп, толстолобик, щука'],
-              [75, 'жерех, судак'],
-              [100, 'налим'],
-              [150, 'сом'],
-            ],
+            rows: MOSCOW_ROWS,
           },
           'На горячем секторе монеты за улов удваиваются, «Двойные монеты» тоже удваивают, а вместе — ×3, не ×4. Если улов захватил сектор, сверху ещё +25 (с «Двойными монетами» — +50).',
         ],
@@ -245,7 +229,11 @@ const RU: FaqSection[] = [
     items: [
       {
         q: 'Что такое челленджи недели?',
-        a: ['Каждую неделю — 3 задания разной сложности: поймать определённую рыбу, захватить сектора и тому подобное. За каждое — от 10 до 150 монет. Новые задания — в понедельник.'],
+        a: [
+          'Каждую неделю — 3 задания разной сложности: простое, лёгкое и среднее или сложное. За каждое — от 10 до 150 монет. Новые задания — в понедельник.',
+          'Задания бывают не только про рыбу: оставить комментарии, собрать лайки и подписчиков, написать в чат клана, сыграть в «Где это?», крутануть слоты, забрать Казну и ежедневную награду, захватить сектор, поймать рыбу в горячем секторе. Клановые задания достаются только тем, кто в клане.',
+          'Нажми на задание, чтобы раскрыть его: там видно, сколько осталось и сколько монет уже в зачёте. Не успел до конца недели — часть монет придёт по прогрессу.',
+        ],
       },
       {
         q: 'Что за медали вокруг аватара?',
@@ -321,8 +309,22 @@ const RU: FaqSection[] = [
   },
 ]
 
+// The coin tables list fish by their Russian names (the species' stored
+// names); outside Russian they are shown in the reader's language.
+function localiseFish(sections: FaqSection[]): FaqSection[] {
+  const rename = (names: string) => names.split(', ').map((n) => localSpeciesNameLoose(n)).join(', ')
+  return sections.map((s) => ({
+    ...s,
+    items: s.items.map((it) => ({
+      ...it,
+      a: it.a.map((b) => (typeof b === 'object' && !Array.isArray(b) ? { ...b, rows: b.rows.map(([coins, names]): [number, string] => [coins, rename(names)]) } : b)),
+    })),
+  }))
+}
+
+const CACHE: Partial<Record<Lang, FaqSection[]>> = {}
+
 export function faqFor(lang: Lang): FaqSection[] {
-  // Only Russian so far (see the note above).
-  void lang
-  return RU
+  if (lang === 'ru') return RU
+  return (CACHE[lang] ??= localiseFish(lang === 'ka' ? FAQ_KA : FAQ_EN))
 }

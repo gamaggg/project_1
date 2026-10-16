@@ -9,6 +9,7 @@ import { CITIES, type CityId } from '@/lib/data/city'
 import { formatWeekOfMonth, pluralCatches, pluralSectors } from '@/lib/format'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { seededRandom, seedFrom } from '@/lib/seededRandom'
+import { tn } from '@/lib/i18n/runtime'
 
 const CONFETTI_COLORS = ['#FC5200', '#F0A93E', '#B8C0CC', '#B06B36']
 // Reveal 3rd -> 2nd -> 1st, slowest for 1st so the ceremony builds toward it.
@@ -45,7 +46,7 @@ export function LastWeekScreen({
     <>
       <div className="header-row">
         <BackButton onClick={onBack} registerNative={false} />
-        <div style={{ fontWeight: 800, fontSize: 15 }}>Итоги недели</div>
+        <div style={{ fontWeight: 800, fontSize: 15 }}>{tn('weekly.lastTitle')}</div>
         <div style={{ width: 36 }} />
       </div>
       <div className="screen-inner">
@@ -65,7 +66,7 @@ export function LastWeekScreen({
           {isLoading ? (
             <SkeletonRows count={6} thumb={40} round />
           ) : entries.length === 0 ? (
-            <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>На прошлой неделе никто не захватил сектор</div>
+            <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>{tn('weekly.lastNobody')}</div>
           ) : (
             <div className="rating-podium">
               {slots.map((entry, i) =>
@@ -108,7 +109,7 @@ export function LastWeekScreen({
         )}
 
         <button className="btn-primary" style={{ marginTop: 18 }} onClick={onOpenCurrentRating}>
-          Перейти к текущему рейтингу
+          {tn('weekly.toRating')}
         </button>
       </div>
     </>

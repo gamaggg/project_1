@@ -1,3 +1,4 @@
+import { tnd } from '@/lib/i18n/runtime'
 // The clan chat's emoji panel (EmojiPanel.tsx). Plain Unicode emoji, so each
 // phone draws them in its own style — Apple's on an iPhone, Google's on
 // Android — exactly like its own keyboard. Kept to Emoji 12 and older so
@@ -11,7 +12,9 @@ const list = (s: string) => s.split(' ').filter(Boolean)
 export const EMOJI_CATEGORIES: EmojiCategory[] = [
   {
     id: 'smileys',
-    label: 'Смайлы',
+    get label() {
+      return tnd('emojiGroup.smileys')
+    },
     icon: '😀',
     emoji: list(
       '😀 😃 😄 😁 😆 😅 😂 🤣 ☺️ 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 🤭 🤫 🤥 😶 😐 😑 😬 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 🤐 🥴 🤢 🤮 🤧 😷 🤒 🤕 🤑 🤠 😈 👿 🤡 💩 👻 💀 👽 🤖 🎃 😺 😸 😹 😻 😼 😽 🙀 😿 😾'
@@ -19,7 +22,9 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
   },
   {
     id: 'gestures',
-    label: 'Жесты и люди',
+    get label() {
+      return tnd('emojiGroup.gestures')
+    },
     icon: '👍',
     emoji: list(
       '👍 👎 👌 🤏 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐️ 🖖 👋 👏 🙌 👐 🤲 🤝 🙏 ✊ 👊 🤛 🤜 💪 🦾 ✍️ 💅 🤳 👀 👁️ 🧠 👅 👄 🙋 🙆 🙅 🤷 🤦 🙇 💁 🙎 🙍 🧏 🏃 🚶 🧍 🧎 🕺 💃 👨‍🍳 🧙 🧛 🧜 🎅 👑 🎓'
@@ -27,7 +32,9 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
   },
   {
     id: 'nature',
-    label: 'Рыбы, животные, природа',
+    get label() {
+      return tnd('emojiGroup.nature')
+    },
     icon: '🐟',
     emoji: list(
       '🐟 🐠 🐡 🦈 🐙 🦑 🦀 🦞 🦐 🐬 🐳 🐋 🐊 🐢 🐸 🦆 🦢 🦩 🐧 🕊️ 🦅 🦉 🐦 🐤 🐓 🦦 🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐵 🙈 🙉 🙊 🐴 🦄 🐝 🐛 🦋 🐌 🐞 🐜 🦟 🕷️ 🦂 🐍 🦎 🐚 🌊 💧 🌵 🎄 🌲 🌳 🌴 🌱 🌿 ☘️ 🍀 🍁 🍂 🍃 🌾 🌺 🌻 🌹 🌷 🌼 🌸 💐 🍄 ☀️ 🌤️ ⛅ 🌥️ ☁️ 🌦️ 🌧️ ⛈️ 🌩️ 🌨️ ❄️ ☃️ ⛄ 🌬️ 💨 🌪️ 🌫️ 🌈 ☔ ⚡ 🔥 🌙 ⭐ 🌟 ✨ 🌍'
@@ -35,7 +42,9 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
   },
   {
     id: 'food',
-    label: 'Еда и напитки',
+    get label() {
+      return tnd('emojiGroup.food')
+    },
     icon: '🍎',
     emoji: list(
       '🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🍆 🥑 🥦 🥬 🥒 🌶️ 🌽 🥕 🧄 🧅 🥔 🍠 🥐 🍞 🥖 🧀 🥚 🍳 🥓 🥩 🍗 🍖 🌭 🍔 🍟 🍕 🥪 🌮 🌯 🥗 🍝 🍜 🍲 🍣 🍤 🍙 🍚 🍢 🍡 🍧 🍨 🍦 🥧 🧁 🍰 🎂 🍫 🍬 🍭 🍯 🍩 🍪 🥜 ☕ 🍵 🧃 🥤 🍺 🍻 🥂 🍷 🥃 🍸 🍹 🧊'
@@ -43,7 +52,9 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
   },
   {
     id: 'activity',
-    label: 'Рыбалка и спорт',
+    get label() {
+      return tnd('emojiGroup.activity')
+    },
     icon: '🎣',
     emoji: list(
       '🎣 🏆 🥇 🥈 🥉 🏅 🎖️ 🎯 🛶 🚣 🏊 🏄 🤽 🧗 🚴 🏕️ ⛺ ⚽ 🏀 🏈 ⚾ 🎾 🏐 🏉 🎱 🏓 🏸 🥊 🥋 🎳 ⛳ 🎮 🎲 🧩 🎨 🎸 🎹 🎤 🎧 🎬 🎉 🎊 🎈 🎁 🎗️ 🎟️'
@@ -51,7 +62,9 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
   },
   {
     id: 'travel',
-    label: 'Транспорт и места',
+    get label() {
+      return tnd('emojiGroup.travel')
+    },
     icon: '⛵',
     emoji: list(
       '⛵ 🚤 🛥️ 🚢 ⚓ 🗺️ 🧭 🏖️ 🏝️ 🏞️ 🌅 🌄 🌇 🌉 🏔️ ⛰️ 🌋 🗻 🏠 🏡 🏘️ 🏙️ 🚗 🚕 🚙 🚌 🚎 🏎️ 🚓 🚑 🚒 🚚 🚜 🏍️ 🛵 🚲 🛴 🚂 🚆 ✈️ 🚁 🚀 🛸 ⛽ 🚦 🗽 🗼 🏰 🎡 🎢 ⛲'
@@ -59,7 +72,9 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
   },
   {
     id: 'objects',
-    label: 'Предметы',
+    get label() {
+      return tnd('emojiGroup.objects')
+    },
     icon: '💡',
     emoji: list(
       '⌚ 📱 💻 🖥️ 📷 📸 📹 🎥 📞 ☎️ 📺 📻 🔦 🕯️ 💡 🔋 🔌 💰 💵 💸 💳 💎 ⚖️ 🔧 🔨 ⚒️ 🛠️ ⛏️ 🔩 ⚙️ 🧲 🔫 🧨 🔪 🗡️ 🛡️ 🔮 🧿 💊 💉 🧪 🌡️ 🧹 🧺 🧻 🧼 🧽 🔑 🗝️ 🚪 🛏️ 🧸 🎒 👓 🕶️ 🧢 👒 🎩 🧥 👕 👖 🩳 🧦 👟 🥾 ⛑️ 🚬 📦 📫 ✏️ 📝 📌 📍 ✂️ 🔒 🔓 🗑️ ⏰ ⏳ 🔔 📣'
@@ -67,7 +82,9 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
   },
   {
     id: 'symbols',
-    label: 'Символы',
+    get label() {
+      return tnd('emojiGroup.symbols')
+    },
     icon: '❤️',
     emoji: list(
       '❤️ 🧡 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❣️ 💕 💞 💓 💗 💖 💘 💝 💯 💢 💥 💫 💦 💤 ✅ ☑️ ✔️ ❌ ❎ ➕ ➖ ❗ ❓ ‼️ ⁉️ ⚠️ 🚫 ⛔ 🆗 🆒 🆕 🆙 🔝 🔜 ♻️ ⚜️ 🔱 🔰 ⭕ 🔴 🟠 🟡 🟢 🔵 🟣 ⚫ ⚪ 🟤 🔺 🔻 🔷 🔶 ➡️ ⬅️ ⬆️ ⬇️ ↗️ ↘️ 🔄 🎵 🎶 ➰ 〰️'

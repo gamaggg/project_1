@@ -28,6 +28,7 @@ import { HOT_FLAME_SVG } from '@/lib/map/hotFlame'
 import { useI18n } from '@/lib/i18n'
 import { formatWeekdayTime } from '@/lib/i18n/format'
 import { useNow } from '@/lib/useNow'
+import { tn } from '@/lib/i18n'
 
 function statusBadge(status: Territory['status'], myTerritoryColor: string, myShare = false) {
   // myShare: a clan-mate's sector the viewer holds a part of.
@@ -35,13 +36,13 @@ function statusBadge(status: Territory['status'], myTerritoryColor: string, mySh
     return (
       <span className="badge" style={{ background: withAlpha(myTerritoryColor, 0.16), color: darkenForBadgeText(myTerritoryColor) }}>
         <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4 3 5-6 5 6 4-3-2 11H5L3 8z" /></svg>
-        {status === 'mine' ? 'Моя' : 'Моя доля'}
+        {status === 'mine' ? tn('map.mine') : tn('map.myShare')}
       </span>
     )
   // Someone else's: no pill — their face beside the id already says it, and
   // the pill was what squeezed that name out of a phone-width row.
   if (status === 'other') return null
-  return <span className="badge badge-neutral">Свободна</span>
+  return <span className="badge badge-neutral">{tn('map.free')}</span>
 }
 
 // Under a shield: the icon and how long is left («18 ч»), not «Под щитом» —
@@ -50,9 +51,9 @@ function shieldBadge(shieldUntil: string | null) {
   const left = shieldUntil ? new Date(shieldUntil).getTime() - Date.now() : 0
   if (left <= 0) return null
   const minutes = Math.max(1, Math.ceil(left / 60_000))
-  const time = minutes < 60 ? `${minutes} мин` : `${Math.floor(minutes / 60)} ч`
+  const time = minutes < 60 ? tn('fmt.minShort', { count: minutes }) : tn('fmt.hourShort', { count: Math.floor(minutes / 60) })
   return (
-    <span className="badge badge-shield" style={{ flex: '0 0 auto' }} title="Под щитом">
+    <span className="badge badge-shield" style={{ flex: '0 0 auto' }} title={tn('map.underShield')}>
       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l8 3v6c0 5-3.4 8.7-8 11-4.6-2.3-8-6-8-11V5l8-3z" /></svg>
       {time}
     </span>
@@ -99,9 +100,6 @@ export const MapScreen = forwardRef<
     onOpenGeo?: () => void
     // No catches yet: the «Ближайший свободный сектор» button shows.
     newbie?: boolean
-    // Bumped by the onboarding's last step («Найти свободный сектор рядом»)
-    // to run the same search as the button once the map is up.
-    nearestFreeRequest?: number
     // Catches saved without a connection, still waiting to go out.
     offlinePending?: { count: number; syncing: boolean }
     // «Где это?» played on this map (GeoMapOverlay): a tap picks the sector
@@ -131,7 +129,6 @@ export const MapScreen = forwardRef<
     onOpenSlots,
     onOpenGeo,
     newbie,
-    nearestFreeRequest,
     offlinePending,
     geo = null,
   },
@@ -159,13 +156,41 @@ export const MapScreen = forwardRef<
       window.localStorage.setItem('range:map-clan-layer', on ? '1' : '0')
     } catch {}
   }
+  // The white thumb behind the picked option slides to it (the same motion as
+  // the bottom nav's capsule); the first placement, a resize or a language
+  // change happen without animating.
+  const layerSwitchRef = useRef<HTMLDivElement>(null)
+  const layerThumbRef = useRef<HTMLSpanElement>(null)
+  useLayoutEffect(() => {
+    const box = layerSwitchRef.current
+    const thumb = layerThumbRef.current
+    if (!box || !thumb) return
+    const place = () => {
+      const on = box.querySelector<HTMLElement>('.map-layer-opt.on')
+      if (!on) return
+      thumb.style.width = `${on.offsetWidth}px`
+      thumb.style.transform = `translateX(${on.offsetLeft}px)`
+    }
+    place()
+    const id = requestAnimationFrame(() => thumb.classList.add('ready'))
+    const ro = new ResizeObserver(() => {
+      thumb.classList.remove('ready')
+      place()
+      requestAnimationFrame(() => thumb.classList.add('ready'))
+    })
+    ro.observe(box)
+    return () => {
+      cancelAnimationFrame(id)
+      ro.disconnect()
+    }
+  }, [clanLayer])
   // Clans holding sectors in this city, biggest first — the clan legend.
   const clanStandings = (() => {
     if (!clanLayer) return []
     const byClan = new Map<number, { id: number; name: string; crest: unknown; count: number }>()
     for (const t of territories) {
       if (!t.ownerClanId || t.status === 'free') continue
-      const entry = byClan.get(t.ownerClanId) ?? { id: t.ownerClanId, name: t.ownerClanName ?? 'Клан', crest: t.ownerClanCrest, count: 0 }
+      const entry = byClan.get(t.ownerClanId) ?? { id: t.ownerClanId, name: t.ownerClanName ?? tn('map.clan'), crest: t.ownerClanCrest, count: 0 }
       entry.count++
       byClan.set(t.ownerClanId, entry)
     }
@@ -272,11 +297,6 @@ export const MapScreen = forwardRef<
     setFreeNav({ ...freeNav, index })
     showFree(freeNav.items[index].id)
   }
-  useEffect(() => {
-    if (nearestFreeRequest) void startNearestFree()
-    // Only a new request runs it — not every re-render of the sectors.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nearestFreeRequest])
 
   // A ring flashed round the card when a map tap changes it, on top of the
   // contents' own change — «which one did I just pick» answered either way.
@@ -349,9 +369,9 @@ export const MapScreen = forwardRef<
             <path d="M12 21c-4-4.5-7-8-7-11a7 7 0 0 1 14 0c0 3-3 6.5-7 11z" />
             <circle cx="12" cy="10" r="2.3" />
           </svg>
-          <div className="map-geo-banner-text">Геолокация выключена — включи её и мы найдём тебя на карте</div>
+          <div className="map-geo-banner-text">{tn('map.geoOff')}</div>
           <button className="map-geo-banner-btn tap-scale" onClick={handleLocate}>
-            Разрешить
+            {tn('map.allow')}
           </button>
         </div>
       )}
@@ -382,12 +402,13 @@ export const MapScreen = forwardRef<
             <img src="/brand/logo_2.svg" alt="RANGE" className="map-hud-logo" />
             <TreasuryChip enabled={holdsSector} onToast={(msg) => onToast?.(msg)} />
             <HudBoosts />
-            <div className="map-layer-switch" role="radiogroup" aria-label="Раскраска карты">
+            <div className="map-layer-switch" role="radiogroup" aria-label={tn('map.layerLabel')} ref={layerSwitchRef}>
+              <span className="map-layer-thumb" ref={layerThumbRef} aria-hidden />
               <button type="button" role="radio" aria-checked={!clanLayer} className={`map-layer-opt${!clanLayer ? ' on' : ''}`} onClick={() => setLayer(false)}>
-                Игроки
+                {tn('map.players')}
               </button>
               <button type="button" role="radio" aria-checked={clanLayer} className={`map-layer-opt${clanLayer ? ' on' : ''}`} onClick={() => setLayer(true)}>
-                Кланы
+                {tn('map.clans')}
               </button>
             </div>
           </div>
@@ -398,30 +419,30 @@ export const MapScreen = forwardRef<
             {clanLayer ? (
               <>
                 {clanStandings.slice(0, 3).map((c) => (
-                  <button key={c.id} className="map-legend-item map-legend-clan" onClick={() => onOpenClan?.(c.id)} title={c.name} aria-label={`${c.name}: секторов ${c.count}`}>
+                  <button key={c.id} className="map-legend-item map-legend-clan" onClick={() => onOpenClan?.(c.id)} title={c.name} aria-label={tn('map.clanSectors', { name: c.name, count: c.count })}>
                     <ClanCrest crest={c.crest} size={16} />
                     <b>{c.count}</b>
                   </button>
                 ))}
-                {clanStandings.length === 0 && <span className="map-legend-item">Кланов пока нет</span>}
+                {clanStandings.length === 0 && <span className="map-legend-item">{tn('map.noClans')}</span>}
                 <span className="map-legend-item">
                   <span className="legend-dot hex-aspect hex-shape" style={{ background: PLAYER_COLORS_SWATCH }} />
-                  Без клана {soloCount}
+                  {tn('map.noClan', { count: soloCount })}
                 </span>
               </>
             ) : (
               <>
                 <span className="map-legend-item">
                   <span className="legend-dot hex-aspect hex-shape" style={{ background: myTerritoryColor }} />
-                  Мои
+                  {tn('map.legendMine')}
                 </span>
                 <span className="map-legend-item">
                   <span className="legend-dot hex-aspect hex-shape" style={{ background: PLAYER_COLORS_SWATCH }} />
-                  Чужие
+                  {tn('map.legendOthers')}
                 </span>
                 <span className="map-legend-item">
                   <span className="legend-dot hex-aspect hex-shape" style={{ background: '#B9BBC2' }} />
-                  Свободные
+                  {tn('map.legendFree')}
                 </span>
               </>
             )}
@@ -431,40 +452,40 @@ export const MapScreen = forwardRef<
         </div>
         {selectedIds && selectedIds.size > 0 && (
           <div className="map-selection-bar">
-            <span>Выбрано: {selectedIds.size}</span>
+            <span>{tn('map.selected', { count: selectedIds.size })}</span>
             <button className="map-selection-bar-btn delete" onClick={onDeleteSelected}>
-              Удалить
+              {tn('common.delete')}
             </button>
             <button className="map-selection-bar-btn cancel" onClick={onCancelSelection}>
-              Отмена
+              {tn('common.cancel')}
             </button>
           </div>
         )}
         {pendingAddDrafts && pendingAddDrafts.length > 0 && (
           <div className="map-selection-bar">
-            <span>Новых: {pendingAddDrafts.length}</span>
+            <span>{tn('map.newCount', { count: pendingAddDrafts.length })}</span>
             <button className="map-selection-bar-btn add" onClick={onConfirmAdd}>
-              Создать
+              {tn('map.create')}
             </button>
             <button className="map-selection-bar-btn cancel" onClick={onCancelAdd}>
-              Отмена
+              {tn('common.cancel')}
             </button>
           </div>
         )}
         <div className="map-controls">
           <div className="map-control-group">
-            <button className="map-control-btn tap-scale" onClick={() => mapRef.current?.zoomIn()} aria-label="Приблизить">
+            <button className="map-control-btn tap-scale" onClick={() => mapRef.current?.zoomIn()} aria-label={tn('map.zoomIn')}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.3" strokeLinecap="round">
                 <path d="M12 5v14M5 12h14" />
               </svg>
             </button>
-            <button className="map-control-btn tap-scale" onClick={() => mapRef.current?.zoomOut()} aria-label="Отдалить">
+            <button className="map-control-btn tap-scale" onClick={() => mapRef.current?.zoomOut()} aria-label={tn('map.zoomOut')}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.3" strokeLinecap="round">
                 <path d="M5 12h14" />
               </svg>
             </button>
           </div>
-          <button className="map-control-btn map-control-locate tap-scale" onClick={handleLocate} aria-label="Моё местоположение">
+          <button className="map-control-btn map-control-locate tap-scale" onClick={handleLocate} aria-label={tn('map.myLocation')}>
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#3E7BFA" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" />
               <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
@@ -542,17 +563,17 @@ export const MapScreen = forwardRef<
                           <span className="map-sheet-owner-name">{t.ownerDisplayName}</span>
                         </button>
                       ) : (
-                        <div className="avatar-stack" title={sectorHoldersCapturerFirst(t).map((h) => h.displayName ?? 'Рыбак').join(', ')}>
+                        <div className="avatar-stack" title={sectorHoldersCapturerFirst(t).map((h) => h.displayName ?? tn('common.angler')).join(', ')}>
                           {sectorHoldersCapturerFirst(t).map((h) => (
                             <button
                               key={h.id}
                               type="button"
                               className="avatar map-sheet-holder"
                               style={{ width: 24, height: 24, fontSize: 10 }}
-                              aria-label={h.displayName ?? 'Рыбак'}
+                              aria-label={h.displayName ?? tn('common.angler')}
                               onClick={() => onOpenUser(h.id)}
                             >
-                              {h.avatarUrl ? <img src={thumbUrl(h.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : (h.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()}
+                              {h.avatarUrl ? <img src={thumbUrl(h.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : (h.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()}
                             </button>
                           ))}
                         </div>
@@ -562,7 +583,7 @@ export const MapScreen = forwardRef<
                   )}
                   {shieldBadge(t.shieldUntil)}
                   {t.id === mostPopularId && !isHot(t) && (
-                    <span className="badge badge-accent" title="Самый популярный сектор" style={{ flex: '0 0 auto' }}>
+                    <span className="badge badge-accent" title={tn('map.mostPopular')} style={{ flex: '0 0 auto' }}>
                       🔥
                     </span>
                   )}
@@ -573,9 +594,9 @@ export const MapScreen = forwardRef<
                   )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13, color: 'var(--ink-soft)', fontWeight: 600 }}>
-                  <span style={{ flex: '0 0 auto' }}>Уловов {t.catchCount}</span>
+                  <span style={{ flex: '0 0 auto' }}>{tn('map.catches', { count: t.catchCount })}</span>
                   <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {t.lastCatchAt ? 'Последний: ' + formatWhen(t.lastCatchAt) : 'Пока нет уловов'}
+                    {t.lastCatchAt ? tn('map.last', { when: formatWhen(t.lastCatchAt) }) : tn('map.noCatches')}
                   </span>
                   {t.status !== 'free' && (
                     // Optically, not geometrically, flush with the badges above: a
@@ -587,7 +608,7 @@ export const MapScreen = forwardRef<
                   )}
                 </div>
                 <button className="btn-primary" style={{ marginTop: 'auto' }} onClick={() => onOpenTerritory(t.id)}>
-                  Подробнее о секторе
+                  {tn('map.details')}
                 </button>
                 </div>
               </div>

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useUpdateProfile } from '@/lib/supabase/queries'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { TermsOfUseModal } from '@/components/app-shell/TermsOfUseModal'
+import { tn } from '@/lib/i18n/runtime'
 
 const NAME_RE = /^[\p{L}\p{N}]{2,}$/u
 
@@ -12,13 +13,18 @@ export function NameStep({
   onBack,
   onDone,
   onSwitchToEmailSignIn,
+  preview,
 }: {
   initialName: string
   onBack: () => void
   onDone: () => void
   onSwitchToEmailSignIn?: () => void
+  // Only the /onboarding-preview page: go on without writing the name.
+  preview?: boolean
 }) {
-  const [name, setName] = useState(initialName)
+  // The name the database made from the e-mail («ivan.petrov») may hold characters the
+  // rule below refuses — start from it without them, so «Next» isn't dead on arrival.
+  const [name, setName] = useState(initialName.replace(/[^\p{L}\p{N}]/gu, ''))
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [termsOpen, setTermsOpen] = useState(false)
   const updateProfile = useUpdateProfile()
@@ -27,7 +33,7 @@ export function NameStep({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!valid) return
-    await updateProfile.mutateAsync({ displayName: name })
+    if (!preview) await updateProfile.mutateAsync({ displayName: name })
     onDone()
   }
 
@@ -46,18 +52,18 @@ export function NameStep({
         </div>
       </div>
       <div className="intro-copy">
-        <div className="intro-title">Как к вам обращаться?</div>
-        <div className="intro-sub">Это имя увидят другие рыбаки на карте.</div>
+        <div className="intro-title">{tn('onb.nameTitle')}</div>
+        <div className="intro-sub">{tn('onb.nameSub')}</div>
       </div>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '0 24px' }}>
         <div className="wizard-field">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Введите имя" maxLength={40} />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={tn('onb.namePlaceholder')} maxLength={40} />
         </div>
-        <div className="wizard-hint">От 2 символов · без пробелов и спецсимволов</div>
+        <div className={`wizard-hint${name && !NAME_RE.test(name) ? ' bad' : ''}`}>{tn('onb.nameHint')}</div>
         <div className="onboarding-checkbox-row">
           <input id="accept-terms" type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} />
           <label htmlFor="accept-terms">
-            Я принимаю{' '}
+            {tn('onb.accept')}{' '}
             <span
               className="terms-link"
               onClick={(e) => {
@@ -66,14 +72,14 @@ export function NameStep({
                 setTermsOpen(true)
               }}
             >
-              условия использования
+              {tn('onb.terms')}
             </span>
           </label>
         </div>
         <div style={{ flex: 1 }} />
         {onSwitchToEmailSignIn && (
           <button type="button" className="otp-resend" style={{ marginBottom: 14 }} onClick={onSwitchToEmailSignIn}>
-            Уже есть аккаунт? Войти по почте
+            {tn('onb.haveAccount')}
           </button>
         )}
         <button
@@ -82,7 +88,7 @@ export function NameStep({
           disabled={!valid || updateProfile.isPending}
           style={!valid || updateProfile.isPending ? { opacity: 0.4, pointerEvents: 'none' } : undefined}
         >
-          {updateProfile.isPending ? 'Сохраняем…' : 'Далее'}
+          {updateProfile.isPending ? tn('common.saving') : tn('common.next')}
         </button>
       </form>
       {termsOpen && <TermsOfUseModal onClose={() => setTermsOpen(false)} />}

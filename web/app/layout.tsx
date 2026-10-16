@@ -7,6 +7,10 @@ import { AuthProvider } from '@/components/providers/AuthProvider'
 import { I18nProvider } from '@/lib/i18n'
 import { SITE_URL } from '@/lib/site'
 import './globals.css'
+import './nav-glass.css'
+import './intro-demo.css'
+import './journey.css'
+import './hex-loader.css'
 
 const manrope = Manrope({
   subsets: ['latin', 'cyrillic'],

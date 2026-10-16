@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { tn } from '@/lib/i18n/runtime'
 
 // A 360° panorama (an equirectangular picture) you turn with a finger and
 // pinch to zoom — «Где это?»'s view and the admin's check. One WebGL quad:
@@ -358,7 +359,7 @@ export function PanoramaViewer({
           <img src={preview ?? src} alt="" />
         </div>
       ) : (
-        <div ref={boxRef} className="pano-box" role="img" aria-label="Панорама 360°, крути пальцем" />
+        <div ref={boxRef} className="pano-box" role="img" aria-label={tn('nav.panoAria')} />
       )}
       {state === 'loading' && <div className="pano-loading" aria-hidden />}
       {state === 'ready' && !touched && (
@@ -368,7 +369,7 @@ export function PanoramaViewer({
             <path d="M5 5h14M7.5 2.5 5 5l2.5 2.5M16.5 2.5 19 5l-2.5 2.5" />
             <path d="M10 21.5v-2.4l-2.6-2.9a1.45 1.45 0 0 1 2.05-2.05L11 15.7V10.8a1.3 1.3 0 0 1 2.6 0v3.6l3.3.7a2 2 0 0 1 1.6 2.3l-.7 4.1" />
           </svg>
-          Крути пальцем · 360°
+          {tn('nav.panoHint')}
         </div>
       )}
     </div>

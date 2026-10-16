@@ -1,15 +1,17 @@
 'use client'
 
+import { HexLoader } from '@/components/app-shell/HexLoader'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useClanRace } from '@/lib/supabase/queries'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { ChallengeCountdown } from '@/components/app-shell/ChallengeCountdown'
 import { RaceRiver, RaceRulesCard, formatMeters, raceHeadline, raceProgress } from '@/components/app-shell/ClanRace'
+import { currentLocale, tn } from '@/lib/i18n/runtime'
 import type { CityId } from '@/lib/data/city'
 
 function finishTime(iso: string): string {
-  return new Date(iso).toLocaleString('ru-RU', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleString(currentLocale(), { weekday: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
 // Full regatta: the whole city's river, the viewer's own day and clan crew,
@@ -37,23 +39,23 @@ export function ClanRaceScreen({
     <>
       <div className="header-row">
         <BackButton onClick={onBack} registerNative={false} />
-        <div style={{ fontWeight: 800, fontSize: 15 }}>Битва кланов</div>
+        <div style={{ fontWeight: 800, fontSize: 15 }}>{tn('race.title')}</div>
         <div style={{ width: 36 }} />
       </div>
       <div className="screen-inner race-screen">
         {isLoading || !race ? (
-          <div className="clan-soon">{isLoading ? 'Загрузка…' : 'Нет данных'}</div>
+          <div className="clan-soon">{isLoading ? <HexLoader size={0.55} /> : tn('common.noData')}</div>
         ) : (
           <>
             <div className="race-card race-hero">
               <div className="race-card-head">
                 <div>
-                  <div className="race-kicker">Эта неделя</div>
-                  <div className="race-hero-title">{mine ? raceHeadline(mine, race) : 'Кто первым доплывёт?'}</div>
+                  <div className="race-kicker">{tn('race.thisWeek')}</div>
+                  <div className="race-hero-title">{mine ? raceHeadline(mine, race) : tn('race.whoFirst')}</div>
                 </div>
                 <ChallengeCountdown endsAt={race.weekEnd} />
               </div>
-              <p className="race-hero-sub">Лови и захватывай — лодка твоего клана плывёт вперёд. Все кланы города в одной битве.</p>
+              <p className="race-hero-sub">{tn('race.heroSub')}</p>
               <RaceRiver clans={race.clans} highlightId={race.myClanId} onOpenClan={onOpenClan} />
             </div>
 
@@ -70,32 +72,32 @@ export function ClanRaceScreen({
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="race-today-title">
-                    Сегодня ты принёс <b>{race.myToday} м</b> из {race.dailyCap}
+                    {tn('race.todayPrefix')} <b>{race.myToday} {tn('fmt.m')}</b> {tn('race.of', { total: race.dailyCap })}
                   </div>
                   <div className="race-today-sub">
                     {race.myToday >= race.dailyCap
-                      ? 'Лимит на сегодня выбран — завтра лодка снова ждёт твоих вёсел'
+                      ? tn('race.capReached')
                       : race.myToday === 0
-                        ? 'Один улов — и лодка клана проплывёт 10 м'
-                        : `Ещё ${race.dailyCap - race.myToday} м сегодня пойдут в зачёт`}
+                        ? tn('race.oneCatch')
+                        : tn('race.moreToday', { m: race.dailyCap - race.myToday })}
                   </div>
                 </div>
               </div>
             ) : (
               <div className="race-join">
                 <div style={{ flex: 1 }}>
-                  <div className="race-today-title">Ты пока не в клане</div>
-                  <div className="race-today-sub">Вступи в клан своего города — и твои уловы начнут двигать его лодку</div>
+                  <div className="race-today-title">{tn('race.notInClan')}</div>
+                  <div className="race-today-sub">{tn('race.notInClanHint')}</div>
                 </div>
                 <button className="clan-mini-btn ok" onClick={onOpenClans}>
-                  Кланы
+                  {tn('race.clans')}
                 </button>
               </div>
             )}
 
             {race.clans.length > 0 && (
               <div className="clan-card">
-                <div className="clan-card-title">Таблица битвы кланов</div>
+                <div className="clan-card-title">{tn('race.standings')}</div>
                 {race.clans.map((c, i) => (
                   <button key={c.id} className={`race-standing${c.id === race.myClanId ? ' mine' : ''}`} style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }} onClick={() => onOpenClan(c.id)}>
                     <span className="clan-list-rank">{c.rank}</span>
@@ -109,28 +111,28 @@ export function ClanRaceScreen({
                     <span className="race-standing-meters">
                       {c.finishedAt ? (
                         <>
-                          <span className="race-finished-chip">Финиш</span>
+                          <span className="race-finished-chip">{tn('race.finish')}</span>
                           <span>{finishTime(c.finishedAt)}</span>
                         </>
                       ) : (
                         <>
                           <b>{formatMeters(c.meters)}</b>
-                          <span>из {formatMeters(c.finish)}</span>
+                          <span>{tn('race.of', { total: formatMeters(c.finish) })}</span>
                         </>
                       )}
                     </span>
                   </button>
                 ))}
-                {race.clans.length === 1 && <div className="race-solo-note">Соперников пока нет — плывите наперегонки с финишем, награда за него всё равно ваша</div>}
+                {race.clans.length === 1 && <div className="race-solo-note">{tn('race.soloNote')}</div>}
               </div>
             )}
 
             {mine && (
               <div className="clan-card">
-                <div className="clan-card-title">Гребцы клана за неделю</div>
+                <div className="clan-card-title">{tn('race.rowersTitle')}</div>
                 {race.myRowers.length === 0 ? (
                   <div className="clan-empty" style={{ padding: '14px 0' }}>
-                    Пока никто не грёб — начни первым
+                    {tn('race.noRowersFirst')}
                   </div>
                 ) : (
                   race.myRowers.map((r, i) => (
@@ -146,7 +148,7 @@ export function ClanRaceScreen({
                       </span>
                       <span className="clan-member-stats">
                         <b>{r.meters}</b>
-                        <span>м</span>
+                        <span>{tn('fmt.m')}</span>
                       </span>
                     </button>
                   ))
@@ -156,7 +158,7 @@ export function ClanRaceScreen({
 
             {race.lastWeek.length > 0 && (
               <div className="clan-card">
-                <div className="clan-card-title">Прошлая неделя</div>
+                <div className="clan-card-title">{tn('race.lastWeek')}</div>
                 <div className="clan-podium" style={{ marginTop: 22 }}>
                   {[race.lastWeek.find((c) => c.place === 2), race.lastWeek.find((c) => c.place === 1), race.lastWeek.find((c) => c.place === 3)].map((c, i) =>
                     c ? (
@@ -164,7 +166,7 @@ export function ClanRaceScreen({
                         <ClanCrest crest={c.crest} size={i === 1 ? 64 : 48} shine={i === 1} />
                         <span className="clan-podium-place">{c.place}</span>
                         <span className="clan-podium-name">{c.name}</span>
-                        <span className="clan-podium-trophies">{c.finished ? 'доплыли' : `${Math.floor((c.meters / Math.max(1, c.finish)) * 100)}% пути`}</span>
+                        <span className="clan-podium-trophies">{c.finished ? tn('race.arrived') : tn('race.pctShort', { pct: Math.floor((c.meters / Math.max(1, c.finish)) * 100) })}</span>
                       </button>
                     ) : (
                       <div key={`empty-${i}`} className="clan-podium-item" aria-hidden />

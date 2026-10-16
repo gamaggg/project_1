@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import type { UserAward } from '@/lib/data/types'
 import { AWARD_ICONS, AWARD_COLOR } from '@/components/app-shell/awardIcons'
 import { seededRandom, seedFrom } from '@/lib/seededRandom'
+import { tn } from '@/lib/i18n/runtime'
 
 const CONFETTI_EXTRA = '#FC5200'
 
@@ -50,7 +51,7 @@ export function AwardDetailModal({ award, onClose }: { award: UserAward; onClose
         <div className="award-detail-subtitle">{award.subtitle}</div>
         <div className="award-detail-desc">{award.description}</div>
         <button className="unlock-modal-close tap-scale" onClick={onClose}>
-          Закрыть
+          {tn('common.close')}
         </button>
       </div>
     </div>

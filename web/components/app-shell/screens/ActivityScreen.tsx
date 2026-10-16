@@ -14,6 +14,9 @@ import { useT } from '@/lib/i18n'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { CLAN_ROLE_LABEL, type ClanRole } from '@/lib/data/clanLevels'
+import { tn } from '@/lib/i18n'
+import { currentLocale } from '@/lib/i18n/runtime'
+import { localAwardSubtitle, localAwardTitle, localChallengeName } from '@/lib/data/dbText'
 
 // «Все» — your own notifications plus every fisher's catches in your city;
 // «Друзья» — catches by people you follow; «Мои территории» — your sectors.
@@ -54,15 +57,11 @@ function groupSeries(list: ActivityEntry[]): (ActivityEntry | CatchSeries)[] {
 }
 
 function pluralFish(n: number): string {
-  const d = n % 10
-  const dd = n % 100
-  if (d === 1 && dd !== 11) return `${n} рыбу`
-  if (d >= 2 && d <= 4 && (dd < 12 || dd > 14)) return `${n} рыбы`
-  return `${n} рыб`
+  return tn('plural.fishCount', { count: n })
 }
 
 function clock(iso: string): string {
-  return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString(currentLocale(), { hour: '2-digit', minute: '2-digit' })
 }
 
 function CatchSeriesRow({
@@ -88,7 +87,7 @@ function CatchSeriesRow({
   const claimed = series.items.some((i) => i.claimed)
   const counts = new Map<string, number>()
   for (const i of series.items) {
-    const name = (i.speciesName ?? 'рыба').toLowerCase()
+    const name = (i.speciesName ?? tn('activity.fishLower')).toLowerCase()
     counts.set(name, (counts.get(name) ?? 0) + 1)
   }
   const species = [...counts.entries()]
@@ -110,13 +109,12 @@ function CatchSeriesRow({
           <button className="activity-who-btn" onClick={() => onOpenUser(newest.userId)}>
             {newest.who}
           </button>{' '}
-          поймал {pluralFish(n)}
-          {claimed ? ' и захватил сектор' : ''}
+          {claimed ? tn('activity.caughtClaimed', { fish: pluralFish(n) }) : tn('activity.caught', { fish: pluralFish(n) })}
         </div>
         {newest.territoryId && (
           <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
             <button className="activity-who-btn" onClick={() => onOpenTerritory(newest.territoryId!)}>
-              Территория {newest.territoryId}
+              {tn('activity.territoryN', { id: newest.territoryId })}
             </button>
             {newest.territoryKind ? ` · ${KIND_LABEL[newest.territoryKind]}` : ''}
           </div>
@@ -126,7 +124,7 @@ function CatchSeriesRow({
           {unread && <span className="unread-dot" />}
           {when}
           <button className="activity-series-toggle" onClick={onToggle} aria-expanded={expanded}>
-            {expanded ? 'Свернуть' : `Показать все ${n}`}
+            {expanded ? tn('activity.collapse') : tn('activity.showAll', { count: n })}
           </button>
         </div>
         {expanded && (
@@ -139,9 +137,9 @@ function CatchSeriesRow({
                     {i.photoUrl ? <img src={thumbUrl(i.photoUrl, 96)} alt="" loading="lazy" decoding="async" /> : <FishIcon size={14} />}
                   </span>
                   <span className="activity-series-catch-text">
-                    <b>{i.speciesName ?? 'Рыба'}</b>
+                    <b>{i.speciesName ?? tn('guest.fish')}</b>
                     {meta ? ` · ${meta}` : ''}
-                    {i.claimed ? ' · захват' : ''}
+                    {i.claimed ? tn('activity.claimedTag') : ''}
                   </span>
                   <span className="activity-series-catch-time">{clock(i.createdAt)}</span>
                 </button>
@@ -150,7 +148,7 @@ function CatchSeriesRow({
           </div>
         )}
       </div>
-      <button className="activity-series-thumbs" onClick={() => newest.catchId && onOpenPhoto(newest.catchId)} aria-label="Открыть последний улов">
+      <button className="activity-series-thumbs" onClick={() => newest.catchId && onOpenPhoto(newest.catchId)} aria-label={tn('activity.openLast')}>
         {series.items.slice(0, 3).map((t, idx) => (
           <span
             key={t.id}
@@ -294,32 +292,32 @@ export function ActivityScreen({
 
   return (
     <div className="screen-inner">
-      <div className="page-title">Активность</div>
-      <div className="page-sub">Что происходит на побережье</div>
+      <div className="page-title">{tn('activity.title')}</div>
+      <div className="page-sub">{tn('activity.sub')}</div>
       <div className="filter-row">
         <div className={`filter-chip${filter === 'all' ? ' active' : ''}`} onClick={() => setFilter('all')}>
-          Все
+          {tn('terr.filterAll')}
         </div>
         <div className={`filter-chip${filter === 'friends' ? ' active' : ''}`} onClick={() => setFilter('friends')}>
-          Друзья
+          {tn('terr.friends')}
         </div>
         <div className={`filter-chip${filter === 'mine' ? ' active' : ''}`} onClick={() => setFilter('mine')}>
-          Мои территории
+          {tn('profile.myTerritories')}
         </div>
       </div>
       <div>
         {!isLoading && !hasPersonal && filter === 'all' && (
           <div style={{ padding: '22px 20px 26px', textAlign: 'center' }}>
-            <div style={{ fontSize: 14.5, fontWeight: 800 }}>Пока тихо</div>
+            <div style={{ fontSize: 14.5, fontWeight: 800 }}>{tn('activity.quiet')}</div>
             <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 8, lineHeight: 1.5 }}>
-              Здесь появятся уловы рыбаков твоего города и всё, что происходит с твоими секторами.
+              {tn('activity.quietText')}
             </div>
             <button
               className="btn-secondary tap-scale"
               style={{ width: 'auto', display: 'inline-flex', padding: '10px 20px', fontSize: 13.5, marginTop: 16 }}
               onClick={onOpenRating}
             >
-              Найти рыбаков в рейтинге
+              {tn('activity.findAnglers')}
             </button>
           </div>
         )}
@@ -392,18 +390,18 @@ export function ActivityScreen({
                   <FeedIcon tone="red" icon={FEED_ICONS.shield} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>
-                      Улов{a.moderationSpecies ? ` (${a.moderationSpecies})` : ''} на территории{' '}
+                      {tn('activity.modCatchPre', { species: a.moderationSpecies ? ` (${a.moderationSpecies})` : '' })}
                       <button className="activity-who-btn" onClick={() => onOpenTerritory(a.territoryId!)}>
                         {a.territoryId}
                       </button>{' '}
-                      удалён модератором
+                      {tn('activity.modCatchPost')}
                     </div>
                     <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
-                      Нарушены правила площадки. При повторных нарушениях аккаунт будет заблокирован.
+                      {tn('activity.modRules')}
                     </div>
                     {a.moderationCoinsRemoved != null && a.moderationCoinsRemoved > 0 && (
                       <div style={{ fontSize: 12.5, color: '#D33', marginTop: 4, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        Списано {a.moderationCoinsRemoved} <CoinIcon size={16} />
+                        {tn('activity.coinsRemoved', { count: a.moderationCoinsRemoved })} <CoinIcon size={16} />
                       </div>
                     )}
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -480,8 +478,8 @@ export function ActivityScreen({
                 // «Где это?»'s quest: a catch in the day's panorama sector.
                 tone = 'gold'
                 icon = FEED_ICONS.gift
-                title = `Задание «Где это?» выполнено`
-                sub = `Улов в секторе ${a.territoryId ?? ''} — +${n('coins') || 50} монет`
+                title = tn('activity.geoDone')
+                sub = tn('activity.geoDoneSub', { id: a.territoryId ?? '', coins: n('coins') || 50 })
                 if (a.territoryId) action = () => onOpenTerritory(a.territoryId!)
               } else if (ev.kind === 'catch_edited') {
                 // Super admins: a player changed the numbers of their catch
@@ -530,28 +528,28 @@ export function ActivityScreen({
               )
             }
             if (a.kind === 'clan_chest_reward' || a.kind.startsWith('clan_race_')) {
-              const clanName = `«${a.clanName ?? 'клан'}»`
+              const clanName = `${tn('sector.qOpen')}${a.clanName ?? tn('activity.clanLower')}${tn('sector.qClose')}`
               const w = a.clanWeek
               const isRace = a.kind !== 'clan_chest_reward'
               const title =
                 a.kind === 'clan_chest_reward'
-                  ? `Сундук ${['I', 'II', 'III', 'IV', 'V'][(w?.tier ?? 1) - 1] ?? ''} клана ${clanName} открыт`
+                  ? tn('activity.chestOpened', { tier: ['I', 'II', 'III', 'IV', 'V'][(w?.tier ?? 1) - 1] ?? '', clan: clanName })
                   : a.kind === 'clan_race_result'
                     ? w?.finished
-                      ? `Битва кланов: клан ${clanName} доплыл, ${w?.place ?? '—'}‑е место`
-                      : `Битва кланов окончена: у клана ${clanName} ${w?.place ?? '—'}‑е место`
+                      ? tn('activity.raceFinishedPlace', { clan: clanName, place: w?.place ?? '—' })
+                      : tn('activity.raceEnded', { clan: clanName, place: w?.place ?? '—' })
                     : a.kind === 'clan_race_overtaken'
-                      ? `Клан ${clanName} обогнали в битве кланов — теперь ${w?.place ?? '—'}‑е место`
-                      : `Лодка клана ${clanName} доплыла до финиша!`
+                      ? tn('activity.overtaken', { clan: clanName, place: w?.place ?? '—' })
+                      : tn('activity.boatFinished', { clan: clanName })
               const sub =
                 a.kind === 'clan_race_overtaken'
                   ? w?.ahead
-                    ? `Впереди «${w.ahead}». Налегайте на вёсла!`
-                    : 'Налегайте на вёсла!'
+                    ? tn('activity.ahead', { name: w.ahead })
+                    : tn('activity.pull')
                   : a.kind === 'clan_race_finished'
-                    ? 'Итоги и награды — в ночь на понедельник'
+                    ? tn('activity.resultsNight')
                     : a.kind === 'clan_race_result' && w?.trophies
-                      ? `Клану +${w.trophies} трофеев`
+                      ? tn('activity.clanTrophies', { count: w.trophies })
                       : null
               return (
                 <div className="activity-item tap-scale" key={a.id} style={{ cursor: 'pointer' }} onClick={() => (isRace ? onOpenRace() : a.clanId && onOpenClan(a.clanId))}>
@@ -594,15 +592,15 @@ export function ActivityScreen({
                       >
                         {a.who}
                       </button>{' '}
-                      {a.kind === 'referral_joined' ? 'зарегистрировался по твоей ссылке' : 'сделал первый улов по твоему приглашению'}
+                      {a.kind === 'referral_joined' ? tn('activity.refJoined') : tn('activity.refFirstCatch')}
                     </div>
                     <div style={{ fontSize: 12.5, color: a.kind === 'referral_reward' ? 'var(--accent)' : 'var(--ink-soft)', fontWeight: 700, marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
                       {a.kind === 'referral_reward' ? (
                         <>
-                          +100 <CoinIcon size={16} /> за приглашение
+                          +100 <CoinIcon size={16} /> {tn('activity.refPlus')}
                         </>
                       ) : (
-                        'Первый улов друга принесёт тебе 100 монет'
+                        tn('activity.refWaiting')
                       )}
                     </div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -630,7 +628,7 @@ export function ActivityScreen({
                       >
                         {a.who}
                       </button>{' '}
-                      упомянул тебя в чате клана «{a.clanName ?? 'клан'}»
+                      {tn('activity.mentioned', { clan: a.clanName ?? tn('activity.clanLower') })}
                     </div>
                     {a.commentText && <div className="activity-comment-quote">«{a.commentText}»</div>}
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -642,19 +640,19 @@ export function ActivityScreen({
               )
             }
             if (a.kind.startsWith('clan_')) {
-              const clanName = `«${a.clanName ?? 'клан'}»`
+              const clanName = `${tn('sector.qOpen')}${a.clanName ?? tn('activity.clanLower')}${tn('sector.qClose')}`
               const text =
                 a.kind === 'clan_invite'
-                  ? <><button className="activity-who-btn" onClick={() => onOpenUser(a.userId)}>{a.who}</button> зовёт тебя в клан {clanName}</>
+                  ? <><button className="activity-who-btn" onClick={() => onOpenUser(a.userId)}>{a.who}</button> {tn('activity.clanInvite', { clan: clanName })}</>
                   : a.kind === 'clan_join_request'
-                    ? <><button className="activity-who-btn" onClick={() => onOpenUser(a.userId)}>{a.who}</button> хочет вступить в {clanName}</>
+                    ? <><button className="activity-who-btn" onClick={() => onOpenUser(a.userId)}>{a.who}</button> {tn('activity.clanRequest', { clan: clanName })}</>
                     : a.kind === 'clan_join_accepted'
-                      ? <>Тебя приняли в клан {clanName}</>
+                      ? <>{tn('activity.clanAccepted', { clan: clanName })}</>
                       : a.kind === 'clan_role_changed'
-                        ? <>Твоя роль в клане {clanName}: {CLAN_ROLE_LABEL[(a.clanRole as ClanRole) ?? 'member']?.toLowerCase()}</>
+                        ? <>{tn('activity.clanRoleChanged', { clan: clanName, role: CLAN_ROLE_LABEL[(a.clanRole as ClanRole) ?? 'member']?.toLowerCase() ?? '' })}</>
                         : a.kind === 'clan_disbanded'
-                          ? <>Клан {clanName} распущен модератором</>
-                          : <>Тебя исключили из клана {clanName}</>
+                          ? <>{tn('activity.clanDisbanded', { clan: clanName })}</>
+                          : <>{tn('activity.clanKicked', { clan: clanName })}</>
               return (
                 <div
                   className="activity-item tap-scale"
@@ -667,8 +665,8 @@ export function ActivityScreen({
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>{text}</div>
-                    {a.kind === 'clan_invite' && <div style={{ fontSize: 12.5, color: 'var(--accent)', fontWeight: 700, marginTop: 3 }}>Открыть и принять</div>}
-                    {a.kind === 'clan_join_request' && <div style={{ fontSize: 12.5, color: 'var(--accent)', fontWeight: 700, marginTop: 3 }}>Рассмотреть заявку</div>}
+                    {a.kind === 'clan_invite' && <div style={{ fontSize: 12.5, color: 'var(--accent)', fontWeight: 700, marginTop: 3 }}>{tn('activity.openAccept')}</div>}
+                    {a.kind === 'clan_join_request' && <div style={{ fontSize: 12.5, color: 'var(--accent)', fontWeight: 700, marginTop: 3 }}>{tn('activity.reviewRequest')}</div>}
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                       {unreadIds.has(a.id) && <span className="unread-dot" />}
                       {formatWhen(a.createdAt)}
@@ -682,9 +680,9 @@ export function ActivityScreen({
                 <div className="activity-item" key={a.id}>
                   <FeedIcon tone="red" icon={FEED_ICONS.shield} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>Твой комментарий удалён модератором</div>
+                    <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>{tn('activity.commentRemoved')}</div>
                     <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
-                      Нарушены правила площадки. При повторных нарушениях комментарии будут недоступны.
+                      {tn('activity.commentRules')}
                     </div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                       {unreadIds.has(a.id) && <span className="unread-dot" />}
@@ -699,9 +697,9 @@ export function ActivityScreen({
                 <div className="activity-item tap-scale" key={a.id} style={{ cursor: 'pointer' }} onClick={onOpenOwnAwards}>
                   <AwardFeedIcon title={a.awardTitle} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>Новая награда: {a.awardTitle}</div>
-                    {a.awardSubtitle && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{a.awardSubtitle}</div>}
-                    {!!a.awardCoins && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>+{a.awardCoins} монет</div>}
+                    <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>{tn('activity.newAward', { title: localAwardTitle(a.awardTitle ?? '') })}</div>
+                    {a.awardSubtitle && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{localAwardSubtitle(a.awardTitle ?? '', a.awardSubtitle)}</div>}
+                    {!!a.awardCoins && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{tn('activity.coinsPlus', { count: a.awardCoins })}</div>}
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                       {unreadIds.has(a.id) && <span className="unread-dot" />}
                       {formatWhen(a.createdAt)}
@@ -715,8 +713,8 @@ export function ActivityScreen({
                 <div className="activity-item tap-scale" key={a.id} style={{ cursor: 'pointer' }} onClick={onOpenChallenges}>
                   <FeedIcon tone="accent" icon={FEED_ICONS.target} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>Выполнен челлендж: {a.challengeTitle}</div>
-                    {!!a.challengeCoins && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>+{a.challengeCoins} монет</div>}
+                    <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>{tn('activity.challengeDone', { title: localChallengeName(a.challengeTitle ?? '') })}</div>
+                    {!!a.challengeCoins && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{tn('activity.coinsPlus', { count: a.challengeCoins })}</div>}
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                       {unreadIds.has(a.id) && <span className="unread-dot" />}
                       {formatWhen(a.createdAt)}
@@ -730,8 +728,8 @@ export function ActivityScreen({
                 <div className="activity-item tap-scale" key={a.id} style={{ cursor: 'pointer' }} onClick={onOpenChallenges}>
                   <FeedIcon tone="accent" icon={FEED_ICONS.targetDone} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>Все челленджи недели выполнены!</div>
-                    {!!a.challengeCoins && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>+{a.challengeCoins} монет за неделю</div>}
+                    <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>{tn('activity.allChallenges')}</div>
+                    {!!a.challengeCoins && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{tn('activity.coinsWeek', { count: a.challengeCoins })}</div>}
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                       {unreadIds.has(a.id) && <span className="unread-dot" />}
                       {formatWhen(a.createdAt)}
@@ -745,8 +743,8 @@ export function ActivityScreen({
                 <div className="activity-item tap-scale" key={a.id} style={{ cursor: 'pointer' }} onClick={onOpenChallenges}>
                   <FeedIcon tone="accent" icon={FEED_ICONS.clock} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>Челленджи недели закончатся через {a.challengeHours ?? 48} часов</div>
-                    <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>Не всё ещё выполнено — успей забрать монеты, пока неделя не закрылась</div>
+                    <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>{tn('activity.challengesEnding', { hours: a.challengeHours ?? 48 })}</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{tn('activity.challengesEndingSub')}</div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                       {unreadIds.has(a.id) && <span className="unread-dot" />}
                       {formatWhen(a.createdAt)}
@@ -761,7 +759,7 @@ export function ActivityScreen({
                   <FeedIcon tone="blue" icon={FEED_ICONS.podium} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>
-                      Итоги недели: {a.weeklyRank} место
+                      {tn('activity.weeklyResult', { rank: a.weeklyRank ?? '' })}
                     </div>
                     <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
                       {a.weeklySectors} {pluralSectors(a.weeklySectors ?? 0)} · {a.weeklyCatches} {pluralCatches(a.weeklyCatches ?? 0)}
@@ -777,16 +775,16 @@ export function ActivityScreen({
             const meta = formatCatchMeta(a.lengthCm, a.weightKg)
             const text =
               a.kind === 'sector_lost'
-                ? `забрал твою территорию ${a.territoryId}`
+                ? tn('activity.sectorLost', { id: a.territoryId ?? '' })
                 : a.kind === 'follow'
-                  ? 'подписался на тебя'
+                  ? tn('activity.followed')
                   : a.kind === 'like'
-                    ? 'лайкнул твой улов'
+                    ? tn('activity.liked')
                     : a.kind === 'comment'
-                      ? 'прокомментировал твой улов'
+                      ? tn('activity.commented')
                       : a.kind === 'comment_reply'
-                        ? 'ответил на твой комментарий'
-                        : `поймал ${a.speciesName?.toLowerCase() ?? 'рыбу'}${a.claimed ? ' и захватил сектор' : ''}`
+                        ? tn('activity.replied')
+                        : tn(a.claimed ? 'activity.caughtClaimed' : 'activity.caught', { fish: a.speciesName?.toLowerCase() ?? tn('activity.fishDefault') })
             const isComment = a.kind === 'comment' || a.kind === 'comment_reply'
             return (
               <div className="activity-item" key={a.id}>
@@ -805,7 +803,7 @@ export function ActivityScreen({
                   {a.territoryId && a.territoryKind && (
                     <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
                       <button className="activity-who-btn" onClick={() => onOpenTerritory(a.territoryId!)}>
-                        Территория {a.territoryId}
+                        {tn('activity.territoryN', { id: a.territoryId })}
                       </button>{' '}
                       · {KIND_LABEL[a.territoryKind]}
                     </div>
@@ -838,21 +836,21 @@ export function ActivityScreen({
         ) : (
           <div style={{ padding: '26px 22px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5, lineHeight: 1.5 }}>
             {filter === 'mine' ? (
-              'Твои сектора никто не трогал'
+              tn('activity.mineEmpty')
             ) : filter === 'friends' ? (
               <>
-                Здесь появятся уловы рыбаков, на которых ты подписан.
+                {tn('activity.friendsEmpty')}
                 <br />
                 <button
                   className="btn-secondary tap-scale"
                   style={{ width: 'auto', display: 'inline-flex', padding: '10px 20px', fontSize: 13.5, marginTop: 14 }}
                   onClick={onOpenRating}
                 >
-                  Найти рыбаков в рейтинге
+                  {tn('activity.findAnglers')}
                 </button>
               </>
             ) : (
-              'Пока нет активности'
+              tn('activity.none')
             )}
           </div>
         )}

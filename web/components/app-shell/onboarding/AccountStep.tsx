@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { OtpCodeStep } from '@/components/app-shell/onboarding/OtpCodeStep'
 import { BackButton } from '@/components/app-shell/BackButton'
+import { tn } from '@/lib/i18n/runtime'
 
 // First real step of the wizard: creates the Supabase account right away
 // (no name/details/color yet — those get filled in via useUpdateProfile in
@@ -25,7 +26,9 @@ import { BackButton } from '@/components/app-shell/BackButton'
 // CityStep (cream intro-screen, hex that claims itself) rather than the old
 // plain white form — the hex claims once the form looks submittable, same
 // gesture as claiming a real sector by catching a fish there.
-export function AccountStep({ onBack }: { onBack: () => void }) {
+// `preview` (the /onboarding-preview page only): look at the screen without making
+// an account — «Далее» just calls `onPreviewDone`.
+export function AccountStep({ onBack, preview, onPreviewDone }: { onBack: () => void; preview?: boolean; onPreviewDone?: () => void }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
@@ -38,6 +41,10 @@ export function AccountStep({ onBack }: { onBack: () => void }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!valid) return
+    if (preview) {
+      onPreviewDone?.()
+      return
+    }
     setError(null)
     setPending(true)
     const supabase = createClient()
@@ -52,9 +59,9 @@ export function AccountStep({ onBack }: { onBack: () => void }) {
       <OtpCodeStep
         email={email}
         type="signup"
-        title="Проверь почту"
-        subtitle={`Отправили код на ${email} — введи его ниже, чтобы подтвердить аккаунт.`}
-        ctaLabel="Подтвердить"
+        title={tn('onb.checkMail')}
+        subtitle={tn('onb.codeSentConfirm', { email })}
+        ctaLabel={tn('onb.confirm')}
         onBack={() => setAwaitingConfirmation(false)}
         onVerified={() => {}}
         onResend={() => createClient().auth.resend({ type: 'signup', email })}
@@ -77,8 +84,8 @@ export function AccountStep({ onBack }: { onBack: () => void }) {
         </div>
       </div>
       <div className="intro-copy">
-        <div className="intro-title">Создать аккаунт</div>
-        <div className="intro-sub">Аккаунт нужен, чтобы фиксировать уловы и занимать территории.</div>
+        <div className="intro-title">{tn('onb.createAccount')}</div>
+        <div className="intro-sub">{tn('onb.createSub')}</div>
       </div>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '0 24px' }}>
         <div className="wizard-field">
@@ -86,7 +93,7 @@ export function AccountStep({ onBack }: { onBack: () => void }) {
           <input id="account-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
         </div>
         <div className="wizard-field">
-          <label htmlFor="account-password">Пароль</label>
+          <label htmlFor="account-password">{tn('onb.password')}</label>
           <input
             id="account-password"
             type="password"
@@ -94,11 +101,11 @@ export function AccountStep({ onBack }: { onBack: () => void }) {
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Минимум 6 символов"
+            placeholder={tn('onb.min6')}
           />
         </div>
         <div className="wizard-field">
-          <label htmlFor="account-password-confirm">Повторите пароль</label>
+          <label htmlFor="account-password-confirm">{tn('onb.repeatPass')}</label>
           <input
             id="account-password-confirm"
             type="password"
@@ -106,14 +113,14 @@ export function AccountStep({ onBack }: { onBack: () => void }) {
             minLength={6}
             value={passwordConfirm}
             onChange={(e) => setPasswordConfirm(e.target.value)}
-            placeholder="Ещё раз пароль"
+            placeholder={tn('onb.againPass')}
           />
-          {mismatch && <div style={{ fontSize: 12.5, color: '#D33', marginTop: 4 }}>Пароли не совпадают</div>}
+          {mismatch && <div style={{ fontSize: 12.5, color: '#D33', marginTop: 4 }}>{tn('onb.mismatch')}</div>}
         </div>
         {error && <div className="auth-error">{error}</div>}
         <div style={{ flex: 1 }} />
         <button className="intro-cta" type="submit" disabled={!valid || pending} style={!valid || pending ? { opacity: 0.4, pointerEvents: 'none' } : undefined}>
-          {pending ? 'Подождите…' : 'Далее'}
+          {pending ? tn('onb.wait') : tn('common.next')}
         </button>
       </form>
     </div>

@@ -1,3 +1,4 @@
+import { tn } from '@/lib/i18n/runtime'
 // «Живая карта» behind the welcome screen: the Batumi coast — sea, shoreline,
 // rivers, lakes (OpenStreetMap water, the same layers as the promo video) —
 // with the game's sectors on it, seen from a tilted camera that glides along
@@ -18,30 +19,30 @@ export type TickerLine = { name: string; verb: string; id: string; day: string }
 // Where the map may show: below the headline, above the buttons.
 export type CoastView = { w: number; h: number; clearTop: number; clearBottom: number }
 
-type Cam = { x: number; y: number; k: number; pitch: number; F: number; cx: number; cy: number; yaw: number }
+export type Cam = { x: number; y: number; k: number; pitch: number; F: number; cx: number; cy: number; yaw: number }
 type Sector = { id: string; x: number; y: number; color: string | null }
-type Pt = [number, number, number]
+export type Pt = [number, number, number]
 
-const HEX = [0, 1, 2, 3, 4, 5].map((i) => [Math.cos((i * Math.PI) / 3), Math.sin((i * Math.PI) / 3)] as const)
+export const HEX = [0, 1, 2, 3, 4, 5].map((i) => [Math.cos((i * Math.PI) / 3), Math.sin((i * Math.PI) / 3)] as const)
 const clamp01 = (t: number) => Math.min(1, Math.max(0, t))
-const easeOut = (t: number) => 1 - Math.pow(1 - clamp01(t), 3)
+export const easeOut = (t: number) => 1 - Math.pow(1 - clamp01(t), 3)
 
 function rgb(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16)
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
 }
-function mix(a: string, b: string, t: number) {
+export function mix(a: string, b: string, t: number) {
   const A = rgb(a)
   const B = rgb(b)
   return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join('')
 }
-function shade(hex: string, f: number, a = 1) {
+export function shade(hex: string, f: number, a = 1) {
   const [r, g, b] = rgb(hex)
   return `rgba(${Math.round(r * f)},${Math.round(g * f)},${Math.round(b * f)},${a})`
 }
-const lift = (hex: string, t: number) => mix(hex, '#ffffff', t)
+export const lift = (hex: string, t: number) => mix(hex, '#ffffff', t)
 
-function project(cam: Cam, x: number, y: number, z: number): Pt {
+export function project(cam: Cam, x: number, y: number, z: number): Pt {
   let dx = (x - cam.x) * cam.k
   let dy = (y - cam.y) * cam.k
   const dz = z * cam.k
@@ -56,7 +57,7 @@ function project(cam: Cam, x: number, y: number, z: number): Pt {
   return [cam.cx + dx * p, cam.cy + yc * p, p]
 }
 
-function hexPath(ctx: CanvasRenderingContext2D, pts: Pt[]) {
+export function hexPath(ctx: CanvasRenderingContext2D, pts: Pt[]) {
   ctx.beginPath()
   ctx.moveTo(pts[0][0], pts[0][1])
   for (let i = 1; i < 6; i++) ctx.lineTo(pts[i][0], pts[i][1])
@@ -64,7 +65,7 @@ function hexPath(ctx: CanvasRenderingContext2D, pts: Pt[]) {
 }
 
 // A held sector: the side faces turned towards the camera, then the top.
-function prism(ctx: CanvasRenderingContext2D, cam: Cam, x: number, y: number, R: number, h: number, color: string) {
+export function prism(ctx: CanvasRenderingContext2D, cam: Cam, x: number, y: number, R: number, h: number, color: string) {
   const T = HEX.map(([a, b]) => project(cam, x + a * R, y + b * R, h))
   if (h > 0.4) {
     const B = HEX.map(([a, b]) => project(cam, x + a * R, y + b * R, 0))
@@ -90,7 +91,7 @@ function prism(ctx: CanvasRenderingContext2D, cam: Cam, x: number, y: number, R:
   ctx.stroke()
 }
 
-function groundRing(ctx: CanvasRenderingContext2D, cam: Cam, x: number, y: number, rad: number, color: string, alpha: number, lw: number) {
+export function groundRing(ctx: CanvasRenderingContext2D, cam: Cam, x: number, y: number, rad: number, color: string, alpha: number, lw: number) {
   ctx.beginPath()
   for (let i = 0; i <= 40; i++) {
     const a = (i / 40) * Math.PI * 2
@@ -103,7 +104,7 @@ function groundRing(ctx: CanvasRenderingContext2D, cam: Cam, x: number, y: numbe
   ctx.stroke()
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+export function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath()
   ctx.moveTo(x + r, y)
   ctx.arcTo(x + w, y, x + w, y + h, r)
@@ -114,16 +115,16 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 }
 
 // Anglers from the game (their own names). About a third of the water is held.
-const NAMES = ['Ruslan', 'catchntravel', 'MaZz', 'Aleksandr', 'AxeLn', 'Mike', 'Maksym', 'Сергей', 'Vitaliy', 'IlyaTelesh', 'Игорь', 'Wesson']
+export const NAMES = ['Ruslan', 'catchntravel', 'MaZz', 'Aleksandr', 'AxeLn', 'Mike', 'Maksym', 'Сергей', 'Vitaliy', 'IlyaTelesh', 'Игорь', 'Wesson']
 const PALETTE = ['#FB6A16', '#4C9BFF', '#2FD08A', '#A77BFF', '#FF5A4E', '#E8EEF6', '#4CC9F0', '#B5E254']
 const colorOf = (name: string) => PALETTE[NAMES.indexOf(name) % PALETTE.length]
 // Captures walk the coast south → north and back, so the camera only glides
 // to the next sector along the shore — never across the city.
 const PATH_IDS = ['B0537', 'B0782', 'B0934', 'B1031', 'B1173', 'B1316', 'B1461', 'B1607']
 const STEP = 2.6
-const HELD = 9
-const R = 30
-const S = R / 347.2 // a sector is 347 m from centre to corner
+export const HELD = 9
+export const R = 30
+export const S = R / 347.2 // a sector is 347 m from centre to corner
 
 export const COAST_STILL_AT = STEP * 4.4
 
@@ -178,7 +179,7 @@ export function createCoastScene(data: CoastData, labelFont: string, onTicker: (
 
     let held = !!target.color
     for (let m = n - 1; m >= 0 && m > n - ORDER.length; m--) if (ORDER[m % ORDER.length] === idx) { held = true; break }
-    const line: TickerLine = { name: taker(n), verb: held ? 'перехватил' : 'захватил', id: target.id, day: n % 3 === 2 ? 'вчера' : 'сегодня' }
+    const line: TickerLine = { name: taker(n), verb: held ? tn('onb.tickerTook') : tn('onb.tickerClaimed'), id: target.id, day: n % 3 === 2 ? tn('onb.tickerYesterday') : tn('onb.tickerToday') }
     const lineKey = `${line.name}|${line.verb}|${line.id}|${line.day}`
     if (lineKey !== lastLine) {
       lastLine = lineKey

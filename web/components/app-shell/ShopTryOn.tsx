@@ -8,10 +8,11 @@ import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorPreviewMap'
 import { StyledName } from '@/components/app-shell/StyledName'
 import { resolveHeroBackground } from '@/lib/data/heroBackgrounds'
-import { JACKPOT_CHANCE_LABEL, resolveAvatarFrame } from '@/lib/data/shopItems'
+import { jackpotChanceLabel, resolveAvatarFrame } from '@/lib/data/shopItems'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import type { ShopItem } from '@/lib/supabase/queries'
 import type { CityId } from '@/lib/data/city'
+import { tn } from '@/lib/i18n/runtime'
 
 export type TryOnLook = {
   displayName: string
@@ -81,27 +82,27 @@ export function ShopTryOn({
           </div>
         )}
         <div className="tryon-body">
-          <div className="tryon-label">Примерка</div>
+          <div className="tryon-label">{tn('shop.tryonLabel')}</div>
           <div className="modal-title">{item.name}</div>
           {state === 'locked' && !item.purchasable ? (
             <button className="btn-primary" onClick={onBuy}>
-              Выбить в слотах · шанс {JACKPOT_CHANCE_LABEL}
+              {tn('shop.knockChance', { chance: jackpotChanceLabel() })}
             </button>
           ) : state === 'locked' ? (
             <button className="btn-primary shop-price-btn" onClick={onBuy}>
-              Купить за <CoinIcon size={16} /> {item.price}
+              {tn('shop.buyFor')} <CoinIcon size={16} /> {item.price}
             </button>
           ) : state === 'owned' ? (
             <button className="btn-primary" onClick={onEquip}>
-              {item.category === 'hero_bg' || item.category === 'territory_skin' ? 'Применить' : 'Надеть'}
+              {item.category === 'hero_bg' || item.category === 'territory_skin' ? tn('shop.apply') : tn('shop.equip')}
             </button>
           ) : (
             <button className="btn-secondary" disabled>
-              Уже у тебя
+              {tn('shop.alreadyOwn')}
             </button>
           )}
           <button className="btn-secondary" style={{ marginTop: 8 }} onClick={onClose}>
-            Закрыть
+            {tn('common.close')}
           </button>
         </div>
       </div>

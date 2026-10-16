@@ -4,6 +4,7 @@ import { useState, type CSSProperties } from 'react'
 import { useUpdateProfile } from '@/lib/supabase/queries'
 import { TERRITORY_COLORS, withAlpha } from '@/lib/data/territoryColors'
 import { BackButton } from '@/components/app-shell/BackButton'
+import { tn } from '@/lib/i18n/runtime'
 
 // Not the last step (city/territory-intro/catch-intro still follow — see
 // OnboardingFlow) — onboarding_completed only flips true at the very end,
@@ -12,13 +13,14 @@ import { BackButton } from '@/components/app-shell/BackButton'
 // The hex claims in the picked color itself (not the generic brand accent
 // every other step uses) via --sector-color/--sector-glow — a real preview
 // of your own territory color, not just "done".
-export function ColorStep({ onBack, onDone }: { onBack: () => void; onDone: () => void }) {
+// `preview` (the /onboarding-preview page only): go on without writing the colour.
+export function ColorStep({ onBack, onDone, preview }: { onBack: () => void; onDone: () => void; preview?: boolean }) {
   const [selected, setSelected] = useState<string | null>(null)
   const updateProfile = useUpdateProfile()
 
   async function handleSubmit() {
     if (!selected) return
-    await updateProfile.mutateAsync({ territoryColor: selected })
+    if (!preview) await updateProfile.mutateAsync({ territoryColor: selected })
     onDone()
   }
 
@@ -42,8 +44,8 @@ export function ColorStep({ onBack, onDone }: { onBack: () => void; onDone: () =
         </div>
       </div>
       <div className="intro-copy">
-        <div className="intro-title">Выберите цвет вашей территории</div>
-        <div className="intro-sub">Им будут отмечены все ваши сектора на карте.</div>
+        <div className="intro-title">{tn('onb.colorTitle')}</div>
+        <div className="intro-sub">{tn('onb.colorSub')}</div>
       </div>
       <div className="color-grid" style={{ padding: '0 24px' }}>
         {TERRITORY_COLORS.map((c) => (
@@ -65,7 +67,7 @@ export function ColorStep({ onBack, onDone }: { onBack: () => void; onDone: () =
           disabled={!selected || updateProfile.isPending}
           style={!selected || updateProfile.isPending ? { opacity: 0.4, pointerEvents: 'none' } : undefined}
         >
-          {updateProfile.isPending ? 'Сохраняем…' : 'Далее'}
+          {updateProfile.isPending ? tn('common.saving') : tn('common.next')}
         </button>
       </div>
     </div>

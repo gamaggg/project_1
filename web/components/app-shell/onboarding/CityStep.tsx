@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { CITY_LIST, storeCity, type CityId } from '@/lib/data/city'
 import { BackButton } from '@/components/app-shell/BackButton'
+import { tn } from '@/lib/i18n/runtime'
 
 // Right after CatchIntroStep ("Поймал — значит занял") — by then the visitor
 // already understands the mechanic, so picking where to play it makes sense
@@ -11,12 +12,13 @@ import { BackButton } from '@/components/app-shell/BackButton'
 // choice to the profile row. Changeable any time later from the Профиль tab.
 // Visually a third intro-screen variant (GPS-pin drop, see globals.css)
 // alongside TerritoryIntroStep/CatchIntroStep — chosen from two proposed designs.
-export function CityStep({ onBack, onDone }: { onBack: () => void; onDone: (city: CityId) => void }) {
+// `preview` (the /onboarding-preview page only): don't keep the choice on this device.
+export function CityStep({ onBack, onDone, preview }: { onBack: () => void; onDone: (city: CityId) => void; preview?: boolean }) {
   const [selected, setSelected] = useState<CityId | null>(null)
 
   function handleSubmit() {
     if (!selected) return
-    storeCity(selected)
+    if (!preview) storeCity(selected)
     onDone(selected)
   }
 
@@ -46,10 +48,10 @@ export function CityStep({ onBack, onDone }: { onBack: () => void; onDone: (city
         </div>
       </div>
       <div className="intro-copy">
-        <div className="intro-title">Где ты будешь ловить?</div>
-        <div className="intro-sub">Можно сменить позже в профиле — сектора никуда не денутся.</div>
+        <div className="intro-title">{tn('onb.whereCatch')}</div>
+        <div className="intro-sub">{tn('onb.citySub')}</div>
         <button className="intro-cta" onClick={handleSubmit} disabled={!selected} style={!selected ? { opacity: 0.4, pointerEvents: 'none' } : undefined}>
-          Далее
+          {tn('common.next')}
         </button>
       </div>
     </div>

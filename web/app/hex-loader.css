@@ -1,0 +1,49 @@
+/* HexLoader: after «Elite Dangerous Inspired Loader» by jpanter (CodePen
+   PWWQXK). A hexagon of triangles, each blinking in turn round the ring. */
+.hexloader {
+  --hl-color: #FF7A1F;
+  margin-inline: auto;
+  /* the room it takes at the scale asked: 96 × 86.4 px at 1 */
+  width: calc(96px * var(--hl-s, 1));
+  height: calc(86.4px * var(--hl-s, 1));
+}
+.hexloader-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 96px;
+  height: 86.4px;
+  transform: scale(var(--hl-s, 1));
+  transform-origin: 0 0;
+}
+.hexloader-row { display: flex; }
+.hexloader-tri {
+  display: block;
+  width: 0;
+  height: 0;
+  margin: 0 -6px;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 21.6px solid var(--hl-color);
+  filter: drop-shadow(0 0 14px var(--hl-glow, var(--hl-color)));
+  animation: hexloader-blink 1s infinite;
+}
+.hexloader-tri.down { transform: rotate(180deg); }
+@keyframes hexloader-blink {
+  0% { opacity: 0.1; }
+  30% { opacity: 1; }
+  100% { opacity: 0.1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hexloader-tri { animation-duration: 2.4s; }
+}
+
+/* The launch screen: white, the brand mark and the loader in the brand orange
+   (the glow softer than on the dark, where it shows more). */
+/* padding-bottom lifts the block a little above the middle, where the eye puts the centre. */
+.loading-shell { background: #fff; gap: 34px; padding-bottom: 16dvh; }
+.loading-shell .hexloader { --hl-glow: rgba(255, 122, 31, 0.5); }
+.loading-shell-logo { width: 168px; height: auto; filter: none; }
+
+/* Small ones inside the app (on light screens and cards): a softer glow. */
+.clan-soon .hexloader, .guest-empty .hexloader, .coin-history-empty .hexloader, .clan-chat-loading .hexloader { --hl-glow: rgba(255, 122, 31, 0.45); }

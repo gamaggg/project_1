@@ -1,10 +1,12 @@
 'use client'
 
+import { HexLoader } from '@/components/app-shell/HexLoader'
 import { useClanList } from '@/lib/supabase/queries'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { leagueFor } from '@/lib/data/clanLevels'
 import { pluralSectors } from '@/lib/format'
 import type { CityId } from '@/lib/data/city'
+import { tn } from '@/lib/i18n'
 
 // «Кланы» tab of the rating: the city's clans ranked by trophies (the
 // regatta result), with how many sectors each currently holds.
@@ -13,13 +15,18 @@ export function ClanRating({ city, onOpenClan, onOpenClans }: { city: CityId; on
   const top = clans.slice(0, 3)
   const rest = clans.slice(3, 30)
 
-  if (isLoading) return <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Загрузка…</div>
+  if (isLoading)
+    return (
+      <div style={{ padding: 26 }}>
+        <HexLoader size={0.55} />
+      </div>
+    )
   if (!clans.length) {
     return (
       <div className="clan-empty">
-        В городе пока нет кланов.
+        {tn('clanRating.none')}
         <button className="btn-primary" style={{ marginTop: 14 }} onClick={onOpenClans}>
-          Создать или найти клан
+          {tn('clanRating.createFind')}
         </button>
       </div>
     )
@@ -51,7 +58,7 @@ export function ClanRating({ city, onOpenClan, onOpenClans }: { city: CityId; on
                 <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                   <span className="clan-list-name">{c.name}</span>
                   <span className="clan-list-meta">
-                    {c.sectorsHeld} {pluralSectors(c.sectorsHeld)} · {c.members} уч.
+                    {c.sectorsHeld} {pluralSectors(c.sectorsHeld)} · {tn('clanRating.members', { count: c.members })}
                   </span>
                 </span>
                 <span className="clan-list-trophies">
@@ -66,7 +73,7 @@ export function ClanRating({ city, onOpenClan, onOpenClans }: { city: CityId; on
         </div>
       )}
       <button className="btn-secondary" style={{ marginTop: 14 }} onClick={onOpenClans}>
-        Все кланы города
+        {tn('clanRating.all')}
       </button>
     </>
   )

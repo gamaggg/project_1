@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { BackButton } from '@/components/app-shell/BackButton'
 import type { EmailOtpType } from '@supabase/supabase-js'
+import { tn } from '@/lib/i18n/runtime'
 
 // Supabase Auth sends at most one email per address per 60 seconds; a
 // shorter countdown let people press «ещё раз» straight into a 429.
@@ -55,7 +56,7 @@ export function OtpCodeStep({
     const supabase = createClient()
     const { error } = await supabase.auth.verifyOtp({ email, token: code.trim(), type })
     setVerifying(false)
-    if (error) setVerifyError('Неверный или устаревший код')
+    if (error) setVerifyError(tn('onb.badCode'))
     else onVerified()
   }
 
@@ -64,7 +65,7 @@ export function OtpCodeStep({
     setResendError(null)
     setResent(false)
     const { error } = await onResend()
-    if (error) setResendError('Не получилось отправить код, попробуй чуть позже')
+    if (error) setResendError(tn('onb.resendFail'))
     else {
       setResent(true)
       setCooldown(RESEND_COOLDOWN_S)
@@ -91,7 +92,7 @@ export function OtpCodeStep({
       </div>
       <form onSubmit={handleVerify} className="otp-form" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '0 24px' }}>
         <div className="wizard-field">
-          <label htmlFor="otp-code">Код подтверждения</label>
+          <label htmlFor="otp-code">{tn('onb.codeLabel')}</label>
           <input
             id="otp-code"
             type="text"
@@ -109,7 +110,7 @@ export function OtpCodeStep({
           {verifyError && <div className="auth-error">{verifyError}</div>}
           {resendError && <div className="auth-error">{resendError}</div>}
           <button type="button" className="otp-resend" disabled={cooldown > 0} onClick={handleResend}>
-            {cooldown > 0 ? `Отправить ещё раз через ${cooldown}с` : resent ? 'Код отправлен ещё раз' : 'Отправить код ещё раз'}
+            {cooldown > 0 ? tn('onb.resendIn', { sec: cooldown }) : resent ? tn('onb.resent') : tn('onb.resend')}
           </button>
         </div>
         <div style={{ flex: 1 }} />
@@ -119,7 +120,7 @@ export function OtpCodeStep({
           disabled={code.trim().length !== 6 || verifying}
           style={code.trim().length !== 6 || verifying ? { opacity: 0.4, pointerEvents: 'none' } : undefined}
         >
-          {verifying ? 'Проверяем…' : ctaLabel}
+          {verifying ? tn('onb.verifying') : ctaLabel}
         </button>
       </form>
     </div>

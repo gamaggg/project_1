@@ -25,6 +25,7 @@ import { TerritoryThumbnailMapView } from '@/components/app-shell/TerritoryThumb
 import { BackButton } from '@/components/app-shell/BackButton'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { useDoubleCoinsUntil } from '@/components/app-shell/DoubleCoinsChip'
+import { tn, currentLocale } from '@/lib/i18n'
 
 export function statusBadge(status: Territory['status'], myTerritoryColor: string, myShare = false) {
   // myShare: a clan-mate's sector the viewer holds a part of.
@@ -32,11 +33,11 @@ export function statusBadge(status: Territory['status'], myTerritoryColor: strin
     return (
       <span className="badge" style={{ background: withAlpha(myTerritoryColor, 0.16), color: darkenForBadgeText(myTerritoryColor) }}>
         <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4 3 5-6 5 6 4-3-2 11H5L3 8z" /></svg>
-        {status === 'mine' ? 'Моя' : 'Моя доля'}
+        {status === 'mine' ? tn('map.mine') : tn('map.myShare')}
       </span>
     )
-  if (status === 'other') return <span className="badge badge-blue">Занята</span>
-  return <span className="badge badge-neutral">Свободна</span>
+  if (status === 'other') return <span className="badge badge-blue">{tn('sector.taken')}</span>
+  return <span className="badge badge-neutral">{tn('map.free')}</span>
 }
 
 // Щит/Прилив — shown next to statusBadge, since a protected sector being
@@ -50,13 +51,13 @@ function ShieldBadge({ shieldUntil }: { shieldUntil: string | null }) {
   const minutes = Math.max(1, Math.ceil(left / 60_000))
   const h = Math.floor(minutes / 60)
   const m = minutes % 60
-  const time = h === 0 ? `${m} мин` : h < 3 && m > 0 ? `${h} ч ${m} мин` : `${h} ч`
+  const time = h === 0 ? tn('fmt.minShort', { count: m }) : h < 3 && m > 0 ? `${tn('fmt.hourShort', { count: h })} ${tn('fmt.minShort', { count: m })}` : tn('fmt.hourShort', { count: h })
   return (
-    <span className="badge badge-shield" title={`До ${new Date(shieldUntil!).toLocaleString('ru', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}`}>
+    <span className="badge badge-shield" title={tn('sector.shieldTitle', { when: new Date(shieldUntil!).toLocaleString(currentLocale(), { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) })}>
       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l8 3v6c0 5-3.4 8.7-8 11-4.6-2.3-8-6-8-11V5l8-3z" /></svg>
       {/* Narrow phones get the short form, so the sector id beside it keeps its room. */}
-      <span className="shield-badge-long">Под щитом · ещё {time}</span>
-      <span className="shield-badge-short">Щит · {time}</span>
+      <span className="shield-badge-long">{tn('sector.shieldLong', { time })}</span>
+      <span className="shield-badge-short">{tn('sector.shieldShort', { time })}</span>
     </span>
   )
 }
@@ -78,10 +79,10 @@ function SectorOwnerCard({
   const { data: fresh } = useProfile(capturer.id)
   const profile = fresh ?? capturer
   const isMine = capturer.isMe
-  const initials = (profile.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
+  const initials = (profile.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()
   return (
     <div className="sector-owner-highlight">
-      <div className="sector-owner-highlight-label">Захватил сектор</div>
+      <div className="sector-owner-highlight-label">{tn('sector.capturedBy')}</div>
       <button
         className="sector-owner-highlight-row tap-scale"
         onClick={() => onOpenUser(capturer.id)}
@@ -91,8 +92,8 @@ function SectorOwnerCard({
           {profile.avatarUrl ? <img src={thumbUrl(profile.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : initials}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="sector-owner-highlight-name">{isMine ? 'Ты' : profile.displayName ?? '…'}</div>
-          {!isMine && <div className="sector-owner-highlight-sub">Смотреть профиль</div>}
+          <div className="sector-owner-highlight-name">{isMine ? tn('sector.you') : profile.displayName ?? '…'}</div>
+          {!isMine && <div className="sector-owner-highlight-sub">{tn('sector.viewProfile')}</div>}
         </div>
         {!isMine && (
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A9AE" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -103,15 +104,15 @@ function SectorOwnerCard({
       {coHolders.length > 0 && (
         <>
           <div className="sector-owner-highlight-label sector-coholders-label">
-            Совладельцы · {coHolders.length} из 3
+            {tn('sector.coHolders', { count: coHolders.length })}
           </div>
           <div className="sector-coholders">
             {coHolders.map((h) => (
               <button key={h.id} className="sector-coholder tap-scale" onClick={() => onOpenUser(h.id)} disabled={h.isMe}>
                 <span className="sector-coholder-avatar">
-                  {h.avatarUrl ? <img src={thumbUrl(h.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : (h.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()}
+                  {h.avatarUrl ? <img src={thumbUrl(h.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : (h.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()}
                 </span>
-                <span className="sector-coholder-name">{h.isMe ? 'Ты' : h.displayName ?? 'Рыбак'}</span>
+                <span className="sector-coholder-name">{h.isMe ? tn('sector.you') : h.displayName ?? tn('common.angler')}</span>
               </button>
             ))}
           </div>
@@ -132,9 +133,9 @@ function SectorCoords({ lat, lng, onToast }: { lat: number; lng: number; onToast
   async function copy() {
     try {
       await navigator.clipboard.writeText(coords)
-      onToast('Координаты скопированы')
+      onToast(tn('sector.coordsCopied'))
     } catch {
-      onToast('Не удалось скопировать')
+      onToast(tn('common.copyFailed'))
     }
   }
 
@@ -149,10 +150,10 @@ function SectorCoords({ lat, lng, onToast }: { lat: number; lng: number; onToast
       </button>
       <div className="sector-coords-actions">
         <button className="sector-coords-btn tap-scale" onClick={() => void copy()}>
-          Скопировать
+          {tn('sector.copy')}
         </button>
         <button className="sector-coords-btn primary tap-scale" onClick={() => setMapsOpen(true)}>
-          Маршрут
+          {tn('sector.route')}
         </button>
       </div>
       {mapsOpen && <RouteModal lat={lat} lng={lng} onClose={() => setMapsOpen(false)} />}
@@ -196,7 +197,7 @@ function ShieldButton({ territory, hot }: { territory: Territory; hot: boolean }
 export function CatcherLabel({ userId, mine, onOpenUser }: { userId: string; mine: boolean; onOpenUser: (id: string) => void }) {
   const { data: profile } = useProfile(mine ? null : userId)
   const style: React.CSSProperties = { fontSize: 11.5, fontWeight: 700, color: 'var(--ink-faint)', marginBottom: 2 }
-  if (mine) return <div style={style}>Ты</div>
+  if (mine) return <div style={style}>{tn('sector.you')}</div>
   return (
     <div style={style}>
       {/* Rows that show this now also open the catch photo on their own
@@ -299,17 +300,17 @@ export function TerritoryScreen({
           territory={territory}
           myTerritoryColor={myTerritoryColor}
           ownerAvatarUrl={ownerProfile?.avatarUrl ?? null}
-          ownerInitials={(ownerProfile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()}
+          ownerInitials={(ownerProfile?.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()}
         />
         {onShowOnMap && (
           // The whole hero map is the tap target; the chip just says so.
-          <button type="button" className="sector-hero-map-open" aria-label="Показать сектор на карте" onClick={() => onShowOnMap(territory.id)}>
+          <button type="button" className="sector-hero-map-open" aria-label={tn('sector.showOnMap')} onClick={() => onShowOnMap(territory.id)}>
             <span className="sector-hero-map-chip">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4z" />
                 <path d="M9 4v13M15 6.5v13" />
               </svg>
-              На карте
+              {tn('sector.onMap')}
             </span>
           </button>
         )}
@@ -330,14 +331,14 @@ export function TerritoryScreen({
                 never ellipsizes, regardless of how much width the badge
                 column on the right takes up. */}
             <div className="page-title" style={{ marginTop: 2, flexShrink: 0 }}>
-              Сектор
+              {tn('sector.sector')}
               <br />
               {territory.id}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
               {statusBadge(territory.status, myTerritoryColor, territory.coHolders.some((h) => h.isMe))}
               <ShieldBadge shieldUntil={territory.shieldUntil} />
-              {isMostPopular && <span className="badge badge-accent">🔥 Самый популярный</span>}
+              {isMostPopular && <span className="badge badge-accent">{tn('sector.mostPopular')}</span>}
             </div>
           </div>
           <div className="page-sub" style={{ marginBottom: 0 }}>
@@ -397,7 +398,7 @@ export function TerritoryScreen({
             <button className="sector-clan-line tap-scale" onClick={() => onOpenClan(territory.ownerClanId!)}>
               <ClanCrest crest={territory.ownerClanCrest} size={26} />
               <span className="sector-clan-line-text">
-                Сектор клана <b>«{territory.ownerClanName}»</b>
+                {tn('sector.clanPre')}<b>{tn('sector.qOpen')}{territory.ownerClanName}{tn('sector.qClose')}</b>
               </span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M9 6l6 6-6 6" />
@@ -418,19 +419,19 @@ export function TerritoryScreen({
         <div className="sector-stat-strip">
           <div>
             <div className="value">{territory.catchCount}</div>
-            <div className="label">Уловов</div>
+            <div className="label">{tn('sector.catchesLabel')}</div>
           </div>
           <div>
             <div className="value">{territory.lastCatchAt ? formatWhen(territory.lastCatchAt) : '—'}</div>
-            <div className="label">Последний</div>
+            <div className="label">{tn('sector.lastLabel')}</div>
           </div>
           <div>
-            <div className="value">≈600 м</div>
-            <div className="label">Размер</div>
+            <div className="value">{tn('sector.sizeValue')}</div>
+            <div className="label">{tn('sector.sizeLabel')}</div>
           </div>
           <div>
             <div className="value">{KIND_LABEL[territory.kind]}</div>
-            <div className="label">Тип</div>
+            <div className="label">{tn('sector.typeLabel')}</div>
           </div>
         </div>
 
@@ -438,10 +439,10 @@ export function TerritoryScreen({
         <SectorInsightsCard territory={territory} />
 
         <div className="section-title-row" style={{ marginTop: 22 }}>
-          <div className="section-title">Последние уловы</div>
+          <div className="section-title">{tn('profile.recentCatches')}</div>
           {catches.length > recent.length && (
             <button className="section-link" onClick={onOpenAllCatches}>
-              Все уловы
+              {tn('profile.allCatches')}
             </button>
           )}
         </div>
@@ -475,7 +476,7 @@ export function TerritoryScreen({
             <SkeletonRows count={Math.min(3, territory.catchCount)} className="sector-skel" />
           ) : (
             <div style={{ padding: '22px 0', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>
-              {catchesPending ? '' : 'Пока нет уловов в этом секторе'}
+              {catchesPending ? '' : tn('sector.noCatchesHere')}
             </div>
           )
         )}

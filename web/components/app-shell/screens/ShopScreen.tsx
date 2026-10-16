@@ -10,7 +10,7 @@ import { StyledName } from '@/components/app-shell/StyledName'
 import { SHOP_TAB_ICONS } from '@/components/app-shell/icons'
 import { usePurchaseFlow } from '@/components/app-shell/usePurchaseFlow'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { AVATAR_FRAMES, JACKPOT_CHANCE_LABEL, JACKPOT_FRAME } from '@/lib/data/shopItems'
+import { AVATAR_FRAMES, jackpotChanceLabel, JACKPOT_FRAME } from '@/lib/data/shopItems'
 import { ShopTryOn } from '@/components/app-shell/ShopTryOn'
 import { AvatarFrameRing } from '@/components/app-shell/AvatarFrameRing'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
@@ -37,6 +37,7 @@ import {
   type ShopItem,
   type Buff,
 } from '@/lib/supabase/queries'
+import { currentLocale, tn } from '@/lib/i18n/runtime'
 
 // A pending refund, captured at the moment the admin taps "Вернуть" so the
 // confirm modal can show its name/price without re-deriving them from
@@ -56,11 +57,11 @@ function rarityClass(price: number): string {
 
 type Category = 'avatar_frame' | 'hero_bg' | 'name_style' | 'territory_skin' | 'buffs'
 const CATEGORIES: { id: Category; label: string; icon: React.ReactNode }[] = [
-  { id: 'avatar_frame', label: 'Рамки', icon: SHOP_TAB_ICONS.frame },
-  { id: 'hero_bg', label: 'Фоны', icon: SHOP_TAB_ICONS.background },
-  { id: 'name_style', label: 'Имя', icon: SHOP_TAB_ICONS.sparkle },
-  { id: 'territory_skin', label: 'Скины', icon: SHOP_TAB_ICONS.skin },
-  { id: 'buffs', label: 'Бафы', icon: SHOP_TAB_ICONS.bolt },
+  { id: 'avatar_frame', get label() { return tn('shop.tabFrames') }, icon: SHOP_TAB_ICONS.frame },
+  { id: 'hero_bg', get label() { return tn('shop.tabBackgrounds') }, icon: SHOP_TAB_ICONS.background },
+  { id: 'name_style', get label() { return tn('shop.tabName') }, icon: SHOP_TAB_ICONS.sparkle },
+  { id: 'territory_skin', get label() { return tn('shop.tabSkins') }, icon: SHOP_TAB_ICONS.skin },
+  { id: 'buffs', get label() { return tn('shop.tabBuffs') }, icon: SHOP_TAB_ICONS.bolt },
 ]
 
 export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpenSlots: () => void }) {
@@ -134,7 +135,7 @@ export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpen
       <div className="shop-sticky-top">
         <div className="header-row">
           <BackButton onClick={onBack} registerNative={false} />
-          <div style={{ fontWeight: 800, fontSize: 15 }}>Магазин</div>
+          <div style={{ fontWeight: 800, fontSize: 15 }}>{tn('shop.title')}</div>
           <div style={{ width: 36 }} />
         </div>
         {/* Balance and slots as one block: the balance is a number and a
@@ -145,9 +146,9 @@ export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpen
             <span className="shop-wallet-num">
               <LiveCoinBalance value={coins} />
             </span>
-            <span className="shop-wallet-label">монет на счету</span>
+            <span className="shop-wallet-label">{tn('shop.walletLabel')}</span>
             <button className="shop-wallet-history" onClick={() => setHistoryOpen(true)}>
-              История
+              {tn('shop.history')}
             </button>
           </div>
           <SlotsCard city={city} onOpen={onOpenSlots} />
@@ -170,7 +171,7 @@ export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpen
                 key={item.id}
                 item={item}
                 avatarUrl={profile?.avatarUrl ?? null}
-                initials={(profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()}
+                initials={(profile?.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()}
                 owned={owned.has(item.id)}
                 equipped={profile?.equippedFrame === item.id}
                 onBuy={() => request(item.price, item.name, () => buyItem.mutate(item.id))}
@@ -215,7 +216,7 @@ export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpen
                 item={item}
                 owned={owned.has(item.id)}
                 equipped={profile?.equippedNameStyle === item.id}
-                displayName={profile?.displayName ?? 'Имя'}
+                displayName={profile?.displayName ?? tn('shop.nameFallback')}
                 onBuy={() => request(item.price, item.name, () => buyItem.mutate(item.id))}
                 onEquip={() => equipItem.mutate({ itemId: item.id })}
                 onUnequip={() => equipItem.mutate({ itemId: null, category: 'name_style' })}
@@ -229,7 +230,7 @@ export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpen
 
         {category === 'territory_skin' && (
           <>
-            <div className="shop-section-caption">Скин виден всем рыбакам на карте — не только тебе</div>
+            <div className="shop-section-caption">{tn('shop.skinCaption')}</div>
             <div className="shop-grid">
               {skins.map((item) => (
                 <SkinCard
@@ -269,7 +270,7 @@ export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpen
         <ShopTryOn
           item={tryOn}
           look={{
-            displayName: profile?.displayName ?? 'Рыбак',
+            displayName: profile?.displayName ?? tn('common.angler'),
             avatarUrl: profile?.avatarUrl ?? null,
             heroBg: profile?.heroBg ?? null,
             frame: profile?.equippedFrame ?? null,
@@ -379,21 +380,21 @@ function BuffRow({
       </div>
       {state === 'armed' ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-          <span className="badge badge-shield">Заряжено</span>
+          <span className="badge badge-shield">{tn('shop.armed')}</span>
           {onRefund && (
             <button className="challenge-swap-btn" onClick={onRefund}>
-              Вернуть
+              {tn('shop.refund')}
             </button>
           )}
         </div>
       ) : state === 'active' && buff.id === 'extra_challenge' ? (
-        <span className="badge badge-shield">Куплено</span>
+        <span className="badge badge-shield">{tn('shop.bought')}</span>
       ) : state === 'active' ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-          <span className="badge badge-shield">До {expiresAt ? new Date(expiresAt).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+          <span className="badge badge-shield">{tn('shop.until', { time: expiresAt ? new Date(expiresAt).toLocaleTimeString(currentLocale(), { hour: '2-digit', minute: '2-digit' }) : '' })}</span>
           {onRefund && (
             <button className="challenge-swap-btn" onClick={onRefund}>
-              Вернуть
+              {tn('shop.refund')}
             </button>
           )}
         </div>
@@ -440,7 +441,7 @@ function FrameCard({
   const prize = !item.purchasable
 
   return (
-    <div className={`shop-card ${prize ? 'shop-card-jackpot' : rarityClass(item.price)}`} data-tag={prize ? 'Джекпот' : undefined}>
+    <div className={`shop-card ${prize ? 'shop-card-jackpot' : rarityClass(item.price)}`} data-tag={prize ? tn('shop.jackpotTag') : undefined}>
       <div className="shop-card-preview">
         <div className="shop-card-avatar">
           <AvatarFrameRing frame={frame} />
@@ -453,17 +454,17 @@ function FrameCard({
       <div className="shop-card-name">{item.name}</div>
       {equipped ? (
         <button className="btn-secondary shop-equipped" onClick={onUnequip} disabled={busy}>
-          Снять
+          {tn('shop.unequip')}
         </button>
       ) : owned ? (
         <button className="btn-primary" onClick={onEquip} disabled={busy}>
-          Надеть
+          {tn('shop.equip')}
         </button>
       ) : prize ? (
         <>
-          <div className="shop-card-jackpot-note">Только в слотах · {JACKPOT_CHANCE_LABEL}</div>
+          <div className="shop-card-jackpot-note">{tn('shop.jackpotNote', { chance: jackpotChanceLabel() })}</div>
           <button className="btn-secondary" onClick={onGoSlots}>
-            Выбить в слотах
+            {tn('shop.knockOut')}
           </button>
         </>
       ) : (
@@ -473,11 +474,11 @@ function FrameCard({
         </button>
       )}
       <button className="challenge-swap-btn" onClick={onTryOn}>
-        Примерить
+        {tn('shop.tryOn')}
       </button>
       {onRefund && (
         <button className="challenge-swap-btn" onClick={onRefund}>
-          Вернуть
+          {tn('shop.refund')}
         </button>
       )}
     </div>
@@ -513,11 +514,11 @@ function BgCard({
       <div className="shop-card-name">{item.name}</div>
       {equipped ? (
         <button className="btn-secondary shop-equipped" disabled>
-          Активен
+          {tn('shop.active')}
         </button>
       ) : owned ? (
         <button className="btn-primary" onClick={onEquip} disabled={busy}>
-          Применить
+          {tn('shop.apply')}
         </button>
       ) : (
         <button className="btn-secondary shop-price-btn" onClick={onBuy} disabled={busy}>
@@ -526,11 +527,11 @@ function BgCard({
         </button>
       )}
       <button className="challenge-swap-btn" onClick={onTryOn}>
-        Примерить
+        {tn('shop.tryOn')}
       </button>
       {onRefund && (
         <button className="challenge-swap-btn" onClick={onRefund}>
-          Вернуть
+          {tn('shop.refund')}
         </button>
       )}
     </div>
@@ -568,11 +569,11 @@ function NameStyleCard({
       <div className="shop-card-name">{item.name}</div>
       {equipped ? (
         <button className="btn-secondary shop-equipped" onClick={onUnequip} disabled={busy}>
-          Снять
+          {tn('shop.unequip')}
         </button>
       ) : owned ? (
         <button className="btn-primary" onClick={onEquip} disabled={busy}>
-          Надеть
+          {tn('shop.equip')}
         </button>
       ) : (
         <button className="btn-secondary shop-price-btn" onClick={onBuy} disabled={busy}>
@@ -581,11 +582,11 @@ function NameStyleCard({
         </button>
       )}
       <button className="challenge-swap-btn" onClick={onTryOn}>
-        Примерить
+        {tn('shop.tryOn')}
       </button>
       {onRefund && (
         <button className="challenge-swap-btn" onClick={onRefund}>
-          Вернуть
+          {tn('shop.refund')}
         </button>
       )}
     </div>
@@ -621,11 +622,11 @@ function SkinCard({
       <div className="shop-card-name">{item.name}</div>
       {equipped ? (
         <button className="btn-secondary shop-equipped" onClick={onUnequip} disabled={busy}>
-          Снять
+          {tn('shop.unequip')}
         </button>
       ) : owned ? (
         <button className="btn-primary" onClick={onEquip} disabled={busy}>
-          Применить
+          {tn('shop.apply')}
         </button>
       ) : (
         <button className="btn-secondary shop-price-btn" onClick={onBuy} disabled={busy}>
@@ -634,11 +635,11 @@ function SkinCard({
         </button>
       )}
       <button className="challenge-swap-btn" onClick={onTryOn}>
-        Примерить
+        {tn('shop.tryOn')}
       </button>
       {onRefund && (
         <button className="challenge-swap-btn" onClick={onRefund}>
-          Вернуть
+          {tn('shop.refund')}
         </button>
       )}
     </div>

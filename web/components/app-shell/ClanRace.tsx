@@ -1,11 +1,13 @@
 'use client'
 
+import { HexLoader } from '@/components/app-shell/HexLoader'
 import { memo, useEffect, useState } from 'react'
 import { useClanRace } from '@/lib/supabase/queries'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { resolveCrest, shadeHex } from '@/lib/data/clanCrests'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { ChallengeCountdown } from '@/components/app-shell/ChallengeCountdown'
+import { currentLocale, tn } from '@/lib/i18n/runtime'
 import type { CityId } from '@/lib/data/city'
 import type { ClanRace, ClanRaceEntry } from '@/lib/data/types'
 
@@ -17,7 +19,7 @@ export function raceProgress(c: ClanRaceEntry): number {
 }
 
 export function formatMeters(m: number): string {
-  return m >= 10_000 ? `${(m / 1000).toFixed(1).replace('.', ',')} км` : `${m.toLocaleString('ru-RU')} м`
+  return m >= 10_000 ? `${(m / 1000).toLocaleString(currentLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })} ${tn('fmt.km')}` : `${m.toLocaleString(currentLocale())} ${tn('fmt.m')}`
 }
 
 // A side-on rowing boat — we are rowers: a long hull in the clan's primary
@@ -94,12 +96,12 @@ export function RaceRiver({
     <div className="race-river" style={{ ['--boat' as string]: `${boatSize}px`, ['--lane' as string]: `${laneHeight}px` }}>
       <div className="race-river-flow" aria-hidden />
       <div className="race-river-head">
-        <span>Старт</span>
-        <span>Финиш</span>
+        <span>{tn('race.start')}</span>
+        <span>{tn('race.finish')}</span>
       </div>
       {clans.length === 0 ? (
         <div className="race-lane race-lane-empty">
-          <span className="race-empty-text">В городе пока нет кланов — первая лодка может быть твоей</span>
+          <span className="race-empty-text">{tn('race.noClans')}</span>
         </div>
       ) : (
         clans.map((c, i) => {
@@ -113,7 +115,7 @@ export function RaceRiver({
               className={`race-lane${mine ? ' mine' : ''}${c.finishedAt ? ' finished' : ''}`}
               style={{ ['--c' as string]: primary, ['--p' as string]: p, ['--i' as string]: i }}
               onClick={onOpenClan ? () => onOpenClan(c.id) : undefined}
-              aria-label={`${c.rank}-е место: ${c.name}, ${formatMeters(c.meters)} из ${formatMeters(c.finish)}`}
+              aria-label={tn('race.laneAria', { place: tn('race.place', { rank: c.rank }), name: c.name, done: formatMeters(c.meters), total: formatMeters(c.finish) })}
             >
               <span className="race-lane-rank">{c.rank}</span>
               <span className="race-track">
@@ -125,7 +127,7 @@ export function RaceRiver({
                   </span>
                 </span>
               </span>
-              {mine && <span className="race-lane-you">Вы</span>}
+              {mine && <span className="race-lane-you">{tn('race.you')}</span>}
             </Lane>
           )
         })
@@ -139,7 +141,7 @@ export function RaceRiver({
 // own line, and the way into the full regatta screen.
 export function ClanRacePreview({ city, clanId, onOpenRace }: { city: CityId; clanId: number; onOpenRace: () => void }) {
   const { data: race, isLoading } = useClanRace(city, true)
-  if (isLoading || !race) return <div className="clan-soon">{isLoading ? 'Загрузка…' : 'Нет данных'}</div>
+  if (isLoading || !race) return <div className="clan-soon">{isLoading ? <HexLoader size={0.55} /> : tn('common.noData')}</div>
 
   const mine = race.clans.find((c) => c.id === clanId) ?? null
   // Up to five lanes, always including this clan's.
@@ -151,8 +153,8 @@ export function ClanRacePreview({ city, clanId, onOpenRace }: { city: CityId; cl
       <div className="race-card race-card-preview" onClick={onOpenRace}>
         <div className="race-card-head">
           <div>
-            <div className="race-kicker">Битва кланов недели</div>
-            <div className="race-card-title">{mine ? raceHeadline(mine, race) : 'Лодка клана ещё не спущена'}</div>
+            <div className="race-kicker">{tn('race.weekKicker')}</div>
+            <div className="race-card-title">{mine ? raceHeadline(mine, race) : tn('race.noBoat')}</div>
           </div>
           <ChallengeCountdown endsAt={race.weekEnd} />
         </div>
@@ -161,10 +163,10 @@ export function ClanRacePreview({ city, clanId, onOpenRace }: { city: CityId; cl
           <span>
             {mine ? (
               <>
-                <b>{formatMeters(mine.meters)}</b> из {formatMeters(mine.finish)}
+                <b>{formatMeters(mine.meters)}</b> {tn('race.of', { total: formatMeters(mine.finish) })}
               </>
             ) : (
-              'Кланов в битве: ' + race.clans.length
+              tn('race.clansCount', { count: race.clans.length })
             )}
           </span>
           <button
@@ -174,7 +176,7 @@ export function ClanRacePreview({ city, clanId, onOpenRace }: { city: CityId; cl
               onOpenRace()
             }}
           >
-            Открыть битву кланов
+            {tn('race.open')}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="m9 6 6 6-6 6" />
             </svg>
@@ -193,10 +195,10 @@ function RaceRowers({ rowers }: { rowers: ClanRace['myRowers'] }) {
   const max = Math.max(1, ...rowers.map((r) => r.meters))
   return (
     <div className="clan-card">
-      <div className="clan-card-title">Вклад участников</div>
+      <div className="clan-card-title">{tn('race.contribution')}</div>
       {rowers.length === 0 ? (
         <div className="clan-empty" style={{ padding: '14px 0' }}>
-          Пока никто не грёб на этой неделе — лови и захватывай!
+          {tn('race.noRowers')}
         </div>
       ) : (
         rowers.map((r, i) => (
@@ -212,7 +214,7 @@ function RaceRowers({ rowers }: { rowers: ClanRace['myRowers'] }) {
             </div>
             <div className="clan-member-stats">
               <b>{r.meters}</b>
-              <span>м</span>
+              <span>{tn('fmt.m')}</span>
             </div>
           </div>
         ))
@@ -223,43 +225,43 @@ function RaceRowers({ rowers }: { rowers: ClanRace['myRowers'] }) {
 
 export function raceHeadline(c: ClanRaceEntry, race: ClanRace): string {
   const solo = race.clans.length < 2
-  if (c.finishedAt) return solo ? 'Доплыли до финиша!' : `Финиш · ${c.rank}-е место`
-  if (solo) return `Пройдено ${Math.floor(raceProgress(c) * 100)}% пути`
-  return `${c.rank}-е место из ${race.clans.length}`
+  if (c.finishedAt) return solo ? tn('race.doneAll') : tn('race.finishPlace', { place: tn('race.place', { rank: c.rank }) })
+  if (solo) return tn('race.pctPath', { pct: Math.floor(raceProgress(c) * 100) })
+  return tn('race.placeOf', { rank: c.rank, total: race.clans.length })
 }
 
 export function RaceRulesCard() {
   return (
     <div className="clan-card race-rules">
-      <div className="clan-card-title">Как плывёт лодка</div>
+      <div className="clan-card-title">{tn('race.rulesTitle')}</div>
       <div className="race-rule-grid">
-        <span>Улов</span>
-        <b>+10 м</b>
-        <span>Недельный челлендж</span>
-        <b>+20 м</b>
-        <span>Захват сектора</span>
-        <b>+30 м</b>
-        <span>Отбить сектор у другого клана</span>
-        <b>+50 м</b>
+        <span>{tn('race.ruleCatch')}</span>
+        <b>+10 {tn('fmt.m')}</b>
+        <span>{tn('race.ruleChallenge')}</span>
+        <b>+20 {tn('fmt.m')}</b>
+        <span>{tn('race.ruleClaim')}</span>
+        <b>+30 {tn('fmt.m')}</b>
+        <span>{tn('race.ruleSteal')}</span>
+        <b>+50 {tn('fmt.m')}</b>
       </div>
       <p className="race-rule-note">
-        Один рыбак приносит не больше 150 м в день — грести нужно всем. Финиш зависит от размера клана: 200 м на участника (минимум как для троих).
+        {tn('race.ruleCap')}
       </p>
       <p className="race-rule-note">
-        Итоги — в ночь на понедельник. Доплыли — 80 монет каждому, кто грёб. Если кланов в городе два и больше, за 1–3 место ещё +120 / +60 / +30 и трофеи клану.
+        {tn('race.ruleResults')}
       </p>
     </div>
   )
 }
 
 function shortLeft(ms: number): string {
-  if (ms <= 0) return 'итоги ночью'
+  if (ms <= 0) return tn('race.leftNight')
   const minutes = Math.floor(ms / 60_000)
   const d = Math.floor(minutes / 1440)
   const h = Math.floor((minutes % 1440) / 60)
-  if (d >= 1) return `ещё ${d} д ${h} ч`
-  if (h >= 1) return `ещё ${h} ч`
-  return `ещё ${minutes % 60} мин`
+  if (d >= 1) return tn('race.leftDH', { d, h })
+  if (h >= 1) return tn('race.leftH', { h })
+  return tn('race.leftM', { m: minutes % 60 })
 }
 
 // Map plaque for clan members: where their boat is right now. Only mounted
@@ -274,12 +276,12 @@ export function MapRacePill({ city, clanId, onOpen }: { city: CityId; clanId: nu
   const mine = race?.clans.find((c) => c.id === clanId)
   if (!race || !mine) return null
   const progress = raceProgress(mine)
-  const status = mine.finishedAt ? 'Финиш!' : race.clans.length < 2 ? `${Math.floor(progress * 100)}% пути` : `${mine.rank}-е место`
+  const status = mine.finishedAt ? tn('race.statusFinish') : race.clans.length < 2 ? tn('race.pctShort', { pct: Math.floor(progress * 100) }) : tn('race.place', { rank: mine.rank })
   const left = shortLeft(new Date(race.weekEnd).getTime() - now)
   // The brand-orange card is the one thing on the map that isn't a sector
   // or a control — it has to read at a glance over both sea and land.
   return (
-    <button className="map-race-pill tap-scale" onClick={onOpen} aria-label={`Битва кланов: ${status}, ${left}`}>
+    <button className="map-race-pill tap-scale" onClick={onOpen} aria-label={tn('race.pillAria', { status, left })}>
       <span className="map-race-pill-icon" aria-hidden>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
           <path d="M14.5 17.5 3 6V3h3l11.5 11.5" />
@@ -290,7 +292,7 @@ export function MapRacePill({ city, clanId, onOpen }: { city: CityId; clanId: nu
       </span>
       <span className="map-race-pill-body">
         <span className="map-race-pill-row">
-          <span className="map-race-pill-title">Битва кланов</span>
+          <span className="map-race-pill-title">{tn('race.pillTitle')}</span>
           <b className="map-race-pill-status">{status}</b>
           <span className="map-race-pill-left">{left}</span>
         </span>

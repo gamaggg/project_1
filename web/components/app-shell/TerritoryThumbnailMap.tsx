@@ -7,6 +7,7 @@ import type { Territory } from '@/lib/data/types'
 import { resolveTerritoryColor, OTHER_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { previewTileUrl } from '@/lib/mapbox/rasterTiles'
 import { splitSector } from '@/lib/map/sectorParts'
+import { tn } from '@/lib/i18n/runtime'
 
 // A static, single-sector preview for TerritoryScreen — not the interactive
 // multi-sector LeafletMap. The number/avatar overlay is plain HTML, not a
@@ -33,7 +34,7 @@ export function TerritoryThumbnailMap({
   const holders = territory.ownerId
     ? [
         { id: territory.ownerId, avatarUrl: ownerAvatarUrl ?? null, initials: ownerInitials ?? '', isMe: territory.status === 'mine', color: territory.ownerColor },
-        ...territory.coHolders.map((h) => ({ id: h.id, avatarUrl: h.avatarUrl, initials: (h.displayName ?? 'Рыбак').slice(0, 2).toUpperCase(), isMe: h.isMe, color: h.color })),
+        ...territory.coHolders.map((h) => ({ id: h.id, avatarUrl: h.avatarUrl, initials: (h.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase(), isMe: h.isMe, color: h.color })),
       ]
     : []
   const shared = holders.length > 1

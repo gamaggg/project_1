@@ -1,9 +1,11 @@
 'use client'
 
+import { HexLoader } from '@/components/app-shell/HexLoader'
 import { createPortal } from 'react-dom'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { useMyCoinTransactions, useAdminUserCoinTransactions } from '@/lib/supabase/queries'
 import { formatWhen } from '@/lib/format'
+import { tn } from '@/lib/i18n/runtime'
 
 // The shop hero balance's "История" link — every coin-mutating RPC now logs
 // a row to coin_transactions (see that migration), so this is a plain read
@@ -27,10 +29,14 @@ export function CoinHistoryModal({ userId, displayName, onClose }: { userId?: st
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card modal-card-wide coin-history-card" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-title">{userId ? `История — ${displayName}` : 'История списаний'}</div>
+        <div className="modal-title">{userId ? tn('coinHistory.titleUser', { name: displayName ?? '' }) : tn('coinHistory.title')}</div>
         <div className="coin-history-list">
-          {isLoading && <div className="coin-history-empty">Загружаем…</div>}
-          {!isLoading && transactions.length === 0 && <div className="coin-history-empty">Пока пусто — здесь появятся покупки и начисления.</div>}
+          {isLoading && (
+            <div className="coin-history-empty">
+              <HexLoader size={0.5} />
+            </div>
+          )}
+          {!isLoading && transactions.length === 0 && <div className="coin-history-empty">{tn('coinHistory.empty')}</div>}
           {transactions.map((t) => (
             <div className="coin-history-row" key={t.id}>
               <div className="coin-history-row-main">
@@ -46,12 +52,12 @@ export function CoinHistoryModal({ userId, displayName, onClose }: { userId?: st
           ))}
           {more && (
             <button className="coin-history-more" disabled={own.isFetchingNextPage} onClick={() => void own.fetchNextPage()}>
-              {own.isFetchingNextPage ? 'Загружаем…' : 'Показать ещё'}
+              {own.isFetchingNextPage ? tn('coinHistory.loading') : tn('coinHistory.more')}
             </button>
           )}
         </div>
         <button className="btn-secondary" style={{ marginTop: 14 }} onClick={onClose}>
-          Закрыть
+          {tn('common.close')}
         </button>
       </div>
     </div>,

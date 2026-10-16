@@ -1,5 +1,6 @@
 'use client'
 
+import { HexLoader } from '@/components/app-shell/HexLoader'
 import { geoImageUrl } from '@/lib/geo'
 import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useShopRewardsCount } from '@/lib/shopRewards'
@@ -26,13 +27,14 @@ import {
 } from '@/lib/supabase/queries'
 import { AwardsRing } from '@/components/app-shell/AwardsRing'
 import { uploadAvatar } from '@/lib/supabase/storage'
+import { AchievementCard } from '@/components/app-shell/AchievementCard'
 import { computeAchievements, heldTerritories, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { resolveClanBackground } from '@/lib/data/clanBackgrounds'
 import { CLAN_ROLE_LABEL } from '@/lib/data/clanLevels'
 import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralFollowers, pluralSpecies, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
-import { ACH_ICONS, CTA_ICONS } from '@/components/app-shell/icons'
+import { CTA_ICONS } from '@/components/app-shell/icons'
 import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorPreviewMap'
 import { DEFAULT_TERRITORY_COLOR, TERRITORY_COLORS } from '@/lib/data/territoryColors'
 import { resolveHeroBackground } from '@/lib/data/heroBackgrounds'
@@ -49,6 +51,7 @@ import { useTelegramHomeScreen } from '@/lib/telegram/useTelegramHomeScreen'
 import { LaurelIcon } from '@/components/app-shell/SectorInsights'
 import { useT, TRANSLATION_READY } from '@/lib/i18n'
 import { LanguagePicker } from '@/components/app-shell/LanguagePicker'
+import { tn } from '@/lib/i18n'
 
 // Telegram notifications, as one row rather than a screen of its own —
 // there's a single setting to make so far. Which control it shows depends on
@@ -77,10 +80,10 @@ function TelegramNotificationsRow() {
   if (reachable) {
     return (
       <div className="perm-switch-row" style={{ borderBottom: 'none', padding: 0 }}>
-        <div className="perm-switch-label">Уведомления в Telegram</div>
+        <div className="perm-switch-label">{tn('profile.tgNotifications')}</div>
         <button
           className={`perm-switch${state.enabled ? ' on' : ''}`}
-          aria-label="Уведомления в Telegram"
+          aria-label={tn('profile.tgNotifications')}
           disabled={setEnabled.isPending}
           onClick={() => setEnabled.mutate(!state.enabled)}
         />
@@ -105,10 +108,10 @@ function TelegramNotificationsRow() {
   return (
     <>
       <button className="btn-secondary" disabled={createLink.isPending} onClick={connect}>
-        {state.unreachable ? 'Подключить Telegram заново' : 'Подключить уведомления в Telegram'}
+        {state.unreachable ? tn('profile.tgReconnect') : tn('profile.tgConnect')}
       </button>
       {linkError && (
-        <div style={{ fontSize: 12.5, color: '#D33', marginTop: 6 }}>Не получилось создать ссылку. Попробуй ещё раз.</div>
+        <div style={{ fontSize: 12.5, color: '#D33', marginTop: 6 }}>{tn('profile.tgLinkFailed')}</div>
       )}
     </>
   )
@@ -171,47 +174,47 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="modal-overlay" onClick={pending ? undefined : onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-title">Изменить пароль</div>
+        <div className="modal-title">{tn('profile.changePassword')}</div>
         {done ? (
           <>
-            <div style={{ marginTop: 10, fontSize: 13.5, color: 'var(--ink-soft)' }}>Пароль обновлён.</div>
+            <div style={{ marginTop: 10, fontSize: 13.5, color: 'var(--ink-soft)' }}>{tn('profile.passwordUpdated')}</div>
             <button className="btn-primary" style={{ marginTop: 14 }} onClick={onClose}>
-              Готово
+              {tn('common.done')}
             </button>
           </>
         ) : (
           <>
             <div className="auth-field" style={{ marginTop: 12 }}>
-              <label htmlFor="change-password-new">Новый пароль</label>
+              <label htmlFor="change-password-new">{tn('profile.newPassword')}</label>
               <input
                 id="change-password-new"
                 type="password"
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Минимум 6 символов"
+                placeholder={tn('profile.passwordMin')}
               />
             </div>
             <div className="auth-field">
-              <label htmlFor="change-password-confirm">Повторите пароль</label>
+              <label htmlFor="change-password-confirm">{tn('profile.repeatPassword')}</label>
               <input
                 id="change-password-confirm"
                 type="password"
                 minLength={6}
                 value={passwordConfirm}
                 onChange={(e) => setPasswordConfirm(e.target.value)}
-                placeholder="Ещё раз пароль"
+                placeholder={tn('profile.passwordAgain')}
               />
-              {mismatch && <div style={{ fontSize: 12.5, color: '#D33', marginTop: 4 }}>Пароли не совпадают</div>}
+              {mismatch && <div style={{ fontSize: 12.5, color: '#D33', marginTop: 4 }}>{tn('profile.passwordMismatch')}</div>}
             </div>
             {error && (
               <div style={{ color: '#D33', fontSize: 12.5, fontWeight: 600, marginTop: 4 }}>{error}</div>
             )}
             <button className="btn-primary" style={{ marginTop: 10 }} disabled={!valid || pending} onClick={handleSubmit}>
-              {pending ? 'Сохраняем…' : 'Сохранить пароль'}
+              {pending ? tn('common.saving') : tn('profile.savePassword')}
             </button>
             <button className="btn-secondary" style={{ marginTop: 8 }} disabled={pending} onClick={onClose}>
-              Отмена
+              {tn('common.cancel')}
             </button>
           </>
         )}
@@ -257,7 +260,7 @@ export function EditProfileModal({ onClose }: { onClose: () => void }) {
     onClose()
   }
 
-  const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
+  const initials = (profile?.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -268,13 +271,13 @@ export function EditProfileModal({ onClose }: { onClose: () => void }) {
           </svg>
         </div>
         <div className="modal-title" style={{ textAlign: 'center' }}>
-          Редактировать профиль
+          {tn('profile.editProfile')}
         </div>
 
         <div className="avatar-edit-wrap" style={{ marginTop: 18 }}>
           <div className="profile-avatar">
             {avatarStatus === 'uploading' ? (
-              <div className="spinner" />
+              <HexLoader size={0.42} />
             ) : avatarUrl ? (
               <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
             ) : (
@@ -290,24 +293,24 @@ export function EditProfileModal({ onClose }: { onClose: () => void }) {
         </div>
         {avatarStatus === 'error' && (
           <div style={{ textAlign: 'center', color: '#D33', fontSize: 12.5, marginTop: -8, marginBottom: 10 }}>
-            Не удалось загрузить фото, попробуй ещё раз
+            {tn('profile.photoFailed')}
           </div>
         )}
 
         <div className="auth-field" style={{ marginTop: 8 }}>
-          <label htmlFor="edit-name">Имя</label>
+          <label htmlFor="edit-name">{tn('profile.name')}</label>
           <input id="edit-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={40} />
         </div>
 
         <div className="auth-field">
-          <label htmlFor="edit-bio">О себе</label>
+          <label htmlFor="edit-bio">{tn('profile.about')}</label>
           <textarea
             id="edit-bio"
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             maxLength={280}
             rows={3}
-            placeholder="Необязательно"
+            placeholder={tn('profile.optional')}
             style={{ resize: 'vertical', fontFamily: 'inherit' }}
           />
         </div>
@@ -315,14 +318,14 @@ export function EditProfileModal({ onClose }: { onClose: () => void }) {
         <div className="auth-field">
           <label>Email</label>
           <input value={user?.email ?? ''} disabled />
-          <div style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 4 }}>Email нельзя изменить</div>
+          <div style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 4 }}>{tn('profile.emailLocked')}</div>
         </div>
 
         <button className="btn-primary" style={{ marginTop: 6 }} onClick={handleSave} disabled={!displayName.trim() || updateProfile.isPending}>
-          {updateProfile.isPending ? 'Сохраняем…' : 'Сохранить'}
+          {updateProfile.isPending ? tn('common.saving') : tn('common.save')}
         </button>
         <button className="btn-secondary" style={{ marginTop: 8 }} onClick={() => setChangingPassword(true)}>
-          Изменить пароль
+          {tn('profile.changePassword')}
         </button>
       </div>
       {changingPassword && <ChangePasswordModal onClose={() => setChangingPassword(false)} />}
@@ -360,7 +363,7 @@ export function ChangeColorModal({ onClose, city }: { onClose: () => void; city:
         </div>
 
         <div className="modal-title" style={{ textAlign: 'center' }}>
-          Цвет территории
+          {tn('profile.territoryColor')}
         </div>
         <TerritoryColorPreviewMap
           city={city}
@@ -380,7 +383,7 @@ export function ChangeColorModal({ onClose, city }: { onClose: () => void; city:
           ))}
         </div>
         <button className="btn-primary" onClick={handleSaveColor} disabled={!selected || updateProfile.isPending}>
-          {updateProfile.isPending ? 'Сохраняем…' : 'Сохранить'}
+          {updateProfile.isPending ? tn('common.saving') : tn('common.save')}
         </button>
       </div>
     </div>
@@ -500,7 +503,7 @@ export function ProfileScreen({
   )
   const recentMine = myCatches.slice(0, 3)
   const visibleTerritories = myTerritories.slice(0, 5)
-  const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
+  const initials = (profile?.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()
   // Synthetic placeholder set by the Telegram auto-sign-in handshake (see
   // api/auth/telegram/route.ts) — never a real address the person chose, so
   // offering "Link email" only makes sense while it's still this pattern.
@@ -510,7 +513,10 @@ export function ProfileScreen({
 
   function handleShareProfile() {
     if (!profile?.publicId) return
-    const text = `🎣 Я в RANGE — ${myTerritories.length} ${pluralTerritories(myTerritories.length)}, ${myCatches.length} ${pluralCatches(myCatches.length)}!\n\nПрисоединяйся и сразимся за территории 🏆`
+    const text = tn('profile.shareProfile', {
+      territories: `${myTerritories.length} ${pluralTerritories(myTerritories.length)}`,
+      catches: `${myCatches.length} ${pluralCatches(myCatches.length)}`,
+    })
     onShareProfile(profile.publicId, text)
   }
 
@@ -571,10 +577,10 @@ export function ProfileScreen({
           </div>
         </AwardsRing>
         <div className="profile-hero-name">
-          <StyledName name={profile?.displayName ?? 'Профиль'} styleId={profile?.equippedNameStyle} />
+          <StyledName name={profile?.displayName ?? tn('profile.profileFallback')} styleId={profile?.equippedNameStyle} />
         </div>
         <div className="profile-hero-meta">
-          {profile?.createdAt && <>В RANGE с <b>{formatJoinedDate(profile.createdAt)}</b></>}
+          {profile?.createdAt && <>{tn('profile.joinedPre')}<b>{formatJoinedDate(profile.createdAt)}</b>{tn('profile.joinedPost')}</>}
           {profile?.publicId && <> · ID {profile.publicId}</>}
         </div>
         <div className="profile-hero-badge">
@@ -583,7 +589,7 @@ export function ProfileScreen({
             style={{ color: 'rgba(var(--hero-text-rgb,255,255,255),.75)', display: 'inline-flex', alignItems: 'center', gap: 5 }}
             onClick={onOpenCityPicker}
           >
-            Город: {CITIES[city].name}
+            {tn('profile.city', { city: CITIES[city].name })}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 20h9" />
               <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
@@ -604,9 +610,9 @@ export function ProfileScreen({
           <b>{myCatchesPending ? <span className="skel hero-stat-skel" /> : myCatches.length}</b>
           <span>{pluralCatches(myCatches.length)}</span>
         </button>
-        <button className="hero-stat" onClick={() => onOpenSpecies(mySpecies)}>
+        <button data-tour="species-stats" className="hero-stat" onClick={() => onOpenSpecies(mySpecies)}>
           <b>{speciesCount}</b>
-          <span>{pluralSpecies(speciesCount)} рыб</span>
+          <span>{tn('profile.speciesOfFish', { count: speciesCount })}</span>
         </button>
         <button
           className="hero-stat"
@@ -633,8 +639,8 @@ export function ProfileScreen({
             </svg>
           </span>
           <span className="profile-cta-icon">{CTA_ICONS.target}</span>
-          <span className="profile-cta-title">Челленджи недели</span>
-          <span className="profile-cta-sub">Выполняй и получай награды</span>
+          <span className="profile-cta-title">{tn('profile.challengesTitle')}</span>
+          <span className="profile-cta-sub">{tn('profile.challengesSub')}</span>
         </button>
         <button data-tour="shop" className="profile-cta-btn profile-cta-shop tap-scale" onClick={onOpenShop}>
           <div className="profile-cta-pattern" />
@@ -648,8 +654,8 @@ export function ProfileScreen({
             {/* Slot spins waiting there (lib/shopRewards.ts). */}
             {shopRewards.total > 0 && <span className="profile-cta-badge">{shopRewards.total > 9 ? '9+' : shopRewards.total}</span>}
           </span>
-          <span className="profile-cta-title">Магазин</span>
-          <span className="profile-cta-sub">Рамки, фоны, скины</span>
+          <span className="profile-cta-title">{tn('profile.shopTitle')}</span>
+          <span className="profile-cta-sub">{tn('profile.shopSub')}</span>
         </button>
       </div>
 
@@ -664,11 +670,11 @@ export function ProfileScreen({
         >
           <ClanCrest crest={profile.clanCrest} size={52} />
           <span className="profile-clan-text">
-            <span className="profile-clan-kicker">{profile.clanRole ? CLAN_ROLE_LABEL[profile.clanRole] : 'Клан'}</span>
+            <span className="profile-clan-kicker">{profile.clanRole ? CLAN_ROLE_LABEL[profile.clanRole] : tn('map.clan')}</span>
             <span className="profile-clan-name">{profile.clanName}</span>
           </span>
           {(clanChat?.unread ?? 0) > 0 && (
-            <span className="profile-clan-unread" aria-label={`Непрочитанных сообщений в чате: ${clanChat!.unread}`}>
+            <span className="profile-clan-unread" aria-label={tn('profile.unreadChat', { count: clanChat!.unread })}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12Z" />
               </svg>
@@ -689,8 +695,8 @@ export function ProfileScreen({
             <ClanCrest crest={{ shape: 'round', symbol: 'flame', primary: '#1F8A5B', secondary: '#FFFFFF' }} size={34} />
           </span>
           <span className="profile-clan-text">
-            <span className="profile-clan-kicker">Кланы</span>
-            <span className="profile-clan-name">Вступи в клан или создай свой</span>
+            <span className="profile-clan-kicker">{tn('map.clans')}</span>
+            <span className="profile-clan-name">{tn('profile.joinOrCreate')}</span>
           </span>
           <span className="profile-cta-arrow" style={{ position: 'static' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
@@ -717,10 +723,10 @@ export function ProfileScreen({
             <span className="profile-geo-q">?</span>
           </span>
           <span className="profile-clan-text">
-            <span className="profile-clan-kicker">Игра дня</span>
-            <span className="profile-clan-name">Где это?</span>
+            <span className="profile-clan-kicker">{tn('profile.dailyGame')}</span>
+            <span className="profile-clan-name">{tn('shell.geoTitle')}</span>
           </span>
-          {geo?.panorama && !geo.result && <span className="profile-geo-dot" aria-label="Панорама дня ждёт" />}
+          {geo?.panorama && !geo.result && <span className="profile-geo-dot" aria-label={tn('profile.panoramaWaiting')} />}
           <span className="profile-cta-arrow" style={{ position: 'static' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 5l7 7-7 7" />
@@ -731,34 +737,27 @@ export function ProfileScreen({
       </div>
 
       <div className="section-title-row" style={{ marginTop: 24 }}>
-        <div className="section-title">Достижения</div>
+        <div className="section-title">
+          {tn('profile.achievements')}
+          <span className="ach-count" aria-label={tn('ach.summary', { done: achievements.filter((x) => x.unlocked).length, total: achievements.length })}>
+            <b>{achievements.filter((x) => x.unlocked).length}</b>/{achievements.length}
+          </span>
+        </div>
         <button className="section-link" onClick={onOpenAchievements}>
-          Все достижения
+          {tn('profile.allAchievements')}
         </button>
       </div>
       <div className="ach-grid">
         {achievements.slice(0, 4).map((a, i) => (
-          <div
-            className={`ach-card${a.unlocked ? '' : ' locked'}`}
-            key={a.icon}
-            onClick={() => onOpenAchievementDetail(a.icon)}
-            style={{ animationDelay: `${i * 50}ms` }}
-          >
-            <div className={`ach-icon hex-aspect hex-shape ${a.unlocked ? 'on' : 'off'}`}>{ACH_ICONS[a.icon]}</div>
-            <div>
-              <div className="ach-title">{a.title}</div>
-              <div className="ach-desc">{a.desc}</div>
-              {!a.unlocked && a.progress && <div className="ach-progress">{a.progress}</div>}
-            </div>
-          </div>
+          <AchievementCard key={a.icon} a={a} index={i} onOpen={() => onOpenAchievementDetail(a.icon)} />
         ))}
       </div>
 
       <div className="section-title-row" style={{ marginTop: 24 }}>
-        <div className="section-title">Последние уловы</div>
+        <div className="section-title">{tn('profile.recentCatches')}</div>
         {myCatches.length > recentMine.length && (
           <button className="section-link" onClick={onOpenAllCatches}>
-            Все уловы
+            {tn('profile.allCatches')}
           </button>
         )}
       </div>
@@ -787,16 +786,16 @@ export function ProfileScreen({
           myCatchesPending ? (
             <SkeletonRows count={3} />
           ) : (
-            <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет уловов</div>
+            <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>{tn('map.noCatches')}</div>
           )
         )}
       </div>
 
       <div className="section-title-row" style={{ marginTop: 24 }}>
-        <div className="section-title">Мои территории</div>
+        <div className="section-title">{tn('profile.myTerritories')}</div>
         {myTerritories.length > visibleTerritories.length && (
           <button className="section-link" onClick={onOpenAllTerritories}>
-            Все мои территории
+            {tn('profile.allMyTerritories')}
           </button>
         )}
       </div>
@@ -823,14 +822,14 @@ export function ProfileScreen({
             </button>
           ))
         ) : (
-          <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет своих территорий</div>
+          <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>{tn('profile.noTerritories')}</div>
         )}
       </div>
 
       {record && (
         <>
           <div className="section-title" style={{ marginTop: 24 }}>
-            Личный рекорд
+            {tn('profile.record')}
           </div>
           <div className="card tap-scale" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }} onClick={() => onOpenPhoto(record.id)}>
             <div className="fish-thumb" style={{ width: 52, height: 52 }}>
@@ -838,7 +837,7 @@ export function ProfileScreen({
             </div>
             <div>
               <div style={{ fontWeight: 800, fontSize: 16 }}>{record.speciesName}</div>
-              <div style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 700, marginTop: 2 }}>{record.lengthCm} см</div>
+              <div style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 700, marginTop: 2 }}>{record.lengthCm} {tn('fmt.cm')}</div>
             </div>
           </div>
         </>
@@ -915,8 +914,8 @@ export function ProfileScreen({
           <CoinIcon size={20} />
         </span>
         <span className="profile-clan-text">
-          <span className="profile-invite-title">Пригласи друзей</span>
-          <span className="profile-invite-sub">+100 монет другу на старт и тебе — когда он поймает первую рыбу</span>
+          <span className="profile-invite-title">{tn('profile.inviteTitle')}</span>
+          <span className="profile-invite-sub">{tn('profile.inviteSub')}</span>
         </span>
         <span className="profile-cta-arrow" style={{ position: 'static' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
@@ -947,7 +946,7 @@ export function ProfileScreen({
       {isTelegramAccount && (
         <div style={{ marginTop: 12 }}>
           <button className="btn-secondary" onClick={onLinkEmail}>
-            Привязать почту
+            {tn('profile.linkEmail')}
           </button>
         </div>
       )}
@@ -955,14 +954,14 @@ export function ProfileScreen({
       {showAddToHomeScreen && (
         <div style={{ marginTop: isTelegramAccount || canModerateReports || canReviewPanoramas || isSuperAdmin ? 12 : 24 }}>
           <button className="btn-secondary" onClick={promptAddToHomeScreen}>
-            Добавить RANGE на главный экран
+            {tn('profile.addHome')}
           </button>
         </div>
       )}
 
       <div style={{ marginTop: showAddToHomeScreen || isTelegramAccount || canModerateReports || canReviewPanoramas || isSuperAdmin ? 12 : 24, paddingBottom: 24 }}>
         <button className="btn-secondary" onClick={onSignOut}>
-          Выйти
+          {tn('common.signOut')}
         </button>
       </div>
       </div>

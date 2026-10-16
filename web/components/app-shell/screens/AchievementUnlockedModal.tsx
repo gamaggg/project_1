@@ -6,6 +6,7 @@ import { ACH_ICONS } from '@/components/app-shell/icons'
 import { HexBadge } from '@/components/app-shell/HexBadge'
 import { hapticSuccess } from '@/lib/telegram/haptics'
 import { seededRandom, seedFrom } from '@/lib/seededRandom'
+import { tn } from '@/lib/i18n/runtime'
 
 const CONFETTI_COLORS = ['#FF6B6B', '#FB6A16', '#B5E254', '#4CC9F0', '#E63946', '#7EF5A0', '#EEAAE3', '#A88EF5', '#FFD60A']
 
@@ -43,12 +44,12 @@ export function AchievementUnlockedModal({
   }, [])
 
   async function handleShare() {
-    const text = `🏆 Я получил достижение «${achievement.title}» в RANGE!\n${achievement.desc}\n\nПрисоединяйся и сразимся за территории на побережье Батуми 🎣\n${window.location.origin}`
+    const text = tn('weekly.achShareLong', { title: achievement.title, desc: achievement.desc, url: window.location.origin })
     try {
       await navigator.clipboard.writeText(text)
-      onShowToast('Скопировано в буфер обмена')
+      onShowToast(tn('weekly.copiedClipboard'))
     } catch {
-      onShowToast('Не удалось скопировать')
+      onShowToast(tn('common.copyFailed'))
     }
   }
 
@@ -72,7 +73,7 @@ export function AchievementUnlockedModal({
             />
           ))}
         </div>
-        <div className="unlock-modal-eyebrow">Достижение открыто</div>
+        <div className="unlock-modal-eyebrow">{tn('weekly.achOpened')}</div>
         <div className="unlock-modal-badge-outer">
           <div className="unlock-modal-badge-glow" />
           <div className="unlock-modal-badge">
@@ -88,10 +89,10 @@ export function AchievementUnlockedModal({
           {achievement.desc}
         </div>
         <button className="btn-primary" onClick={handleShare}>
-          Поделиться
+          {tn('common.share')}
         </button>
         <button className="unlock-modal-close tap-scale" onClick={onClose}>
-          Закрыть
+          {tn('common.close')}
         </button>
       </div>
     </div>

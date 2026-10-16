@@ -1,0 +1,1386 @@
+/* The bottom nav as a floating «liquid glass» pill: a translucent white band
+   with a lit top edge and a light rim, blurred over whatever scrolls under it,
+   the active tab as a raised glass capsule, the camera as a glossy orange
+   button. Only the nav — the screens themselves are untouched.
+
+   Loaded after globals.css, so these rules replace the full-width bar there
+   (same selectors, same specificity, later in the cascade). */
+
+:root {
+  /* How far the floating nav sits above the bottom of the screen — also the
+     gap the map's sector card keeps above the nav. */
+  --nav-bottom: calc(8px + max(0px, env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px) - 14px));
+}
+.bottomnav {
+  left: 10px;
+  right: 10px;
+  bottom: var(--nav-bottom);
+  min-height: 70px;
+  padding: 0 6px;
+  /* A full semicircle at each end (half the height); the capsule inside is inset 7px, so its own radius is 7px less and the two arcs share one centre. */
+  border-radius: 999px;
+  /* A touch of warm grey, not pure white: the active capsule is white, and on
+     a white screen it would otherwise dissolve into the bar. */
+  background: linear-gradient(180deg, rgba(246, 242, 236, 0.8), rgba(238, 232, 224, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(26px) saturate(200%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 1) inset, 0 -1px 0 rgba(255, 255, 255, 0.4) inset, 0 14px 34px rgba(80, 45, 15, 0.2), 0 2px 6px rgba(80, 45, 15, 0.1);
+  /* The pale grey of the inactive tabs is a notch darker over glass. */
+  --ink-faint: #767882;
+}
+/* The edge under the nav: whatever scrolls beneath the pill, and shows in the
+   gap around it, is blurred progressively — strongest at the very bottom,
+   fading to nothing above the pill — with a faint white veil so the pill's
+   rim stays readable. Pointer-transparent, one layer behind the nav. */
+.nav-edge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 39;
+  height: calc(var(--nav-h, 82px) + 18px);
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.28) 55%, rgba(255, 255, 255, 0) 100%);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 50%, transparent 100%);
+  mask-image: linear-gradient(to top, #000 0%, #000 50%, transparent 100%);
+}
+/* The dimming laid over the nav when a sheet opens inside a screen follows the pill's corners. */
+.app-shell:has(.screens .modal-overlay, .screens .comments-overlay, .screens .move-sheet-overlay) .bottomnav::after,
+.app-shell:has(.screens .lightbox-overlay) .bottomnav::after {
+  border-radius: inherit;
+}
+.navitem {
+  position: relative;
+  z-index: 1;
+  /* Equal columns; one whose label needs more room (a long word in a small
+     phone) takes it, and the capsule follows the tab's real size. */
+  flex: 1 1 0;
+  width: auto;
+  min-width: max-content;
+  padding: 8px 5px 7px;
+  border-radius: 26px;
+  gap: 4px;
+  transition: transform 0.15s var(--ease);
+}
+.navitem > span:last-child {
+  font-size: clamp(9.5px, 2.95vw, 11.5px);
+  white-space: nowrap;
+}
+.navitem.active {
+  background: none;
+  box-shadow: none;
+}
+/* The glass capsule behind the active tab (BottomNav.tsx moves it). */
+.nav-indicator {
+  position: absolute;
+  left: 0;
+  top: 6px;
+  z-index: 0;
+  width: 0;
+  /* Inset 6px from the bar's top and bottom, fully rounded: concentric with
+     the bar's own corners instead of fighting them. */
+  height: calc(100% - 12px);
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  /* The bar behind is a warm grey, so the white capsule already stands out; a
+     warm lower half, a hairline rim and a soft shadow are enough. */
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 45%, #F6F1EA 100%);
+  box-shadow: 0 0 0 1px rgba(120, 82, 50, 0.09), 0 1px 0 #fff inset, 0 4px 10px rgba(80, 45, 15, 0.13);
+  will-change: transform, width;
+}
+/* Beside the camera button the capsule's camera-facing end dissolves, so it
+   reads as stopping there rather than tucking under the button. */
+.nav-indicator[data-fade="right"] {
+  -webkit-mask-image: linear-gradient(90deg, #000 72%, transparent 100%);
+  mask-image: linear-gradient(90deg, #000 72%, transparent 100%);
+}
+.nav-indicator[data-fade="left"] {
+  -webkit-mask-image: linear-gradient(270deg, #000 72%, transparent 100%);
+  mask-image: linear-gradient(270deg, #000 72%, transparent 100%);
+}
+.nav-indicator.ready {
+  transition: transform 0.42s cubic-bezier(0.3, 1.25, 0.4, 1), width 0.3s var(--ease-out), height 0.3s var(--ease-out), opacity 0.2s var(--ease);
+}
+.navitem.navitem-plus,
+.navitem.navitem-plus.active {
+  flex: 0 0 64px;
+  padding: 0;
+  width: 64px;
+}
+.navplus-badge {
+  background: radial-gradient(120% 120% at 30% 15%, #FF9A5C 0%, #FC5200 55%, #E04400 100%);
+  box-shadow: 0 1px 1px rgba(255, 255, 255, 0.7) inset, 0 -2px 4px rgba(150, 30, 0, 0.25) inset, 0 10px 22px rgba(252, 82, 0, 0.42);
+}
+.nav-badge,
+.nav-dot {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+}
+
+/* The map's floating panels — the top bar and the sector card — in the same
+   glass as the nav: the map shows through, blurred. */
+.map-hud,
+.map-sheet-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(255, 255, 255, 0.5));
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(26px) saturate(200%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 1) inset, 0 -1px 0 rgba(255, 255, 255, 0.4) inset, 0 14px 34px rgba(80, 45, 15, 0.2), 0 2px 6px rgba(80, 45, 15, 0.1);
+}
+.map-hud {
+  border-radius: 28px;
+  /* The light rim is an inset ring, painted under the contents: the orange
+     race bar covers it, so the rim only frames the glass part. */
+  border: none;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.92) inset, 0 1px 0 #fff inset, 0 14px 34px rgba(80, 45, 15, 0.2), 0 2px 6px rgba(80, 45, 15, 0.1);
+  /* Over the dark sea the bar needs a little more white to keep its text readable. */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.64));
+}
+.map-sheet-card { border-radius: 28px; }
+/* The chips inside the bar: the flat grey and teal blocks become small glass
+   pieces of their own — a lit top edge, a light rim, a soft shadow — so they
+   read as part of the glass instead of dirty patches on it. */
+.map-hud {
+  --hud-ink: #4A4C55;
+}
+.map-hud .treasury-chip,
+.map-hud .forecast-chip {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.5));
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 0 #fff inset, 0 4px 12px rgba(60, 40, 20, 0.12);
+  color: var(--hud-ink);
+}
+.map-hud .treasury-chip.done { opacity: 0.9; }
+.map-hud .treasury-chip-cap { color: #7A7C86; }
+.map-hud .treasury-chip.ready {
+  background: linear-gradient(180deg, rgba(255, 236, 224, 0.95), rgba(255, 206, 178, 0.7));
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(252, 82, 0, 0.35), 0 4px 14px rgba(252, 82, 0, 0.22);
+  color: #9A3412;
+}
+.map-hud .shields-chip {
+  background: linear-gradient(180deg, #5FD3C0 0%, #17A090 55%, #0E8074 100%);
+  border: none;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset, 0 5px 12px rgba(14, 128, 116, 0.32);
+}
+.map-hud .double-coins-chip,
+.map-hud .hud-boosts {
+  border: none;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset, 0 5px 12px rgba(196, 138, 0, 0.3);
+}
+.map-hud .map-layer-switch {
+  padding: 3px;
+  gap: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 1px 3px rgba(60, 40, 20, 0.16) inset, 0 0 0 1px rgba(255, 255, 255, 0.65);
+}
+.map-hud .map-layer-opt {
+  color: var(--hud-ink);
+  border-radius: 999px;
+}
+.map-hud .map-layer-switch { position: relative; }
+.map-hud .map-layer-opt { position: relative; z-index: 1; }
+/* The picked option is lit by the sliding thumb behind it, not by its own fill. */
+.map-hud .map-layer-opt.on {
+  color: var(--ink);
+  background: none;
+  box-shadow: none;
+}
+.map-layer-thumb {
+  position: absolute;
+  top: 3px;
+  left: 0;
+  z-index: 0;
+  width: 0;
+  /* Inset 3px inside the track, both fully rounded: concentric. */
+  height: calc(100% - 6px);
+  border-radius: 999px;
+  pointer-events: none;
+  background: linear-gradient(180deg, #fff, rgba(255, 255, 255, 0.82));
+  box-shadow: 0 1px 0 #fff inset, 0 3px 10px rgba(60, 40, 20, 0.2);
+  will-change: transform, width;
+}
+.map-layer-thumb.ready {
+  transition: transform 0.42s cubic-bezier(0.3, 1.25, 0.4, 1), width 0.3s var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-layer-thumb.ready { transition: none; }
+}
+.map-hud .map-legend-row { color: var(--hud-ink); }
+.map-hud .legend-dot { flex: 0 0 auto; }
+/* The panel's light rim carries on around the orange race bar, in a brighter
+   orange instead of white: left, right and bottom edges, curving with the
+   panel's own corners. (The top edge is the seam with the glass part, no line.) */
+.map-hud .map-race-pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border: 1px solid rgba(255, 168, 108, 0.95);
+  border-top: none;
+  border-radius: 0 0 28px 28px;
+}
+.map-hud .map-legend-row { gap: 11px; }
+.map-hud .forecast-chip { padding: 3px 8px 3px 6px; gap: 4px; }
+
+/* The profile's blocks (the counters, the achievements, the lists, the two
+   shortcut cards, the dark clan / «Где это?» cards) in the bar's style —
+   a light rim, a lit top edge, a soft shadow — but in clean neutral white, not
+   the bar's warm tint. */
+:is(#screen-profile, #screen-user-profile) :is(.hero-stat, .ach-card, .card, .profile-faq-row) {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F4F5F8 100%);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(23, 24, 27, 0.06), 0 8px 20px rgba(23, 24, 27, 0.08);
+}
+:is(#screen-profile, #screen-user-profile) .hero-stat {
+  border-radius: 22px;
+  padding: 14px 3px 12px;
+}
+:is(#screen-profile, #screen-user-profile) .hero-stat b { font-size: 21px; letter-spacing: -0.01em; }
+:is(#screen-profile, #screen-user-profile) .hero-stat span:not(.hero-stat-icon) { color: #6B6E78; }
+:is(#screen-profile, #screen-user-profile) :is(.ach-card, .card) { border-radius: 24px; }
+:is(#screen-profile, #screen-user-profile) .profile-faq-row { border-radius: 22px; }
+:is(#screen-profile, #screen-user-profile) .profile-cta-btn {
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+}
+:is(#screen-profile, #screen-user-profile) .profile-cta-challenges {
+  background: linear-gradient(180deg, #FFF4EE 0%, #FFE5D6 100%);
+  box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(252, 82, 0, 0.12), 0 10px 22px rgba(252, 82, 0, 0.12);
+}
+:is(#screen-profile, #screen-user-profile) .profile-cta-shop {
+  background: linear-gradient(180deg, #F4F8FF 0%, #E0EBFF 100%);
+  box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(29, 111, 201, 0.12), 0 10px 22px rgba(29, 111, 201, 0.12);
+}
+:is(#screen-profile, #screen-user-profile) .profile-cta-pattern { opacity: 0.3; }
+:is(#screen-profile, #screen-user-profile) :is(.profile-clan-card, .profile-geo-card, .profile-invite-card) {
+  border-radius: 24px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.28) inset, 0 0 0 1px rgba(255, 255, 255, 0.12) inset, 0 14px 28px rgba(20, 28, 40, 0.28);
+}
+
+/* The language switch, like the map's Players / Clans switch: a pill track
+   with a white glass thumb that slides to the picked language. */
+.language-picker-opts {
+  position: relative;
+  padding: 3px;
+  gap: 3px;
+  border-radius: 999px;
+  background: rgba(23, 24, 27, 0.05);
+  box-shadow: 0 1px 3px rgba(60, 40, 20, 0.14) inset, 0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+.language-picker-opt {
+  position: relative;
+  z-index: 1;
+  border-radius: 999px;
+  padding: 10px 6px;
+  transition: color 0.2s var(--ease);
+}
+.language-picker-opt.on {
+  background: none;
+  box-shadow: none;
+  color: var(--ink);
+}
+.language-picker-thumb {
+  position: absolute;
+  top: 3px;
+  left: 0;
+  z-index: 0;
+  width: 0;
+  height: calc(100% - 6px);
+  border-radius: 999px;
+  pointer-events: none;
+  background: linear-gradient(180deg, #fff, #F7F3EE);
+  box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(120, 82, 50, 0.09), 0 4px 10px rgba(80, 45, 15, 0.13);
+  will-change: transform, width;
+}
+.language-picker-thumb.ready {
+  transition: transform 0.42s cubic-bezier(0.3, 1.25, 0.4, 1), width 0.3s var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .language-picker-thumb.ready { transition: none; }
+}
+
+/* Narrow phones: a slightly smaller camera button gives the labels their room. */
+@media (max-width: 345px) {
+  .navitem { padding-left: 3px; padding-right: 3px; }
+  .navitem.navitem-plus,
+  .navitem.navitem-plus.active { flex-basis: 56px; width: 56px; }
+  .navplus-badge { width: 50px; height: 50px; }
+}
+
+/* ---- The rest of the app in the same material -------------------------
+   Neutral white glass for everything not styled above: cards, sheets and
+   modals, menus, the small switches, search boxes, buttons. Flat blocks (cards,
+   chips, fields) get the rim + lit top edge + soft shadow only — no
+   backdrop-filter, it costs a lot on long lists and shows nothing over plain
+   white; the blur is kept for what floats over content (modals, sheets, menus,
+   toasts). */
+:root {
+  --glass-fill: linear-gradient(180deg, #FFFFFF 0%, #F4F5F8 100%);
+  --glass-rim: 0 1px 0 #fff inset, 0 0 0 1px rgba(23, 24, 27, 0.06);
+  --glass-lift: 0 8px 20px rgba(23, 24, 27, 0.08);
+}
+.card {
+  background: var(--glass-fill);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 22px;
+  box-shadow: var(--glass-rim), var(--glass-lift);
+}
+.btn-secondary {
+  background: var(--glass-fill);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 18px;
+  box-shadow: var(--glass-rim), 0 4px 12px rgba(23, 24, 27, 0.06);
+}
+.btn-secondary:active { background: linear-gradient(180deg, #F1F2F5 0%, #E8EAEF 100%); }
+.btn-primary,
+.btn-danger { border-radius: 18px; box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 10px 22px rgba(252, 82, 0, 0.28); }
+.btn-danger { box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 10px 22px rgba(211, 51, 51, 0.28); }
+.btn-primary.tour-next { border-radius: 15px; }
+
+.search-input {
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #F1F2F5 0%, #F7F8FA 100%);
+  box-shadow: 0 1px 3px rgba(23, 24, 27, 0.1) inset, 0 0 0 1px rgba(23, 24, 27, 0.05);
+}
+.search-input:focus { border-color: rgba(252, 82, 0, 0.55); box-shadow: 0 1px 3px rgba(23, 24, 27, 0.08) inset, 0 0 0 3px rgba(252, 82, 0, 0.14); }
+
+.filter-chip,
+.sort-menu-btn {
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  background: var(--glass-fill);
+  box-shadow: var(--glass-rim), 0 3px 8px rgba(23, 24, 27, 0.05);
+}
+.filter-chip.active {
+  background: linear-gradient(180deg, #2A2C32 0%, #17181B 100%);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18) inset, 0 6px 14px rgba(23, 24, 27, 0.22);
+}
+
+.players-filter-btn {
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  background: var(--glass-fill);
+  box-shadow: var(--glass-rim), 0 3px 8px rgba(23, 24, 27, 0.05);
+}
+.players-filter-btn.on { border-color: rgba(252, 82, 0, 0.45); box-shadow: var(--glass-rim), 0 0 0 3px rgba(252, 82, 0, 0.12); }
+
+/* ---- Every remaining button and block, same material, same shapes ----
+   Only the surface changes (fill, lit top edge, rim, soft shadow); radii,
+   sizes, borders' widths and layouts stay as they were. Border colours are left
+   alone where a state or a rarity sets them. */
+
+/* The back chevron and the map's round / grouped controls. */
+.icon-btn {
+  background: var(--glass-fill);
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow: var(--glass-rim), 0 4px 12px rgba(23, 24, 27, 0.1);
+}
+.map-control-group {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(244, 245, 248, 0.7));
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: var(--glass-rim), 0 8px 20px rgba(23, 24, 27, 0.14);
+}
+.map-control-group .map-control-btn + .map-control-btn { border-top-color: rgba(23, 24, 27, 0.07); }
+
+/* White blocks and buttons on a plain background: the profile's glass. */
+:is(.shop-card, .buff-row, .slots-paytable, .species-cell, .challenge-card, .clan-field, .clan-card, .clan-search, .move-search, .guest-card, .guest-catch, .stats-kpi, .stats-block, .diary-fish, .faq-list, .geo-story, .geo-catch, .admin-plan-list, .clan-chat-mention-pick, .support-card, .clan-chat-card, .clan-join-card, .diary-action, .forecast-card, .shop-tab, .clan-mini-btn, .clan-opt, .first-steps-pill, .city-chip, .sector-clan-line, .clan-chat-bubble) {
+  background: var(--glass-fill);
+  box-shadow: var(--glass-rim), 0 6px 16px rgba(23, 24, 27, 0.07);
+}
+.clan-chat-bubble { box-shadow: var(--glass-rim), 0 2px 6px rgba(23, 24, 27, 0.08); }
+.species-trigger,
+.clan-swatch { box-shadow: var(--glass-rim), 0 3px 8px rgba(23, 24, 27, 0.06); }
+.species-trigger { background-color: #F7F8FA; }
+.clan-swatch { box-shadow: 0 0 0 1.5px rgba(23, 24, 27, 0.1), 0 3px 8px rgba(23, 24, 27, 0.12); }
+
+/* Grey inset wells and small grey buttons: a recessed or raised light-grey glass. */
+:is(.geo-fact, .forecast-day, .sector-coords-btn, .support-compose-attach) {
+  background: linear-gradient(180deg, #F7F8FA 0%, #EDEFF3 100%);
+  box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(23, 24, 27, 0.05);
+}
+.sector-coords-btn { box-shadow: var(--glass-rim), 0 3px 8px rgba(23, 24, 27, 0.07); }
+
+/* Tinted blocks keep their tint and only gain the lit edge. */
+:is(.slots-gift, .clan-announcement, .gift-pick-bar, .race-today, .race-join, .double-modal-what) {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85) inset, 0 4px 12px rgba(23, 24, 27, 0.05);
+}
+.double-modal-what { box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85) inset, 0 0 0 1px rgba(14, 128, 116, 0.18); }
+
+/* Segmented tracks: the pill-track + white-thumb look of the other switches. */
+.clan-tabs,
+.boosts-tabs {
+  background: rgba(23, 24, 27, 0.05);
+  box-shadow: 0 1px 3px rgba(60, 40, 20, 0.14) inset, 0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+.forecast-tab { box-shadow: var(--glass-rim), 0 3px 8px rgba(23, 24, 27, 0.05); }
+/* the picked day: one clean ring inside the card — no lit top edge over it, no ring outside it (it was cut at the sheet's top and laid over its neighbours) */
+.forecast-tab.on { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--score-color) 50%, transparent); }
+
+/* Light buttons on coloured or dark panels: a lit top edge and rim. */
+:is(.nearest-free-btn, .race-card-open, .clan-chip, .coin-pill, .recap-cta) {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+.shop-wallet-history {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.5));
+  box-shadow: 0 1px 0 #fff inset, 0 2px 6px rgba(138, 90, 12, 0.12);
+}
+
+/* Small solid orange / gold buttons: the same gloss as the big ones. */
+:is(.diary-save, .map-geo-banner-btn, .comments-send, .shop-equipped, .map-selection-bar-btn) { box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset; }
+.rewards-take { box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset, 0 8px 18px rgba(196, 138, 0, 0.3); }
+.intro-cta { box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset; }
+
+/* Sector screen, and a few more white wells and chips. */
+:is(.insights-card, .sector-standing) {
+  background: var(--glass-fill);
+  box-shadow: var(--glass-rim), 0 6px 16px rgba(23, 24, 27, 0.07);
+}
+:is(.sector-owner-highlight-row, .sector-coholder) {
+  background: var(--glass-fill);
+  box-shadow: var(--glass-rim), 0 3px 8px rgba(23, 24, 27, 0.06);
+}
+.sector-coords {
+  background: linear-gradient(180deg, #F7F8FA 0%, #EEF0F4 100%);
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 3px rgba(23, 24, 27, 0.07) inset, 0 0 0 1px rgba(23, 24, 27, 0.05);
+}
+/* The sheet runs on into the page below it, so it stays plain white (a gradient
+   to grey made its bottom end look cut) and only its top edge has depth. */
+.sector-dock-card {
+  background: var(--surface);
+  box-shadow: 0 1px 0 #fff inset, 0 -14px 26px rgba(23, 24, 27, 0.08);
+}
+.sector-hero-map-chip {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(244, 245, 248, 0.7));
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+  box-shadow: var(--glass-rim), 0 4px 12px rgba(23, 24, 27, 0.14);
+}
+.btn-primary.shield-locked:disabled { background: linear-gradient(180deg, #F1F2F5 0%, #E6E8ED 100%); box-shadow: var(--glass-rim); }
+.forecast-day.today { box-shadow: inset 0 0 0 1.5px rgba(252, 82, 0, 0.3); }
+/* The thin grey progress tracks: a recessed groove, not a white line. */
+.challenge-progress-track { background: rgba(23, 24, 27, 0.07); box-shadow: 0 1px 2px rgba(23, 24, 27, 0.08) inset; }
+.support-status { background: linear-gradient(180deg, #F7F8FA 0%, #EDEFF3 100%); box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(23, 24, 27, 0.05); }
+/* Soft accent badges and icon tiles: a lit edge. */
+:is(.clan-chat-card-icon, .profile-faq-icon, .rating-week-badge) { box-shadow: 0 1px 0 rgba(255, 255, 255, 0.75) inset, 0 0 0 1px rgba(252, 82, 0, 0.08); }
+/* Clan hero chips: frosted over the hero's colours. */
+.clan-chip, .race-card-open { -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+/* The clan's three tabs: a thumb that slides, like the nav. */
+.clan-tabs { position: relative; }
+.clan-tabs::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / 3);
+  border-radius: 9px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F6F1EA 100%);
+  box-shadow: 0 0 0 1px rgba(120, 82, 50, 0.09), 0 1px 0 #fff inset, 0 4px 10px rgba(80, 45, 15, 0.13);
+  transition: transform 0.38s var(--ease-out);
+}
+.clan-tabs:has(.clan-tab:nth-child(2).on)::before { transform: translateX(100%); }
+.clan-tabs:has(.clan-tab:nth-child(3).on)::before { transform: translateX(200%); }
+.clan-tabs:has(.clan-tab:nth-child(4).on)::before { transform: translateX(300%); }
+.clan-tabs:has(.clan-tab:nth-child(4))::before { width: calc((100% - 6px) / 4); }
+.clan-tab { position: relative; z-index: 1; }
+.clan-tab.on { background: none; box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .clan-tabs::before { transition: none; } }
+
+/* «Уловы / Дневник»: a pill track with a sliding thumb (two halves). */
+.diary-tabs {
+  position: relative;
+  border-radius: 999px;
+  background: rgba(23, 24, 27, 0.05);
+  box-shadow: 0 1px 3px rgba(60, 40, 20, 0.14) inset, 0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+.diary-tabs::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 6px);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F6F1EA 100%);
+  box-shadow: 0 0 0 1px rgba(120, 82, 50, 0.09), 0 1px 0 #fff inset, 0 4px 10px rgba(80, 45, 15, 0.13);
+  transition: transform 0.38s var(--ease-out);
+}
+.diary-tabs:has(button:last-child.on)::before { transform: translateX(calc(100% + 4px)); }
+.diary-tabs button { position: relative; z-index: 1; border-radius: 999px; }
+.diary-tabs button.on { background: none; box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .diary-tabs::before { transition: none; } }
+/* The achievements everywhere, not only in the profile. */
+.ach-card {
+  background: var(--glass-fill);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: var(--glass-rim), var(--glass-lift);
+}
+
+/* Text fields everywhere: the recessed field of the search box. */
+:is(.faq-search input, .auth-field input, .auth-field select, .auth-field textarea, .wizard-field input, .support-compose textarea, .support-field textarea, .diary-note-edit textarea, .diary-field textarea, .diary-field input, .gift-amounts input) {
+  border-color: rgba(255, 255, 255, 0.95);
+  background-color: #F4F5F8;
+  box-shadow: 0 1px 3px rgba(23, 24, 27, 0.09) inset, 0 0 0 1px rgba(23, 24, 27, 0.05);
+}
+:is(.faq-search input, .auth-field input, .wizard-field input, .support-compose textarea, .support-field textarea, .diary-field input, .diary-field textarea):focus {
+  border-color: rgba(252, 82, 0, 0.55);
+  box-shadow: 0 1px 3px rgba(23, 24, 27, 0.08) inset, 0 0 0 3px rgba(252, 82, 0, 0.14);
+}
+/* The diary's period switch is a track like the others. */
+.diary-stats-periods { background: rgba(23, 24, 27, 0.05); box-shadow: 0 1px 3px rgba(60, 40, 20, 0.14) inset, 0 0 0 1px rgba(255, 255, 255, 0.7); }
+.diary-stats-periods .on { background: linear-gradient(180deg, #FFFFFF 0%, #F6F1EA 100%); box-shadow: 0 0 0 1px rgba(120, 82, 50, 0.09), 0 1px 0 #fff inset, 0 3px 8px rgba(80, 45, 15, 0.12); }
+/* «Где это?»: white pills and icon tiles. */
+:is(.geo-prize, .geo-quest-icon) { box-shadow: var(--glass-rim), 0 3px 8px rgba(23, 24, 27, 0.1); }
+.geo-quest-icon { background: var(--glass-fill); }
+:is(.geo-owner, .geo-owner-badge, .support-card-icon, .diary-stats-icon) { box-shadow: 0 1px 0 rgba(255, 255, 255, 0.75) inset, 0 0 0 1px rgba(23, 24, 27, 0.04); }
+.geo-board-row { box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset; }
+
+/* Small grey chips (weather, tags): raised light glass. */
+.catch-conditions-chip:not(.skeleton) {
+  background: linear-gradient(180deg, #FAFAFC 0%, #EFF0F4 100%);
+  box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(23, 24, 27, 0.05);
+}
+
+/* The other floating cards, sheets and menus, and the round close / back buttons. */
+:is(.unlock-modal-card, .comments-dialog, .comment-menu, .diary-menu-list, .move-sheet, .tour-tip) {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(245, 246, 249, 0.98) 100%);
+  box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(23, 24, 27, 0.06), 0 12px 32px rgba(23, 24, 27, 0.18);
+}
+.move-sheet { box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(23, 24, 27, 0.05), 0 -10px 34px rgba(23, 24, 27, 0.14); }
+:is(.modal-close, .modal-back) { background: var(--glass-fill); box-shadow: var(--glass-rim), 0 3px 8px rgba(23, 24, 27, 0.1); }
+.admin-geo-tabs { background: rgba(23, 24, 27, 0.05); box-shadow: 0 1px 3px rgba(60, 40, 20, 0.14) inset, 0 0 0 1px rgba(255, 255, 255, 0.7); }
+.admin-geo-tabs .on { background: linear-gradient(180deg, #FFFFFF 0%, #F6F1EA 100%); box-shadow: 0 0 0 1px rgba(120, 82, 50, 0.09), 0 1px 0 #fff inset, 0 3px 8px rgba(80, 45, 15, 0.12); }
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :is(.unlock-modal-card, .comments-dialog, .comment-menu, .diary-menu-list, .move-sheet, .tour-tip) { background: #fff; backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+
+/* Inside a modal's scrolling list an outer shadow is cut off by the list's edge
+   (a grey square behind each avatar): a ring instead. */
+:is(.modal-card, .comments-sheet, .move-sheet) .avatar { box-shadow: 0 0 0 1px rgba(23, 24, 27, 0.08); }
+:is(.modal-card, .comments-sheet, .move-sheet) .btn-secondary { box-shadow: var(--glass-rim); }
+
+/* While a modal is open, the animated things under its blur (hero glow, shimmers,
+   pulses) stand still: re-blurring a moving picture every frame flickers. The
+   modal's own animations are left running. */
+body:has(.modal-overlay, .comments-overlay, .move-sheet-overlay) .screen.active :is(*, *::before, *::after):not(.modal-overlay, .comments-overlay, .move-sheet-overlay):not(:is(.modal-overlay, .comments-overlay, .move-sheet-overlay) *) {
+  animation-play-state: paused !important;
+}
+
+/* Achievements: the tiles, the summary ring, and the detail screen's moving
+   stage (no photographs — rays, a halo and sparks drawn in CSS). */
+.ach-count {
+  display: inline-flex;
+  align-items: baseline;
+  margin-left: 8px;
+  padding: 2px 9px 3px;
+  border-radius: 999px;
+  vertical-align: 2px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #8E919B;
+  letter-spacing: 0;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F1F2F6 100%);
+  box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(23, 24, 27, 0.06), 0 2px 6px rgba(23, 24, 27, 0.06);
+  font-variant-numeric: tabular-nums;
+}
+.ach-count b { color: var(--ink); font-weight: 800; }
+
+.ach-card { position: relative; overflow: hidden; align-items: flex-start; transition: opacity 0.2s var(--ease), transform 0.2s var(--ease); }
+.ach-card:not(.locked)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 90% at 0% 0%, rgba(252, 82, 0, 0.1), transparent 60%);
+  pointer-events: none;
+}
+.ach-card.locked { animation: ach-in-locked 0.45s var(--ease-out) both; }
+@keyframes ach-in-locked { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 0.62; transform: none; } }
+.ach-card.locked .ach-icon.off { background: linear-gradient(180deg, #F4F5F8, #E6E8ED); }
+.ach-icon-wrap { position: relative; flex: 0 0 auto; }
+.ach-icon.on { box-shadow: none; filter: drop-shadow(0 4px 8px rgba(252, 82, 0, 0.28)); }
+.ach-icon-sheen {
+  position: absolute;
+  inset: 0;
+  width: 38px;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.85) 50%, transparent 65%);
+  background-size: 250% 100%;
+  background-position: 130% 0;
+  animation: ach-sheen 3.6s var(--ease-in-out) calc(0.5s + var(--i, 0) * 0.18s) infinite;
+  pointer-events: none;
+}
+@keyframes ach-sheen { 0%, 55% { background-position: 130% 0; } 100% { background-position: -40% 0; } }
+.ach-text { width: 100%; }
+.ach-progress-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.ach-progress-row .ach-progress { margin: 0; flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+.ach-bar {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(23, 24, 27, 0.08);
+  box-shadow: 0 1px 2px rgba(23, 24, 27, 0.1) inset;
+}
+.ach-bar i {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #FF8A3D, var(--accent));
+  transform-origin: left center;
+  animation: ach-bar-in 0.8s var(--ease-out) 0.25s both;
+}
+@keyframes ach-bar-in { from { transform: scaleX(0); } }
+.ach-bar.big { height: 10px; width: 220px; flex: none; }
+
+/* The summary card on top of «Все достижения». */
+.ach-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding: 16px 18px;
+  border-radius: 24px;
+  background: var(--glass-fill);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: var(--glass-rim), var(--glass-lift);
+  animation: ach-summary-in 0.5s var(--ease-out) both;
+}
+@keyframes ach-summary-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
+.ach-summary-ring { position: relative; flex: 0 0 auto; width: 84px; height: 84px; }
+.ach-summary-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ach-ring-track { fill: none; stroke: rgba(23, 24, 27, 0.08); stroke-width: 8; }
+.ach-ring-fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.1s var(--ease-out);
+  animation: ach-ring-in 1.1s var(--ease-out) 0.2s both;
+}
+@keyframes ach-ring-in { from { stroke-dashoffset: 214; } }
+.ach-ring-num { position: absolute; inset: 0; display: flex; align-items: baseline; justify-content: center; padding-top: 28px; font-variant-numeric: tabular-nums; }
+.ach-ring-num b { font-family: var(--font-display), 'Manrope', sans-serif; font-size: 26px; font-weight: 700; line-height: 1; }
+.ach-ring-num span { font-size: 13px; font-weight: 800; color: var(--ink-faint); }
+.ach-summary-title { font-size: 17px; font-weight: 800; letter-spacing: -0.2px; }
+.ach-summary-sub { margin-top: 4px; font-size: 13px; font-weight: 600; color: var(--ink-soft); line-height: 1.35; }
+
+/* The detail screen: a moving stage behind the badge. */
+.ach-stage { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.ach-stage-halo {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  width: 150%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255, 150, 70, 0.34) 0%, rgba(252, 82, 0, 0.1) 32%, transparent 62%);
+  animation: ach-halo 5s ease-in-out infinite;
+}
+.ach-stage-rays {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  width: 190%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: repeating-conic-gradient(from 0deg, rgba(252, 82, 0, 0) 0deg, rgba(252, 82, 0, 0.11) 5deg, rgba(252, 82, 0, 0) 10deg, rgba(252, 82, 0, 0) 20deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 10%, #000 24%, transparent 58%);
+  mask-image: radial-gradient(circle, transparent 10%, #000 24%, transparent 58%);
+  filter: blur(2px);
+  animation: ach-rays 60s linear infinite;
+}
+.ach-stage.locked .ach-stage-halo { background: radial-gradient(circle, rgba(23, 24, 27, 0.12) 0%, transparent 60%); animation: none; }
+.ach-stage.locked .ach-stage-rays { display: none; }
+@keyframes ach-halo { 0%, 100% { opacity: 0.75; transform: translate(-50%, -50%) scale(0.96); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.04); } }
+@keyframes ach-rays { to { transform: translate(-50%, -50%) rotate(360deg); } }
+.ach-spark {
+  position: absolute;
+  left: calc(8% + var(--i) * 9%);
+  bottom: -10px;
+  width: calc(4px + (var(--i) % 3) * 2px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, #FFE2B8, #FF9A4D);
+  box-shadow: 0 0 8px rgba(255, 150, 70, 0.7);
+  opacity: 0;
+  animation: ach-spark 6s ease-in infinite;
+  animation-delay: calc(var(--i) * 0.55s);
+}
+@keyframes ach-spark { 0% { transform: translateY(0) scale(0.6); opacity: 0; } 15% { opacity: 0.9; } 100% { transform: translateY(-62vh) translateX(calc((var(--i) - 5) * 6px)) scale(1); opacity: 0; } }
+.screen:not(.active) .ach-stage * { animation-play-state: paused !important; }
+.ach-detail-progress { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ach-detail-progress span { font-variant-numeric: tabular-nums; }
+.ach-got {
+  margin-top: 14px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(160deg, #FF8A3D, var(--accent));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 6px 14px rgba(252, 82, 0, 0.3);
+  animation: ach-got-in 0.5s var(--ease-out) 0.5s both;
+}
+@keyframes ach-got-in { from { opacity: 0; transform: translateY(6px) scale(0.9); } }
+.ach-detail-flavor {
+  background: var(--glass-fill);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: var(--glass-rim), var(--glass-lift);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+/* The badge itself is alive: an open one floats gently above a shadow that
+   breathes against it, and a bright band sweeps across its face every few
+   seconds. (The drag-to-spin stays — it moves the inner layer, this moves the
+   wrapper.) */
+.ach-detail-badge-outer:has(.ach-detail-badge-glow.on) { animation: ach-float 5.5s ease-in-out infinite; }
+.ach-detail-badge-outer:has(.ach-detail-badge-glow.on)::after {
+  content: "";
+  position: absolute;
+  left: 20%;
+  right: 20%;
+  bottom: -26px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(252, 82, 0, 0.32), transparent 70%);
+  filter: blur(4px);
+  z-index: -1;
+  animation: ach-float-shadow 5.5s ease-in-out infinite;
+}
+@keyframes ach-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@keyframes ach-float-shadow { 0%, 100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(0.78); opacity: 0.55; } }
+.ach-detail-badge .hexbadge-gloss::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.75) 50%, transparent 62%);
+  background-size: 280% 100%;
+  background-position: 160% 0;
+  animation: ach-badge-sheen 4.6s ease-in-out 1.4s infinite;
+}
+@keyframes ach-badge-sheen { 0%, 62% { background-position: 160% 0; } 100% { background-position: -70% 0; } }
+.screen:not(.active) :is(.ach-detail-badge-outer, .ach-detail-badge-outer::after, .ach-detail-badge .hexbadge-gloss::after) { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) {
+  .ach-detail-badge-outer, .ach-detail-badge-outer::after, .ach-detail-badge .hexbadge-gloss::after { animation: none !important; }
+}
+/* The unlock modal gets the same slow rays behind its badge. */
+.unlock-modal-badge-outer::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 360%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  z-index: -2;
+  background: repeating-conic-gradient(from 0deg, rgba(252, 82, 0, 0) 0deg, rgba(252, 82, 0, 0.12) 5deg, rgba(252, 82, 0, 0) 10deg, rgba(252, 82, 0, 0) 20deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 6%, #000 14%, transparent 55%);
+  mask-image: radial-gradient(circle, transparent 6%, #000 14%, transparent 55%);
+  filter: blur(2px);
+  animation: ach-rays 40s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ach-icon-sheen, .ach-stage-halo, .ach-stage-rays, .ach-spark, .unlock-modal-badge-outer::before { animation: none; }
+  .ach-spark { display: none; }
+  .ach-bar i, .ach-ring-fill, .ach-summary, .ach-got { animation: none; }
+}
+
+/* A scrolling strip clips whatever sticks out of it, shadows included — leave
+   them room (padding) and take it back with a negative margin. */
+.shop-tabs { padding: 4px 6px 14px; margin: 12px -6px -10px; }
+.clan-chat-mentions { padding: 4px 6px 14px; margin: -4px -6px -6px; }
+.shop-tab { box-shadow: var(--glass-rim), 0 3px 8px rgba(23, 24, 27, 0.07); }
+.shop-tab.active {
+  background: linear-gradient(180deg, #2A2C32 0%, #17181B 100%);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset, 0 6px 14px rgba(23, 24, 27, 0.22);
+}
+
+/* The coin / «×2» / shields sheets (.double-modal): neutral glass instead of
+   the cream-yellow and the teal-green; a little wider; the ten days in two
+   rows of five so the cells aren't thin slivers. */
+.modal-card.double-modal { max-width: 360px; }
+.double-modal::before { background: radial-gradient(120% 90% at 50% 0%, rgba(252, 82, 0, 0.06) 0%, rgba(252, 82, 0, 0) 72%); }
+.double-modal-coin { background: radial-gradient(circle at 50% 38%, #FFFFFF, #F1F2F6); }
+.double-modal-coin.reserve-modal-coin { background: radial-gradient(circle at 50% 38%, #FFFFFF, #F1F2F6); }
+.double-modal-what,
+.double-modal-what.reserve-modal-what {
+  background: var(--glass-fill);
+  box-shadow: var(--glass-rim), 0 4px 12px rgba(23, 24, 27, 0.06);
+  padding: 14px 14px 15px;
+  border-radius: 20px;
+}
+.double-modal-kicker,
+.double-modal-what.reserve-modal-what .double-modal-kicker { color: var(--ink-faint); }
+.double-modal-timer b,
+.double-modal-timer.reserve-modal-timer b { color: var(--ink); }
+.double-modal-timer small,
+.double-modal-timer.reserve-modal-timer small { color: var(--ink-faint); }
+.double-modal-note b,
+.double-modal-note.reserve-modal-note b { color: var(--ink); }
+.double-modal-chips span {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F1F2F6 100%);
+  box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(23, 24, 27, 0.06), 0 2px 6px rgba(23, 24, 27, 0.06);
+}
+.double-modal-what.reserve-modal-what .double-modal-chips span { box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(23, 24, 27, 0.06), 0 2px 6px rgba(23, 24, 27, 0.06); }
+.rewards-strip { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.rewards-strip .daily-cell {
+  height: 42px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F1F2F6 100%);
+  box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(23, 24, 27, 0.06), 0 2px 6px rgba(23, 24, 27, 0.06);
+}
+.daily-cell.done { background: linear-gradient(180deg, #FFF4EC 0%, #FFE6D6 100%); color: var(--accent); box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(252, 82, 0, 0.16); }
+.rewards-strip .daily-cell.done { background: linear-gradient(180deg, #FFF4EC 0%, #FFE6D6 100%); box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(252, 82, 0, 0.16); }
+.daily-cell.current { background: linear-gradient(160deg, #FF8A3D, var(--accent)); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 4px 12px rgba(252, 82, 0, 0.32); }
+.daily-cell.last,
+.rewards-strip .daily-cell.last {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFEFE2 100%);
+  color: var(--accent);
+  box-shadow: 0 1px 0 #fff inset, 0 0 0 1.5px rgba(252, 82, 0, 0.4);
+}
+.rewards-done {
+  background: var(--glass-fill);
+  color: var(--ink);
+  box-shadow: var(--glass-rim), 0 3px 8px rgba(23, 24, 27, 0.06);
+  border-radius: 16px;
+  padding: 12px 8px;
+}
+.rewards-done svg { color: var(--accent); }
+.rewards-take {
+  border-radius: 16px;
+  padding: 13px 12px;
+  background: linear-gradient(160deg, #FF8A3D, var(--accent) 70%);
+  color: #fff;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 8px 18px rgba(252, 82, 0, 0.28);
+}
+/* The sheet's own tabs: one white thumb whatever the tab's colour. */
+.boosts-tab.on,
+.boosts-tab.gold.on,
+.boosts-tab.teal.on,
+.boosts-tab.orange.on {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F6F1EA 100%);
+  color: var(--ink);
+  box-shadow: 0 0 0 1px rgba(120, 82, 50, 0.09), 0 1px 0 #fff inset, 0 3px 8px rgba(80, 45, 15, 0.12);
+}
+.boosts-tab.on .boosts-tab-dot { background: var(--accent); box-shadow: 0 0 0 2px #fff; }
+.boosts-tabs { border-radius: 999px; }
+.boosts-tab { border-radius: 999px; }
+
+/* Sector: the four-number strip (catches, last, size, type) is a glass card
+   with short dividers instead of two rules and four long lines. */
+.sector-stat-strip {
+  margin-top: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 22px;
+  background: var(--glass-fill);
+  box-shadow: var(--glass-rim), var(--glass-lift);
+}
+.sector-stat-strip > div { position: relative; border-left: none; padding: 14px 4px 13px; }
+.sector-stat-strip > div + div::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 16px;
+  bottom: 16px;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(23, 24, 27, 0.1) 25%, rgba(23, 24, 27, 0.1) 75%, transparent);
+}
+
+/* Onboarding: the cream-yellow of the registration and intro screens becomes
+   clean white with a faint warm glow at the top; the cream chips, borders and
+   the brown subtitle go neutral; buttons and cards use the same glass. */
+.intro-screen--catch {
+  background: radial-gradient(110% 55% at 50% 0%, rgba(252, 82, 0, 0.07) 0%, rgba(252, 82, 0, 0) 70%), linear-gradient(180deg, #FFFFFF 0%, #F4F5F8 100%);
+  color: var(--ink);
+}
+.intro-screen--catch .intro-sub { color: var(--ink-soft); }
+.intro-screen--catch .intro-cta {
+  background: linear-gradient(160deg, #FF8A3D, var(--accent) 70%);
+  color: #fff;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 10px 22px rgba(252, 82, 0, 0.28);
+}
+.intro-screen--catch .intro-cta-secondary {
+  background: var(--glass-fill);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  color: var(--ink);
+  box-shadow: var(--glass-rim), 0 4px 12px rgba(23, 24, 27, 0.06);
+}
+.intro-back {
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset, 0 4px 12px rgba(23, 24, 27, 0.12);
+}
+.intro-screen--catch .intro-back { background: var(--glass-fill); }
+.intro-screen--territory .intro-back { background: rgba(255, 255, 255, 0.24); border-color: rgba(255, 255, 255, 0.4); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.intro-screen--territory .intro-cta {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFF1E8 100%);
+  box-shadow: 0 1px 0 #fff inset, 0 10px 22px rgba(120, 30, 0, 0.28);
+}
+.intro-photocard { box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(23, 24, 27, 0.05), 0 14px 26px -10px rgba(23, 24, 27, 0.35); }
+.intro-badge {
+  background: linear-gradient(180deg, #2A2C32 0%, #17181B 100%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 8px 18px rgba(23, 24, 27, 0.25);
+}
+.city-chip {
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  background: var(--glass-fill);
+  box-shadow: var(--glass-rim), 0 4px 12px rgba(23, 24, 27, 0.07);
+}
+.city-chip.selected { border-color: rgba(252, 82, 0, 0.5); background: linear-gradient(180deg, #FFFFFF 0%, #FFF1E8 100%); box-shadow: 0 1px 0 #fff inset, 0 0 0 1.5px rgba(252, 82, 0, 0.45), 0 6px 14px rgba(252, 82, 0, 0.14); }
+.city-chip-dot { background: #C9CCD4; }
+.sector-hex { background: #D9DCE3; }
+.sector-pin { box-shadow: 0 0 0 3px #fff; }
+.wizard-field input {
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  background-color: #F4F5F8;
+  box-shadow: 0 1px 3px rgba(23, 24, 27, 0.09) inset, 0 0 0 1px rgba(23, 24, 27, 0.05);
+}
+.wizard-field input:focus { border-color: rgba(252, 82, 0, 0.55); box-shadow: 0 1px 3px rgba(23, 24, 27, 0.08) inset, 0 0 0 3px rgba(252, 82, 0, 0.14); }
+/* The welcome screen's language menu: a frosted-dark button with the round
+   flag in the top-right corner, level with the logo, opening a glass list. */
+.lang-flag {
+  display: inline-block;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35), 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+.lang-flag svg { display: block; width: 100%; height: 100%; }
+.lang-menu {
+  position: absolute;
+  z-index: 6;
+  /* Level with the logo: it is 34px tall and starts 30px down, so its middle is at 47px; the button is 40px. */
+  top: calc(27px + env(safe-area-inset-top) + var(--tg-safe-area-top, 0px));
+  right: 24px;
+}
+.lang-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px 0 9px;
+  border: none;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #F4F6FA;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+.lang-menu-chevron { color: rgba(244, 246, 250, 0.7); transition: transform 0.2s var(--ease); }
+.lang-menu-btn[aria-expanded="true"] .lang-menu-chevron { transform: rotate(180deg); }
+.lang-menu-list {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 190px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: 20px;
+  transform-origin: top right;
+  animation: sortMenuIn 0.18s var(--ease) both;
+  background: rgba(24, 30, 42, 0.78);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  backdrop-filter: blur(24px) saturate(170%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset, 0 0 0 1px rgba(255, 255, 255, 0.12), 0 16px 36px rgba(0, 0, 0, 0.4);
+}
+.lang-menu-opt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px 9px 9px;
+  border: none;
+  border-radius: 15px;
+  background: none;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: #F4F6FA;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lang-menu-opt > span:not(.lang-flag) { flex: 1; }
+.lang-menu-opt svg { color: var(--accent); flex: 0 0 auto; }
+.lang-menu-opt:hover,
+.lang-menu-opt:active { background: rgba(255, 255, 255, 0.08); }
+.lang-menu-opt.on { background: rgba(255, 255, 255, 0.12); }
+@media (max-width: 359px), (max-height: 620px) { .lang-menu { top: calc(15px + env(safe-area-inset-top) + var(--tg-safe-area-top, 0px)); } }
+@media (prefers-reduced-motion: reduce) { .lang-menu-list { animation: none; } .lang-menu-chevron { transition: none; } }
+
+/* The welcome screen's ticker and invite chip: frosted over the map. */
+.welcome-ticker {
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1) inset;
+}
+.welcome-invite { box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+
+/* The coin balance in the profile hero is the share button's twin: same
+   fill, rim, lit top edge and shadow. */
+.profile-hero .coin-pill {
+  box-shadow: var(--glass-rim), 0 4px 12px rgba(23, 24, 27, 0.1);
+}
+
+/* Running text: no lonely last word on a line (the no-break spaces in the
+   Russian strings handle prepositions; this handles the rest). */
+p, li, .modal-body, .intro-sub, .ach-desc, .faq-a, .double-modal-note, .rewards-note, .hint, .wizard-hint, .support-body { text-wrap: pretty; }
+
+/* Soft cream-on-white blocks that dissolved into the page (the hourly chart in the
+   bite forecast, …): the same glass as the other blocks — a rim, a lit top edge, a
+   soft shadow — so they read as objects. */
+.forecast-block {
+  background: var(--glass-fill);
+  box-shadow: var(--glass-rim), 0 6px 16px rgba(23, 24, 27, 0.06);
+}
+
+/* The shop's balance block no longer butts against the back button. */
+.shop-sticky-top .header-row { margin-bottom: 8px; }
+.slots-title { margin-top: 4px; }
+
+/* Floating layers: modals, the comments sheet, drop-down menus, the toast. */
+.modal-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(245, 246, 249, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 28px;
+  box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(23, 24, 27, 0.05), 0 6px 16px rgba(23, 24, 27, 0.08), 0 24px 48px rgba(23, 24, 27, 0.16);
+}
+/* Behind a modal or a sheet the screen is only blurred, not darkened. The nav
+   sits above the screens, so an overlay opened inside one can't reach it —
+   the nav itself is blurred to match instead of dimmed. */
+.modal-overlay,
+.comments-overlay,
+.move-sheet-overlay {
+  background: rgba(255, 255, 255, 0.04);
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
+}
+.app-shell:has(.screens .modal-overlay, .screens .comments-overlay, .screens .move-sheet-overlay) .bottomnav::after {
+  background: none;
+}
+.app-shell:has(.screens .modal-overlay, .screens .comments-overlay, .screens .move-sheet-overlay) :is(.bottomnav, .nav-edge) {
+  filter: blur(5px);
+}
+.comments-sheet {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(246, 247, 250, 0.98) 100%);
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(23, 24, 27, 0.05), 0 -10px 34px rgba(23, 24, 27, 0.14);
+}
+.sort-menu-list {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(244, 245, 248, 0.94) 100%);
+  border-radius: 20px;
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(23, 24, 27, 0.06), 0 12px 30px rgba(23, 24, 27, 0.16);
+}
+.sort-menu-opt { border-radius: 14px; }
+.toast {
+  background: rgba(23, 24, 27, 0.82);
+  border-radius: 18px;
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 10px 24px rgba(23, 24, 27, 0.25);
+}
+
+/* «Неделя / Все игроки» (and any two-way .rating-views): a pill track with a
+   white thumb that slides, like the nav. CSS-only — two equal halves. */
+.rating-views {
+  position: relative;
+  padding: 3px;
+  gap: 3px;
+  border-radius: 999px;
+  background: rgba(23, 24, 27, 0.05);
+  box-shadow: 0 1px 3px rgba(60, 40, 20, 0.14) inset, 0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+.rating-views::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 4.5px);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F6F1EA 100%);
+  box-shadow: 0 0 0 1px rgba(120, 82, 50, 0.09), 0 1px 0 #fff inset, 0 4px 10px rgba(80, 45, 15, 0.13);
+  transition: transform 0.38s var(--ease-out);
+}
+.rating-views:has(.rating-view:last-child.on)::before { transform: translateX(calc(100% + 3px)); }
+.rating-view { position: relative; z-index: 1; border-radius: 999px; padding: 9px 10px; }
+.rating-view.on { background: none; box-shadow: none; }
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .nav-edge { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .modal-card, .comments-sheet, .sort-menu-list { background: #fff; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .modal-overlay, .comments-overlay, .move-sheet-overlay { background: rgba(23, 24, 27, 0.3); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .toast { background: #17181B; backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rating-views::before { transition: none; }
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .bottomnav,
+  .map-hud,
+  .map-sheet-card { background: rgba(255, 255, 255, 0.96); }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :is(#screen-profile, #screen-user-profile) :is(.hero-stat, .ach-card, .card, .profile-faq-row) { background: #fff; }
+  .bottomnav,
+  .map-hud,
+  .map-sheet-card {
+    background: #fff;
+    backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .navitem { transition: none; }
+  .nav-indicator.ready { transition: opacity 0.2s var(--ease); }
+}
+
+/* ---------- Fish species: the collection screen (SpeciesListModal) ---------- */
+.sp-card { max-height: min(86dvh, 720px); display: flex; flex-direction: column; padding-left: 18px; padding-right: 18px; }
+.sp-scroll { overflow-y: auto; flex: 1; margin: 14px -18px 0; padding: 0 18px 4px; overscroll-behavior: contain; }
+.sp-empty { padding: 28px 0 12px; text-align: center; color: var(--ink-faint); font-size: 13px; }
+
+.sp-hero { display: flex; align-items: center; gap: 16px; }
+.sp-ring { position: relative; width: 92px; height: 92px; flex: 0 0 auto; }
+.sp-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+.sp-ring circle { fill: none; stroke-width: 7; }
+.sp-ring-bg { stroke: rgba(23, 24, 27, 0.08); }
+.sp-ring-fg { stroke: #FC5200; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: calc(100 - var(--p)); animation: sp-ring 1.1s var(--ease-out) 0.1s both; }
+@keyframes sp-ring { from { stroke-dashoffset: 100; } }
+.sp-ring-num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
+.sp-ring-num b { font-family: var(--font-display), var(--font-georgian), 'Oswald', sans-serif; font-size: 30px; font-weight: 700; }
+.sp-ring-num span { font-size: 10.5px; font-weight: 700; color: var(--ink-faint); margin-top: 3px; }
+.sp-hero-side { flex: 1; min-width: 0; }
+.sp-hero-total { font-size: 13px; font-weight: 800; color: var(--ink-soft); margin-bottom: 8px; }
+.sp-stack { display: flex; gap: 3px; height: 12px; }
+.sp-seg { border: 0; padding: 0; min-width: 8px; border-radius: 6px; cursor: pointer; transition: opacity 0.2s, transform 0.2s var(--ease-out); transform-origin: left center; animation: sp-seg 0.7s var(--ease-out) 0.2s both; }
+@keyframes sp-seg { from { transform: scaleX(0); } }
+.sp-seg.dim { opacity: 0.28; }
+.sp-seg.on { transform: scaleY(1.35); }
+.sp-legend { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-top: 8px; }
+.sp-leg { display: inline-flex; align-items: center; gap: 5px; border: 0; background: rgba(23, 24, 27, 0.05); border-radius: 10px; padding: 4px 8px; font: inherit; font-size: 11.5px; font-weight: 700; color: var(--ink-soft); cursor: pointer; transition: background 0.2s, color 0.2s; }
+.sp-leg i { width: 8px; height: 8px; border-radius: 3px; display: block; }
+.sp-leg.on { background: var(--ink); color: #fff; }
+
+.sp-tiles { display: grid; grid-template-columns: 0.8fr 1.1fr 1.1fr; gap: 8px; margin-top: 16px; }
+.sp-tile { appearance: none; border: 0; font: inherit; text-align: left; color: inherit; background: rgba(23, 24, 27, 0.045); border-radius: 14px; padding: 10px 11px; display: flex; flex-direction: column; gap: 2px; min-width: 0; cursor: pointer; transition: transform 0.15s var(--ease); }
+.sp-tile:disabled { cursor: default; }
+.sp-tile:not(:disabled):active { transform: scale(0.96); }
+.sp-tile span { font-size: 10.5px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); }
+.sp-tile b { font-family: var(--font-display), var(--font-georgian), 'Oswald', sans-serif; font-size: 20px; font-weight: 700; line-height: 1.15; }
+.sp-tile em { font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.sp-sorts { display: flex; gap: 4px; margin-top: 16px; padding: 3px; background: rgba(23, 24, 27, 0.05); border-radius: 12px; }
+.sp-sort { flex: 1; border: 0; background: none; font: inherit; font-size: 12.5px; font-weight: 800; color: var(--ink-soft); padding: 7px 4px; border-radius: 9px; cursor: pointer; transition: background 0.2s, color 0.2s, box-shadow 0.2s; }
+.sp-sort.on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(23, 24, 27, 0.12); }
+
+.sp-list { margin-top: 8px; }
+.sp-row { border-bottom: 1px solid var(--line); animation: comment-in 0.35s var(--ease-out) both; }
+.sp-row:last-child { border-bottom: 0; }
+.sp-row-head { display: flex; align-items: center; gap: 11px; width: 100%; padding: 11px 0; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.sp-dot { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; display: block; }
+.sp-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.sp-name { font-weight: 700; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-bar { display: block; height: 5px; border-radius: 3px; background: rgba(23, 24, 27, 0.07); overflow: hidden; }
+.sp-bar span { display: block; height: 100%; border-radius: 3px; transform-origin: left center; animation: sp-seg 0.7s var(--ease-out) both; }
+.sp-count { font-size: 13px; font-weight: 800; color: var(--ink-soft); flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+.sp-chev { flex: 0 0 auto; color: var(--ink-faint); transition: transform 0.3s var(--ease-out); }
+.sp-row.open .sp-chev, .sp-missing-head.open .sp-chev { transform: rotate(180deg); }
+
+/* The open part grows from 0 to its height without measuring it. */
+.sp-more { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 0.35s var(--ease-out), opacity 0.25s; }
+.sp-more-in { overflow: hidden; min-height: 0; }
+.sp-row.open .sp-more, .sp-more.show { grid-template-rows: 1fr; opacity: 1; }
+.sp-facts { display: flex; gap: 12px; align-items: stretch; padding: 2px 0 10px; }
+.sp-photo { width: 84px; height: 84px; border-radius: 14px; object-fit: cover; flex: 0 0 auto; background: rgba(23, 24, 27, 0.06); }
+.sp-facts dl { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; margin: 0; align-content: center; }
+.sp-facts dt { font-size: 10.5px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); }
+.sp-facts dd { margin: 1px 0 0; font-size: 13.5px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.sp-share { font-size: 12px; font-weight: 700; color: var(--ink-soft); padding-bottom: 8px; }
+.sp-actions { display: flex; gap: 8px; padding-bottom: 12px; }
+.sp-act { flex: 1; border: 0; font: inherit; font-size: 12.5px; font-weight: 800; padding: 9px 10px; border-radius: 12px; background: rgba(252, 82, 0, 0.1); color: #C73F00; cursor: pointer; transition: transform 0.15s var(--ease); }
+.sp-act:active { transform: scale(0.96); }
+
+.sp-missing { margin-top: 10px; border-top: 1px solid var(--line); }
+.sp-missing-head { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 14px 0 10px; background: none; border: 0; font: inherit; font-size: 13.5px; font-weight: 800; color: var(--ink-soft); cursor: pointer; }
+.sp-ghosts { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 2px; }
+.sp-ghost { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px; border-radius: 10px; border: 1px dashed rgba(23, 24, 27, 0.2); font-size: 12px; font-weight: 700; color: var(--ink-faint); }
+.sp-hint { font-size: 12px; color: var(--ink-faint); line-height: 1.4; padding: 10px 0 6px; }
+.sp-done { padding: 14px 0 6px; text-align: center; font-size: 13.5px; font-weight: 800; color: #1E8A5C; }
+@media (prefers-reduced-motion: reduce) {
+  .sp-ring-fg, .sp-seg, .sp-bar span, .sp-row { animation: none; }
+  .sp-more, .sp-chev { transition: none; }
+}
+
+/* ---------- Clan chest: tappable chests, detail card, own share (ClanChestPanel) ---------- */
+.clan-chest-stop { appearance: none; background: none; border: 0; font: inherit; color: inherit; cursor: pointer; position: relative; border-radius: 14px; padding: 4px 0 6px; transition: background 0.25s; }
+.clan-chest-stop:active svg { transform: scale(0.92); }
+.clan-chest-stop svg { transition: transform 0.2s var(--ease-out); }
+.clan-chest-stop.sel { background: rgba(255, 255, 255, 0.09); box-shadow: inset 0 0 0 1.5px rgba(242, 196, 107, 0.5); }
+.clan-chest-stop.open svg { animation: chest-ping 0.7s var(--ease-out) var(--open-delay, 1s) both; }
+@keyframes chest-ping { 0% { transform: scale(1); } 40% { transform: scale(1.18) translateY(-3px); } 100% { transform: scale(1); } }
+.chest-lid { transition: transform 0.35s var(--ease-out); }
+.chest-lid.up { transform: rotate(-38deg); }
+.chest-glow { animation: chest-glow 1.4s ease-out both; }
+@keyframes chest-glow { from { opacity: 0; } 25% { opacity: 1; } to { opacity: 0.4; } }
+.chest-coins { position: absolute; left: 50%; top: 14px; width: 0; height: 0; pointer-events: none; z-index: 2; }
+.chest-coins i { position: absolute; left: -8px; top: 0; display: block; opacity: 0; animation: chest-coin 1.1s var(--ease-out) both; }
+@keyframes chest-coin { 0% { opacity: 0; transform: translate(0, 0) scale(0.6); } 20% { opacity: 1; } 55% { transform: translate(var(--dx), var(--dy)) scale(1); } 100% { opacity: 0; transform: translate(calc(var(--dx) * 1.4), calc(var(--dy) + 30px)) scale(0.9); } }
+
+/* The fill glows along its length and ends in a bright head. */
+.clan-chest-fill { position: relative; overflow: hidden; }
+.clan-chest-fill::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.55) 50%, transparent 70%); transform: translateX(-100%); animation: chest-shimmer 2.8s ease-in-out 1.2s infinite; }
+@keyframes chest-shimmer { to { transform: translateX(100%); } }
+
+.clan-chest-detail { margin-top: 14px; padding: 12px 13px 11px; border-radius: 16px; background: rgba(255, 255, 255, 0.07); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); animation: comment-in 0.35s var(--ease-out) both; }
+.clan-chest-detail-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.clan-chest-detail-top b { font-size: 15px; font-weight: 800; }
+.clan-chest-chip { font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 9px; border-radius: 20px; background: rgba(255, 255, 255, 0.12); color: rgba(255, 255, 255, 0.75); }
+.clan-chest-detail.open .clan-chest-chip { background: rgba(242, 196, 107, 0.22); color: #FFD98A; }
+.clan-chest-detail.next .clan-chest-chip { background: rgba(252, 82, 0, 0.28); color: #FFC4A3; }
+.clan-chest-detail-bar { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); overflow: hidden; margin: 10px 0 8px; }
+.clan-chest-detail-bar span { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #E0A63A, #FFD98A); transform-origin: left center; animation: clan-chest-fill 0.7s var(--ease-out) both; }
+.clan-chest-detail-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; font-weight: 700; color: rgba(255, 255, 255, 0.78); font-variant-numeric: tabular-nums; }
+.clan-chest-detail-coins { display: inline-flex; align-items: center; gap: 3px; font-size: 15px; font-weight: 800; color: #FFD98A; flex: 0 0 auto; }
+.clan-chest-detail-sub { margin-top: 4px; font-size: 11.5px; color: rgba(255, 255, 255, 0.5); }
+
+.chest-me-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.chest-me-row b { font-family: var(--font-display), var(--font-georgian), 'Oswald', sans-serif; font-size: 26px; font-weight: 700; line-height: 1.1; }
+.chest-me-row span { font-size: 12.5px; font-weight: 700; color: var(--ink-soft); }
+.chest-me-rewards { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.chest-me-rewards > span { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; font-weight: 700; color: var(--ink-soft); padding: 8px 11px; border-radius: 12px; background: rgba(23, 24, 27, 0.045); }
+.chest-me-rewards b { display: inline-flex; align-items: center; gap: 3px; color: var(--ink); font-weight: 800; }
+.chest-me-now { background: rgba(224, 166, 58, 0.16) !important; }
+.clan-member-row.me { background: rgba(252, 82, 0, 0.06); border-radius: 14px; box-shadow: inset 0 0 0 1px rgba(252, 82, 0, 0.18); }
+.clan-mvp, .clan-you { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 6px; font-size: 10px; font-weight: 800; letter-spacing: 0.03em; vertical-align: 1px; }
+.clan-mvp { background: rgba(224, 166, 58, 0.2); color: #9A6A0E; }
+.clan-you { background: rgba(252, 82, 0, 0.12); color: #C73F00; }
+@media (prefers-reduced-motion: reduce) {
+  .clan-chest-stop.open svg, .clan-chest-fill::after, .chest-coins i, .chest-glow { animation: none; }
+  .chest-lid { transition: none; }
+}
+/* Locked chests are dimmed, not see-through — the bar must not show through them. */
+.clan-chest-stop.locked svg { opacity: 1; filter: brightness(0.62) drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35)); }
+
+/* ---------- Weekly challenges: unfolding cards, the week's path (ChallengesScreen) ---------- */
+.challenge-card { padding: 0; }
+.challenge-head { display: block; width: 100%; background: none; border: 0; font: inherit; color: inherit; text-align: left; padding: 16px 16px 14px; cursor: pointer; transition: transform 0.15s var(--ease); }
+.challenge-head:active { transform: scale(0.99); }
+.challenge-head .challenge-tier-row { display: flex; align-items: center; gap: 7px; }
+.challenge-head .challenge-name { display: block; margin-top: 10px; padding-right: 4px; }
+.challenge-head .challenge-progress-track { display: block; height: 6px; margin-top: 12px; border-radius: 3px; overflow: hidden; }
+.challenge-head .challenge-progress-fill { display: block; height: 100%; width: 100%; border-radius: 3px; transform-origin: left center; animation: sp-seg 0.8s var(--ease-out) 0.15s both; }
+.challenge-head .challenge-progress-label { display: block; margin-top: 6px; }
+.challenge-chev { flex: 0 0 auto; color: var(--ink-faint); transition: transform 0.3s var(--ease-out); }
+.challenge-card.open .challenge-chev { transform: rotate(180deg); }
+.challenge-done-badge { position: static; width: 22px; height: 22px; flex: 0 0 auto; box-shadow: 0 0 0 3px color-mix(in srgb, var(--tier-color) 22%, transparent); }
+.challenge-check { stroke-dasharray: 24; animation: wk-draw 0.5s ease-out 0.25s both; }
+@keyframes wk-draw { from { stroke-dashoffset: 24; } }
+
+.challenge-more { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 0.35s var(--ease-out), opacity 0.25s; }
+.challenge-more-in { overflow: hidden; min-height: 0; padding: 0 16px; }
+.challenge-card.open .challenge-more { grid-template-rows: 1fr; opacity: 1; }
+.challenge-card.open .challenge-more-in { padding-bottom: 16px; }
+.challenge-more .challenge-desc { margin-top: 0; }
+.challenge-card.open .challenge-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.challenge-fact { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 10px; background: rgba(23, 24, 27, 0.05); font-size: 12.5px; font-weight: 700; color: var(--ink-soft); }
+.challenge-fact b { display: inline-flex; align-items: center; gap: 3px; color: var(--ink); font-weight: 800; }
+.challenge-fact.paid { background: color-mix(in srgb, var(--tier-color) 16%, transparent); color: var(--ink); }
+.challenge-tip { margin-top: 10px; font-size: 12px; line-height: 1.4; color: var(--ink-faint); }
+.challenge-more .challenge-swap-btn { display: inline-block; margin-top: 12px; padding: 8px 13px; border-radius: 12px; background: rgba(252, 82, 0, 0.1); color: #C73F00; text-decoration: none; font-size: 12.5px; font-weight: 800; transition: transform 0.15s var(--ease); }
+.challenge-more .challenge-swap-btn:active { transform: scale(0.96); }
+
+/* A task that has just flipped to done: the card lights up once. */
+.challenge-card.fresh { animation: challengeCardIn 0.4s var(--ease) both, wk-fresh 1.6s ease-out 0.2s both; }
+@keyframes wk-fresh { 0% { box-shadow: var(--glass-rim), 0 0 0 0 color-mix(in srgb, var(--tier-color) 55%, transparent); } 40% { box-shadow: var(--glass-rim), 0 0 0 8px color-mix(in srgb, var(--tier-color) 22%, transparent); } 100% { box-shadow: var(--glass-rim), 0 6px 16px rgba(23, 24, 27, 0.07); } }
+
+/* The week's path inside the dark card: one node per task, tap to jump to it. */
+.wk-path { display: flex; align-items: center; margin-top: 2px; }
+.wk-path-seg { display: flex; align-items: center; flex: 1 1 0; }
+.wk-path-seg:first-child { flex: 0 0 auto; }
+.wk-path-line { flex: 1; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.14); margin: 0 6px; transition: background 0.4s; }
+.wk-path-line.on { background: rgba(255, 255, 255, 0.4); }
+.wk-path-line.full { background: var(--accent); }
+.wk-node { appearance: none; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--tier-color); background: rgba(255, 255, 255, 0.06); color: #fff; font: inherit; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: transform 0.2s var(--ease-out), box-shadow 0.2s, background 0.3s; }
+.wk-node b { font-weight: 800; }
+.wk-node:active { transform: scale(0.9); }
+.wk-node.cur { box-shadow: 0 0 0 4px color-mix(in srgb, var(--tier-color) 32%, transparent); }
+.wk-node.done { background: var(--tier-color); }
+.challenges-week-card.all-done .challenges-week-title { color: #FFD98A; }
+.challenges-week-card.all-done .challenges-week-ring-fill { stroke: #F2C46B; }
+@media (prefers-reduced-motion: reduce) {
+  .challenge-head .challenge-progress-fill, .challenge-check, .challenge-card.open     .challenge-more, .challenge-chev { transition: none; }
+}
+/* Species tiles: every label is one line at the same height, so the labels, the numbers and the names under them line up. */
+.sp-tile span { display: block; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The window keeps its size whatever is filtered or unfolded inside it. */
+.sp-card--fixed { height: min(86dvh, 720px); }
+/* An unfinished task is always unfolded: nothing to tap, no arrow. */
+.challenge-card.pinned .challenge-head { cursor: default; }
+.challenge-card.pinned .challenge-head:active { transform: none; }
+.challenge-card.pinned .challenge-chev { display: none; }
+/* The week's path: one colour, spread across the whole card (it runs under the decorative glow on the right). */
+.wk-path { margin-right: -86px; }
+.wk-node { border-color: var(--accent); }
+.wk-node.done { background: var(--accent); }
+.wk-node.cur { box-shadow: 0 0 0 4px rgba(252, 82, 0, 0.3); }
+.wk-path-line.on { background: rgba(252, 82, 0, 0.45); }
+/* «Твой вклад»: the card has only a 4px bottom padding of its own — room under the last row. */
+.clan-card.chest-me { padding-bottom: 14px; }
+/* Own row in the contribution list: the tint sticks out 12px each side so the avatar and the number keep their space inside it. */
+.clan-member-row.me { padding-left: 12px; padding-right: 12px; margin-left: -12px; margin-right: -12px; }
+
+/* The week card plays when the screen opens: it rises, the ring fills, the path draws node by node. */
+.challenges-week-card { animation: wk-hero-in 0.6s var(--ease-out) backwards; }
+@keyframes wk-hero-in { from { opacity: 0; transform: translateY(16px) scale(0.97); } }
+.challenges-week-ring-fill { animation: wk-ring 1.1s var(--ease-out) 0.25s backwards; }
+@keyframes wk-ring { from { stroke-dashoffset: 188.5; } }
+.wk-node { animation: wk-node-in 0.45s var(--ease-out) calc(0.35s + var(--i, 0) * 0.1s) backwards; }
+@keyframes wk-node-in { from { opacity: 0; transform: scale(0.4); } }
+.wk-path-line { transform-origin: left center; animation: sp-seg 0.5s var(--ease-out) calc(0.3s + var(--i, 0) * 0.1s) backwards; }
+@media (prefers-reduced-motion: reduce) {
+  .challenges-week-card, .challenges-week-ring-fill, .wk-node, .wk-path-line { animation: none; }
+}
+/* The name rule turns red once what is typed breaks it. */
+.wizard-hint.bad { color: #D33; }
+/* Georgian labels are long («ტერიტორიები»): a size smaller so the five tabs fit the bar. */
+html[lang="ka"] .navitem > span:last-child { font-size: clamp(8.5px, 2.45vw, 10px); letter-spacing: 0; }
+/* The countdown chip sits in the card's corner; a long title (Georgian, or any language on a narrow phone) goes under it. */
+html[lang="ka"] .challenges-week-top { padding-top: 40px; }
+@media (max-width: 345px) { html:not([lang="ru"]) .challenges-week-top { padding-top: 40px; } }
+/* Territories / Rating / Clans in Georgian on a 320 px phone: a size smaller and closer so the third tab stays on screen. */
+@media (max-width: 345px) {
+  .rating-tabs { gap: 14px; }
+  .rating-tab { font-size: 13px; }
+}
+/* 320 px: the three species tiles keep their labels whole (a size smaller, less padding). */
+@media (max-width: 345px) {
+  .sp-tiles { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .sp-tile { padding: 9px 8px; }
+  .sp-tile span { font-size: 9px; letter-spacing: 0; }
+  .sp-tile b { font-size: 18px; }
+}
+/* 320 px: the legend and the forecast chip share a row — the chip keeps its bars and the score, the words go (its aria-label has them). */
+@media (max-width: 345px) {
+  .map-hud .forecast-chip .forecast-chip-text { display: none; }
+}
+@media (max-width: 345px) { .clan-chest-threshold { font-size: 11.5px; } }

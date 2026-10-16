@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { EMOJI_CATEGORIES } from '@/lib/data/emoji'
+import { tn } from '@/lib/i18n/runtime'
 
 const RECENT_KEY = 'range:emoji-recent'
 const RECENT_MAX = 24
@@ -36,7 +37,7 @@ export function EmojiPanel({ onPick }: { onPick: (emoji: string) => void }) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const sections = [
-    ...(recent.length ? [{ id: 'recent', label: 'Недавние', icon: '🕘', emoji: recent }] : []),
+    ...(recent.length ? [{ id: 'recent', label: tn('nav.emojiRecent'), icon: '🕘', emoji: recent }] : []),
     ...EMOJI_CATEGORIES,
   ]
 
@@ -79,7 +80,7 @@ export function EmojiPanel({ onPick }: { onPick: (emoji: string) => void }) {
           </section>
         ))}
       </div>
-      <div className="emoji-tabs" role="tablist" aria-label="Категории эмодзи">
+      <div className="emoji-tabs" role="tablist" aria-label={tn('nav.emojiAria')}>
         {sections.map((s) => (
           <button
             key={s.id}

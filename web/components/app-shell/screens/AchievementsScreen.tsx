@@ -3,9 +3,10 @@
 import { useCatchesByUser, useProfile, useHasClaimedFromOthers, useSyncMyAchievements } from '@/lib/supabase/queries'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { computeAchievements, heldTerritories, type Achievement } from '@/lib/data/achievements'
-import { ACH_ICONS } from '@/components/app-shell/icons'
+import { AchievementCard, achievementFraction } from '@/components/app-shell/AchievementCard'
 import { BackButton } from '@/components/app-shell/BackButton'
 import type { Territory } from '@/lib/data/types'
+import { tn } from '@/lib/i18n/runtime'
 
 // Full achievements list for one profile (own or someone else's) — ProfileScreen/
 // UserProfileScreen only show a 4-item preview with a button into this screen.
@@ -41,29 +42,47 @@ export function AchievementsScreen({
     profile?.city ?? 'batumi'
   )
 
+  const done = achievements.filter((a) => a.unlocked).length
+  const total = achievements.length
+  // Open ones first (in their usual order), then the closed ones, the nearest
+  // to opening leading them.
+  const ordered = [...achievements.filter((a) => a.unlocked), ...achievements.filter((a) => !a.unlocked).sort((x, y) => achievementFraction(y) - achievementFraction(x))]
+  const closest = ordered.find((a) => !a.unlocked)
+  const RING = 2 * Math.PI * 34
+
   return (
     <>
       <div className="header-row">
         <BackButton onClick={onBack} registerNative={false} />
-        <div style={{ fontWeight: 800, fontSize: 15 }}>Достижения</div>
+        <div style={{ fontWeight: 800, fontSize: 15 }}>{tn('weekly.achievements')}</div>
         <div style={{ width: 36 }} />
       </div>
       <div className="screen-inner">
-        <div className="ach-grid">
-          {achievements.map((a, i) => (
-            <div
-              className={`ach-card${a.unlocked ? '' : ' locked'}`}
-              key={a.icon}
-              onClick={() => onOpenDetail(a.icon)}
-              style={{ animationDelay: `${i * 50}ms` }}
-            >
-              <div className={`ach-icon hex-aspect hex-shape ${a.unlocked ? 'on' : 'off'}`}>{ACH_ICONS[a.icon]}</div>
-              <div>
-                <div className="ach-title">{a.title}</div>
-                <div className="ach-desc">{a.desc}</div>
-                {!a.unlocked && a.progress && <div className="ach-progress">{a.progress}</div>}
-              </div>
+        <div className="ach-summary">
+          <div className="ach-summary-ring">
+            <svg viewBox="0 0 80 80" aria-hidden>
+              <circle className="ach-ring-track" cx="40" cy="40" r="34" />
+              <circle
+                className="ach-ring-fill"
+                cx="40"
+                cy="40"
+                r="34"
+                style={{ strokeDasharray: RING, strokeDashoffset: RING * (1 - (total ? done / total : 0)) }}
+              />
+            </svg>
+            <div className="ach-ring-num">
+              <b>{done}</b>
+              <span>/{total}</span>
             </div>
+          </div>
+          <div className="ach-summary-text">
+            <div className="ach-summary-title">{tn('ach.summary', { done, total })}</div>
+            <div className="ach-summary-sub">{closest ? tn('ach.closest', { title: closest.title }) : tn('ach.allDone')}</div>
+          </div>
+        </div>
+        <div className="ach-grid">
+          {ordered.map((a, i) => (
+            <AchievementCard key={a.icon} a={a} index={i} onOpen={() => onOpenDetail(a.icon)} />
           ))}
         </div>
       </div>

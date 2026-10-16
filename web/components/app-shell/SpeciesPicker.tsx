@@ -2,6 +2,9 @@
 
 import { useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { tn } from '@/lib/i18n'
+import { localBait, localMethod } from '@/lib/data/species'
+import { currentLocale } from '@/lib/i18n/runtime'
 
 type Option = { key: string; name: string }
 
@@ -32,34 +35,34 @@ type PickerText = {
 // the player's own most-caught fish first, then everything A–Я under letter
 // headings.
 export function SpeciesPicker(props: { options: Option[]; value: string; frequent: string[]; onChange: (key: string) => void }) {
-  return <OptionPicker {...props} text={{ id: 'species', title: 'Вид рыбы', placeholder: 'Выбери вид рыбы', frequentTitle: 'Часто ловишь' }} dataTour="species" />
+  return <OptionPicker {...props} text={{ id: 'species', title: tn('catch.species'), placeholder: tn('catch.pickSpecies'), frequentTitle: tn('catch.oftenCatch') }} dataTour="species" />
 }
 
 // The bait, the same way: a sheet with search, the player's usual baits
 // first, A–Я below — and «Не указано», the field being optional.
 export function BaitPicker({ baits, value, frequent, onChange }: { baits: string[]; value: string; frequent: string[]; onChange: (bait: string) => void }) {
-  const options = useMemo(() => baits.map((b) => ({ key: b, name: b })), [baits])
+  const options = useMemo(() => baits.map((b) => ({ key: b, name: localBait(b) })), [baits])
   return (
     <OptionPicker
       options={options}
       value={value}
       frequent={frequent}
       onChange={onChange}
-      text={{ id: 'bait', title: 'Приманка', placeholder: 'Не указано', frequentTitle: 'Часто берёшь', noneLabel: 'Не указано' }}
+      text={{ id: 'bait', title: tn('catch.bait'), placeholder: tn('catch.notSpecified'), frequentTitle: tn('catch.oftenBait'), noneLabel: tn('catch.notSpecified') }}
     />
   )
 }
 
 // The fishing method, the same way (optional too).
 export function MethodPicker({ methods, value, frequent, onChange }: { methods: string[]; value: string; frequent: string[]; onChange: (method: string) => void }) {
-  const options = useMemo(() => methods.map((m) => ({ key: m, name: m })), [methods])
+  const options = useMemo(() => methods.map((m) => ({ key: m, name: localMethod(m) })), [methods])
   return (
     <OptionPicker
       options={options}
       value={value}
       frequent={frequent}
       onChange={onChange}
-      text={{ id: 'method', title: 'Способ ловли', placeholder: 'Не указано', frequentTitle: 'Часто ловишь так', noneLabel: 'Не указано' }}
+      text={{ id: 'method', title: tn('catch.method'), placeholder: tn('catch.notSpecified'), frequentTitle: tn('catch.oftenMethod'), noneLabel: tn('catch.notSpecified') }}
     />
   )
 }
@@ -120,7 +123,7 @@ function PickerSheet({
   onClose: () => void
 }) {
   const [query, setQuery] = useState('')
-  const sorted = useMemo(() => [...options].sort((a, b) => bare(a.name).localeCompare(bare(b.name), 'ru')), [options])
+  const sorted = useMemo(() => [...options].sort((a, b) => bare(a.name).localeCompare(bare(b.name), currentLocale())), [options])
   const q = norm(query)
 
   // A word starting with the query ranks first («кар» → Карась before
@@ -160,7 +163,7 @@ function PickerSheet({
           <div className="move-title">{text.title}</div>
         </div>
         <div className="species-search">
-          <input type="search" placeholder="Поиск" value={query} onChange={(e) => setQuery(e.target.value)} enterKeyHint="search" />
+          <input type="search" placeholder={tn('common.search')} value={query} onChange={(e) => setQuery(e.target.value)} enterKeyHint="search" />
         </div>
         <div className="move-body species-list">
           {mine.length > 0 && (
@@ -176,7 +179,7 @@ function PickerSheet({
             </>
           )}
           {found ? (
-            found.length > 0 ? found.map(row) : <div className="species-empty">Не нашли «{query.trim()}»</div>
+            found.length > 0 ? found.map(row) : <div className="species-empty">{tn('catch.notFound', { q: query.trim() })}</div>
           ) : (
             <>
               {text.noneLabel && (

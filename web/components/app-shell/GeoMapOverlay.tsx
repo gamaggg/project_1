@@ -8,8 +8,10 @@ import type { Territory } from '@/lib/data/types'
 import type { CityId } from '@/lib/data/city'
 import { GEO_BONUS, GEO_COINS, formatGeoDistance, geoImageUrl, type GeoResult } from '@/lib/geo'
 import { useTelegramBackButton } from '@/lib/telegram/useTelegramBackButton'
+import { tn } from '@/lib/i18n/runtime'
+import { KIND_LABEL } from '@/lib/data/species'
 
-const KIND: Record<string, string> = { sea: 'море', river: 'река', lake: 'озеро', pond: 'пруд' }
+const kindName = (kind: string) => (KIND_LABEL as Record<string, string>)[kind]?.toLowerCase()
 
 // «Где это?» played on the app's own map (MapScreen's `geo`): first the pick —
 // a window into the panorama up top, a tap on a sector, «Это здесь!» — then
@@ -53,17 +55,17 @@ export function GeoMapOverlay({
       {phase === 'pick' && (
         <>
           <div className="geo-play-top">
-            <button className="geo-play-window" data-tour="geo-window" style={windowStyle} onClick={onBack} aria-label="Вернуться к панораме">
+            <button className="geo-play-window" data-tour="geo-window" style={windowStyle} onClick={onBack} aria-label={tn('geoGame.backToPano')}>
               <span>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d="M15 18l-6-6 6-6" />
                 </svg>
-                к панораме
+                {tn('geoGame.toPano')}
               </span>
             </button>
             <div className="geo-play-ask">
-              <small>Где это?</small>
-              <b>В какой соте снята панорама?</b>
+              <small>{tn('geoGame.whereIs')}</small>
+              <b>{tn('geoGame.whichCell')}</b>
             </div>
           </div>
           <div className="geo-play-bottom">
@@ -73,16 +75,16 @@ export function GeoMapOverlay({
                 <span className="geo-play-hex" aria-hidden />
                 <span>
                   <b>{picked.id}</b>
-                  <small>{KIND[picked.kind] ?? 'вода'}</small>
+                  <small>{kindName(picked.kind) ?? tn('geoGame.water')}</small>
                 </span>
                 <button className="btn-primary geo-play-send" disabled={sending} onClick={onSend}>
-                  {sending ? 'Проверяем…' : 'Это здесь!'}
+                  {sending ? tn('geoGame.checking') : tn('geoGame.itsHere')}
                 </button>
               </div>
             ) : (
               <div className="geo-play-hint" data-tour="geo-hint">
                 <span className="geo-play-hex idle" aria-hidden />
-                Нажми на соту у воды — где, по-твоему, снята панорама
+                {tn('geoGame.tapCell')}
               </div>
             )}
           </div>
@@ -92,21 +94,21 @@ export function GeoMapOverlay({
       {phase === 'reveal' && result && (
         <div className={`geo-reveal${result.correct ? ' win' : ''}`}>
           {result.correct && <WinBurst prize="triple" coins={GEO_COINS} city={city} />}
-          <div className="geo-reveal-kicker">{result.correct ? 'В точку!' : neighbour ? 'Совсем рядом' : 'Не угадал'}</div>
+          <div className="geo-reveal-kicker">{result.correct ? tn('geoGame.spotOnBang') : neighbour ? tn('geoGame.veryClose') : tn('geoGame.missed')}</div>
           {result.correct ? (
             <div className="geo-reveal-coins">
               +{result.coins}
               <CoinIcon size={28} />
             </div>
           ) : (
-            <div className="geo-reveal-head">Это было в соте {result.territoryId}</div>
+            <div className="geo-reveal-head">{tn('geoGame.itWasIn', { id: result.territoryId ?? '' })}</div>
           )}
           <div className="geo-reveal-sub">
             {result.correct
-              ? `Сектор ${result.territoryId} — ты узнал это место`
+              ? tn('geoGame.revealRight', { id: result.territoryId ?? '' })
               : neighbour
-                ? 'Соседняя сота — не хватило совсем чуть-чуть'
-                : `${formatGeoDistance(result.distance)} от твоей соты ${result.guessTerritoryId}`}
+                ? tn('geoGame.revealNear')
+                : tn('geoGame.revealFar', { dist: formatGeoDistance(result.distance), id: result.guessTerritoryId })}
           </div>
           <div className="geo-reveal-quest">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
@@ -114,10 +116,10 @@ export function GeoMapOverlay({
               <circle cx="12" cy="12" r="4.5" />
               <circle cx="12" cy="12" r="1.2" fill="currentColor" />
             </svg>
-            Поймай здесь рыбу до полуночи — ещё +{GEO_BONUS}
+            {tn('geoGame.catchHere', { bonus: GEO_BONUS })}
           </div>
           <button className="btn-primary geo-reveal-btn" onClick={onStory}>
-            Что это за место
+            {tn('geoGame.whatPlace')}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M9 5l7 7-7 7" />
             </svg>

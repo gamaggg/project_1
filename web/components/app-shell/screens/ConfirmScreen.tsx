@@ -1,5 +1,6 @@
 'use client'
 
+import { HexLoader } from '@/components/app-shell/HexLoader'
 import { useEffect, useRef, useState } from 'react'
 import { useSpecies, useLastCatchChoices } from '@/lib/supabase/queries'
 import { CATEGORIES_BY_CITY, KIND_LABEL, METHODS, BAITS_BY_CITY } from '@/lib/data/species'
@@ -15,6 +16,7 @@ import { BaitPicker, MethodPicker, SpeciesPicker } from '@/components/app-shell/
 import { DefenseShields } from '@/components/app-shell/SectorDefense'
 import { useT } from '@/lib/i18n'
 import type { PendingCatch, Territory } from '@/lib/data/types'
+import { tn } from '@/lib/i18n'
 
 export type CatchFormData = {
   species: string
@@ -44,6 +46,7 @@ export function ConfirmScreen({
   capturedPhoto,
   photoStatus,
   onRetryUpload,
+  onGiveUpUpload,
   onSubmit,
   onFinish,
   onBack,
@@ -72,6 +75,9 @@ export function ConfirmScreen({
   capturedPhoto: Blob
   photoStatus: PhotoStatus
   onRetryUpload: () => void
+  // The photo is taking too long and the person chose not to wait: save the catch
+  // without it going out now (the offline queue sends it later).
+  onGiveUpUpload: () => void
   onSubmit: (form: CatchFormData) => void
   onFinish: () => void
   onBack: () => void
@@ -184,8 +190,8 @@ export function ConfirmScreen({
 
   if (step === 'success') {
     const meta = [
-      pendingCatch?.lengthCm ? `${pendingCatch.lengthCm} см` : null,
-      pendingCatch?.weightKg ? `${formatWeightGrams(pendingCatch.weightKg)} г` : null,
+      pendingCatch?.lengthCm ? `${pendingCatch.lengthCm} ${tn('fmt.cm')}` : null,
+      pendingCatch?.weightKg ? `${formatWeightGrams(pendingCatch.weightKg)} ${tn('fmt.g')}` : null,
       territory.id,
     ]
       .filter(Boolean)
@@ -197,7 +203,7 @@ export function ConfirmScreen({
         <div className="catch-trophy-stage">
           <div className="catch-trophy-card">
             <div className="catch-trophy-face">
-              {previewUrl && <img src={previewUrl} alt={caughtSpeciesName ?? 'Улов'} className="catch-trophy-photo" />}
+              {previewUrl && <img src={previewUrl} alt={caughtSpeciesName ?? tn('catch.title')} className="catch-trophy-photo" />}
               <div className="catch-trophy-shine" />
               <div className="catch-trophy-stats">
                 <div className="catch-trophy-species">{caughtSpeciesName ?? pendingCatch?.species}</div>
@@ -219,7 +225,7 @@ export function ConfirmScreen({
           </div>
         </div>
         <div className="catch-trophy-title">
-          {attackDefense !== null ? t('defense.attackTitle') : wasFree ? 'Теперь это твоя территория' : 'Улов зафиксирован'}
+          {attackDefense !== null ? t('defense.attackTitle') : wasFree ? tn('catch.newTerritory') : tn('catch.saved')}
         </div>
         {attackDefense !== null && (
           <div className="catch-trophy-attack">
@@ -231,13 +237,13 @@ export function ConfirmScreen({
         {clanSupport && (
           <div className="catch-trophy-support">
             {clanShare
-              ? 'Ты в доле сектора соклановца — теперь он поделён между вами'
-              : 'У сектора уже 4 владельца — улов засчитан как поддержка клана'}
+              ? tn('catch.clanShare')
+              : tn('catch.clanSupport')}
           </div>
         )}
         {(speciesCoins > 0 || captureCoins > 0) && (
           <div data-tour="catch-reward" className="catch-trophy-reward">
-            {doubled && <div className="catch-trophy-double">×2 · действуют двойные монеты</div>}
+            {doubled && <div className="catch-trophy-double">{tn('catch.doubleCoins')}</div>}
             {speciesCoins > 0 && (
               <div className="catch-trophy-reward-row">
                 <span>{caughtSpeciesName ?? pendingCatch?.species}</span>
@@ -248,7 +254,7 @@ export function ConfirmScreen({
             )}
             {captureCoins > 0 && (
               <div className="catch-trophy-reward-row">
-                <span>Захват сектора</span>
+                <span>{tn('catch.claimReward')}</span>
                 <span className="catch-trophy-reward-amount">
                   +{captureCoins} <CoinIcon size={16} />
                 </span>
@@ -258,13 +264,13 @@ export function ConfirmScreen({
         )}
         <div className="catch-trophy-ctas" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <button className="btn-primary" onClick={onShare}>
-            Поделиться уловом
+            {tn('catch.shareCatch')}
           </button>
           {savedCatchId && onToast && (
             <StoryButton big catchId={savedCatchId} caption={[caughtSpeciesName ?? pendingCatch?.species, meta.split(' · ').slice(0, -1).join(' · ')].filter(Boolean).join(' ')} onToast={onToast} />
           )}
           <button className="btn-secondary" onClick={onFinish}>
-            Готово
+            {tn('common.done')}
           </button>
         </div>
       </div>
@@ -275,13 +281,13 @@ export function ConfirmScreen({
     <>
       <div className="header-row">
         <BackButton onClick={onBack} registerNative={false} />
-        <div style={{ fontWeight: 800, fontSize: 15 }}>Новый улов</div>
+        <div style={{ fontWeight: 800, fontSize: 15 }}>{tn('catch.newCatch')}</div>
         <div style={{ width: 36 }} />
       </div>
       <div className="screen-inner">
         <form onSubmit={handleSubmit}>
           <div className="confirm-photo">
-            {previewUrl && <img src={previewUrl} alt="Улов" className="confirm-photo-img" />}
+            {previewUrl && <img src={previewUrl} alt={tn('catch.title')} className="confirm-photo-img" />}
             {/* Back to the camera for another shot — the same as the back arrow, said out loud. */}
             {!pending && (
               <button type="button" className="confirm-photo-retake tap-scale" onClick={onBack}>
@@ -289,15 +295,10 @@ export function ConfirmScreen({
                   <path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.8l1.5-2h6.4l1.5 2h1.8A2.5 2.5 0 0 1 21 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5Z" />
                   <circle cx="12" cy="13" r="3.6" />
                 </svg>
-                Переснять
+                {tn('catch.retake')}
               </button>
             )}
-            {photoStatus === 'uploading' && (
-              <div className="confirm-photo-status">
-                <div className="spinner" />
-                <div className="msg">Загружаем фото…</div>
-              </div>
-            )}
+            {photoStatus === 'uploading' && <UploadingStatus onGiveUp={onGiveUpUpload} />}
             {photoStatus === 'error' && offlineMode && (
               <div className="confirm-photo-status confirm-photo-offline">
                 <div className="confirm-offline-title">
@@ -308,28 +309,28 @@ export function ConfirmScreen({
                 </div>
                 <div className="msg">{t('offline.confirmHint')}</div>
                 <button type="button" className="confirm-photo-retry tap-scale" onClick={onRetryUpload}>
-                  Повторить попытку
+                  {tn('catch.retry')}
                 </button>
               </div>
             )}
             {photoStatus === 'error' && !offlineMode && (
               <div className="confirm-photo-status">
-                <div className="msg">Не удалось загрузить фото. Без фото улов сохранить нельзя.</div>
+                <div className="msg">{tn('catch.uploadFailed')}</div>
                 <button type="button" className="confirm-photo-retry tap-scale" onClick={onRetryUpload}>
-                  Повторить попытку
+                  {tn('catch.retry')}
                 </button>
               </div>
             )}
           </div>
           <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 12 }}>
-            Территория {territory.id} · {KIND_LABEL[territory.kind]}
+            {tn('catch.territoryKind', { id: territory.id, kind: KIND_LABEL[territory.kind] })}
           </div>
 
           <div className="auth-field" style={{ marginTop: 18 }}>
             <label htmlFor="species">
-              Вид рыбы
-              {speciesGuessed && <span className="species-guess-badge">определено по фото</span>}
-              {speciesFromLast && <span className="species-guess-badge">как в прошлый раз</span>}
+              {tn('catch.species')}
+              {speciesGuessed && <span className="species-guess-badge">{tn('catch.guessed')}</span>}
+              {speciesFromLast && <span className="species-guess-badge">{tn('catch.fromLast')}</span>}
             </label>
             <SpeciesPicker
               options={speciesOptions}
@@ -346,19 +347,19 @@ export function ConfirmScreen({
 
           <div style={{ display: 'flex', gap: 12 }}>
             <div className="auth-field" style={{ flex: 1 }}>
-              <label htmlFor="length">Размер, см</label>
-              <input id="length" type="number" min={1} max={300} inputMode="numeric" placeholder="необязательно" value={lengthCm} onChange={(e) => setLengthCm(e.target.value)} />
+              <label htmlFor="length">{tn('catch.lengthCm')}</label>
+              <input id="length" type="number" min={1} max={300} inputMode="numeric" placeholder={tn('catch.optionalLower')} value={lengthCm} onChange={(e) => setLengthCm(e.target.value)} />
             </div>
             <div className="auth-field" style={{ flex: 1 }}>
-              <label htmlFor="weight">Вес, г</label>
-              <input id="weight" type="number" min={10} max={9999} step={10} inputMode="numeric" placeholder="необязательно" value={weightG} onChange={(e) => setWeightG(e.target.value)} />
+              <label htmlFor="weight">{tn('catch.weightG')}</label>
+              <input id="weight" type="number" min={10} max={9999} step={10} inputMode="numeric" placeholder={tn('catch.optionalLower')} value={weightG} onChange={(e) => setWeightG(e.target.value)} />
             </div>
           </div>
 
           <div className="auth-field">
             <label htmlFor="method">
-              Способ ловли
-              {methodFromLast && <span className="species-guess-badge">как в прошлый раз</span>}
+              {tn('catch.method')}
+              {methodFromLast && <span className="species-guess-badge">{tn('catch.fromLast')}</span>}
             </label>
             <MethodPicker
               methods={METHODS}
@@ -373,8 +374,8 @@ export function ConfirmScreen({
 
           <div className="auth-field">
             <label htmlFor="bait">
-              Приманка
-              {baitFromLast && <span className="species-guess-badge">как в прошлый раз</span>}
+              {tn('catch.bait')}
+              {baitFromLast && <span className="species-guess-badge">{tn('catch.fromLast')}</span>}
             </label>
             <BaitPicker
               baits={baits}
@@ -389,11 +390,37 @@ export function ConfirmScreen({
 
           <div style={{ marginTop: 10 }}>
             <button className="btn-primary" type="submit" disabled={!speciesKey || (photoStatus !== 'success' && !offlineMode) || pending}>
-              {pending ? 'Сохраняем…' : offlineMode ? t('offline.saveOffline') : 'Подтвердить улов'}
+              {pending ? tn('common.saving') : offlineMode ? t('offline.saveOffline') : tn('catch.confirm')}
             </button>
           </div>
         </form>
       </div>
     </>
+  )
+}
+
+// What the photo's overlay says while it uploads: «Загружаем фото…», and when it
+// drags on — a word about the connection after 8 seconds, and after 25 a way out:
+// save the catch offline instead of waiting (it goes out by itself later).
+function UploadingStatus({ onGiveUp }: { onGiveUp: () => void }) {
+  const [waited, setWaited] = useState(0)
+  useEffect(() => {
+    const slow = window.setTimeout(() => setWaited(1), 8000)
+    const long = window.setTimeout(() => setWaited(2), 25000)
+    return () => {
+      clearTimeout(slow)
+      clearTimeout(long)
+    }
+  }, [])
+  return (
+    <div className="confirm-photo-status">
+      <HexLoader size={0.6} />
+      <div className="msg">{waited > 0 ? tn('catch.uploadingSlow') : tn('catch.uploading')}</div>
+      {waited > 1 && (
+        <button type="button" className="confirm-photo-retry tap-scale" onClick={onGiveUp}>
+          {tn('catch.saveWithoutNet')}
+        </button>
+      )}
+    </div>
   )
 }

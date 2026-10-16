@@ -11,15 +11,36 @@ import { CREST_COLORS, CREST_SECONDARY_COLORS, CREST_SHAPES, CREST_SYMBOLS, reso
 import { CLAN_BACKGROUNDS, isLightClanBackground } from '@/lib/data/clanBackgrounds'
 import { CLAN_PRICE, JOIN_TYPE_LABEL, MIN_SECTORS_OPTIONS, clanErrorMessage, type ClanJoinType } from '@/lib/data/clanLevels'
 import { hapticSuccess } from '@/lib/telegram/haptics'
+import { currentLocale, tn } from '@/lib/i18n/runtime'
 import type { ClanDetail } from '@/lib/data/types'
 
-const STEPS = ['Герб', 'Название', 'Фон', 'Вступление'] as const
+const STEPS = ['crest', 'name', 'bg', 'join'] as const
+const STEP_LABEL = {
+  get crest() {
+    return tn('clanEditor.stepCrest')
+  },
+  get name() {
+    return tn('clanEditor.stepName')
+  },
+  get bg() {
+    return tn('clanEditor.stepBg')
+  },
+  get join() {
+    return tn('clanEditor.stepJoin')
+  },
+}
 const NAME_RE = /^[A-Za-zА-Яа-яЁё0-9]([A-Za-zА-Яа-яЁё0-9 -]*[A-Za-zА-Яа-яЁё0-9])?$/
 
 const JOIN_DESCRIPTION: Record<ClanJoinType, string> = {
-  open: 'Любой рыбак из города вступает сразу',
-  request: 'Глава, соруководители и старейшины принимают заявки',
-  invite: 'Только те, кого вы пригласили сами',
+  get open() {
+    return tn('clanEditor.joinOpen')
+  },
+  get request() {
+    return tn('clanEditor.joinRequest')
+  },
+  get invite() {
+    return tn('clanEditor.joinInvite')
+  },
 }
 
 function useDebounced<T>(value: T, ms: number): T {
@@ -49,7 +70,7 @@ function LockTag({ level }: { level: number }) {
       <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
         <path d="M7 10V7a5 5 0 0 1 10 0v3h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Zm2 0h6V7a3 3 0 0 0-6 0Z" />
       </svg>
-      ур. {level}
+      {tn('clanEditor.lockLevel', { level })}
     </span>
   )
 }
@@ -99,7 +120,7 @@ export function ClanEditorScreen({
   const trimmed = name.trim()
   const debouncedName = useDebounced(trimmed, 450)
   const nameChanged = !isEdit || trimmed !== clan?.name
-  const localNameProblem = trimmed.length === 0 ? null : trimmed.length < 3 ? 'Минимум 3 символа' : !NAME_RE.test(trimmed) || /\s{2}/.test(trimmed) ? 'Только буквы, цифры, пробел и дефис' : null
+  const localNameProblem = trimmed.length === 0 ? null : trimmed.length < 3 ? tn('clanEditor.min3') : !NAME_RE.test(trimmed) || /\s{2}/.test(trimmed) ? tn('clanEditor.badChars') : null
   const { data: nameProblem, isFetching: checkingName } = useClanNameCheck(debouncedName, nameChanged && !localNameProblem)
   const nameSettled = debouncedName === trimmed && !checkingName
   const nameOk = trimmed.length >= 3 && !localNameProblem && (!nameChanged || (nameSettled && !nameProblem))
@@ -119,7 +140,7 @@ export function ClanEditorScreen({
     setError(null)
     if (!nameOk) {
       setStep(1)
-      setError(localNameProblem ?? (nameProblem ? clanErrorMessage(nameProblem) : 'Проверь название'))
+      setError(localNameProblem ?? (nameProblem ? clanErrorMessage(nameProblem) : tn('clanEditor.checkName')))
       return
     }
     if (isEdit) {
@@ -140,7 +161,7 @@ export function ClanEditorScreen({
 
   function next() {
     if (step === 1 && !nameOk) {
-      setError(localNameProblem ?? (nameProblem ? clanErrorMessage(nameProblem) : trimmed ? 'Проверяем название…' : 'Придумай название клана'))
+      setError(localNameProblem ?? (nameProblem ? clanErrorMessage(nameProblem) : trimmed ? tn('clanEditor.checkingName') : tn('clanEditor.thinkName')))
       return
     }
     setError(null)
@@ -150,9 +171,9 @@ export function ClanEditorScreen({
   let nameStatus: { text: string; ok: boolean } | null = null
   if (!nameChanged) nameStatus = null
   else if (localNameProblem) nameStatus = { text: localNameProblem, ok: false }
-  else if (trimmed.length >= 3 && !nameSettled) nameStatus = { text: 'Проверяем…', ok: true }
+  else if (trimmed.length >= 3 && !nameSettled) nameStatus = { text: tn('clanEditor.checking'), ok: true }
   else if (nameProblem) nameStatus = { text: clanErrorMessage(nameProblem), ok: false }
-  else if (trimmed.length >= 3) nameStatus = { text: 'Название свободно', ok: true }
+  else if (trimmed.length >= 3) nameStatus = { text: tn('clanEditor.nameFree'), ok: true }
 
   if (created) {
     return <ClanFounded crest={crest} name={created.name} background={background} onOpen={() => onDone(created.id)} onShare={() => onShareClan(created.id, created.name, createdInviteCode)} />
@@ -163,14 +184,14 @@ export function ClanEditorScreen({
       <div className="clan-editor-top">
         <div className="header-row" style={{ padding: '6px 0 8px' }}>
           <BackButton onClick={onBack} registerNative={false} />
-          <div style={{ fontWeight: 800, fontSize: 15 }}>{isEdit ? 'Настройки клана' : 'Новый клан'}</div>
+          <div style={{ fontWeight: 800, fontSize: 15 }}>{isEdit ? tn('clanEditor.settings') : tn('clanEditor.newClan')}</div>
           <div style={{ width: 36, textAlign: 'right', fontSize: 12, fontWeight: 800, color: 'var(--ink-faint)' }}>{isEdit ? '' : `${step + 1}/${STEPS.length}`}</div>
         </div>
         {isEdit ? (
           <div className="clan-tabs">
             {STEPS.map((label, i) => (
               <button key={label} className={`clan-tab${step === i ? ' on' : ''}`} onClick={() => setStep(i)}>
-                {label}
+                {STEP_LABEL[label]}
               </button>
             ))}
           </div>
@@ -187,7 +208,7 @@ export function ClanEditorScreen({
       <div className="clan-editor-body" key={step}>
         {step === 0 && (
           <>
-            <div className="clan-section-label">Форма</div>
+            <div className="clan-section-label">{tn('clanEditor.shape')}</div>
             <div className="clan-opt-grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
               {CREST_SHAPES.map((s) => {
                 const locked = s.level > level
@@ -207,7 +228,7 @@ export function ClanEditorScreen({
                 )
               })}
             </div>
-            <div className="clan-section-label">Символ</div>
+            <div className="clan-section-label">{tn('clanEditor.symbol')}</div>
             <div className="clan-opt-grid" style={{ gridTemplateColumns: 'repeat(6, 1fr)' }}>
               {CREST_SYMBOLS.map((s) => {
                 const locked = s.level > level
@@ -236,7 +257,7 @@ export function ClanEditorScreen({
                 )
               })}
             </div>
-            <div className="clan-section-label">Цвет герба</div>
+            <div className="clan-section-label">{tn('clanEditor.crestColor')}</div>
             <div className="clan-swatches">
               {CREST_COLORS.map((c) => (
                 <button
@@ -248,7 +269,7 @@ export function ClanEditorScreen({
                 />
               ))}
             </div>
-            <div className="clan-section-label">Цвет кольца</div>
+            <div className="clan-section-label">{tn('clanEditor.ringColor')}</div>
             <div className="clan-swatches">
               {CREST_SECONDARY_COLORS.map((c) => (
                 <button
@@ -265,13 +286,13 @@ export function ClanEditorScreen({
 
         {step === 1 && (
           <>
-            <div className="clan-section-label">Название</div>
+            <div className="clan-section-label">{tn('clanEditor.nameLabel')}</div>
             <div className={`clan-field${nameStatus && !nameStatus.ok ? ' bad' : ''}`}>
               <input
                 value={name}
                 maxLength={20}
                 disabled={isEdit && !canRename}
-                placeholder="Щуки Батуми"
+                placeholder={tn('clanEditor.namePlaceholder')}
                 onChange={(e) => {
                   setName(e.target.value)
                   setError(null)
@@ -279,14 +300,14 @@ export function ClanEditorScreen({
               />
               <span className="clan-field-count">{name.length}/20</span>
             </div>
-            {isEdit && !isLeader && <div className="clan-hint">Название меняет только глава клана</div>}
+            {isEdit && !isLeader && <div className="clan-hint">{tn('clanEditor.leaderOnly')}</div>}
             {isEdit && isLeader && renameBlockedUntil && (
-              <div className="clan-hint">Переименовать можно с {renameBlockedUntil.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</div>
+              <div className="clan-hint">{tn('clanEditor.renameFrom', { date: renameBlockedUntil.toLocaleDateString(currentLocale(), { day: 'numeric', month: 'long' }) })}</div>
             )}
             {nameStatus && <div className={`clan-name-status${nameStatus.ok ? ' ok' : ' bad'}`}>{nameStatus.text}</div>}
-            <div className="clan-section-label">Девиз</div>
+            <div className="clan-section-label">{tn('clanEditor.motto')}</div>
             <div className="clan-field clan-field-area">
-              <textarea value={motto} maxLength={120} rows={2} placeholder="Клюёт у тех, кто рано встаёт" onChange={(e) => {
+              <textarea value={motto} maxLength={120} rows={2} placeholder={tn('clanEditor.mottoPlaceholder')} onChange={(e) => {
                   setMotto(e.target.value)
                   setError(null)
                 }} />
@@ -294,13 +315,13 @@ export function ClanEditorScreen({
             </div>
             {isEdit && (
               <>
-                <div className="clan-section-label">Объявление для своих</div>
+                <div className="clan-section-label">{tn('clanEditor.announcement')}</div>
                 <div className="clan-field clan-field-area">
                   <textarea
                     value={announcement}
                     maxLength={200}
                     rows={3}
-                    placeholder="В субботу все на Чорохи к 6:00"
+                    placeholder={tn('clanEditor.announcementPlaceholder')}
                     onChange={(e) => {
                       setAnnouncement(e.target.value)
                       setError(null)
@@ -308,10 +329,10 @@ export function ClanEditorScreen({
                   />
                   <span className="clan-field-count">{announcement.length}/200</span>
                 </div>
-                <div className="clan-hint">Видно только участникам клана — вверху экрана клана</div>
+                <div className="clan-hint">{tn('clanEditor.announcementHint')}</div>
               </>
             )}
-            <div className="clan-hint">Название, девиз и объявление проходят автоматическую проверку: без мата, ссылок и телефонов.</div>
+            <div className="clan-hint">{tn('clanEditor.moderationHint')}</div>
           </>
         )}
 
@@ -331,7 +352,7 @@ export function ClanEditorScreen({
                       loops stop on their own once this screen is hidden. */}
                   {b.animated && <HeroBgLive bg={b} variant="swatch" />}
                   <span className="clan-bg-label">{b.label}</span>
-                  {b.animated && <span className="clan-bg-live">живой</span>}
+                  {b.animated && <span className="clan-bg-live">{tn('clanEditor.live')}</span>}
                   {locked && <LockTag level={b.level} />}
                 </button>
               )
@@ -341,7 +362,7 @@ export function ClanEditorScreen({
 
         {step === 3 && (
           <>
-            <div className="clan-section-label">Как вступать</div>
+            <div className="clan-section-label">{tn('clanEditor.howJoin')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {(['open', 'request', 'invite'] as ClanJoinType[]).map((t) => (
                 <button key={t} className={`clan-join-card${joinType === t ? ' on' : ''}`} onClick={() => setJoinType(t)}>
@@ -353,11 +374,11 @@ export function ClanEditorScreen({
                 </button>
               ))}
             </div>
-            <div className="clan-section-label">Минимум захваченных секторов</div>
+            <div className="clan-section-label">{tn('clanEditor.minSectors')}</div>
             <div className="filter-row" style={{ marginBottom: 0 }}>
               {MIN_SECTORS_OPTIONS.map((n) => (
                 <button key={n} className={`filter-chip${minSectors === n ? ' active' : ''}`} onClick={() => setMinSectors(n)}>
-                  {n === 0 ? 'Без условий' : `от ${n}`}
+                  {n === 0 ? tn('clanEditor.noConditions') : tn('clanEditor.from', { n })}
                 </button>
               ))}
             </div>
@@ -366,16 +387,16 @@ export function ClanEditorScreen({
               <div className="clan-price-card">
                 <div className="clan-req-row">
                   <span className={`clan-req-dot${sectorsOk ? ' ok' : ''}`}>{sectorsOk ? '✓' : '✕'}</span>
-                  Захвачено секторов: {eligibility?.sectors ?? '…'} из {eligibility?.sectorsNeeded ?? 3}
+                  {tn('clanEditor.sectorsReq', { have: eligibility?.sectors ?? '…', need: eligibility?.sectorsNeeded ?? 3 })}
                 </div>
                 <div className="clan-req-row">
                   <span className={`clan-req-dot${coinsOk ? ' ok' : ''}`}>{coinsOk ? '✓' : '✕'}</span>
-                  Монет: {eligibility?.coins ?? '…'} из {CLAN_PRICE}
+                  {tn('clanEditor.coinsReq', { have: eligibility?.coins ?? '…', need: CLAN_PRICE })}
                 </div>
                 {cooldown && cooldown > new Date() && (
                   <div className="clan-req-row">
                     <span className="clan-req-dot">✕</span>
-                    После выхода из клана — с {cooldown.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                    {tn('clanEditor.cooldown', { time: cooldown.toLocaleTimeString(currentLocale(), { hour: '2-digit', minute: '2-digit' }) })}
                   </div>
                 )}
               </div>
@@ -388,26 +409,26 @@ export function ClanEditorScreen({
       <div className="clan-editor-footer">
         {isEdit ? (
           <button className="btn-primary" disabled={busy} onClick={submit}>
-            {busy ? 'Сохраняем…' : 'Сохранить'}
+            {busy ? tn('common.saving') : tn('common.save')}
           </button>
         ) : (
           <>
             {step > 0 && (
               <button className="btn-secondary" style={{ flex: '0 0 auto', width: 'auto', padding: '0 22px' }} onClick={() => setStep((s) => s - 1)}>
-                Назад
+                {tn('common.back')}
               </button>
             )}
             {step < STEPS.length - 1 ? (
               <button className="btn-primary" onClick={next}>
-                Далее
+                {tn('common.next')}
               </button>
             ) : (
               <button className="btn-primary clan-create-btn" disabled={busy || !sectorsOk || !coinsOk || (!!cooldown && cooldown > new Date())} onClick={submit}>
                 {busy ? (
-                  'Создаём…'
+                  tn('clanEditor.creating')
                 ) : (
                   <>
-                    Создать клан · <CoinIcon size={20} /> {CLAN_PRICE}
+                    {tn('clanEditor.createFor')}<CoinIcon size={20} /> {CLAN_PRICE}
                   </>
                 )}
               </button>
@@ -449,16 +470,16 @@ function ClanFounded({ crest, name, background, onOpen, onShare }: { crest: Cres
         </div>
       </ClanHero>
       <div className="clan-founded-text">
-        <div className="clan-founded-kicker">Клан основан</div>
+        <div className="clan-founded-kicker">{tn('clanEditor.founded')}</div>
         <div className="clan-founded-name">{name}</div>
-        <div className="clan-founded-sub">Уровень 1 · Лига «Бронза» · 1 из 15 мест</div>
+        <div className="clan-founded-sub">{tn('clanEditor.foundedSub')}</div>
       </div>
       <div className="clan-founded-actions">
         <button className="btn-primary" onClick={onShare}>
-          Пригласить друзей
+          {tn('clanEditor.inviteFriends')}
         </button>
         <button className="btn-secondary" onClick={onOpen}>
-          Открыть клан
+          {tn('clanEditor.openClan')}
         </button>
       </div>
     </div>

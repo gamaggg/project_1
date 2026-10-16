@@ -6,13 +6,13 @@ import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { useMyActiveBuffs } from '@/lib/supabase/queries'
 import { useNow } from '@/lib/useNow'
 import { hapticTap } from '@/lib/telegram/haptics'
+import { labels, tn } from '@/lib/i18n/runtime'
 
 // What coin_multiplier doubles, and what it leaves alone — the same lists as
 // the FAQ («Что дают бафы?»).
-const DOUBLED = ['Уловы', 'Захваты', 'Челленджи', 'Достижения', 'Награды клана']
-const NOT_DOUBLED = 'Казна, ежедневная награда и слоты — без удвоения'
+const DOUBLED = ['catches', 'claims', 'challenges', 'achievements', 'clan'] as const
+const DOUBLED_LABEL = labels('boost', ['doubled_catches', 'doubled_claims', 'doubled_challenges', 'doubled_achievements', 'doubled_clan'] as const)
 // A hot sector's ×2 and this ×2 add up to ×3 for a catch, not ×4 (confirm_catch).
-const ON_HOT = 'На горячем секторе улов — ×3'
 
 // The running «Двойные монеты» (bought in the shop or won as «3 крючка» in the
 // slots): when it started and when it ends, or null if it isn't on.
@@ -34,7 +34,7 @@ export function useDoubleCoinsUntil(): number | null {
 
 function left(ms: number) {
   const min = Math.max(1, Math.ceil(ms / 60_000))
-  return min < 60 ? `${min} мин` : `${Math.floor(min / 60)} ч`
+  return min < 60 ? tn('fmt.minShort', { count: min }) : tn('fmt.hourShort', { count: Math.floor(min / 60) })
 }
 
 // «×2» in the map's top panel while double coins are on — players won it in
@@ -52,7 +52,7 @@ export function DoubleCoinsChip() {
         type="button"
         data-tour="double"
         className="double-coins-chip tap-scale"
-        aria-label={`Двойные монеты, ещё ${rest}`}
+        aria-label={tn('boost.doubleAria', { rest })}
         onClick={() => {
           hapticTap()
           setOpen(true)
@@ -74,10 +74,10 @@ const RING_C = 2 * Math.PI * RING_R
 function DoubleCoinsModal({ from, until, onClose }: { from: number; until: number; onClose: () => void }) {
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card double-modal" role="dialog" aria-label="Двойные монеты" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-card double-modal" role="dialog" aria-label={tn('boost.doubleTitle')} onClick={(e) => e.stopPropagation()}>
         <DoubleCoinsContent from={from} until={until} />
         <button className="btn-primary" onClick={onClose}>
-          Понятно
+          {tn('common.gotIt')}
         </button>
       </div>
     </div>,
@@ -127,33 +127,33 @@ export function DoubleCoinsContent({ from, until }: { from: number; until: numbe
         <div className="double-modal-badge">×2</div>
       </div>
 
-      <div className="modal-title double-modal-title">Двойные монеты</div>
+      <div className="modal-title double-modal-title">{tn('boost.doubleTitle')}</div>
 
       <div className="double-modal-timer">
         <b>
           {h > 0 && (
             <>
               {h}
-              <small>ч</small>{' '}
+              <small>{tn('boost.hUnit')}</small>{' '}
             </>
           )}
           {m}
-          <small>мин</small>
+          <small>{tn('boost.minUnit')}</small>
         </b>
-        <span>до конца удвоения</span>
+        <span>{tn('boost.untilEnd')}</span>
       </div>
 
       <div className="double-modal-what">
-        <div className="double-modal-kicker">Вдвое больше монет за</div>
+        <div className="double-modal-kicker">{tn('boost.twiceFor')}</div>
         <div className="double-modal-chips">
           {DOUBLED.map((item) => (
-            <span key={item}>{item}</span>
+            <span key={item}>{DOUBLED_LABEL[`doubled_${item}` as keyof typeof DOUBLED_LABEL]}</span>
           ))}
         </div>
       </div>
       <div className="double-modal-note">
-        <b>{ON_HOT}</b>
-        {NOT_DOUBLED}
+        <b>{tn('boost.onHot')}</b>
+        {tn('boost.notDoubled')}
       </div>
     </>
   )

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { OtpCodeStep } from '@/components/app-shell/onboarding/OtpCodeStep'
 import { BackButton } from '@/components/app-shell/BackButton'
+import { tn } from '@/lib/i18n/runtime'
 
 // Rendered by FishZoneApp itself, same top-level-gate pattern as
 // ForgotPasswordFlow — triggered from ProfileScreen for an account whose
@@ -33,7 +34,7 @@ export function LinkEmailFlow({ onDone, onCancel }: { onDone: () => void; onCanc
     const supabase = createClient()
     const { error } = await supabase.auth.updateUser({ email: email.trim(), password })
     setPending(false)
-    if (error) setError(error.message === 'User already registered' ? 'Эта почта уже занята другим аккаунтом' : error.message)
+    if (error) setError(error.message === 'User already registered' ? tn('onb.emailTaken') : error.message)
     else setStep('code')
   }
 
@@ -42,9 +43,9 @@ export function LinkEmailFlow({ onDone, onCancel }: { onDone: () => void; onCanc
       <OtpCodeStep
         email={email.trim()}
         type="email_change"
-        title="Проверь новую почту"
-        subtitle={`Отправили код на ${email.trim()} — введи его ниже, чтобы привязать почту к аккаунту.`}
-        ctaLabel="Привязать"
+        title={tn('onb.checkNewMail')}
+        subtitle={tn('onb.codeSentLink', { email: email.trim() })}
+        ctaLabel={tn('onb.link')}
         onBack={() => setStep('form')}
         onVerified={async () => {
           // verifyOtp above only proves the new address — this project's
@@ -77,10 +78,10 @@ export function LinkEmailFlow({ onDone, onCancel }: { onDone: () => void; onCanc
           </div>
         </div>
         <div className="intro-copy">
-          <div className="intro-title">Почта привязана</div>
-          <div className="intro-sub">Теперь можно входить и через Telegram, и по почте с этим паролем.</div>
+          <div className="intro-title">{tn('onb.linked')}</div>
+          <div className="intro-sub">{tn('onb.linkedSub')}</div>
           <button className="intro-cta" onClick={onDone}>
-            Готово
+            {tn('common.done')}
           </button>
         </div>
       </div>
@@ -102,8 +103,8 @@ export function LinkEmailFlow({ onDone, onCancel }: { onDone: () => void; onCanc
         </div>
       </div>
       <div className="intro-copy">
-        <div className="intro-title">Привязать почту</div>
-        <div className="intro-sub">Добавь почту и пароль — сможешь заходить в RANGE не только через Telegram, но и с сайта.</div>
+        <div className="intro-title">{tn('onb.linkTitle')}</div>
+        <div className="intro-sub">{tn('onb.linkSub')}</div>
       </div>
       <form onSubmit={handleSubmit} className="wizard-anim-form" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '0 24px' }}>
         <div className="wizard-field">
@@ -111,11 +112,11 @@ export function LinkEmailFlow({ onDone, onCancel }: { onDone: () => void; onCanc
           <input id="link-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
         </div>
         <div className="wizard-field">
-          <label htmlFor="link-password">Пароль</label>
-          <input id="link-password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Минимум 6 символов" />
+          <label htmlFor="link-password">{tn('onb.password')}</label>
+          <input id="link-password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={tn('onb.min6')} />
         </div>
         <div className="wizard-field">
-          <label htmlFor="link-password-confirm">Повторите пароль</label>
+          <label htmlFor="link-password-confirm">{tn('onb.repeatPass')}</label>
           <input
             id="link-password-confirm"
             type="password"
@@ -123,14 +124,14 @@ export function LinkEmailFlow({ onDone, onCancel }: { onDone: () => void; onCanc
             minLength={6}
             value={passwordConfirm}
             onChange={(e) => setPasswordConfirm(e.target.value)}
-            placeholder="Ещё раз пароль"
+            placeholder={tn('onb.againPass')}
           />
-          {mismatch && <div style={{ fontSize: 12.5, color: '#D33', marginTop: 4 }}>Пароли не совпадают</div>}
+          {mismatch && <div style={{ fontSize: 12.5, color: '#D33', marginTop: 4 }}>{tn('onb.mismatch')}</div>}
         </div>
         {error && <div className="auth-error">{error}</div>}
         <div style={{ flex: 1 }} />
         <button className="intro-cta" type="submit" disabled={!valid || pending} style={!valid || pending ? { opacity: 0.4, pointerEvents: 'none' } : undefined}>
-          {pending ? 'Отправляем…' : 'Отправить код'}
+          {pending ? tn('onb.sending') : tn('onb.sendCode')}
         </button>
       </form>
     </div>

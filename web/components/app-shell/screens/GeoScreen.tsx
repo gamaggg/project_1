@@ -11,9 +11,18 @@ import { GEO_BONUS, GEO_COINS, GEO_NEIGHBOUR_M, GEO_RECORD_MIN_CM, GEO_RECORD_MI
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { LegendWreath } from '@/components/app-shell/SectorInsights'
 import { useNow } from '@/lib/useNow'
+import { currentLocale, tn } from '@/lib/i18n/runtime'
+import { KIND_LABEL } from '@/lib/data/species'
 
-const IN_CITY: Record<CityId, string> = { batumi: 'Батуми', moscow: 'Москве' }
-const KIND: Record<string, string> = { sea: 'Море', river: 'Река', lake: 'Озеро', pond: 'Пруд' }
+const IN_CITY: Record<CityId, string> = {
+  get batumi() {
+    return tn('geoGame.inBatumi')
+  },
+  get moscow() {
+    return tn('geoGame.inMoscow')
+  },
+}
+const KIND: Record<string, string> = KIND_LABEL
 
 type Pano = { image: string; heading: number }
 
@@ -26,36 +35,36 @@ function metres(a: { lat: number; lng: number }, b: { lat: number; lng: number }
 function leftLabel(ms: number) {
   const h = Math.floor(ms / 3_600_000)
   const m = Math.floor((ms % 3_600_000) / 60_000)
-  return h > 0 ? `${h} ч ${m} мин` : `${m} мин`
+  return h > 0 ? tn('geoGame.hm', { h, m }) : tn('fmt.minShort', { count: m })
 }
 
 function whenLabel(iso: string, now: number) {
   const d = new Date(iso)
   const days = Math.floor((new Date(now).setHours(0, 0, 0, 0) - new Date(iso).setHours(0, 0, 0, 0)) / 86_400_000)
-  const time = d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
-  if (days <= 0) return `сегодня в ${time}`
-  if (days === 1) return `вчера в ${time}`
-  if (days < 7) return `${days} ${days < 5 ? 'дня' : 'дней'} назад`
-  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
+  const time = d.toLocaleTimeString(currentLocale(), { hour: '2-digit', minute: '2-digit' })
+  if (days <= 0) return tn('geoGame.today', { time })
+  if (days === 1) return tn('geoGame.yesterday', { time })
+  if (days < 7) return tn('geoGame.daysAgo', { count: days })
+  return d.toLocaleDateString(currentLocale(), { day: 'numeric', month: 'long' })
 }
 
 function dateLabel(iso: string) {
-  return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
+  return new Date(iso).toLocaleDateString(currentLocale(), { day: 'numeric', month: 'long' })
 }
 
 // The record's size — what makes it one (GEO_RECORD_MIN_*): «1,2 кг · 45 см».
 function recordLabel(weightKg: number | null, lengthCm: number | null) {
   return [
-    weightKg != null && weightKg >= GEO_RECORD_MIN_KG && `${String(Number(weightKg)).replace('.', ',')} кг`,
-    lengthCm != null && lengthCm >= GEO_RECORD_MIN_CM && `${lengthCm} см`,
+    weightKg != null && weightKg >= GEO_RECORD_MIN_KG && `${Number(weightKg).toLocaleString(currentLocale())} ${tn('fmt.kg')}`,
+    lengthCm != null && lengthCm >= GEO_RECORD_MIN_CM && `${lengthCm} ${tn('fmt.cm')}`,
   ]
     .filter(Boolean)
     .join(' · ')
 }
 
 function sizeLabel(weightKg: number | null, lengthCm: number | null) {
-  if (weightKg != null) return `${String(Number(weightKg)).replace('.', ',')} кг`
-  if (lengthCm != null) return `${lengthCm} см`
+  if (weightKg != null) return `${Number(weightKg).toLocaleString(currentLocale())} ${tn('fmt.kg')}`
+  if (lengthCm != null) return `${lengthCm} ${tn('fmt.cm')}`
   return null
 }
 
@@ -122,9 +131,9 @@ export function GeoScreen({
   if (isError || !today) {
     return (
       <div className="geo-empty">
-        <p>Не удалось загрузить панораму.</p>
+        <p>{tn('geoGame.loadFailed')}</p>
         <button className="btn-secondary" onClick={() => void refetch()}>
-          Повторить
+          {tn('geoGame.retry')}
         </button>
       </div>
     )
@@ -136,8 +145,8 @@ export function GeoScreen({
     return (
       <div className="geo-empty">
         <div className="geo-empty-art" aria-hidden />
-        <div className="geo-empty-title">Панорамы скоро появятся</div>
-        <p>Отбираем места у воды в {IN_CITY[city]}. Загляни завтра.</p>
+        <div className="geo-empty-title">{tn('geoGame.soon')}</div>
+        <p>{tn('geoGame.soonText', { city: IN_CITY[city] })}</p>
       </div>
     )
   }
@@ -169,12 +178,12 @@ export function GeoScreen({
         ) : (
           <div className="geo-pano geo-pano-still" style={{ backgroundImage: `url(${geoImageUrl(pano.image, 'small')})` }} />
         )}
-        <span className="geo-stage-chip">Панорама дня · {CITIES[city].name}</span>
+        <span className="geo-stage-chip">{tn('geoGame.dayPano', { city: CITIES[city].name })}</span>
       </div>
       <div className="geo-goal" data-tour="geo-goal">
         <div>
-          <b>Узнай это место</b>
-          <span>Осмотрись и найди на карте соту, где снята панорама</span>
+          <b>{tn('geoGame.recognise')}</b>
+          <span>{tn('geoGame.recogniseText')}</span>
         </div>
         <span className="geo-prize">
           +{GEO_COINS}
@@ -182,9 +191,9 @@ export function GeoScreen({
         </span>
       </div>
       <button className="btn-primary geo-cta" data-tour="geo-cta" onClick={() => onStartPick(pano)}>
-        <HexIcon /> Выбрать сектор на карте
+        <HexIcon /> {tn('geoGame.pickSector')}
       </button>
-      <p className="geo-foot">Одна попытка в день · новая панорама в полночь</p>
+      <p className="geo-foot">{tn('geoGame.oneTry')}</p>
     </div>
   )
 }
@@ -226,8 +235,8 @@ function GeoResultView({
   const day = dateLabel(`${today.day}T12:00:00`)
 
   function share() {
-    const line = result.correct ? `🎯 угадал сектор · +${result.coins} монет` : neighbour ? '🟨 соседняя сота — чуть-чуть не хватило' : `🟥 промах ${formatGeoDistance(result.distance)}`
-    onShare(`Где это? · ${CITIES[city].name} · ${day}\n${line}\nА ты узнаешь это место?`)
+    const line = result.correct ? tn('geoGame.shareHit', { coins: result.coins }) : neighbour ? tn('geoGame.shareNear') : tn('geoGame.shareMiss', { dist: formatGeoDistance(result.distance) })
+    onShare(tn('geoGame.shareText', { city: CITIES[city].name, day, line }))
   }
 
   return (
@@ -240,7 +249,7 @@ function GeoResultView({
         <div className="geo-verdict-blur" aria-hidden />
         <div className="geo-verdict-tint" aria-hidden />
         <div className="geo-verdict-top">
-          <span className="geo-verdict-chip">Панорама дня · {day}</span>
+          <span className="geo-verdict-chip">{tn('geoGame.verdictDay', { day })}</span>
           {result.territoryId && (
             <span className="geo-verdict-chip geo-verdict-place">
               <i aria-hidden />
@@ -250,28 +259,28 @@ function GeoResultView({
           )}
         </div>
         <div className="geo-verdict-body">
-          <div className="geo-kicker">{result.correct ? 'Ты угадал' : neighbour ? 'Совсем рядом' : 'Не угадал'}</div>
+          <div className="geo-kicker">{result.correct ? tn('geoGame.youGuessed') : neighbour ? tn('geoGame.veryClose') : tn('geoGame.missed')}</div>
           {result.correct ? (
             <div className="geo-big-coins">
               +<CountUp to={result.coins} />
               <CoinIcon size={28} />
             </div>
           ) : (
-            <div className="geo-headline">{neighbour ? 'Соседняя сота' : `Промах ${formatGeoDistance(result.distance)}`}</div>
+            <div className="geo-headline">{neighbour ? tn('geoGame.nextCell') : tn('geoGame.missBy', { dist: formatGeoDistance(result.distance) })}</div>
           )}
           {/* The sector is named up top — this line is about you. */}
           <div className="geo-verdict-sub">
-            {result.correct ? 'Ты узнал это место' : neighbour ? `Ты выбрал ${result.guessTerritoryId} — не хватило одной соты` : `Ты выбрал ${result.guessTerritoryId}`}
+            {result.correct ? tn('geoGame.youKnew') : neighbour ? tn('geoGame.youPickedNear', { id: result.guessTerritoryId }) : tn('geoGame.youPicked', { id: result.guessTerritoryId })}
           </div>
           <div className="geo-verdict-meta">
-            {result.players <= 1 ? 'Ты сегодня первый' : `Угадали ${result.winners} из ${result.players} · ты ${result.rank}-й`}
+            {result.players <= 1 ? tn('geoGame.firstToday') : tn('geoGame.guessedOf', { winners: result.winners, players: result.players, rank: result.rank })}
           </div>
           <div className="geo-verdict-actions">
             <button className="btn-secondary" onClick={onShowOnMap}>
-              <HexIcon /> На карте
+              <HexIcon /> {tn('geoGame.onMap')}
             </button>
             <button className="btn-secondary" onClick={share}>
-              Поделиться
+              {tn('geoGame.share')}
             </button>
           </div>
         </div>
@@ -283,9 +292,9 @@ function GeoResultView({
             <TargetIcon />
           </span>
           <div className="geo-quest-text">
-            <small>Задание дня</small>
-            <b>{result.bonusCoins > 0 ? `Выполнено — улов в ${result.territoryId}` : `Поймай рыбу в секторе ${result.territoryId}`}</b>
-            <span>{result.bonusCoins > 0 ? 'Монеты уже у тебя' : `До полуночи · осталось ${leftLabel(left)}`}</span>
+            <small>{tn('geoGame.questTitle')}</small>
+            <b>{result.bonusCoins > 0 ? tn('geoGame.questDone', { id: result.territoryId }) : tn('geoGame.questTodo', { id: result.territoryId })}</b>
+            <span>{result.bonusCoins > 0 ? tn('geoGame.questCoins') : tn('geoGame.questLeft', { left: leftLabel(left) })}</span>
           </div>
           <span className="geo-prize">
             {result.bonusCoins > 0 ? '✓' : '+'}
@@ -300,7 +309,7 @@ function GeoResultView({
       {board && board.length > 0 && (
         <section className="geo-board">
           <div className="geo-section-title" data-tour="geo-board">
-            Сегодня в {IN_CITY[city]}
+            {tn('geoGame.boardTitle', { city: IN_CITY[city] })}
           </div>
           {board.map((r, i) => {
             // Your own row has your face too, even before the board brings it.
@@ -320,23 +329,23 @@ function GeoResultView({
                   // eslint-disable-next-line @next/next/no-img-element -- small avatar from storage
                   <img className="geo-board-avatar" src={thumbUrl(avatar, 64)} alt="" />
                 ) : (
-                  <span className="geo-board-avatar initials">{(name ?? 'Р').slice(0, 2).toUpperCase()}</span>
+                  <span className="geo-board-avatar initials">{(name ?? tn('common.angler')).slice(0, 1).toUpperCase()}</span>
                 )}
                 <span className="geo-board-name">
-                  {name ?? 'Рыбак'}
-                  {r.isMe && <small> · ты</small>}
+                  {name ?? tn('common.angler')}
+                  {r.isMe && <small> · {tn('geoGame.you')}</small>}
                 </span>
-                <span className="geo-board-dist">{r.correct ? 'в точку' : formatGeoDistance(r.distance)}</span>
+                <span className="geo-board-dist">{r.correct ? tn('geoGame.spotOn') : formatGeoDistance(r.distance)}</span>
               </button>
             )
           })}
         </section>
       )}
 
-      <p className="geo-foot">Новая панорама через {leftLabel(left)}</p>
+      <p className="geo-foot">{tn('geoGame.newIn', { left: leftLabel(left) })}</p>
       {result.source === 'mapillary' && (
         <p className="geo-credit">
-          Панорама{result.author ? `: ${result.author}` : ''} ·{' '}
+          {tn('geoGame.credit', { author: result.author ? `: ${result.author}` : '' })} ·{' '}
           <a href={`https://www.mapillary.com/app/?pKey=${result.sourceId}`} target="_blank" rel="noopener noreferrer">
             Mapillary
           </a>
@@ -391,7 +400,7 @@ function SectorStory({
   // The server already leaves small fish out; checked here too.
   const record =
     story.record && ((story.record.weightKg ?? 0) >= GEO_RECORD_MIN_KG || (story.record.lengthCm ?? 0) >= GEO_RECORD_MIN_CM) ? story.record : null
-  const firstDay = story.firstAt ? new Date(story.firstAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '') : null
+  const firstDay = story.firstAt ? new Date(story.firstAt).toLocaleDateString(currentLocale(), { day: 'numeric', month: 'short' }).replace('.', '') : null
   const maxSpecies = Math.max(1, ...story.species.map((s) => s.count))
 
   return (
@@ -400,11 +409,11 @@ function SectorStory({
       <button className="geo-story-head" data-tour="geo-story" onClick={() => onOpenTerritory(id)}>
         <span className={`geo-story-hex ${status}`} aria-hidden />
         <span className="geo-story-title">
-          <small>{sector ? KIND[sector.kind] : 'Сектор'}</small>
-          <b>Сектор {id}</b>
+          <small>{sector ? KIND[sector.kind] : tn('geoGame.sector')}</small>
+          <b>{tn('geoGame.sectorId', { id })}</b>
         </span>
         <span className="geo-story-open">
-          Открыть
+          {tn('geoGame.open')}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <path d="M9 5l7 7-7 7" />
           </svg>
@@ -420,34 +429,34 @@ function SectorStory({
               <StarIcon />
             </span>
             <div>
-              <b>{story.catches === 0 ? 'Здесь ещё никто не ловил' : 'Сектор свободен'}</b>
-              <span>{story.catches === 0 ? 'Поймай здесь первым — и сектор станет твоим.' : 'Сейчас без хозяина: поймай здесь — и он твой.'}</span>
+              <b>{story.catches === 0 ? tn('geoGame.nobody') : tn('geoGame.free')}</b>
+              <span>{story.catches === 0 ? tn('geoGame.catchFirst') : tn('geoGame.noOwner')}</span>
             </div>
           </>
         ) : (
           <>
-            <button className="geo-owner-avatar" onClick={() => story.owner && onOpenUser(story.owner.id)} aria-label={story.owner?.name ?? 'Владелец'}>
+            <button className="geo-owner-avatar" onClick={() => story.owner && onOpenUser(story.owner.id)} aria-label={story.owner?.name ?? tn('geoGame.owner')}>
               {story.owner?.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- small avatar from storage
                 <img src={thumbUrl(story.owner.avatarUrl, 96)} alt="" />
               ) : (
-                <span>{(story.owner?.name ?? 'Р').slice(0, 2).toUpperCase()}</span>
+                <span>{(story.owner?.name ?? tn('common.angler')).slice(0, 1).toUpperCase()}</span>
               )}
             </button>
             <div>
-              <b>{status === 'mine' ? 'Это твой сектор' : `Держит ${story.owner?.name ?? 'рыбак'}`}</b>
+              <b>{status === 'mine' ? tn('geoGame.yourSector') : tn('geoGame.heldBy', { name: story.owner?.name ?? tn('geoGame.anglerLower') })}</b>
               <span>
                 {shield
                   ? status === 'mine'
-                    ? `Под твоим щитом до ${dateLabel(shield)}.`
-                    : `Под щитом до ${dateLabel(shield)} — сейчас его не отбить.`
+                    ? tn('geoGame.shieldMine', { date: dateLabel(shield) })
+                    : tn('geoGame.shieldOther', { date: dateLabel(shield) })
                   : status === 'mine'
                     ? story.owner?.since
-                      ? `Твой с ${dateLabel(story.owner.since)}. Заглядывай — держи защиту.`
-                      : 'Заглядывай — держи защиту.'
+                      ? tn('geoGame.mineSince', { date: dateLabel(story.owner.since) })
+                      : tn('geoGame.mineKeep')
                     : (sector?.defense ?? 0) > 0
-                      ? `Защита ${sector!.defense} из 3 — каждый твой улов снимает одну. Отбей сектор!`
-                      : 'Защита снята — первый же твой улов заберёт сектор.'}
+                      ? tn('geoGame.defense', { n: sector!.defense })
+                      : tn('geoGame.defenseDown')}
               </span>
             </div>
           </>
@@ -458,7 +467,7 @@ function SectorStory({
           <span aria-hidden>
             <FlameIcon />
           </span>
-          Горящий сектор: ×3 монеты за улов до {dateLabel(hot)}
+          {tn('geoGame.hot', { date: dateLabel(hot) })}
         </div>
       )}
 
@@ -469,28 +478,28 @@ function SectorStory({
               <b>
                 <CountUp to={story.catches} />
               </b>
-              <span>{plural(story.catches, ['улов', 'улова', 'уловов'])}</span>
+              <span>{tn('plural.catch', { count: story.catches })}</span>
             </div>
             <div className="geo-stat" style={{ '--i': 1 } as CSSProperties}>
               <b>
                 <CountUp to={story.anglers} />
               </b>
-              <span>{plural(story.anglers, ['рыбак', 'рыбака', 'рыбаков'])}</span>
+              <span>{tn('plural.angler', { count: story.anglers })}</span>
             </div>
             <div className="geo-stat" style={{ '--i': 2 } as CSSProperties}>
               <b>
                 <CountUp to={story.species.length} />
               </b>
-              <span>{plural(story.species.length, ['вид', 'вида', 'видов'])}</span>
+              <span>{tn('plural.species', { count: story.species.length })}</span>
             </div>
             <div className="geo-stat" style={{ '--i': 3 } as CSSProperties}>
               <b className="small">{firstDay ?? '—'}</b>
-              <span>первый улов</span>
+              <span>{tn('geoGame.firstCatch')}</span>
             </div>
           </div>
 
           <div className="geo-story-block">
-            <div className="geo-section-title">Что здесь ловят</div>
+            <div className="geo-section-title">{tn('geoGame.whatCaught')}</div>
             <div className="geo-species">
               {story.species.map((s, i) => (
                 <div key={s.key} className="geo-species-row" style={{ '--i': i, '--w': `${(s.count / maxSpecies) * 100}%` } as CSSProperties}>
@@ -512,7 +521,7 @@ function SectorStory({
                     <TrophyIcon />
                   </span>
                   <span>
-                    <small>Рекорд сектора</small>
+                    <small>{tn('geoGame.record')}</small>
                     <b>
                       {record.speciesName} · {recordLabel(record.weightKg, record.lengthCm)}
                     </b>
@@ -526,7 +535,7 @@ function SectorStory({
                     <ClockIcon />
                   </span>
                   <span>
-                    <small>Лучше всего клюёт</small>
+                    <small>{tn('geoGame.bestBite')}</small>
                     <b>{best}</b>
                   </span>
                 </div>
@@ -545,9 +554,9 @@ function SectorStory({
                     </span>
                   </LegendWreath>
                   <span>
-                    <small>Легенда сектора</small>
-                    <b>{insights.legend.name ?? 'Рыбак'}</b>
-                    <em>{insights.legend.count} {plural(insights.legend.count, ['улов', 'улова', 'уловов'])} за 90 дней</em>
+                    <small>{tn('geoGame.legend')}</small>
+                    <b>{insights.legend.name ?? tn('common.angler')}</b>
+                    <em>{tn('geoGame.legendDays', { count: `${insights.legend.count} ${tn('plural.catch', { count: insights.legend.count })}` })}</em>
                   </span>
                 </button>
               )}
@@ -556,7 +565,7 @@ function SectorStory({
 
           {story.last.length > 0 && (
             <div className="geo-story-block">
-              <div className="geo-section-title">Последние уловы</div>
+              <div className="geo-section-title">{tn('geoGame.lastCatches')}</div>
               <ol className="geo-timeline">
                 {story.last.map((c, i) => (
                   <li key={c.id} style={{ '--i': i } as CSSProperties}>
@@ -571,7 +580,7 @@ function SectorStory({
                           {sizeLabel(c.weightKg, c.lengthCm) && <i> · {sizeLabel(c.weightKg, c.lengthCm)}</i>}
                         </b>
                         <span>
-                          {c.userName ?? 'Рыбак'} · {whenLabel(c.caughtAt, now)}
+                          {c.userName ?? tn('common.angler')} · {whenLabel(c.caughtAt, now)}
                         </span>
                       </span>
                     </button>
@@ -583,8 +592,8 @@ function SectorStory({
         </>
       ) : (
         <div className="geo-virgin">
-          <b>Нетронутое место</b>
-          <span>Ни одного улова — первый, кто поймает здесь, откроет сектор для всех.</span>
+          <b>{tn('geoGame.virgin')}</b>
+          <span>{tn('geoGame.virginText')}</span>
         </div>
       )}
     </section>
@@ -607,14 +616,6 @@ function bestWindow(hours: number[] | null): string | null {
   return `${hh(at)}–${hh(at + 3)}`
 }
 
-function plural(n: number, forms: [string, string, string]) {
-  const a = Math.abs(n) % 100
-  const b = a % 10
-  if (a > 10 && a < 20) return forms[2]
-  if (b > 1 && b < 5) return forms[1]
-  if (b === 1) return forms[0]
-  return forms[2]
-}
 
 function HexIcon() {
   return (

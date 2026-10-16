@@ -3,6 +3,7 @@
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useNow } from '@/lib/useNow'
+import { tn } from '@/lib/i18n/runtime'
 
 // A catch sent to someone else's sector while a shield is up (confirm_catch's
 // SHIELDED:<until>): it can't count there, but the photo and the fish needn't
@@ -50,7 +51,7 @@ export function ShieldedSectorModal({
 
   return (
     <div className="modal-overlay" onClick={saving ? undefined : onClose}>
-      <div className="modal-card shield-modal" role="dialog" aria-label={`${territoryId} под щитом`} onClick={(e) => e.stopPropagation()}>
+      <div className="modal-card shield-modal" role="dialog" aria-label={tn('boost.underShield', { id: territoryId })} onClick={(e) => e.stopPropagation()}>
         <div className="shield-modal-hero" aria-hidden>
           <svg className="shield-modal-ring" width="140" height="140" viewBox="0 0 140 140">
             <defs>
@@ -87,10 +88,10 @@ export function ShieldedSectorModal({
           </div>
         </div>
 
-        <div className="modal-title shield-modal-title">{territoryId} под щитом</div>
+        <div className="modal-title shield-modal-title">{tn('boost.underShield', { id: territoryId })}</div>
         {ownerName && (
           <div className="shield-modal-owner">
-            держит <b>{ownerName}</b>
+            {tn('boost.holds')} <b>{ownerName}</b>
             {ownerClanCrest != null && <ClanCrest crest={ownerClanCrest} size={16} title={ownerClanName ?? undefined} />}
           </div>
         )}
@@ -100,28 +101,28 @@ export function ShieldedSectorModal({
             {h > 0 && (
               <>
                 {h}
-                <small>ч</small>{' '}
+                <small>{tn('boost.hUnit')}</small>{' '}
               </>
             )}
             {m}
-            <small>мин</small>
+            <small>{tn('boost.minUnit')}</small>
           </b>
-          <span>до конца щита — пока он стоит, чужой улов здесь не засчитать</span>
+          <span>{tn('boost.untilShieldEnd')}</span>
         </div>
 
         <div className="shield-modal-catch">
           <img src={thumbUrl(catchPhotoUrl, 160)} alt="" decoding="async" />
           <div>
             <b>{speciesName}</b>
-            <span>{catchMeta || 'Твой улов'}</span>
+            <span>{catchMeta || tn('boost.yourCatch')}</span>
           </div>
         </div>
 
         <button className="btn-primary" disabled={saving} onClick={onAddToDiary}>
-          {saving ? 'Сохраняем…' : 'Добавить в дневник'}
+          {saving ? tn('common.saving') : tn('boost.addToDiary')}
         </button>
         <button className="shield-modal-close" disabled={saving} onClick={onClose}>
-          Закрыть
+          {tn('common.close')}
         </button>
       </div>
     </div>

@@ -14,6 +14,7 @@ import { PhotoViewer } from '@/components/app-shell/PhotoViewer'
 import { EditMyCatchSheet } from '@/components/app-shell/EditMyCatchSheet'
 import { EditCatchSheet, MoveCatchSheet } from '@/components/app-shell/lazyScreens'
 import type { ProfileSummary } from '@/lib/data/types'
+import { tn } from '@/lib/i18n'
 
 // "Иван" / "Иван и Мария" / "Иван, Мария и ещё 5" — sidesteps gender-correct
 // verb conjugation entirely (no existing activity text in this app bothers
@@ -22,8 +23,8 @@ import type { ProfileSummary } from '@/lib/data/types'
 function likersSummary(likers: ProfileSummary[]): string {
   const names = likers.map((l) => l.displayName)
   if (names.length === 1) return names[0]
-  if (names.length === 2) return `${names[0]} и ${names[1]}`
-  return `${names[0]}, ${names[1]} и ещё ${names.length - 2}`
+  if (names.length === 2) return tn('catch.likersTwo', { a: names[0], b: names[1] })
+  return tn('catch.likersMany', { a: names[0], b: names[1], n: names.length - 2 })
 }
 
 // A real screen (pushed on the stack, reachable via ?catch=<id>) rather than
@@ -177,7 +178,7 @@ export function CatchPhotoScreen({
               action row below the fold — flex:1 above fills exactly the
               space the sheet's own height leaves behind, on any screen
               height. */}
-          <img src={c.photoUrl} alt={c.speciesName} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', cursor: 'zoom-in' }} onClick={() => setZoomed(true)} />
+          <img data-tour={c.mine ? 'photo-zoom' : undefined} src={c.photoUrl} alt={c.speciesName} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', cursor: 'zoom-in' }} onClick={() => setZoomed(true)} />
           {/* --standalone-top: the photo runs up under the status bar in
               the iPhone home-screen app, the buttons stay below its blur. */}
           <div style={{ position: 'absolute', top: 'calc(12px + var(--standalone-top, 0px))', left: 12 }}>
@@ -185,18 +186,18 @@ export function CatchPhotoScreen({
           </div>
           {isSuperAdmin && (
             <div style={{ position: 'absolute', top: 'calc(12px + var(--standalone-top, 0px))', right: 12, display: 'flex', gap: 8 }}>
-              <div className="icon-btn tap-scale" onClick={() => setEditing(true)} title="Исправить вид, размер и вес">
+              <div className="icon-btn tap-scale" onClick={() => setEditing(true)} title={tn('weekly.editTitle')}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 20h9" />
                   <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
                 </svg>
               </div>
-              <div className="icon-btn tap-scale" onClick={() => setMoving(true)} title="Перенести в другой сектор">
+              <div className="icon-btn tap-scale" onClick={() => setMoving(true)} title={tn('weekly.moveTitle')}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M7 4 3 8l4 4M3 8h13a5 5 0 0 1 0 10h-3" />
                 </svg>
               </div>
-              <div className="icon-btn tap-scale" onClick={() => onDeleteCatch(c.id)} title="Удалить улов">
+              <div className="icon-btn tap-scale" onClick={() => onDeleteCatch(c.id)} title={tn('weekly.deleteTitle')}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D33" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M10 11v6M14 11v6M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" />
                 </svg>
@@ -206,7 +207,7 @@ export function CatchPhotoScreen({
           {zoomed && <PhotoViewer src={c.photoUrl} alt={c.speciesName} onClose={() => setZoomed(false)} />}
           {c.mine && !isSuperAdmin && (
             <div style={{ position: 'absolute', top: 'calc(12px + var(--standalone-top, 0px))', right: 12 }}>
-              <div className="icon-btn tap-scale" onClick={() => setEditingMine(true)} title="Дополнить данные улова" aria-label="Дополнить данные улова">
+              <div className="icon-btn tap-scale" onClick={() => setEditingMine(true)} title={tn('catch.addDetailsTitle')} aria-label={tn('catch.addDetailsTitle')}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 20h9" />
                   <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
@@ -218,14 +219,14 @@ export function CatchPhotoScreen({
           {moving && <MoveCatchSheet c={c} onClose={() => setMoving(false)} />}
           {editing && <EditCatchSheet c={c} onClose={() => setEditing(false)} />}
           {prevCatch && (
-            <div className="icon-btn tap-scale" style={{ position: 'absolute', top: '50%', left: 12, transform: 'translateY(-50%)' }} onClick={() => goTo(prevCatch.id)} title="Предыдущий улов">
+            <div className="icon-btn tap-scale" style={{ position: 'absolute', top: '50%', left: 12, transform: 'translateY(-50%)' }} onClick={() => goTo(prevCatch.id)} title={tn('catch.prev')}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M15 6l-6 6 6 6" />
               </svg>
             </div>
           )}
           {nextCatch && (
-            <div className="icon-btn tap-scale" style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)' }} onClick={() => goTo(nextCatch.id)} title="Следующий улов">
+            <div className="icon-btn tap-scale" style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)' }} onClick={() => goTo(nextCatch.id)} title={tn('catch.next')}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 6l6 6-6 6" />
               </svg>
@@ -299,7 +300,7 @@ export function CatchPhotoScreen({
                 className="icon-btn tap-scale"
                 style={{ width: 32, height: 32, marginLeft: 6 }}
                 onClick={() => onOpenComments(c.id)}
-                aria-label="Комментарии"
+                aria-label={tn('guest.commentsAfter')}
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-4-.9L3 20l1.1-4a8.4 8.4 0 0 1-1.1-4.5A8.5 8.5 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5z" />
@@ -344,7 +345,7 @@ export function CatchPhotoScreen({
                   </div>
                 ))}
               </div>
-              <div style={{ fontSize: 12.5, color: 'var(--ink-soft)' }}>Нравится: {likersSummary(likes.likers)}</div>
+              <div style={{ fontSize: 12.5, color: 'var(--ink-soft)' }}>{tn('catch.likedBy', { names: likersSummary(likes.likers) })}</div>
             </div>
           )}
 
@@ -352,7 +353,7 @@ export function CatchPhotoScreen({
           {meta && <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 2 }}>{meta}</div>}
           <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
             <button className="section-link" style={{ fontSize: 12.5 }} onClick={() => onOpenTerritory(c.territoryId)}>
-              Сектор {c.territoryId}
+              {tn('guest.sectorTitle', { id: c.territoryId })}
             </button>
             <span>· {formatWhen(c.caughtAt)}</span>
           </div>
@@ -364,7 +365,7 @@ export function CatchPhotoScreen({
                 <b>{cm.displayName}</b> {cm.body}
               </div>
             ))}
-            <div className="catch-comments-preview-more">{commentCount ? `Все комментарии (${commentCount})` : 'Написать комментарий'}</div>
+            <div className="catch-comments-preview-more">{commentCount ? tn('catch.allComments', { count: commentCount }) : tn('catch.writeComment')}</div>
           </div>
 
           <div style={{ height: 1, background: 'var(--line)', margin: '16px 0' }} />
@@ -375,28 +376,28 @@ export function CatchPhotoScreen({
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 3v18M5 4h12l-2.5 4L17 12H5" />
                 </svg>
-                Пожаловаться
+                {tn('catch.report')}
               </button>
             )}
             <button
               className="btn-secondary"
               style={{ flex: 1, padding: '9px 14px', fontSize: 13 }}
-              onClick={() => onShare(c.id, `🎣 ${c.speciesName} в RANGE`)}
+              onClick={() => onShare(c.id, tn('catch.shareText', { species: c.speciesName }))}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 15V4M12 4 8 8M12 4l4 4" />
                 <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
               </svg>
-              Поделиться
+              {tn('common.share')}
             </button>
             {c.mine && <StoryButton catchId={c.id} caption={`${c.speciesName}${meta ? ` ${meta}` : ''}`} onToast={onToast} />}
             {c.mine && (
-              <button className="btn-secondary" style={{ flex: 1, fontSize: 13 }} onClick={() => setEditingMine(true)}>
+              <button data-tour="edit-catch" className="btn-secondary" style={{ flex: 1, fontSize: 13 }} onClick={() => setEditingMine(true)}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d="M12 20h9" />
                   <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
                 </svg>
-                {c.lengthCm == null && c.weightKg == null ? 'Размер, вес' : 'Изменить'}
+                {c.lengthCm == null && c.weightKg == null ? tn('catch.sizeWeight') : tn('catch.edit')}
               </button>
             )}
           </div>

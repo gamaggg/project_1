@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { BackButton } from '@/components/app-shell/BackButton'
+import { tn } from '@/lib/i18n/runtime'
 
 // Mirrors the old AuthForm's signin mode exactly (same copy, same error
 // text) — just given its own screen now that AuthForm itself is retired.
@@ -22,7 +23,7 @@ export function SignInStep({ onBack, onForgotPassword }: { onBack: () => void; o
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     setPending(false)
-    if (error) setError(error.code === 'email_not_confirmed' ? 'Подтверди почту кодом из письма, которое мы прислали при регистрации' : 'Неверный email или пароль')
+    if (error) setError(error.code === 'email_not_confirmed' ? tn('onb.needConfirm') : tn('onb.badLogin'))
   }
 
   return (
@@ -32,10 +33,10 @@ export function SignInStep({ onBack, onForgotPassword }: { onBack: () => void; o
       </div>
       <div className="auth-card">
         <div className="page-title" style={{ textAlign: 'center', fontSize: 24 }}>
-          Вход
+          {tn('onb.signIn')}
         </div>
         <div className="page-sub" style={{ textAlign: 'center' }}>
-          Заходи, чтобы занимать территории
+          {tn('onb.signInSub')}
         </div>
         <form onSubmit={handleSubmit} style={{ marginTop: 20 }}>
           <div className="auth-field">
@@ -43,7 +44,7 @@ export function SignInStep({ onBack, onForgotPassword }: { onBack: () => void; o
             <input id="signin-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
           </div>
           <div className="auth-field">
-            <label htmlFor="signin-password">Пароль</label>
+            <label htmlFor="signin-password">{tn('onb.password')}</label>
             <input
               id="signin-password"
               type="password"
@@ -51,15 +52,15 @@ export function SignInStep({ onBack, onForgotPassword }: { onBack: () => void; o
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Минимум 6 символов"
+              placeholder={tn('onb.min6')}
             />
           </div>
           {error && <div className="auth-error">{error}</div>}
           <button className="btn-primary" type="submit" disabled={pending}>
-            {pending ? 'Подождите…' : 'Войти'}
+            {pending ? tn('onb.wait') : tn('onb.doSignIn')}
           </button>
           <button type="button" className="otp-resend" style={{ display: 'block', margin: '14px auto 0', textAlign: 'center' }} onClick={onForgotPassword}>
-            Забыли пароль?
+            {tn('onb.forgot')}
           </button>
         </form>
       </div>

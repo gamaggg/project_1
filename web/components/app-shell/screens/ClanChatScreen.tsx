@@ -1,5 +1,6 @@
 'use client'
 
+import { HexLoader } from '@/components/app-shell/HexLoader'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useClan, useClanChat, useDeleteClanMessage, useMarkClanChatRead, usePostClanMessage, useProfile } from '@/lib/supabase/queries'
@@ -13,6 +14,7 @@ import { bigEmojiCount } from '@/lib/data/emoji'
 import { useKeyboardInset } from '@/lib/useKeyboardInset'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { CLAN_ROLE_LABEL } from '@/lib/data/clanLevels'
+import { currentLocale, tn } from '@/lib/i18n/runtime'
 import { CLAN_CHAT_MAX_LENGTH, chatModerationMessage, chatMutedMessage, moderationMessage, quickCheck } from '@/lib/moderation'
 import type { ClanChatMessage, ClanEvent } from '@/lib/data/types'
 
@@ -32,17 +34,13 @@ function dayLabel(d: Date): string {
   const today = new Date()
   const yesterday = new Date(today)
   yesterday.setDate(today.getDate() - 1)
-  if (d.toDateString() === today.toDateString()) return 'Сегодня'
-  if (d.toDateString() === yesterday.toDateString()) return 'Вчера'
-  return d.toLocaleDateString('ru-RU', d.getFullYear() === today.getFullYear() ? { day: 'numeric', month: 'long' } : { day: 'numeric', month: 'long', year: 'numeric' })
+  if (d.toDateString() === today.toDateString()) return tn('fmt.today')
+  if (d.toDateString() === yesterday.toDateString()) return tn('fmt.yesterday')
+  return d.toLocaleDateString(currentLocale(), d.getFullYear() === today.getFullYear() ? { day: 'numeric', month: 'long' } : { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 function pluralMembers(n: number): string {
-  const d = n % 10
-  const dd = n % 100
-  if (d === 1 && dd !== 11) return `${n} участник`
-  if (d >= 2 && d <= 4 && (dd < 12 || dd > 14)) return `${n} участника`
-  return `${n} участников`
+  return `${n} ${tn('plural.member', { count: n })}`
 }
 
 function escapeRegex(s: string): string {
@@ -60,7 +58,7 @@ function mentionPattern(names: string[]): RegExp | null {
 }
 
 function timeLabel(iso: string): string {
-  return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString(currentLocale(), { hour: '2-digit', minute: '2-digit' })
 }
 
 // Messages (oldest first) and the clan's journal events woven into one
@@ -310,7 +308,7 @@ export function ClanChatScreen({
     // A member's «@Имя» is a mention, not a Telegram handle — dropped before
     // the link check, exactly as post_clan_message does on the server.
     const quick = quickCheck(mentionRe ? body.replace(mentionRe, '$1') : body, CLAN_CHAT_MAX_LENGTH)
-    if (quick) return fail(quick === 'too_long' ? 'Слишком длинно — до 500 символов' : moderationMessage(quick))
+    if (quick) return fail(quick === 'too_long' ? tn('clanChat.tooLong') : moderationMessage(quick))
 
     const tempId = -Date.now()
     setPending((p) => [
@@ -318,7 +316,7 @@ export function ClanChatScreen({
       {
         id: tempId,
         userId: user.id,
-        displayName: me?.displayName ?? 'Ты',
+        displayName: me?.displayName ?? tn('comments.you'),
         avatarUrl: me?.avatarUrl ?? null,
         nameStyle: me?.equippedNameStyle ?? null,
         role: clan?.myRole ?? null,
@@ -343,7 +341,7 @@ export function ClanChatScreen({
       }
     } catch {
       setText(body)
-      fail('Не удалось отправить — проверь интернет')
+      fail(tn('clanChat.sendFailed'))
     } finally {
       setPending((p) => p.filter((m) => m.id !== tempId))
     }
@@ -369,9 +367,9 @@ export function ClanChatScreen({
     setMenuFor(null)
     try {
       await navigator.clipboard.writeText(m.body)
-      setToast('Скопировано')
+      setToast(tn('common.copied'))
     } catch {
-      setToast('Не удалось скопировать')
+      setToast(tn('common.copyFailed'))
     }
   }
 
@@ -384,8 +382,8 @@ export function ClanChatScreen({
         <div className="clan-chat-title">
           {clan && <ClanCrest crest={clan.crest} size={32} />}
           <div style={{ minWidth: 0 }}>
-            <div className="clan-chat-name">{clan?.name ?? 'Чат клана'}</div>
-            <div className="clan-chat-sub">Чат клана{memberCount ? ` · ${pluralMembers(memberCount)}` : ''}</div>
+            <div className="clan-chat-name">{clan?.name ?? tn('clanChat.title')}</div>
+            <div className="clan-chat-sub">{tn('clanChat.title')}{memberCount ? ` · ${pluralMembers(memberCount)}` : ''}</div>
           </div>
         </div>
         <div style={{ width: 36 }} />
@@ -397,18 +395,20 @@ export function ClanChatScreen({
             <path d="M12 17v5M9 3h6l-1 6 3 3v2H7v-2l3-3-1-6Z" />
           </svg>
           <span className="clan-chat-pinned-text">
-            <b>Объявление</b>
+            <b>{tn('clanChat.announcement')}</b>
             <span>{clan.announcement}</span>
           </span>
         </button>
       )}
 
       <div className="clan-chat-list" ref={listRef} onScroll={onScroll}>
-        {chat.isFetchingNextPage && <div className="clan-chat-loading">Загружаем историю…</div>}
+        {chat.isFetchingNextPage && <div className="clan-chat-loading">{tn('clanChat.loadingHistory')}</div>}
         {notMember ? (
-          <div className="clan-chat-empty">Чат доступен только участникам клана</div>
+          <div className="clan-chat-empty">{tn('clanChat.membersOnly')}</div>
         ) : chat.isLoading ? (
-          <div className="clan-chat-loading">Загрузка…</div>
+          <div className="clan-chat-loading">
+            <HexLoader size={0.55} />
+          </div>
         ) : (
           <>
             {items.map((item) => {
@@ -464,8 +464,8 @@ export function ClanChatScreen({
             {!messages.length && (
               <div className="clan-chat-empty">
                 {clan && <ClanCrest crest={clan.crest} size={56} />}
-                <b>Здесь пока тихо</b>
-                <span>Напиши первым — например, где сегодня клюёт</span>
+                <b>{tn('clanChat.quiet')}</b>
+                <span>{tn('clanChat.quietHint')}</span>
               </div>
             )}
           </>
@@ -475,7 +475,7 @@ export function ClanChatScreen({
       {!notMember && (
         <div className="clan-chat-compose" style={{ marginBottom: keyboardInset }}>
           {mentionCandidates.length > 0 && (
-            <div className="clan-chat-mentions" role="listbox" aria-label="Упомянуть участника">
+            <div className="clan-chat-mentions" role="listbox" aria-label={tn('clanChat.mentionAria')}>
               {mentionCandidates.map((m) => (
                 <button
                   key={m.userId}
@@ -508,8 +508,8 @@ export function ClanChatScreen({
                 rows={1}
                 value={text}
                 maxLength={CLAN_CHAT_MAX_LENGTH + 50}
-                placeholder="Сообщение клану…"
-                aria-label="Сообщение в чат клана"
+                placeholder={tn('clanChat.placeholder')}
+                aria-label={tn('clanChat.inputAria')}
                 onChange={(e) => {
                   setText(e.target.value)
                   if (error) setError(null)
@@ -537,7 +537,7 @@ export function ClanChatScreen({
                 // mousedown: keeps focus where it is until we move it ourselves
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={toggleEmoji}
-                aria-label={emojiOpen ? 'Клавиатура' : 'Эмодзи'}
+                aria-label={emojiOpen ? tn('clanChat.keyboard') : tn('clanChat.emoji')}
               >
                 {emojiOpen ? (
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -554,7 +554,7 @@ export function ClanChatScreen({
               {text.length > CLAN_CHAT_MAX_LENGTH - 100 && (
                 <span className={`clan-chat-counter${text.length > CLAN_CHAT_MAX_LENGTH ? ' over' : ''}`}>{CLAN_CHAT_MAX_LENGTH - text.length}</span>
               )}
-              <button className="comments-send tap-scale" disabled={!text.trim() || text.length > CLAN_CHAT_MAX_LENGTH} onClick={() => void send()} aria-label="Отправить">
+              <button className="comments-send tap-scale" disabled={!text.trim() || text.length > CLAN_CHAT_MAX_LENGTH} onClick={() => void send()} aria-label={tn('comments.send')}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d="M12 19V5M5 12l7-7 7 7" />
                 </svg>
@@ -570,7 +570,7 @@ export function ClanChatScreen({
           <div className="comments-dialog clan-chat-menu" onClick={(e) => e.stopPropagation()}>
             <div className="clan-chat-menu-quote">{menuFor.body}</div>
             <button className="clan-chat-menu-btn" onClick={() => void copy(menuFor)}>
-              Скопировать текст
+              {tn('clanChat.copyText')}
             </button>
             {(menuFor.mine || canModerate) && (
               <button
@@ -580,11 +580,11 @@ export function ClanChatScreen({
                   setMenuFor(null)
                 }}
               >
-                Удалить сообщение
+                {tn('clanChat.deleteMessage')}
               </button>
             )}
             <button className="comments-dialog-cancel" onClick={() => setMenuFor(null)}>
-              Отмена
+              {tn('common.cancel')}
             </button>
           </div>
         </div>
@@ -594,7 +594,7 @@ export function ClanChatScreen({
         <div className="comments-dialog-backdrop" onClick={() => setConfirmDelete(null)}>
           <div className="comments-dialog" onClick={(e) => e.stopPropagation()}>
             <div className="modal-title" style={{ textAlign: 'center' }}>
-              Удалить сообщение?
+              {tn('clanChat.deleteTitle')}
             </div>
             <div className="clan-chat-menu-quote">{confirmDelete.body}</div>
             <button
@@ -603,15 +603,15 @@ export function ClanChatScreen({
               onClick={() => {
                 remove.mutate(
                   { messageId: confirmDelete.id, clanId },
-                  { onSuccess: () => setToast('Удалено'), onError: () => setToast('Не удалось удалить') }
+                  { onSuccess: () => setToast(tn('clanChat.deleted')), onError: () => setToast(tn('clanChat.deleteFailed')) }
                 )
                 setConfirmDelete(null)
               }}
             >
-              Удалить
+              {tn('common.delete')}
             </button>
             <button className="comments-dialog-cancel" onClick={() => setConfirmDelete(null)}>
-              Отмена
+              {tn('common.cancel')}
             </button>
           </div>
         </div>

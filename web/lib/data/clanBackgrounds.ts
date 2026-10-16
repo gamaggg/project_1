@@ -1,3 +1,4 @@
+import { tnd } from '@/lib/i18n/runtime'
 import type { HeroBackground } from '@/lib/data/heroBackgrounds'
 
 // Backgrounds for the clan screen's hero. Same shape as the profile hero
@@ -14,7 +15,9 @@ export function isLightClanBackground(bg: ClanBackground): boolean {
 export const CLAN_BACKGROUNDS: ClanBackground[] = [
   {
     id: 'deep',
-    label: 'Глубина',
+    get label() {
+      return tnd('clanBg.deep')
+    },
     level: 1,
     base: 'linear-gradient(180deg,#0F2B3A,#071820 85%)',
     css: 'radial-gradient(120% 90% at 50% -10%, rgba(29,111,201,.55), rgba(29,111,201,0) 60%), linear-gradient(180deg,#0F2B3A,#071820 85%)',
@@ -22,7 +25,9 @@ export const CLAN_BACKGROUNDS: ClanBackground[] = [
   },
   {
     id: 'topo',
-    label: 'Топо-карта',
+    get label() {
+      return tnd('clanBg.topo')
+    },
     level: 1,
     base: 'linear-gradient(180deg,#1C2E26,#0B1611 85%)',
     css: 'repeating-radial-gradient(circle at 26% 18%, rgba(255,255,255,.08) 0 1.5px, transparent 1.5px 15px), repeating-radial-gradient(circle at 80% 72%, rgba(255,255,255,.06) 0 1.5px, transparent 1.5px 19px), linear-gradient(180deg,#1C2E26,#0B1611 85%)',
@@ -30,7 +35,9 @@ export const CLAN_BACKGROUNDS: ClanBackground[] = [
   },
   {
     id: 'waves',
-    label: 'Волны',
+    get label() {
+      return tnd('clanBg.waves')
+    },
     level: 1,
     base: 'linear-gradient(180deg,#0A1B2E,#040D17 82%)',
     css: 'linear-gradient(180deg,#0A1B2E,#040D17 82%)',
@@ -41,7 +48,9 @@ export const CLAN_BACKGROUNDS: ClanBackground[] = [
   },
   {
     id: 'aurora',
-    label: 'Аврора',
+    get label() {
+      return tnd('clanBg.aurora')
+    },
     level: 1,
     base: 'linear-gradient(180deg,#102A28,#081615 82%)',
     css: 'linear-gradient(180deg,#102A28,#081615 82%)',
@@ -52,7 +61,9 @@ export const CLAN_BACKGROUNDS: ClanBackground[] = [
   },
   {
     id: 'aurora-light',
-    label: 'Аврора (светлая)',
+    get label() {
+      return tnd('clanBg.aurora_light')
+    },
     level: 1,
     base: 'linear-gradient(180deg,#FAFAF8,#F1F1ED 82%)',
     css: 'linear-gradient(180deg,#FAFAF8,#F1F1ED 82%)',
@@ -72,7 +83,9 @@ export const CLAN_BACKGROUNDS: ClanBackground[] = [
   },
   {
     id: 'aurora-light-blue',
-    label: 'Аврора (светлая, синий)',
+    get label() {
+      return tnd('clanBg.aurora_light_blue')
+    },
     level: 1,
     base: 'linear-gradient(180deg,#FAFAF8,#F1F1ED 82%)',
     css: 'linear-gradient(180deg,#FAFAF8,#F1F1ED 82%)',
@@ -86,7 +99,9 @@ export const CLAN_BACKGROUNDS: ClanBackground[] = [
   },
   {
     id: 'aurora-light-pink',
-    label: 'Аврора (светлая, розовый)',
+    get label() {
+      return tnd('clanBg.aurora_light_pink')
+    },
     level: 1,
     base: 'linear-gradient(180deg,#FAFAF8,#F1F1ED 82%)',
     css: 'linear-gradient(180deg,#FAFAF8,#F1F1ED 82%)',
@@ -100,7 +115,9 @@ export const CLAN_BACKGROUNDS: ClanBackground[] = [
   },
   {
     id: 'aurora-light-orange',
-    label: 'Аврора (светлая, огонь)',
+    get label() {
+      return tnd('clanBg.aurora_light_orange')
+    },
     level: 1,
     base: 'linear-gradient(180deg,#FAFAF8,#F1F1ED 82%)',
     css: 'linear-gradient(180deg,#FAFAF8,#F1F1ED 82%)',
@@ -114,7 +131,9 @@ export const CLAN_BACKGROUNDS: ClanBackground[] = [
   },
   {
     id: 'reeds',
-    label: 'Камыш',
+    get label() {
+      return tnd('clanBg.reeds')
+    },
     level: 1,
     // Live (PremiumBackgrounds' reeds scene): stems swaying in the wind.
     base: 'radial-gradient(120% 70% at 50% 100%, rgba(255,170,80,.30), rgba(255,170,80,0) 62%), linear-gradient(180deg,#1A2A2E,#0C1517 85%)',
@@ -125,7 +144,9 @@ export const CLAN_BACKGROUNDS: ClanBackground[] = [
   },
   {
     id: 'rain',
-    label: 'Дождь',
+    get label() {
+      return tnd('clanBg.rain')
+    },
     level: 1,
     // Live (PremiumBackgrounds' rain scene): falling streaks, rings on the water.
     base: 'linear-gradient(180deg,#26343F,#111A21 85%)',
@@ -136,7 +157,9 @@ export const CLAN_BACKGROUNDS: ClanBackground[] = [
   },
   {
     id: 'scales',
-    label: 'Чешуя',
+    get label() {
+      return tnd('clanBg.scales')
+    },
     level: 2,
     base: 'linear-gradient(180deg,#26303A,#10161C 85%)',
     // Still version (reduced motion draws the scene's own frame): even rows
@@ -149,7 +172,9 @@ export const CLAN_BACKGROUNDS: ClanBackground[] = [
   },
   {
     id: 'bubbles',
-    label: 'Пузыри',
+    get label() {
+      return tnd('clanBg.bubbles')
+    },
     level: 3,
     base: 'linear-gradient(180deg,#0B3340,#05161D 85%)',
     css: 'linear-gradient(180deg,#0B3340,#05161D 85%)',
@@ -160,7 +185,9 @@ export const CLAN_BACKGROUNDS: ClanBackground[] = [
   },
   {
     id: 'circles',
-    label: 'Круги на воде',
+    get label() {
+      return tnd('clanBg.circles')
+    },
     level: 4,
     base: 'linear-gradient(180deg,#141A30,#0A0D1A 82%)',
     css: 'linear-gradient(180deg,#141A30,#0A0D1A 82%)',
@@ -171,7 +198,9 @@ export const CLAN_BACKGROUNDS: ClanBackground[] = [
   },
   {
     id: 'halftone',
-    label: 'Полутон',
+    get label() {
+      return tnd('clanBg.halftone')
+    },
     level: 6,
     base: 'linear-gradient(180deg,#26262B,#101012 82%)',
     css: 'linear-gradient(180deg,#26262B,#101012 82%)',
@@ -182,7 +211,9 @@ export const CLAN_BACKGROUNDS: ClanBackground[] = [
   },
   {
     id: 'fireflies',
-    label: 'Светлячки',
+    get label() {
+      return tnd('clanBg.fireflies')
+    },
     level: 7,
     base: 'linear-gradient(180deg,#0F1A2E,#070B14 85%)',
     css: 'linear-gradient(180deg,#0F1A2E,#070B14 85%)',
@@ -193,7 +224,9 @@ export const CLAN_BACKGROUNDS: ClanBackground[] = [
   },
   {
     id: 'sunset',
-    label: 'Закат',
+    get label() {
+      return tnd('clanBg.sunset')
+    },
     level: 8,
     base: 'linear-gradient(180deg,#2A1436 0%,#5C2138 50%,#A4412A 100%)',
     css: 'radial-gradient(90% 70% at 50% 115%, rgba(255,170,70,.8), rgba(255,170,70,0) 62%), linear-gradient(180deg,#2A1436 0%,#5C2138 50%,#A4412A 100%)',

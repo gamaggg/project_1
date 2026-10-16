@@ -20,10 +20,10 @@ import {
 } from '@/lib/supabase/queries'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { AwardsRing } from '@/components/app-shell/AwardsRing'
+import { AchievementCard } from '@/components/app-shell/AchievementCard'
 import { computeAchievements, heldTerritories, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralFollowers, pluralSpecies, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
-import { ACH_ICONS } from '@/components/app-shell/icons'
 import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
 import { CITIES } from '@/lib/data/city'
 import { resolveHeroBackground } from '@/lib/data/heroBackgrounds'
@@ -36,6 +36,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
+import { tn } from '@/lib/i18n'
 
 // Rendered by FishZoneApp itself, not nested inside a screen's scrolling
 // `.screen-inner` — same clipping reasoning as every other app-shell-level
@@ -141,13 +142,13 @@ export function UserProfileScreen({
     viewedCity
   )
   const recent = catches.slice(0, 3)
-  const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
+  const initials = (profile?.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()
   const territoriesRef = useRef<HTMLDivElement>(null)
   const heroRef = useMagneticProfileHero()
 
   function handleShare() {
     if (!profile?.publicId) return
-    onShareProfile(profile.publicId, `🎣 Профиль ${profile.displayName ?? 'рыбака'} в RANGE`)
+    onShareProfile(profile.publicId, profile.displayName ? tn('profile.otherShare', { name: profile.displayName }) : tn('profile.otherShareAnon'))
   }
 
   return (
@@ -183,7 +184,7 @@ export function UserProfileScreen({
               className="profile-hero-avatar-btn"
               style={{ cursor: profile?.avatarUrl ? 'pointer' : 'default' }}
               onClick={() => profile?.avatarUrl && onOpenAvatarPreview(profile.avatarUrl)}
-              aria-label={profile?.avatarUrl ? 'Открыть фото' : undefined}
+              aria-label={profile?.avatarUrl ? tn('profile.openPhoto') : undefined}
             >
               <div className="profile-avatar">
                 {profile?.avatarUrl ? (
@@ -196,7 +197,7 @@ export function UserProfileScreen({
           </div>
         </AwardsRing>
         <div className="profile-hero-name">
-          <StyledName name={profile?.displayName ?? 'Профиль'} styleId={profile?.equippedNameStyle} />
+          <StyledName name={profile?.displayName ?? tn('profile.profileFallback')} styleId={profile?.equippedNameStyle} />
         </div>
         {profile?.clanId && (
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
@@ -208,16 +209,16 @@ export function UserProfileScreen({
         )}
         {profile?.isBlocked && (
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
-            <span className="badge" style={{ background: '#FDE2E2', color: '#D33' }}>Заблокирован</span>
+            <span className="badge" style={{ background: '#FDE2E2', color: '#D33' }}>{tn('profile.blocked')}</span>
           </div>
         )}
         <div className="profile-hero-meta">
-          {profile?.createdAt && <>В RANGE с <b>{formatJoinedDate(profile.createdAt)}</b></>}
+          {profile?.createdAt && <>{tn('profile.joinedPre')}<b>{formatJoinedDate(profile.createdAt)}</b>{tn('profile.joinedPost')}</>}
           {profile?.publicId && <> · ID {profile.publicId}</>}
         </div>
         <div className="profile-hero-badge">
           <span className="section-link" style={{ color: 'rgba(var(--hero-text-rgb,255,255,255),.75)', cursor: 'default' }}>
-            Город: {CITIES[viewedCity].name}
+            {tn('profile.city', { city: CITIES[viewedCity].name })}
           </span>
         </div>
         {profile?.bio && (
@@ -232,7 +233,7 @@ export function UserProfileScreen({
             disabled={followLoading || setFollowing.isPending}
             onClick={() => setFollowing.mutate({ followeeId: userId, following: !isFollowing })}
           >
-            {isFollowing ? 'Отписаться' : 'Подписаться'}
+            {isFollowing ? tn('profile.unfollow') : tn('profile.follow')}
           </button>
           {canBlockUsers && !profile?.isSuperAdmin && (
             <button
@@ -259,7 +260,7 @@ export function UserProfileScreen({
             }
           >
             <ClanCrest crest={me?.clanCrest} size={20} />
-            {inviteState === 'sent' ? 'Приглашение отправлено' : `Пригласить в «${me?.clanName}»`}
+            {inviteState === 'sent' ? tn('profile.inviteSent') : tn('profile.inviteTo', { clan: me?.clanName ?? '' })}
           </button>
         )}
         {inviteState !== 'idle' && inviteState !== 'sent' && <div className="clan-error" style={{ marginTop: 6 }}>{inviteState}</div>}
@@ -314,45 +315,43 @@ export function UserProfileScreen({
           <button className="hero-stat" onClick={onOpenAllCatches}>
             {/* Not «0» before the catches are in — a grey bar until they are. */}
             <b>{catchesPending ? <span className="skel hero-stat-skel" /> : catches.length}</b>
-            <span>Уловов</span>
+            <span>{tn('sector.catchesLabel')}</span>
           </button>
           <button className="hero-stat" onClick={() => onOpenSpecies(catchSpecies)}>
             <b>{catchesPending ? <span className="skel hero-stat-skel" /> : speciesCount}</b>
-            <span>{pluralSpecies(speciesCount)} рыб</span>
+            <span>{tn('profile.speciesOfFish', { count: speciesCount })}</span>
           </button>
           <button
             className="hero-stat"
             onClick={() => (profile?.followersCount ?? 0) > 0 && onOpenFollowers(followers)}
           >
             <b>{profile?.followersCount ?? 0}</b>
-            <span>Подписчика</span>
+            <span>{tn('profile.followersLabel')}</span>
           </button>
         </div>
 
         <div className="section-title-row" style={{ marginTop: 24 }}>
-          <div className="section-title">Достижения</div>
+          <div className="section-title">
+            {tn('profile.achievements')}
+            <span className="ach-count" aria-label={tn('ach.summary', { done: achievements.filter((x) => x.unlocked).length, total: achievements.length })}>
+              <b>{achievements.filter((x) => x.unlocked).length}</b>/{achievements.length}
+            </span>
+          </div>
           <button className="section-link" onClick={onOpenAchievements}>
-            Все достижения
+            {tn('profile.allAchievements')}
           </button>
         </div>
         <div className="ach-grid">
-          {achievements.slice(0, 4).map((a) => (
-            <div className={`ach-card${a.unlocked ? '' : ' locked'}`} key={a.icon} onClick={() => onOpenAchievementDetail(a.icon)}>
-              <div className={`ach-icon hex-aspect hex-shape ${a.unlocked ? 'on' : 'off'}`}>{ACH_ICONS[a.icon]}</div>
-              <div>
-                <div className="ach-title">{a.title}</div>
-                <div className="ach-desc">{a.desc}</div>
-                {!a.unlocked && a.progress && <div className="ach-progress">{a.progress}</div>}
-              </div>
-            </div>
+          {achievements.slice(0, 4).map((a, i) => (
+            <AchievementCard key={a.icon} a={a} index={i} onOpen={() => onOpenAchievementDetail(a.icon)} />
           ))}
         </div>
 
         <div className="section-title-row" style={{ marginTop: 24 }}>
-          <div className="section-title">Последние уловы</div>
+          <div className="section-title">{tn('profile.recentCatches')}</div>
           {catches.length > recent.length && (
             <button className="section-link" onClick={onOpenAllCatches}>
-              Все уловы
+              {tn('profile.allCatches')}
             </button>
           )}
         </div>
@@ -380,12 +379,12 @@ export function UserProfileScreen({
           ) : catchesPending ? (
             <SkeletonRows count={3} />
           ) : (
-            <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет уловов</div>
+            <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>{tn('map.noCatches')}</div>
           )}
         </div>
 
         <div className="section-title" style={{ marginTop: 24 }} ref={territoriesRef}>
-          Территории
+          {tn('terr.title')}
         </div>
         <div className="card" style={{ overflow: 'hidden' }}>
           {territories.length ? (
@@ -407,14 +406,14 @@ export function UserProfileScreen({
               </button>
             ))
           ) : (
-            <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет территорий</div>
+            <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>{tn('profile.noTerritoriesOther')}</div>
           )}
         </div>
 
         {record && (
           <>
             <div className="section-title" style={{ marginTop: 24 }}>
-              Личный рекорд
+              {tn('profile.record')}
             </div>
             <div className="card tap-scale" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }} onClick={() => onOpenPhoto(record.id)}>
               <div className="fish-thumb" style={{ width: 52, height: 52 }}>
@@ -422,7 +421,7 @@ export function UserProfileScreen({
               </div>
               <div>
                 <div style={{ fontWeight: 800, fontSize: 16 }}>{record.speciesName}</div>
-                <div style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 700, marginTop: 2 }}>{record.lengthCm} см</div>
+                <div style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 700, marginTop: 2 }}>{record.lengthCm} {tn('fmt.cm')}</div>
               </div>
             </div>
           </>

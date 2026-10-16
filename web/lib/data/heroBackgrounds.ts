@@ -1,3 +1,4 @@
+import { tnd } from '@/lib/i18n/runtime'
 import type { PremiumBackgroundKind } from '@/components/app-shell/PremiumBackgrounds'
 
 // Presets for the profile hero panel's background (see ChangeColorModal) —
@@ -54,63 +55,81 @@ export type HeroBackground = {
 export const HERO_BACKGROUNDS: HeroBackground[] = [
   {
     id: 'default',
-    label: 'Огонь',
+    get label() {
+      return tnd('heroBg.default')
+    },
     base: 'linear-gradient(180deg,#1E1E24,#111114 82%)',
     css: 'radial-gradient(120% 85% at 50% -15%, rgba(252,82,0,.5), rgba(252,82,0,0) 60%), linear-gradient(180deg,#1E1E24,#111114 82%)',
     accentRgb: '252,82,0',
   },
   {
     id: 'ocean',
-    label: 'Океан',
+    get label() {
+      return tnd('heroBg.ocean')
+    },
     base: 'linear-gradient(180deg,#12242E,#0A1216 82%)',
     css: 'radial-gradient(120% 85% at 50% -15%, rgba(62,123,250,.5), rgba(62,123,250,0) 60%), linear-gradient(180deg,#12242E,#0A1216 82%)',
     accentRgb: '62,123,250',
   },
   {
     id: 'forest',
-    label: 'Лес',
+    get label() {
+      return tnd('heroBg.forest')
+    },
     base: 'linear-gradient(180deg,#132A1E,#0B1610 82%)',
     css: 'radial-gradient(120% 85% at 50% -15%, rgba(60,180,110,.45), rgba(60,180,110,0) 60%), linear-gradient(180deg,#132A1E,#0B1610 82%)',
     accentRgb: '60,180,110',
   },
   {
     id: 'dusk',
-    label: 'Сумерки',
+    get label() {
+      return tnd('heroBg.dusk')
+    },
     base: 'linear-gradient(180deg,#221E2E,#131018 82%)',
     css: 'radial-gradient(120% 85% at 50% -15%, rgba(168,142,245,.45), rgba(168,142,245,0) 60%), linear-gradient(180deg,#221E2E,#131018 82%)',
     accentRgb: '168,142,245',
   },
   {
     id: 'crimson',
-    label: 'Багровый',
+    get label() {
+      return tnd('heroBg.crimson')
+    },
     base: 'linear-gradient(180deg,#2A1416,#160B0C 82%)',
     css: 'radial-gradient(120% 85% at 50% -15%, rgba(230,57,70,.45), rgba(230,57,70,0) 60%), linear-gradient(180deg,#2A1416,#160B0C 82%)',
     accentRgb: '230,57,70',
   },
   {
     id: 'mono',
-    label: 'Моно',
+    get label() {
+      return tnd('heroBg.mono')
+    },
     base: 'linear-gradient(180deg,#26262B,#101012 82%)',
     css: 'linear-gradient(180deg,#26262B,#101012 82%)',
     accentRgb: '255,255,255',
   },
   {
     id: 'teal',
-    label: 'Бирюза',
+    get label() {
+      return tnd('heroBg.teal')
+    },
     base: 'linear-gradient(180deg,#102A28,#081615 82%)',
     css: 'radial-gradient(120% 85% at 50% -15%, rgba(45,212,191,.5), rgba(45,212,191,0) 60%), linear-gradient(180deg,#102A28,#081615 82%)',
     accentRgb: '45,212,191',
   },
   {
     id: 'rose',
-    label: 'Розовый',
+    get label() {
+      return tnd('heroBg.rose')
+    },
     base: 'linear-gradient(180deg,#2A1420,#160A12 82%)',
     css: 'radial-gradient(120% 85% at 50% -15%, rgba(236,72,153,.45), rgba(236,72,153,0) 60%), linear-gradient(180deg,#2A1420,#160A12 82%)',
     accentRgb: '236,72,153',
   },
   {
     id: 'waves',
-    label: 'Волны',
+    get label() {
+      return tnd('heroBg.waves')
+    },
     base: 'linear-gradient(180deg,#241207,#120901 82%)',
     css: 'linear-gradient(180deg,#241207,#120901 82%)',
     accentRgb: '252,82,0',
@@ -120,7 +139,9 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   },
   {
     id: 'waves-ocean',
-    label: 'Волны (море)',
+    get label() {
+      return tnd('heroBg.waves_ocean')
+    },
     base: 'linear-gradient(180deg,#0A1B2E,#040D17 82%)',
     css: 'linear-gradient(180deg,#0A1B2E,#040D17 82%)',
     accentRgb: '62,123,250',
@@ -130,7 +151,9 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   },
   {
     id: 'waves-purple',
-    label: 'Волны (фиолет)',
+    get label() {
+      return tnd('heroBg.waves_purple')
+    },
     base: 'linear-gradient(180deg,#1C0F30,#0D0718 82%)',
     css: 'linear-gradient(180deg,#1C0F30,#0D0718 82%)',
     accentRgb: '168,142,245',
@@ -140,7 +163,9 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   },
   {
     id: 'waves-pink',
-    label: 'Волны (розовый)',
+    get label() {
+      return tnd('heroBg.waves_pink')
+    },
     base: 'linear-gradient(180deg,#2A0F22,#180712 82%)',
     css: 'linear-gradient(180deg,#2A0F22,#180712 82%)',
     accentRgb: '236,72,153',
@@ -156,7 +181,9 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   // dark base its waves-* counterpart already uses.
   {
     id: 'aurora',
-    label: 'Аврора',
+    get label() {
+      return tnd('heroBg.aurora')
+    },
     base: 'linear-gradient(180deg,#102A28,#081615 82%)',
     css: 'linear-gradient(180deg,#102A28,#081615 82%)',
     accentRgb: '20,184,166',
@@ -166,7 +193,9 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   },
   {
     id: 'aurora-orange',
-    label: 'Аврора (огонь)',
+    get label() {
+      return tnd('heroBg.aurora_orange')
+    },
     base: 'linear-gradient(180deg,#241207,#120901 82%)',
     css: 'linear-gradient(180deg,#241207,#120901 82%)',
     accentRgb: '252,82,0',
@@ -176,7 +205,9 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   },
   {
     id: 'aurora-pink',
-    label: 'Аврора (розовый)',
+    get label() {
+      return tnd('heroBg.aurora_pink')
+    },
     base: 'linear-gradient(180deg,#2A0F22,#180712 82%)',
     css: 'linear-gradient(180deg,#2A0F22,#180712 82%)',
     accentRgb: '236,72,153',
@@ -186,7 +217,9 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   },
   {
     id: 'aurora-blue',
-    label: 'Аврора (синий)',
+    get label() {
+      return tnd('heroBg.aurora_blue')
+    },
     base: 'linear-gradient(180deg,#0A1B2E,#040D17 82%)',
     css: 'linear-gradient(180deg,#0A1B2E,#040D17 82%)',
     accentRgb: '62,123,250',
@@ -202,7 +235,9 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   // presets above, would just wash out to white here).
   {
     id: 'aurora-light',
-    label: 'Аврора (светлая)',
+    get label() {
+      return tnd('heroBg.aurora_light')
+    },
     base: 'linear-gradient(180deg,#FAFAF8,#F1F1ED 82%)',
     css: 'linear-gradient(180deg,#FAFAF8,#F1F1ED 82%)',
     accentRgb: '20,184,166',
@@ -224,7 +259,9 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   // and blue, mirroring the dark aurora family's own 3 extra colours.
   {
     id: 'aurora-light-orange',
-    label: 'Аврора (светлая, огонь)',
+    get label() {
+      return tnd('heroBg.aurora_light_orange')
+    },
     base: 'linear-gradient(180deg,#FAFAF8,#F1F1ED 82%)',
     css: 'linear-gradient(180deg,#FAFAF8,#F1F1ED 82%)',
     accentRgb: '252,82,0',
@@ -237,7 +274,9 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   },
   {
     id: 'aurora-light-pink',
-    label: 'Аврора (светлая, розовый)',
+    get label() {
+      return tnd('heroBg.aurora_light_pink')
+    },
     base: 'linear-gradient(180deg,#FAFAF8,#F1F1ED 82%)',
     css: 'linear-gradient(180deg,#FAFAF8,#F1F1ED 82%)',
     accentRgb: '236,72,153',
@@ -250,7 +289,9 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   },
   {
     id: 'aurora-light-blue',
-    label: 'Аврора (светлая, синий)',
+    get label() {
+      return tnd('heroBg.aurora_light_blue')
+    },
     base: 'linear-gradient(180deg,#FAFAF8,#F1F1ED 82%)',
     css: 'linear-gradient(180deg,#FAFAF8,#F1F1ED 82%)',
     accentRgb: '62,123,250',
@@ -265,7 +306,9 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   // indigo so it reads as its own thing next to the warmer aurora family.
   {
     id: 'circles',
-    label: 'Кольца',
+    get label() {
+      return tnd('heroBg.circles')
+    },
     base: 'linear-gradient(180deg,#141A30,#0A0D1A 82%)',
     css: 'linear-gradient(180deg,#141A30,#0A0D1A 82%)',
     accentRgb: '124,140,255',
@@ -278,7 +321,9 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   // so the dots themselves carry all the colour.
   {
     id: 'halftone',
-    label: 'Полутона',
+    get label() {
+      return tnd('heroBg.halftone')
+    },
     base: 'linear-gradient(180deg,#26262B,#101012 82%)',
     css: 'linear-gradient(180deg,#26262B,#101012 82%)',
     accentRgb: '252,82,0',
@@ -291,7 +336,9 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   // ground as the scene, for the first paint and the picker swatch.
   {
     id: 'deepwater',
-    label: 'Глубина',
+    get label() {
+      return tnd('heroBg.deepwater')
+    },
     base: 'linear-gradient(180deg,#0E4A5C,#082A38 55%,#03121A)',
     css: 'linear-gradient(180deg,#0E4A5C,#082A38 55%,#03121A)',
     accentRgb: '56,189,248',
@@ -300,7 +347,9 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   },
   {
     id: 'moonpath',
-    label: 'Лунная дорожка',
+    get label() {
+      return tnd('heroBg.moonpath')
+    },
     base: 'linear-gradient(180deg,#070B26,#1B2560 60%,#0C1440 60%,#03061A)',
     css: 'linear-gradient(180deg,#070B26,#1B2560 60%,#0C1440 60%,#03061A)',
     accentRgb: '200,210,255',
@@ -309,7 +358,9 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   },
   {
     id: 'school',
-    label: 'Косяк',
+    get label() {
+      return tnd('heroBg.school')
+    },
     base: 'linear-gradient(180deg,#0F4D4A,#04191A)',
     css: 'linear-gradient(180deg,#0F4D4A,#04191A)',
     accentRgb: '45,212,191',
@@ -318,7 +369,9 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   },
   {
     id: 'golddust',
-    label: 'Золотая пыль',
+    get label() {
+      return tnd('heroBg.golddust')
+    },
     base: 'linear-gradient(160deg,#2C1F08,#0D0803)',
     css: 'linear-gradient(160deg,#2C1F08,#0D0803)',
     accentRgb: '255,200,60',

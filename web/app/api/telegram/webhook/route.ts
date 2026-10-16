@@ -4,9 +4,16 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { isEmptyTelegramAccount } from '@/lib/telegram/accounts'
 import { stopFishingDay } from '@/lib/telegram/fishing'
 import { withErrorReport } from '@/lib/serverErrors'
+import { TRANSLATION_READY, langFromLocale, translate, type Lang, type TKey, type TVars } from '@/lib/i18n/core'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
+
+// The bot answers in the language Telegram reports for the person (Russian
+// until the translation is switched on — TRANSLATION_READY).
+type From = { language_code?: string } | undefined
+const langOf = (from: From): Lang => (TRANSLATION_READY ? langFromLocale(from?.language_code) : 'ru')
+const say = (lang: Lang, key: TKey, vars?: TVars) => translate(lang, key, vars)
 
 async function sendText(chatId: number, text: string) {
   await fetch(`${TELEGRAM_API}/sendMessage`, {
@@ -19,7 +26,8 @@ async function sendText(chatId: number, text: string) {
 // Attaches this chat to the account that generated the token. Every failure
 // path answers in the chat: the person is sitting in Telegram waiting for
 // something to happen, and silence reads as a broken button.
-async function linkAccount(token: string, message: { chat: { id: number }; from?: { id: number } }) {
+async function linkAccount(token: string, message: { chat: { id: number }; from?: { id: number; language_code?: string } }) {
+  const lang = langOf(message.from)
   const chatId = message.chat.id
   const telegramId = message.from?.id ?? chatId
   const admin = createAdminClient()
@@ -35,7 +43,7 @@ async function linkAccount(token: string, message: { chat: { id: number }; from?
     .maybeSingle()
 
   if (!row || row.used_at || new Date(row.expires_at) < new Date()) {
-    await sendText(chatId, 'Ссылка больше не действует. Открой профиль в RANGE и нажми «Подключить Telegram» ещё раз.')
+    await sendText(chatId, say(lang, 'bot.linkExpired'))
     return
   }
 
@@ -60,13 +68,13 @@ async function linkAccount(token: string, message: { chat: { id: number }; from?
     if (!(await isEmptyTelegramAccount(admin, taken.id))) {
       await sendText(
         chatId,
-        `Этот Telegram уже привязан к другому аккаунту RANGE${taken.display_name ? ` — «${taken.display_name}»` : ''}. Войди в него через Telegram или напиши администратору.`,
+        say(lang, 'bot.taken', { name: taken.display_name ? say(lang, 'bot.nameSuffix', { name: taken.display_name }) : '' }),
       )
       return
     }
     const { error: releaseError } = await admin.from('profiles').update({ telegram_id: null, tg_notifications_enabled: false }).eq('id', taken.id)
     if (releaseError) {
-      await sendText(chatId, 'Не получилось подключить уведомления. Попробуй ещё раз из профиля.')
+      await sendText(chatId, say(lang, 'bot.connectFailed'))
       return
     }
   }
@@ -81,12 +89,12 @@ async function linkAccount(token: string, message: { chat: { id: number }; from?
   if (error) {
     // Put a released link back, so the empty account still opens in the Mini App.
     if (taken) await admin.from('profiles').update({ telegram_id: telegramId }).eq('id', taken.id)
-    await sendText(chatId, 'Не получилось подключить уведомления. Попробуй ещё раз из профиля.')
+    await sendText(chatId, say(lang, 'bot.connectFailed'))
     return
   }
 
   await admin.from('telegram_link_tokens').update({ used_at: new Date().toISOString() }).eq('token', token)
-  await sendText(chatId, 'Готово. Теперь я напишу, когда у тебя отнимут сектор.')
+  await sendText(chatId, say(lang, 'bot.linked'))
 }
 
 // "/stop": game notifications off, remembered as the person's choice so
@@ -94,7 +102,8 @@ async function linkAccount(token: string, message: { chat: { id: number }; from?
 // The first message to anyone whose notifications were turned on for them
 // points here (see send-notifications). Announcements aren't covered — they
 // go to every chat that pressed /start (admin_post_announcement).
-async function stopNotifications(message: { chat: { id: number }; from?: { id: number } }) {
+async function stopNotifications(message: { chat: { id: number }; from?: { id: number; language_code?: string } }) {
+  const lang = langOf(message.from)
   const telegramId = message.from?.id ?? message.chat.id
   // Someone who pressed /start but never signed up has no profile to switch
   // off — this stops the onboarding chain for their chat (onboarding_due).
@@ -107,18 +116,12 @@ async function stopNotifications(message: { chat: { id: number }; from?: { id: n
   await sendText(
     message.chat.id,
     error
-      ? 'Не получилось выключить уведомления. Попробуй ещё раз или выключи их в профиле RANGE.'
+      ? say(lang, 'bot.stopFailed')
       : data.length
-        ? 'Уведомления из игры выключены. Включить снова — «Уведомления в Telegram» в профиле RANGE.'
-        : 'Этот Telegram не привязан к аккаунту RANGE, уведомления из игры сюда не приходят.',
+        ? say(lang, 'bot.stopped')
+        : say(lang, 'bot.notLinked'),
   )
 }
-
-const WELCOME_CAPTION = `Добро пожаловать в RANGE 🎣
-
-Здесь каждый улов меняет карту. Захватывай береговые сектора, следи за соперниками и поднимайся в рейтинге недели.
-
-Нажми «Открыть RANGE», чтобы начать.`
 
 // Telegram POSTs every update here once the webhook is registered (see
 // scripts/setTelegramWebhook.sh) — handled are /stop (see stopNotifications)
@@ -144,7 +147,7 @@ async function handlePOST(req: Request) {
     await fetch(`${TELEGRAM_API}/answerCallbackQuery`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ callback_query_id: callback.id, text: linked ? 'Понял, до следующей рыбалки 🎣' : 'Не нашли твой аккаунт RANGE' }),
+      body: JSON.stringify({ callback_query_id: callback.id, text: say(langOf(callback.from), linked ? 'bot.fishingStopOk' : 'bot.fishingStopNo') }),
     })
     return NextResponse.json({ ok: true })
   }
@@ -200,9 +203,9 @@ async function handlePOST(req: Request) {
       body: JSON.stringify({
         chat_id: message.chat.id,
         photo: `${SITE_URL}/telegram/welcome.png`,
-        caption: WELCOME_CAPTION,
+        caption: say(langOf(message.from), 'bot.welcome'),
         reply_markup: {
-          inline_keyboard: [[{ text: '🎣 Открыть RANGE', web_app: { url: SITE_URL } }]],
+          inline_keyboard: [[{ text: say(langOf(message.from), 'bot.openBtn'), web_app: { url: SITE_URL } }]],
         },
       }),
     })

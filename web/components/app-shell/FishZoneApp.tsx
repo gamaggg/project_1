@@ -60,6 +60,7 @@ import { hapticBuildUp, hapticSuccess, hapticTap } from '@/lib/telegram/haptics'
 import { GeoMapOverlay } from '@/components/app-shell/GeoMapOverlay'
 import { GEO_AREA_MAX_LAT, GEO_NEIGHBOUR_M, type GeoResult } from '@/lib/geo'
 import { BottomNav } from '@/components/app-shell/BottomNav'
+import { HexLoader } from '@/components/app-shell/HexLoader'
 import { SpotlightTours } from '@/components/app-shell/SpotlightTours'
 import {
   ClanBattleCeremony,
@@ -119,6 +120,8 @@ import { AwardDetailModal } from '@/components/app-shell/AwardDetailModal'
 import type { UserAward } from '@/lib/data/types'
 import type { Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
+import { tn } from '@/lib/i18n'
+import { LanguageSync } from '@/components/app-shell/LanguageSync'
 
 export type ScreenId =
   | 'screen-map'
@@ -233,7 +236,6 @@ export function FishZoneApp() {
   // catches yet» costs nothing extra.
   const { data: myCatchesForNewbie, isSuccess: myCatchesReady } = useMyCatches()
   const isNewbie = myCatchesReady && (myCatchesForNewbie?.length ?? 0) === 0
-  const [nearestFreeRequest, setNearestFreeRequest] = useState(0)
   const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories, territoriesReady, city)
   const { show: showWeekTop, entry: weekTopEntry, dismiss: dismissWeekTop } = useWeekTopModal(city)
   const clanCeremony = useClanBattleCeremony(city, myProfile?.clanId ?? null)
@@ -250,18 +252,6 @@ export function FishZoneApp() {
   // Only clan members make this request — it feeds the profile tab's badge.
   const { data: clanChatSummary } = useClanChatSummary(myProfile?.clanId ?? null)
   const shopRewards = useShopRewardsCount()
-
-  // Achievement detail photos are full-bleed JPGs (~80-110KB each) fetched
-  // cold on the first tap — without this the background pops in a beat after
-  // AchievementDetailScreen mounts instead of being there immediately.
-  // Warming the browser's HTTP cache for all of them once per session means
-  // every open is instant, including the very first.
-  useEffect(() => {
-    for (const icon of Object.keys(ACH_ICONS)) {
-      const img = new window.Image()
-      img.src = `/achievements/${icon}.jpg`
-    }
-  }, [])
 
   // Rare screens live in their own chunks (see lazyScreens) — fetched once
   // the map's data is in and the page is idle, so opening one later is as
@@ -682,7 +672,7 @@ export function FishZoneApp() {
   async function shareClan(clanId: number, name: string, inviteCode?: string | null) {
     const invite = inviteCode ? `&invite=${encodeURIComponent(inviteCode)}` : ''
     const url = `${window.location.origin}${window.location.pathname}?clan=${clanId}${invite}${refParam(myProfile?.publicId)}`
-    const text = `Вступай в клан «${name}» в RANGE`
+    const text = tn('shell.joinClan', { name })
     const webApp = window.Telegram?.WebApp
     if (insideTelegram() && webApp?.openTelegramLink) {
       webApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`)
@@ -690,9 +680,9 @@ export function FishZoneApp() {
     }
     try {
       await navigator.clipboard.writeText(`${text}\n${url}`)
-      showToast('Ссылка на клан скопирована — отправь её друзьям')
+      showToast(tn('shell.clanLinkCopied'))
     } catch {
-      showToast('Не удалось скопировать ссылку')
+      showToast(tn('common.linkCopyFailed'))
     }
   }
   function openChallenges() {
@@ -752,7 +742,7 @@ export function FishZoneApp() {
         if ((e as { message?: string }).message?.includes('GEO:already')) {
           queryClient.invalidateQueries({ queryKey: ['geo-today'] })
           endGeoPlay()
-        } else setGeoError('Не получилось отправить — попробуй ещё раз')
+        } else setGeoError(tn('shell.sendFailed'))
       },
     })
   }
@@ -770,9 +760,9 @@ export function FishZoneApp() {
     }
     try {
       await navigator.clipboard.writeText(`${text}\n${url}`)
-      showToast('Скопировано — отправь друзьям')
+      showToast(tn('shell.copiedSend'))
     } catch {
-      showToast('Не удалось скопировать')
+      showToast(tn('common.copyFailed'))
     }
   }
   function openTerritory(id: string) {
@@ -781,7 +771,7 @@ export function FishZoneApp() {
     // `territories` (see useTerritories' is_deleted filter), so guard
     // against pushing a screen that'd render blank.
     if (!territories.some((t) => t.id === id)) {
-      showToast('Этот сектор удалён')
+      showToast(tn('shell.sectorGone'))
       return
     }
     setViewingTerritoryId(id)
@@ -912,7 +902,7 @@ export function FishZoneApp() {
       return
     }
     setLocating(true)
-    showToast('Определяем твоё местоположение…')
+    showToast(tn('shell.locating'))
     const coords = await getCurrentCoords()
     setLocating(false)
     if (!coords) {
@@ -922,8 +912,8 @@ export function FishZoneApp() {
       const permission = await queryGeolocationPermission()
       showToast(
         permission === 'denied'
-          ? 'Доступ к геолокации запрещён. Разреши его в настройках браузера для этого сайта'
-          : 'Не получилось определить твоё местоположение. Попробуй ещё раз'
+          ? tn('shell.geoDenied')
+          : tn('shell.geoFailed')
       )
       return
     }
@@ -983,6 +973,14 @@ export function FishZoneApp() {
     setConfirmStep('form')
     push({ screen: 'screen-confirm' })
     void startUpload(blob)
+  }
+  // The photo is taking too long and the person chose not to wait: drop this
+  // attempt (a late finish is ignored, see uploadSeqRef) and fall into the offline
+  // mode, where the catch is saved with the photo and goes out by itself later.
+  function giveUpUpload() {
+    uploadSeqRef.current += 1
+    setUploadNetworkFail(true)
+    setPhotoStatus('error')
   }
   function retryUpload() {
     if (!capturedPhoto) return
@@ -1049,10 +1047,10 @@ export function FishZoneApp() {
       } else if (shieldedMatch) {
         setShieldBlock({ territoryId: catchTerritoryId, until: new Date(Number(shieldedMatch[1]) * 1000).toISOString(), photoUrl, form })
       } else if (message === 'account blocked') {
-        showToast('Аккаунт заблокирован, добавлять уловы нельзя')
+        showToast(tn('shell.blocked'))
       } else {
         reportClientError('confirm_catch', err)
-        showToast('Не удалось сохранить улов, попробуй ещё раз')
+        showToast(tn('shell.catchSaveFailed'))
       }
     }
   }
@@ -1088,11 +1086,11 @@ export function FishZoneApp() {
       })
       track('catch_to_diary_shielded', { territory: shieldBlock.territoryId }, city)
       setShieldBlock(null)
-      showToast('Улов сохранён в дневник')
+      showToast(tn('shell.savedToDiary'))
       finishCatchFlow()
     } catch (err) {
       reportClientError('diary_from_shield', err)
-      showToast('Не удалось сохранить в дневник, попробуй ещё раз')
+      showToast(tn('shell.diarySaveFailed'))
     }
   }
   function finishCatchFlow() {
@@ -1109,9 +1107,9 @@ export function FishZoneApp() {
     const url = `${window.location.origin}${window.location.pathname}?territory=${territoryId}${refParam(myProfile?.publicId)}`
     try {
       await navigator.clipboard.writeText(url)
-      showToast('Ссылка на территорию скопирована')
+      showToast(tn('shell.sectorLinkCopied'))
     } catch {
-      showToast('Не удалось скопировать ссылку')
+      showToast(tn('common.linkCopyFailed'))
     }
   }
   // Same shape as shareTerritory above, keyed by the short public_id (not
@@ -1126,7 +1124,7 @@ export function FishZoneApp() {
   async function inviteFriends() {
     if (!myProfile?.publicId) return
     const url = inviteLink(myProfile.publicId)
-    const text = 'Лови рыбу и захватывай сектора в RANGE — по моей ссылке +100 монет на старт'
+    const text = tn('shell.inviteText')
     const webApp = window.Telegram?.WebApp
     if (insideTelegram() && webApp?.openTelegramLink) {
       webApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`)
@@ -1134,9 +1132,9 @@ export function FishZoneApp() {
     }
     try {
       await navigator.clipboard.writeText(`${text}\n${url}`)
-      showToast('Ссылка-приглашение скопирована — отправь её друзьям')
+      showToast(tn('shell.inviteLinkCopied'))
     } catch {
-      showToast('Не удалось скопировать ссылку')
+      showToast(tn('common.linkCopyFailed'))
     }
   }
   async function shareProfile(publicId: string, text: string) {
@@ -1144,9 +1142,9 @@ export function FishZoneApp() {
     const url = `${window.location.origin}${window.location.pathname}?user=${publicId}${refParam(myProfile?.publicId)}`
     try {
       await navigator.clipboard.writeText(`${text}\n${url}`)
-      showToast('Ссылка на профиль скопирована')
+      showToast(tn('shell.profileLinkCopied'))
     } catch {
-      showToast('Не удалось скопировать ссылку')
+      showToast(tn('common.linkCopyFailed'))
     }
   }
   // Same idea again, one level more specific: publicId identifies whose
@@ -1158,9 +1156,9 @@ export function FishZoneApp() {
     const url = `${window.location.origin}${window.location.pathname}?achievement=${publicId}:${icon}${refParam(myProfile?.publicId)}`
     try {
       await navigator.clipboard.writeText(`${text}\n${url}`)
-      showToast('Ссылка на достижение скопирована')
+      showToast(tn('shell.achievementLinkCopied'))
     } catch {
-      showToast('Не удалось скопировать ссылку')
+      showToast(tn('common.linkCopyFailed'))
     }
   }
 
@@ -1172,9 +1170,9 @@ export function FishZoneApp() {
     const url = `${window.location.origin}${window.location.pathname}?catch=${catchId}${refParam(myProfile?.publicId)}`
     try {
       await navigator.clipboard.writeText(`${text}\n${url}`)
-      showToast('Ссылка на улов скопирована')
+      showToast(tn('shell.catchLinkCopied'))
     } catch {
-      showToast('Не удалось скопировать ссылку')
+      showToast(tn('common.linkCopyFailed'))
     }
   }
 
@@ -1465,7 +1463,7 @@ export function FishZoneApp() {
     if (!remembered) return
     claimReferral.mutate(remembered, {
       onSuccess: (r) => {
-        if (r.ok) showToast(`+${r.coins} монет — бонус за приглашение${r.referrerName ? ` от ${r.referrerName}` : ''}`)
+        if (r.ok) showToast(r.referrerName ? tn('shell.referralBonusFrom', { coins: r.coins, name: r.referrerName }) : tn('shell.referralBonus', { coins: r.coins }))
       },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1513,7 +1511,6 @@ export function FishZoneApp() {
           initialStep={!user && guestAuth ? guestAuth : undefined}
           onBackToShare={!user && guestShare ? () => setGuestAuth(null) : undefined}
           invited={!!launchRef}
-          onFindNearestFree={() => setNearestFreeRequest((n) => n + 1)}
         />
       </div>
     )
@@ -1551,7 +1548,6 @@ export function FishZoneApp() {
             onOpenSlots={openSlots}
             onOpenGeo={openGeo}
             newbie={isNewbie}
-            nearestFreeRequest={nearestFreeRequest}
             offlinePending={offlineQueue}
             geo={
               geoPlay?.phase === 'pick'
@@ -1631,7 +1627,7 @@ export function FishZoneApp() {
             <>
               <div className="header-row">
                 <BackButton onClick={pop} registerNative={false} />
-                <div className="geo-header-title">Где это?</div>
+                <div className="geo-header-title">{tn('shell.geoTitle')}</div>
                 <div style={{ width: 36 }} />
               </div>
               <div className="screen-inner geo-inner">
@@ -1753,6 +1749,7 @@ export function FishZoneApp() {
               capturedPhoto={capturedPhoto}
               photoStatus={photoStatus}
               onRetryUpload={retryUpload}
+              onGiveUpUpload={giveUpUpload}
               onSubmit={submitCatch}
               onFinish={finishCatchFlow}
               onBack={backToCamera}
@@ -1917,10 +1914,10 @@ export function FishZoneApp() {
                 <path d="M4 4l16 16" />
               </svg>
             </div>
-            <div className="modal-title">Ты не на территории</div>
-            <div className="modal-body">Подойди ближе к воде, чтобы зафиксировать улов.</div>
+            <div className="modal-title">{tn('shell.outOfZoneTitle')}</div>
+            <div className="modal-body">{tn('shell.outOfZoneBody')}</div>
             <button className="btn-primary" onClick={() => setOutOfZone(false)}>
-              Понятно
+              {tn('common.gotIt')}
             </button>
           </div>
         </div>
@@ -1952,10 +1949,10 @@ export function FishZoneApp() {
                 <path d="M12 7v5l3.5 2" />
               </svg>
             </div>
-            <div className="modal-title">Небольшой перерыв</div>
-            <div className="modal-body">Следующий улов можно добавить через {formatCooldown(cooldownSeconds)}.</div>
+            <div className="modal-title">{tn('shell.cooldownTitle')}</div>
+            <div className="modal-body">{tn('shell.cooldownBody', { time: formatCooldown(cooldownSeconds) })}</div>
             <button className="btn-primary" onClick={() => setCooldownSeconds(null)}>
-              Понятно
+              {tn('common.gotIt')}
             </button>
           </div>
         </div>
@@ -1971,8 +1968,8 @@ export function FishZoneApp() {
                 <path d="M21 12H9" />
               </svg>
             </div>
-            <div className="modal-title">Выйти из аккаунта?</div>
-            <div className="modal-body">Тебе нужно будет войти снова, чтобы продолжить пользоваться RANGE.</div>
+            <div className="modal-title">{tn('shell.signOutTitle')}</div>
+            <div className="modal-body">{tn('shell.signOutBody')}</div>
             <button
               className="btn-danger"
               onClick={() => {
@@ -1980,10 +1977,10 @@ export function FishZoneApp() {
                 void signOut()
               }}
             >
-              Выйти
+              {tn('common.signOut')}
             </button>
             <button className="btn-secondary" style={{ marginTop: 8 }} onClick={() => setConfirmingSignOut(false)}>
-              Отмена
+              {tn('common.cancel')}
             </button>
           </div>
         </div>
@@ -1997,14 +1994,14 @@ export function FishZoneApp() {
         <ReportPhotoModal
           catchId={reportingCatchId}
           onClose={() => setReportingCatchId(null)}
-          onSubmitted={() => showToast('Жалоба отправлена, спасибо')}
+          onSubmitted={() => showToast(tn('shell.reportSent'))}
         />
       )}
       {deletingCatchId !== null && (
         <DeleteCatchModal
           catchId={deletingCatchId}
           onClose={() => setDeletingCatchId(null)}
-          onDeleted={() => showToast('Улов удалён')}
+          onDeleted={() => showToast(tn('shell.catchDeleted'))}
         />
       )}
       {deletingTerritoryId !== null && (
@@ -2013,7 +2010,7 @@ export function FishZoneApp() {
           onClose={() => setDeletingTerritoryId(null)}
           onDeleted={() => {
             pop()
-            showToast('Сектор удалён')
+            showToast(tn('shell.sectorDeleted'))
           }}
         />
       )}
@@ -2085,7 +2082,7 @@ export function FishZoneApp() {
       )}
       {viewingLikersFor !== null && (
         <PeopleListModal
-          title="Отметки «Нравится»"
+          title={tn('shell.likesTitle')}
           people={viewingLikersFor}
           onClose={() => setViewingLikersFor(null)}
           onOpenUser={(id) => {
@@ -2096,7 +2093,7 @@ export function FishZoneApp() {
       )}
       {viewingFollowersFor !== null && (
         <PeopleListModal
-          title="Подписчики"
+          title={tn('shell.followersTitle')}
           people={viewingFollowersFor}
           onClose={() => setViewingFollowersFor(null)}
           onOpenUser={(id) => {
@@ -2149,6 +2146,7 @@ export function FishZoneApp() {
           onClose={clanCeremony.dismiss}
         />
       )}
+      <LanguageSync />
       {/* The week's hot sectors, once per week — a tour over the map after
           onboarding, behind every celebration above. Seen from the moment it
           starts: leaving the map or closing the app halfway ends it for good. */}
@@ -2282,8 +2280,8 @@ function LoadingShell() {
   return (
     <div className="app-shell loading-shell">
       {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, same as MapScreen's brandmark */}
-      <img src="/brand/logo_1.svg" alt="RANGE" className="loading-shell-logo" />
-      <div className="spinner" />
+      <img src="/brand/logo_2.svg" alt="RANGE" className="loading-shell-logo" />
+      <HexLoader size={1.08} />
     </div>
   )
 }
@@ -2304,7 +2302,12 @@ function ClanEditorHost({
   onShareClan: (clanId: number, name: string, inviteCode?: string | null) => void
 }) {
   const { data: clan } = useClan(mode === 'edit' ? clanId : null)
-  if (mode === 'edit' && !clan) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Загрузка…</div>
+  if (mode === 'edit' && !clan)
+    return (
+      <div style={{ padding: 40 }}>
+        <HexLoader size={0.6} />
+      </div>
+    )
   return <ClanEditorScreen mode={mode} clan={clan ?? null} onBack={onBack} onDone={onDone} onShareClan={onShareClan} />
 }
 

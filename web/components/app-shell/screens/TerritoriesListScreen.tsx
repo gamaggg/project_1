@@ -12,6 +12,7 @@ import { PlayersDirectory } from '@/components/app-shell/screens/PlayersDirector
 import { ClanRating } from '@/components/app-shell/screens/ClanRating'
 import { compareSectors, SECTOR_SORT_LABEL, type SectorSort } from '@/lib/data/sectorOrder'
 import { SortMenu } from '@/components/app-shell/SortMenu'
+import { tn } from '@/lib/i18n'
 
 type Filter = 'all' | TerritoryStatus
 export type Mode = 'territories' | 'rating' | 'clans'
@@ -112,18 +113,18 @@ export function TerritoriesListScreen({
 
   return (
     <div className="screen-inner">
-      <div className="page-title">Территории</div>
+      <div className="page-title">{tn('terr.title')}</div>
       <div className="page-sub">{CITIES[city].boundaryLabel} · {territories.length} {pluralSectors(territories.length)}</div>
 
       <div className="rating-tabs">
         <button className={`rating-tab${mode === 'territories' ? ' active' : ''}`} onClick={() => setMode('territories')}>
-          Территории
+          {tn('terr.title')}
         </button>
         <button className={`rating-tab${mode === 'rating' ? ' active' : ''}`} onClick={() => setMode('rating')}>
-          Рейтинг
+          {tn('terr.tabRating')}
         </button>
         <button className={`rating-tab${mode === 'clans' ? ' active' : ''}`} onClick={() => setMode('clans')}>
-          Кланы
+          {tn('terr.tabClans')}
         </button>
       </div>
 
@@ -131,12 +132,12 @@ export function TerritoriesListScreen({
         <ClanRating city={city} onOpenClan={onOpenClan} onOpenClans={onOpenClans} />
       ) : mode === 'rating' ? (
         <>
-          <div className="rating-views" role="tablist" aria-label="Рейтинг">
+          <div className="rating-views" data-tour="players-list" role="tablist" aria-label={tn('terr.tabRating')}>
             <button role="tab" aria-selected={ratingView === 'week'} className={`rating-view${ratingView === 'week' ? ' on' : ''}`} onClick={() => setRatingView('week')}>
-              Неделя
+              {tn('terr.week')}
             </button>
             <button role="tab" aria-selected={ratingView === 'players'} className={`rating-view${ratingView === 'players' ? ' on' : ''}`} onClick={() => setRatingView('players')}>
-              Все игроки
+              {tn('terr.allPlayers')}
             </button>
           </div>
           {ratingView === 'week' ? <WeeklyLeaderboard city={city} onOpenUser={onOpenUser} /> : <PlayersDirectory onOpenUser={onOpenUser} />}
@@ -150,15 +151,15 @@ export function TerritoriesListScreen({
           )}
           <div className="filter-row with-sort">
             <div className={`filter-chip${filter === 'all' ? ' active' : ''}`} onClick={() => setFilter('all')}>
-              Все
+              {tn('terr.filterAll')}
             </div>
             <div className={`filter-chip${filter === 'mine' ? ' active' : ''}`} onClick={() => setFilter('mine')}>
-              Мои
+              {tn('terr.filterMine')}
             </div>
             <div className={`filter-chip${filter === 'free' ? ' active' : ''}`} onClick={() => setFilter('free')}>
-              Свободные
+              {tn('terr.filterFree')}
             </div>
-            <SortMenu value={sort} options={SECTOR_SORT_LABEL} onChange={setSort} label="Порядок секторов" />
+            <SortMenu value={sort} options={SECTOR_SORT_LABEL} onChange={setSort} label={tn('terr.sortLabel')} />
           </div>
           <div className="card" style={{ overflow: 'hidden' }}>
             {list.length ? (
@@ -183,9 +184,9 @@ export function TerritoriesListScreen({
                     }}
                   />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, fontSize: 14.5 }}>Сектор {t.id}</div>
+                    <div style={{ fontWeight: 700, fontSize: 14.5 }}>{tn('terr.sector', { id: t.id })}</div>
                     <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
-                      {KIND_LABEL[t.kind]} · Уловов {t.catchCount} · {t.lastCatchAt ? formatWhen(t.lastCatchAt) : '—'}
+                      {tn('terr.row', { kind: KIND_LABEL[t.kind], count: t.catchCount, when: t.lastCatchAt ? formatWhen(t.lastCatchAt) : '—' })}
                     </div>
                   </div>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A9AE" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -195,7 +196,7 @@ export function TerritoriesListScreen({
                 )
               })
             ) : (
-              <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Нет территорий в этой категории</div>
+              <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>{tn('terr.empty')}</div>
             )}
           </div>
           <div ref={sentinelRef} aria-hidden />

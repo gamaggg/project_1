@@ -1,3 +1,4 @@
+import { tnd } from '@/lib/i18n/runtime'
 import type { TerritoryStatus } from '@/lib/data/types'
 
 // Chosen once during onboarding (ColorStep), painted on the map on a player's
@@ -6,15 +7,33 @@ import type { TerritoryStatus } from '@/lib/data/types'
 // that other people's sectors were all one blue). The fixed "someone else's
 // territory" blue (#3E7BFA) is now only for owners who never picked a colour.
 export const TERRITORY_COLORS: { id: string; hex: string; label: string }[] = [
-  { id: 'coral', hex: '#FF6B6B', label: 'Коралловый' },
-  { id: 'orange', hex: '#FB6A16', label: 'Оранжевый' },
-  { id: 'lime', hex: '#B5E254', label: 'Лаймовый' },
-  { id: 'sky', hex: '#4CC9F0', label: 'Голубой' },
-  { id: 'red', hex: '#E63946', label: 'Красный' },
-  { id: 'mint', hex: '#7EF5A0', label: 'Мятный' },
-  { id: 'pink', hex: '#EEAAE3', label: 'Розовый' },
-  { id: 'purple', hex: '#A88EF5', label: 'Фиолетовый' },
-  { id: 'yellow', hex: '#FFD60A', label: 'Жёлтый' },
+  { id: 'coral', hex: '#FF6B6B', get label() {
+      return tnd('terrColor.coral')
+    } },
+  { id: 'orange', hex: '#FB6A16', get label() {
+      return tnd('terrColor.orange')
+    } },
+  { id: 'lime', hex: '#B5E254', get label() {
+      return tnd('terrColor.lime')
+    } },
+  { id: 'sky', hex: '#4CC9F0', get label() {
+      return tnd('terrColor.sky')
+    } },
+  { id: 'red', hex: '#E63946', get label() {
+      return tnd('terrColor.red')
+    } },
+  { id: 'mint', hex: '#7EF5A0', get label() {
+      return tnd('terrColor.mint')
+    } },
+  { id: 'pink', hex: '#EEAAE3', get label() {
+      return tnd('terrColor.pink')
+    } },
+  { id: 'purple', hex: '#A88EF5', get label() {
+      return tnd('terrColor.purple')
+    } },
+  { id: 'yellow', hex: '#FFD60A', get label() {
+      return tnd('terrColor.yellow')
+    } },
 ]
 
 // Same green that was hardcoded as "mine" before this feature — pre-wizard

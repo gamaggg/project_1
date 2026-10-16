@@ -1,5 +1,6 @@
 'use client'
 
+import { HexLoader } from '@/components/app-shell/HexLoader'
 import { lazyComponent } from '@/components/app-shell/lazyComponent'
 
 // Screens and modals kept out of the startup bundle (see lazyComponent).
@@ -8,7 +9,7 @@ import { lazyComponent } from '@/components/app-shell/lazyComponent'
 
 const spinner = (
   <div className="lazy-loading">
-    <div className="spinner" />
+    <HexLoader size={0.8} />
   </div>
 )
 

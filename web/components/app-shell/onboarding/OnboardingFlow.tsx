@@ -3,21 +3,21 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useProfile, useUpdateProfile } from '@/lib/supabase/queries'
-import { WelcomeStep } from '@/components/app-shell/onboarding/WelcomeStep'
+import { IntroJourney } from '@/components/app-shell/onboarding/IntroJourney'
+import { OnboardingCrossfade } from '@/components/app-shell/onboarding/OnboardingCrossfade'
 import { SignInStep } from '@/components/app-shell/onboarding/SignInStep'
 import { AccountStep } from '@/components/app-shell/onboarding/AccountStep'
-import { TerritoryIntroStep } from '@/components/app-shell/onboarding/TerritoryIntroStep'
-import { CatchIntroStep } from '@/components/app-shell/onboarding/CatchIntroStep'
 import { CityStep } from '@/components/app-shell/onboarding/CityStep'
 import { NameStep } from '@/components/app-shell/onboarding/NameStep'
 import { ColorStep } from '@/components/app-shell/onboarding/ColorStep'
 import type { CityId } from '@/lib/data/city'
 import { track } from '@/lib/analytics'
 
-// Listed in actual flow order: welcome -> account -> name -> color -> city ->
-// territory-intro -> catch-intro (which flips onboarding_completed and ends
-// the wizard). signin is a side branch off welcome, not part of the linear
-// sequence.
+// Listed in actual flow order: welcome -> territory-intro -> catch-intro (the
+// two playable screens that show the mechanic, straight after the welcome so the
+// picture and style carry on) -> account -> name -> color -> city (which flips
+// onboarding_completed and ends the wizard). signin is a side branch off
+// welcome, not part of the linear sequence.
 type Step = 'welcome' | 'signin' | 'account' | 'name' | 'color' | 'city' | 'territory-intro' | 'catch-intro'
 
 // Rendered by FishZoneApp whenever `!user || !myProfile.onboardingCompleted`
@@ -34,7 +34,6 @@ export function OnboardingFlow({
   initialStep,
   onBackToShare,
   invited,
-  onFindNearestFree,
 }: {
   onCityChosen?: (city: CityId) => void
   onForgotPassword: () => void
@@ -44,9 +43,6 @@ export function OnboardingFlow({
   onBackToShare?: () => void
   // Opened from a friend's invite link — Welcome mentions the start bonus.
   invited?: boolean
-  // The last step's second button: finish onboarding and have the map look
-  // for the nearest free sector straight away.
-  onFindNearestFree?: () => void
 }) {
   const { user, signOut, signInWithTelegram } = useAuth()
   // Only true for an account that just got silently created by the Telegram
@@ -71,10 +67,10 @@ export function OnboardingFlow({
   // it forever. All forward movement after this is local setStep() calls.
   //
   // Only territoryColor is a reliable nullable checkpoint (name always falls
-  // back to a default display name server-side, city/territory-intro/
-  // catch-intro persist nothing at all) — so a reload mid tail just restarts
-  // that tail from 'city' rather than trying to guess exactly which of the
-  // unpersisted screens was last seen.
+  // back to a default display name server-side, and the city step is the last,
+  // so it persists only by finishing) — so a reload after the colour just
+  // restarts at 'city'; a reload before it restarts at 'name'. The intro screens
+  // are before the account and are never resumed.
   // Decided once, during render, as soon as the profile is in.
   const [resumed, setResumed] = useState(false)
   const [resumeTarget, setResumeTarget] = useState<Step>('name')
@@ -98,31 +94,46 @@ export function OnboardingFlow({
 
   if (user && myProfileLoading) return null
 
-  if (step === 'welcome') {
-    // Signed in by Telegram already (its account exists): one tap onward.
-    if (viaTelegram && user) return <WelcomeStep invited={invited} onContinue={() => setStep(resumeTarget)} />
-    // Inside Telegram with no account tied to it yet — nothing was created
-    // at launch (see AuthProvider). «Start» makes the Telegram account now;
-    // «I already have one» signs in by email, and that account then takes
-    // this Telegram over (app/api/auth/telegram/link).
-    if (viaTelegram)
-      return (
-        <WelcomeStep
-          invited={invited}
-          onCapture={async () => {
-            setStartedHere(true)
-            // Once it resolves, the resume logic above (keyed on `user`) and
-            // FishZoneApp's own gate take over.
-            await signInWithTelegram()
-          }}
-          onSignIn={() => setStep('signin')}
-        />
-      )
-    return <WelcomeStep invited={invited} onCapture={() => setStep('account')} onSignIn={() => setStep('signin')} />
+  // After the two intro screens: the account is made here — by Telegram inside
+  // Telegram (the resume logic above and FishZoneApp's gate take over once it
+  // resolves), by the email sign-up elsewhere. An account that already exists
+  // (Telegram signed it in at launch) goes on to where it left off.
+  const afterIntro = async () => {
+    if (user) {
+      setStep(resumeTarget)
+      return
+    }
+    if (viaTelegram) {
+      setStartedHere(true)
+      await signInWithTelegram()
+      return
+    }
+    setStep('account')
   }
+  // The welcome and the two intro screens are one picture (IntroJourney): the
+  // camera flies from stop to stop as `step` changes, so they are drawn by the
+  // same element — whichever of the three it is.
+  const isJourney = step === 'welcome' || step === 'territory-intro' || step === 'catch-intro'
+  const journeyEl = isJourney ? (
+      <IntroJourney
+        stage={step}
+        onStage={setStep}
+        invited={invited}
+        // Signed in by Telegram already (its account exists): the welcome offers one
+        // tap onward — to the intro for an account just made, past it for one
+        // that has got further.
+        continueMode={viaTelegram && !!user}
+        onContinue={viaTelegram && user && resumeTarget !== 'name' ? () => setStep(resumeTarget) : undefined}
+        // «I already have one» signs in by email, and (inside Telegram) that account
+        // then takes this Telegram over (app/api/auth/telegram/link).
+        onSignIn={() => setStep('signin')}
+        onFinish={() => void afterIntro()}
+      />
+  ) : null
   const backFromAuth = () => (onBackToShare ? onBackToShare() : setStep('welcome'))
+  const renderRest = () => {
   if (step === 'signin') return <SignInStep onBack={backFromAuth} onForgotPassword={onForgotPassword} />
-  if (step === 'account') return <AccountStep onBack={backFromAuth} />
+  if (step === 'account') return <AccountStep onBack={() => (onBackToShare ? onBackToShare() : setStep('catch-intro'))} />
   if (step === 'name')
     return (
       <NameStep
@@ -142,32 +153,17 @@ export function OnboardingFlow({
       />
     )
   if (step === 'color') return <ColorStep onBack={() => setStep('name')} onDone={() => setStep('city')} />
-  if (step === 'city')
-    return (
-      <CityStep
-        onBack={() => setStep('color')}
-        onDone={(chosen) => {
-          updateProfile.mutate({ city: chosen })
-          onCityChosen?.(chosen)
-          setStep('territory-intro')
-        }}
-      />
-    )
-  if (step === 'territory-intro') return <TerritoryIntroStep onBack={() => setStep('city')} onDone={() => setStep('catch-intro')} />
-  // Last screen of the wizard — flips onboarding_completed, which is what
+  // The last screen of the wizard — flips onboarding_completed, which is what
   // makes FishZoneApp's gate unmount the whole wizard and show the real map.
   return (
-    <CatchIntroStep
-      onBack={() => setStep('territory-intro')}
-      onDone={() => updateProfile.mutate({ onboardingCompleted: true })}
-      onFindNearestFree={
-        onFindNearestFree
-          ? () => {
-              onFindNearestFree()
-              updateProfile.mutate({ onboardingCompleted: true })
-            }
-          : undefined
-      }
+    <CityStep
+      onBack={() => setStep('color')}
+      onDone={(chosen) => {
+        updateProfile.mutate({ city: chosen, onboardingCompleted: true })
+        onCityChosen?.(chosen)
+      }}
     />
   )
+  }
+  return <OnboardingCrossfade journey={journeyEl} rest={isJourney ? null : renderRest()} />
 }

@@ -2,6 +2,7 @@
 
 import { createPortal } from 'react-dom'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { tn } from '@/lib/i18n/runtime'
 
 // The missing step between tapping a price tag and actually spending coins
 // (previously every buy button mutated instantly, see ShopScreen/Challenges/
@@ -31,19 +32,19 @@ export function PurchaseConfirmModal({
   return createPortal(
     <div className="modal-overlay" onClick={busy ? undefined : onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-title">Купить «{name.replace(/[«»]/g, '')}»?</div>
+        <div className="modal-title">{tn('purchase.title', { name: name.replace(/[«»]/g, '') })}</div>
         <div className="purchase-confirm-price">
           <CoinIcon size={28} />
           <b>{price}</b>
         </div>
         <div className="modal-body" style={{ margin: '10px 0 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-          Останется <CoinIcon size={16} /> {Math.max(0, coins - price)}
+          {tn('purchase.left')} <CoinIcon size={16} /> {Math.max(0, coins - price)}
         </div>
         <button className="btn-primary" disabled={busy} onClick={onConfirm}>
-          {busy ? 'Покупаем…' : 'Купить'}
+          {busy ? tn('purchase.buying') : tn('purchase.buy')}
         </button>
         <button className="btn-secondary" style={{ marginTop: 8 }} disabled={busy} onClick={onClose}>
-          Отмена
+          {tn('common.cancel')}
         </button>
       </div>
     </div>,

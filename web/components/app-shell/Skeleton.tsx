@@ -1,6 +1,7 @@
 'use client'
 
 import type { CSSProperties } from 'react'
+import { tn } from '@/lib/i18n/runtime'
 
 // Grey shimmering placeholders for what's still loading — the shape of the
 // block that's coming, so it doesn't pop in and push the page down, and a
@@ -9,7 +10,7 @@ import type { CSSProperties } from 'react'
 // Rows like the catch lists: a thumbnail and two lines.
 export function SkeletonRows({ count = 3, thumb = 46, round = false, className }: { count?: number; thumb?: number; round?: boolean; className?: string }) {
   return (
-    <div className={`skel-rows${className ? ` ${className}` : ''}`} aria-busy="true" aria-label="Загрузка">
+    <div className={`skel-rows${className ? ` ${className}` : ''}`} aria-busy="true" aria-label={tn('common.loading')}>
       {Array.from({ length: count }, (_, i) => (
         <div key={i} className="skel-row" style={{ '--d': `${i * 90}ms` } as CSSProperties}>
           <span className="skel" style={{ width: thumb, height: thumb, borderRadius: round ? '50%' : 13, flex: '0 0 auto' }} />

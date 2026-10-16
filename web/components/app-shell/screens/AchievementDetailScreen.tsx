@@ -4,9 +4,11 @@ import { cloneElement, type ReactElement } from 'react'
 import { useCatchesByUser, useProfile, useHasClaimedFromOthers } from '@/lib/supabase/queries'
 import { computeAchievements, heldTerritories, type Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
+import { achievementFraction } from '@/components/app-shell/AchievementCard'
 import { SpinBadge } from '@/components/app-shell/SpinBadge'
 import { BackButton } from '@/components/app-shell/BackButton'
 import type { Territory } from '@/lib/data/types'
+import { tn } from '@/lib/i18n/runtime'
 
 // Single-achievement screen (pushed from a card tap in AchievementsScreen or
 // the profile preview) — mirrors the Apple Fitness+ "award detail" layout the
@@ -46,7 +48,7 @@ export function AchievementDetailScreen({
 
   function handleShare() {
     if (!achievement || !profile?.publicId) return
-    const text = `🏆 Я получил достижение «${achievement.title}» в RANGE!\n${achievement.desc}\n\nПрисоединяйся и сразимся за территории 🎣`
+    const text = tn('weekly.achShareShort', { title: achievement.title, desc: achievement.desc })
     onShareAchievement(profile.publicId, icon, text)
   }
 
@@ -54,9 +56,10 @@ export function AchievementDetailScreen({
 
   return (
     <>
-      <div className={`ach-detail-photo-bg${achievement.unlocked ? '' : ' locked'}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
-        <img src={`/achievements/${achievement.icon}.jpg`} alt="" />
+      <div className={`ach-stage${achievement.unlocked ? '' : ' locked'}`} aria-hidden>
+        <span className="ach-stage-rays" />
+        <span className="ach-stage-halo" />
+        {achievement.unlocked && Array.from({ length: 10 }, (_, i) => <span key={i} className="ach-spark" style={{ '--i': i } as React.CSSProperties} />)}
       </div>
       <div className="header-row">
         <BackButton onClick={onBack} registerNative={false} />
@@ -84,7 +87,15 @@ export function AchievementDetailScreen({
         </div>
         <div className="ach-detail-title">{achievement.title}</div>
         <div className="ach-detail-desc">{achievement.desc}</div>
-        {!achievement.unlocked && achievement.progress && <div className="ach-detail-progress">{achievement.progress}</div>}
+        {!achievement.unlocked && achievement.progress && (
+          <div className="ach-detail-progress">
+            <div className="ach-bar big" aria-hidden>
+              <i style={{ transform: `scaleX(${achievementFraction(achievement)})` }} />
+            </div>
+            <span>{achievement.progress}</span>
+          </div>
+        )}
+        {achievement.unlocked && <div className="ach-got">{tn('ach.got')}</div>}
         <div className="ach-detail-flavor">{achievement.flavor}</div>
       </div>
     </>

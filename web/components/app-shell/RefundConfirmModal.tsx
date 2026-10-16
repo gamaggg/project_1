@@ -2,6 +2,7 @@
 
 import { createPortal } from 'react-dom'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { tn } from '@/lib/i18n/runtime'
 
 // The super-admin "undo a purchase" confirm step — owned/active items in the
 // Shop's own cards and buff rows (ShopScreen.tsx), refunding right where the
@@ -27,15 +28,15 @@ export function RefundConfirmModal({
   return createPortal(
     <div className="modal-overlay" onClick={busy ? undefined : onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-title">Вернуть покупку «{label.replace(/[«»]/g, '')}»?</div>
+        <div className="modal-title">{tn('refund.title', { name: label.replace(/[«»]/g, '') })}</div>
         <div className="modal-body" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
-          Зачислится <CoinIcon size={16} /> {price}, предмет будет изъят.
+          {tn('refund.before')} <CoinIcon size={16} /> {price}{tn('refund.after')}
         </div>
         <button className="btn-primary" disabled={busy} onClick={onConfirm}>
-          {busy ? 'Возвращаем…' : 'Вернуть'}
+          {busy ? tn('refund.refunding') : tn('refund.refund')}
         </button>
         <button className="btn-secondary" style={{ marginTop: 8 }} disabled={busy} onClick={onClose}>
-          Отмена
+          {tn('common.cancel')}
         </button>
       </div>
     </div>,

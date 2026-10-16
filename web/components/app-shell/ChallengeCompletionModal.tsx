@@ -5,6 +5,7 @@ import { CoinCountUp } from '@/components/app-shell/CoinCountUp'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import { hapticSuccess } from '@/lib/telegram/haptics'
 import { seededRandom, seedFrom } from '@/lib/seededRandom'
+import { tn } from '@/lib/i18n/runtime'
 
 const CONFETTI_COLORS = ['#FF6B6B', '#FB6A16', '#B5E254', '#4CC9F0', '#E63946', '#7EF5A0', '#EEAAE3', '#A88EF5', '#FFD60A']
 
@@ -71,21 +72,21 @@ export function ChallengeCompletionModal({
               <div className="challenge-medal-glow" />
               <div className="challenge-medal">{cloneElement(ACH_ICONS.first as ReactElement<{ width: number; height: number }>, { width: 34, height: 34 })}</div>
             </div>
-            <div className="unlock-modal-eyebrow">Неделя закрыта</div>
-            <div className="modal-title challenge-complete-title-all">Все челленджи недели выполнены!</div>
-            <div className="challenge-complete-sub">Три задания, ноль пропусков — вот это дисциплина 👏</div>
+            <div className="unlock-modal-eyebrow">{tn('nav.weekClosed')}</div>
+            <div className="modal-title challenge-complete-title-all">{tn('nav.allDone')}</div>
+            <div className="challenge-complete-sub">{tn('nav.allDoneSub')}</div>
           </>
         ) : (
           <>
-            <div className="unlock-modal-eyebrow">Задание выполнено</div>
-            <div className="modal-title">{`${doneCount}/${total} заданий выполнено`}</div>
+            <div className="unlock-modal-eyebrow">{tn('nav.taskDone')}</div>
+            <div className="modal-title">{tn('nav.tasksProgress', { done: doneCount, total })}</div>
           </>
         )}
         <div className="challenge-complete-reward">
           <CoinCountUp from={coinsBefore} to={coinsBefore + coinsEarned} size={allDone ? 56 : 28} animated={false} />
         </div>
         <button className="btn-primary" style={{ marginTop: allDone ? 22 : 16 }} onClick={onClose}>
-          Отлично
+          {tn('nav.great')}
         </button>
       </div>
     </div>

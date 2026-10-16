@@ -1,6 +1,7 @@
 'use client'
 
 import { useAdminDeleteCatch } from '@/lib/supabase/queries'
+import { tn } from '@/lib/i18n'
 
 // Rendered by FishZoneApp itself, not nested inside a screen's scrolling
 // .screen-inner — same reason as ReportPhotoModal/EditProfileModal, see
@@ -31,15 +32,15 @@ export function DeleteCatchModal({
             <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M10 11v6M14 11v6M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" />
           </svg>
         </div>
-        <div className="modal-title">Удалить улов?</div>
+        <div className="modal-title">{tn('catch.deleteTitle')}</div>
         <div className="modal-body">
-          Улов будет удалён без возможности восстановления. Владельцу придёт уведомление в активность.
+          {tn('catch.deleteBody')}
         </div>
         <button className="btn-danger" disabled={deleteCatch.isPending} onClick={handleConfirm}>
-          {deleteCatch.isPending ? 'Удаляем…' : 'Удалить'}
+          {deleteCatch.isPending ? tn('catch.deleting') : tn('common.delete')}
         </button>
         <button className="btn-secondary" style={{ marginTop: 8 }} onClick={onClose}>
-          Отмена
+          {tn('common.cancel')}
         </button>
       </div>
     </div>

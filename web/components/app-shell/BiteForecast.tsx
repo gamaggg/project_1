@@ -164,7 +164,7 @@ export function ForecastChip({ city }: { city: CityId }) {
         aria-label={`${t('forecast.title')}: ${scoreLabel(today.score)}`}
       >
         <ScoreBars score={today.score} size={13} />
-        {t('forecast.chip')}
+        <span className="forecast-chip-text">{t('forecast.chip')}</span>
         <b style={{ color: SCORE_COLOR[today.score] }}>{today.score}</b>
       </button>
       {open && days && <ForecastSheet title={t('forecast.title')} kicker={info.name} days={days} sector={false} timezone={info.timezone} onClose={() => setOpen(false)} />}

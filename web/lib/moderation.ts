@@ -1,3 +1,4 @@
+import { currentLocale, labels, tn } from '@/lib/i18n/runtime'
 // Texts for the reason codes that the server-side filter (public.moderate_text,
 // see DECISIONS.md «Модерация текста») and post_comment return. The swear-word
 // list itself lives only in the DB; the client repeats just the cheap checks
@@ -5,59 +6,36 @@
 
 export const COMMENT_MAX_LENGTH = 300
 
-const REASON_TEXT: Record<string, string> = {
-  empty: 'Напиши текст комментария',
-  too_long: 'Слишком длинно',
-  profanity: 'Без мата и оскорблений, пожалуйста',
-  link: 'Ссылки публиковать нельзя',
-  phone: 'Номера телефонов публиковать нельзя',
-  caps: 'Не кричи — убери капс',
-  repeat: 'Слишком много повторов',
-  reserved: 'Это название занято системой',
-  duplicate: 'Ты уже это писал',
-  rate_hour: 'Слишком много комментариев за час — сделай паузу',
-  rate_day: 'Лимит комментариев на сегодня исчерпан',
-  rate_catch: 'Слишком много комментариев под этим уловом — подожди немного',
-  blocked: 'Аккаунт заблокирован — комментарии недоступны',
-  no_catch: 'Улов удалён',
-  no_parent: 'Комментарий, на который ты отвечаешь, удалён',
-}
+const REASON_TEXT: Record<string, string | undefined> = labels('modReason', ['empty', 'too_long', 'profanity', 'link', 'phone', 'caps', 'repeat', 'reserved', 'duplicate', 'rate_hour', 'rate_day', 'rate_catch', 'blocked', 'no_catch', 'no_parent'] as const)
 
 export function moderationMessage(reason: string, extra?: { retryAfter?: number | null; mutedUntil?: string | null }): string {
-  if (reason === 'rate_fast') return `Не так быстро — подожди ${extra?.retryAfter ?? 8} с`
+  if (reason === 'rate_fast') return tn('modReason.rate_fast', { sec: extra?.retryAfter ?? 8 })
   if (reason === 'muted') return mutedMessage(extra?.mutedUntil ?? null)
-  return REASON_TEXT[reason] ?? 'Не удалось отправить комментарий'
+  return REASON_TEXT[reason] ?? tn('modReason.fail')
 }
 
 export function mutedMessage(mutedUntil: string | null): string {
-  if (!mutedUntil) return 'Комментарии временно недоступны'
-  const time = new Date(mutedUntil).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
-  return `Комментарии недоступны до ${time} за нарушения правил`
+  if (!mutedUntil) return tn('modReason.mutedUnknown')
+  const time = new Date(mutedUntil).toLocaleTimeString(currentLocale(), { hour: '2-digit', minute: '2-digit' })
+  return tn('modReason.muted', { time })
 }
 
 // Clan chat (post_clan_message): the same filter minus the swear-word check,
 // its own length and rate limits, and the same mute as comments.
 export const CLAN_CHAT_MAX_LENGTH = 500
 
-const CHAT_REASON_TEXT: Record<string, string> = {
-  empty: 'Напиши сообщение',
-  duplicate: 'Ты только что это писал',
-  rate_burst: 'Слишком много сообщений — подожди пару минут',
-  rate_day: 'Лимит сообщений на сегодня исчерпан',
-  not_member: 'Ты больше не в этом клане',
-  blocked: 'Аккаунт заблокирован — чат недоступен',
-}
+const CHAT_REASON_TEXT: Record<string, string | undefined> = labels('chatReason', ['empty', 'duplicate', 'rate_burst', 'rate_day', 'not_member', 'blocked'] as const)
 
 export function chatModerationMessage(reason: string, extra?: { mutedUntil?: string | null }): string {
-  if (reason === 'rate_fast') return 'Не так быстро'
+  if (reason === 'rate_fast') return tn('chatReason.rate_fast')
   if (reason === 'muted') return chatMutedMessage(extra?.mutedUntil ?? null)
-  return CHAT_REASON_TEXT[reason] ?? REASON_TEXT[reason] ?? 'Не удалось отправить сообщение'
+  return CHAT_REASON_TEXT[reason] ?? REASON_TEXT[reason] ?? tn('chatReason.fail')
 }
 
 export function chatMutedMessage(mutedUntil: string | null): string {
-  if (!mutedUntil) return 'Чат временно недоступен'
-  const time = new Date(mutedUntil).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
-  return `Чат недоступен до ${time} за нарушения правил`
+  if (!mutedUntil) return tn('chatReason.mutedUnknown')
+  const time = new Date(mutedUntil).toLocaleTimeString(currentLocale(), { hour: '2-digit', minute: '2-digit' })
+  return tn('chatReason.muted', { time })
 }
 
 // Links to RANGE itself (a sector, catch, clan, profile, invite) are allowed

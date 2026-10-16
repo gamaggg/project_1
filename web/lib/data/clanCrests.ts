@@ -1,3 +1,4 @@
+import { tnd } from '@/lib/i18n/runtime'
 // Clan crest parts. The ids and unlock levels must match the SQL
 // public._clan_item_level() — the server validates every crest against it.
 // Artwork is a first pass drawn to be swapped out later: replace the path
@@ -64,22 +65,44 @@ function helmParts(): Part[] {
 }
 
 export const CREST_SHAPES: CrestShape[] = [
-  { id: 'shield', label: 'Щит', level: 1, d: 'M50 4 90 16v32c0 24-18 40-40 48C28 88 10 72 10 48V16Z', cx: 50, cy: 47 },
-  { id: 'round', label: 'Круг', level: 1, d: 'M50 4a46 46 0 1 1 0 92a46 46 0 1 1 0-92Z', cx: 50, cy: 50 },
-  { id: 'hex', label: 'Сектор', level: 1, d: 'M50 4 90 27v46L50 96 10 73V27Z', cx: 50, cy: 50 },
-  { id: 'diamond', label: 'Ромб', level: 1, d: 'M50 3 97 50 50 97 3 50Z', cx: 50, cy: 50, k: 0.88 },
-  { id: 'pennant', label: 'Вымпел', level: 2, d: 'M14 5h72v69L50 96 14 74Z', cx: 50, cy: 48, k: 0.95 },
-  { id: 'wave', label: 'Волна', level: 2, d: 'M11 24Q30 8 50 22T89 24v44Q89 90 50 96 11 90 11 68Z', cx: 48.5, cy: 59, k: 0.95 },
-  { id: 'rosette', label: 'Розетка', level: 4, d: rosettePath(), cx: 50, cy: 50 },
-  { id: 'anchor_frame', label: 'Иллюминатор', level: 4, d: 'M31 4h38l27 27v38L69 96H31L4 69V31Z', cx: 50, cy: 50 },
-  { id: 'crown', label: 'Корона', level: 6, d: 'M10 30 28 12l22 16 22-16 18 18v26c0 20-18 34-40 40C28 90 10 76 10 56Z', cx: 50, cy: 60.5, k: 0.9 },
-  { id: 'bastion', label: 'Бастион', level: 8, d: 'M10 8h15v9h13V8h24v9h13V8h15v52c0 18-18 32-40 36C28 92 10 78 10 60Z', cx: 50, cy: 53 },
+  { id: 'shield', get label() {
+      return tnd('crestShape.shield')
+    }, level: 1, d: 'M50 4 90 16v32c0 24-18 40-40 48C28 88 10 72 10 48V16Z', cx: 50, cy: 47 },
+  { id: 'round', get label() {
+      return tnd('crestShape.round')
+    }, level: 1, d: 'M50 4a46 46 0 1 1 0 92a46 46 0 1 1 0-92Z', cx: 50, cy: 50 },
+  { id: 'hex', get label() {
+      return tnd('crestShape.hex')
+    }, level: 1, d: 'M50 4 90 27v46L50 96 10 73V27Z', cx: 50, cy: 50 },
+  { id: 'diamond', get label() {
+      return tnd('crestShape.diamond')
+    }, level: 1, d: 'M50 3 97 50 50 97 3 50Z', cx: 50, cy: 50, k: 0.88 },
+  { id: 'pennant', get label() {
+      return tnd('crestShape.pennant')
+    }, level: 2, d: 'M14 5h72v69L50 96 14 74Z', cx: 50, cy: 48, k: 0.95 },
+  { id: 'wave', get label() {
+      return tnd('crestShape.wave')
+    }, level: 2, d: 'M11 24Q30 8 50 22T89 24v44Q89 90 50 96 11 90 11 68Z', cx: 48.5, cy: 59, k: 0.95 },
+  { id: 'rosette', get label() {
+      return tnd('crestShape.rosette')
+    }, level: 4, d: rosettePath(), cx: 50, cy: 50 },
+  { id: 'anchor_frame', get label() {
+      return tnd('crestShape.anchor_frame')
+    }, level: 4, d: 'M31 4h38l27 27v38L69 96H31L4 69V31Z', cx: 50, cy: 50 },
+  { id: 'crown', get label() {
+      return tnd('crestShape.crown')
+    }, level: 6, d: 'M10 30 28 12l22 16 22-16 18 18v26c0 20-18 34-40 40C28 90 10 76 10 56Z', cx: 50, cy: 60.5, k: 0.9 },
+  { id: 'bastion', get label() {
+      return tnd('crestShape.bastion')
+    }, level: 8, d: 'M10 8h15v9h13V8h24v9h13V8h15v52c0 18-18 32-40 36C28 92 10 78 10 60Z', cx: 50, cy: 53 },
 ]
 
 export const CREST_SYMBOLS: CrestSymbol[] = [
   {
     id: 'pike',
-    label: 'Щука',
+    get label() {
+      return tnd('crestSymbol.pike')
+    },
     level: 1,
     parts: [
       // Long and slender, pointed snout, the dorsal fin far back by the tail.
@@ -92,7 +115,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'carp',
-    label: 'Карп',
+    get label() {
+      return tnd('crestSymbol.carp')
+    },
     level: 1,
     parts: [
       // Deep, round-backed body with a long dorsal fin.
@@ -105,7 +130,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'perch',
-    label: 'Окунь',
+    get label() {
+      return tnd('crestSymbol.perch')
+    },
     level: 1,
     parts: [
       // Humped back, spiny dorsal fin, dark vertical bands.
@@ -117,7 +144,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'hook',
-    label: 'Крючок',
+    get label() {
+      return tnd('crestSymbol.hook')
+    },
     level: 1,
     parts: [
       // The classic hook icon in one line: eye, shank, round bend, and the
@@ -128,7 +157,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'anchor',
-    label: 'Якорь',
+    get label() {
+      return tnd('crestSymbol.anchor')
+    },
     level: 1,
     parts: [
       { circle: [24, 8.5, 3.6], mode: 'stroke', w: 3 },
@@ -139,7 +170,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'wave',
-    label: 'Волна',
+    get label() {
+      return tnd('crestSymbol.wave')
+    },
     level: 1,
     parts: [
       { d: 'M4 19c4-6 10-6 14 0s10 6 14 0 9-6 12-2', mode: 'stroke', w: 3.6 },
@@ -148,7 +181,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'lighthouse',
-    label: 'Маяк',
+    get label() {
+      return tnd('crestSymbol.lighthouse')
+    },
     level: 1,
     parts: [
       { d: 'M19 16h10l3 26H16Z', mode: 'fill' },
@@ -160,7 +195,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'boat',
-    label: 'Парусник',
+    get label() {
+      return tnd('crestSymbol.boat')
+    },
     level: 1,
     parts: [
       { d: 'M23 5v27H9Z', mode: 'fill' },
@@ -170,13 +207,17 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'star',
-    label: 'Звезда',
+    get label() {
+      return tnd('crestSymbol.star')
+    },
     level: 1,
     parts: [{ d: 'M24 4.5l5 12.8 13.4.8-10.3 8.6 3.3 13-11.4-7.2-11.4 7.2 3.3-13-10.3-8.6 13.4-.8Z', mode: 'fill' }],
   },
   {
     id: 'flame',
-    label: 'Пламя',
+    get label() {
+      return tnd('crestSymbol.flame')
+    },
     level: 1,
     parts: [
       { d: 'M24 3c3 9 12 13 12 25 0 8-5.4 15-12 15S12 36 12 28c0-6 3-10 6-13 0 5 2 8 5 9-1-7-1-14 1-21Z', mode: 'fill' },
@@ -185,7 +226,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'moon',
-    label: 'Луна',
+    get label() {
+      return tnd('crestSymbol.moon')
+    },
     level: 1,
     parts: [
       // Crescent cut from a circle centred in the box, so it sits in the
@@ -196,7 +239,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'crossed_rods',
-    label: 'Удочки',
+    get label() {
+      return tnd('crestSymbol.crossed_rods')
+    },
     level: 1,
     parts: [
       // Two rods crossed: thick cork handles, reels, thin tips with line.
@@ -212,7 +257,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'trout',
-    label: 'Форель',
+    get label() {
+      return tnd('crestSymbol.trout')
+    },
     level: 2,
     parts: [
       { d: 'M4 24c6-6 18-8 28-4.5 3.5 1 5.5 2.3 6.5 3.3L45 18.5 44.2 24l.8 5.5-6.5-4.3c-1 1-3 2.3-6.5 3.3C22 32 10 30 4 24Z', mode: 'fill' },
@@ -226,7 +273,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'lure',
-    label: 'Воблер',
+    get label() {
+      return tnd('crestSymbol.lure')
+    },
     level: 2,
     parts: [
       // A wobbler: fish-shaped hard body, solid diving lip under the nose,
@@ -241,7 +290,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'catfish',
-    label: 'Сом',
+    get label() {
+      return tnd('crestSymbol.catfish')
+    },
     level: 4,
     parts: [
       // Wide flat head with a broad mouth, long tapering body, rounded tail.
@@ -253,7 +304,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'spoon',
-    label: 'Блесна',
+    get label() {
+      return tnd('crestSymbol.spoon')
+    },
     level: 4,
     parts: [
       { circle: [24, 3.8, 2], mode: 'stroke', w: 2 },
@@ -264,7 +317,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'compass',
-    label: 'Компас',
+    get label() {
+      return tnd('crestSymbol.compass')
+    },
     level: 4,
     parts: [
       // A compass rose, no ring (a ring inside a round crest reads as a
@@ -276,10 +331,14 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
       { circle: [24, 24, 2.4], mode: 'fill-bg' },
     ],
   },
-  { id: 'helm', label: 'Штурвал', level: 4, parts: helmParts() },
+  { id: 'helm', get label() {
+      return tnd('crestSymbol.helm')
+    }, level: 4, parts: helmParts() },
   {
     id: 'trident',
-    label: 'Трезубец',
+    get label() {
+      return tnd('crestSymbol.trident')
+    },
     level: 6,
     parts: [
       { d: 'M24 9v34', mode: 'stroke', w: 3.4 },
@@ -289,7 +348,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'crab',
-    label: 'Краб',
+    get label() {
+      return tnd('crestSymbol.crab')
+    },
     level: 6,
     parts: [
       { d: 'M11 27c0-7 6-10 13-10s13 3 13 10c0 5-6 8-13 8s-13-3-13-8Z', mode: 'fill' },
@@ -301,7 +362,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'gull',
-    label: 'Чайка',
+    get label() {
+      return tnd('crestSymbol.gull')
+    },
     level: 6,
     parts: [
       // Two gulls in flight: crescent wings, the far one smaller.
@@ -311,7 +374,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'whale',
-    label: 'Кит',
+    get label() {
+      return tnd('crestSymbol.whale')
+    },
     level: 8,
     parts: [
       { d: 'M5 28c0-8 9-12 19-11 9 1 14 6 16 11l5-6c1 4-.5 8-4 10-3 4-10 6-18 6-11 0-18-4-18-10Z', mode: 'fill' },
@@ -322,7 +387,9 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
   },
   {
     id: 'octopus',
-    label: 'Осьминог',
+    get label() {
+      return tnd('crestSymbol.octopus')
+    },
     level: 8,
     parts: [
       { d: 'M24 4c8 0 13 6 13 14 0 5-3 8-6 9H17c-3-1-6-4-6-9 0-8 5-14 13-14Z', mode: 'fill' },
@@ -331,28 +398,58 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
       { circle: [28.5, 16.5, 2.1], mode: 'fill-bg' },
     ],
   },
-  { id: 'bolt', label: 'Молния', level: 8, parts: [{ d: 'M27 3 10 27h12l-3 18 19-26H26Z', mode: 'fill' }] },
+  { id: 'bolt', get label() {
+      return tnd('crestSymbol.bolt')
+    }, level: 8, parts: [{ d: 'M27 3 10 27h12l-3 18 19-26H26Z', mode: 'fill' }] },
 ]
 
 export const CREST_COLORS: { id: string; label: string }[] = [
-  { id: '#FC5200', label: 'Оранжевый' },
-  { id: '#E5322D', label: 'Красный' },
-  { id: '#C2185B', label: 'Малиновый' },
-  { id: '#7B3FC7', label: 'Фиолетовый' },
-  { id: '#3949AB', label: 'Индиго' },
-  { id: '#1D6FC9', label: 'Синий' },
-  { id: '#0E8A9A', label: 'Бирюзовый' },
-  { id: '#1F8A5B', label: 'Зелёный' },
-  { id: '#6B8E23', label: 'Оливковый' },
-  { id: '#D99A1E', label: 'Золотой' },
-  { id: '#6D4C41', label: 'Коричневый' },
-  { id: '#2B2D33', label: 'Графит' },
+  { id: '#FC5200', get label() {
+      return tnd('crestColor.cFC5200')
+    } },
+  { id: '#E5322D', get label() {
+      return tnd('crestColor.cE5322D')
+    } },
+  { id: '#C2185B', get label() {
+      return tnd('crestColor.cC2185B')
+    } },
+  { id: '#7B3FC7', get label() {
+      return tnd('crestColor.c7B3FC7')
+    } },
+  { id: '#3949AB', get label() {
+      return tnd('crestColor.c3949AB')
+    } },
+  { id: '#1D6FC9', get label() {
+      return tnd('crestColor.c1D6FC9')
+    } },
+  { id: '#0E8A9A', get label() {
+      return tnd('crestColor.c0E8A9A')
+    } },
+  { id: '#1F8A5B', get label() {
+      return tnd('crestColor.c1F8A5B')
+    } },
+  { id: '#6B8E23', get label() {
+      return tnd('crestColor.c6B8E23')
+    } },
+  { id: '#D99A1E', get label() {
+      return tnd('crestColor.cD99A1E')
+    } },
+  { id: '#6D4C41', get label() {
+      return tnd('crestColor.c6D4C41')
+    } },
+  { id: '#2B2D33', get label() {
+      return tnd('crestColor.c2B2D33')
+    } },
 ]
 
 // The ring can also be white or cream — both read on every primary above.
 export const CREST_SECONDARY_COLORS: { id: string; label: string }[] = [
-  { id: '#FFFFFF', label: 'Белый' },
-  { id: '#FFE7C2', label: 'Кремовый' },
+  { id: '#FFFFFF', get label() {
+      return tnd('crestColor.cFFFFFF')
+    } },
+  { id: '#FFE7C2', get label() {
+      return tnd('crestColor.cFFE7C2')
+    } },
   ...CREST_COLORS,
 ]
 

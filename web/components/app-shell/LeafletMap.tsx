@@ -19,6 +19,7 @@ import { useSkinAssetsVersion, useSkinPatterns } from '@/lib/map/skinPattern'
 import { getCurrentCoords, queryGeolocationPermission } from '@/lib/geolocation'
 import { hapticTap } from '@/lib/telegram/haptics'
 import { applyCurrentLightPreset } from '@/lib/mapbox/lightPreset'
+import { tn } from '@/lib/i18n/runtime'
 
 // Trial swap from OpenFreeMap — a custom Mapbox Standard style, hand-tuned to
 // RANGE's brand colors (deep-water blue that's deliberately distinct from the
@@ -67,7 +68,7 @@ function escapeHtml(s: string): string {
 function avatarInnerHtml(avatarUrl: string | null, displayName: string | null): string {
   return avatarUrl
     ? `<img src="${escapeHtml(thumbUrl(avatarUrl, 48))}" alt="" decoding="async" />`
-    : escapeHtml((displayName ?? 'Рыбак').slice(0, 2).toUpperCase())
+    : escapeHtml((displayName ?? tn('common.angler')).slice(0, 2).toUpperCase())
 }
 
 // A hot sector's id label turns brand orange with a flame in front of the

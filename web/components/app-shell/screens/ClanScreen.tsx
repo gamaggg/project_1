@@ -33,6 +33,8 @@ import { StyledName } from '@/components/app-shell/StyledName'
 import { CLAN_ROLE_LABEL, CLAN_ROLE_RANK, JOIN_TYPE_LABEL, clanErrorMessage, clanLevelProgress, leagueFor, type ClanRole } from '@/lib/data/clanLevels'
 import { formatShortAgo } from '@/lib/format'
 import type { ClanDetail, ClanEvent, ClanMember } from '@/lib/data/types'
+import { tn, currentLocale } from '@/lib/i18n'
+import { labels } from '@/lib/i18n/runtime'
 
 type Tab = 'members' | 'chest' | 'race'
 
@@ -51,13 +53,7 @@ function RoleIcon({ role }: { role: ClanRole }) {
   )
 }
 
-const MODERATED_TEXT: Record<string, string> = {
-  reset_name: 'Модератор сбросил название клана',
-  reset_motto: 'Модератор сбросил девиз клана',
-  reset_announcement: 'Модератор сбросил объявление',
-  reset_crest: 'Модератор сбросил герб клана',
-  void_race: 'Модератор аннулировал результат клана в битве кланов за эту неделю',
-}
+const MODERATED_TEXT: Record<string, string | undefined> = labels('clanModerated', ['reset_name', 'reset_motto', 'reset_announcement', 'reset_crest', 'void_race'] as const)
 
 const ADMIN_CLAN_ACTIONS: { action: ClanModerationAction; label: string; confirm: string; danger?: boolean }[] = [
   { action: 'reset_name', label: 'Сбросить название', confirm: 'Сбросить название на «Клан N»? Глава сможет сразу задать новое.' },
@@ -70,34 +66,34 @@ const ADMIN_CLAN_ACTIONS: { action: ClanModerationAction; label: string; confirm
 
 // Also the chat's system lines (see ClanChatScreen).
 export function eventText(e: ClanEvent): string {
-  const actor = e.actorName ?? 'Кто-то'
-  const target = e.targetName ?? 'участник'
+  const actor = e.actorName ?? tn('clan.someone')
+  const target = e.targetName ?? tn('clan.memberWord')
   const role = CLAN_ROLE_LABEL[(e.payload?.role as ClanRole) ?? 'member']?.toLowerCase()
   switch (e.kind) {
     case 'created':
-      return `${actor} основал клан`
+      return tn('clan.evCreated', { actor })
     case 'joined':
-      return e.actorName && e.actorName !== e.targetName ? `${actor} принял ${target}` : `${target} вступил в клан`
+      return e.actorName && e.actorName !== e.targetName ? tn('clan.evAccepted', { actor, target }) : tn('clan.evJoined', { target })
     case 'left':
-      return `${actor} вышел из клана`
+      return tn('clan.evLeft', { actor })
     case 'kicked':
-      return `${actor} исключил ${target}`
+      return tn('clan.evKicked', { actor, target })
     case 'promoted':
-      return `${actor} повысил ${target} до роли «${role}»`
+      return tn('clan.evPromoted', { actor, target, role: role ?? '' })
     case 'demoted':
-      return `${actor} понизил ${target} до роли «${role}»`
+      return tn('clan.evDemoted', { actor, target, role: role ?? '' })
     case 'new_leader':
-      return `${target} стал главой клана`
+      return tn('clan.evNewLeader', { target })
     case 'renamed':
-      return `${actor} переименовал клан в «${String(e.payload?.to ?? '')}»`
+      return tn('clan.evRenamed', { actor, to: String(e.payload?.to ?? '') })
     case 'settings':
-      return `${actor} обновил настройки клана`
+      return tn('clan.evSettings', { actor })
     case 'moderated': {
       if (e.payload?.what === 'slots') {
         const extra = Number(e.payload?.extra ?? 0)
-        return extra > 0 ? `Модератор дал клану дополнительные места: +${extra}` : 'Модератор убрал дополнительные места клана'
+        return extra > 0 ? tn('clan.extraSlotsAdded', { extra }) : tn('clan.extraSlotsRemoved')
       }
-      return MODERATED_TEXT[String(e.payload?.what ?? '')] ?? 'Модератор изменил клан'
+      return MODERATED_TEXT[String(e.payload?.what ?? '')] ?? tn('clan.moderatedDefault')
     }
     case 'week_result': {
       const place = Number(e.payload?.place ?? 0)
@@ -105,17 +101,17 @@ export function eventText(e: ClanEvent): string {
       // place 1 without a win means the clan raced alone (a win needs 2+ clans).
       const alone = place === 1 && !e.payload?.won
       const race = e.payload?.voided
-        ? 'битва кланов аннулирована модератором'
+        ? tn('clan.raceVoided')
         : e.payload?.won
-          ? 'победа в битве кланов!'
+          ? tn('clan.raceWon')
           : alone
             ? e.payload?.finished
-              ? 'битва кланов: доплыли до финиша'
-              : 'битва кланов: до финиша не доплыли'
+              ? tn('clan.raceAloneFinished')
+              : tn('clan.raceAloneNot')
             : e.payload?.finished
-              ? `битва кланов: доплыли, ${place}-е место`
-              : `битва кланов: ${place}-е место`
-      return `Итоги недели — ${race}, сундук ${tier > 0 ? ['I', 'II', 'III', 'IV', 'V'][tier - 1] : 'не открыт'}`
+              ? tn('clan.raceFinishedPlace', { place })
+              : tn('clan.racePlace', { place })
+      return tn('clan.weekResult', { race, chest: tier > 0 ? ['I', 'II', 'III', 'IV', 'V'][tier - 1] : tn('clan.chestNone') })
     }
     default:
       return actor
@@ -137,14 +133,14 @@ function ClanChatCard({ clanId, onOpen }: { clanId: number; onOpen: () => void }
         </svg>
       </span>
       <span className="clan-chat-card-text">
-        <span className="clan-chat-card-title">Чат клана</span>
+        <span className="clan-chat-card-title">{tn('clan.chatTitle')}</span>
         <span className="clan-chat-card-last">
           {last ? (
             <>
-              <b>{last.mine ? 'Ты' : last.author}:</b> {last.body}
+              <b>{last.mine ? tn('sector.you') : last.author}:</b> {last.body}
             </>
           ) : (
-            'Пока тихо — напиши первым'
+            tn('clan.chatQuiet')
           )}
         </span>
       </span>
@@ -225,7 +221,7 @@ export function ClanScreen({
             <SkeletonRows count={5} thumb={40} round />
           </div>
         ) : (
-          <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Клан не найден</div>
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>{tn('clan.notFound')}</div>
         )}
       </>
     )
@@ -248,10 +244,10 @@ export function ClanScreen({
     if (!clan) return
     run(
       join.mutateAsync({ clanId: clan.id, inviteCode: code }).then((r) => {
-        if (r === 'requested') setToast('Заявка отправлена')
+        if (r === 'requested') setToast(tn('clan.requestSent'))
         else forgetClanInvite()
       }),
-      clan.joinType === 'open' || code ? 'Добро пожаловать в клан!' : undefined
+      clan.joinType === 'open' || code ? tn('clan.welcome') : undefined
     )
   }
 
@@ -268,24 +264,24 @@ export function ClanScreen({
     const promote = (role: ClanRole, label: string) =>
       list.push({ label, run: () => run(setRole.mutateAsync({ userId: m.userId, role, clanId: clan.id }), `${m.displayName}: ${CLAN_ROLE_LABEL[role].toLowerCase()}`) })
     if (clan.myRole === 'leader') {
-      if (m.role === 'member') promote('elder', 'Сделать старейшиной')
-      if (m.role !== 'co_leader') promote('co_leader', 'Сделать соруководителем')
-      if (m.role === 'co_leader') promote('elder', 'Понизить до старейшины')
-      if (m.role === 'elder') promote('member', 'Понизить до участника')
+      if (m.role === 'member') promote('elder', tn('clan.makeElder'))
+      if (m.role !== 'co_leader') promote('co_leader', tn('clan.makeCoLeader'))
+      if (m.role === 'co_leader') promote('elder', tn('clan.demoteElder'))
+      if (m.role === 'elder') promote('member', tn('clan.demoteMember'))
       list.push({
-        label: 'Передать главенство',
-        confirm: `Передать главенство ${m.displayName}? Ты станешь соруководителем.`,
-        run: () => run(setRole.mutateAsync({ userId: m.userId, role: 'leader', clanId: clan.id }), `${m.displayName} теперь глава`),
+        label: tn('clan.transfer'),
+        confirm: tn('clan.transferConfirm', { name: m.displayName }),
+        run: () => run(setRole.mutateAsync({ userId: m.userId, role: 'leader', clanId: clan.id }), tn('clan.nowLeader', { name: m.displayName })),
       })
     } else if (clan.myRole === 'co_leader') {
-      if (m.role === 'member') promote('elder', 'Сделать старейшиной')
-      if (m.role === 'elder') promote('member', 'Понизить до участника')
+      if (m.role === 'member') promote('elder', tn('clan.makeElder'))
+      if (m.role === 'elder') promote('member', tn('clan.demoteMember'))
     }
     list.push({
-      label: 'Исключить из клана',
+      label: tn('clan.kick'),
       danger: true,
-      confirm: `Исключить ${m.displayName}? Вернуться в клан он сможет только через 3 дня.`,
-      run: () => run(kick.mutateAsync({ userId: m.userId, clanId: clan.id }), `${m.displayName} исключён`),
+      confirm: tn('clan.kickConfirm', { name: m.displayName }),
+      run: () => run(kick.mutateAsync({ userId: m.userId, clanId: clan.id }), tn('clan.kickedToast', { name: m.displayName })),
     })
     return list
   }
@@ -295,14 +291,14 @@ export function ClanScreen({
       <BackButton onClick={onBack} registerNative={false} />
       <div style={{ display: 'flex', gap: 8 }}>
         {isMember && myRank >= 3 && (
-          <button className="icon-btn tap-scale" aria-label="Настройки клана" onClick={() => onEdit(clan)}>
+          <button className="icon-btn tap-scale" aria-label={tn('clan.settingsAria')} onClick={() => onEdit(clan)}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <circle cx="12" cy="12" r="3" />
               <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
             </svg>
           </button>
         )}
-        <button className="icon-btn tap-scale" aria-label="Поделиться кланом" onClick={() => onShareClan(clan.id, clan.name, shareInviteCode)}>
+        <button className="icon-btn tap-scale" aria-label={tn('clan.shareAria')} onClick={() => onShareClan(clan.id, clan.name, shareInviteCode)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <path d="M12 15V4M12 4 8 8M12 4l4 4" />
             <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
@@ -316,28 +312,28 @@ export function ClanScreen({
     <div className="clan-screen" onClick={() => menuFor && setMenuFor(null)}>
       <ClanHero crest={clan.crest} name={clan.name} motto={clan.motto} background={clan.background} golden={clan.level >= 10} top={headerTop}>
         <div className="clan-chips">
-          <button type="button" className="clan-chip tap-scale" onClick={() => setInfo('level')} aria-label="Уровень клана и бонусы">
-            Ур. {clan.level}
+          <button type="button" className="clan-chip tap-scale" onClick={() => setInfo('level')} aria-label={tn('clan.levelAria')}>
+            {tn('guest.level', { level: clan.level })}
           </button>
-          <button type="button" className="clan-chip clan-chip-league tap-scale" onClick={() => setInfo('league')} aria-label="Лиги кланов">
+          <button type="button" className="clan-chip clan-chip-league tap-scale" onClick={() => setInfo('league')} aria-label={tn('clan.leaguesAria')}>
             <span className="clan-league-dot" style={{ background: league.color }} />
             {league.label} · {clan.trophies}
           </button>
           {/* Capacity grows with the level — its explanation is the level sheet. */}
-          <button type="button" className="clan-chip tap-scale" onClick={() => setInfo('level')} aria-label="Сколько мест в клане">
+          <button type="button" className="clan-chip tap-scale" onClick={() => setInfo('level')} aria-label={tn('clan.slotsAria')}>
             {clan.members.length}/{clan.capacity}
           </button>
-          <button type="button" className="clan-chip tap-scale" onClick={() => setInfo('sectors')} aria-label="Сектора клана">
-            {clan.sectorsHeld} сект.
+          <button type="button" className="clan-chip tap-scale" onClick={() => setInfo('sectors')} aria-label={tn('clan.sectorsAria')}>
+            {tn('clan.sectShort', { count: clan.sectorsHeld })}
           </button>
           <button
             type="button"
             className="clan-chip tap-scale"
-            title="Номер клана — по нему клан находится в поиске"
+            title={tn('clan.idTitle')}
             onClick={() => {
               navigator.clipboard
                 ?.writeText(String(clan.id))
-                .then(() => setToast(`ID ${clan.id} скопирован — по нему клан находится в поиске`))
+                .then(() => setToast(tn('clan.idCopied', { id: clan.id })))
                 .catch(() => {})
             }}
           >
@@ -348,14 +344,14 @@ export function ClanScreen({
               type="button"
               className={`clan-chip clan-chip-race tap-scale${clan.wonLastWeek ? ' fresh' : ''}`}
               onClick={() => setInfo('race')}
-              aria-label={`Побед в битве кланов: ${clan.raceWins}`}
+              aria-label={tn('clan.raceWinsAria', { count: clan.raceWins })}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                 <path d="M12.6 3.2c3.9 2.4 5.9 6.3 6.1 11.3h-6.1Z" />
                 <path d="M11 6.2 6 14.5h5Z" opacity=".75" />
                 <path d="M3 16.8h18l-2.3 3.2H5.3Z" />
               </svg>
-              {clan.wonLastWeek ? 'Победитель битвы кланов' : 'Побед в битве'}
+              {clan.wonLastWeek ? tn('clan.wonLastWeek') : tn('clan.raceWinsLabel')}
               {clan.raceWins > 1 || !clan.wonLastWeek ? ` · ${clan.raceWins}` : ''}
             </button>
           )}
@@ -366,8 +362,8 @@ export function ClanScreen({
               <div className="clan-xp-fill" style={{ width: `${Math.round(progress.pct * 100)}%` }} />
             </div>
             <div className="clan-xp-label">
-              <span>Опыт клана</span>
-              <span>{progress.to === null ? 'Максимальный уровень' : `${clan.xp} / ${progress.to}`}</span>
+              <span>{tn('clan.xp')}</span>
+              <span>{progress.to === null ? tn('clan.maxLevel') : `${clan.xp} / ${progress.to}`}</span>
             </div>
           </div>
         )}
@@ -375,11 +371,11 @@ export function ClanScreen({
 
       <div className="clan-body">
         {clan.disbanded ? (
-          <div className="clan-note">Клан распущен</div>
+          <div className="clan-note">{tn('clan.disbanded')}</div>
         ) : isMember ? (
           <div className="clan-actions">
             <button className="btn-primary" onClick={() => onShareClan(clan.id, clan.name, shareInviteCode)}>
-              Пригласить в клан
+              {tn('clan.inviteBtn')}
             </button>
             <button
               className="btn-secondary"
@@ -388,79 +384,78 @@ export function ClanScreen({
                 setConfirm({
                   text:
                     clan.myRole === 'leader' && clan.members.length > 1
-                      ? 'Выйти из клана? Главенство перейдёт следующему по старшинству. Вступить в другой клан можно будет через сутки.'
+                      ? tn('clan.leaveLeader')
                       : clan.members.length === 1
-                        ? 'Ты последний участник — клан будет распущен. Вступить в другой клан можно будет через сутки.'
-                        : 'Выйти из клана? Вступить в другой клан можно будет через сутки.',
-                  action: 'Выйти',
+                        ? tn('clan.leaveLast')
+                        : tn('clan.leaveConfirm'),
+                  action: tn('clan.leave'),
                   danger: true,
-                  run: () => run(leave.mutateAsync(clan.id), 'Ты вышел из клана'),
+                  run: () => run(leave.mutateAsync(clan.id), tn('clan.youLeft')),
                 })
               }
             >
-              Выйти
+              {tn('clan.leave')}
             </button>
           </div>
         ) : (
           <div className="clan-join-box">
             {clan.myInvite ? (
               <>
-                <div className="clan-join-note">Тебя пригласили в этот клан</div>
+                <div className="clan-join-note">{tn('clan.invitedNote')}</div>
                 <div className="clan-actions">
                   <button className="btn-primary" disabled={joinBlocked} onClick={() => joinClan(null)}>
-                    Принять приглашение
+                    {tn('clan.accept')}
                   </button>
                   <button className="btn-secondary" style={{ flex: '0 0 auto', width: 'auto', padding: '0 16px' }} onClick={() => run(declineInvite.mutateAsync(clan.id))}>
-                    Отклонить
+                    {tn('clan.decline')}
                   </button>
                 </div>
               </>
             ) : clan.myRequestPending ? (
               <div className="clan-actions">
                 <button className="btn-secondary" disabled>
-                  Заявка отправлена
+                  {tn('clan.requestSent')}
                 </button>
                 <button className="btn-secondary" style={{ flex: '0 0 auto', width: 'auto', padding: '0 16px' }} onClick={() => run(cancelRequest.mutateAsync(clan.id))}>
-                  Отменить
+                  {tn('clan.cancelRequest')}
                 </button>
               </div>
             ) : linkInvite ? (
               <>
-                {clan.joinType !== 'open' && <div className="clan-join-note">Тебя пригласили в этот клан</div>}
+                {clan.joinType !== 'open' && <div className="clan-join-note">{tn('clan.invitedNote')}</div>}
                 <button className="btn-primary" disabled={joinBlocked || lacksSectors} onClick={() => joinClan(inviteCode ?? null)}>
-                  Вступить в клан
+                  {tn('clan.join')}
                 </button>
               </>
             ) : clan.joinType === 'invite' ? (
               <div className="clan-join-note">
-                В этот клан вступают только по приглашению
-                <div className="clan-join-hint">Попроси главу или старейшину прислать ссылку-приглашение</div>
+                {tn('clan.inviteOnly')}
+                <div className="clan-join-hint">{tn('clan.inviteOnlyHint')}</div>
               </div>
             ) : (
               <button className="btn-primary" disabled={joinBlocked || lacksSectors} onClick={() => joinClan(null)}>
-                {clan.joinType === 'open' ? 'Вступить в клан' : 'Подать заявку'}
+                {clan.joinType === 'open' ? tn('clan.join') : tn('clan.apply')}
               </button>
             )}
             {clan.joinType !== 'invite' && !linkInvite && !clan.myInvite && (
               <div className="clan-join-meta">
                 {JOIN_TYPE_LABEL[clan.joinType]}
-                {clan.minSectors > 0 && ` · от ${clan.minSectors} захваченных секторов`}
+                {clan.minSectors > 0 && tn('clan.minSectors', { count: clan.minSectors })}
               </div>
             )}
-            {otherCity && <div className="clan-join-warn">Клан из другого города</div>}
-            {inOtherClan && <div className="clan-join-warn">Ты уже в клане «{me?.clanName}»</div>}
+            {otherCity && <div className="clan-join-warn">{tn('clan.otherCity')}</div>}
+            {inOtherClan && <div className="clan-join-warn">{tn('clan.alreadyIn', { name: me?.clanName ?? '' })}</div>}
             {!otherCity && !inOtherClan && lacksSectors && (
               <div className="clan-join-warn">
-                Нужно захватить {clan.minSectors} сект. — у тебя {eligibility?.sectors ?? 0}
+                {tn('clan.needSectors', { need: clan.minSectors, have: eligibility?.sectors ?? 0 })}
               </div>
             )}
             {!otherCity && !inOtherClan && onCooldown && cooldownUntil && (
               <div className="clan-join-warn">
-                После выхода из клана — сутки паузы. Вступить можно с{' '}
-                {cooldownUntil.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                {tn('clan.cooldown', { when: cooldownUntil.toLocaleString(currentLocale(), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) })}
               </div>
             )}
-            {!otherCity && !inOtherClan && full && <div className="clan-join-warn">Свободных мест нет</div>}
+            {!otherCity && !inOtherClan && full && <div className="clan-join-warn">{tn('clan.full')}</div>}
           </div>
         )}
         {error && <div className="clan-error">{error}</div>}
@@ -468,13 +463,13 @@ export function ClanScreen({
 
         <div className="clan-tabs" style={{ marginTop: 16 }}>
           <button className={`clan-tab${tab === 'members' ? ' on' : ''}`} onClick={() => setTab('members')}>
-            Участники
+            {tn('guest.members')}
           </button>
           <button className={`clan-tab${tab === 'race' ? ' on' : ''}`} onClick={() => setTab('race')}>
-            Битва кланов
+            {tn('clan.tabRace')}
           </button>
           <button className={`clan-tab${tab === 'chest' ? ' on' : ''}`} onClick={() => setTab('chest')}>
-            Сундук
+            {tn('clan.tabChest')}
           </button>
         </div>
 
@@ -482,14 +477,14 @@ export function ClanScreen({
           <div className="clan-tab-body" key="members">
             {clan.announcement && (
               <div className="clan-announcement">
-                <div className="clan-announcement-kicker">Объявление</div>
+                <div className="clan-announcement-kicker">{tn('clan.announcement')}</div>
                 {clan.announcement}
               </div>
             )}
 
             {clan.requests && clan.requests.length > 0 && (
               <div className="clan-card">
-                <div className="clan-card-title">Заявки · {clan.requests.length}</div>
+                <div className="clan-card-title">{tn('clan.requests', { count: clan.requests.length })}</div>
                 {clan.requests.map((r) => (
                   <div key={r.userId} className="clan-member-row">
                     <button className="avatar clan-member-avatar tap-scale" onClick={() => onOpenUser(r.userId)} aria-label={r.displayName}>
@@ -498,13 +493,13 @@ export function ClanScreen({
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="clan-member-name">{r.displayName}</div>
                       <div className="clan-member-meta">
-                        Захватил {r.sectors} сект. · {formatShortAgo(r.createdAt)}
+                        {tn('clan.reqSectors', { count: r.sectors })} · {formatShortAgo(r.createdAt)}
                       </div>
                     </div>
-                    <button className="clan-mini-btn ok" onClick={() => run(respond.mutateAsync({ userId: r.userId, accept: true, clanId: clan.id }), `${r.displayName} в клане`)}>
-                      Принять
+                    <button className="clan-mini-btn ok" onClick={() => run(respond.mutateAsync({ userId: r.userId, accept: true, clanId: clan.id }), tn('clan.nowIn', { name: r.displayName }))}>
+                      {tn('clan.acceptBtn')}
                     </button>
-                    <button className="clan-mini-btn" onClick={() => run(respond.mutateAsync({ userId: r.userId, accept: false, clanId: clan.id }))} aria-label="Отклонить">
+                    <button className="clan-mini-btn" onClick={() => run(respond.mutateAsync({ userId: r.userId, accept: false, clanId: clan.id }))} aria-label={tn('clan.decline')}>
                       ✕
                     </button>
                   </div>
@@ -513,7 +508,7 @@ export function ClanScreen({
             )}
 
             <div className="clan-card">
-              <div className="clan-card-title">Участники · {clan.members.length}</div>
+              <div className="clan-card-title">{tn('clan.membersTitle', { count: clan.members.length })}</div>
               {clan.members.map((m, i) => {
                 const actions = memberActions(m)
                 return (
@@ -524,7 +519,7 @@ export function ClanScreen({
                     <button className="clan-member-main" onClick={() => onOpenUser(m.userId)}>
                       <span className="clan-member-name">
                         <StyledName name={m.displayName} styleId={m.nameStyle} />
-                        {m.userId === user?.id && <span className="clan-you">ты</span>}
+                        {m.userId === user?.id && <span className="clan-you">{tn('clan.you')}</span>}
                       </span>
                       <span className={`clan-role clan-role-${m.role}`}>
                         <RoleIcon role={m.role} />
@@ -533,13 +528,13 @@ export function ClanScreen({
                     </button>
                     <div className="clan-member-stats">
                       <b>{m.weekCatches}</b>
-                      <span>уловов за нед.</span>
+                      <span>{tn('clan.weekCatches')}</span>
                     </div>
                     {actions.length > 0 && (
                       <div style={{ position: 'relative' }}>
                         <button
                           className="comment-more"
-                          aria-label="Действия"
+                          aria-label={tn('clan.actionsAria')}
                           onClick={(e) => {
                             e.stopPropagation()
                             setMenuFor(menuFor === m.userId ? null : m.userId)
@@ -577,7 +572,7 @@ export function ClanScreen({
 
             {clan.events.length > 0 && (
               <div className="clan-card">
-                <div className="clan-card-title">Журнал клана</div>
+                <div className="clan-card-title">{tn('clan.journal')}</div>
                 {clan.events.map((e, i) => (
                   <div key={i} className="clan-event">
                     <span className="clan-event-dot" />
@@ -654,7 +649,7 @@ export function ClanScreen({
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="btn-secondary" onClick={() => setConfirm(null)}>
-                Отмена
+                {tn('common.cancel')}
               </button>
               <button
                 className="btn-primary"

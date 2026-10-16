@@ -3,6 +3,7 @@
 import type { CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
+import { currentLocale, tn } from '@/lib/i18n/runtime'
 import type { ClanRace } from '@/lib/data/types'
 
 const CONFETTI_COLORS = ['#FC5200', '#FFD60A', '#1E8FB5', '#2FA84F', '#A88EF5', '#FF6B6B']
@@ -24,7 +25,7 @@ function weekRange(weekStartIso: string): string {
   const thisWeek = new Date(weekStartIso)
   const start = new Date(thisWeek.getTime() - 7 * 86_400_000)
   const end = new Date(thisWeek.getTime() - 86_400_000)
-  const month = (d: Date) => d.toLocaleDateString('ru-RU', { month: 'long' })
+  const month = (d: Date) => d.toLocaleDateString(currentLocale(), { month: 'long' })
   return start.getMonth() === end.getMonth()
     ? `${start.getDate()}–${end.getDate()} ${month(end)}`
     : `${start.getDate()} ${month(start)} – ${end.getDate()} ${month(end)}`
@@ -44,23 +45,25 @@ export function ClanBattleCeremony({ race, clanId, onOpenRace, onClose }: { race
   const podium = solo ? [null, results[0], null] : [results.find((c) => c.place === 2), results.find((c) => c.place === 1), results.find((c) => c.place === 3)]
   const headline = solo
     ? mine.finished
-      ? 'Ваш клан доплыл до финиша!'
-      : 'До финиша не хватило совсем немного'
+      ? tn('battle.soloDone')
+      : tn('battle.soloClose')
     : won
-      ? `Победа! «${mine.name}» — лучший клан города`
-      : `«${mine.name}» — ${mine.place}-е место${mine.place > 3 ? ` из ${results.length}` : ''}`
+      ? tn('battle.won', { name: mine.name })
+      : mine.place > 3
+        ? tn('battle.placeOf', { name: mine.name, place: tn('race.place', { rank: mine.place }), total: results.length })
+        : tn('battle.place', { name: mine.name, place: tn('race.place', { rank: mine.place }) })
   const sub = solo
     ? mine.finished
-      ? 'Соперников не было — награда за финиш ваша'
-      : `Пройдено ${pct}% пути — на этой неделе доплывёте`
+      ? tn('battle.soloSubDone')
+      : tn('battle.soloSubWait', { pct })
     : mine.finished
-      ? 'Лодка клана доплыла до финиша'
-      : `Пройдено ${pct}% пути`
+      ? tn('battle.subDone')
+      : tn('battle.subPct', { pct })
 
   return createPortal(
     <div className="modal-overlay battle-cer-overlay" onClick={onClose}>
-      <div className="modal-card battle-cer-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Итоги битвы кланов">
-        <div className="battle-cer-title">Итоги битвы кланов</div>
+      <div className="modal-card battle-cer-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={tn('battle.ariaTitle')}>
+        <div className="battle-cer-title">{tn('battle.title')}</div>
         <div className="battle-cer-week">{weekRange(race.weekStart)}</div>
 
         <div className="battle-cer-stage">
@@ -89,7 +92,7 @@ export function ClanBattleCeremony({ race, clanId, onOpenRace, onClose }: { race
                   <div className="battle-cer-name">{c.name}</div>
                   <div className="battle-cer-column">
                     <span className="battle-cer-place">{c.place}</span>
-                    {isMine && <span className="battle-cer-you">Ваш клан</span>}
+                    {isMine && <span className="battle-cer-you">{tn('battle.yourClan')}</span>}
                   </div>
                 </div>
               )
@@ -101,7 +104,7 @@ export function ClanBattleCeremony({ race, clanId, onOpenRace, onClose }: { race
           <div className="battle-cer-mine-row">
             <ClanCrest crest={mine.crest} size={34} />
             <span>{mine.name}</span>
-            <b>{mine.place}-е место</b>
+            <b>{tn('race.place', { rank: mine.place })}</b>
           </div>
         )}
 
@@ -109,10 +112,10 @@ export function ClanBattleCeremony({ race, clanId, onOpenRace, onClose }: { race
         <div className="battle-cer-sub">{sub}</div>
 
         <button className="btn-primary" style={{ marginTop: 18 }} onClick={onOpenRace}>
-          Битва этой недели
+          {tn('battle.thisWeek')}
         </button>
         <button className="battle-cer-close" onClick={onClose}>
-          Закрыть
+          {tn('common.close')}
         </button>
       </div>
     </div>,

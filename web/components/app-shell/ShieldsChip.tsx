@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useSlotState } from '@/lib/supabase/queries'
 import { hapticTap } from '@/lib/telegram/haptics'
+import { tn } from '@/lib/i18n/runtime'
 
 // Same as the server's reserve cap (spin_slots: a 4th shield turns into coins).
 export const SHIELD_RESERVE_MAX = 3
@@ -24,7 +25,7 @@ export function ShieldsChip() {
         type="button"
         data-tour="shields"
         className="shields-chip tap-scale"
-        aria-label={`Щитов в запасе: ${count} из ${SHIELD_RESERVE_MAX}`}
+        aria-label={tn('boost.shieldAria', { count, max: SHIELD_RESERVE_MAX })}
         onClick={() => {
           hapticTap()
           setOpen(true)
@@ -43,10 +44,10 @@ export function ShieldsChip() {
 function ShieldReserveModal({ count, onClose }: { count: number; onClose: () => void }) {
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card shield-modal reserve-modal" role="dialog" aria-label="Щиты в запасе" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-card shield-modal reserve-modal" role="dialog" aria-label={tn('boost.shieldReserve')} onClick={(e) => e.stopPropagation()}>
         <ShieldReserveContent count={count} />
         <button className="btn-primary" onClick={onClose}>
-          Понятно
+          {tn('common.gotIt')}
         </button>
       </div>
     </div>,
@@ -97,30 +98,30 @@ export function ShieldReserveContent({ count }: { count: number }) {
             <path d={SHIELD_PATH} />
           </svg>
         </div>
-        <div className="double-modal-badge reserve-modal-badge">24 ч</div>
+        <div className="double-modal-badge reserve-modal-badge">{tn('boost.h24')}</div>
       </div>
 
-      <div className="modal-title double-modal-title">Щиты в запасе</div>
+      <div className="modal-title double-modal-title">{tn('boost.shieldReserve')}</div>
 
       <div className="double-modal-timer reserve-modal-timer">
         <b>
           {count}
-          <small>из {SHIELD_RESERVE_MAX}</small>
+          <small>{tn('boost.ofMax', { max: SHIELD_RESERVE_MAX })}</small>
         </b>
-        <span>{count > 0 ? 'можно поставить на свой сектор' : 'щиты выпадают в слотах'}</span>
+        <span>{count > 0 ? tn('boost.canPlace') : tn('boost.dropInSlots')}</span>
       </div>
 
       <div className="double-modal-what reserve-modal-what">
-        <div className="double-modal-kicker">Щит на твоём секторе</div>
+        <div className="double-modal-kicker">{tn('boost.onYours')}</div>
         <div className="double-modal-chips">
-          <span>24 часа</span>
-          <span>Соклановцы ловят</span>
-          <span>Чужой улов не в счёт</span>
+          <span>{tn('boost.chip24')}</span>
+          <span>{tn('boost.chipClan')}</span>
+          <span>{tn('boost.chipForeign')}</span>
         </div>
       </div>
       <div className="double-modal-note reserve-modal-note">
-        <b>Поставить — «Поставить щит» на экране своего сектора</b>
-        На горячий сектор щит не ставится. Новые щиты выпадают в слотах — «3 соты».
+        <b>{tn('boost.howPlace', { button: tn('territory.freeShield') })}</b>
+        {tn('boost.notOnHot', { slot: tn('slots.rows.shield') })}
       </div>
     </>
   )

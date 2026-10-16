@@ -1,5 +1,7 @@
 import type { Database } from '@/lib/types'
 import type { CityId } from '@/lib/data/city'
+import { currentLanguage, labels, tnd } from '@/lib/i18n/runtime'
+import { ru } from '@/lib/i18n/ru'
 
 // Species (now 60 total across both cities) live in the `species` table
 // (public, read-only for clients) — not hardcoded here. See DECISIONS.md.
@@ -8,12 +10,7 @@ import type { CityId } from '@/lib/data/city'
 // (predator/peaceful) — the two category pairs never mix on one city's map.
 export type SpeciesCategory = 'marine' | 'freshwater' | 'predator' | 'peaceful'
 
-export const CATEGORY_LABEL: Record<SpeciesCategory, string> = {
-  marine: 'Морская',
-  freshwater: 'Пресноводная',
-  predator: 'Хищная',
-  peaceful: 'Мирная',
-}
+export const CATEGORY_LABEL = labels('category', ['marine', 'freshwater', 'predator', 'peaceful'] as const)
 
 // One gradient per category (not per species — 57 individual gradients isn't
 // worth maintaining) for the catch-photo placeholder.
@@ -60,10 +57,40 @@ export const WATER_KINDS_BY_CITY: Record<CityId, Database['public']['Enums']['te
   moscow: ['river', 'lake', 'pond'],
 }
 
-export const KIND_LABEL: Record<Database['public']['Enums']['territory_kind'], string> = {
-  sea: 'Море',
-  river: 'Река',
-  stream: 'Ручей',
-  lake: 'Озеро',
-  pond: 'Пруд',
+export const KIND_LABEL: Record<Database['public']['Enums']['territory_kind'], string> = labels('kind', ['sea', 'river', 'stream', 'lake', 'pond'] as const)
+
+// Names stay Russian in the database (a catch stores «Окунь», «Спиннинг»,
+// «Воблер» as text), so every other language translates for display only:
+// a Russian value is looked up in the dictionary's Russian entries and the
+// same key read in the current language. Russian itself is returned as is.
+function reverse(group: Record<string, string>): Map<string, string> {
+  return new Map(Object.entries(group).map(([key, name]) => [name, key]))
+}
+const SPECIES_BY_NAME = reverse(ru.species)
+const BAIT_BY_NAME = reverse(ru.bait)
+const METHOD_BY_NAME = reverse(ru.method)
+
+export function localSpeciesName(name: string, key?: string): string {
+  if (currentLanguage() === 'ru') return name
+  const k = key && key in ru.species ? key : SPECIES_BY_NAME.get(name)
+  return k ? tnd(`species.${k}`) : name
+}
+
+// For text written by hand (the FAQ's coin tables): the same lookup, blind to
+// case and to «ё»/«е», returning the name as is when there is no match.
+const SPECIES_LOOSE = new Map(Object.entries(ru.species).map(([key, name]) => [name.toLowerCase().replace(/ё/g, 'е'), key]))
+
+export function localSpeciesNameLoose(name: string): string {
+  const k = SPECIES_LOOSE.get(name.toLowerCase().replace(/ё/g, 'е'))
+  return k ? tnd(`species.${k}`) : name
+}
+
+export function localBait(name: string): string {
+  const k = currentLanguage() === 'ru' ? undefined : BAIT_BY_NAME.get(name)
+  return k ? tnd(`bait.${k}`) : name
+}
+
+export function localMethod(name: string): string {
+  const k = currentLanguage() === 'ru' ? undefined : METHOD_BY_NAME.get(name)
+  return k ? tnd(`method.${k}`) : name
 }

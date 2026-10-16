@@ -1,4 +1,5 @@
 import type { Territory } from '@/lib/data/types'
+import { labels } from '@/lib/i18n/runtime'
 
 // How sector lists are ordered: freshest catch first (the map's first card
 // and the default on «Территории»), or most caught first.
@@ -6,10 +7,7 @@ export type SectorSort = 'lastCatch' | 'popular'
 
 // The same words on the pill and in its list — the pill shares a row with
 // the filter chips, so they're kept to one word.
-export const SECTOR_SORT_LABEL: Record<SectorSort, string> = {
-  lastCatch: 'Свежие',
-  popular: 'Популярные',
-}
+export const SECTOR_SORT_LABEL = labels('sectorSort', ['lastCatch', 'popular'] as const)
 
 const byId = (a: Territory, b: Territory) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
 

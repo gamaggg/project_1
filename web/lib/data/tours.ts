@@ -54,6 +54,17 @@ export type TourKey =
   | 'geoQuest'
   | 'geoStory'
   | 'geoBoard'
+  | 'language'
+  | 'speciesStats'
+  | 'challengesNew'
+  | 'ownerColours'
+  | 'weekPath'
+  | 'challengeOpen'
+  | 'chestTap'
+  | 'chestMine'
+  | 'editCatch'
+  | 'photoZoom'
+  | 'playersList'
 export type TourStep = { target: string; key: TourKey }
 // `always`: shown even to a player who pressed «Пропустить» on the tours.
 // `unlessSeen`: not shown once the tour with that id has been seen.
@@ -134,6 +145,64 @@ const GEO_TOURS: Tour[] = [
   },
 ]
 
+// 16.10: the big update — the language switch, the species statistics, the
+// unfolding challenges, the tappable chest, editing a catch later, the
+// zoomable photo, the colours of owners on the map, the list of all players.
+// Only for players who were here before (whatsNew); each tour on its screen,
+// steps whose element this player doesn't have are left out (the language
+// switch only exists once the translation is on).
+const UPDATE_16_10_TOURS: Tour[] = [
+  {
+    id: 'u1610-map',
+    screen: 'screen-map',
+    requires: 'legend',
+    steps: [{ target: 'legend', key: 'ownerColours' }],
+    always: true,
+  },
+  {
+    id: 'u1610-profile',
+    screen: 'screen-profile',
+    requires: 'species-stats',
+    steps: [
+      { target: 'species-stats', key: 'speciesStats' },
+      { target: 'challenges', key: 'challengesNew' },
+      { target: 'language', key: 'language' },
+    ],
+    always: true,
+  },
+  {
+    id: 'u1610-challenges',
+    screen: 'screen-challenges',
+    requires: 'week-path',
+    steps: [
+      { target: 'week-path', key: 'weekPath' },
+      { target: 'challenge-card', key: 'challengeOpen' },
+    ],
+    always: true,
+  },
+  {
+    id: 'u1610-chest',
+    screen: 'screen-clan',
+    requires: 'chest-stops',
+    steps: [
+      { target: 'chest-stops', key: 'chestTap' },
+      { target: 'chest-me', key: 'chestMine' },
+    ],
+    always: true,
+  },
+  {
+    id: 'u1610-catch',
+    screen: 'screen-catch-photo',
+    requires: 'edit-catch',
+    steps: [
+      { target: 'photo-zoom', key: 'photoZoom' },
+      { target: 'edit-catch', key: 'editCatch' },
+    ],
+    always: true,
+  },
+  { id: 'u1610-players', screen: 'screen-territories', requires: 'players-list', steps: [{ target: 'players-list', key: 'playersList' }], always: true },
+]
+
 export const TOURS: Record<TourAudience, Tour[]> = {
   whatsNew: [
     {
@@ -174,6 +243,7 @@ export const TOURS: Record<TourAudience, Tour[]> = {
     DIARY_STATS_TOUR,
     DIARY_TAB_TOUR,
     ...GEO_TOURS,
+    ...UPDATE_16_10_TOURS,
   ],
   newcomer: [
     {

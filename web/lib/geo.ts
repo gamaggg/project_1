@@ -1,3 +1,4 @@
+import { tn, currentLanguage } from '@/lib/i18n/runtime'
 // «Где это?» — one 360° panorama of a shore a day per city; the player picks
 // on the map the sector it was taken in: the right one pays GEO_COINS, any
 // other nothing. Where it was taken stays on the server until the guess
@@ -25,16 +26,16 @@ export const GEO_NEIGHBOUR_M = 650
 
 // «340 м», «2,3 км», «14 км».
 export function formatGeoDistance(m: number): string {
-  if (m < 1000) return `${Math.round(m)} м`
+  if (m < 1000) return tn('geo.m', { count: Math.round(m) })
   const km = m / 1000
-  return `${km < 10 ? km.toFixed(1).replace('.', ',') : Math.round(km)} км`
+  return tn('geo.km', { count: km < 10 ? (currentLanguage() === 'ru' ? km.toFixed(1).replace('.', ',') : km.toFixed(1)) : Math.round(km) })
 }
 
 export function geoVerdict(correct: boolean, neighbour: boolean, distance: number): string {
-  if (correct) return 'В точку!'
-  if (neighbour) return 'Соседний сектор'
-  if (distance <= 2000) return 'Близко'
-  return 'Мимо'
+  if (correct) return tn('geo.spotOn')
+  if (neighbour) return tn('geo.neighbour')
+  if (distance <= 2000) return tn('geo.close')
+  return tn('geo.miss')
 }
 
 // The share line's marker, like a Wordle square.

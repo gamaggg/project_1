@@ -1,6 +1,7 @@
 'use client'
 
 import { lazy, Suspense, useState, type ComponentType, type ReactNode } from 'react'
+import { tn } from '@/lib/i18n/runtime'
 
 const RETRY_DELAYS_MS = [800, 2000]
 
@@ -20,9 +21,9 @@ async function loadWithRetry<T>(load: () => Promise<T>): Promise<T> {
 function LoadFailed() {
   return (
     <div className="lazy-failed">
-      <div>Не удалось загрузить экран — проверь интернет.</div>
+      <div>{tn('nav.loadFailed')}</div>
       <button type="button" className="btn-secondary" onClick={() => window.location.reload()}>
-        Обновить
+        {tn('nav.reload')}
       </button>
     </div>
   )

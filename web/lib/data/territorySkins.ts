@@ -1,3 +1,4 @@
+import { tnd } from '@/lib/i18n/runtime'
 // Visual catalog for the "Скин территории" shop items — same reasoning as
 // nameStyles.ts/shopItems.ts: the DB row is just id/category/name/price, the
 // name/order lives here. Unlike frames/name styles, a skin has no fixed color
@@ -15,22 +16,50 @@ export type TerritorySkin = {
 }
 
 export const TERRITORY_SKINS: TerritorySkin[] = [
-  { id: 'skin_stripes', label: 'Полосы' },
-  { id: 'skin_horizon', label: 'Горизонт' },
-  { id: 'skin_diagonal', label: 'Диагональ' },
-  { id: 'skin_zigzag', label: 'Зигзаг' },
-  { id: 'skin_herringbone', label: 'Ёлочка' },
-  { id: 'skin_rain', label: 'Дождь' },
-  { id: 'skin_wave', label: 'Течение' },
-  { id: 'skin_scribble', label: 'Вихрь' },
-  { id: 'skin_net', label: 'Сеть' },
-  { id: 'skin_grass', label: 'Трава' },
+  { id: 'skin_stripes', get label() {
+      return tnd('skin.skin_stripes')
+    } },
+  { id: 'skin_horizon', get label() {
+      return tnd('skin.skin_horizon')
+    } },
+  { id: 'skin_diagonal', get label() {
+      return tnd('skin.skin_diagonal')
+    } },
+  { id: 'skin_zigzag', get label() {
+      return tnd('skin.skin_zigzag')
+    } },
+  { id: 'skin_herringbone', get label() {
+      return tnd('skin.skin_herringbone')
+    } },
+  { id: 'skin_rain', get label() {
+      return tnd('skin.skin_rain')
+    } },
+  { id: 'skin_wave', get label() {
+      return tnd('skin.skin_wave')
+    } },
+  { id: 'skin_scribble', get label() {
+      return tnd('skin.skin_scribble')
+    } },
+  { id: 'skin_net', get label() {
+      return tnd('skin.skin_net')
+    } },
+  { id: 'skin_grass', get label() {
+      return tnd('skin.skin_grass')
+    } },
   // Premium (800+): same hex/viewBox and single ink as the hand-drawn ones,
   // with tonal depth from opacity alone (source-in keeps each pixel's alpha).
-  { id: 'skin_scales', label: 'Чешуя' },
-  { id: 'skin_depth', label: 'Глубины' },
-  { id: 'skin_compass', label: 'Роза ветров' },
-  { id: 'skin_school', label: 'Косяк' },
+  { id: 'skin_scales', get label() {
+      return tnd('skin.skin_scales')
+    } },
+  { id: 'skin_depth', get label() {
+      return tnd('skin.skin_depth')
+    } },
+  { id: 'skin_compass', get label() {
+      return tnd('skin.skin_compass')
+    } },
+  { id: 'skin_school', get label() {
+      return tnd('skin.skin_school')
+    } },
 ]
 
 export function resolveTerritorySkin(id: string | null | undefined): TerritorySkin | null {

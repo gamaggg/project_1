@@ -5,6 +5,7 @@ import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useIsFollowing, useSetFollowing } from '@/lib/supabase/queries'
 import type { ProfileSummary } from '@/lib/data/types'
+import { tn } from '@/lib/i18n'
 
 function PersonRow({ person, onOpenUser }: { person: ProfileSummary; onOpenUser: (id: string) => void }) {
   const { user } = useAuth()
@@ -39,7 +40,7 @@ function PersonRow({ person, onOpenUser }: { person: ProfileSummary; onOpenUser:
           disabled={setFollowing.isPending}
           onClick={() => setFollowing.mutate({ followeeId: person.userId, following: !isFollowing })}
         >
-          {isFollowing ? 'Отписаться' : 'Подписаться'}
+          {isFollowing ? tn('profile.unfollow') : tn('profile.follow')}
         </button>
       )}
     </div>
@@ -81,7 +82,7 @@ export function PeopleListModal({
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Поиск"
+          placeholder={tn('common.search')}
           style={{
             marginTop: 14,
             padding: '10px 14px',
@@ -98,7 +99,7 @@ export function PeopleListModal({
           {filtered.length ? (
             filtered.map((p) => <PersonRow key={p.userId} person={p} onOpenUser={onOpenUser} />)
           ) : (
-            <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--ink-faint)', fontSize: 13 }}>Никого не найдено</div>
+            <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--ink-faint)', fontSize: 13 }}>{tn('catch.nobodyFound')}</div>
           )}
         </div>
       </div>

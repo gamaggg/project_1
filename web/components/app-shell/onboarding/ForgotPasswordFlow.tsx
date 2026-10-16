@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { OtpCodeStep } from '@/components/app-shell/onboarding/OtpCodeStep'
 import { BackButton } from '@/components/app-shell/BackButton'
+import { tn } from '@/lib/i18n/runtime'
 
 // Rendered by FishZoneApp itself (see `recoveryMode`), not nested inside
 // OnboardingFlow — verifyOtp's 'recovery' type sets a real session the
@@ -54,9 +55,9 @@ export function ForgotPasswordFlow({ onDone, onCancel }: { onDone: () => void; o
       <OtpCodeStep
         email={email}
         type="recovery"
-        title="Проверь почту"
-        subtitle={`Отправили код на ${email} — введи его ниже, чтобы сбросить пароль.`}
-        ctaLabel="Далее"
+        title={tn('onb.checkMail')}
+        subtitle={tn('onb.codeSentReset', { email })}
+        ctaLabel={tn('common.next')}
         onBack={() => setStep('email')}
         onVerified={() => setStep('password')}
         onResend={() => createClient().auth.resetPasswordForEmail(email.trim())}
@@ -81,21 +82,21 @@ export function ForgotPasswordFlow({ onDone, onCancel }: { onDone: () => void; o
         </div>
         {step === 'done' ? (
           <div className="intro-copy">
-            <div className="intro-title">Пароль обновлён</div>
-            <div className="intro-sub">Можно возвращаться в RANGE.</div>
+            <div className="intro-title">{tn('onb.passUpdated')}</div>
+            <div className="intro-sub">{tn('onb.backToApp')}</div>
             <button className="intro-cta" onClick={onDone}>
-              Продолжить
+              {tn('onb.continue')}
             </button>
           </div>
         ) : (
           <>
             <div className="intro-copy">
-              <div className="intro-title">Новый пароль</div>
-              <div className="intro-sub">Код подтверждён — придумай новый пароль для входа.</div>
+              <div className="intro-title">{tn('onb.newPassword')}</div>
+              <div className="intro-sub">{tn('onb.codeOk')}</div>
             </div>
             <form onSubmit={handleSetPassword} className="wizard-anim-form" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '0 24px' }}>
               <div className="wizard-field">
-                <label htmlFor="new-password">Новый пароль</label>
+                <label htmlFor="new-password">{tn('onb.newPassword')}</label>
                 <input
                   id="new-password"
                   type="password"
@@ -103,11 +104,11 @@ export function ForgotPasswordFlow({ onDone, onCancel }: { onDone: () => void; o
                   minLength={6}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Минимум 6 символов"
+                  placeholder={tn('onb.min6')}
                 />
               </div>
               <div className="wizard-field">
-                <label htmlFor="new-password-confirm">Повторите пароль</label>
+                <label htmlFor="new-password-confirm">{tn('onb.repeatPass')}</label>
                 <input
                   id="new-password-confirm"
                   type="password"
@@ -115,14 +116,14 @@ export function ForgotPasswordFlow({ onDone, onCancel }: { onDone: () => void; o
                   minLength={6}
                   value={passwordConfirm}
                   onChange={(e) => setPasswordConfirm(e.target.value)}
-                  placeholder="Ещё раз пароль"
+                  placeholder={tn('onb.againPass')}
                 />
-                {mismatch && <div style={{ fontSize: 12.5, color: '#D33', marginTop: 4 }}>Пароли не совпадают</div>}
+                {mismatch && <div style={{ fontSize: 12.5, color: '#D33', marginTop: 4 }}>{tn('onb.mismatch')}</div>}
               </div>
               {error && <div className="auth-error">{error}</div>}
               <div style={{ flex: 1 }} />
               <button className="intro-cta" type="submit" disabled={!passwordValid || pending} style={!passwordValid || pending ? { opacity: 0.4, pointerEvents: 'none' } : undefined}>
-                {pending ? 'Сохраняем…' : 'Сохранить пароль'}
+                {pending ? tn('common.saving') : tn('onb.savePass')}
               </button>
             </form>
           </>
@@ -146,8 +147,8 @@ export function ForgotPasswordFlow({ onDone, onCancel }: { onDone: () => void; o
         </div>
       </div>
       <div className="intro-copy">
-        <div className="intro-title">Забыли пароль?</div>
-        <div className="intro-sub">Введи email — пришлём код для сброса пароля.</div>
+        <div className="intro-title">{tn('onb.forgot')}</div>
+        <div className="intro-sub">{tn('onb.enterEmail')}</div>
       </div>
       <form onSubmit={handleSendCode} className="wizard-anim-form" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '0 24px' }}>
         <div className="wizard-field">
@@ -157,7 +158,7 @@ export function ForgotPasswordFlow({ onDone, onCancel }: { onDone: () => void; o
         {error && <div className="auth-error">{error}</div>}
         <div style={{ flex: 1 }} />
         <button className="intro-cta" type="submit" disabled={!email.trim() || pending} style={!email.trim() || pending ? { opacity: 0.4, pointerEvents: 'none' } : undefined}>
-          {pending ? 'Отправляем…' : 'Отправить код'}
+          {pending ? tn('onb.sending') : tn('onb.sendCode')}
         </button>
       </form>
     </div>

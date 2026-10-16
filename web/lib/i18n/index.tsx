@@ -1,11 +1,14 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { isLang, langFromLocale, translate, type Lang, type TKey, type TVars } from '@/lib/i18n/core'
+import { createContext, Fragment, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { setCurrentLanguage } from '@/lib/i18n/runtime'
+import { TRANSLATION_READY, isLang, langFromLocale, translate, type Lang, type TKey, type TVars } from '@/lib/i18n/core'
 
 export { LANGS, type Lang, type TKey } from '@/lib/i18n/core'
 
 const STORAGE_KEY = 'range:lang'
+
+export { tn, tnd, currentLanguage, currentLocale } from '@/lib/i18n/runtime'
 
 type I18n = {
   lang: Lang
@@ -19,11 +22,7 @@ const I18nContext = createContext<I18n>({
   t: (key, vars) => translate('ru', key, vars),
 })
 
-// Russian for everyone until the whole app is translated (BIG_UPDATE item
-// 11, decided 06.10): most screens are still Russian in code, so following an
-// English or Georgian Telegram would mix translated new screens with the
-// Russian rest. Flip this on together with the full translation.
-export const TRANSLATION_READY = false
+export { TRANSLATION_READY }
 
 // An explicit choice is always honoured: «?lang=ka» in the link (remembered
 // on the device — how the translation is tried before it is switched on) or
@@ -53,8 +52,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Syncing with the device's saved choice / Telegram's language — external
     // sources that only exist after mount.
+    const detected = detectLang()
+    setCurrentLanguage(detected)
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLangState(detectLang())
+    setLangState(detected)
   }, [])
 
   useEffect(() => {
@@ -62,14 +63,24 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, [lang])
 
   const setLang = useCallback((next: Lang) => {
-    setLangState(next)
     try {
       localStorage.setItem(STORAGE_KEY, next)
     } catch {}
+    setCurrentLanguage(next)
+    setLangState(next)
+    // Fetched data already carries names in the old language (species,
+    // sectors' clans…): a fresh load is the simple, certain way to redo it all.
+    window.location.reload()
   }, [])
 
   const value = useMemo<I18n>(() => ({ lang, setLang, t: (key, vars) => translate(lang, key, vars) }), [lang, setLang])
-  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
+  // keyed by language: a change remounts the app under it, so every plain
+  // function that reads the language (tn, formatWhen…) is called afresh.
+  return (
+    <I18nContext.Provider value={value}>
+      <Fragment key={lang}>{children}</Fragment>
+    </I18nContext.Provider>
+  )
 }
 
 export function useI18n(): I18n {

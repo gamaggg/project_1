@@ -6,6 +6,7 @@ import { ACH_ICONS } from '@/components/app-shell/icons'
 import type { WeeklyLeaderboardEntry } from '@/lib/data/types'
 import { pluralCatches, pluralSectors } from '@/lib/format'
 import { seededRandom, seedFrom } from '@/lib/seededRandom'
+import { tn } from '@/lib/i18n/runtime'
 
 const CONFETTI_COLORS = ['#FC5200', '#F0A93E', '#B8C0CC', '#B06B36', '#FFD60A']
 
@@ -56,24 +57,24 @@ export function WeekTopModal({
             />
           ))}
         </div>
-        <div className="unlock-modal-eyebrow">Топ недели</div>
+        <div className="unlock-modal-eyebrow">{tn('weekly.topEyebrow')}</div>
         <div className="unlock-modal-badge-outer">
           <div className="unlock-modal-badge-glow" />
           <div className="unlock-modal-badge">
             <HexBadge unlocked strokeWidth={3} icon={cloneElement(ACH_ICONS.first as ReactElement<{ width: number; height: number }>, { width: 38, height: 38 })} />
           </div>
         </div>
-        <div className="modal-title">Поздравляем!</div>
+        <div className="modal-title">{tn('weekly.congrats')}</div>
         <div className="modal-body" style={{ marginBottom: 22 }}>
-          Прошлая неделя — {entry.rank} место
+          {tn('weekly.lastWeekRank', { rank: entry.rank })}
           <br />
-          {entry.sectorsThisWeek} {pluralSectors(entry.sectorsThisWeek)} и {entry.catchesThisWeek} {pluralCatches(entry.catchesThisWeek)}
+          {tn('weekly.stats', { sectors: `${entry.sectorsThisWeek} ${pluralSectors(entry.sectorsThisWeek)}`, catches: `${entry.catchesThisWeek} ${pluralCatches(entry.catchesThisWeek)}` })}
         </div>
         <button className="btn-primary" onClick={onViewRecap}>
-          Смотреть итоги недели
+          {tn('weekly.viewRecap')}
         </button>
         <button className="unlock-modal-close tap-scale" onClick={onClose}>
-          Закрыть
+          {tn('common.close')}
         </button>
       </div>
     </div>

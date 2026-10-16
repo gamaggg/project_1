@@ -9,13 +9,24 @@ import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { usePurchaseFlow } from '@/components/app-shell/usePurchaseFlow'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useMyChallenges, useChallengeWeekState, useSwapChallenge, useBuyExtraChallenge, useBuffs, useProfile, type WeeklyChallenge } from '@/lib/supabase/queries'
+import { tn } from '@/lib/i18n/runtime'
 
 const TIER_LABEL: Record<WeeklyChallenge['tier'], string> = {
-  soft: 'Простое',
-  light: 'Лёгкое',
-  medium: 'Среднее',
-  hard: 'Сложное',
+  get soft() {
+    return tn('weekly.tierSoft')
+  },
+  get light() {
+    return tn('weekly.tierLight')
+  },
+  get medium() {
+    return tn('weekly.tierMedium')
+  },
+  get hard() {
+    return tn('weekly.tierHard')
+  },
 }
+
+const TIER_HINT = { soft: 'weekly.hintSoft', light: 'weekly.hintLight', medium: 'weekly.hintMedium', hard: 'weekly.hintHard' } as const
 
 const TIER_COLOR: Record<WeeklyChallenge['tier'], string> = {
   soft: '#7A8896',
@@ -55,6 +66,10 @@ export function ChallengesScreen({ onBack, active }: { onBack: () => void; activ
   const coins = myProfile?.coins ?? 0
   const { request, modal: purchaseModal } = usePurchaseFlow(coins)
   const [completion, setCompletion] = useState<Completion | null>(null)
+  // Unfinished tasks are always unfolded and sit first; a finished one folds away
+  // below them and unfolds on a tap (openId). `fresh` = just flipped to done.
+  const [openId, setOpenId] = useState<number | null>(null)
+  const [fresh, setFresh] = useState<Set<number>>(new Set())
 
   // <Screen> never unmounts (see DECISIONS.md), so useQuery's own
   // fetch-on-mount only ever fires once, at app boot — progress made
@@ -73,6 +88,7 @@ export function ChallengesScreen({ onBack, active }: { onBack: () => void; activ
       refetch().then((res) => {
         const after = res.data ?? []
         const newlyDone = after.filter((c) => before.has(c.id) && !before.get(c.id) && !!c.completedAt)
+        if (newlyDone.length > 0) setFresh(new Set(newlyDone.map((c) => c.id)))
         if (newlyDone.length > 0 && after.length > 0) {
           setCompletion({
             doneCount: after.filter((c) => !!c.completedAt).length,
@@ -93,14 +109,26 @@ export function ChallengesScreen({ onBack, active }: { onBack: () => void; activ
   const total = challenges.length
   const weekPct = total ? doneCount / total : 0
   const weekCoins = challenges.reduce((sum, c) => sum + c.coinReward, 0)
+  const earnedCoins = challenges.reduce((sum, c) => sum + (c.completedAt ? c.coinReward : 0), 0)
+  const allDone = total > 0 && doneCount === total
+  const curId = challenges.find((c) => !c.completedAt)?.id ?? null
+  // The path fills left to right: ticks first, then the numbers still to do.
+  const pathOrder = [...challenges.filter((c) => !!c.completedAt), ...challenges.filter((c) => !c.completedAt)]
+  const ordered = [...challenges.filter((c) => !c.completedAt), ...challenges.filter((c) => !!c.completedAt)]
   const ringR = 30
   const ringC = 2 * Math.PI * ringR
+
+  // A node on the week's path: unfold that task's card and bring it into view.
+  const jumpTo = (id: number) => {
+    setOpenId(id)
+    requestAnimationFrame(() => document.getElementById(`challenge-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+  }
 
   return (
     <>
       <div className="header-row">
         <BackButton onClick={onBack} registerNative={false} />
-        <div style={{ fontWeight: 800, fontSize: 15 }}>Челленджи недели</div>
+        <div style={{ fontWeight: 800, fontSize: 15 }}>{tn('weekly.title')}</div>
         <div style={{ width: 36 }} />
       </div>
       <div className="screen-inner">
@@ -115,7 +143,8 @@ export function ChallengesScreen({ onBack, active }: { onBack: () => void; activ
           </div>
         )}
         {!isLoading && total > 0 && (
-          <div className="challenges-week-card">
+          // Re-keyed each time the screen becomes the visible one, so the card plays its entrance again.
+          <div key={active ? 'on' : 'off'} className={`challenges-week-card${allDone ? ' all-done' : ''}`}>
             <div className="challenges-week-pattern" />
             <ChallengeCountdown endsAt={weekState?.weekEndsAt ?? null} />
             <div className="challenges-week-body">
@@ -142,28 +171,56 @@ export function ChallengesScreen({ onBack, active }: { onBack: () => void; activ
                   </div>
                 </div>
                 <div className="challenges-week-info">
-                  <div className="challenges-week-title">{doneCount === total ? 'Неделя закрыта 🎉' : 'Задания недели'}</div>
+                  <div className="challenges-week-title">{allDone ? tn('weekly.weekClosed') : tn('weekly.weekTasks')}</div>
                   <div className="challenges-week-reward">
                     <CoinIcon size={16} />
-                    <span>до {weekCoins} монет</span>
+                    <span>{tn('weekly.earned', { got: earnedCoins, total: weekCoins })}</span>
                   </div>
                 </div>
               </div>
-              <div className="challenges-week-note">Три задания на неделю. Не успел — часть монет всё равно капнет по прогрессу.</div>
+              <div className="wk-path" data-tour="week-path" aria-label={tn('weekly.path')}>
+                {pathOrder.map((ch, i) => {
+                  const d = !!ch.completedAt
+                  return (
+                    <div key={ch.id} className="wk-path-seg" style={{ ['--i' as string]: i }}>
+                      {i > 0 && <span className={`wk-path-line${d ? ' full' : pathOrder[i - 1].completedAt ? ' on' : ''}`} />}
+                      <button
+                        className={`wk-node${d ? ' done' : ''}${curId === ch.id ? ' cur' : ''}`}
+                        style={{ ['--tier-color' as string]: TIER_COLOR[ch.tier] }}
+                        onClick={() => jumpTo(ch.id)}
+                        aria-label={ch.name}
+                      >
+                        {d ? (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                            <path d="M5 12.5l4.5 4.5L19 7.5" />
+                          </svg>
+                        ) : (
+                          <b>{i + 1}</b>
+                        )}
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="challenges-week-note">{tn('weekly.note')}</div>
             </div>
             <div className="challenges-week-glow-panel" />
           </div>
         )}
 
         {!isLoading &&
-          challenges.map((ch, i) => {
+          ordered.map((ch, i) => {
             const done = !!ch.completedAt
             const pct = Math.min(1, ch.progress / ch.target)
             const canSwap = !done && (ch.tier === 'medium' || ch.tier === 'hard')
+            const isOpen = !done || openId === ch.id
+            const partial = Math.floor(pct * ch.coinReward)
             return (
               <div
                 key={ch.challengeId}
-                className={`challenge-card${done ? ' challenge-done' : ''}`}
+                id={`challenge-${ch.id}`}
+                data-tour={!done && ordered[0]?.id === ch.id ? 'challenge-card' : undefined}
+                className={`challenge-card${done ? ' challenge-done' : ' pinned'}${isOpen ? ' open' : ''}${fresh.has(ch.id) ? ' fresh' : ''}`}
                 style={
                   {
                     '--tier-color': TIER_COLOR[ch.tier],
@@ -172,35 +229,64 @@ export function ChallengesScreen({ onBack, active }: { onBack: () => void; activ
                   } as React.CSSProperties
                 }
               >
-                {done && <div className="challenge-done-badge">✓</div>}
-                <div className="challenge-tier-row">
-                  <span className="challenge-tier-dot" style={{ background: TIER_COLOR[ch.tier] }} />
-                  <span className="challenge-tier-label">{TIER_LABEL[ch.tier]}</span>
-                  {!done && (
-                    <span className="challenge-reward">
-                      <CoinIcon size={16} />
-                      {ch.coinReward}
-                    </span>
-                  )}
-                </div>
-                <div className="challenge-name">{ch.name}</div>
-                <div className="challenge-desc">{ch.description}</div>
-                <div className="challenge-progress-track">
-                  <div className="challenge-progress-fill" style={{ transform: `scaleX(${pct})`, background: TIER_COLOR[ch.tier] }} />
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
-                  <div className="challenge-progress-label">
+                <button className="challenge-head" onClick={() => done && setOpenId(isOpen ? null : ch.id)} aria-expanded={isOpen}>
+                  <span className="challenge-tier-row">
+                    <span className="challenge-tier-dot" style={{ background: TIER_COLOR[ch.tier] }} />
+                    <span className="challenge-tier-label">{TIER_LABEL[ch.tier]}</span>
+                    {done ? (
+                      <span className="challenge-done-badge" aria-hidden>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path className="challenge-check" d="M5 12.5l4.5 4.5L19 7.5" />
+                        </svg>
+                      </span>
+                    ) : (
+                      <span className="challenge-reward">
+                        <CoinIcon size={16} />
+                        {ch.coinReward}
+                      </span>
+                    )}
+                    <svg className="challenge-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  </span>
+                  <span className="challenge-name">{ch.name}</span>
+                  <span className="challenge-progress-track">
+                    <span className="challenge-progress-fill" style={{ transform: `scaleX(${pct})`, background: TIER_COLOR[ch.tier] }} />
+                  </span>
+                  <span className="challenge-progress-label">
                     {ch.progress}/{ch.target}
+                  </span>
+                </button>
+                <div className="challenge-more">
+                  <div className="challenge-more-in">
+                    <div className="challenge-desc">{ch.description}</div>
+                    <div className="challenge-facts">
+                      {done ? (
+                        <span className="challenge-fact paid">{tn('weekly.paid')}</span>
+                      ) : (
+                        <>
+                          <span className="challenge-fact">{tn('weekly.left', { n: ch.target - ch.progress })}</span>
+                          <span className="challenge-fact">
+                            {tn('weekly.inCredit')}
+                            <b>
+                              {partial}
+                              <CoinIcon size={16} />
+                            </b>
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <div className="challenge-tip">{done ? tn(TIER_HINT[ch.tier]) : tn('weekly.partialHint')}</div>
+                    {canSwap && (
+                      <button
+                        className="challenge-swap-btn"
+                        disabled={swapChallenge.isPending}
+                        onClick={() => request(swapPrice, tn('weekly.swapReason', { name: ch.name }), () => swapChallenge.mutate(ch.id))}
+                      >
+                        {tn('weekly.swap', { price: swapPrice })}
+                      </button>
+                    )}
                   </div>
-                  {canSwap && (
-                    <button
-                      className="challenge-swap-btn"
-                      disabled={swapChallenge.isPending}
-                      onClick={() => request(swapPrice, `Замена: ${ch.name}`, () => swapChallenge.mutate(ch.id))}
-                    >
-                      Заменить · {swapPrice}
-                    </button>
-                  )}
                 </div>
               </div>
             )
@@ -210,10 +296,10 @@ export function ChallengesScreen({ onBack, active }: { onBack: () => void; activ
           <button
             className="challenge-extra-btn"
             disabled={buyExtraChallenge.isPending}
-            onClick={() => request(extraPrice, 'Четвёртый челлендж', () => buyExtraChallenge.mutate())}
+            onClick={() => request(extraPrice, tn('weekly.fourthReason'), () => buyExtraChallenge.mutate())}
           >
             <span className="challenge-extra-lock">🔓</span>
-            <span>Открыть 4-й челлендж</span>
+            <span>{tn('weekly.openFourth')}</span>
             <span className="challenge-extra-price">
               <CoinIcon size={16} />
               {extraPrice}

@@ -4,6 +4,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { isLightClanBackground, resolveClanBackground } from '@/lib/data/clanBackgrounds'
+import { tn } from '@/lib/i18n/runtime'
 
 // The clan's banner: its chosen background, the big crest (with the shine)
 // and name/motto. Shared by the clan screen and the constructor's live
@@ -41,7 +42,7 @@ export function ClanHero({
         <div className="clan-hero-crest">
           <ClanCrest crest={crest} size={compact ? 84 : 104} shine golden={golden} title={name} />
         </div>
-        {!hideName && <div className="clan-hero-name">{name || 'Название клана'}</div>}
+        {!hideName && <div className="clan-hero-name">{name || tn('nav.clanNameFallback')}</div>}
         {motto ? <div className="clan-hero-motto">«{motto}»</div> : null}
         {children}
       </div>

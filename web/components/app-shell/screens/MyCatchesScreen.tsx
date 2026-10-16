@@ -10,6 +10,7 @@ import { CatcherLabel } from '@/components/app-shell/screens/TerritoryScreen'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { DiaryView } from '@/components/app-shell/Diary'
 import { useT } from '@/lib/i18n'
+import { tn } from '@/lib/i18n/runtime'
 
 // Full catch history — either one profile's (own or someone else's, by
 // userId; ProfileScreen/UserProfileScreen show a 3-item preview with a button
@@ -43,7 +44,7 @@ export function MyCatchesScreen({
   const catchesPending = territoryId ? byTerritoryPending : byUserPending
   const isOwn = !territoryId && userId === user?.id
   const { data: profile } = useProfile(!territoryId && !isOwn ? (userId ?? null) : null)
-  const title = territoryId ? `Уловы: ${territoryId}` : isOwn ? 'Мои уловы' : `Уловы: ${profile?.displayName ?? '…'}`
+  const title = territoryId ? tn('weekly.catchesOf', { name: territoryId }) : isOwn ? tn('weekly.myCatches') : tn('weekly.catchesOf', { name: profile?.displayName ?? '…' })
 
   return (
     <>
@@ -99,7 +100,7 @@ export function MyCatchesScreen({
               catchesPending ? (
                 <SkeletonRows count={5} />
               ) : (
-                <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Пока нет уловов</div>
+                <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>{tn('weekly.noCatches')}</div>
               )
             )}
           </div>

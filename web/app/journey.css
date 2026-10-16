@@ -1,0 +1,123 @@
+/* The onboarding journey: the welcome screen and the two intro screens as one
+   picture (IntroJourney). One night map fills the screen; three panels of text
+   and buttons lie over it, one shown at a time. A panel's pieces (.jp-in) come in
+   one after another once the camera has landed, and leave upward when the next
+   stop is reached (or downward, if it is gone back from). */
+.journey {
+  position: relative;
+  height: 100dvh;
+  overflow: hidden;
+  isolation: isolate;
+  background: #050C14;
+  color: #F4F6FA;
+}
+html.ios-standalone .journey { height: var(--app-h); }
+.journey-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: manipulation;
+}
+/* A band of night at the bottom, so the text and the buttons sit on it. */
+.journey::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: min(340px, 40%);
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(rgba(5, 12, 20, 0), rgba(5, 12, 20, 0.9) 44%, #050C14);
+}
+
+.jp-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  visibility: hidden;
+  transition: visibility 0s linear 0.45s;
+}
+.jp-panel[data-state="active"] { visibility: visible; transition-delay: 0s; }
+.jp-panel button,
+.jp-panel .lang-menu { pointer-events: auto; }
+.jp-panel--welcome {
+  padding: calc(30px + env(safe-area-inset-top) + var(--tg-safe-area-top, 0px)) 24px calc(16px + env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px));
+}
+.jp-panel--intro { padding-bottom: calc(24px + env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px)); }
+.jp-panel .intro-illustration { pointer-events: none; }
+
+/* The welcome's own pieces, minus their one-off entrance animations. */
+.jp-panel--welcome .welcome-logo,
+.jp-panel--welcome .welcome-title span,
+.jp-panel--welcome .welcome-sub,
+.jp-panel--welcome .welcome-foot { animation: none; }
+.jp-panel--welcome .btn-primary { white-space: nowrap; box-shadow: 0 12px 26px rgba(252, 82, 0, 0.38), 0 2px 4px rgba(120, 30, 0, 0.3); }
+@media (max-width: 359px), (max-height: 620px) {
+  .jp-panel--welcome { padding-top: calc(18px + env(safe-area-inset-top) + var(--tg-safe-area-top, 0px)); }
+  .jp-panel--welcome .btn-primary { font-size: 15px; padding-left: 12px; padding-right: 12px; }
+  .jp-panel--welcome .welcome-title,
+  .jp-panel--welcome .welcome-sub { margin-top: 14px; }
+  .jp-panel--welcome .welcome-foot { gap: 10px; }
+}
+/* The two intro stops: the night-screen look of the text and the button. */
+.jp-panel--intro .intro-copy { padding: 22px 24px 0; background: none; }
+.jp-panel--intro .intro-title { color: #F4F6FA; text-wrap: balance; }
+.jp-panel--intro .intro-sub { color: #B9C4D2; }
+.jp-panel--intro .intro-cta {
+  background: linear-gradient(160deg, #FF6A1F, #FC5200 65%);
+  color: #fff;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 12px 26px rgba(252, 82, 0, 0.38), 0 2px 4px rgba(120, 30, 0, 0.3);
+}
+.jp-panel--intro .intro-back {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset, 0 4px 12px rgba(0, 0, 0, 0.3);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* The pieces: hidden and displaced by default; shown, in order, in the active
+   panel (--d is each piece's delay, a little after the camera lands); on leaving
+   they go quickly, all together, up (the next stop is ahead) or down (gone back). */
+.jp-in {
+  --jp-y: 22px;
+  opacity: 0;
+  transform: translateY(var(--jp-y));
+  filter: blur(6px);
+  transition: opacity 0.22s ease, transform 0.3s ease, filter 0.22s ease;
+}
+.jp-panel[data-state="past"] .jp-in { --jp-y: -18px; }
+.jp-panel[data-state="active"] .jp-in {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  transition: opacity 0.5s ease var(--d, 0s), transform 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0s), filter 0.5s ease var(--d, 0s);
+}
+@media (prefers-reduced-motion: reduce) {
+  .jp-in, .jp-panel[data-state="active"] .jp-in { transition: opacity 0.2s ease; transform: none; filter: none; }
+}
+
+/* The hand-over from the night map to the first light step (OnboardingCrossfade):
+   the map dissolves (softly blurring, a touch larger) while the step comes up
+   under it. Around it, the wrapper is just a flex column like the app shell. */
+.ob-stage { position: relative; display: flex; flex-direction: column; flex: 1 1 auto; min-height: 100dvh; }
+.ob-journey, .ob-rest { display: flex; flex-direction: column; flex: 1 1 auto; }
+.ob-leaving { position: absolute; inset: 0; z-index: 60; pointer-events: none; animation: ob-leave 0.75s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.ob-enter { display: flex; flex-direction: column; flex: 1 1 auto; animation: ob-enter 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both; }
+/* Coming back to the night picture: it fades up as the light form dissolves. */
+.ob-fadein { display: flex; flex-direction: column; flex: 1 1 auto; animation: ob-fadein 0.65s ease both; }
+@keyframes ob-fadein { from { opacity: 0; } to { opacity: 1; } }
+.ob-leaving--light { animation-name: ob-leave-light; }
+@keyframes ob-leave-light { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-10px); } }
+@keyframes ob-leave { from { opacity: 1; filter: none; transform: none; } to { opacity: 0; filter: blur(10px); transform: scale(1.04); } }
+@keyframes ob-enter { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .ob-leaving { animation-duration: 0.2s; }
+  .ob-enter { animation: none; }
+}

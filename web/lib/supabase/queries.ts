@@ -15,6 +15,9 @@ import { mapRecap, type WeekRecap } from '@/lib/recap'
 import { uploadSupportPhoto } from '@/lib/supabase/storage'
 import { downscaleToJpeg } from '@/lib/exif'
 import type { AdminGeoPanorama, AdminGeoPlanDay, GeoBoardEntry, GeoCity, GeoResult, GeoSectorStory, GeoToday } from '@/lib/geo'
+import { localSpeciesName } from '@/lib/data/species'
+import { localShopName, localAwardDescription, localAwardSubtitle, localAwardTitle, localBuff, localChallenge, localTxLabel } from '@/lib/data/dbText'
+import { tn } from '@/lib/i18n/runtime'
 
 type SectorGeometry = {
   id: string
@@ -296,7 +299,7 @@ export function useSpecies() {
       const supabase = createClient()
       const { data, error } = await supabase.from('species').select('key, name, category').order('sort_order').order('name')
       if (error) throw error
-      return data as Species[]
+      return (data as Species[]).map((s) => ({ ...s, name: localSpeciesName(s.name, s.key) }))
     },
     staleTime: Infinity,
     gcTime: Infinity,
@@ -326,7 +329,7 @@ function rowToCatch(c: CatchRow, currentUserId?: string): Catch {
     territoryId: c.territory_id,
     userId: c.user_id,
     species: c.species,
-    speciesName: info?.name ?? c.species,
+    speciesName: info?.name ? localSpeciesName(info.name, c.species) : c.species,
     speciesCategory: (info?.category as SpeciesCategory) ?? 'marine',
     lengthCm: c.length_cm,
     weightKg: c.weight_kg,
@@ -413,7 +416,7 @@ export function useCatchComments(catchId: number | null) {
         id: r.id,
         parentId: r.parent_id,
         userId: r.user_id,
-        displayName: r.display_name ?? 'Рыбак',
+        displayName: r.display_name ?? tn('common.angler'),
         avatarUrl: r.avatar_url,
         nameStyle: r.equipped_name_style,
         replyToUserId: r.reply_to_user_id,
@@ -570,7 +573,7 @@ export function useAdminTextModerationLog(enabled: boolean) {
       return (data ?? []).map((r) => ({
         id: r.id,
         userId: r.user_id,
-        displayName: r.display_name ?? 'Рыбак',
+        displayName: r.display_name ?? tn('common.angler'),
         avatarUrl: r.avatar_url,
         context: r.context,
         reason: r.reason,
@@ -609,7 +612,7 @@ export function useCatchLikes(catchId: number | null) {
       if (error) throw error
       const likers = data.map((r) => {
         const p = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
-        return { userId: r.user_id, displayName: p?.display_name ?? 'Рыбак', avatarUrl: p?.avatar_url ?? null }
+        return { userId: r.user_id, displayName: p?.display_name ?? tn('common.angler'), avatarUrl: p?.avatar_url ?? null }
       })
       return { count: likers.length, likedByMe: !!user && likers.some((l) => l.userId === user.id), likers }
     },
@@ -643,7 +646,7 @@ export function useToggleCatchLike() {
         const nextLikers = liked
           ? likers.filter((l) => l.userId !== user!.id)
           : user && !likers.some((l) => l.userId === user.id)
-            ? [{ userId: user.id, displayName: myProfile?.displayName ?? 'Ты', avatarUrl: myProfile?.avatarUrl ?? null }, ...likers]
+            ? [{ userId: user.id, displayName: myProfile?.displayName ?? tn('sector.you'), avatarUrl: myProfile?.avatarUrl ?? null }, ...likers]
             : likers
         return { count: Math.max(0, (old?.count ?? 0) + (liked ? -1 : 1)), likedByMe: !liked, likers: nextLikers }
       })
@@ -810,7 +813,7 @@ export function useActivity() {
                                         : 'catch'
           return {
             id: `notif:${row.id}`,
-            who: actor?.display_name ?? 'Рыбак',
+            who: actor?.display_name ?? tn('common.angler'),
             userId: row.actor_id ?? '',
             avatarUrl: actor?.avatar_url ?? null,
             // The one kind that's about a sector of yours rather than about
@@ -820,7 +823,7 @@ export function useActivity() {
             kind,
             territoryId: row.territory_id ?? undefined,
             territoryKind: territory?.kind ?? undefined,
-            speciesName: speciesInfo?.name ?? null,
+            speciesName: speciesInfo?.name ? localSpeciesName(speciesInfo.name) : null,
             speciesCategory: (speciesInfo?.category as SpeciesCategory | undefined) ?? null,
             lengthCm: c?.length_cm ?? null,
             weightKg: c?.weight_kg ?? null,
@@ -936,7 +939,7 @@ export function useCityFeed(city: CityId, enabled = true) {
       return (data ?? []).map(
         (r): ActivityEntry => ({
           id: `city:${r.catch_id}`,
-          who: r.display_name ?? 'Рыбак',
+          who: r.display_name ?? tn('common.angler'),
           userId: r.user_id,
           avatarUrl: r.avatar_url,
           mine: false,
@@ -946,7 +949,7 @@ export function useCityFeed(city: CityId, enabled = true) {
           claimed: r.claimed,
           territoryId: r.territory_id,
           territoryKind: r.territory_kind ?? undefined,
-          speciesName: r.species_name,
+          speciesName: r.species_name ? localSpeciesName(r.species_name) : r.species_name,
           speciesCategory: (r.species_category as SpeciesCategory | null) ?? null,
           lengthCm: r.length_cm,
           weightKg: r.weight_kg,
@@ -1095,7 +1098,7 @@ export function useProfile(userId: string | null) {
       if (error) throw error
       return {
         id: data.id!,
-        displayName: data.display_name ?? 'Рыбак',
+        displayName: data.display_name ?? tn('common.angler'),
         location: data.location,
         avatarUrl: data.avatar_url,
         bio: data.bio,
@@ -1154,7 +1157,7 @@ export function useAllUsers() {
       return data.map(
         (r): UserListEntry => ({
           id: r.id!,
-          displayName: r.display_name ?? 'Рыбак',
+          displayName: r.display_name ?? tn('common.angler'),
           avatarUrl: r.avatar_url,
           publicId: r.public_id ?? '?????',
           createdAt: r.created_at ?? new Date().toISOString(),
@@ -1189,7 +1192,7 @@ export function useAllPlayers(enabled: boolean) {
         .map(
           (r): CityPlayer => ({
             id: r.id!,
-            displayName: r.display_name ?? 'Рыбак',
+            displayName: r.display_name ?? tn('common.angler'),
             avatarUrl: r.avatar_url,
             catchesCount: r.catches_count ?? 0,
             territoriesCount: r.territories_count ?? 0,
@@ -1227,7 +1230,7 @@ export function useWeeklyLeaderboard(friendsOnly: boolean, weekOffset: number = 
       return data.map(
         (r): WeeklyLeaderboardEntry => ({
           userId: r.user_id,
-          displayName: r.display_name ?? 'Рыбак',
+          displayName: r.display_name ?? tn('common.angler'),
           avatarUrl: r.avatar_url,
           sectorsThisWeek: r.sectors_this_week,
           catchesThisWeek: r.catches_this_week,
@@ -1252,9 +1255,9 @@ export function useUserAwards(userId: string | null) {
         (r): UserAward => ({
           id: r.id,
           kind: r.kind as AwardKind,
-          title: r.title,
-          subtitle: r.subtitle,
-          description: r.description,
+          title: localAwardTitle(r.title),
+          subtitle: localAwardSubtitle(r.title, r.subtitle),
+          description: localAwardDescription(r.title, r.description),
           earnedAt: r.earned_at,
         })
       )
@@ -1608,7 +1611,7 @@ export function useShopItems() {
       const supabase = createClient()
       const { data, error } = await supabase.from('shop_items').select('id, category, name, price, purchasable').order('category').order('sort_order')
       if (error) throw error
-      return data.map((r) => ({ id: r.id, category: r.category as ShopItem['category'], name: r.name, price: r.price, purchasable: r.purchasable }))
+      return data.map((r) => ({ id: r.id, category: r.category as ShopItem['category'], name: localShopName(r.id, r.name), price: r.price, purchasable: r.purchasable }))
     },
     staleTime: Infinity,
     gcTime: Infinity,
@@ -1680,7 +1683,7 @@ export function useFollowers(userId: string | null) {
       if (error) throw error
       return (data ?? []).map((r) => {
         const p = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
-        return { userId: r.follower_id, displayName: p?.display_name ?? 'Рыбак', avatarUrl: p?.avatar_url ?? null }
+        return { userId: r.follower_id, displayName: p?.display_name ?? tn('common.angler'), avatarUrl: p?.avatar_url ?? null }
       })
     },
   })
@@ -1776,7 +1779,7 @@ export function useReports() {
             reason: r.reason,
             createdAt: r.created_at,
             reporterId: r.reporter_id,
-            reporterName: reporter?.display_name ?? 'Рыбак',
+            reporterName: reporter?.display_name ?? tn('common.angler'),
             territoryId: c.territory_id,
             photoUrl: c.photo_url,
             speciesName: speciesInfo?.name ?? null,
@@ -2367,8 +2370,7 @@ export function useMyChallenges(city: CityId) {
       const rows = (data ?? []).map((r) => ({
         id: r.id,
         challengeId: r.challenge_id,
-        name: r.name,
-        description: r.description,
+        ...localChallenge(r.challenge_id, r.name, r.description),
         tier: r.tier as WeeklyChallenge['tier'],
         coinReward: r.coin_reward,
         target: r.target,
@@ -2490,7 +2492,7 @@ export function useBuffs() {
       const supabase = createClient()
       const { data, error } = await supabase.from('buffs').select('id, name, description, price, duration_hours').order('sort_order')
       if (error) throw error
-      return data.map((r) => ({ id: r.id, name: r.name, description: r.description, price: r.price, durationHours: r.duration_hours }))
+      return data.map((r) => ({ id: r.id, ...localBuff(r.id, r.name, r.description), price: r.price, durationHours: r.duration_hours }))
     },
     staleTime: Infinity,
     gcTime: Infinity,
@@ -2566,7 +2568,7 @@ export function useMyCoinTransactions() {
       if (pageParam) q = q.or(`created_at.lt.${pageParam.at},and(created_at.eq.${pageParam.at},id.lt.${pageParam.id})`)
       const { data, error } = await q
       if (error) throw error
-      return data.map((r) => ({ id: r.id, amount: r.amount, reason: r.reason, label: r.label, createdAt: r.created_at }))
+      return data.map((r) => ({ id: r.id, amount: r.amount, reason: r.reason, label: localTxLabel(r.reason, r.label), createdAt: r.created_at }))
     },
     getNextPageParam: (last) => {
       if (last.length < COIN_HISTORY_PAGE) return undefined
@@ -2588,7 +2590,7 @@ export function useAdminUserCoinTransactions(userId: string | null) {
       const supabase = createClient()
       const { data, error } = await supabase.rpc('admin_get_user_coin_transactions', { p_user_id: userId! })
       if (error) throw error
-      return data.map((r) => ({ id: r.id, amount: r.amount, reason: r.reason, label: r.label, createdAt: r.created_at }))
+      return data.map((r) => ({ id: r.id, amount: r.amount, reason: r.reason, label: localTxLabel(r.reason, r.label), createdAt: r.created_at }))
     },
   })
 }
@@ -3190,7 +3192,7 @@ export function useClan(clanId: number | null) {
         sectorsHeld: Number(r.sectors_held ?? 0),
         members: members.map((m) => ({
           userId: String(m.user_id),
-          displayName: String(m.display_name ?? 'Рыбак'),
+          displayName: String(m.display_name ?? tn('common.angler')),
           avatarUrl: (m.avatar_url as string | null) ?? null,
           nameStyle: (m.name_style as string | null) ?? null,
           role: m.role as ClanMember['role'],
@@ -3201,7 +3203,7 @@ export function useClan(clanId: number | null) {
         requests: requests
           ? requests.map((q) => ({
               userId: String(q.user_id),
-              displayName: String(q.display_name ?? 'Рыбак'),
+              displayName: String(q.display_name ?? tn('common.angler')),
               avatarUrl: (q.avatar_url as string | null) ?? null,
               sectors: Number(q.sectors ?? 0),
               createdAt: String(q.created_at),
@@ -3240,7 +3242,7 @@ export function useClanChat(clanId: number | null) {
       return (data ?? []).map((r) => ({
         id: r.id,
         userId: r.user_id,
-        displayName: r.display_name ?? 'Рыбак',
+        displayName: r.display_name ?? tn('common.angler'),
         avatarUrl: r.avatar_url,
         nameStyle: r.name_style,
         role: (r.role as ClanRoleId | null) ?? null,
@@ -3537,7 +3539,7 @@ export function useClanChest(clanId: number | null) {
         rewards: (r.rewards as number[]) ?? [20, 45, 80, 120, 170],
         contributors: contributors.map((c) => ({
           userId: String(c.user_id),
-          displayName: String(c.display_name ?? 'Рыбак'),
+          displayName: String(c.display_name ?? tn('common.angler')),
           avatarUrl: (c.avatar_url as string | null) ?? null,
           points: Number(c.points ?? 0),
         })),
@@ -3570,7 +3572,7 @@ export function useClanRace(city: CityId, enabled: boolean) {
         dailyCap: Number(r.daily_cap ?? 150),
         myRowers: ((r.my_rowers as Record<string, unknown>[]) ?? []).map((w) => ({
           userId: String(w.user_id),
-          displayName: String(w.display_name ?? 'Рыбак'),
+          displayName: String(w.display_name ?? tn('common.angler')),
           avatarUrl: (w.avatar_url as string | null) ?? null,
           meters: Number(w.meters ?? 0),
         })),

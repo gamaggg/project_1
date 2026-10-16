@@ -9,6 +9,7 @@ import { useAllPlayers } from '@/lib/supabase/queries'
 import { pluralCatches, pluralSectors } from '@/lib/format'
 import type { CityPlayer } from '@/lib/data/types'
 import { CITIES, type CityId } from '@/lib/data/city'
+import { currentLocale, labels, tn } from '@/lib/i18n/runtime'
 
 type Order = 'rating' | 'name'
 type CityFilter = 'all' | CityId
@@ -16,13 +17,13 @@ type CityFilter = 'all' | CityId
 // clan members, only players who hold sectors, only the newly joined.
 type Who = 'all' | 'solo' | 'clan' | 'holders' | 'new'
 
-const ORDER_LABEL: Record<Order, string> = { rating: 'По рейтингу', name: 'По имени' }
-const WHO_LABEL: Record<Who, string> = { all: 'Все игроки', solo: 'Без клана', clan: 'В клане', holders: 'С секторами', new: 'Новые за 2 недели' }
+const ORDER_LABEL = labels('playersOrder', ['rating', 'name'] as const)
+const WHO_LABEL = labels('playersWho', ['all', 'solo', 'clan', 'holders', 'new'] as const)
 const NEW_DAYS = 14
 
 const BY_RATING = (a: CityPlayer, b: CityPlayer) =>
-  b.territoriesCount - a.territoriesCount || b.catchesCount - a.catchesCount || a.displayName.localeCompare(b.displayName, 'ru')
-const BY_NAME = (a: CityPlayer, b: CityPlayer) => a.displayName.localeCompare(b.displayName, 'ru')
+  b.territoriesCount - a.territoriesCount || b.catchesCount - a.catchesCount || a.displayName.localeCompare(b.displayName, currentLocale())
+const BY_NAME = (a: CityPlayer, b: CityPlayer) => a.displayName.localeCompare(b.displayName, currentLocale())
 
 // How many rows are shown until «Показать ещё» — a few hundred players would
 // otherwise mean a few hundred avatars at once.
@@ -67,7 +68,7 @@ export function PlayersDirectory({ onOpenUser }: { onOpenUser: (id: string) => v
             setSearch(e.target.value)
             setShown(PAGE)
           }}
-          placeholder="Найти игрока"
+          placeholder={tn('players.search')}
           enterKeyHint="search"
         />
         <PlayersFilter
@@ -84,7 +85,7 @@ export function PlayersDirectory({ onOpenUser }: { onOpenUser: (id: string) => v
         />
       </div>
       <div className="filter-row with-sort">
-        <span className="players-count">{isLoading ? ' ' : `${list.length} ${list.length === 1 ? 'игрок' : list.length % 10 >= 2 && list.length % 10 <= 4 && (list.length % 100 < 12 || list.length % 100 > 14) ? 'игрока' : 'игроков'}`}</span>
+        <span className="players-count">{isLoading ? ' ' : `${list.length} ${tn('plural.player', { count: list.length })}`}</span>
         <SortMenu
           value={order}
           options={ORDER_LABEL}
@@ -92,14 +93,14 @@ export function PlayersDirectory({ onOpenUser }: { onOpenUser: (id: string) => v
             setOrder(o)
             setShown(PAGE)
           }}
-          label="Порядок игроков"
+          label={tn('players.orderLabel')}
         />
       </div>
 
       {isLoading ? (
         <SkeletonRows count={6} thumb={40} round />
       ) : list.length === 0 ? (
-        <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>{query ? 'Никого не нашли' : 'Пока нет игроков'}</div>
+        <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>{query ? tn('players.nobody') : tn('players.none')}</div>
       ) : (
         <>
           <div className="card" style={{ overflow: 'hidden' }}>
@@ -134,7 +135,7 @@ export function PlayersDirectory({ onOpenUser }: { onOpenUser: (id: string) => v
           </div>
           {shown < list.length && (
             <button className="btn-secondary" style={{ marginTop: 12 }} onClick={() => setShown((n) => n + PAGE)}>
-              Показать ещё
+              {tn('players.more')}
             </button>
           )}
         </>
@@ -166,15 +167,15 @@ function PlayersFilter({ who, city, onWho, onCity }: { who: Who; city: CityFilte
   const active = who !== 'all' || city !== 'all'
   return (
     <div className="sort-menu players-filter" ref={rootRef}>
-      <button type="button" className={`players-filter-btn tap-scale${active ? ' on' : ''}`} aria-haspopup="listbox" aria-expanded={open} aria-label="Фильтр игроков" onClick={() => setOpen((o) => !o)}>
+      <button type="button" className={`players-filter-btn tap-scale${active ? ' on' : ''}`} aria-haspopup="listbox" aria-expanded={open} aria-label={tn('players.filterLabel')} onClick={() => setOpen((o) => !o)}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <path d="M4 6h16M7 12h10M10 18h4" />
         </svg>
         {active && <span className="players-filter-dot" />}
       </button>
       {open && (
-        <div className="sort-menu-list players-filter-list" role="listbox" aria-label="Фильтр игроков">
-          <div className="players-filter-title">Кто</div>
+        <div className="sort-menu-list players-filter-list" role="listbox" aria-label={tn('players.filterLabel')}>
+          <div className="players-filter-title">{tn('players.who')}</div>
           {(Object.keys(WHO_LABEL) as Who[]).map((key) => (
             <button
               key={key}
@@ -190,7 +191,7 @@ function PlayersFilter({ who, city, onWho, onCity }: { who: Who; city: CityFilte
               {WHO_LABEL[key]}
             </button>
           ))}
-          <div className="players-filter-title">Город</div>
+          <div className="players-filter-title">{tn('players.city')}</div>
           {(['all', 'batumi', 'moscow'] as const).map((key) => (
             <button
               key={key}
@@ -203,7 +204,7 @@ function PlayersFilter({ who, city, onWho, onCity }: { who: Who; city: CityFilte
                 setOpen(false)
               }}
             >
-              {key === 'all' ? 'Все города' : CITIES[key].name}
+              {key === 'all' ? tn('players.allCities') : CITIES[key].name}
             </button>
           ))}
         </div>

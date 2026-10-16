@@ -1,3 +1,4 @@
+import { tn } from '@/lib/i18n/runtime'
 // Really running as the Telegram Mini App. The SDK (layout.tsx) loads on
 // every page and defines WebApp in a plain browser too — there its
 // openTelegramLink just navigates the tab away to t.me, so share sheets and
@@ -24,8 +25,8 @@ export function formatCoords(lat: number, lng: number): string {
 export function mapsLinks(lat: number, lng: number): { id: string; label: string; url: string }[] {
   const ll = `${lat.toFixed(6)},${lng.toFixed(6)}`
   return [
-    { id: 'google', label: 'Google Карты', url: `https://www.google.com/maps/dir/?api=1&destination=${ll}` },
-    { id: 'yandex', label: 'Яндекс Карты', url: `https://yandex.ru/maps/?rtext=~${ll}&rtt=auto` },
-    { id: 'apple', label: 'Apple Карты', url: `https://maps.apple.com/?daddr=${ll}` },
+    { id: 'google', label: tn('maps.google'), url: `https://www.google.com/maps/dir/?api=1&destination=${ll}` },
+    { id: 'yandex', label: tn('maps.yandex'), url: `https://yandex.ru/maps/?rtext=~${ll}&rtt=auto` },
+    { id: 'apple', label: tn('maps.apple'), url: `https://maps.apple.com/?daddr=${ll}` },
   ]
 }

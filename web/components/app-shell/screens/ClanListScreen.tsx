@@ -8,6 +8,7 @@ import { BackButton } from '@/components/app-shell/BackButton'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { CLAN_PRICE, JOIN_TYPE_LABEL, leagueFor } from '@/lib/data/clanLevels'
+import { tn } from '@/lib/i18n/runtime'
 
 function useDebounced<T>(value: T, ms: number): T {
   const [debounced, setDebounced] = useState(value)
@@ -47,7 +48,7 @@ export function ClanListScreen({
     <>
       <div className="header-row">
         <BackButton onClick={onBack} registerNative={false} />
-        <div style={{ fontWeight: 800, fontSize: 15 }}>Кланы · {CITIES[city].name}</div>
+        <div style={{ fontWeight: 800, fontSize: 15 }}>{tn('clanList.title', { city: CITIES[city].name })}</div>
         <div style={{ width: 36 }} />
       </div>
       <div className="screen-inner">
@@ -56,14 +57,14 @@ export function ClanListScreen({
             <circle cx="11" cy="11" r="7" />
             <path d="m20 20-3.5-3.5" />
           </svg>
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Название или ID клана" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tn('clanList.search')} />
         </div>
 
         {inClan && me?.clanId && (
           <button className="clan-mine tap-scale" onClick={() => onOpenClan(me.clanId!)}>
             <ClanCrest crest={me.clanCrest} size={48} />
             <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-              <span className="clan-mine-kicker">Твой клан</span>
+              <span className="clan-mine-kicker">{tn('clanList.yours')}</span>
               <span className="clan-mine-name">{me.clanName}</span>
             </span>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -74,15 +75,15 @@ export function ClanListScreen({
 
         {!inClan && invites.length > 0 && (
           <div className="clan-card" style={{ marginTop: 12 }}>
-            <div className="clan-card-title">Приглашения · {invites.length}</div>
+            <div className="clan-card-title">{tn('clanList.invites', { count: invites.length })}</div>
             {invites.map((inv) => (
               <button key={inv.clanId} className="clan-list-row tap-scale" onClick={() => onOpenClan(inv.clanId)}>
                 <ClanCrest crest={inv.crest} size={40} />
                 <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                   <span className="clan-list-name">{inv.name}</span>
-                  <span className="clan-list-meta">Зовёт {inv.invitedByName ?? 'участник клана'}</span>
+                  <span className="clan-list-meta">{tn('clanList.invitedBy', { name: inv.invitedByName ?? tn('clanList.clanMember') })}</span>
                 </span>
-                <span className="clan-mini-btn ok">Открыть</span>
+                <span className="clan-mini-btn ok">{tn('clanList.open')}</span>
               </button>
             ))}
           </div>
@@ -90,30 +91,30 @@ export function ClanListScreen({
 
         {!inClan && (
           <div className="clan-create-card">
-            <div className="clan-create-kicker">Свой клан</div>
-            <div className="clan-create-title">Собери команду, выбери герб и побеждай в битве кланов</div>
+            <div className="clan-create-kicker">{tn('clanList.createKicker')}</div>
+            <div className="clan-create-title">{tn('clanList.createTitle')}</div>
             <div className="clan-create-reqs">
               <span className={`clan-create-req${sectorsOk ? ' ok' : ''}`}>
-                {sectorsOk ? '✓ 3+ сектора захвачено' : `✕ Сектора: ${eligibility?.sectors ?? '…'} из ${eligibility?.sectorsNeeded ?? 3}`}
+                {sectorsOk ? tn('clanList.sectorsOk') : tn('clanList.sectorsNo', { have: eligibility?.sectors ?? '…', need: eligibility?.sectorsNeeded ?? 3 })}
               </span>
               <span className={`clan-create-req${coinsOk ? ' ok' : ''}`}>
-                {coinsOk ? `✓ ${CLAN_PRICE} монет есть` : `✕ Монеты: ${eligibility?.coins ?? '…'} из ${CLAN_PRICE}`}
+                {coinsOk ? tn('clanList.coinsOk', { price: CLAN_PRICE }) : tn('clanList.coinsNo', { have: eligibility?.coins ?? '…', price: CLAN_PRICE })}
               </span>
             </div>
             <button className="btn-primary" style={{ marginTop: 14 }} onClick={onCreate}>
-              {sectorsOk && coinsOk ? 'Создать клан' : 'Посмотреть конструктор'}
+              {sectorsOk && coinsOk ? tn('clanList.create') : tn('clanList.builder')}
             </button>
           </div>
         )}
 
         <div className="section-title-row" style={{ marginTop: 22 }}>
-          <div className="section-title">{debounced ? 'Найдено' : 'Все кланы'}</div>
+          <div className="section-title">{debounced ? tn('clanList.found') : tn('clanList.all')}</div>
         </div>
         {isLoading ? (
           <SkeletonRows count={6} thumb={40} round />
         ) : clans.length === 0 ? (
           <div className="clan-empty">
-            {debounced ? 'Клана с таким названием или ID нет' : 'В городе пока нет ни одного клана — стань первым'}
+            {debounced ? tn('clanList.notFound') : tn('clanList.none')}
           </div>
         ) : (
           <div className="clan-card">
@@ -127,7 +128,7 @@ export function ClanListScreen({
                     <span className="clan-list-name">{c.name}</span>
                     <span className="clan-list-meta">
                       ID {c.id} · {c.members}/{c.capacity} · {JOIN_TYPE_LABEL[c.joinType]}
-                      {c.minSectors > 0 ? ` · от ${c.minSectors} сект.` : ''}
+                      {c.minSectors > 0 ? ` · ${tn('clanList.minSectors', { count: c.minSectors })}` : ''}
                     </span>
                   </span>
                   <span className="clan-list-trophies">

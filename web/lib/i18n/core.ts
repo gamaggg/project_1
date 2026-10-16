@@ -2,6 +2,13 @@ import { ru } from '@/lib/i18n/ru'
 import { en } from '@/lib/i18n/en'
 import { ka } from '@/lib/i18n/ka'
 
+// Russian for everyone until the whole app is translated (BIG_UPDATE item
+// 11, decided 06.10): most screens were still Russian in code, so following an
+// English or Georgian Telegram would mix translated new screens with the
+// Russian rest. Flip this on together with the full translation. (It lives
+// here, not in index.tsx, so the Telegram routes can read it too.)
+export const TRANSLATION_READY = true
+
 export type Lang = 'ru' | 'en' | 'ka'
 
 export const LANGS: { id: Lang; name: string }[] = [
@@ -72,6 +79,21 @@ export function translate(lang: Lang, key: TKey, vars?: TVars): string {
   const leaf = lookup(DICTS[lang], key) ?? lookup(DICTS.ru, key)
   if (leaf === undefined) return key
   const text = typeof leaf === 'string' ? leaf : pluralForm(lang, leaf, Number(vars?.count ?? 0))
-  if (!vars) return text
-  return text.replace(/\{(\w+)\}/g, (match, name: string) => (name in vars ? String(vars[name]) : match))
+  const out = vars ? text.replace(/\{(\w+)\}/g, (match, name: string) => (name in vars ? String(vars[name]) : match)) : text
+  return lang === 'ru' ? typo(out) : out
+}
+
+// Russian typography: a one-to-three-letter preposition or conjunction never
+// ends a line («в / городе», «и / участок»), a dash never starts one, and a
+// number stays with its unit — each is glued to what follows (or, for the dash,
+// precedes) with a no-break space.
+const NBSP = '\u00A0'
+const GLUE = /(?<![\p{L}\p{N}])(в|во|и|к|ко|о|об|с|со|у|а|но|да|на|по|за|от|до|из|не|ни|бы|ли|же|для|при|про|над|под|без)[ ](?=[\p{L}\p{N}«"(])/giu
+const UNIT = /(\d)[ ](?=(?:м|км|кг|г|см|мм|ч|мин|сек|дн|шт|%|₽)(?![\p{L}]))/gu
+export function typo(text: string): string {
+  if (!text.includes(' ')) return text
+  return text
+    .replace(GLUE, `$1${NBSP}`)
+    .replace(/(\S)[ ](—|–)[ ]/g, `$1${NBSP}$2 `)
+    .replace(UNIT, `$1${NBSP}`)
 }

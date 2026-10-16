@@ -33,7 +33,8 @@ for (const top of ['app', 'components', 'lib']) {
     readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
       const s = line.trim()
       if (s.startsWith('//') || s.startsWith('*') || s.startsWith('/*') || s.startsWith('{/*')) return
-      if (/[А-Яа-яЁё]/.test(line.replace(/\s\/\/.*$/, ''))) lines.push(`${i + 1}: ${s.slice(0, 140)}`)
+      // `/ё/g` and the like: code that handles Russian text, not text to translate
+      if (/[А-Яа-яЁё]/.test(line.replace(/\s\/\/.*$/, '').replace(/\/[^/\n]*ё[^/\n]*\/[gimsuy]*/g, ''))) lines.push(`${i + 1}: ${s.slice(0, 140)}`)
     })
     if (lines.length) rows.push({ rel, n: lines.length, admin: ADMIN.test(rel), lines })
   }

@@ -10,6 +10,7 @@ import { nowInZone } from '@/lib/forecast/bite'
 import { CITIES } from '@/lib/data/city'
 import { useNow } from '@/lib/useNow'
 import { hapticSuccess } from '@/lib/telegram/haptics'
+import { tn } from '@/lib/i18n/runtime'
 
 // The coin chip's sheet (TreasuryChip): today's login reward and the Казна,
 // as two tabs of one card built like the «×2 | Щиты» sheet (HudBoosts): a
@@ -46,7 +47,7 @@ export function RewardsModal({ treasury, onClose, onToast }: { treasury: Treasur
           </div>
         </div>
         <button className="btn-primary" onClick={onClose}>
-          Понятно
+          {tn('common.gotIt')}
         </button>
       </div>
     </div>,

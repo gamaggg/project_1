@@ -20,7 +20,8 @@ import { formatShortAgo } from '@/lib/format'
 import { COMMENT_MAX_LENGTH, moderationMessage, mutedMessage, quickCheck } from '@/lib/moderation'
 import { renderWithAppLinks } from '@/components/app-shell/AppLinkText'
 import { useKeyboardInset } from '@/lib/useKeyboardInset'
-import { COMMENT_REPORT_REASONS } from '@/lib/data/reportReasons'
+import { COMMENT_REPORT_REASONS, reportReasonLabel } from '@/lib/data/reportReasons'
+import { tn } from '@/lib/i18n'
 import type { CatchComment } from '@/lib/data/types'
 
 type ReplyTarget = { rootId: number; userId: string; name: string }
@@ -162,7 +163,7 @@ export function CommentsSheet({
         id: tempId,
         parentId: target?.rootId ?? null,
         userId: user.id,
-        displayName: me?.displayName ?? 'Ты',
+        displayName: me?.displayName ?? tn('comments.you'),
         avatarUrl: me?.avatarUrl ?? null,
         nameStyle: me?.equippedNameStyle ?? null,
         replyToUserId: target?.userId ?? null,
@@ -196,7 +197,7 @@ export function CommentsSheet({
     } catch {
       setText(body)
       setReplyTo(target)
-      fail('Не удалось отправить — проверь интернет')
+      fail(tn('comments.sendFailed'))
     } finally {
       setPending((p) => p.filter((c) => c.id !== tempId))
     }
@@ -219,7 +220,7 @@ export function CommentsSheet({
       return (
         <div key={c.id} id={`comment-${c.id}`} className={classes.join(' ')}>
           <div className="avatar comment-avatar comment-avatar-deleted" aria-hidden />
-          <div className="comment-deleted">Комментарий удалён</div>
+          <div className="comment-deleted">{tn('comments.deleted')}</div>
         </div>
       )
     }
@@ -234,10 +235,10 @@ export function CommentsSheet({
               <StyledName name={c.displayName} styleId={c.nameStyle} />
             </button>
             {c.clanCrest != null && <ClanCrest crest={c.clanCrest} size={16} title={c.clanName ?? undefined} />}
-            <span className="comment-time">{c.pending ? 'отправка…' : formatShortAgo(c.createdAt)}</span>
+            <span className="comment-time">{c.pending ? tn('comments.sending') : formatShortAgo(c.createdAt)}</span>
             {!c.pending && user && (
               <div style={{ marginLeft: 'auto', position: 'relative' }}>
-                <button className="comment-more" aria-label="Действия" onClick={() => setMenuFor(menuFor === c.id ? null : c.id)}>
+                <button className="comment-more" aria-label={tn('comments.actions')} onClick={() => setMenuFor(menuFor === c.id ? null : c.id)}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                     <circle cx="5" cy="12" r="1.8" />
                     <circle cx="12" cy="12" r="1.8" />
@@ -246,7 +247,7 @@ export function CommentsSheet({
                 </button>
                 {menuFor === c.id && (
                   <div className="comment-menu" onClick={(e) => e.stopPropagation()}>
-                    <button onClick={() => startReply(c)}>Ответить</button>
+                    <button onClick={() => startReply(c)}>{tn('comments.reply')}</button>
                     {!c.mine && (
                       <button
                         onClick={() => {
@@ -254,7 +255,7 @@ export function CommentsSheet({
                           setReportFor(c.id)
                         }}
                       >
-                        Пожаловаться
+                        {tn('comments.report')}
                       </button>
                     )}
                     {canDelete(c) && (
@@ -265,7 +266,7 @@ export function CommentsSheet({
                           setConfirmDeleteFor(c.id)
                         }}
                       >
-                        Удалить
+                        {tn('common.delete')}
                       </button>
                     )}
                   </div>
@@ -279,7 +280,7 @@ export function CommentsSheet({
           </div>
           {!c.pending && user && (
             <div className="comment-actions">
-              <button onClick={() => startReply(c)}>Ответить</button>
+              <button onClick={() => startReply(c)}>{tn('comments.reply')}</button>
             </div>
           )}
         </div>
@@ -325,9 +326,9 @@ export function CommentsSheet({
           <div className="comments-handle" />
           <div className="comments-head">
             <div className="comments-title">
-              Комментарии {liveCount > 0 && <span className="comments-count">{liveCount}</span>}
+              {tn('comments.title')} {liveCount > 0 && <span className="comments-count">{liveCount}</span>}
             </div>
-            <button className="comments-close tap-scale" onClick={close} aria-label="Закрыть">
+            <button className="comments-close tap-scale" onClick={close} aria-label={tn('common.close')}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden>
                 <path d="M6 6l12 12M18 6L6 18" />
               </svg>
@@ -351,8 +352,8 @@ export function CommentsSheet({
               <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-4-.9L3 20l1.1-4a8.4 8.4 0 0 1-1.1-4.5A8.5 8.5 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5z" />
               </svg>
-              <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--ink)', marginTop: 10 }}>Пока без комментариев</div>
-              <div style={{ marginTop: 4 }}>Будь первым — спроси, на что клюнуло</div>
+              <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--ink)', marginTop: 10 }}>{tn('comments.emptyTitle')}</div>
+              <div style={{ marginTop: 4 }}>{tn('comments.emptyHint')}</div>
             </div>
           ) : (
             roots.map((root) => {
@@ -367,7 +368,7 @@ export function CommentsSheet({
                       {shown.map((r) => renderComment(r, true))}
                       {!isOpen && (
                         <button className="comment-more-replies" onClick={() => setExpanded((prev) => new Set(prev).add(root.id))}>
-                          Показать ещё ответы ({replies.length - VISIBLE_REPLIES})
+                          {tn('comments.moreReplies', { count: replies.length - VISIBLE_REPLIES })}
                         </button>
                       )}
                     </div>
@@ -381,8 +382,8 @@ export function CommentsSheet({
         <div className="comments-compose">
           {replyTo && (
             <div className="comments-reply-chip">
-              Ответ {replyTo.name}
-              <button onClick={() => setReplyTo(null)} aria-label="Отменить ответ">
+              {tn('comments.replyTo', { name: replyTo.name })}
+              <button onClick={() => setReplyTo(null)} aria-label={tn('comments.cancelReply')}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden>
                   <path d="M6 6l12 12M18 6L6 18" />
                 </svg>
@@ -398,7 +399,7 @@ export function CommentsSheet({
                 rows={1}
                 value={text}
                 maxLength={COMMENT_MAX_LENGTH + 20}
-                placeholder={replyTo ? `Ответ ${replyTo.name}` : 'Напиши комментарий'}
+                placeholder={replyTo ? tn('comments.replyTo', { name: replyTo.name }) : tn('comments.placeholder')}
                 onChange={(e) => {
                   setText(e.target.value)
                   if (error) setError(null)
@@ -412,7 +413,7 @@ export function CommentsSheet({
                 }}
               />
               {counterVisible && (
-                <svg width="24" height="24" viewBox="0 0 24 24" className="comments-counter" aria-label={`Осталось ${COMMENT_MAX_LENGTH - text.length}`}>
+                <svg width="24" height="24" viewBox="0 0 24 24" className="comments-counter" aria-label={tn('comments.left', { count: COMMENT_MAX_LENGTH - text.length })}>
                   <circle cx="12" cy="12" r="9" fill="none" stroke="var(--line)" strokeWidth="2.5" />
                   <circle
                     cx="12"
@@ -433,7 +434,7 @@ export function CommentsSheet({
                   )}
                 </svg>
               )}
-              <button className="comments-send tap-scale" disabled={!text.trim() || over || postComment.isPending} onClick={send} aria-label="Отправить">
+              <button className="comments-send tap-scale" disabled={!text.trim() || over || postComment.isPending} onClick={send} aria-label={tn('comments.send')}>
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d="M12 19V5M5 12l7-7 7 7" />
                 </svg>
@@ -448,7 +449,7 @@ export function CommentsSheet({
         {reportFor !== null && (
           <div className="comments-dialog-backdrop" onClick={() => setReportFor(null)}>
             <div className="comments-dialog" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-title">Пожаловаться на комментарий</div>
+              <div className="modal-title">{tn('comments.reportTitle')}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
                 {COMMENT_REPORT_REASONS.map((reason) => (
                   <button
@@ -460,19 +461,19 @@ export function CommentsSheet({
                       reportComment.mutate(
                         { commentId: id, reason },
                         {
-                          onSuccess: () => setToast('Жалоба отправлена — модератор посмотрит'),
-                          onError: () => setToast('Не удалось отправить жалобу'),
+                          onSuccess: () => setToast(tn('comments.reportSent')),
+                          onError: () => setToast(tn('comments.reportFailed')),
                         }
                       )
                       setReportFor(null)
                     }}
                   >
-                    {reason}
+                    {reportReasonLabel(reason)}
                   </button>
                 ))}
               </div>
               <button className="comments-dialog-cancel" onClick={() => setReportFor(null)}>
-                Отмена
+                {tn('common.cancel')}
               </button>
             </div>
           </div>
@@ -481,13 +482,13 @@ export function CommentsSheet({
         {confirmDeleteFor !== null && (
           <div className="comments-dialog-backdrop" onClick={() => setConfirmDeleteFor(null)}>
             <div className="comments-dialog" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-title">Удалить комментарий?</div>
+              <div className="modal-title">{tn('comments.deleteTitle')}</div>
               <div className="modal-body" style={{ margin: '8px 0 16px' }}>
-                Если на него уже ответили, вместо текста останется «Комментарий удалён».
+                {tn('comments.deleteNote')}
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button className="btn-secondary" onClick={() => setConfirmDeleteFor(null)}>
-                  Отмена
+                  {tn('common.cancel')}
                 </button>
                 <button
                   className="btn-primary"
@@ -496,12 +497,12 @@ export function CommentsSheet({
                   onClick={() => {
                     deleteComment.mutate(
                       { commentId: confirmDeleteFor, catchId },
-                      { onSuccess: () => setToast('Комментарий удалён'), onError: () => setToast('Не удалось удалить') }
+                      { onSuccess: () => setToast(tn('comments.deleted')), onError: () => setToast(tn('comments.deleteFailed')) }
                     )
                     setConfirmDeleteFor(null)
                   }}
                 >
-                  Удалить
+                  {tn('common.delete')}
                 </button>
               </div>
             </div>

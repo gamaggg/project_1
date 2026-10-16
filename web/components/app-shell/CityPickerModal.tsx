@@ -1,6 +1,7 @@
 'use client'
 
 import { CITY_LIST, type CityId } from '@/lib/data/city'
+import { tn } from '@/lib/i18n/runtime'
 
 // Rendered by FishZoneApp itself, not nested inside a screen's scrolling
 // `.screen-inner` — same reason as EditProfileModal/ChangeColorModal (a
@@ -16,7 +17,7 @@ export function CityPickerModal({ city, onChange, onClose }: { city: CityId; onC
           </svg>
         </div>
         <div className="modal-title" style={{ textAlign: 'center' }}>
-          Город
+          {tn('nav.city')}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
           {CITY_LIST.map((c) => (

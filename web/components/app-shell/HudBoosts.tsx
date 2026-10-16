@@ -6,6 +6,7 @@ import { DoubleCoinsChip, DoubleCoinsContent, useDoubleCoins } from '@/component
 import { SHIELD_PATH, ShieldReserveContent, ShieldsChip } from '@/components/app-shell/ShieldsChip'
 import { useSlotState } from '@/lib/supabase/queries'
 import { hapticTap } from '@/lib/telegram/haptics'
+import { tn } from '@/lib/i18n/runtime'
 
 // «×2» and the shields in the reserve, in the map's top panel. A player with
 // both gets one button of two equal halves — two pills pushed the «Игроки /
@@ -29,7 +30,7 @@ export function HudBoosts() {
         type="button"
         data-tour="boosts"
         className="hud-boosts tap-scale"
-        aria-label={`Двойные монеты и щиты в запасе: ${shields}`}
+        aria-label={tn('boost.doubleAriaHud', { shields })}
         onClick={() => {
           hapticTap()
           setOpen(true)
@@ -57,18 +58,18 @@ function BoostsModal({ from, until, shields, onClose }: { from: number; until: n
       <div
         className={`modal-card boosts-modal ${tab === 'double' ? 'double-modal' : 'shield-modal reserve-modal'}`}
         role="dialog"
-        aria-label="Твои бонусы"
+        aria-label={tn('boost.myBoosts')}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="boosts-tabs" role="tablist">
           <button type="button" role="tab" aria-selected={tab === 'double'} className={`boosts-tab gold${tab === 'double' ? ' on' : ''}`} onClick={() => setTab('double')}>
-            ×2 монеты
+            {tn('boost.x2coins')}
           </button>
           <button type="button" role="tab" aria-selected={tab === 'shields'} className={`boosts-tab teal${tab === 'shields' ? ' on' : ''}`} onClick={() => setTab('shields')}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
               <path d={SHIELD_PATH} />
             </svg>
-            Щиты · {shields}
+            {tn('boost.shieldsTab', { shields })}
           </button>
         </div>
         {/* Both tabs in one cell: the open one shown, the other laid out
@@ -83,7 +84,7 @@ function BoostsModal({ from, until, shields, onClose }: { from: number; until: n
           </div>
         </div>
         <button className="btn-primary" onClick={onClose}>
-          Понятно
+          {tn('common.gotIt')}
         </button>
       </div>
     </div>,

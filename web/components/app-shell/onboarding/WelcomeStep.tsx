@@ -1,9 +1,11 @@
 'use client'
 
+import { LanguageMenu } from '@/components/app-shell/LanguageMenu'
 import { useCallback, useRef, useState } from 'react'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { WelcomeMap } from '@/components/app-shell/onboarding/WelcomeMap'
 import type { TickerLine } from '@/lib/welcome/coastScene'
+import { tn } from '@/lib/i18n/runtime'
 
 // The first screen: «Лови / Занимай / Владей» over a live map of the Batumi
 // coast where sectors change hands (WelcomeMap), a ticker of those captures,
@@ -28,21 +30,22 @@ export function WelcomeStep({
   return (
     <div className="onboarding-welcome">
       <WelcomeMap headRef={headRef} footRef={footRef} onTicker={onTicker} />
+      <LanguageMenu />
       <div className="welcome-head" ref={headRef}>
         {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
         <img src="/brand/logo_2.svg" alt="RANGE" className="welcome-logo" />
         <h1 className="welcome-title">
-          <span>Лови</span>
-          <span className="welcome-title-accent">Занимай</span>
-          <span>Владей</span>
+          <span>{tn('onb.welcomeCatch')}</span>
+          <span className="welcome-title-accent">{tn('onb.welcomeClaim')}</span>
+          <span>{tn('onb.welcomeOwn')}</span>
         </h1>
-        <p className="welcome-sub">Каждый улов меняет карту</p>
+        <p className="welcome-sub">{tn('onb.everyCatch')}</p>
       </div>
       <div className="welcome-foot" ref={footRef}>
         {invited && (
           <div className="welcome-invite">
             <CoinIcon size={16} />
-            Друг пригласил тебя · +100 монет на старт
+            {tn('onb.invited')}
           </div>
         )}
         <div className="welcome-ticker" aria-live="polite">
@@ -55,15 +58,15 @@ export function WelcomeStep({
         </div>
         {onContinue ? (
           <button className="btn-primary" onClick={onContinue}>
-            Продолжить
+            {tn('onb.continue')}
           </button>
         ) : (
           <>
             <button className="btn-primary" onClick={onCapture}>
-              Захватить первую территорию
+              {tn('onb.captureFirst')}
             </button>
             <button className="welcome-link" onClick={onSignIn}>
-              У меня уже есть аккаунт
+              {tn('onb.haveAcc')}
             </button>
           </>
         )}

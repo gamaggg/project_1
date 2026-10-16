@@ -1,6 +1,6 @@
 import { SITE_URL } from '@/lib/site'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { pluralCatches } from '@/lib/format'
+import { isLang, translate, type Lang, type TKey, type TVars } from '@/lib/i18n/core'
 
 // «Ещё на рыбалке?» (fishing_sessions — one row per player per fishing day).
 // Players asked for a reminder to photograph the catch while they fish: a
@@ -43,7 +43,21 @@ async function tg(method: string, body: Record<string, unknown>): Promise<{ ok: 
 
 const localDate = (d: Date, tz: string) => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d)
 const localHour = (d: Date, tz: string) => Number(new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', hourCycle: 'h23' }).format(d))
-const localTime = (d: Date, tz: string) => new Intl.DateTimeFormat('ru-RU', { timeZone: tz, hour: '2-digit', minute: '2-digit' }).format(d)
+const LOCALE: Record<Lang, string> = { ru: 'ru-RU', en: 'en-GB', ka: 'ka-GE' }
+const localTime = (d: Date, tz: string, lang: Lang) => new Intl.DateTimeFormat(LOCALE[lang], { timeZone: tz, hour: '2-digit', minute: '2-digit' }).format(d)
+
+const say = (lang: Lang, key: TKey, vars?: TVars) => translate(lang, key, vars)
+const catchesPhrase = (lang: Lang, n: number) => `${n} ${translate(lang, 'plural.catch', { count: n })}`
+
+// profiles.language of the given people (empty = Russian). Read apart from
+// the main queries so a database without the column yet just sends Russian.
+async function languagesOf(admin: ReturnType<typeof createAdminClient>, ids: string[]): Promise<Map<string, Lang>> {
+  const out = new Map<string, Lang>()
+  if (!ids.length) return out
+  const { data } = await admin.from('profiles').select('id, language').in('id', ids)
+  for (const r of (data ?? []) as unknown as { id: string; language: string | null }[]) if (isLang(r.language)) out.set(r.id, r.language)
+  return out
+}
 
 // dryRun: nothing written or sent — just who would get a reminder now (a
 // safe check against the live database).
@@ -71,6 +85,7 @@ export async function runFishingReminders({ dryRun = false }: { dryRun?: boolean
       .gte('started_at', new Date(now.getTime() - 36 * 3600 * 1000).toISOString()),
   ])
   const sessions = (sessionRows ?? []) as Session[]
+  const langs = await languagesOf(admin, ids)
   let started = 0
   let reminded = 0
 
@@ -112,14 +127,15 @@ export async function runFishingReminders({ dryRun = false }: { dryRun?: boolean
 
     if (s.chat_id && s.reminder_message_id) await tg('deleteMessage', { chat_id: s.chat_id, message_id: s.reminder_message_id })
     const n = todays.length
+    const lang = langs.get(p.id) ?? 'ru'
     const sent = await tg('sendMessage', {
       chat_id: p.telegram_id,
-      text: `🎣 Ещё на рыбалке? Последний улов — в ${localTime(last, tz)}${n > 1 ? `, сегодня уже ${n} ${pluralCatches(n)}` : ''}.\n\nПоймаешь ещё — сразу сфоткай в RANGE, и сектор будет твоим.`,
+      text: say(lang, 'fishing.remind', { time: localTime(last, tz, lang), today: n > 1 ? say(lang, 'fishing.todayN', { catches: catchesPhrase(lang, n) }) : '' }),
       disable_notification: true,
       reply_markup: {
         inline_keyboard: [
-          [{ text: '📷 Сфоткать улов', web_app: { url: `${SITE_URL}/?camera=1` } }],
-          [{ text: 'Я уже закончил', callback_data: 'fishing_stop' }],
+          [{ text: say(lang, 'fishing.btnCamera'), web_app: { url: `${SITE_URL}/?camera=1` } }],
+          [{ text: say(lang, 'fishing.btnDone'), callback_data: 'fishing_stop' }],
         ],
       },
     })
@@ -155,10 +171,11 @@ export async function stopFishingDay(telegramId: number): Promise<boolean> {
   if (s.chat_id && s.reminder_message_id) {
     const { count } = await admin.from('catches').select('id', { count: 'exact', head: true }).eq('user_id', p.id).gte('caught_at', s.started_at)
     const n = count ?? 0
+    const lang = (await languagesOf(admin, [p.id])).get(p.id) ?? 'ru'
     await tg('editMessageText', {
       chat_id: s.chat_id,
       message_id: s.reminder_message_id,
-      text: `🎣 Рыбалка на сегодня закончена${n > 0 ? ` · ${n} ${pluralCatches(n)}` : ''}. Хорошего отдыха!`,
+      text: say(lang, 'fishing.wrapUp', { n: n > 0 ? say(lang, 'fishing.wrapN', { catches: catchesPhrase(lang, n) }) : '' }),
     })
   }
   return true

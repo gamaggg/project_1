@@ -8,6 +8,7 @@ import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import type { WeeklyLeaderboardEntry } from '@/lib/data/types'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { formatWeekOfMonth, pluralCatches, pluralSectors } from '@/lib/format'
+import { tn } from '@/lib/i18n'
 
 type Scope = 'all' | 'friends'
 
@@ -106,10 +107,10 @@ export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUs
     <>
       <div className="filter-row">
         <div className={`filter-chip${scope === 'all' ? ' active' : ''}`} onClick={() => setScope('all')}>
-          Все
+          {tn('terr.filterAll')}
         </div>
         <div className={`filter-chip${scope === 'friends' ? ' active' : ''}`} onClick={() => setScope('friends')}>
-          Друзья
+          {tn('terr.friends')}
         </div>
         <span className="rating-week-badge rating-week-badge-inline">{formatWeekOfMonth(0, cityInfo.timezone)}</span>
       </div>
@@ -118,7 +119,7 @@ export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUs
         <SkeletonRows count={6} thumb={40} round />
       ) : entries.length === 0 ? (
         <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>
-          {scope === 'friends' ? 'Никто из тех, на кого ты подписан, ещё не рыбачил на этой неделе' : 'На этой неделе пока никто не захватил сектор — начни первым'}
+          {scope === 'friends' ? tn('terr.emptyFriends') : tn('terr.emptyAll')}
         </div>
       ) : (
         <>

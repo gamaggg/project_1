@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { APP_LINK_RE } from '@/lib/moderation'
+import { tn } from '@/lib/i18n/runtime'
 
 // FishZoneApp listens for this and opens the link's target in place (sector,
 // catch, clan, profile) — no reload, no leaving the app.
@@ -14,12 +15,12 @@ function linkLabel(href: string): string {
   try {
     const p = new URL(/^https?:\/\//i.test(href) ? href : `https://${href}`).searchParams
     const territory = p.get('territory')
-    if (territory) return `Сектор ${territory}`
-    if (p.get('catch')) return 'Улов'
-    if (p.get('clan')) return 'Клан'
+    if (territory) return tn('nav.linkSector', { id: territory })
+    if (p.get('catch')) return tn('nav.linkCatch')
+    if (p.get('clan')) return tn('nav.linkClan')
     const user = p.get('user')
-    if (user) return `Профиль ${user}`
-    if (p.get('achievement')) return 'Достижение'
+    if (user) return tn('nav.linkProfile', { name: user })
+    if (p.get('achievement')) return tn('nav.linkAchievement')
   } catch {
     // Not a parseable URL — fall through to the plain label.
   }

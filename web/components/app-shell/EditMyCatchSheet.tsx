@@ -9,16 +9,17 @@ import { formatWeightGrams } from '@/lib/format'
 import { useKeyboardInset } from '@/lib/useKeyboardInset'
 import { BaitPicker, MethodPicker } from '@/components/app-shell/SpeciesPicker'
 import type { Catch } from '@/lib/data/types'
+import { tn } from '@/lib/i18n'
 
 function editErrorText(error: unknown): string {
   const msg = error instanceof Error ? error.message : String((error as { message?: string })?.message ?? error)
-  if (msg.includes('EDIT:no_changes')) return 'Ничего не изменилось'
-  if (msg.includes('EDIT:bad_length')) return 'Размер — от 1 до 300 см'
-  if (msg.includes('EDIT:bad_weight')) return 'Вес — от 10 до 9999 г'
-  if (msg.includes('EDIT:bad_text')) return 'Приманка или способ не подходят'
-  if (msg.includes('EDIT:not_yours')) return 'Менять можно только свои уловы'
-  if (msg.includes('EDIT:catch_not_found')) return 'Улов не найден — возможно, его уже удалили'
-  return 'Не удалось сохранить — попробуй ещё раз'
+  if (msg.includes('EDIT:no_changes')) return tn('editCatch.noChanges')
+  if (msg.includes('EDIT:bad_length')) return tn('editCatch.badLength')
+  if (msg.includes('EDIT:bad_weight')) return tn('editCatch.badWeight')
+  if (msg.includes('EDIT:bad_text')) return tn('editCatch.badText')
+  if (msg.includes('EDIT:not_yours')) return tn('editCatch.notYours')
+  if (msg.includes('EDIT:catch_not_found')) return tn('editCatch.notFound')
+  return tn('editCatch.failed')
 }
 
 // The catch form's own limits: whole centimetres 1–300, grams 10–9999.
@@ -83,7 +84,7 @@ export function EditMyCatchSheet({ c, onClose, onSaved }: { c: Catch; onClose: (
         className="move-sheet"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
-        aria-label="Дополнить улов"
+        aria-label={tn('editCatch.aria')}
         style={keyboardInset ? { maxHeight: `calc(92dvh - ${keyboardInset}px)` } : undefined}
       >
         <div className="move-sheet-handle" />
@@ -94,19 +95,19 @@ export function EditMyCatchSheet({ c, onClose, onSaved }: { c: Catch; onClose: (
                 <path d="m5 12.5 4.5 4.5L19 7.5" />
               </svg>
             </div>
-            <div className="move-done-title">Сохранено</div>
+            <div className="move-done-title">{tn('editCatch.saved')}</div>
             <button className="btn-primary" style={{ marginTop: 18 }} onClick={onClose}>
-              Готово
+              {tn('common.done')}
             </button>
           </div>
         ) : (
           <>
             <div className="move-head">
               <div>
-                <div className="move-kicker">Мой улов</div>
+                <div className="move-kicker">{tn('editCatch.kicker')}</div>
                 <div className="move-title">{c.speciesName}</div>
               </div>
-              <button className="icon-btn tap-scale" aria-label="Закрыть" onClick={onClose}>
+              <button className="icon-btn tap-scale" aria-label={tn('common.close')} onClick={onClose}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.6" strokeLinecap="round" aria-hidden>
                   <path d="M6 6l12 12M18 6 6 18" />
                 </svg>
@@ -115,26 +116,26 @@ export function EditMyCatchSheet({ c, onClose, onSaved }: { c: Catch; onClose: (
 
             <div className="move-body">
               <div className="move-note" style={{ marginTop: 0, marginBottom: 14 }}>
-                Принёс домой, взвесил и измерил — внеси данные. Сейчас: {c.lengthCm ? `${c.lengthCm} см` : 'размер не указан'} · {c.weightKg ? `${formatWeightGrams(c.weightKg)} г` : 'вес не указан'}
+                {tn('editCatch.intro', { length: c.lengthCm ? `${c.lengthCm} ${tn('fmt.cm')}` : tn('editCatch.lengthNone'), weight: c.weightKg ? `${formatWeightGrams(c.weightKg)} ${tn('fmt.g')}` : tn('editCatch.weightNone') })}
               </div>
 
               <div style={{ display: 'flex', gap: 12 }}>
                 <div className="auth-field" style={{ flex: 1 }}>
-                  <label htmlFor="mine-catch-length">Размер, см</label>
-                  <input id="mine-catch-length" type="number" min={1} max={300} inputMode="numeric" placeholder="необязательно" value={lengthCm} onChange={(e) => setLengthCm(e.target.value)} />
+                  <label htmlFor="mine-catch-length">{tn('catch.lengthCm')}</label>
+                  <input id="mine-catch-length" type="number" min={1} max={300} inputMode="numeric" placeholder={tn('catch.optionalLower')} value={lengthCm} onChange={(e) => setLengthCm(e.target.value)} />
                 </div>
                 <div className="auth-field" style={{ flex: 1 }}>
-                  <label htmlFor="mine-catch-weight">Вес, г</label>
-                  <input id="mine-catch-weight" type="number" min={10} max={9999} step={10} inputMode="numeric" placeholder="необязательно" value={weightG} onChange={(e) => setWeightG(e.target.value)} />
+                  <label htmlFor="mine-catch-weight">{tn('catch.weightG')}</label>
+                  <input id="mine-catch-weight" type="number" min={10} max={9999} step={10} inputMode="numeric" placeholder={tn('catch.optionalLower')} value={weightG} onChange={(e) => setWeightG(e.target.value)} />
                 </div>
               </div>
 
               <div className="auth-field">
-                <label htmlFor="method">Способ ловли</label>
+                <label htmlFor="method">{tn('catch.method')}</label>
                 <MethodPicker methods={methods} value={method} frequent={(lastChoices?.frequentMethods ?? []).filter((m) => methods.includes(m))} onChange={setMethod} />
               </div>
               <div className="auth-field">
-                <label htmlFor="bait">Приманка</label>
+                <label htmlFor="bait">{tn('catch.bait')}</label>
                 <BaitPicker baits={baits} value={bait} frequent={(lastChoices?.frequentBaits ?? []).filter((b) => baits.includes(b))} onChange={setBait} />
               </div>
             </div>
@@ -142,14 +143,14 @@ export function EditMyCatchSheet({ c, onClose, onSaved }: { c: Catch; onClose: (
             <div className="move-footer">
               <div className="move-note">
                 {length === 'bad'
-                  ? 'Размер — целое число от 1 до 300 см.'
+                  ? tn('editCatch.lengthHint')
                   : weight === 'bad'
-                    ? 'Вес — целое число граммов от 10 до 9999.'
-                    : 'Вид, фото и место менять нельзя. Монеты за улов не меняются, достижения пересчитаются.'}
+                    ? tn('editCatch.weightHint')
+                    : tn('editCatch.footNote')}
               </div>
               {edit.isError && <div className="move-error">{editErrorText(edit.error)}</div>}
               <button className="btn-primary" disabled={invalid || !changed || edit.isPending} onClick={submit}>
-                {edit.isPending ? 'Сохраняем…' : changed ? 'Сохранить' : 'Нет изменений'}
+                {edit.isPending ? tn('common.saving') : changed ? tn('common.save') : tn('editCatch.noChangesBtn')}
               </button>
             </div>
           </>

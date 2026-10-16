@@ -705,7 +705,8 @@ body{
 .shop-tab svg{display:block;}
 .shop-section-caption{font-size:12px; color:var(--ink-faint); font-weight:600; margin-top:12px; line-height:1.4;}
 
-.shop-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px;}
+.shop-grid{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; margin-top:14px;}
+.shop-grid > *{min-width:0;}
 .shop-card{
   position:relative; background:var(--surface); border:1.5px solid var(--line); border-radius:18px;
   padding:14px; display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center;
@@ -1071,6 +1072,8 @@ body{
   font-size:16px; font-weight:800; font-variant-numeric:tabular-nums; color:#fff;
 }
 .challenges-week-info{flex:1; min-width:0;}
+/* Longer words in en/ka wrap under the countdown chip pinned to the card's corner — leave it its own line. */
+html:not([lang="ru"]) .challenges-week-top{padding-top:22px;}
 .challenges-week-title{font-size:15px; font-weight:800; color:#fff; text-transform:uppercase; letter-spacing:.02em;}
 .challenges-week-reward{display:flex; align-items:center; gap:5px; margin-top:6px; font-size:13px; font-weight:700; color:rgba(255,255,255,.72);}
 .challenges-week-note{font-size:12px; line-height:1.4; color:rgba(255,255,255,.5);}
@@ -1472,10 +1475,11 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .map-selection-bar-btn.cancel{background:rgba(255,255,255,0.12); color:#fff;}
 .map-selection-bar-btn:active{transform:scale(0.96);}
 .map-sheet-container{
-  /* The card 12px over the menu — the same as its side margins (the row's
-     12px padding): the row below holds 8px of room for the selection ring,
-     so the container sits 4px above the menu (--nav-h, the real bar height). */
-  position:absolute; left:0; right:0; bottom:calc(var(--nav-h, 82px) + 4px); z-index:700;
+  /* The card floats over the menu by the same gap the menu floats over the
+     bottom of the screen (--nav-bottom): the row below holds 8px of room for
+     the selection ring, so the container sits that much less above the menu
+     (--nav-h is the bar's height plus its own bottom gap). */
+  position:absolute; left:0; right:0; bottom:calc(var(--nav-h, 82px) + var(--nav-bottom, 12px) - 8px); z-index:700;
   display:flex; flex-direction:column; gap:9px;
   /* Full width, but only its pieces take touches: the empty space beside
      the week-recap sticker (or above a card) passes swipes to the map. */
@@ -2253,16 +2257,6 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
   flex:1 1 auto; display:flex; flex-direction:column;
   align-items:center; justify-content:center; padding-top:10px;
 }
-.ach-detail-photo-bg{
-  position:absolute; inset:0; z-index:-1;
-  pointer-events:none; overflow:hidden;
-}
-.ach-detail-photo-bg img{width:100%; height:100%; display:block; object-fit:cover; object-position:50% 78%; transition:filter .3s var(--ease);}
-.ach-detail-photo-bg.locked img{filter:grayscale(1) contrast(0.95);}
-.ach-detail-photo-bg::after{
-  content:''; position:absolute; inset:0;
-  background:linear-gradient(180deg, rgba(255,255,255,.5) 0%, rgba(255,255,255,.62) 35%, rgba(255,255,255,.5) 65%, rgba(255,255,255,.7) 100%);
-}
 .ach-detail-badge-outer{position:relative; isolation:isolate; width:300px; margin:0 auto 22px;}
 /* Glow is a separate static (non-transformed) layer — filter:drop-shadow
    combined with an animated transform on the same element renders the
@@ -3030,6 +3024,30 @@ button.clan-chip:focus-visible{outline:2px solid rgb(var(--hero-text-rgb,255,255
 .map-layer-opt{flex:1; border:none; background:none; font:inherit; font-size:12.5px; font-weight:800; color:var(--ink-soft); padding:7px 8px; border-radius:8px; cursor:pointer; white-space:nowrap; transition:background .15s, color .15s;}
 .map-layer-opt.on{background:var(--surface); color:var(--ink); box-shadow:var(--shadow-sm);}
 .map-layer-opt:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
+/* «მოთამაშეები / კლანები» is wider than «Игроки / Кланы»: on a narrow phone the switch
+   (squeezed between the coin, the shield and the logo) gets smaller type and
+   tighter padding, and a label that still doesn't fit ends in an ellipsis
+   instead of running out of the panel. */
+html:not([lang="ru"]) .map-layer-opt{flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis;}
+@media (max-width:380px){
+  html:not([lang="ru"]) .map-layer-opt{font-size:11.5px; padding:7px 5px;}
+}
+/* The legend (Mine / Others / Free, or the clan counts and «No clan») plus the
+   forecast chip don't fit on one line in en/ka on a narrow phone: the chip
+   drops to a second line at the right instead of cutting a label. */
+@media (max-width:400px){
+  html:not([lang="ru"]) .map-legend-row{flex-wrap:wrap; row-gap:5px; column-gap:10px;}
+  html:not([lang="ru"]) .map-legend-item{flex:0 0 auto;}
+}
+@media (max-width:345px){
+  html:not([lang="ru"]) .map-hud-bar{gap:5px; padding-left:8px; padding-right:5px;}
+  html:not([lang="ru"]) .map-hud-logo{height:16px;}
+  html:not([lang="ru"]) .map-race-pill-title{font-size:12px;}
+  html:not([lang="ru"]) .map-race-pill-status{padding:2px 5px; font-size:10.5px;}
+  html:not([lang="ru"]) .map-race-pill-row{gap:5px;}
+  html:not([lang="ru"]) .map-layer-opt{font-size:10px; padding:7px 0;}
+  html:not([lang="ru"]) .map-layer-switch{gap:1px; padding:2px 1px;}
+}
 .sector-clan-line{display:flex; align-items:center; gap:10px; width:100%; margin-top:10px; border:1px solid #EFEDE8; background:#FAF9F7; border-radius:14px; padding:9px 12px; font:inherit; font-size:13.5px; color:var(--ink); cursor:pointer; text-align:left;}
 /* Only the text stretches — ClanCrest's root is a <span> too. */
 .sector-clan-line-text{flex:1; min-width:0;}
@@ -3549,6 +3567,20 @@ button.race-lane{cursor:pointer;}
 .score-bars{display:block; flex:0 0 auto;}
 .forecast-chip{display:inline-flex; align-items:center; gap:5px; flex:0 0 auto; margin-left:auto; padding:3px 9px 3px 7px; border:none; border-radius:999px; background:#F3F1EC; font:inherit; font-size:11.5px; font-weight:800; color:var(--ink-soft); cursor:pointer;}
 .forecast-chip b{font-size:12.5px; font-variant-numeric:tabular-nums;}
+/* en/ka words are longer than the Russian ones: tighter legend row and race pill so nothing is cut off at 375px. */
+html:not([lang="ru"]) .map-legend-row{gap:9px; font-size:10.5px;}
+html:not([lang="ru"]) .map-legend-row .forecast-chip{font-size:10.5px; gap:4px; padding:3px 7px 3px 6px;}
+html:not([lang="ru"]) .map-race-pill-title{font-size:13px;}
+html:not([lang="ru"]) .map-race-pill-row{gap:6px;}
+html:not([lang="ru"]) .map-race-pill-left{font-size:10.5px;}
+/* Georgian letters stand taller than Cyrillic: a single-line title that clips (overflow:hidden) needs more line height. */
+html[lang="ka"] .profile-clan-name{line-height:1.5;}
+html:not([lang="ru"]) .slots-card-title{white-space:normal; line-height:1.3;}
+html:not([lang="ru"]) .slots-title{white-space:normal; font-size:30px; line-height:1.25;}
+/* A flex button squeezes its icon when the label is long; keep icons their size. */
+.btn-secondary > svg,.btn-primary > svg{flex:0 0 auto;}
+html:not([lang="ru"]) .profile-duo:not(.single) .profile-geo-card .profile-clan-name{white-space:normal; font-size:17px; line-height:1.3;}
+html[lang="ka"] .profile-duo:not(.single) .profile-geo-card .profile-clan-name{line-height:1.45;}
 .forecast-chip-skel{width:104px; height:22px; padding:0; cursor:default;}
 .forecast-card{display:block; width:100%; margin-top:16px; padding:14px 16px; border:none; border-radius:var(--radius-l); background:var(--surface); box-shadow:var(--shadow-sm); font:inherit; color:inherit; text-align:left; cursor:pointer;}
 .forecast-card:disabled{cursor:default;}

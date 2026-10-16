@@ -2,6 +2,7 @@
 
 import { useState, type CSSProperties } from 'react'
 import { useTelegramBackButton } from '@/lib/telegram/useTelegramBackButton'
+import { tn } from '@/lib/i18n/runtime'
 
 // Single reusable back affordance for every screen and onboarding step —
 // wires Telegram's native chrome BackButton (see useTelegramBackButton) and,
@@ -47,7 +48,7 @@ export function BackButton({
   if (variant === 'intro') {
     if (viaTelegram) return null
     return (
-      <button className="intro-back" onClick={onClick} aria-label="Назад">
+      <button className="intro-back" onClick={onClick} aria-label={tn('common.back')}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
           <path d="M15 18l-6-6 6-6" />
         </svg>
