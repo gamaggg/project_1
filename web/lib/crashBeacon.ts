@@ -96,8 +96,10 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
   }
   beat(false)
   let timer = 0
+  // Set aside by Telegram (collapsed): the page may still say «visible», but no signal.
+  let away = false
   const tick = () => {
-    if (document.visibilityState === 'visible') beat(false)
+    if (document.visibilityState === 'visible' && !away) beat(false)
     timer = window.setTimeout(tick, Date.now() - started < EARLY_FOR_MS ? HEARTBEAT_EARLY_MS : HEARTBEAT_MS)
   }
   timer = window.setTimeout(tick, HEARTBEAT_EARLY_MS)
@@ -106,14 +108,34 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
   let pending = 0
   const observer = new MutationObserver(() => {
     window.clearTimeout(pending)
-    pending = window.setTimeout(() => beat(false), 400)
+    pending = window.setTimeout(() => {
+      if (!away) beat(false)
+    }, 400)
   })
   observer.observe(root, { attributes: true, attributeFilter: ['class'], subtree: true })
   const onVisibility = () => beat(document.visibilityState === 'hidden')
   const onHide = () => beat(true)
   document.addEventListener('visibilitychange', onVisibility)
   window.addEventListener('pagehide', onHide)
+  document.addEventListener('freeze', onHide)
+  // Telegram's «collapse» (the chevron beside «Закрыть») and leaving Telegram do not
+  // always reach the page as a visibility change; its own events do. A page that was
+  // set aside this way and thrown away later is not a crash in front of the player.
+  const tg = window.Telegram?.WebApp as { onEvent?: (e: string, f: () => void) => void; offEvent?: (e: string, f: () => void) => void } | undefined
+  const onDeactivated = () => {
+    away = true
+    beat(true)
+  }
+  const onActivated = () => {
+    away = false
+    beat(false)
+  }
+  tg?.onEvent?.('deactivated', onDeactivated)
+  tg?.onEvent?.('activated', onActivated)
   return () => {
+    tg?.offEvent?.('deactivated', onDeactivated)
+    tg?.offEvent?.('activated', onActivated)
+    document.removeEventListener('freeze', onHide)
     window.clearTimeout(timer)
     window.clearTimeout(pending)
     observer.disconnect()
