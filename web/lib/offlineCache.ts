@@ -17,7 +17,10 @@ const STORE = 'kv'
 const KEY = 'queries'
 const LAST_USER_KEY = 'range:lastUser'
 const MAX_AGE_MS = 14 * 24 * 3600 * 1000
-const SAVE_DELAY_MS = 2500
+// Saving is a stringify of a megabyte and a write of it: not more often than a
+// breath, and not at all when nothing changed (it also runs when the app goes
+// to the background, so the last changes are not lost).
+const SAVE_DELAY_MS = 20_000
 const MAX_ENTRIES = 300
 
 // The queries worth having offline — the main screens' own data. Everything
@@ -126,6 +129,7 @@ function lastUserId(): string | null {
 // Sign-out (or a session that is really gone): nothing of this player stays.
 export function forgetOfflineData() {
   kept = new Map()
+  lastSignature = ''
   try {
     localStorage.removeItem(LAST_USER_KEY)
   } catch {}
@@ -138,6 +142,7 @@ export function forgetOfflineData() {
 // replacing it: a launch that got only part of the data (no connection, a slow
 // one) must never wipe the screens it did not reach.
 let kept = new Map<string, DehydratedQuery>()
+let lastSignature = ''
 
 async function restore(client: QueryClient) {
   const userId = lastUserId()
@@ -160,6 +165,10 @@ function save(client: QueryClient) {
     shouldDehydrateQuery: (q) => q.state.status === 'success' && PERSISTED.has(String((q.queryKey as QueryKey)[0])),
   })
   if (state.queries.length === 0) return
+  // The same queries as last time, each as fresh as last time: nothing to write.
+  const signature = state.queries.map((q) => `${q.queryHash}:${q.state.dataUpdatedAt}`).join('|')
+  if (signature === lastSignature) return
+  lastSignature = signature
   const now = Date.now()
   const merged = new Map(kept)
   for (const q of state.queries) merged.set(q.queryHash, q)

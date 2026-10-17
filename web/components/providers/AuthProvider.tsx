@@ -4,9 +4,10 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { ensureSession, flushSessionReport, setExpectedUser } from '@/lib/supabase/session'
-import { setGuestRefusalHandler } from '@/lib/errorReporting'
+import { reportsEnabled, setGuestRefusalHandler } from '@/lib/errorReporting'
 import { trySignInWithTelegram } from '@/lib/telegram/signIn'
 import { forgetOfflineData, lastKnownUser, rememberUser } from '@/lib/offlineCache'
+import { installCrashBeacon } from '@/lib/crashBeacon'
 
 type AuthState = {
   user: User | null
@@ -233,6 +234,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       webApp?.offEvent?.('fullscreenChanged', applyTelegramChrome)
     }
   }, [])
+
+  // Leaves a note on the phone while the app is in front, so a launch that finds
+  // the last one ended without warning (the OS killed the page) can say where.
+  const signedIn = !!user
+  useEffect(() => {
+    if (!signedIn || process.env.NODE_ENV !== 'production') return
+    return installCrashBeacon((message) => {
+      if (!reportsEnabled) return
+      void createClient()
+        .rpc('report_client_error', { p_context: 'webview_killed', p_message: message.slice(0, 500) })
+        .then(
+          () => {},
+          () => {}
+        )
+    })
+  }, [signedIn])
 
   // The session watch (lib/supabase/session.ts) knows who should be signed
   // in, and a guest refusal from any request sends it to check.

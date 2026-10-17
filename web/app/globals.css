@@ -252,10 +252,10 @@ body{
 /* An overlay opened inside a screen can't cover the nav (see .modal-overlay):
    the nav is dimmed to match instead. Overlays outside the screens (app
    level, portals) already paint over it. */
-.app-shell:has(.screens .modal-overlay, .screens .comments-overlay, .screens .move-sheet-overlay) .bottomnav::after{
+html.has-overlay:root .bottomnav::after{
   content:''; position:absolute; inset:0; background:rgba(10,14,18,.5); pointer-events:none;
 }
-.app-shell:has(.screens .lightbox-overlay) .bottomnav::after{
+html.has-lightbox:root .bottomnav::after{
   content:''; position:absolute; inset:0; background:rgba(6,10,14,.92); pointer-events:none;
 }
 .navitem{

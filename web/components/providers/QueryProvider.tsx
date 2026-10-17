@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { installGlobalErrorReporting } from '@/lib/errorReporting'
 import { installStandaloneViewportHeal } from '@/lib/standaloneViewport'
 import { installOfflineCache } from '@/lib/offlineCache'
+import { installOverlayWatch } from '@/lib/overlayWatch'
 import { reportClientError } from '@/lib/supabase/queries'
 
 export function QueryProvider({ children }: { children: ReactNode }) {
@@ -30,5 +31,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
   useEffect(() => installStandaloneViewportHeal(), [])
   // The main screens' data kept on the phone, for opening with no network.
   useEffect(() => installOfflineCache(client), [client])
+  // The has-overlay / has-lightbox classes the stylesheet keys off (lib/overlayWatch.ts).
+  useEffect(() => installOverlayWatch(), [])
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>
 }

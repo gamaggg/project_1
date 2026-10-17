@@ -47,8 +47,8 @@
   mask-image: linear-gradient(to top, #000 0%, #000 50%, transparent 100%);
 }
 /* The dimming laid over the nav when a sheet opens inside a screen follows the pill's corners. */
-.app-shell:has(.screens .modal-overlay, .screens .comments-overlay, .screens .move-sheet-overlay) .bottomnav::after,
-.app-shell:has(.screens .lightbox-overlay) .bottomnav::after {
+html.has-overlay:root .bottomnav::after,
+html.has-lightbox:root .bottomnav::after {
   border-radius: inherit;
 }
 .navitem {
@@ -569,7 +569,7 @@
 /* While a modal is open, the animated things under its blur (hero glow, shimmers,
    pulses) stand still: re-blurring a moving picture every frame flickers. The
    modal's own animations are left running. */
-body:has(.modal-overlay, .comments-overlay, .move-sheet-overlay) .screen.active :is(*, *::before, *::after):not(.modal-overlay, .comments-overlay, .move-sheet-overlay):not(:is(.modal-overlay, .comments-overlay, .move-sheet-overlay) *) {
+html.has-modal .screen.active :is(*, *::before, *::after):not(.modal-overlay, .comments-overlay, .move-sheet-overlay):not(:is(.modal-overlay, .comments-overlay, .move-sheet-overlay) *) {
   animation-play-state: paused !important;
 }
 
@@ -1072,10 +1072,10 @@ p, li, .modal-body, .intro-sub, .ach-desc, .faq-a, .double-modal-note, .rewards-
   -webkit-backdrop-filter: blur(7px);
   backdrop-filter: blur(7px);
 }
-.app-shell:has(.screens .modal-overlay, .screens .comments-overlay, .screens .move-sheet-overlay) .bottomnav::after {
+html.has-overlay:root .bottomnav::after {
   background: none;
 }
-.app-shell:has(.screens .modal-overlay, .screens .comments-overlay, .screens .move-sheet-overlay) :is(.bottomnav, .nav-edge) {
+html.has-overlay:root :is(.bottomnav, .nav-edge) {
   filter: blur(5px);
 }
 .comments-sheet {
@@ -1413,3 +1413,10 @@ html.ios-standalone #screen-clan .clan-hero { margin-top: 0; margin-left: 0; mar
 
 /* Room under a screen's last element for the floating menu (its height and the gap under it, --nav-h) and some air: the old 100px was the full-width bar's height. */
 .screen-inner { padding-bottom: calc(var(--nav-h, 82px) + 18px); }
+
+/* ---------- Lighter on the GPU (an iPhone's WebView is killed when it asks for too much) ----------
+   A backdrop blur re-samples what is behind it each frame, so blurs that are always on but never seen cost a lot for nothing. Nothing changes to the eye. */
+/* The toast waits unseen at the bottom between messages: no blur until it shows. */
+.toast:not(.show) { -webkit-backdrop-filter: none; backdrop-filter: none; }
+/* A blur inside the zoom group's own blur was a second pass on the same pixels. */
+.map-control-group .map-control-btn { -webkit-backdrop-filter: none; backdrop-filter: none; }
