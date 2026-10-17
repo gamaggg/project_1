@@ -3942,7 +3942,7 @@ button.diary-stats-line:disabled{cursor:default;}
 .boosts-tab.on .boosts-tab-dot{background:#fff; box-shadow:none;}
 .boosts-tab-stack{display:grid;}
 .boosts-tab-stack > *{grid-area:1 / 1; min-width:0;}
-.boosts-tab-body{align-self:center; animation:boosts-tab-in .25s var(--ease-out) both;}
+.boosts-tab-body{align-self:start; animation:boosts-tab-in .25s var(--ease-out) both;}
 .boosts-tab-sizer{visibility:hidden; pointer-events:none;}
 .boosts-tab-sizer *{animation:none !important;}
 @keyframes boosts-tab-in{from{opacity:0; transform:translateY(4px);}}
