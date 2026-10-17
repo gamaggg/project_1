@@ -6,22 +6,29 @@ type DehydratedQuery = DehydratedState['queries'][number]
 
 // What the app shows with no network: the game's data as of the last time it
 // was online. The queries that make up the main screens are saved on the phone
-// (IndexedDB) a moment after they change, and put back into the query cache at
-// launch — so the map, the profile, the diary, the challenges and the rest
-// come up at once, then refresh by themselves when there is a connection.
-// Only for the player who was signed in when it was saved, and thrown away on
-// sign-out. The app's own files are kept by the service worker (public/sw.js).
+// (IndexedDB, one record each) a while after they change, and put back into the
+// query cache when they are needed — so the map, the profile, the diary, the
+// challenges and the rest come up with no connection, then refresh by
+// themselves when there is one. Only for the player who was signed in when it
+// was saved, and thrown away on sign-out. The app's own files are kept by the
+// service worker (public/sw.js).
+//
+// Light on purpose — the launch is when an iPhone's WebView has the least room
+// (the map, the data and the first screens all start together), and a Mini App
+// was thrown away right there: nothing is read back while the network is
+// answering (only if it does not, or there is none), and a save writes only
+// the queries that changed, a few at a time.
 
 const DB_NAME = 'range-cache'
-const STORE = 'kv'
-const KEY = 'queries'
+const DB_VERSION = 2
+const STORE = 'q'
 const LAST_USER_KEY = 'range:lastUser'
 const MAX_AGE_MS = 14 * 24 * 3600 * 1000
-// Saving is a stringify of a megabyte and a write of it: not more often than a
-// breath, and not at all when nothing changed (it also runs when the app goes
-// to the background, so the last changes are not lost).
 const SAVE_DELAY_MS = 20_000
-const MAX_ENTRIES = 300
+// With a network, the saved copy is only a fallback: asked for after this long
+// without the app's own data having come.
+const RESTORE_WAIT_MS = 6_000
+const WRITE_CHUNK_CHARS = 250_000
 
 // The queries worth having offline — the main screens' own data. Everything
 // else (admin lists, search, one-off checks) is left out on purpose.
@@ -63,7 +70,7 @@ const PERSISTED = new Set([
   'catch-comments',
 ])
 
-type Saved = { userId: string; savedAt: number; json: string }
+type Row = { hash: string; userId: string; at: number; json: string }
 
 // Maps and Sets don't survive JSON as they are.
 const replacer = (_k: string, v: unknown) => {
@@ -79,17 +86,25 @@ const reviver = (_k: string, v: unknown) => {
   }
   return v
 }
+// The reviver is called for every value in the text: only worth it when a Map or
+// a Set is in there (almost never).
+const parse = (json: string): DehydratedQuery => (json.includes('"__t"') ? JSON.parse(json, reviver) : JSON.parse(json))
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1)
-    req.onupgradeneeded = () => req.result.createObjectStore(STORE)
+    const req = indexedDB.open(DB_NAME, DB_VERSION)
+    req.onupgradeneeded = () => {
+      const db = req.result
+      // The first version kept everything in one record: gone.
+      if (db.objectStoreNames.contains('kv')) db.deleteObjectStore('kv')
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'hash' })
+    }
     req.onsuccess = () => resolve(req.result)
     req.onerror = () => reject(req.error)
   })
 }
 
-async function idb<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+async function withStore<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest<T>): Promise<T> {
   const db = await openDb()
   try {
     return await new Promise<T>((resolve, reject) => {
@@ -126,90 +141,142 @@ function lastUserId(): string | null {
   return lastKnownUser<{ id?: string }>()?.id ?? null
 }
 
+// Each query as it is on the phone now (hash → when its data came): what a save
+// does not need to write again.
+const written = new Map<string, number>()
+
 // Sign-out (or a session that is really gone): nothing of this player stays.
 export function forgetOfflineData() {
-  kept = new Map()
-  lastSignature = ''
+  written.clear()
   try {
     localStorage.removeItem(LAST_USER_KEY)
   } catch {}
-  void idb('readwrite', (s) => s.delete(KEY)).catch(() => {})
+  void withStore('readwrite', (s) => s.clear()).catch(() => {})
 }
 
 // ---------------------------------------------------------------- save / restore
 
-// What is already on the phone, by query. A save adds to it rather than
-// replacing it: a launch that got only part of the data (no connection, a slow
-// one) must never wipe the screens it did not reach.
-let kept = new Map<string, DehydratedQuery>()
-let lastSignature = ''
-
 async function restore(client: QueryClient) {
   const userId = lastUserId()
   if (!userId) return
-  const saved = await idb<Saved | undefined>('readonly', (s) => s.get(KEY)).catch(() => undefined)
-  if (!saved || saved.userId !== userId || Date.now() - saved.savedAt > MAX_AGE_MS) return
+  const rows = await withStore<Row[]>('readonly', (s) => s.getAll()).catch(() => [] as Row[])
+  const queries: DehydratedQuery[] = []
+  const now = Date.now()
+  for (const row of rows) {
+    if (row.userId !== userId || now - row.at > MAX_AGE_MS) continue
+    try {
+      queries.push(parse(row.json))
+      written.set(row.hash, row.at)
+    } catch {
+      // a copy this build can't read: ignored, the app asks the server
+    }
+  }
+  if (queries.length) hydrate(client, { mutations: [], queries })
+}
+
+// Records of other players and of long ago leave the phone.
+async function prune() {
+  const userId = lastUserId()
+  const db = await openDb().catch(() => null)
+  if (!db) return
   try {
-    const state = JSON.parse(saved.json, reviver) as DehydratedState
-    kept = new Map(state.queries.map((q) => [q.queryHash, q]))
-    hydrate(client, state)
-  } catch {
-    // a copy this build can't read: ignored, the app asks the server
+    const now = Date.now()
+    await new Promise<void>((resolve) => {
+      const tx = db.transaction(STORE, 'readwrite')
+      const req = tx.objectStore(STORE).openCursor()
+      req.onsuccess = () => {
+        const cur = req.result
+        if (!cur) return
+        const row = cur.value as Row
+        if (row.userId !== userId || now - row.at > MAX_AGE_MS) cur.delete()
+        cur.continue()
+      }
+      tx.oncomplete = () => resolve()
+      tx.onerror = () => resolve()
+    })
+  } finally {
+    db.close()
   }
 }
 
-function save(client: QueryClient) {
+let saving = false
+
+async function save(client: QueryClient) {
   const userId = lastUserId()
-  if (!userId) return
+  if (!userId || saving) return
   const state = dehydrate(client, {
     shouldDehydrateQuery: (q) => q.state.status === 'success' && PERSISTED.has(String((q.queryKey as QueryKey)[0])),
   })
-  if (state.queries.length === 0) return
-  // The same queries as last time, each as fresh as last time: nothing to write.
-  const signature = state.queries.map((q) => `${q.queryHash}:${q.state.dataUpdatedAt}`).join('|')
-  if (signature === lastSignature) return
-  lastSignature = signature
-  const now = Date.now()
-  const merged = new Map(kept)
-  for (const q of state.queries) merged.set(q.queryHash, q)
-  // Too old to be of use, and the oldest ones past the cap.
-  const fresh = [...merged.values()].filter((q) => now - q.state.dataUpdatedAt < MAX_AGE_MS)
-  fresh.sort((a, b) => b.state.dataUpdatedAt - a.state.dataUpdatedAt)
-  const queries = fresh.slice(0, MAX_ENTRIES)
-  kept = new Map(queries.map((q) => [q.queryHash, q]))
-  let json: string
+  // Only the queries whose data is newer than what the phone has.
+  const changed = state.queries.filter((q) => written.get(q.queryHash) !== q.state.dataUpdatedAt)
+  if (changed.length === 0) return
+  saving = true
   try {
-    json = JSON.stringify({ mutations: [], queries }, replacer)
-  } catch {
-    return
+    let chars = 0
+    for (const q of changed) {
+      let json: string
+      try {
+        json = JSON.stringify(q, replacer)
+      } catch {
+        continue
+      }
+      const row: Row = { hash: q.queryHash, userId, at: q.state.dataUpdatedAt, json }
+      await withStore('readwrite', (s) => s.put(row)).catch(() => undefined)
+      written.set(q.queryHash, q.state.dataUpdatedAt)
+      chars += json.length
+      // A breath between the big ones, so the page never stalls on it.
+      if (chars > WRITE_CHUNK_CHARS) {
+        chars = 0
+        await new Promise((r) => setTimeout(r, 60))
+      }
+    }
+  } finally {
+    saving = false
   }
-  const row: Saved = { userId, savedAt: now, json }
-  void idb('readwrite', (s) => s.put(row, KEY)).catch(() => {})
 }
 
-// Puts the saved queries back, then keeps saving as the cache changes.
-// Returns what to call to stop.
+// Keeps saving as the cache changes; puts the saved queries back when they are
+// needed. Returns what to call to stop.
 export function installOfflineCache(client: QueryClient): () => void {
   if (typeof indexedDB === 'undefined') return () => {}
   let timer = 0
   let stopped = false
-  void restore(client)
+
+  // With no network the copy is the whole app: back at once. With one, the app's
+  // own data is on its way — the copy is asked for only if it has not come.
+  const haveProfile = () => client.getQueryCache().findAll({ queryKey: ['profile'] }).some((q) => q.state.status === 'success')
+  const offline = typeof navigator !== 'undefined' && !navigator.onLine
+  const restoreTimer = window.setTimeout(
+    () => {
+      if (!stopped && (offline || !haveProfile())) void restore(client)
+    },
+    offline ? 0 : RESTORE_WAIT_MS
+  )
+  const pruneTimer = window.setTimeout(() => void prune(), 45_000)
+
+  // The first change starts the clock; later ones ride the same save (waiting for
+  // a quiet moment would never come while queries keep refreshing).
   const unsubscribe = client.getQueryCache().subscribe(() => {
-    if (stopped) return
-    window.clearTimeout(timer)
-    timer = window.setTimeout(() => save(client), SAVE_DELAY_MS)
+    if (stopped || timer) return
+    timer = window.setTimeout(() => {
+      timer = 0
+      void save(client)
+    }, SAVE_DELAY_MS)
   })
-  // The phone may close the page right after the last change: write at once then.
+  // The phone may close the page right after the last change: write then.
   const onHide = () => {
     if (document.visibilityState === 'hidden') {
       window.clearTimeout(timer)
-      save(client)
+      timer = 0
+      void save(client)
     }
   }
   document.addEventListener('visibilitychange', onHide)
   return () => {
     stopped = true
     window.clearTimeout(timer)
+    window.clearTimeout(restoreTimer)
+    window.clearTimeout(pruneTimer)
     unsubscribe()
     document.removeEventListener('visibilitychange', onHide)
   }

@@ -10,11 +10,14 @@
 // with the screen it happened on and what the page weighed.
 const KEY = 'range:beacon'
 const REPORTED_KEY = 'range:beaconReported'
+// Close together while the app starts (that is when it is most at risk), then easy.
+const HEARTBEAT_EARLY_MS = 3_000
 const HEARTBEAT_MS = 15_000
+const EARLY_FOR_MS = 60_000
 const MAX_AGE_MS = 15 * 60_000
 const REPORT_EVERY_MS = 60 * 60_000
 
-type Beacon = { screen: string; at: number; started: number; clean: boolean; nodes: number; canvases: number; screens: number; heapMB: number | null }
+type Beacon = { screen: string; at: number; started: number; clean: boolean; nodes: number; canvases: number; screens: number; heapMB: number | null; nav: string }
 
 function read(): Beacon | null {
   try {
@@ -32,8 +35,16 @@ function write(b: Beacon) {
   }
 }
 
+// «Loading» until the app's screens are on the page (the launch screen is all there is).
 function activeScreen(): string {
-  return document.querySelector('.screens .screen.active')?.id ?? document.querySelector('.screen.active')?.id ?? 'none'
+  const id = document.querySelector('.screens .screen.active')?.id ?? document.querySelector('.screen.active')?.id
+  if (id) return id
+  return document.querySelector('.screen') ? 'none' : 'загрузка'
+}
+
+// How this page was opened: a fresh visit, a reload, or back/forward.
+function navigationType(): string {
+  return (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined)?.type ?? '?'
 }
 
 function heapMB(): number | null {
@@ -63,12 +74,13 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
       const lived = Math.round((prev.at - prev.started) / 1000)
       report(
         `страница сброшена без ухода в фон: экран ${prev.screen}; жила ${lived} с, последний сигнал ${Math.round((now - prev.at) / 1000)} с назад; ` +
-          `узлов ${prev.nodes}, экранов ${prev.screens}, canvas ${prev.canvases}${prev.heapMB !== null ? `, куча ${prev.heapMB} МБ` : ''}; ${platform()}`
+          `узлов ${prev.nodes}, экранов ${prev.screens}, canvas ${prev.canvases}${prev.heapMB !== null ? `, куча ${prev.heapMB} МБ` : ''}; открыта как ${prev.nav ?? '?'}; ${platform()}`
       )
     }
   }
 
   const started = now
+  const navType = navigationType()
   const beat = (clean: boolean) => {
     write({
       screen: activeScreen(),
@@ -79,12 +91,16 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
       canvases: document.getElementsByTagName('canvas').length,
       screens: document.querySelectorAll('.screen').length,
       heapMB: heapMB(),
+      nav: navType,
     })
   }
   beat(false)
-  const timer = window.setInterval(() => {
+  let timer = 0
+  const tick = () => {
     if (document.visibilityState === 'visible') beat(false)
-  }, HEARTBEAT_MS)
+    timer = window.setTimeout(tick, Date.now() - started < EARLY_FOR_MS ? HEARTBEAT_EARLY_MS : HEARTBEAT_MS)
+  }
+  timer = window.setTimeout(tick, HEARTBEAT_EARLY_MS)
   // A screen change is worth a note at once: it is what the report names.
   const root = document.querySelector('.screens') ?? document.body
   let pending = 0
@@ -98,7 +114,7 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
   document.addEventListener('visibilitychange', onVisibility)
   window.addEventListener('pagehide', onHide)
   return () => {
-    window.clearInterval(timer)
+    window.clearTimeout(timer)
     window.clearTimeout(pending)
     observer.disconnect()
     document.removeEventListener('visibilitychange', onVisibility)
