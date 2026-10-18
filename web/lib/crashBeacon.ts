@@ -8,6 +8,8 @@
 // note «left cleanly». If the next launch finds a note that was NOT marked, the
 // last launch ended without warning — and that is reported to the super admins
 // with the screen it happened on and what the page weighed.
+// The build this page runs (short): the report names the one that died, and the one the next launch runs.
+const BUILD = (process.env.APP_VERSION ?? 'dev').slice(0, 7)
 const KEY = 'range:beacon'
 const REPORTED_KEY = 'range:beaconReported'
 // Close together while the app starts (that is when it is most at risk), then easy.
@@ -17,7 +19,7 @@ const EARLY_FOR_MS = 60_000
 const MAX_AGE_MS = 15 * 60_000
 const REPORT_EVERY_MS = 60 * 60_000
 
-type Beacon = { screen: string; at: number; started: number; clean: boolean; nodes: number; canvases: number; screens: number; images: number; heapMB: number | null; nav: string; trail: string }
+type Beacon = { screen: string; at: number; started: number; clean: boolean; nodes: number; canvases: number; screens: number; images: number; heapMB: number | null; nav: string; trail: string; ver?: string }
 
 function read(): Beacon | null {
   try {
@@ -76,7 +78,7 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
       const lived = Math.round((prev.at - prev.started) / 1000)
       report(
         `страница сброшена без ухода в фон: экран ${prev.screen}; жила ${lived} с, последний сигнал ${Math.round((now - prev.at) / 1000)} с назад; ` +
-          `узлов ${prev.nodes}, экранов ${prev.screens}, canvas ${prev.canvases}${prev.images !== undefined ? `, картинок ${prev.images}` : ''}${prev.heapMB !== null ? `, куча ${prev.heapMB} МБ` : ''}; открыта как ${prev.nav ?? '?'}; ${platform()}${prev.trail ? `; путь: ${prev.trail}` : ''}`
+          `узлов ${prev.nodes}, экранов ${prev.screens}, canvas ${prev.canvases}${prev.images !== undefined ? `, картинок ${prev.images}` : ''}${prev.heapMB !== null ? `, куча ${prev.heapMB} МБ` : ''}; открыта как ${prev.nav ?? '?'}; версия ${prev.ver ?? '?'}${prev.ver && prev.ver !== BUILD ? `, теперь ${BUILD}` : ''}; ${platform()}${prev.trail ? `; путь: ${prev.trail}` : ''}`
       )
     }
   }
@@ -104,6 +106,7 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
       heapMB: heapMB(),
       nav: navType,
       trail: trail.join(' → '),
+      ver: BUILD,
     })
   }
   beat(false)
