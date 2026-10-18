@@ -156,6 +156,9 @@ export function ClanWarCard({ race, clanId }: { race: ClanRace; clanId: number }
 
   if (race.myWar) {
     const w = race.myWar
+    // The leader / a co-leader can add the players who are not in yet — until the clan has finished.
+    const finished = !!race.clans.find((c) => c.id === clanId)?.finishedAt
+    const canAdd = (race.myRole === 'leader' || race.myRole === 'co_leader') && w.size < race.myClanActive && !finished
     return (
       <div className="clan-card war-card in" data-tour="war-card">
         <div className="clan-card-title">{tn('race.warRosterCount', { players: tn('race.warPlayers', { count: w.size }) })}</div>
@@ -168,6 +171,12 @@ export function ClanWarCard({ race, clanId }: { race: ClanRace; clanId: number }
           {w.roster.length > 12 && <span className="war-roster-more">+{w.roster.length - 12}</span>}
         </div>
         <div className={`war-me${w.meIn ? ' in' : ''}`}>{w.meIn ? tn('race.warMeIn') : tn('race.warMeOut')}</div>
+        {canAdd && (
+          <button type="button" className="clan-mini-btn war-add-btn" onClick={() => setPicking(true)}>
+            {tn('race.warAddBtn')}
+          </button>
+        )}
+        {picking && <ClanWarRosterSheet clanId={clanId} mode="add" onClose={() => setPicking(false)} />}
       </div>
     )
   }

@@ -55,7 +55,7 @@ export const MIN_SECTORS_OPTIONS = [0, 1, 3, 5, 10]
 
 // Texts for the CLAN:<code> errors the clan RPCs raise, plus the name-check
 // codes from check_clan_name / moderate_text.
-const CLAN_ERRORS: Record<string, string | undefined> = labels('clanError', ['blocked', 'in_clan', 'not_in_clan', 'cooldown', 'not_enough_sectors', 'not_enough_coins', 'name_short', 'too_long', 'name_chars', 'name_taken', 'reserved', 'profanity', 'link', 'phone', 'caps', 'repeat', 'empty', 'crest_invalid', 'crest_locked', 'background_locked', 'settings_invalid', 'other_city', 'kicked_recently', 'clan_full', 'invite_only', 'no_clan', 'no_request', 'not_allowed', 'rename_cooldown'] as const)
+const CLAN_ERRORS: Record<string, string | undefined> = labels('clanError', ['blocked', 'in_clan', 'not_in_clan', 'cooldown', 'not_enough_sectors', 'not_enough_coins', 'name_short', 'too_long', 'name_chars', 'name_taken', 'reserved', 'profanity', 'link', 'phone', 'caps', 'repeat', 'empty', 'crest_invalid', 'crest_locked', 'background_locked', 'settings_invalid', 'other_city', 'kicked_recently', 'clan_full', 'invite_only', 'no_clan', 'no_request', 'not_allowed', 'rename_cooldown', 'war_not_open', 'war_exists', 'war_roster_small', 'war_bad_roster', 'war_not_started', 'war_finished', 'war_nothing_to_add'] as const)
 
 export function clanErrorMessage(error: unknown): string {
   const raw = error instanceof Error ? error.message : typeof error === 'object' && error && 'message' in error ? String((error as { message: unknown }).message) : String(error ?? '')

@@ -96,6 +96,8 @@ export function eventText(e: ClanEvent): string {
       }
       return MODERATED_TEXT[String(e.payload?.what ?? '')] ?? tn('clan.moderatedDefault')
     }
+    case 'war_added':
+      return tn('clan.evWarAdded', { actor, count: Number(e.payload?.count ?? 0) })
     case 'war_started':
       return tn('clan.evWarStarted', { actor, count: Number(e.payload?.size ?? 0) })
     case 'week_result': {

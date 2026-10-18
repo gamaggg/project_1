@@ -1531,3 +1531,6 @@ html.ios-standalone #screen-clan .clan-hero { margin-top: 0; margin-left: 0; mar
 
 /* The clan journal: a small «Показать ещё» under the latest lines. */
 .clan-events-more { display: flex; justify-content: center; padding: 10px 0 8px; }
+
+/* «Добавить игроков» under the roster card. */
+.war-add-btn { margin-top: 2px; margin-bottom: 12px; padding: 8px 14px; font-size: 13px; }

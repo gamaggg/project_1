@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { HexLoader } from '@/components/app-shell/HexLoader'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
-import { useClanWarCandidates, useStartClanWar } from '@/lib/supabase/queries'
+import { useAddClanWarPlayers, useClanWarCandidates, useStartClanWar } from '@/lib/supabase/queries'
 import { CLAN_ROLE_LABEL, clanErrorMessage } from '@/lib/data/clanLevels'
 import { formatShortAgo } from '@/lib/format'
 import { tn } from '@/lib/i18n/runtime'
@@ -15,16 +15,21 @@ const MIN_ROSTER = 3
 // The leader's / co-leader's screen for opening the clan battle: who rows this
 // week. Every member with last week's activity next to the face, «Выбрать всех»
 // and «Снять выделение», at least 3 picked, then a confirmation — after the
-// start the roster cannot be changed.
-export function ClanWarRosterSheet({ clanId, onClose }: { clanId: number; onClose: () => void }) {
-  const { data: members, isLoading, isError } = useClanWarCandidates(clanId, true)
-  const start = useStartClanWar()
+// start the roster cannot lose anyone. In `add` mode the same sheet adds players
+// to a roster already started (only those not in it yet, at least one).
+export function ClanWarRosterSheet({ clanId, onClose, mode = 'start' }: { clanId: number; onClose: () => void; mode?: 'start' | 'add' }) {
+  const adding = mode === 'add'
+  const { data: all, isLoading, isError } = useClanWarCandidates(clanId, true)
+  const members = useMemo(() => (adding ? (all ?? []).filter((m) => !m.inRoster) : all), [all, adding])
+  const startWar = useStartClanWar()
+  const addPlayers = useAddClanWarPlayers()
+  const start = adding ? addPlayers : startWar
   const [picked, setPicked] = useState<Set<string>>(() => new Set())
   const [step, setStep] = useState<'pick' | 'confirm' | 'done'>('pick')
 
   const total = members?.length ?? 0
   const count = picked.size
-  const enough = count >= MIN_ROSTER
+  const enough = count >= (adding ? 1 : MIN_ROSTER)
   const allIds = useMemo(() => (members ?? []).map((m) => m.userId), [members])
 
   function toggle(id: string) {
@@ -45,7 +50,7 @@ export function ClanWarRosterSheet({ clanId, onClose }: { clanId: number; onClos
 
   return createPortal(
     <div className="move-sheet-overlay" onClick={start.isPending ? undefined : onClose}>
-      <div className="move-sheet war-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={tn('race.warRosterTitle')}>
+      <div className="move-sheet war-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={adding ? tn('race.warAddTitle') : tn('race.warRosterTitle')}>
         <div className="move-sheet-handle" />
         {step === 'done' ? (
           <div className="move-done">
@@ -54,14 +59,14 @@ export function ClanWarRosterSheet({ clanId, onClose }: { clanId: number; onClos
                 <path d="m5 12.5 4.5 4.5L19 7.5" />
               </svg>
             </div>
-            <div className="move-done-title">{tn('race.warStarted')}</div>
+            <div className="move-done-title">{adding ? tn('race.warAddDone') : tn('race.warStarted')}</div>
             <button className="btn-primary" style={{ marginTop: 18 }} onClick={onClose}>
               {tn('common.done')}
             </button>
           </div>
         ) : step === 'confirm' ? (
           <div className="move-done">
-            <div className="move-done-title">{tn('race.warConfirmTitle')}</div>
+            <div className="move-done-title">{adding ? tn('race.warAddConfirmTitle') : tn('race.warConfirmTitle')}</div>
             {/* Everyone picked, face by face, right under the title. */}
             <div className="war-confirm-faces">
               {(members ?? [])
@@ -72,14 +77,14 @@ export function ClanWarRosterSheet({ clanId, onClose }: { clanId: number; onClos
                   </span>
                 ))}
             </div>
-            <p className="war-confirm-body">{tn('race.warConfirmBody', { players: tn('race.warPlayers', { count }) })}</p>
+            <p className="war-confirm-body">{adding ? tn('race.warAddConfirmBody', { players: tn('race.warPlayers', { count }), m: count * 200 }) : tn('race.warConfirmBody', { players: tn('race.warPlayers', { count }) })}</p>
             {start.isError && <div className="move-error">{clanErrorMessage(start.error)}</div>}
             <div className="war-confirm-actions">
               <button className="btn-secondary" disabled={start.isPending} onClick={() => setStep('pick')}>
                 {tn('race.warBack')}
               </button>
               <button className="btn-primary" disabled={start.isPending} onClick={go}>
-                {start.isPending ? tn('race.warStarting') : tn('race.warConfirmGo')}
+                {start.isPending ? tn('race.warStarting') : adding ? tn('race.warAddConfirmGo') : tn('race.warConfirmGo')}
               </button>
             </div>
           </div>
@@ -88,7 +93,7 @@ export function ClanWarRosterSheet({ clanId, onClose }: { clanId: number; onClos
             <div className="move-head">
               <div>
                 <div className="move-kicker">{tn('race.warRosterKicker')}</div>
-                <div className="move-title">{tn('race.warRosterTitle')}</div>
+                <div className="move-title">{adding ? tn('race.warAddTitle') : tn('race.warRosterTitle')}</div>
               </div>
               <button className="icon-btn tap-scale" aria-label={tn('common.close')} onClick={onClose}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.6" strokeLinecap="round" aria-hidden>
@@ -99,7 +104,7 @@ export function ClanWarRosterSheet({ clanId, onClose }: { clanId: number; onClos
 
             <div className="move-body">
               <div className="move-note" style={{ textAlign: 'left', marginBottom: 10 }}>
-                {tn('race.warRosterNote')}
+                {adding ? tn('race.warAddNote') : tn('race.warRosterNote')}
               </div>
               <div className="war-pick-bar">
                 <b>{tn('race.warSelected', { count, total })}</b>
@@ -152,9 +157,9 @@ export function ClanWarRosterSheet({ clanId, onClose }: { clanId: number; onClos
 
             <div className="move-footer">
               {start.isError && <div className="move-error">{clanErrorMessage(start.error)}</div>}
-              {!enough && <div className="move-note">{tn('race.warNeedThree')}</div>}
+              {!enough && <div className="move-note">{adding ? tn('race.warNeedOne') : tn('race.warNeedThree')}</div>}
               <button className="btn-primary" disabled={!enough} onClick={() => setStep('confirm')}>
-                {tn('race.warStartBtn')}
+                {adding ? tn('race.warAddGo') : tn('race.warStartBtn')}
               </button>
             </div>
           </>

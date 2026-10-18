@@ -3664,7 +3664,26 @@ export function useClanWarCandidates(clanId: number | null, enabled: boolean) {
         catches: Number(m.catches ?? 0),
         meters: Number(m.meters ?? 0),
         lastCatchAt: (m.last_catch_at as string | null) ?? null,
+        inRoster: !!m.in_roster,
       }))
+    },
+  })
+}
+
+// Adds players to a roster that is already started (never removes): their metres
+// count from now and the finish grows by 200 m each.
+export function useAddClanWarPlayers() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ clanId, userIds }: { clanId: number; userIds: string[] }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('add_clan_war_players', { p_clan_id: clanId, p_user_ids: userIds })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clan-race'] })
+      queryClient.invalidateQueries({ queryKey: ['clan-war-candidates'] })
+      queryClient.invalidateQueries({ queryKey: ['clan'] })
     },
   })
 }

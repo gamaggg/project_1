@@ -557,4 +557,6 @@ export type ClanWarCandidate = {
   catches: number
   meters: number
   lastCatchAt: string | null
+  // Already in this week's roster (the «add players» sheet leaves them out).
+  inRoster: boolean
 }
