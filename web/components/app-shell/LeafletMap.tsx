@@ -58,6 +58,29 @@ const LABEL_MIN_ZOOM = 14
 // sector takes the same space on the screen in either city. A FIXED shift per city, not
 // one computed from the map centre's latitude: a centre a few metres south of the
 // reference turned the label threshold into 14.0003 and the labels vanished at zoom 14.
+// Where the player was last seen (this device): the map opens straight over it at
+// launch instead of showing the city centre and then flying over. Kept only while it is
+// in the same city (within 25 km of the city centre), so a trip elsewhere does not open
+// the map over empty sea.
+const LAST_POS_KEY = 'range:lastPos'
+function readLastPos(city: [number, number]): [number, number] | null {
+  try {
+    const raw = window.localStorage.getItem(LAST_POS_KEY)
+    if (!raw) return null
+    const v = JSON.parse(raw) as { lat?: number; lng?: number }
+    if (typeof v.lat !== 'number' || typeof v.lng !== 'number') return null
+    const dLat = (v.lat - city[0]) * 111.2
+    const dLng = (v.lng - city[1]) * 111.2 * Math.cos((city[0] * Math.PI) / 180)
+    return Math.hypot(dLat, dLng) <= 25 ? [v.lat, v.lng] : null
+  } catch {
+    return null
+  }
+}
+function saveLastPos(lat: number, lng: number) {
+  try {
+    window.localStorage.setItem(LAST_POS_KEY, JSON.stringify({ lat, lng }))
+  } catch {}
+}
 const MOSCOW_ZOOM_SHIFT = -0.41 // log2(cos 55.75° / cos 41.65°)
 const forLat = (zoom: number, lat: number) => (lat > 50 ? zoom + MOSCOW_ZOOM_SHIFT : zoom)
 
@@ -528,6 +551,7 @@ export const LeafletMap = forwardRef<
       const L = leafletRef.current
       const map = mapRef.current
       if (!L || !map) return
+      saveLastPos(lat, lng)
       if (userMarkerRef.current) {
         userMarkerRef.current.setLatLng([lat, lng])
         return
@@ -707,7 +731,12 @@ export const LeafletMap = forwardRef<
         svgRendererRef.current = L.svg({ padding: 0.2 })
         highlightLayerRef.current = L.layerGroup().addTo(map)
 
-        map.setView(fallbackCenter ?? FALLBACK_CENTER, fallbackZoom ?? FALLBACK_ZOOM)
+        // Over the player's last known position if there is one (the dot appears with it),
+        // else the city's own centre.
+        const homeCentre = fallbackCenter ?? FALLBACK_CENTER
+        const lastPos = readLastPos(homeCentre)
+        map.setView(lastPos ?? homeCentre, fallbackZoom ?? FALLBACK_ZOOM)
+        if (lastPos) placeUserMarker(lastPos[0], lastPos[1])
 
         // getMapboxMap() isn't in @types/mapbox-gl-leaflet even though it
         // exists at runtime — see the `.default` workaround note above for
@@ -739,11 +768,21 @@ export const LeafletMap = forwardRef<
         // on the wide view above — see the map-geo-banner in MapScreen.tsx
         // for how they're prompted to grant it.
         queryGeolocationPermission().then(async (permission) => {
-          if (cancelled || permission !== 'granted') return
+          if (cancelled) return
+          if (permission !== 'granted') {
+            // No access any more: the remembered position (and its dot) goes too.
+            userMarkerRef.current?.remove()
+            userMarkerRef.current = null
+            try {
+              window.localStorage.removeItem(LAST_POS_KEY)
+            } catch {}
+            return
+          }
           const coords = await getCurrentCoords()
           if (cancelled || !coords) return
-          // At launch: the same scale the map opens at, not a close-up of one sector.
-          map.flyTo([coords.lat, coords.lng], homeZoomRef.current, { duration: 0.6 })
+          // At launch the map is already over the last known position: the fresh fix is set
+          // without a flight (no moving about), at the scale the map opened at.
+          map.setView([coords.lat, coords.lng], homeZoomRef.current, { animate: false })
           placeUserMarker(coords.lat, coords.lng)
         })
 
