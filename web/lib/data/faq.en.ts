@@ -205,7 +205,7 @@ export const FAQ_EN: FaqSection[] = [
       },
       {
         q: 'What are the medals around the avatar?',
-        a: ['Medals are for special events: for example, holding a hot sector until the end of the week. Achievements in the profile are for catches, fish species and sectors.'],
+        a: ['Medals are for special events: for example, holding a hot sector until the end of the week. Achievements in the profile are for catches, fish species and sectors. An achievement you have earned stays for good: if you lose the sectors, it does not go away, and the reward is not paid a second time.'],
       },
     ],
   },

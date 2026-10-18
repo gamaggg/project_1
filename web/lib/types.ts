@@ -1436,6 +1436,24 @@ export type Database = {
           },
         ]
       }
+      user_achievements: {
+        Row: {
+          achievement_key: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_key: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_key?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_ui_state: {
         Row: {
           key: string

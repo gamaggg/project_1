@@ -1,6 +1,6 @@
 'use client'
 
-import { useCatchesByUser, useProfile, useHasClaimedFromOthers, useSyncMyAchievements } from '@/lib/supabase/queries'
+import { useCatchesByUser, useProfile, useHasClaimedFromOthers, useEarnedAchievements, useSyncMyAchievements } from '@/lib/supabase/queries'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { computeAchievements, heldTerritories, type Achievement } from '@/lib/data/achievements'
 import { AchievementCard, achievementFraction } from '@/components/app-shell/AchievementCard'
@@ -29,6 +29,7 @@ export function AchievementsScreen({
   const { data: profile } = useProfile(userId)
   const { data: catches = [] } = useCatchesByUser(userId)
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(userId)
+  const { data: earnedAchievements } = useEarnedAchievements(userId)
   useSyncMyAchievements(userId === user?.id)
   const myTerritories = heldTerritories(territories, userId)
   const achievements = computeAchievements(
@@ -38,6 +39,7 @@ export function AchievementsScreen({
       allTerritories: territories,
       followersCount: profile?.followersCount ?? 0,
       claimedFromOthers,
+      earned: earnedAchievements,
     },
     profile?.city ?? 'batumi'
   )

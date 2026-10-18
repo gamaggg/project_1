@@ -17,6 +17,7 @@ import {
   useIsSuperAdmin,
   useReports,
   useHasClaimedFromOthers,
+  useEarnedAchievements,
   useUserAwards,
   useFollowers,
   useTelegramNotificationState,
@@ -478,6 +479,7 @@ export function ProfileScreen({
   const showGeoCard = !!geo?.panorama || isSuperAdmin
   const { data: reports = [] } = useReports()
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(user?.id ?? null)
+  const { data: earnedAchievements } = useEarnedAchievements(user?.id ?? null)
   const { data: awards = [] } = useUserAwards(user?.id ?? null)
   const { data: followers = [] } = useFollowers(user?.id ?? null)
   const equippedFrame = resolveAvatarFrame(profile?.equippedFrame)
@@ -498,6 +500,7 @@ export function ProfileScreen({
       allTerritories,
       followersCount: profile?.followersCount ?? 0,
       claimedFromOthers,
+      earned: earnedAchievements,
     },
     city
   )

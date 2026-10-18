@@ -14,6 +14,7 @@ import {
   useCanBlockUsers,
   useSetBlocked,
   useHasClaimedFromOthers,
+  useEarnedAchievements,
   useReportDeletionCount,
   useUserAwards,
   useFollowers,
@@ -115,6 +116,7 @@ export function UserProfileScreen({
   const canBlockUsers = useCanBlockUsers()
   const setBlocked = useSetBlocked()
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(userId)
+  const { data: earnedAchievements } = useEarnedAchievements(userId)
   const { data: reportDeletionCount } = useReportDeletionCount(userId)
   const { data: awards = [] } = useUserAwards(userId)
   const { data: followers = [] } = useFollowers(userId)
@@ -138,6 +140,7 @@ export function UserProfileScreen({
       allTerritories,
       followersCount: profile?.followersCount ?? 0,
       claimedFromOthers,
+      earned: earnedAchievements,
     },
     viewedCity
   )

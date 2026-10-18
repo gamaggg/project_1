@@ -1,7 +1,7 @@
 'use client'
 
 import { cloneElement, type ReactElement } from 'react'
-import { useCatchesByUser, useProfile, useHasClaimedFromOthers } from '@/lib/supabase/queries'
+import { useCatchesByUser, useProfile, useHasClaimedFromOthers, useEarnedAchievements } from '@/lib/supabase/queries'
 import { computeAchievements, heldTerritories, type Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import { achievementFraction } from '@/components/app-shell/AchievementCard'
@@ -33,6 +33,7 @@ export function AchievementDetailScreen({
   const { data: profile } = useProfile(userId)
   const { data: catches = [] } = useCatchesByUser(userId)
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(userId)
+  const { data: earnedAchievements } = useEarnedAchievements(userId)
   const myTerritories = heldTerritories(territories, userId)
   const achievements = computeAchievements(
     catches,
@@ -41,6 +42,7 @@ export function AchievementDetailScreen({
       allTerritories: territories,
       followersCount: profile?.followersCount ?? 0,
       claimedFromOthers,
+      earned: earnedAchievements,
     },
     profile?.city ?? 'batumi'
   )

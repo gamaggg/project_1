@@ -55,6 +55,7 @@ const PERSISTED = new Set([
   'activity',
   'unread-notifications',
   'user-awards',
+  'earned-achievements',
   'claimed-from-others',
   'geo-today',
   'followers',

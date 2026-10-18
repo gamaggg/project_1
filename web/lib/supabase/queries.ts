@@ -1919,6 +1919,24 @@ export function useAdminEditCatch() {
 
 // The angler's own correction of a catch after the fact — size, weight, bait
 // and method (edit_my_catch; the species stays, the coins were paid for it).
+// The achievements this player has EVER earned (user_achievements, written once
+// by the server when one opens and never taken back). An achievement that was
+// earned stays unlocked even when what it was earned for is gone — ten sectors
+// lost again, the catches behind it deleted.
+export function useEarnedAchievements(userId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['earned-achievements', userId ?? null],
+    enabled: !!userId,
+    staleTime: 60_000,
+    queryFn: async (): Promise<string[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.from('user_achievements').select('achievement_key').eq('user_id', userId!)
+      if (error) throw error
+      return data.map((r) => r.achievement_key)
+    },
+  })
+}
+
 export function useEditMyCatch() {
   const queryClient = useQueryClient()
   return useMutation({

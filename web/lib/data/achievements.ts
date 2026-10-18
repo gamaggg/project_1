@@ -29,6 +29,9 @@ export type Achievement = {
   // already covers "how close", so this doesn't need two variants).
   flavor: string
   unlocked: boolean
+  // Unlocked only because the server recorded it earlier, not by today's state
+  // (the sectors behind it are gone): no popup for it.
+  earnedOnly?: boolean
   progress?: string
 }
 
@@ -62,6 +65,9 @@ export type AchievementContext = {
   // (activity_log kind:'claim' with a previous_owner_id)? Computed by the
   // caller (useHasClaimedFromOthers) since it needs its own query.
   claimedFromOthers: boolean
+  // Keys of the achievements this profile has ever earned (user_achievements):
+  // they stay unlocked even if the condition no longer holds (sectors lost).
+  earned?: readonly string[]
 }
 
 // Ported from fishzone-app.html computeAchievements() — real milestones computed
@@ -241,6 +247,15 @@ export function computeAchievements(myCatches: Catch[], ctx: AchievementContext,
       unlocked: claimedFromOthers,
     },
   ]
+  // Earned once, earned for good: what the server has recorded stays unlocked
+  // when the live state has moved on (ten sectors held, then lost).
+  const earned = new Set(ctx.earned ?? [])
+  for (const a of list) {
+    if (!a.unlocked && earned.has(a.icon)) {
+      a.unlocked = true
+      a.earnedOnly = true
+    }
+  }
   return list.sort((a, b) => Number(b.unlocked) - Number(a.unlocked)) // unlocked first, stable otherwise
 }
 

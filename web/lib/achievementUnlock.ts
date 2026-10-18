@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useCatchesByUser, useProfile, useHasClaimedFromOthers } from '@/lib/supabase/queries'
+import { useCatchesByUser, useProfile, useHasClaimedFromOthers, useEarnedAchievements } from '@/lib/supabase/queries'
 import { computeAchievements, heldTerritories, type Achievement } from '@/lib/data/achievements'
 import type { Territory } from '@/lib/data/types'
 import type { CityId } from '@/lib/data/city'
@@ -46,13 +46,14 @@ export function useAchievementUnlock(territories: Territory[], territoriesReady:
   const catchesQ = useCatchesByUser(user?.id ?? null)
   const profileQ = useProfile(user?.id ?? null)
   const claimedQ = useHasClaimedFromOthers(user?.id ?? null)
+  const earnedQ = useEarnedAchievements(user?.id ?? null)
   // territoriesReady comes from the caller's own useTerritories() — without it,
   // territory-dependent achievements briefly compute against an empty []
   // (its default before that query resolves) whenever it happens to resolve
   // *after* the three queries above, and the prune step below then wrongly
   // reads that blip as "no longer unlocked" and wipes it from "seen",
   // re-popping the modal once real data arrives (see DECISIONS.md).
-  const ready = catchesQ.isSuccess && profileQ.isSuccess && claimedQ.isSuccess && territoriesReady
+  const ready = catchesQ.isSuccess && profileQ.isSuccess && claimedQ.isSuccess && earnedQ.isSuccess && territoriesReady
 
   // The account's own city, not the map's city lens: the lens starts from
   // this device's localStorage and only catches up with the profile one
@@ -71,11 +72,15 @@ export function useAchievementUnlock(territories: Territory[], territoriesReady:
       allTerritories: territories,
       followersCount: profileQ.data?.followersCount ?? 0,
       claimedFromOthers: claimedQ.data ?? false,
+      earned: earnedQ.data,
     },
     achievementCity
   )
   const unlockedIcons = achievements.filter((a) => a.unlocked).map((a) => a.icon)
-  const unlockedKey = unlockedIcons.join(',')
+  // Unlocked only through the server's record (the live state has moved on):
+  // already known to the player, never worth a popup.
+  const earnedOnlyIcons = achievements.filter((a) => a.earnedOnly).map((a) => a.icon)
+  const unlockedKey = unlockedIcons.join(',') + '|' + earnedOnlyIcons.join(',')
 
   const [queue, setQueue] = useState<{ icon: Achievement['icon']; city: CityId }[]>([])
   const ui = useUiState()
@@ -106,13 +111,16 @@ export function useAchievementUnlock(territories: Territory[], territoriesReady:
     }
     // Seen only on this device so far: the account takes it over.
     if (!remote) writeSeen(user.id, seen, achievementCity)
-    // Prune anything no longer unlocked (e.g. a moderator deleted the catches
-    // behind it) out of "seen" too — achievements aren't guaranteed monotonic
-    // here, so losing one and earning it again should pop the modal again,
-    // not stay silently marked as already shown.
+    // Prune anything no longer unlocked out of "seen". An achievement the server
+    // has recorded (user_achievements) counts as unlocked for good — losing the
+    // sectors or catches behind it no longer takes it back, so it is never
+    // pruned and never pops the modal a second time. Only a "seen" entry whose
+    // achievement is truly gone (not recorded either) is dropped.
     const unlockedSet = new Set(unlockedIcons)
     const pruned = new Set([...seen].filter((icon) => unlockedSet.has(icon)))
-    if (pruned.size !== seen.size) writeSeen(user.id, pruned, achievementCity)
+    // Earned earlier and since lost: marked as seen, so getting it back is no news.
+    for (const icon of earnedOnlyIcons) pruned.add(icon)
+    if (pruned.size !== seen.size || [...pruned].some((icon) => !seen.has(icon))) writeSeen(user.id, pruned, achievementCity)
     const fresh = unlockedIcons.filter((icon) => !pruned.has(icon))
     if (fresh.length === 0) return
     // eslint-disable-next-line react-hooks/set-state-in-effect -- compares against "seen" in browser storage (external), only readable after mount
