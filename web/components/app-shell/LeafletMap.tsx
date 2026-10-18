@@ -226,6 +226,10 @@ export const LeafletMap = forwardRef<
     plainRef.current = plain
     const containerRef = useRef<HTMLDivElement>(null)
     const mapRef = useRef<L.Map | null>(null)
+    // The scale the map opens at in this city — also the scale it flies to when it
+    // goes to the player's own position (it used to close in to 16.5).
+    const homeZoomRef = useRef(fallbackZoom ?? FALLBACK_ZOOM)
+    homeZoomRef.current = fallbackZoom ?? FALLBACK_ZOOM
     const leafletRef = useRef<typeof import('leaflet') | null>(null)
     const getSkinPattern = useSkinPatterns()
     // Skin SVGs load async — this ticks once a given skin's file lands, so
@@ -556,7 +560,8 @@ export const LeafletMap = forwardRef<
       flyToLocation(lat: number, lng: number) {
         const map = mapRef.current
         if (!map) return
-        const targetZoom = Math.max(map.getZoom(), 16.5)
+        // «Моё местоположение»: the city's own scale, or the player's if already closer.
+        const targetZoom = Math.max(map.getZoom(), homeZoomRef.current)
         map.flyTo([lat, lng], targetZoom, { duration: 0.5 })
       },
       // City switch — a real forced duration (not proportional-to-distance
@@ -735,7 +740,8 @@ export const LeafletMap = forwardRef<
           if (cancelled || permission !== 'granted') return
           const coords = await getCurrentCoords()
           if (cancelled || !coords) return
-          map.flyTo([coords.lat, coords.lng], 16.5, { duration: 0.6 })
+          // At launch: the same scale the map opens at, not a close-up of one sector.
+          map.flyTo([coords.lat, coords.lng], homeZoomRef.current, { duration: 0.6 })
           placeUserMarker(coords.lat, coords.lng)
         })
 
