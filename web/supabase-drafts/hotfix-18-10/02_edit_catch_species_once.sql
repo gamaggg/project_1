@@ -113,3 +113,4 @@ end;
 $$;
 
 grant execute on function public.edit_my_catch(bigint, integer, numeric, text, text, text) to authenticated, service_role;
+revoke execute on function public.edit_my_catch(bigint, integer, numeric, text, text, text) from public, anon;
