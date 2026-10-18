@@ -61,7 +61,10 @@ export const CITIES: Record<CityId, CityInfo> = {
     },
     timezone: 'Europe/Moscow',
     center: [55.7522, 37.6228],
-    zoom: 14.3,
+    // 13.9, not Batumi's 14.3: at Moscow's latitude the same zoom draws a sector
+    // ~1.33× bigger (web mercator), so 14.3 − log2(cos 41.65° / cos 55.75°) gives
+    // sectors the size they have on the Batumi screen.
+    zoom: 13.9,
     // Kremlin embankment.
     colorPreviewCenter: [55.7485, 37.6180],
     seaPoint: null,

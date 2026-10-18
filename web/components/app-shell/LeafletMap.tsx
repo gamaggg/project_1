@@ -52,6 +52,12 @@ export type LeafletMapHandle = {
 export type GeoMarks = { picked: string | null; answer: string | null; spot: [number, number] | null; dim: boolean }
 
 const LABEL_MIN_ZOOM = 14
+// The same zoom shows a sector bigger the further north the city is (web mercator
+// stretches by 1/cos(latitude)): Moscow at Batumi's zoom looks ~1.3× closer. Zooms
+// in this file are written for Batumi's latitude and carried to the map's own with
+// this, so a sector takes the same space on the screen in either city.
+const REF_LAT = 41.6513
+const forLat = (zoom: number, lat: number) => zoom + Math.log2(Math.cos((lat * Math.PI) / 180) / Math.cos((REF_LAT * Math.PI) / 180))
 
 // ownerDisplayName/ownerAvatarUrl are user-controlled (a display name, or an
 // avatar_url a user could in principle set to an arbitrary string via a raw
@@ -458,7 +464,7 @@ export const LeafletMap = forwardRef<
       const labelsLayer = labelsLayerRef.current
       if (!L || !map || !labelsLayer) return
       labelsLayer.clearLayers()
-      if (map.getZoom() < LABEL_MIN_ZOOM) return
+      if (map.getZoom() < forLat(LABEL_MIN_ZOOM, map.getCenter().lat)) return
       // Padded so a marker isn't created/destroyed right as it crosses the
       // edge — the strip just outside the viewport is already built by the
       // time a drag brings it in.
@@ -540,7 +546,7 @@ export const LeafletMap = forwardRef<
         // Keep the player's scale — «На карте» and swiping the cards used to
         // zoom right in (16.5, the sector filling half the screen). Only a
         // map zoomed far out comes in to 14, where a sector still reads.
-        const targetZoom = Math.max(map.getZoom(), 14)
+        const targetZoom = Math.max(map.getZoom(), forLat(14, map.getCenter().lat))
         map.flyTo([t.lat, t.lng], targetZoom, { duration: 0.5 })
       },
       showUserLocation: placeUserMarker,
@@ -734,7 +740,7 @@ export const LeafletMap = forwardRef<
         })
 
         function updateLabelVisibility() {
-          const show = map.getZoom() >= LABEL_MIN_ZOOM
+          const show = map.getZoom() >= forLat(LABEL_MIN_ZOOM, map.getCenter().lat)
           if (show && !map.hasLayer(labelsLayerRef.current!)) labelsLayerRef.current!.addTo(map)
           if (!show && map.hasLayer(labelsLayerRef.current!)) map.removeLayer(labelsLayerRef.current!)
           // The other way round for the hot-sector badges: they stand in for
