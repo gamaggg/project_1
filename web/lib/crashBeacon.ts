@@ -17,7 +17,7 @@ const EARLY_FOR_MS = 60_000
 const MAX_AGE_MS = 15 * 60_000
 const REPORT_EVERY_MS = 60 * 60_000
 
-type Beacon = { screen: string; at: number; started: number; clean: boolean; nodes: number; canvases: number; screens: number; heapMB: number | null; nav: string }
+type Beacon = { screen: string; at: number; started: number; clean: boolean; nodes: number; canvases: number; screens: number; images: number; heapMB: number | null; nav: string; trail: string }
 
 function read(): Beacon | null {
   try {
@@ -55,7 +55,9 @@ function heapMB(): number | null {
 function platform(): string {
   const tg = window.Telegram?.WebApp as { platform?: string; version?: string } | undefined
   const standalone = (navigator as Navigator & { standalone?: boolean }).standalone === true
-  return [tg?.platform ? `Telegram ${tg.platform} ${tg.version ?? ''}`.trim() : standalone ? 'главный экран' : 'браузер', `${innerWidth}×${innerHeight}`, `dpr ${devicePixelRatio}`].join(', ')
+  // Outside Telegram the script still answers, with platform «unknown».
+  const inTelegram = !!tg?.platform && tg.platform !== 'unknown'
+  return [inTelegram ? `Telegram ${tg?.platform} ${tg?.version ?? ''}`.trim() : standalone ? 'главный экран' : 'браузер (не Telegram)', `${innerWidth}×${innerHeight}`, `dpr ${devicePixelRatio}`].join(', ')
 }
 
 // `report` is how the super admins hear of it (lib/supabase/queries.ts reportClientError).
@@ -74,24 +76,33 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
       const lived = Math.round((prev.at - prev.started) / 1000)
       report(
         `страница сброшена без ухода в фон: экран ${prev.screen}; жила ${lived} с, последний сигнал ${Math.round((now - prev.at) / 1000)} с назад; ` +
-          `узлов ${prev.nodes}, экранов ${prev.screens}, canvas ${prev.canvases}${prev.heapMB !== null ? `, куча ${prev.heapMB} МБ` : ''}; открыта как ${prev.nav ?? '?'}; ${platform()}`
+          `узлов ${prev.nodes}, экранов ${prev.screens}, canvas ${prev.canvases}${prev.images !== undefined ? `, картинок ${prev.images}` : ''}${prev.heapMB !== null ? `, куча ${prev.heapMB} МБ` : ''}; открыта как ${prev.nav ?? '?'}${prev.trail ? `; путь: ${prev.trail}` : ''}; ${platform()}`
       )
     }
   }
 
   const started = now
   const navType = navigationType()
+  // The last few screens and when (seconds since launch): how the player got here.
+  const trail: string[] = []
   const beat = (clean: boolean) => {
+    const screen = activeScreen()
+    if (trail[trail.length - 1]?.split('@')[0] !== screen) {
+      trail.push(`${screen.replace('screen-', '')}@${Math.round((Date.now() - started) / 1000)}`)
+      if (trail.length > 6) trail.shift()
+    }
     write({
-      screen: activeScreen(),
+      screen,
       at: Date.now(),
       started,
       clean,
       nodes: document.getElementsByTagName('*').length,
       canvases: document.getElementsByTagName('canvas').length,
       screens: document.querySelectorAll('.screen').length,
+      images: document.getElementsByTagName('img').length,
       heapMB: heapMB(),
       nav: navType,
+      trail: trail.join(' → '),
     })
   }
   beat(false)
