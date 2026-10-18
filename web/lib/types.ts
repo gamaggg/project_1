@@ -1798,6 +1798,8 @@ export type Database = {
       admin_delete_catch: { Args: { p_catch_id: number }; Returns: undefined }
       admin_move_catch: { Args: { p_catch_id: number; p_territory_id: string }; Returns: Json }
       admin_edit_catch: { Args: { p_catch_id: number; p_species: string; p_length_cm: number | null; p_weight_kg: number | null }; Returns: Json }
+      get_clan_war_candidates: { Args: { p_clan_id?: number }; Returns: Json }
+      start_clan_war: { Args: { p_clan_id: number; p_user_ids: string[] }; Returns: Json }
       edit_my_catch: { Args: { p_catch_id: number; p_length_cm: number | null; p_weight_kg: number | null; p_bait: string | null; p_method: string | null; p_species?: string }; Returns: Json }
       admin_delete_territory: {
         Args: { p_territory_id: string }

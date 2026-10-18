@@ -9,6 +9,7 @@ import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { ChallengeCountdown } from '@/components/app-shell/ChallengeCountdown'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
 import type { CityId } from '@/lib/data/city'
+import { ClanWarRosterSheet } from '@/components/app-shell/ClanWarRosterSheet'
 import type { ClanRace, ClanRaceEntry } from '@/lib/data/types'
 
 // How far along the river a clan's boat is, 0..1. A clan that crossed the
@@ -125,6 +126,14 @@ export function RaceRiver({
                   <span className="race-boat-bob">
                     <RaceBoat crest={c.crest} size={boatSize} />
                   </span>
+                  {/* Crossed the line: sparks around the boat, which rests and glows. */}
+                  {c.finishedAt && (
+                    <>
+                      <span className="race-spark s1" aria-hidden />
+                      <span className="race-spark s2" aria-hidden />
+                      <span className="race-spark s3" aria-hidden />
+                    </>
+                  )}
                 </span>
               </span>
               {mine && <span className="race-lane-you">{tn('race.you')}</span>}
@@ -133,6 +142,48 @@ export function RaceRiver({
         })
       )}
       <div className="race-finish" aria-hidden />
+    </div>
+  )
+}
+
+// The sign-up weeks: this clan's own state of the battle. Not started — the
+// leader / a co-leader gets «Участвовать в битве кланов» (the roster sheet), the
+// others are told who opens it; started — who is in the roster and whether the
+// viewer is. Nothing for another clan, nothing before the sign-up weeks begin.
+export function ClanWarCard({ race, clanId }: { race: ClanRace; clanId: number }) {
+  const [picking, setPicking] = useState(false)
+  if (!race.warMode || race.myClanId !== clanId) return null
+
+  if (race.myWar) {
+    const w = race.myWar
+    return (
+      <div className="clan-card war-card in" data-tour="war-card">
+        <div className="clan-card-title">{tn('race.warRosterCount', { players: tn('race.warPlayers', { count: w.size }) })}</div>
+        <div className="war-roster-faces">
+          {w.roster.slice(0, 12).map((m) => (
+            <span key={m.userId} className="avatar war-roster-face" title={m.displayName}>
+              {m.avatarUrl ? <img src={thumbUrl(m.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : m.displayName.slice(0, 1).toUpperCase()}
+            </span>
+          ))}
+          {w.roster.length > 12 && <span className="war-roster-more">+{w.roster.length - 12}</span>}
+        </div>
+        <div className={`war-me${w.meIn ? ' in' : ''}`}>{w.meIn ? tn('race.warMeIn') : tn('race.warMeOut')}</div>
+      </div>
+    )
+  }
+
+  const tooSmall = race.myClanActive < 3
+  return (
+    <div className="clan-card war-card" data-tour="war-card">
+      <div className="war-card-kicker">{tn('race.warKicker')}</div>
+      <div className="war-card-title">{tn('race.warCardTitle')}</div>
+      <p className="war-card-lead">{race.canStart ? tn('race.warLeadLeader') : tooSmall ? tn('race.warTooSmall') : tn('race.warLeadMember')}</p>
+      {race.canStart && (
+        <button className="btn-primary war-card-btn" onClick={() => setPicking(true)}>
+          {tn('race.warJoinBtn')}
+        </button>
+      )}
+      {picking && <ClanWarRosterSheet clanId={clanId} onClose={() => setPicking(false)} />}
     </div>
   )
 }
@@ -185,8 +236,10 @@ export function ClanRacePreview({ city, clanId, onOpenRace }: { city: CityId; cl
       </div>
       {/* Each member's metres this week — like the chest's points (the server
           counts them for the viewer's own clan only). */}
-      {race.myClanId === clanId && <RaceRowers rowers={race.myRowers} />}
-      <RaceRulesCard />
+      <ClanWarCard race={race} clanId={clanId} />
+      {/* Before the battle is opened there are no rowers to list. */}
+      {race.myClanId === clanId && !(race.warMode && !race.myWar) && <RaceRowers rowers={race.myRowers} />}
+      <RaceRulesCard signup={race.warMode} />
     </div>
   )
 }
@@ -230,10 +283,124 @@ export function raceHeadline(c: ClanRaceEntry, race: ClanRace): string {
   return tn('race.placeOf', { rank: c.rank, total: race.clans.length })
 }
 
-export function RaceRulesCard() {
+type HowStep = 'roster' | 'meters' | 'finish' | 'prize'
+const HOW_STEPS: HowStep[] = ['roster', 'meters', 'finish', 'prize']
+const HOW_ACTIONS: { key: 'ruleCatch' | 'ruleChallenge' | 'ruleClaim' | 'ruleSteal'; m: number }[] = [
+  { key: 'ruleCatch', m: 10 },
+  { key: 'ruleChallenge', m: 20 },
+  { key: 'ruleClaim', m: 30 },
+  { key: 'ruleSteal', m: 50 },
+]
+const DAY_CAP = 150
+
+// «How the battle goes» for the sign-up weeks: four steps you can tap through,
+// each with something to play with — tap the actions and watch the day's metres
+// fill to the 150 m limit, change the roster size and see how long the finish is.
+function RaceHowCard() {
+  const [step, setStep] = useState<HowStep>('roster')
+  const [day, setDay] = useState(0)
+  const [players, setPlayers] = useState(5)
+  const capped = day >= DAY_CAP
+  const idx = HOW_STEPS.indexOf(step)
+
+  return (
+    <div className="clan-card race-how" data-tour="race-how">
+      <div className="clan-card-title">{tn('race.howTitle')}</div>
+      <div className="race-how-steps" role="tablist">
+        {HOW_STEPS.map((s, i) => (
+          <button key={s} type="button" role="tab" aria-selected={s === step} className={`race-how-step${s === step ? ' on' : ''}${i < idx ? ' past' : ''}`} onClick={() => setStep(s)}>
+            <span className="race-how-num">{i + 1}</span>
+            <span className="race-how-label">{s === 'roster' ? tn('race.howStep1') : s === 'meters' ? tn('race.howStep2') : s === 'finish' ? tn('race.howStep3') : tn('race.howStep4')}</span>
+          </button>
+        ))}
+      </div>
+
+      <div key={step} className="race-how-panel">
+        {step === 'roster' && (
+          <>
+            <p className="race-how-line" style={{ marginTop: 0 }}>{tn('race.howRoster1')}</p>
+            <p className="race-how-line">{tn('race.howRoster2')}</p>
+            <p className="race-how-line soft">{tn('race.howRoster3')}</p>
+          </>
+        )}
+
+        {step === 'meters' && (
+          <>
+            <p className="race-how-line soft" style={{ marginTop: 0 }}>{tn('race.howMetersHint')}</p>
+            <div className="race-how-tiles">
+              {HOW_ACTIONS.map((a) => (
+                <button key={a.key} type="button" className="race-how-tile" disabled={capped} onClick={() => setDay((d) => Math.min(DAY_CAP, d + a.m))}>
+                  <span>{tn(`race.${a.key}`)}</span>
+                  <b>+{a.m} {tn('fmt.m')}</b>
+                </button>
+              ))}
+            </div>
+            <div className="race-how-gauge">
+              <div className="race-how-gauge-bar">
+                <span style={{ transform: `scaleX(${day / DAY_CAP})` }} className={capped ? 'full' : ''} />
+              </div>
+              <div className="race-how-gauge-row">
+                <span>{tn('race.howDay', { m: day, cap: DAY_CAP })}</span>
+                <button type="button" className="race-how-reset" style={{ visibility: day > 0 ? 'visible' : 'hidden' }} tabIndex={day > 0 ? 0 : -1} onClick={() => setDay(0)}>
+                  {tn('race.howReset')}
+                </button>
+              </div>
+              {/* One note slot of a fixed height, so the block never jumps while you tap. */}
+              <div className={`race-how-capnote${capped ? ' on' : ''}`}>{capped ? tn('race.howCapReached') : tn('race.howDayLimit')}</div>
+            </div>
+          </>
+        )}
+
+        {step === 'finish' && (
+          <>
+            <div className="race-how-stepper">
+              <span>{tn('race.howFinishLabel')}</span>
+              <span className="race-how-count">
+                <button type="button" aria-label="−" disabled={players <= 3} onClick={() => setPlayers((n) => Math.max(3, n - 1))}>−</button>
+                <b>{players}</b>
+                <button type="button" aria-label="+" disabled={players >= 30} onClick={() => setPlayers((n) => Math.min(30, n + 1))}>+</button>
+              </span>
+            </div>
+            <div className="race-how-finish">
+              <div className="race-how-finish-total">{tn('race.howFinishResult', { total: formatMeters(players * 200) })}</div>
+              <div className="race-how-finish-bar" aria-hidden>
+                <span style={{ transform: `scaleX(${Math.min(1, (players * 200) / 6000)})` }} />
+              </div>
+            </div>
+            <p className="race-how-line soft">{tn('race.howFinishNote')}</p>
+          </>
+        )}
+
+        {step === 'prize' && (
+          <>
+            <p className="race-how-line" style={{ marginTop: 0 }}>{tn('race.howPrizeFinish')}</p>
+            <p className="race-how-line soft">{tn('race.howPrizePlaces')}</p>
+            <div className="race-how-places">
+              {[
+                { rank: 1, coins: 120 },
+                { rank: 2, coins: 60 },
+                { rank: 3, coins: 30 },
+              ].map((r) => (
+                <span key={r.rank} className={`race-how-place p${r.rank}`}>
+                  <i>{r.rank}</i>
+                  <b>+{r.coins}</b>
+                </span>
+              ))}
+            </div>
+            <p className="race-how-line soft">{tn('race.howPrizeClan')}</p>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export function RaceRulesCard({ signup = false }: { signup?: boolean }) {
+  if (signup) return <RaceHowCard />
   return (
     <div className="clan-card race-rules">
       <div className="clan-card-title">{tn('race.rulesTitle')}</div>
+      {signup && <p className="race-rule-note" style={{ marginTop: 0, marginBottom: 10 }}>{tn('race.ruleRoster')}</p>}
       <div className="race-rule-grid">
         <span>{tn('race.ruleCatch')}</span>
         <b>+10 {tn('fmt.m')}</b>
@@ -274,14 +441,24 @@ export function MapRacePill({ city, clanId, onOpen }: { city: CityId; clanId: nu
     return () => clearInterval(id)
   }, [])
   const mine = race?.clans.find((c) => c.id === clanId)
-  if (!race || !mine) return null
-  const progress = raceProgress(mine)
-  const status = mine.finishedAt ? tn('race.statusFinish') : race.clans.length < 2 ? tn('race.pctShort', { pct: Math.floor(progress * 100) }) : tn('race.place', { rank: mine.rank })
-  const left = shortLeft(new Date(race.weekEnd).getTime() - now)
+  if (!race) return null
+  // Sign-up weeks, the clan has not opened the war: «Битва не начата» — the leader is asked to start.
+  const notStarted = race.warMode && !mine && race.myClanId === clanId
+  if (!mine && !notStarted) return null
+  const progress = mine ? raceProgress(mine) : 0
+  const status = !mine
+    ? tn('race.warStatusNot')
+    : mine.finishedAt
+      ? tn('race.statusFinish')
+      : race.clans.length < 2
+        ? tn('race.pctShort', { pct: Math.floor(progress * 100) })
+        : tn('race.place', { rank: mine.rank })
+  const startable = !mine && race.canStart
+  const left = startable ? tn('race.warPillStart') : shortLeft(new Date(race.weekEnd).getTime() - now)
   // The brand-orange card is the one thing on the map that isn't a sector
   // or a control — it has to read at a glance over both sea and land.
   return (
-    <button className="map-race-pill tap-scale" onClick={onOpen} aria-label={tn('race.pillAria', { status, left })}>
+    <button data-tour="race-pill" className={`map-race-pill tap-scale${startable ? ' has-cta' : ''}`} onClick={onOpen} aria-label={tn('race.pillAria', { status, left })}>
       <span className="map-race-pill-icon" aria-hidden>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
           <path d="M14.5 17.5 3 6V3h3l11.5 11.5" />
@@ -293,16 +470,26 @@ export function MapRacePill({ city, clanId, onOpen }: { city: CityId; clanId: nu
       <span className="map-race-pill-body">
         <span className="map-race-pill-row">
           <span className="map-race-pill-title">{tn('race.pillTitle')}</span>
-          <b className="map-race-pill-status">{status}</b>
-          <span className="map-race-pill-left">{left}</span>
+          {mine && <b className="map-race-pill-status">{status}</b>}
+          {!startable && <span className="map-race-pill-left">{left}</span>}
         </span>
-        <span className="map-race-pill-track">
-          <span className="map-race-pill-fill" style={{ width: `${Math.round(progress * 100)}%` }} />
-        </span>
+        {/* Not started: «не начата» on the second line, and no strip — there is nothing to fill. */}
+        {mine ? (
+          <span className="map-race-pill-track">
+            <span className="map-race-pill-fill" style={{ width: `${Math.round(progress * 100)}%` }} />
+          </span>
+        ) : (
+          <b className="map-race-pill-status map-race-pill-status-line">{status}</b>
+        )}
       </span>
-      <svg className="map-race-pill-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M9 6l6 6-6 6" />
-      </svg>
+      {/* To the leader of a clan not in the battle: a white button, not a time. */}
+      {startable && <span className="map-race-pill-cta">{left}</span>}
+      {/* The white button says it already — no arrow beside it. */}
+      {!startable && (
+        <svg className="map-race-pill-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+      )}
     </button>
   )
 }

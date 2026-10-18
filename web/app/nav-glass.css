@@ -1423,3 +1423,111 @@ html.ios-standalone #screen-clan .clan-hero { margin-top: 0; margin-left: 0; mar
 
 /* «Can be corrected once» under the species, size and weight in the catch edit sheet. */
 .edit-once-note { margin-top: 5px; font-size: 12px; line-height: 1.3; color: var(--ink-soft, #6B6D76); }
+
+/* ---------- Clan battle by sign-up: the clan's card and the roster sheet (ClanWarRosterSheet.tsx, ClanWarCard) ---------- */
+.war-card { margin-top: 12px; }
+/* The base .clan-card only pads 4px (its rows bring their own); this card is plain text and a button. */
+.war-card:not(.in) { padding: 16px; }
+.war-card.in .war-me { margin-bottom: 12px; }
+.war-card-kicker { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.war-card-title { margin-top: 4px; font-size: 17px; font-weight: 800; line-height: 1.25; }
+.war-card-lead { margin: 8px 0 0; font-size: 13.5px; line-height: 1.45; color: var(--ink-soft); }
+.war-card-btn { margin-top: 14px; width: 100%; }
+.war-roster-faces { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; align-items: center; }
+.war-roster-face { width: 34px; height: 34px; flex: 0 0 auto; cursor: default; }
+.war-roster-more { font-size: 12.5px; font-weight: 800; color: var(--ink-faint); padding: 0 4px; }
+.war-me { margin-top: 12px; font-size: 13px; font-weight: 700; color: var(--ink-soft); line-height: 1.4; }
+.war-me.in { color: #1B7F6B; }
+.war-pick-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 2px 0 6px; font-size: 13.5px; }
+.war-pick-actions { display: flex; gap: 6px; }
+.war-pick-row { align-items: center; }
+.war-pick-check { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 7px; border: 2px solid #CFCCC5; background: var(--surface); display: flex; align-items: center; justify-content: center; transition: background .15s var(--ease), border-color .15s var(--ease); }
+.war-pick-check.on { background: var(--accent); border-color: var(--accent); }
+.war-pick-avatar { width: 40px; height: 40px; flex: 0 0 auto; cursor: default; }
+.war-pick-role { margin-left: 6px; font-size: 11px; font-weight: 700; color: var(--ink-faint); }
+.war-confirm-body { margin: 10px 0 0; font-size: 14px; line-height: 1.5; color: var(--ink-soft); }
+.war-confirm-actions { display: flex; gap: 10px; width: 100%; margin-top: 18px; }
+.war-confirm-actions > button { flex: 1; }
+
+/* «начать» on the map plaque for the leader of a clan that has not opened the battle: a white button on the orange card. */
+.map-race-pill-cta { flex: 0 0 auto; margin-left: auto; padding: 11px 22px; border-radius: 999px; background: #fff; color: #D94400; font-size: 15px; font-weight: 800; line-height: 1.2; white-space: nowrap; box-shadow: 0 3px 10px rgba(120, 40, 0, 0.3), 0 1px 0 rgba(255, 255, 255, 0.9) inset; }
+.map-race-pill:active .map-race-pill-cta { transform: scale(0.95); }
+
+/* «не начата» sits on the second line under the title (no strip before the battle starts). */
+.map-race-pill-status-line { align-self: flex-start; }
+.map-race-pill.has-cta .map-race-pill-body { gap: 4px; justify-content: center; }
+@media (max-width: 380px) { .map-race-pill-cta { font-size: 14px; } }
+
+/* The plaque with the white button keeps the height every plaque has (53 px): the band inside is
+   icon, two text lines and button, all centred, with equal margins around it. */
+.map-race-pill.has-cta { padding: 7px 12px; height: 53px; }
+.map-race-pill.has-cta .map-race-pill-icon { width: 36px; height: 36px; border-radius: 11px; }
+.map-race-pill.has-cta .map-race-pill-icon svg { width: 20px; height: 20px; }
+.map-race-pill.has-cta .map-race-pill-title { line-height: 1.15; }
+.map-race-pill.has-cta .map-race-pill-status-line { padding: 1px 7px; line-height: 1.25; font-size: 11px; }
+.map-race-pill.has-cta .map-race-pill-cta { padding: 0 20px; height: 38px; display: inline-flex; align-items: center; }
+@media (max-width: 380px) { .map-race-pill.has-cta .map-race-pill-cta { padding: 0 16px; } }
+
+/* ---------- A clan that reached the finish (RaceRiver, .race-lane.finished) ---------- */
+/* The lane warms to gold towards the line, the boat stops rowing and glows, the trail turns gold. */
+.race-lane.finished::before { content: ''; position: absolute; top: 0; bottom: 0; left: 30%; right: 12px; background: radial-gradient(ellipse 100% 50% at 100% 50%, rgba(255, 205, 92, 0.28), rgba(255, 205, 92, 0.12) 45%, rgba(255, 205, 92, 0) 100%); pointer-events: none; }
+.race-lane.finished .race-boat-bob { animation: none; filter: drop-shadow(0 0 9px rgba(255, 207, 96, 0.9)); }
+.race-lane.finished .race-oar { animation: none; }
+.race-lane.finished .race-trail { opacity: 0.7; height: 6px; margin-top: 8px; background: linear-gradient(90deg, rgba(255, 214, 120, 0), rgba(255, 200, 80, 0.55)); }
+.race-spark { position: absolute; width: 8px; height: 8px; background: #FFE08A; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); opacity: 0; animation: race-twinkle 2s ease-in-out infinite; pointer-events: none; z-index: 3; }
+.race-spark.s1 { left: calc(var(--boat) * 0.2); top: 14%; animation-delay: 0s; }
+.race-spark.s2 { left: calc(var(--boat) * 0.62); top: 2%; width: 6px; height: 6px; animation-delay: 0.7s; }
+.race-spark.s3 { left: calc(var(--boat) * 0.98); top: 52%; width: 7px; height: 7px; animation-delay: 1.3s; }
+@keyframes race-twinkle { 0%, 100% { transform: scale(0.3) rotate(0); opacity: 0; } 40% { transform: scale(1) rotate(20deg); opacity: 1; } 70% { transform: scale(0.6) rotate(35deg); opacity: 0.5; } }
+@media (prefers-reduced-motion: reduce) { .race-spark { animation: none; opacity: 0.8; } }
+
+/* The confirmation step of the roster sheet: the picked players' faces under the title. */
+.war-confirm-faces { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; margin-top: 14px; max-width: 100%; }
+.war-confirm-faces .war-roster-face { width: 40px; height: 40px; }
+
+/* ---------- «How the battle goes» — four steps with something to tap in each (RaceHowCard) ---------- */
+.race-how { padding-bottom: 14px; }
+.race-how-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 6px; }
+.race-how-step { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px 7px; border: none; border-radius: 14px; background: transparent; font: inherit; color: var(--ink-soft); cursor: pointer; transition: background .2s var(--ease), color .2s var(--ease); }
+.race-how-step.on { background: #FFEFE6; color: #B83B00; }
+.race-how-num { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; background: #EDEBE6; color: var(--ink-soft); transition: background .2s var(--ease), color .2s var(--ease), transform .2s var(--ease-out); }
+.race-how-step.past .race-how-num { background: #FAD2BA; color: #B83B00; }
+.race-how-step.on .race-how-num { background: var(--accent); color: #fff; transform: scale(1.08); }
+.race-how-label { font-size: 11.5px; font-weight: 800; }
+.race-how-panel { margin-top: 12px; padding: 0 2px; animation: boosts-tab-in .25s var(--ease-out) both; }
+.race-how-line { margin: 9px 0 0; font-size: 13.5px; line-height: 1.45; color: var(--ink); }
+.race-how-line.soft { color: var(--ink-soft); }
+.race-how-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.race-how-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 10px 12px; border: 1.5px solid #F6DCCB; border-radius: 14px; background: #FFF7F2; font: inherit; font-size: 12.5px; color: var(--ink); text-align: left; cursor: pointer; transition: transform .12s var(--ease), background .15s var(--ease); }
+.race-how-tile b { font-size: 15px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.race-how-tile:active:not(:disabled) { transform: scale(0.96); background: #FFE4D3; }
+.race-how-tile:disabled { opacity: 0.45; cursor: default; }
+.race-how-gauge { margin-top: 12px; }
+.race-how-gauge-bar { height: 10px; border-radius: 6px; background: #F6E6DC; overflow: hidden; }
+.race-how-gauge-bar span { display: block; height: 100%; width: 100%; transform-origin: left; border-radius: 6px; background: linear-gradient(90deg, #FF8A3D, var(--accent)); transition: transform .35s var(--ease-out); }
+.race-how-gauge-bar span.full { background: linear-gradient(90deg, #FFD86B, #E0A63A); }
+.race-how-gauge-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 7px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.race-how-reset { border: none; background: none; font: inherit; font-size: 12.5px; font-weight: 800; color: var(--accent); cursor: pointer; padding: 2px 4px; line-height: 1.4; }
+.race-how-capnote { margin-top: 4px; min-height: 35px; font-size: 12.5px; line-height: 1.4; color: var(--ink-faint); font-weight: 600; transition: color .2s var(--ease); }
+.race-how-capnote.on { color: #A5731A; font-weight: 700; }
+.race-how-stepper { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13.5px; font-weight: 700; }
+.race-how-count { display: inline-flex; align-items: center; gap: 4px; padding: 3px; border-radius: 14px; background: #FFF7F2; border: 1.5px solid #F6DCCB; }
+.race-how-count b { min-width: 34px; text-align: center; font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.race-how-count button { width: 32px; height: 32px; border: none; border-radius: 10px; background: #fff; font: inherit; font-size: 18px; font-weight: 800; color: #B83B00; cursor: pointer; box-shadow: 0 1px 3px rgba(120, 50, 10, 0.15); }
+.race-how-count button:disabled { opacity: 0.4; cursor: default; }
+.race-how-count button:active:not(:disabled) { transform: scale(0.92); }
+.race-how-finish { margin-top: 12px; padding: 12px 14px; border-radius: 16px; background: #FFF7F2; border: 1px solid #F6DCCB; }
+.race-how-finish-total { font-size: 20px; font-weight: 800; color: #B83B00; font-variant-numeric: tabular-nums; }
+.race-how-finish-bar { height: 8px; margin-top: 8px; border-radius: 5px; background: #F8E3D6; overflow: hidden; }
+.race-how-finish-bar span { display: block; height: 100%; width: 100%; transform-origin: left; border-radius: 5px; background: linear-gradient(90deg, #FF8A3D, var(--accent)); transition: transform .35s var(--ease-out); }
+.race-how-places { display: flex; gap: 8px; margin-top: 8px; }
+.race-how-place { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 6px; border-radius: 14px; background: #FFF7F2; border: 1px solid #F6DCCB; }
+.race-how-place i { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 12px; font-weight: 800; color: #fff; background: #B9C2C8; }
+.race-how-place.p1 i { background: #E0A63A; }
+.race-how-place.p2 i { background: #9AA7B0; }
+.race-how-place.p3 i { background: #C98A55; }
+.race-how-place b { font-size: 14.5px; font-weight: 800; color: #B83B00; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .race-how-panel { animation: none; } .race-how-gauge-bar span, .race-how-finish-bar span { transition: none; } }
+
+/* The clan journal: a small «Показать ещё» under the latest lines. */
+.clan-events-more { display: flex; justify-content: center; padding: 10px 0 8px; }

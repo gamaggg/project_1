@@ -143,6 +143,18 @@ function renderMessage(notification: NotificationRef): Message | null {
         url: `${SITE_URL}/?clan=${clanId}`,
       }
     }
+    case 'clan_war_started':
+    case 'clan_war_reminder': {
+      const clanName = notification.payload?.clan_name as string | undefined
+      if (!clanName) return null
+      const text =
+        notification.kind === 'clan_war_started'
+          ? tn('tg.warStarted', { clan: clanName })
+          : notification.payload?.slot === 'last'
+            ? tn('tg.warReminderLast', { clan: clanName })
+            : tn('tg.warReminderStart', { clan: clanName })
+      return { text, buttonLabel: tn('tg.btnRace'), url: `${SITE_URL}/?race=1` }
+    }
     case 'clan_race_result':
     case 'clan_race_overtaken':
     case 'clan_race_finished': {

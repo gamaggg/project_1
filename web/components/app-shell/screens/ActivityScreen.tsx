@@ -527,12 +527,16 @@ export function ActivityScreen({
                 </div>
               )
             }
-            if (a.kind === 'clan_chest_reward' || a.kind.startsWith('clan_race_')) {
+            if (a.kind === 'clan_chest_reward' || a.kind.startsWith('clan_race_') || a.kind.startsWith('clan_war_')) {
               const clanName = `${tn('sector.qOpen')}${a.clanName ?? tn('activity.clanLower')}${tn('sector.qClose')}`
               const w = a.clanWeek
               const isRace = a.kind !== 'clan_chest_reward'
               const title =
-                a.kind === 'clan_chest_reward'
+                a.kind === 'clan_war_started'
+                  ? tn('activity.warStarted', { clan: clanName })
+                  : a.kind === 'clan_war_reminder'
+                    ? tn('activity.warReminder', { clan: clanName })
+                    : a.kind === 'clan_chest_reward'
                   ? tn('activity.chestOpened', { tier: ['I', 'II', 'III', 'IV', 'V'][(w?.tier ?? 1) - 1] ?? '', clan: clanName })
                   : a.kind === 'clan_race_result'
                     ? w?.finished
@@ -542,7 +546,11 @@ export function ActivityScreen({
                       ? tn('activity.overtaken', { clan: clanName, place: w?.place ?? '—' })
                       : tn('activity.boatFinished', { clan: clanName })
               const sub =
-                a.kind === 'clan_race_overtaken'
+                a.kind === 'clan_war_started'
+                  ? tn('activity.warStartedSub')
+                  : a.kind === 'clan_war_reminder'
+                    ? tn('activity.warReminderSub')
+                    : a.kind === 'clan_race_overtaken'
                   ? w?.ahead
                     ? tn('activity.ahead', { name: w.ahead })
                     : tn('activity.pull')

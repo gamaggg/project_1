@@ -299,7 +299,7 @@ export type ActivityEntry = {
   // "This concerns a sector of mine" — the feed only carries other people's
   // actions now, so this no longer means "I did it" (see useActivity).
   mine: boolean
-  kind: 'catch' | 'sector_lost' | 'follow' | 'moderation' | 'like' | 'announcement' | 'award' | 'weekly_result' | 'challenge' | 'challenges_week_done' | 'challenge_deadline' | 'comment' | 'comment_reply' | 'comment_removed' | 'clan_invite' | 'clan_join_request' | 'clan_join_accepted' | 'clan_role_changed' | 'clan_kicked' | 'clan_disbanded' | 'clan_chest_reward' | 'clan_race_result' | 'clan_race_overtaken' | 'clan_race_finished' | 'clan_chat_mention' | 'referral_joined' | 'referral_reward' | 'system_alert' | 'game_event'
+  kind: 'catch' | 'sector_lost' | 'follow' | 'moderation' | 'like' | 'announcement' | 'award' | 'weekly_result' | 'challenge' | 'challenges_week_done' | 'challenge_deadline' | 'comment' | 'comment_reply' | 'comment_removed' | 'clan_invite' | 'clan_join_request' | 'clan_join_accepted' | 'clan_role_changed' | 'clan_kicked' | 'clan_disbanded' | 'clan_chest_reward' | 'clan_race_result' | 'clan_race_overtaken' | 'clan_race_finished' | 'clan_war_started' | 'clan_war_reminder' | 'clan_chat_mention' | 'referral_joined' | 'referral_reward' | 'system_alert' | 'game_event'
   // Still unread as of the moment the screen loaded. Opening the feed marks
   // everything read, so this is a snapshot, not live state.
   unread: boolean
@@ -538,4 +538,23 @@ export type ClanRace = {
   myRowers: { userId: string; displayName: string; avatarUrl: string | null; meters: number }[]
   clans: ClanRaceEntry[]
   lastWeek: { id: number; name: string; crest: unknown; place: number; finished: boolean; meters: number; finish: number }[]
+  // The week runs by sign-up: only clans whose leader or co-leader opened the war
+  // (with a roster of 3 or more) race, and only the roster's metres count.
+  warMode: boolean
+  myRole: string | null
+  myClanActive: number
+  myWar: { startedAt: string; size: number; meIn: boolean; roster: { userId: string; displayName: string; avatarUrl: string | null }[] } | null
+  // This viewer may open the war now (leader / co-leader, clan of 3+, not opened yet).
+  canStart: boolean
+}
+
+// One member on the roster screen: last week's activity next to the face.
+export type ClanWarCandidate = {
+  userId: string
+  displayName: string
+  avatarUrl: string | null
+  role: string
+  catches: number
+  meters: number
+  lastCatchAt: string | null
 }

@@ -5,7 +5,7 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type InfiniteD
 import { createClient } from '@/lib/supabase/client'
 import { reportsEnabled } from '@/lib/errorReporting'
 import { useAuth } from '@/components/providers/AuthProvider'
-import type { Territory, TerritoryCoHolder, TerritoryStatus, Catch, ProfileSummary, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, CityPlayer, WeeklyLeaderboardEntry, UserAward, AwardKind, CatchComment, ClanSummary, ClanDetail, ClanMember, ClanEligibility, ClanInvite, ClanChest, ClanRace, ClanChatMessage, ClanChatSummary, ClanRoleId } from '@/lib/data/types'
+import type { Territory, TerritoryCoHolder, TerritoryStatus, Catch, ProfileSummary, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, CityPlayer, WeeklyLeaderboardEntry, UserAward, AwardKind, CatchComment, ClanSummary, ClanDetail, ClanMember, ClanEligibility, ClanInvite, ClanChest, ClanRace, ClanWarCandidate, ClanChatMessage, ClanChatSummary, ClanRoleId } from '@/lib/data/types'
 import type { SpeciesCategory } from '@/lib/data/species'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { compareSectors } from '@/lib/data/sectorOrder'
@@ -807,6 +807,8 @@ export function useActivity() {
                                         row.kind === 'clan_race_result' ||
                                         row.kind === 'clan_race_overtaken' ||
                                         row.kind === 'clan_race_finished' ||
+                                        row.kind === 'clan_war_started' ||
+                                        row.kind === 'clan_war_reminder' ||
                                         row.kind === 'clan_chat_mention' ||
                                         row.kind === 'referral_joined' ||
                                         row.kind === 'referral_reward' ||
@@ -3622,7 +3624,65 @@ export function useClanRace(city: CityId, enabled: boolean) {
           meters: Number(c.meters ?? 0),
           finish: Number(c.finish ?? 0),
         })),
+        // A server from before the sign-up weeks has none of these: the old race for everyone.
+        warMode: !!r.war_mode,
+        myRole: (r.my_role as string | null) ?? null,
+        myClanActive: Number(r.my_clan_active ?? 0),
+        myWar: toMyWar(r.my_war),
+        canStart: !!r.can_start,
       }
+    },
+  })
+}
+
+function toMyWar(raw: unknown): ClanRace['myWar'] {
+  if (!raw || typeof raw !== 'object') return null
+  const w = raw as Record<string, unknown>
+  const roster = ((w.roster as Record<string, unknown>[]) ?? []).map((m) => ({
+    userId: String(m.user_id),
+    displayName: String(m.display_name ?? tn('common.angler')),
+    avatarUrl: (m.avatar_url as string | null) ?? null,
+  }))
+  return { startedAt: String(w.started_at), size: Number(w.size ?? roster.length), meIn: !!w.me_in, roster }
+}
+
+// The leader's roster screen: the clan's members with last week's activity.
+export function useClanWarCandidates(clanId: number | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ['clan-war-candidates', clanId],
+    enabled: enabled && !!clanId,
+    staleTime: 30_000,
+    queryFn: async (): Promise<ClanWarCandidate[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_clan_war_candidates', { p_clan_id: clanId! })
+      if (error) throw error
+      return ((data as Record<string, unknown>[] | null) ?? []).map((m) => ({
+        userId: String(m.user_id),
+        displayName: String(m.display_name ?? tn('common.angler')),
+        avatarUrl: (m.avatar_url as string | null) ?? null,
+        role: String(m.role ?? 'member'),
+        catches: Number(m.catches ?? 0),
+        meters: Number(m.meters ?? 0),
+        lastCatchAt: (m.last_catch_at as string | null) ?? null,
+      }))
+    },
+  })
+}
+
+// Opens the clan's war for the week with this roster (3 or more of its members);
+// the roster cannot be changed afterwards.
+export function useStartClanWar() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ clanId, userIds }: { clanId: number; userIds: string[] }) => {
+      const supabase = createClient()
+      const { error } = await supabase.rpc('start_clan_war', { p_clan_id: clanId, p_user_ids: userIds })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clan-race'] })
+      queryClient.invalidateQueries({ queryKey: ['clan-war-candidates'] })
+      queryClient.invalidateQueries({ queryKey: ['clan'] })
     },
   })
 }

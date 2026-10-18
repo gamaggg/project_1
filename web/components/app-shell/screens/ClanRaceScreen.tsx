@@ -6,7 +6,7 @@ import { useClanRace } from '@/lib/supabase/queries'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { ChallengeCountdown } from '@/components/app-shell/ChallengeCountdown'
-import { RaceRiver, RaceRulesCard, formatMeters, raceHeadline, raceProgress } from '@/components/app-shell/ClanRace'
+import { ClanWarCard, RaceRiver, RaceRulesCard, formatMeters, raceHeadline, raceProgress } from '@/components/app-shell/ClanRace'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
 import type { CityId } from '@/lib/data/city'
 
@@ -83,7 +83,7 @@ export function ClanRaceScreen({
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : race.myClanId != null ? null : (
               <div className="race-join">
                 <div style={{ flex: 1 }}>
                   <div className="race-today-title">{tn('race.notInClan')}</div>
@@ -94,6 +94,8 @@ export function ClanRaceScreen({
                 </button>
               </div>
             )}
+
+            {race.myClanId != null && <ClanWarCard race={race} clanId={race.myClanId} />}
 
             {race.clans.length > 0 && (
               <div className="clan-card">
@@ -176,7 +178,7 @@ export function ClanRaceScreen({
               </div>
             )}
 
-            <RaceRulesCard />
+            <RaceRulesCard signup={race.warMode} />
           </>
         )}
       </div>

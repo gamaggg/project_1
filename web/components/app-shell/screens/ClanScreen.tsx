@@ -1,9 +1,10 @@
 'use client'
 
 import { SkeletonBlock, SkeletonRows } from '@/components/app-shell/Skeleton'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
+import { observeScreenActive } from '@/lib/observeScreenActive'
 import { useAuth } from '@/components/providers/AuthProvider'
 import {
   useClan,
@@ -95,6 +96,8 @@ export function eventText(e: ClanEvent): string {
       }
       return MODERATED_TEXT[String(e.payload?.what ?? '')] ?? tn('clan.moderatedDefault')
     }
+    case 'war_started':
+      return tn('clan.evWarStarted', { actor, count: Number(e.payload?.size ?? 0) })
     case 'week_result': {
       const place = Number(e.payload?.place ?? 0)
       const tier = Number(e.payload?.tier ?? 0)
@@ -102,6 +105,8 @@ export function eventText(e: ClanEvent): string {
       const alone = place === 1 && !e.payload?.won
       const race = e.payload?.voided
         ? tn('clan.raceVoided')
+        : e.payload?.in_race === false
+          ? tn('clan.raceNotIn')
         : e.payload?.won
           ? tn('clan.raceWon')
           : alone
@@ -197,6 +202,18 @@ export function ClanScreen({
 
   const [tab, setTab] = useState<Tab>('members')
   const [menuFor, setMenuFor] = useState<string | null>(null)
+  // The clan journal shows the latest lines; «Показать ещё» adds ten more at a time.
+  const [eventsShown, setEventsShown] = useState(5)
+  // Screens stay mounted: when this one is left, the journal folds back to the latest lines.
+  const rootRef = useRef<HTMLDivElement>(null)
+  const loaded = !!clan
+  useEffect(() => {
+    const el = rootRef.current
+    if (!el) return
+    return observeScreenActive(el, (active) => {
+      if (!active) setEventsShown(5)
+    })
+  }, [loaded])
   const [confirm, setConfirm] = useState<{ text: string; action: string; danger?: boolean; run: () => void } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
@@ -309,7 +326,7 @@ export function ClanScreen({
   )
 
   return (
-    <div className="clan-screen" onClick={() => menuFor && setMenuFor(null)}>
+    <div ref={rootRef} className="clan-screen" onClick={() => menuFor && setMenuFor(null)}>
       <ClanHero crest={clan.crest} name={clan.name} motto={clan.motto} background={clan.background} golden={clan.level >= 10} top={headerTop}>
         <div className="clan-chips">
           <button type="button" className="clan-chip tap-scale" onClick={() => setInfo('level')} aria-label={tn('clan.levelAria')}>
@@ -573,13 +590,20 @@ export function ClanScreen({
             {clan.events.length > 0 && (
               <div className="clan-card">
                 <div className="clan-card-title">{tn('clan.journal')}</div>
-                {clan.events.map((e, i) => (
+                {clan.events.slice(0, eventsShown).map((e, i) => (
                   <div key={i} className="clan-event">
                     <span className="clan-event-dot" />
                     <span style={{ flex: 1 }}>{eventText(e)}</span>
                     <span className="clan-event-time">{formatShortAgo(e.createdAt)}</span>
                   </div>
                 ))}
+                {clan.events.length > eventsShown && (
+                  <div className="clan-events-more">
+                    <button type="button" className="clan-mini-btn" onClick={() => setEventsShown((n) => n + 10)}>
+                      {tn('clan.eventsMore')}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

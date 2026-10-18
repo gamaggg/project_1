@@ -76,7 +76,7 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
       const lived = Math.round((prev.at - prev.started) / 1000)
       report(
         `страница сброшена без ухода в фон: экран ${prev.screen}; жила ${lived} с, последний сигнал ${Math.round((now - prev.at) / 1000)} с назад; ` +
-          `узлов ${prev.nodes}, экранов ${prev.screens}, canvas ${prev.canvases}${prev.images !== undefined ? `, картинок ${prev.images}` : ''}${prev.heapMB !== null ? `, куча ${prev.heapMB} МБ` : ''}; открыта как ${prev.nav ?? '?'}${prev.trail ? `; путь: ${prev.trail}` : ''}; ${platform()}`
+          `узлов ${prev.nodes}, экранов ${prev.screens}, canvas ${prev.canvases}${prev.images !== undefined ? `, картинок ${prev.images}` : ''}${prev.heapMB !== null ? `, куча ${prev.heapMB} МБ` : ''}; открыта как ${prev.nav ?? '?'}; ${platform()}${prev.trail ? `; путь: ${prev.trail}` : ''}`
       )
     }
   }
@@ -87,9 +87,10 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
   const trail: string[] = []
   const beat = (clean: boolean) => {
     const screen = activeScreen()
-    if (trail[trail.length - 1]?.split('@')[0] !== screen) {
-      trail.push(`${screen.replace('screen-', '')}@${Math.round((Date.now() - started) / 1000)}`)
-      if (trail.length > 6) trail.shift()
+    const name = screen.replace('screen-', '')
+    if (trail[trail.length - 1]?.split('@')[0] !== name) {
+      trail.push(`${name}@${Math.round((Date.now() - started) / 1000)}`)
+      if (trail.length > 5) trail.shift()
     }
     write({
       screen,

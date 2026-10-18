@@ -65,6 +65,9 @@ export type TourKey =
   | 'editCatch'
   | 'photoZoom'
   | 'playersList'
+  | 'warPill'
+  | 'warCard'
+  | 'warHow'
 export type TourStep = { target: string; key: TourKey }
 // `always`: shown even to a player who pressed «Пропустить» on the tours.
 // `unlessSeen`: not shown once the tour with that id has been seen.
@@ -203,6 +206,38 @@ const UPDATE_16_10_TOURS: Tour[] = [
   { id: 'u1610-players', screen: 'screen-territories', requires: 'players-list', steps: [{ target: 'players-list', key: 'playersList' }], always: true },
 ]
 
+// 19.10: the clan battle by sign-up. The map plaque of a clan member says whether
+// the battle is open; on the battle screen (or the clan's «Битва кланов» tab,
+// whichever the player reaches first) the card where the leader opens it and
+// the «How the battle goes» block. Only players in a clan have these elements;
+// the clan tab and the battle screen show the same two, so each tour is
+// skipped once the other has been seen.
+const UPDATE_19_10_TOURS: Tour[] = [
+  { id: 'u1910-map', screen: 'screen-map', requires: 'race-pill', steps: [{ target: 'race-pill', key: 'warPill' }], always: true },
+  {
+    id: 'u1910-race',
+    screen: 'screen-clan-race',
+    requires: 'war-card',
+    steps: [
+      { target: 'war-card', key: 'warCard' },
+      { target: 'race-how', key: 'warHow' },
+    ],
+    always: true,
+    unlessSeen: 'u1910-clan',
+  },
+  {
+    id: 'u1910-clan',
+    screen: 'screen-clan',
+    requires: 'war-card',
+    steps: [
+      { target: 'war-card', key: 'warCard' },
+      { target: 'race-how', key: 'warHow' },
+    ],
+    always: true,
+    unlessSeen: 'u1910-race',
+  },
+]
+
 export const TOURS: Record<TourAudience, Tour[]> = {
   whatsNew: [
     {
@@ -244,6 +279,7 @@ export const TOURS: Record<TourAudience, Tour[]> = {
     DIARY_TAB_TOUR,
     ...GEO_TOURS,
     ...UPDATE_16_10_TOURS,
+    ...UPDATE_19_10_TOURS,
   ],
   newcomer: [
     {
