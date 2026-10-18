@@ -2,12 +2,12 @@
 
 import { useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useEditMyCatch, useLastCatchChoices } from '@/lib/supabase/queries'
-import { BAITS_BY_CITY, METHODS } from '@/lib/data/species'
+import { useEditMyCatch, useLastCatchChoices, useSpecies } from '@/lib/supabase/queries'
+import { BAITS_BY_CITY, CATEGORIES_BY_CITY, METHODS } from '@/lib/data/species'
 import { cityForSectorId } from '@/lib/data/city'
 import { formatWeightGrams } from '@/lib/format'
 import { useKeyboardInset } from '@/lib/useKeyboardInset'
-import { BaitPicker, MethodPicker } from '@/components/app-shell/SpeciesPicker'
+import { BaitPicker, MethodPicker, SpeciesPicker } from '@/components/app-shell/SpeciesPicker'
 import type { Catch } from '@/lib/data/types'
 import { tn } from '@/lib/i18n'
 
@@ -18,6 +18,9 @@ function editErrorText(error: unknown): string {
   if (msg.includes('EDIT:bad_weight')) return tn('editCatch.badWeight')
   if (msg.includes('EDIT:bad_text')) return tn('editCatch.badText')
   if (msg.includes('EDIT:not_yours')) return tn('editCatch.notYours')
+  if (msg.includes('EDIT:species_once')) return tn('editCatch.speciesOnce')
+  if (msg.includes('EDIT:measures_once')) return tn('editCatch.measuresOnce')
+  if (msg.includes('EDIT:unknown_species')) return tn('editCatch.unknownSpecies')
   if (msg.includes('EDIT:catch_not_found')) return tn('editCatch.notFound')
   return tn('editCatch.failed')
 }
@@ -36,15 +39,19 @@ function parseWeightGrams(value: string): number | null | 'bad' {
 }
 
 // The angler's own correction of a catch later — weighed and measured at
-// home, or remembered the bait afterwards. The same four optional fields as
-// the catch form, filled with what was entered; the species stays (the coins
-// were paid for it), and the photo and place can't change.
+// home, or remembered the bait afterwards. The same optional fields as the
+// catch form, filled with what was entered. The species can be changed ONCE,
+// and so can the size and weight (together — one change, and filling them in
+// for the first time counts as it); the bait and the method as often as needed.
+// The coins paid at the catch stay, and the photo and place can't change.
 export function EditMyCatchSheet({ c, onClose, onSaved }: { c: Catch; onClose: () => void; onSaved?: () => void }) {
   const edit = useEditMyCatch()
   const { data: lastChoices } = useLastCatchChoices()
+  const { data: speciesList = [] } = useSpecies()
   const overlayRef = useRef<HTMLDivElement>(null)
   const keyboardInset = useKeyboardInset(overlayRef)
 
+  const [speciesKey, setSpeciesKey] = useState(c.species)
   const [lengthCm, setLengthCm] = useState(c.lengthCm ? String(c.lengthCm) : '')
   const [weightG, setWeightG] = useState(c.weightKg ? String(Math.round(c.weightKg * 1000)) : '')
   const [method, setMethod] = useState(c.method ?? '')
@@ -59,16 +66,26 @@ export function EditMyCatchSheet({ c, onClose, onSaved }: { c: Catch; onClose: (
   }, [c.territoryId, c.bait])
   const methods = useMemo(() => (c.method && !METHODS.includes(c.method) ? [...METHODS, c.method] : METHODS), [c.method])
 
+  // The whole city's fish, as in the catch form.
+  const speciesOptions = useMemo(() => {
+    const categories = CATEGORIES_BY_CITY[cityForSectorId(c.territoryId)]
+    return speciesList.filter((s) => categories.includes(s.category) || s.key === c.species)
+  }, [speciesList, c.territoryId, c.species])
+  const newSpeciesName = speciesList.find((s) => s.key === speciesKey)?.name
+  // The one change of size and weight is used: both are locked.
+  const measuresLocked = c.measuresChanged
+
   const length = parseLength(lengthCm)
   const weight = parseWeightGrams(weightG)
   const oldWeightG = c.weightKg ? Math.round(c.weightKg * 1000) : null
   const invalid = length === 'bad' || weight === 'bad'
-  const changed = length !== (c.lengthCm ?? null) || weight !== oldWeightG || (method || null) !== (c.method ?? null) || (bait || null) !== (c.bait ?? null)
+  const speciesPicked = speciesKey !== c.species
+  const changed = speciesPicked || length !== (c.lengthCm ?? null) || weight !== oldWeightG || (method || null) !== (c.method ?? null) || (bait || null) !== (c.bait ?? null)
 
   function submit() {
     if (invalid || !changed) return
     edit.mutate(
-      { catchId: c.id, lengthCm: length, weightKg: weight === null ? null : weight / 1000, bait: bait || null, method: method || null },
+      { catchId: c.id, lengthCm: length, weightKg: weight === null ? null : weight / 1000, bait: bait || null, method: method || null, species: speciesPicked ? speciesKey : undefined },
       {
         onSuccess: () => {
           setDone(true)
@@ -119,16 +136,27 @@ export function EditMyCatchSheet({ c, onClose, onSaved }: { c: Catch; onClose: (
                 {tn('editCatch.intro', { length: c.lengthCm ? `${c.lengthCm} ${tn('fmt.cm')}` : tn('editCatch.lengthNone'), weight: c.weightKg ? `${formatWeightGrams(c.weightKg)} ${tn('fmt.g')}` : tn('editCatch.weightNone') })}
               </div>
 
+              <div className="auth-field">
+                <label htmlFor="species">{tn('editCatch.speciesLabel')}</label>
+                {c.speciesChanged ? (
+                  <input id="species" value={c.speciesName} disabled readOnly />
+                ) : (
+                  <SpeciesPicker options={speciesOptions} value={speciesKey} frequent={(lastChoices?.frequentSpecies ?? []).filter((k) => speciesOptions.some((s) => s.key === k))} onChange={setSpeciesKey} />
+                )}
+                <div className="edit-once-note">{c.speciesChanged ? tn('editCatch.speciesUsedNote') : speciesPicked ? tn('editCatch.speciesChosen', { from: c.speciesName, to: newSpeciesName ?? '' }) : tn('editCatch.speciesOnceNote')}</div>
+              </div>
+
               <div style={{ display: 'flex', gap: 12 }}>
                 <div className="auth-field" style={{ flex: 1 }}>
                   <label htmlFor="mine-catch-length">{tn('catch.lengthCm')}</label>
-                  <input id="mine-catch-length" type="number" min={1} max={300} inputMode="numeric" placeholder={tn('catch.optionalLower')} value={lengthCm} onChange={(e) => setLengthCm(e.target.value)} />
+                  <input id="mine-catch-length" type="number" min={1} max={300} inputMode="numeric" placeholder={tn('catch.optionalLower')} value={lengthCm} disabled={measuresLocked} onChange={(e) => setLengthCm(e.target.value)} />
                 </div>
                 <div className="auth-field" style={{ flex: 1 }}>
                   <label htmlFor="mine-catch-weight">{tn('catch.weightG')}</label>
-                  <input id="mine-catch-weight" type="number" min={10} max={9999} step={10} inputMode="numeric" placeholder={tn('catch.optionalLower')} value={weightG} onChange={(e) => setWeightG(e.target.value)} />
+                  <input id="mine-catch-weight" type="number" min={10} max={9999} step={10} inputMode="numeric" placeholder={tn('catch.optionalLower')} value={weightG} disabled={measuresLocked} onChange={(e) => setWeightG(e.target.value)} />
                 </div>
               </div>
+              <div className="edit-once-note" style={{ marginTop: -6, marginBottom: 12 }}>{measuresLocked ? tn('editCatch.measuresUsedNote') : tn('editCatch.measuresOnceNote')}</div>
 
               <div className="auth-field">
                 <label htmlFor="method">{tn('catch.method')}</label>
@@ -146,7 +174,7 @@ export function EditMyCatchSheet({ c, onClose, onSaved }: { c: Catch; onClose: (
                   ? tn('editCatch.lengthHint')
                   : weight === 'bad'
                     ? tn('editCatch.weightHint')
-                    : tn('editCatch.footNote')}
+                    : tn('editCatch.footOnce')}
               </div>
               {edit.isError && <div className="move-error">{editErrorText(edit.error)}</div>}
               <button className="btn-primary" disabled={invalid || !changed || edit.isPending} onClick={submit}>

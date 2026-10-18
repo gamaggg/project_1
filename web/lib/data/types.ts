@@ -226,6 +226,9 @@ export type Catch = {
   photoUrl: string
   caughtAt: string
   mine: boolean
+  // The one change allowed after the catch (the species; the size and weight together) is used up.
+  speciesChanged: boolean
+  measuresChanged: boolean
 }
 
 // A minimal person reference for list-of-people UI — useCatchLikes' likers

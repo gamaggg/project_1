@@ -28,7 +28,7 @@ export const FAQ_EN: FaqSection[] = [
         a: [
           'Stand in a sector, tap the orange camera button at the bottom of the screen, photograph the fish and pick the species. Length, weight, method and bait are optional.',
           'The catch counts for the sector you are standing in now. Its card is the first one at the bottom of the map and the sector itself is outlined; the blue dot on the map follows you. If you are not in a sector, the bottom shows the sector with the freshest catch.',
-          'Did not weigh it on the spot? Open your catch card and tap the pencil at the top (or the «Edit» button at the bottom): you can add the length, weight, method and bait later, at home. The species, photo and sector no longer change, and neither do the coins for the catch.',
+          'Did not weigh it on the spot? Open your catch card and tap the pencil at the top (or the «Edit» button at the bottom): you can add the length, weight, method and bait later, at home. The species can be changed once, and the size and weight can be changed once too (entering them for the first time counts as that one time, so enter both together); the method and the bait as often as you like. The photo and sector do not change, and neither do the coins for the catch.',
         ],
       },
       {

@@ -1420,3 +1420,6 @@ html.ios-standalone #screen-clan .clan-hero { margin-top: 0; margin-left: 0; mar
 .toast:not(.show) { -webkit-backdrop-filter: none; backdrop-filter: none; }
 /* A blur inside the zoom group's own blur was a second pass on the same pixels. */
 .map-control-group .map-control-btn { -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+/* «Can be corrected once» under the species, size and weight in the catch edit sheet. */
+.edit-once-note { margin-top: 5px; font-size: 12px; line-height: 1.3; color: var(--ink-soft, #6B6D76); }

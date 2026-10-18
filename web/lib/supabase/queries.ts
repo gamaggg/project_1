@@ -320,6 +320,8 @@ type CatchRow = {
   bait: string | null
   photo_url: string
   caught_at: string
+  species_changed?: boolean | null
+  measures_changed?: boolean | null
 }
 
 function rowToCatch(c: CatchRow, currentUserId?: string): Catch {
@@ -338,6 +340,8 @@ function rowToCatch(c: CatchRow, currentUserId?: string): Catch {
     photoUrl: c.photo_url,
     caughtAt: c.caught_at,
     mine: c.user_id === currentUserId,
+    speciesChanged: !!c.species_changed,
+    measuresChanged: !!c.measures_changed,
   }
 }
 
@@ -1918,7 +1922,7 @@ export function useAdminEditCatch() {
 export function useEditMyCatch() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ catchId, lengthCm, weightKg, bait, method }: { catchId: number; lengthCm: number | null; weightKg: number | null; bait: string | null; method: string | null }) => {
+    mutationFn: async ({ catchId, lengthCm, weightKg, bait, method, species }: { catchId: number; lengthCm: number | null; weightKg: number | null; bait: string | null; method: string | null; species?: string }) => {
       const supabase = createClient()
       const { data, error } = await supabase.rpc('edit_my_catch', {
         p_catch_id: catchId,
@@ -1926,6 +1930,8 @@ export function useEditMyCatch() {
         p_weight_kg: weightKg,
         p_bait: bait,
         p_method: method,
+        // Left out when the species stays (a server from before the release has no such argument).
+        ...(species ? { p_species: species } : {}),
       })
       if (error) throw error
       return (data as { changes?: string[] } | null)?.changes ?? []
@@ -1936,6 +1942,9 @@ export function useEditMyCatch() {
       queryClient.invalidateQueries({ queryKey: ['profile'] })
       queryClient.invalidateQueries({ queryKey: ['my-challenges'] })
       queryClient.invalidateQueries({ queryKey: ['challenge-week-state'] })
+      // A new species changes the diary, the species list and the awards.
+      queryClient.invalidateQueries({ queryKey: ['diary'] })
+      queryClient.invalidateQueries({ queryKey: ['user-awards'] })
     },
   })
 }
