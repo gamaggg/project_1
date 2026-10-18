@@ -54,10 +54,12 @@ export type GeoMarks = { picked: string | null; answer: string | null; spot: [nu
 const LABEL_MIN_ZOOM = 14
 // The same zoom shows a sector bigger the further north the city is (web mercator
 // stretches by 1/cos(latitude)): Moscow at Batumi's zoom looks ~1.3× closer. Zooms
-// in this file are written for Batumi's latitude and carried to the map's own with
-// this, so a sector takes the same space on the screen in either city.
-const REF_LAT = 41.6513
-const forLat = (zoom: number, lat: number) => zoom + Math.log2(Math.cos((lat * Math.PI) / 180) / Math.cos((REF_LAT * Math.PI) / 180))
+// in this file are written for Batumi and carried to Moscow with a fixed shift, so a
+// sector takes the same space on the screen in either city. A FIXED shift per city, not
+// one computed from the map centre's latitude: a centre a few metres south of the
+// reference turned the label threshold into 14.0003 and the labels vanished at zoom 14.
+const MOSCOW_ZOOM_SHIFT = -0.41 // log2(cos 55.75° / cos 41.65°)
+const forLat = (zoom: number, lat: number) => (lat > 50 ? zoom + MOSCOW_ZOOM_SHIFT : zoom)
 
 // ownerDisplayName/ownerAvatarUrl are user-controlled (a display name, or an
 // avatar_url a user could in principle set to an arbitrary string via a raw
@@ -759,6 +761,12 @@ export const LeafletMap = forwardRef<
         // Labels only exist for the current viewport (see drawLabels), so
         // every settled pan/zoom rebuilds them for wherever the map landed.
         map.on('moveend', drawLabels)
+        // The layer is also put on (or taken off) after every settled move, not only
+        // after a zoom change — flying to the player's position at the same zoom fires
+        // no zoomend, and the labels used to stay off until the first zoom — and once
+        // right now: the first setView above ran before these listeners existed.
+        map.on('moveend', updateLabelVisibility)
+        updateLabelVisibility()
         map.on('zoomend', () => setZoomTick((v) => v + 1))
         // A drag can start with a mousedown on a polygon — don't let that
         // turn into a long-press selection once the map actually starts
