@@ -57,6 +57,8 @@ export function SpotlightTours({ screen, audience, memberSince }: { screen: stri
   // The note's own height, measured — so it can be kept on screen.
   const tipRef = useRef<HTMLDivElement>(null)
   const [tipH, setTipH] = useState(200)
+  // A sheet or modal opened over a running tour: the tour steps aside (shows again when it closes).
+  const [covered, setCovered] = useState(false)
   // Seen tours are kept on the account too (lib/uiState.ts), so a tour
   // finished on the phone doesn't start over in Telegram on the desktop.
   const ui = useUiState()
@@ -130,13 +132,15 @@ export function SpotlightTours({ screen, audience, memberSince }: { screen: stri
       const now = findTarget(step.target)
       setRect(now ? now.getBoundingClientRect() : null)
       if (tipRef.current) setTipH(tipRef.current.offsetHeight)
+      const isCovered = busy()
+      setCovered((prev) => (prev === isCovered ? prev : isCovered))
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
   }, [step])
 
-  if (!tour || !step || !rect || !audience) return null
+  if (!tour || !step || !rect || !audience || covered) return null
 
   const finish = (all: boolean) => {
     const seen = { ...readSeen(audience), ...(remoteSeen ?? {}) }
