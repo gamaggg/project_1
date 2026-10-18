@@ -220,6 +220,13 @@ export const FAQ_EN: FaqSection[] = [
         ],
       },
       {
+        q: 'I removed a player from my clan. When can I invite them back?',
+        a: [
+          'A removed player can rejoin the same clan only 72 hours after the removal: before that an invitation or a request will not work, and they will see «You were recently removed from this clan».',
+          'If they left on their own, they can come back after a day. For a day after any leaving or removal a player cannot join any clan of their city.',
+        ],
+      },
+      {
         q: 'What is the Clan battle?',
         a: [
           'A weekly race of rowing boats: the clan’s boat moves forward for catches (+10 m), challenges (+20 m), claims (+30 m) and sectors taken from another clan (+50 m). One player brings in no more than 150 m a day.',

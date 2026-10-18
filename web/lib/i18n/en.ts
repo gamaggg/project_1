@@ -1079,7 +1079,7 @@ export const en: Dict = {
     background_locked: 'This background unlocks at the next clan level',
     settings_invalid: 'Check the clan settings',
     other_city: 'The clan is in another city',
-    kicked_recently: 'You were recently removed from this clan',
+    kicked_recently: 'You were recently removed from this clan: you can return 72 hours after the removal',
     clan_full: 'The clan has no free slots',
     invite_only: 'This clan is invite-only',
     no_clan: 'Clan not found',
