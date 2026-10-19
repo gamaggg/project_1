@@ -163,7 +163,7 @@ export const CITIES: Record<CityId, CityInfo> = {
 // The cities a player can pick. A city is added here only once its rows are in the
 // database (city_config, territories, cron jobs): a profile in a city the functions do not
 // know would break the leaderboard, the clans and the weekly jobs.
-const LAUNCHED_CITIES: CityId[] = ['batumi', 'moscow']
+const LAUNCHED_CITIES: CityId[] = ['batumi', 'moscow', 'spb', 'sochi', 'tbilisi']
 export const CITY_LIST: CityInfo[] = LAUNCHED_CITIES.map((id) => CITIES[id])
 
 // Countries that have a launched city, in the order the picker shows them; each with its

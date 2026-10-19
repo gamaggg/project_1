@@ -7,7 +7,7 @@ import { reportsEnabled } from '@/lib/errorReporting'
 import { useAuth } from '@/components/providers/AuthProvider'
 import type { Territory, TerritoryCoHolder, TerritoryStatus, Catch, ProfileSummary, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, CityPlayer, WeeklyLeaderboardEntry, UserAward, AwardKind, CatchComment, ClanSummary, ClanDetail, ClanMember, ClanEligibility, ClanInvite, ClanChest, ClanRace, ClanWarCandidate, ClanChatMessage, ClanChatSummary, ClanRoleId } from '@/lib/data/types'
 import type { SpeciesCategory } from '@/lib/data/species'
-import { CITIES, type CityId } from '@/lib/data/city'
+import { CITIES, cityForSectorId, type CityId } from '@/lib/data/city'
 import { compareSectors } from '@/lib/data/sectorOrder'
 import type { ShareKind } from '@/lib/guestShare'
 import type { Database } from '@/lib/types'
@@ -194,14 +194,18 @@ export function useTerritories(city: CityId | null) {
         .filter((row): row is typeof row & { corners: NonNullable<typeof row.corners> } => !staticIds.has(row.id!) && !row.is_deleted && !!row.corners)
         .map((row) => toTerritory(row.id!, row.kind!, row.lat!, row.lng!, row.corners as unknown as [number, number][]))
 
-      return [...fromStatic, ...fromDb]
+      const all = [...fromStatic, ...fromDb]
+      // Nobody has caught anything in this city yet: never-fished sectors go nearest the
+      // city's centre first (see compareSectors).
+      const near = city && all.every((t) => t.catchCount === 0 || cityForSectorId(t.id) !== city) ? CITIES[city].center : undefined
+      return all
         // Freshest catch first everywhere that lists territories (the map's
         // first card, the territories tab) — a single sort here instead of
         // one per screen, since every consumer shares this same array; the
         // tab re-sorts only when another order is picked there. Never-fished
         // sectors follow in number order (see compareSectors). The week's
         // hot sectors go before all of them — the map's first cards.
-        .sort((a, b) => hotRank(b) - hotRank(a) || compareSectors('lastCatch')(a, b))
+        .sort((a, b) => hotRank(b) - hotRank(a) || compareSectors('lastCatch', near)(a, b))
     },
     // Until the stored session is read the key would say "no user" and the
     // whole table would be fetched once for nobody, then again for the real
