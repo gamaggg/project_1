@@ -18,7 +18,7 @@ import { CLAN_ROLE_LABEL, type ClanRole } from '@/lib/data/clanLevels'
 import { computeAchievements } from '@/lib/data/achievements'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { tn } from '@/lib/i18n'
-import { CITIES } from '@/lib/data/city'
+import { CITIES, asCityId } from '@/lib/data/city'
 
 const BONUS = 100
 
@@ -264,7 +264,7 @@ function UserBody({ u, onLocked }: { u: UserPreview; onLocked: (what: string) =>
         <Avatar url={u.avatar_url} name={u.display_name} size={84} />
         <div className="guest-profile-name">{u.display_name ?? tn('common.angler')}</div>
         <div className="guest-profile-meta">
-          {CITIES[u.city === 'moscow' ? 'moscow' : 'batumi'].name}
+          {CITIES[asCityId(u.city)].name}
           {u.public_id ? ` · ID ${u.public_id}` : ''}
         </div>
         {u.clan && (
@@ -361,7 +361,7 @@ function ClanBody({ c, onLocked }: { c: ClanPreview; onLocked: (what: string) =>
           <span className="clan-chip">
             {c.members}/{c.capacity}
           </span>
-          <span className="clan-chip">{CITIES[c.city === 'moscow' ? 'moscow' : 'batumi'].name}</span>
+          <span className="clan-chip">{CITIES[asCityId(c.city)].name}</span>
         </div>
       </ClanHero>
       {c.top.length > 0 && (

@@ -388,6 +388,7 @@ export const MapScreen = forwardRef<
           onClickEmptyMap={onClickEmptyMap}
           fallbackCenter={CITIES[city].center}
           fallbackZoom={CITIES[city].zoom}
+          zoomShift={CITIES[city].zoomShift}
           highlightedId={highlightedSectorId}
           clanLayer={clanLayer}
           geo={geo ? { picked: geo.picked, answer: geo.answer, spot: geo.spot, dim: geo.dim } : null}

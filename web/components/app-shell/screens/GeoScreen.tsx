@@ -21,6 +21,15 @@ const IN_CITY: Record<CityId, string> = {
   get moscow() {
     return tn('geoGame.inMoscow')
   },
+  get spb() {
+    return tn('geoGame.inSpb')
+  },
+  get sochi() {
+    return tn('geoGame.inSochi')
+  },
+  get tbilisi() {
+    return tn('geoGame.inTbilisi')
+  },
 }
 const KIND: Record<string, string> = KIND_LABEL
 

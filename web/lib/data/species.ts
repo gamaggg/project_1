@@ -1,5 +1,5 @@
 import type { Database } from '@/lib/types'
-import type { CityId } from '@/lib/data/city'
+import { CITIES, type CityId } from '@/lib/data/city'
 import { currentLanguage, labels, tnd } from '@/lib/i18n/runtime'
 import { ru } from '@/lib/i18n/ru'
 
@@ -23,9 +23,25 @@ export const CATEGORY_GRADIENT: Record<SpeciesCategory, string> = {
 
 // Which pair of categories a city's species/catches split into — drives the
 // filter chips in ConfirmScreen.
-export const CATEGORIES_BY_CITY: Record<CityId, [SpeciesCategory, SpeciesCategory]> = {
+// The species table is one list for every city; a city plays a slice of it:
+//  - Batumi and Sochi: the marine and freshwater species (the Black Sea and its rivers);
+//  - Tbilisi: Batumi's freshwater species only (a river and lake city, no sea);
+//  - Moscow: the predator / peaceful species of Moscow's rivers and ponds (keys *_msk);
+//  - Saint Petersburg: all of Moscow's, plus the Gulf of Finland and Neva Bay species (keys *_spb).
+// Moscow's own list must not show the Gulf species, so those keys are told apart by suffix.
+export const CATEGORIES_BY_CITY: Record<CityId, SpeciesCategory[]> = {
   batumi: ['marine', 'freshwater'],
+  sochi: ['marine', 'freshwater'],
+  tbilisi: ['freshwater'],
   moscow: ['predator', 'peaceful'],
+  spb: ['predator', 'peaceful'],
+}
+const cityIds = Object.keys(CITIES) as CityId[]
+
+// The species a city offers (the catch form, the diary, the collection).
+export function speciesOfCity<T extends { key: string; category: SpeciesCategory | string }>(all: readonly T[], city: CityId): T[] {
+  const categories = CATEGORIES_BY_CITY[city] as string[]
+  return all.filter((s) => categories.includes(s.category) && (city === 'spb' || !s.key.endsWith('_spb')))
 }
 
 // Starting category shown when the catch form opens — Batumi can infer it
@@ -33,16 +49,17 @@ export const CATEGORIES_BY_CITY: Record<CityId, [SpeciesCategory, SpeciesCategor
 // water bodies so predator/peaceful isn't derivable from kind at all; defaults
 // to predator there since that's the more commonly targeted catch.
 export function categoryForKind(kind: Database['public']['Enums']['territory_kind'], city: CityId): SpeciesCategory {
-  if (city === 'moscow') return 'predator'
+  if (CITIES[city].theme === 'fresh') return 'predator'
   return kind === 'sea' ? 'marine' : 'freshwater'
 }
 
 export const METHODS = ['Спиннинг', 'Донная снасть', 'Поплавочная удочка', 'Нахлыст', 'Тенкара']
 
-export const BAITS_BY_CITY: Record<CityId, string[]> = {
-  batumi: ['Микроджиг', 'Силикон', 'Блесна', 'Воблер', 'Креветка', 'Морской червь', 'Навозный червь', 'Вертушка', 'Бомбарда', 'Пилькер', 'Булер', 'Мормышка', 'Мушка', 'Хлеб (тесто)'],
-  moscow: ['Микроджиг', 'Блесна', 'Воблер', 'Червь', 'Опарыш', 'Кукуруза', 'Мушка', 'Хлеб (тесто)'],
+const BAITS_BY_THEME: Record<'sea' | 'fresh', string[]> = {
+  sea: ['Микроджиг', 'Силикон', 'Блесна', 'Воблер', 'Креветка', 'Морской червь', 'Навозный червь', 'Вертушка', 'Бомбарда', 'Пилькер', 'Булер', 'Мормышка', 'Мушка', 'Хлеб (тесто)'],
+  fresh: ['Микроджиг', 'Блесна', 'Воблер', 'Червь', 'Опарыш', 'Кукуруза', 'Мушка', 'Хлеб (тесто)'],
 }
+export const BAITS_BY_CITY = Object.fromEntries(cityIds.map((id) => [id, BAITS_BY_THEME[CITIES[id].theme]])) as Record<CityId, string[]>
 
 // Union across both cities' baits — used only as the "tried every bait"
 // achievement target, which is computed globally rather than per city (see
@@ -52,10 +69,7 @@ export const ALL_BAITS = Array.from(new Set(Object.values(BAITS_BY_CITY).flat())
 // Water types each city's map actually has — streams were merged into rivers,
 // and Moscow has no sea. 'stream' stays in the DB enum only so old rows and
 // KIND_LABEL still type-check; nothing offers it any more.
-export const WATER_KINDS_BY_CITY: Record<CityId, Database['public']['Enums']['territory_kind'][]> = {
-  batumi: ['sea', 'river', 'lake', 'pond'],
-  moscow: ['river', 'lake', 'pond'],
-}
+export const WATER_KINDS_BY_CITY = Object.fromEntries(cityIds.map((id) => [id, CITIES[id].waterKinds])) as Record<CityId, Database['public']['Enums']['territory_kind'][]>
 
 export const KIND_LABEL: Record<Database['public']['Enums']['territory_kind'], string> = labels('kind', ['sea', 'river', 'stream', 'lake', 'pond'] as const)
 

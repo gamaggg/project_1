@@ -1,4 +1,4 @@
-import type { CityId } from '@/lib/data/city'
+import { CITIES, type CityId } from '@/lib/data/city'
 import type { SlotSymbol as SymbolId } from '@/lib/supabase/queries'
 
 // Reel art for the «Слоты» tab — the designer's 256px PNGs trimmed to the
@@ -7,13 +7,13 @@ import type { SlotSymbol as SymbolId } from '@/lib/supabase/queries'
 // on the four fish symbols, tier for tier: the two common fish, the 100-coin
 // predator and the jackpot giant.
 type Fish = Exclude<SymbolId, 'hook' | 'hex'>
-const FISH: Record<CityId, Record<Fish, string>> = {
-  batumi: { stavrida: 'stavrida', skorpena: 'skorpena', lufar: 'lufar', katran: 'katran' },
-  moscow: { stavrida: 'okun', skorpena: 'leshch', lufar: 'shchuka', katran: 'som' },
+const FISH: Record<'sea' | 'fresh', Record<Fish, string>> = {
+  sea: { stavrida: 'stavrida', skorpena: 'skorpena', lufar: 'lufar', katran: 'katran' },
+  fresh: { stavrida: 'okun', skorpena: 'leshch', lufar: 'shchuka', katran: 'som' },
 }
 
 export function slotSymbolSrc(symbol: SymbolId, city: CityId) {
-  return `/slots/${symbol === 'hook' || symbol === 'hex' ? symbol : FISH[city][symbol]}.webp`
+  return `/slots/${symbol === 'hook' || symbol === 'hex' ? symbol : FISH[CITIES[city].theme][symbol]}.webp`
 }
 
 // Every symbol is fitted into the same 3:2 box (`size` is its height): the

@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useEditMyCatch, useLastCatchChoices, useSpecies } from '@/lib/supabase/queries'
-import { BAITS_BY_CITY, CATEGORIES_BY_CITY, METHODS } from '@/lib/data/species'
+import { BAITS_BY_CITY, METHODS, speciesOfCity } from '@/lib/data/species'
 import { cityForSectorId } from '@/lib/data/city'
 import { formatWeightGrams } from '@/lib/format'
 import { useKeyboardInset } from '@/lib/useKeyboardInset'
@@ -68,8 +68,8 @@ export function EditMyCatchSheet({ c, onClose, onSaved }: { c: Catch; onClose: (
 
   // The whole city's fish, as in the catch form.
   const speciesOptions = useMemo(() => {
-    const categories = CATEGORIES_BY_CITY[cityForSectorId(c.territoryId)]
-    return speciesList.filter((s) => categories.includes(s.category) || s.key === c.species)
+    const ofCity = speciesOfCity(speciesList, cityForSectorId(c.territoryId))
+    return ofCity.some((s) => s.key === c.species) ? ofCity : [...ofCity, ...speciesList.filter((s) => s.key === c.species)]
   }, [speciesList, c.territoryId, c.species])
   const newSpeciesName = speciesList.find((s) => s.key === speciesKey)?.name
   // The one change of size and weight is used: both are locked.

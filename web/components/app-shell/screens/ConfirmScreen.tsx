@@ -3,7 +3,7 @@
 import { HexLoader } from '@/components/app-shell/HexLoader'
 import { useEffect, useRef, useState } from 'react'
 import { useSpecies, useLastCatchChoices } from '@/lib/supabase/queries'
-import { CATEGORIES_BY_CITY, KIND_LABEL, METHODS, BAITS_BY_CITY } from '@/lib/data/species'
+import { CATEGORIES_BY_CITY, KIND_LABEL, METHODS, BAITS_BY_CITY, speciesOfCity } from '@/lib/data/species'
 import { matchFishialSpecies } from '@/lib/data/fishSpeciesMatch'
 import { cityForSectorId } from '@/lib/data/city'
 import { formatWeightGrams } from '@/lib/format'
@@ -91,7 +91,7 @@ export function ConfirmScreen({
   const baits = BAITS_BY_CITY[city]
   const { data: species = [] } = useSpecies()
   // The whole city's fish in one list (see SpeciesPicker).
-  const speciesOptions = species.filter((s) => categories.includes(s.category))
+  const speciesOptions = speciesOfCity(species, city)
   const [speciesKey, setSpeciesKey] = useState('')
   const [speciesGuessed, setSpeciesGuessed] = useState(false)
   const [speciesFromLast, setSpeciesFromLast] = useState(false)

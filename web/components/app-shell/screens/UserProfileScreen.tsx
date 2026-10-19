@@ -27,6 +27,7 @@ import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralFollowers, pluralSpecies, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
 import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
 import { CITIES } from '@/lib/data/city'
+import { Flag } from '@/components/app-shell/Flag'
 import { resolveHeroBackground } from '@/lib/data/heroBackgrounds'
 import { resolveAvatarFrame } from '@/lib/data/shopItems'
 import { AvatarFrameRing } from '@/components/app-shell/AvatarFrameRing'
@@ -221,6 +222,7 @@ export function UserProfileScreen({
         </div>
         <div className="profile-hero-badge">
           <span className="section-link" style={{ color: 'rgba(var(--hero-text-rgb,255,255,255),.75)', cursor: 'default' }}>
+            <Flag country={CITIES[viewedCity].country} height={13} />{' '}
             {tn('profile.city', { city: CITIES[viewedCity].name })}
           </span>
         </div>

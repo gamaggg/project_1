@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { RecapSlide, SLIDE_H, SLIDE_W, slideImages } from '@/components/recap/RecapSlide'
 import { mapRecap, recapSlides, sizedPhoto, type SlideId } from '@/lib/recap'
 import { isLang, translate, type Lang, type TKey, type TVars } from '@/lib/i18n/core'
-import type { CityId } from '@/lib/data/city'
+import { asCityId, type CityId } from '@/lib/data/city'
 
 // One slide of «Неделя в городе» as a 1080×1920 image — what «Поделиться»
 // sends to a Telegram story or the phone's gallery. The same RecapSlide the
@@ -42,7 +42,7 @@ async function dataUrl(url: string): Promise<string | null> {
 export async function GET(request: Request, { params }: { params: Promise<{ city: string; slide: string }> }) {
   const { city: cityParam, slide } = await params
   const url = new URL(request.url)
-  const city: CityId = cityParam === 'moscow' ? 'moscow' : 'batumi'
+  const city: CityId = asCityId(cityParam)
   const langParam = url.searchParams.get('lang')
   const lang: Lang = isLang(langParam) ? langParam : 'ru'
   const user = url.searchParams.get('u')

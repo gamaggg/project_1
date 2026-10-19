@@ -82,8 +82,8 @@ function saveLastPos(lat: number, lng: number) {
     window.localStorage.setItem(LAST_POS_KEY, JSON.stringify({ lat, lng }))
   } catch {}
 }
-const MOSCOW_ZOOM_SHIFT = -0.41 // log2(cos 55.75° / cos 41.65°)
-const forLat = (zoom: number, lat: number) => (lat > 50 ? zoom + MOSCOW_ZOOM_SHIFT : zoom)
+// The zoom shift of the city on screen (CITIES[city].zoomShift: log2(cos lat / cos 41.65°)).
+const withShift = (zoom: number, shift: number) => zoom + shift
 
 // ownerDisplayName/ownerAvatarUrl are user-controlled (a display name, or an
 // avatar_url a user could in principle set to an arbitrary string via a raw
@@ -214,6 +214,8 @@ export const LeafletMap = forwardRef<
     onClickEmptyMap?: (lat: number, lng: number) => void
     fallbackCenter?: [number, number]
     fallbackZoom?: number
+    // The city's zoom shift (see withShift): the same zoom shows a sector bigger further north.
+    zoomShift?: number
     // The sector the bottom sheet carousel is currently previewing — drawn
     // with a pulsing glow outline so a map tap is visibly acknowledged.
     highlightedId?: string | null
@@ -238,6 +240,7 @@ export const LeafletMap = forwardRef<
     onClickEmptyMap,
     fallbackCenter,
     fallbackZoom,
+    zoomShift = 0,
     highlightedId,
     clanLayer = false,
     geo = null,
@@ -254,6 +257,8 @@ export const LeafletMap = forwardRef<
     const mapRef = useRef<L.Map | null>(null)
     // The scale the map opens at in this city — also the scale it flies to when it
     // goes to the player's own position (it used to close in to 16.5).
+    const zoomShiftRef = useRef(zoomShift)
+    zoomShiftRef.current = zoomShift
     const homeZoomRef = useRef(fallbackZoom ?? FALLBACK_ZOOM)
     homeZoomRef.current = fallbackZoom ?? FALLBACK_ZOOM
     const leafletRef = useRef<typeof import('leaflet') | null>(null)
@@ -494,7 +499,7 @@ export const LeafletMap = forwardRef<
       const labelsLayer = labelsLayerRef.current
       if (!L || !map || !labelsLayer) return
       labelsLayer.clearLayers()
-      if (map.getZoom() < forLat(LABEL_MIN_ZOOM, map.getCenter().lat)) return
+      if (map.getZoom() < withShift(LABEL_MIN_ZOOM, zoomShiftRef.current)) return
       // Padded so a marker isn't created/destroyed right as it crosses the
       // edge — the strip just outside the viewport is already built by the
       // time a drag brings it in.
@@ -577,7 +582,7 @@ export const LeafletMap = forwardRef<
         // Keep the player's scale — «На карте» and swiping the cards used to
         // zoom right in (16.5, the sector filling half the screen). Only a
         // map zoomed far out comes in to 14, where a sector still reads.
-        const targetZoom = Math.max(map.getZoom(), forLat(14, map.getCenter().lat))
+        const targetZoom = Math.max(map.getZoom(), withShift(14, zoomShiftRef.current))
         map.flyTo([t.lat, t.lng], targetZoom, { duration: 0.5 })
       },
       showUserLocation: placeUserMarker,
@@ -797,7 +802,7 @@ export const LeafletMap = forwardRef<
         })
 
         function updateLabelVisibility() {
-          const show = map.getZoom() >= forLat(LABEL_MIN_ZOOM, map.getCenter().lat)
+          const show = map.getZoom() >= withShift(LABEL_MIN_ZOOM, zoomShiftRef.current)
           if (show && !map.hasLayer(labelsLayerRef.current!)) labelsLayerRef.current!.addTo(map)
           if (!show && map.hasLayer(labelsLayerRef.current!)) map.removeLayer(labelsLayerRef.current!)
           // The other way round for the hot-sector badges: they stand in for

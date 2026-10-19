@@ -132,7 +132,7 @@ function LeagueInfo({ clan }: { clan: ClanDetail }) {
 }
 
 function SectorsInfo({ clan, onOpenTerritory }: { clan: ClanDetail; onOpenTerritory: (id: string) => void }) {
-  const { data: territories = [], isPending } = useTerritories()
+  const { data: territories = [], isPending } = useTerritories(clan.city)
   const held = territories.filter((t) => t.ownerClanId === clan.id)
   return (
     <>

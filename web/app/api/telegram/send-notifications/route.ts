@@ -6,6 +6,10 @@ import { setCurrentLanguage, tn } from '@/lib/i18n/runtime'
 import { isLang, type Lang } from '@/lib/i18n/core'
 import { localAwardTitle, localChallengeName } from '@/lib/data/dbText'
 import { withErrorReport } from '@/lib/serverErrors'
+import { asCityId, cityForSectorId, type CityId } from '@/lib/data/city'
+
+// «in the city» as the notification texts name it (tg.in…).
+const IN_CITY = { batumi: 'tg.inBatumi', moscow: 'tg.inMoscow', spb: 'tg.inSpb', sochi: 'tg.inSochi', tbilisi: 'tg.inTbilisi' } as const satisfies Record<CityId, string>
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
@@ -226,7 +230,7 @@ function renderMessage(notification: NotificationRef): Message | null {
     case 'hot_sector_week': {
       const sectors = (notification.payload?.sectors as string[] | undefined) ?? []
       if (!sectors.length) return null
-      const city = sectors[0].startsWith('M') ? tn('tg.inMoscow') : tn('tg.inBatumi')
+      const city = tn(IN_CITY[cityForSectorId(sectors[0])])
       return { text: tn('tg.hotWeek', { city, sectors: sectors.join(tn('tg.and')) }), ...sector(sectors[0]) }
     }
     case 'hot_sector_won': {
@@ -267,7 +271,7 @@ function renderMessage(notification: NotificationRef): Message | null {
     }
     case 'bite_forecast': {
       const score = notification.payload?.score as number | undefined
-      const city = notification.payload?.city === 'moscow' ? tn('tg.inMoscow') : tn('tg.inBatumi')
+      const city = tn(IN_CITY[asCityId(notification.payload?.city)])
       const from = notification.payload?.from as string | undefined
       const to = notification.payload?.to as string | undefined
       if (!score) return null

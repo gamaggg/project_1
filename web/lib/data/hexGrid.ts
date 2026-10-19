@@ -31,6 +31,11 @@ const EARTH_RADIUS_M = 6371008.8
 const BBOXES: Record<CityId, { s: number; w: number; n: number; e: number }> = {
   batumi: { s: 41.48, w: 41.5, n: 41.72, e: 41.8 },
   moscow: { s: 55.5718, w: 37.3688, n: 55.9111, e: 37.8435 },
+  // The new cities' sectors are numbered in order (P0001…), but cut from one grid per
+  // city with these exact bboxes (tools/fishing-hex/cities.mjs): keep the two in step.
+  spb: { s: 59.62, w: 29.4, n: 60.25, e: 30.77 },
+  sochi: { s: 43.385, w: 39.14, n: 44.04, e: 40.015 },
+  tbilisi: { s: 41.62, w: 44.65, n: 41.84, e: 45.02 },
 }
 
 // Same haversine turf's own distance() uses, needed only to convert
@@ -80,10 +85,7 @@ function buildGrid(bbox: { s: number; w: number; n: number; e: number }): Grid {
   return { west, south, cellWidth, cellHeight, hexHeight, xInterval, yInterval, xAdjust, yAdjust }
 }
 
-const GRIDS: Record<CityId, Grid> = {
-  batumi: buildGrid(BBOXES.batumi),
-  moscow: buildGrid(BBOXES.moscow),
-}
+const GRIDS = Object.fromEntries((Object.keys(BBOXES) as CityId[]).map((id) => [id, buildGrid(BBOXES[id])])) as Record<CityId, Grid>
 
 function cellCenter(grid: Grid, x: number, y: number): { lng: number; lat: number } {
   const isOdd = ((x % 2) + 2) % 2 === 1

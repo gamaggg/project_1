@@ -8,7 +8,7 @@ import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useAllPlayers } from '@/lib/supabase/queries'
 import { pluralCatches, pluralSectors } from '@/lib/format'
 import type { CityPlayer } from '@/lib/data/types'
-import { CITIES, type CityId } from '@/lib/data/city'
+import { CITIES, CITY_LIST, type CityId } from '@/lib/data/city'
 import { currentLocale, labels, tn } from '@/lib/i18n/runtime'
 
 type Order = 'rating' | 'name'
@@ -192,7 +192,7 @@ function PlayersFilter({ who, city, onWho, onCity }: { who: Who; city: CityFilte
             </button>
           ))}
           <div className="players-filter-title">{tn('players.city')}</div>
-          {(['all', 'batumi', 'moscow'] as const).map((key) => (
+          {(['all', ...CITY_LIST.map((c) => c.id)] as const).map((key) => (
             <button
               key={key}
               type="button"

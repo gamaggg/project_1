@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { CITIES, type CityId } from '@/lib/data/city'
+import { CITIES, asCityId, type CityId } from '@/lib/data/city'
 import { fetchRawForecast, nowInZone, scoreForecast } from '@/lib/forecast/bite'
 import { withErrorReport } from '@/lib/serverErrors'
 
@@ -16,7 +16,7 @@ async function handleGET(req: Request) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
   const cityParam = new URL(req.url).searchParams.get('city')
-  const city: CityId = cityParam === 'moscow' ? 'moscow' : 'batumi'
+  const city: CityId = asCityId(cityParam)
   const info = CITIES[city]
   try {
     const raw = await fetchRawForecast(

@@ -9,7 +9,7 @@ import { SlotSymbol, slotSymbolSrc } from '@/components/app-shell/SlotSymbol'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { observeScreenActive } from '@/lib/observeScreenActive'
 import { useSlotState, useSpinSlots, type SlotPrize, type SlotSpinResult, type SlotSymbol as SymbolId } from '@/lib/supabase/queries'
-import type { CityId } from '@/lib/data/city'
+import { CITIES, type CityId } from '@/lib/data/city'
 import { JACKPOT_CHANCE } from '@/lib/data/shopItems'
 import { useI18n, useT, type TKey } from '@/lib/i18n'
 import { hapticSuccess, hapticTap } from '@/lib/telegram/haptics'
@@ -146,7 +146,7 @@ const BULBS = 9
 
 export function SlotsScreen({ city }: { city: CityId }) {
   const { t, lang } = useI18n()
-  const local = (key: TKey) => (city === 'moscow' ? (MOSCOW_TEXT[key] ?? key) : key)
+  const local = (key: TKey) => (CITIES[city].theme === 'fresh' ? (MOSCOW_TEXT[key] ?? key) : key)
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const { data: state, dataUpdatedAt, refetch } = useSlotState()

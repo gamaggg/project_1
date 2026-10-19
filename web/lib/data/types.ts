@@ -462,7 +462,7 @@ export type ClanChatSummary = {
 
 export type ClanDetail = {
   id: number
-  city: 'batumi' | 'moscow'
+  city: import('@/lib/data/city').CityId
   name: string
   motto: string | null
   // Members only — null for everyone else (see get_clan).

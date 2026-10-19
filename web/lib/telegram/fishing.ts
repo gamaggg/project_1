@@ -1,4 +1,5 @@
 import { SITE_URL } from '@/lib/site'
+import { CITIES, asCityId } from '@/lib/data/city'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isLang, translate, type Lang, type TKey, type TVars } from '@/lib/i18n/core'
 
@@ -15,7 +16,6 @@ import { isLang, translate, type Lang, type TKey, type TVars } from '@/lib/i18n/
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
-const TZ: Record<string, string> = { batumi: 'Asia/Tbilisi', moscow: 'Europe/Moscow' }
 const QUIET_AFTER_MS = 90 * 60 * 1000
 const GIVE_UP_AFTER_MS = 6 * 60 * 60 * 1000
 const MAX_A_DAY = 2
@@ -90,7 +90,7 @@ export async function runFishingReminders({ dryRun = false }: { dryRun?: boolean
   let reminded = 0
 
   for (const p of profiles ?? []) {
-    const tz = TZ[p.city ?? 'batumi'] ?? TZ.batumi
+    const tz = CITIES[asCityId(p.city)].timezone
     const today = localDate(now, tz)
     const todays = (byUser.get(p.id) ?? []).filter((at) => localDate(new Date(at), tz) === today)
     if (todays.length === 0) continue

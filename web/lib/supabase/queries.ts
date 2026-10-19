@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type InfiniteData, type QueryKey } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useInfiniteQuery, useMutation, useQueryClient, type InfiniteData, type QueryKey } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { reportsEnabled } from '@/lib/errorReporting'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -52,7 +52,10 @@ function hotRank(t: Territory): number {
 }
 
 const TERRITORY_PAGE_SIZE = 1000
-const TERRITORY_PARALLEL_PAGES = 2
+// A city's rows (deleted ones included) come in 1000-row pages; the first pages are asked for
+// together when the city is known to fill more than one (Moscow ~1.2k, Saint Petersburg ~1.5k),
+// so the second page costs no extra round trip. The other cities fit one page.
+const TERRITORY_PARALLEL_PAGES: Partial<Record<CityId, number>> = { moscow: 2, spb: 2 }
 
 // territories_with_stats.co_holders is a jsonb array of {id, avatar_url,
 // display_name, equipped_skin}, oldest share first — null when nobody shares
@@ -76,13 +79,23 @@ function toCoHolders(raw: unknown, myId: string | undefined): TerritoryCoHolder[
 
 // Merges static geometry with live Supabase ownership (territories_with_stats) —
 // see DECISIONS.md for why geometry stays a static asset instead of DB rows.
-export function useTerritories() {
+// One city's sectors (its id prefix), plus the sectors the signed-in player holds in other
+// cities (the profile and «Мои» list them). With five cities the whole table is ~4.5k rows
+// and each row carries its corners, so everyone loading every city would make the start
+// heavier by more than twice for nothing. `city` null: not known yet (the stored or profile
+// city is read right after the first render), nothing is fetched.
+export function useTerritories(city: CityId | null) {
   const { user, sessionReady } = useAuth()
   const queryClient = useQueryClient()
 
   return useQuery({
-    queryKey: ['territories', user?.id ?? null],
+    queryKey: ['territories', user?.id ?? null, city],
+    // Switching city keeps the old city's sectors on screen until the new ones arrive,
+    // instead of dropping back to the loading screen.
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<Territory[]> => {
+      const prefix = city ? CITIES[city].idPrefix : ''
+      const parallelPages = (city && TERRITORY_PARALLEL_PAGES[city]) || 1
       const supabase = createClient()
       const columns =
         'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted, shield_until, owner_equipped_skin, owner_territory_color, owner_clan_id, owner_clan_name, owner_clan_crest, co_holders, capturer_id, hot_until, legend_id, defense'
@@ -96,14 +109,17 @@ export function useTerritories() {
       // Pages need a fixed order: without one, two separate requests may
       // come back in different orders and overlap — some sectors twice,
       // others (up to hundreds) missing from the map.
-      const fetchPage = (from: number) =>
-        supabase.from('territories_with_stats').select(columns).order('id').range(from, from + pageSize - 1)
+      const fetchPage = (from: number) => {
+        const query = supabase.from('territories_with_stats').select(columns).order('id').range(from, from + pageSize - 1)
+        // In a PostgREST or() the LIKE wildcard is *, not %.
+        return user ? query.or(`id.like.${prefix}*,owner_id.eq.${user.id}`) : query.like('id', `${prefix}%`)
+      }
       // The static geometry and the first pages are fetched side by side —
       // the rows don't need the geometry until the merge below, so waiting
       // for sectors.json before asking the database only delayed the map.
       const [geometry, pages] = await Promise.all([
         queryClient.ensureQueryData(sectorsGeometryQuery),
-        Promise.all(Array.from({ length: TERRITORY_PARALLEL_PAGES }, (_, i) => fetchPage(i * pageSize))),
+        Promise.all(Array.from({ length: parallelPages }, (_, i) => fetchPage(i * pageSize))),
       ])
       const data: NonNullable<(typeof pages)[number]['data']> = []
       for (const page of pages) {
@@ -111,7 +127,7 @@ export function useTerritories() {
         data.push(...page.data)
       }
       let lastPageLength = pages[pages.length - 1].data?.length ?? 0
-      for (let from = TERRITORY_PARALLEL_PAGES * pageSize; lastPageLength === pageSize; from += pageSize) {
+      for (let from = parallelPages * pageSize; lastPageLength === pageSize; from += pageSize) {
         const page = await fetchPage(from)
         if (page.error) throw page.error
         data.push(...page.data)
@@ -151,7 +167,10 @@ export function useTerritories() {
         }
       }
 
+      // The static file holds Batumi and Moscow both: only this city's sectors, and the
+      // ones the player holds elsewhere (they came with their rows), are shown.
       const fromStatic = geometry
+        .filter((g) => g.id.startsWith(prefix) || byId.has(g.id))
         // Geometry is a static asset (see useSectorsGeometry) — a sector a
         // super admin deleted (admin_delete_territory) stays in that file,
         // so it's dropped here based on the DB row's is_deleted flag instead.
@@ -187,7 +206,7 @@ export function useTerritories() {
     // Until the stored session is read the key would say "no user" and the
     // whole table would be fetched once for nobody, then again for the real
     // user.
-    enabled: sessionReady,
+    enabled: sessionReady && city !== null,
   })
 }
 

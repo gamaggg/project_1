@@ -1,7 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { CATEGORIES_BY_CITY, CATEGORY_LABEL, type SpeciesCategory } from '@/lib/data/species'
+import type { CityId } from '@/lib/data/city'
+import { CATEGORY_LABEL, speciesOfCity, type SpeciesCategory } from '@/lib/data/species'
 import { formatWeightGrams, type SpeciesEntry } from '@/lib/format'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
@@ -26,10 +27,13 @@ const dateOf = (iso: string) => new Date(iso).toLocaleDateString(currentLocale()
 
 export function SpeciesListModal({
   species,
+  city,
   onClose,
   onOpenCatch,
 }: {
   species: SpeciesEntry[]
+  // The city the screens are showing: its fish are the collection.
+  city: CityId
   onClose: () => void
   onOpenCatch: (catchId: number) => void
 }) {
@@ -42,14 +46,14 @@ export function SpeciesListModal({
   const totalCatches = species.reduce((sum, s) => sum + s.count, 0)
   const maxCount = Math.max(1, ...species.map((s) => s.count))
 
-  // The collection is the species of the cities the catches belong to (Batumi's
-  // marine/freshwater, Moscow's predator/peaceful — the two never mix within a
-  // city, but someone who fished in both has both).
+  // The collection is the species of the city on screen (see speciesOfCity), plus any
+  // other fish the player has caught, in another city or since moved out of the list.
   const collection = useMemo(() => {
-    const caught = new Set(species.map((s) => s.category))
-    const cats = new Set(Object.values(CATEGORIES_BY_CITY).filter((p) => p.some((c) => caught.has(c))).flat())
-    return allSpecies.filter((s) => cats.has(s.category))
-  }, [allSpecies, species])
+    const caught = new Set(species.map((s) => s.key))
+    const ofCity = speciesOfCity(allSpecies, city)
+    const inCity = new Set(ofCity.map((s) => s.key))
+    return [...ofCity, ...allSpecies.filter((s) => caught.has(s.key) && !inCity.has(s.key))]
+  }, [allSpecies, species, city])
   const caughtKeys = useMemo(() => new Set(species.map((s) => s.key)), [species])
   const missing = collection.filter((s) => !caughtKeys.has(s.key))
   const total = collection.length ? Math.max(collection.length, species.length) : species.length

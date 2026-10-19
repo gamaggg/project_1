@@ -128,7 +128,7 @@ export const AVATAR_FRAMES: AvatarFrame[] = [
 ]
 
 // Which jackpot frame a city's slots give (spin_slots on the server agrees).
-export const JACKPOT_FRAME = { batumi: 'frame_katran', moscow: 'frame_som' } as const
+export const JACKPOT_FRAME = { batumi: 'frame_katran', moscow: 'frame_som', spb: 'frame_som', sochi: 'frame_katran', tbilisi: 'frame_som' } as const
 
 // The slots' jackpot odds — the same threshold as spin_slots on the server
 // (supabase-drafts/slots_odds_free_spin.sql). The pay table and the shop's

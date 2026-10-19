@@ -53,6 +53,7 @@ import { LaurelIcon } from '@/components/app-shell/SectorInsights'
 import { useT, TRANSLATION_READY } from '@/lib/i18n'
 import { LanguagePicker } from '@/components/app-shell/LanguagePicker'
 import { tn } from '@/lib/i18n'
+import { Flag } from '@/components/app-shell/Flag'
 
 // Telegram notifications, as one row rather than a screen of its own —
 // there's a single setting to make so far. Which control it shows depends on
@@ -592,6 +593,7 @@ export function ProfileScreen({
             style={{ color: 'rgba(var(--hero-text-rgb,255,255,255),.75)', display: 'inline-flex', alignItems: 'center', gap: 5 }}
             onClick={onOpenCityPicker}
           >
+            <Flag country={CITIES[city].country} height={13} />
             {tn('profile.city', { city: CITIES[city].name })}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 20h9" />

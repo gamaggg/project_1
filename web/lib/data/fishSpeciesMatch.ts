@@ -63,12 +63,32 @@ const SCIENTIFIC_NAME_TO_BASE_KEY: Record<string, string> = {
   'sarda sarda': 'pelamida',
 }
 
+// The Gulf of Finland and Neva Bay species Saint Petersburg adds (keys *_spb). Checked first: they
+// are offered only to Petersburg, and the sea trout there is kumzha_spb, not the Batumi river trout.
+const SCIENTIFIC_NAME_TO_SPB_KEY: Record<string, string> = {
+  'osmerus eperlanus': 'korjushka_spb',
+  'gasterosteus aculeatus': 'kolyushka_spb',
+  'platichthys flesus': 'kambala_spb',
+  'anguilla anguilla': 'ugor_spb',
+  'salmo trutta': 'kumzha_spb',
+  'salmo salar': 'losos_spb',
+  'clupea harengus': 'salaka_spb',
+  'coregonus albula': 'ryapushka_spb',
+  'pelecus cultratus': 'chekhon_spb',
+  'ballerus ballerus': 'sinets_spb',
+  'ballerus sapa': 'beloglazka_spb',
+  'coregonus lavaretus': 'sig_spb',
+}
+
 const MIN_CONFIDENCE = 0.4
 
 export function matchFishialSpecies(candidates: { scientificName: string; confidence: number }[], availableKeys: ReadonlySet<string>): string | null {
   for (const { scientificName, confidence } of candidates) {
     if (confidence < MIN_CONFIDENCE) continue
-    const baseKey = SCIENTIFIC_NAME_TO_BASE_KEY[scientificName.toLowerCase().trim()]
+    const name = scientificName.toLowerCase().trim()
+    const spbKey = SCIENTIFIC_NAME_TO_SPB_KEY[name]
+    if (spbKey && availableKeys.has(spbKey)) return spbKey
+    const baseKey = SCIENTIFIC_NAME_TO_BASE_KEY[name]
     if (!baseKey) continue
     const mskKey = `${baseKey}_msk`
     if (availableKeys.has(mskKey)) return mskKey

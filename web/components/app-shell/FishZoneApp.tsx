@@ -203,7 +203,6 @@ export function FishZoneApp() {
   // «Первые шаги»: a newcomer gets the newcomer tours and the checklist;
   // undefined while loading, null when the server doesn't have it yet.
   const { data: firstSteps } = useFirstSteps()
-  const { data: territories = [], isLoading: territoriesLoading, isSuccess: territoriesReady } = useTerritories()
   const isSuperAdmin = useIsSuperAdmin()
   const canAddCatchFromGallery = useCanAddCatchFromGallery()
   const canReviewPanoramas = useCanReviewPanoramas()
@@ -223,10 +222,16 @@ export function FishZoneApp() {
   // Declared before useAchievementUnlock below since that hook's achievement
   // computation is itself city-aware (see lib/data/achievements).
   const [city, setCity] = useState<CityId>('batumi')
+  // The stored city is read right after mount; the sectors are fetched for it (and only it:
+  // useTerritories), so nothing is asked of the database before that.
+  const [cityReady, setCityReady] = useState(false)
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reads browser storage, only available after mount
     setCity(loadStoredCity())
+    setCityReady(true)
   }, [])
+  const { data: territories = [], isLoading: territoriesFetching, isSuccess: territoriesReady } = useTerritories(cityReady ? city : null)
+  const territoriesLoading = territoriesFetching || !cityReady
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- the profile city (a fetched value) overrides the stored one
     if (myProfile?.city) setCity(myProfile.city)
@@ -2124,6 +2129,7 @@ export function FishZoneApp() {
       {viewingSpeciesFor !== null && (
         <SpeciesListModal
           species={viewingSpeciesFor}
+          city={city}
           onClose={() => setViewingSpeciesFor(null)}
           onOpenCatch={(id) => {
             setViewingSpeciesFor(null)

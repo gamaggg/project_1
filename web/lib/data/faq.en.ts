@@ -1,5 +1,5 @@
 import type { FaqSection } from '@/lib/data/faq'
-import { BATUMI_ROWS, MOSCOW_ROWS } from '@/lib/data/faq.rows'
+import { BATUMI_ROWS, MOSCOW_ROWS, SPB_ROWS, TBILISI_ROWS } from '@/lib/data/faq.rows'
 
 // The English «Questions and answers». Mirrors faq.ts section by section —
 // every number here is the live rule, so a rule change updates both files.
@@ -13,6 +13,14 @@ export const FAQ_EN: FaqSection[] = [
         a: [
           'A game for anglers. The city is split into hexagonal sectors — about 600 metres across. Catch a fish in a sector and photograph it in the app — the sector becomes yours.',
           'Catches and sectors earn you coins, medals and places in the ratings, and in a clan — shared rewards too.',
+        ],
+      },
+      {
+        q: 'Which cities can I play in?',
+        a: [
+          'Five right now: Batumi, Moscow, Saint Petersburg, Sochi (with Adler) and Tbilisi. You pick the city when you sign up and can change it later: Profile → «City».',
+          'Sectors run only along the water where you can actually fish: sea, rivers, lakes and ponds. There are none in reserves, ports, airports, military areas or other closed places. Every city has its own rating, clans and clan battle, and its local time zone.',
+          'Sochi and Batumi play the marine and freshwater species of the Black Sea and its rivers. Tbilisi plays freshwater species (river, lake, pond). Moscow has the predator and peaceful fish of its rivers and ponds. Saint Petersburg has the same as Moscow plus the Gulf of Finland and Neva Bay species: smelt, Baltic herring, eel, flounder, salmon and more.',
         ],
       },
       {
@@ -137,8 +145,10 @@ export const FAQ_EN: FaqSection[] = [
         q: 'How many coins for which fish?',
         a: [
           'The coins for a catch depend only on the species — size and weight do not matter. The rarer the fish, the more it pays.',
-          { title: 'Batumi', rows: BATUMI_ROWS },
+          { title: 'Batumi and Sochi', rows: BATUMI_ROWS },
+          { title: 'Tbilisi', rows: TBILISI_ROWS },
           { title: 'Moscow', rows: MOSCOW_ROWS },
+          { title: 'Saint Petersburg', rows: SPB_ROWS },
           'On a hot sector the coins for a catch double, «Double coins» double too, and together it is ×3, not ×4. If the catch claimed the sector, there is another +25 on top (+50 with «Double coins»).',
         ],
       },
@@ -173,8 +183,8 @@ export const FAQ_EN: FaqSection[] = [
         q: 'How do the slots work?',
         a: [
           'Every day — 1 free spin and one more for each catch, no more than 4 a day. Under the button you can see how many spins are left and how many more you can get for catches today.',
-          'The reels show your city’s fish: in Batumi horse mackerel, scorpionfish, bluefish and dogfish, in Moscow — perch, bream, pike and catfish. Plus a hook and a hex.',
-          'Prizes: the jackpot (0.3% chance) — the «Katran» frame in Batumi or «Catfish» in Moscow; these frames are not sold, you can only win them, and if you already have it — 300 coins. Also: a shield into the reserve (5%, shields exist only here; if the reserve already has 3 — 70 coins), double coins for a day (6%), 100 coins (4%), 3 horse mackerel or 3 perch — 25 coins (14%), 3 scorpionfish or 3 bream — a free spin (8%), a pair — 10 coins (38%). It is all in the pay table in the slots.',
+          'The reels show your city’s fish: in Batumi and Sochi horse mackerel, scorpionfish, bluefish and dogfish, in Moscow, Saint Petersburg and Tbilisi — perch, bream, pike and catfish. Plus a hook and a hex.',
+          'Prizes: the jackpot (0.3% chance) — the «Katran» frame in Batumi and Sochi or «Catfish» in Moscow, Saint Petersburg and Tbilisi; these frames are not sold, you can only win them, and if you already have it — 300 coins. Also: a shield into the reserve (5%, shields exist only here; if the reserve already has 3 — 70 coins), double coins for a day (6%), 100 coins (4%), 3 horse mackerel or 3 perch — 25 coins (14%), 3 scorpionfish or 3 bream — a free spin (8%), a pair — 10 coins (38%). It is all in the pay table in the slots.',
           'The slots are in the Shop, the «Angler’s slots» block together with your balance: it shows how many spins are left; tap it and the slots open. While a spin is waiting, a «Slots» sticker hangs on the map and the number of spins is on the profile badge and on the «Shop». You can hide the sticker with the cross: for this time (until a new spin) or for good.',
           'The free spin from the slots and the spins RANGE sometimes gives are bonus ones: they do not burn at the end of the day and are used when the regular ones run out.',
         ],

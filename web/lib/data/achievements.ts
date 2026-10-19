@@ -1,7 +1,7 @@
 import { tn } from '@/lib/i18n/runtime'
 import type { Catch, Territory, TerritoryKind } from '@/lib/data/types'
 import { METHODS, ALL_BAITS, WATER_KINDS_BY_CITY } from '@/lib/data/species'
-import { cityForSectorId, type CityId } from '@/lib/data/city'
+import { CITIES, cityForSectorId, type CityId } from '@/lib/data/city'
 
 export type Achievement = {
   icon:
@@ -81,10 +81,11 @@ export type AchievementContext = {
 // lib/data/city), same source every other city-aware screen already uses.
 export function computeAchievements(myCatches: Catch[], ctx: AchievementContext, city: CityId): Achievement[] {
   const { myTerritories, allTerritories, followersCount, claimedFromOthers } = ctx
-  const isMoscow = city === 'moscow'
+  // The freshwater variant (no marine / freshwater split): Moscow, Saint Petersburg, Tbilisi.
+  const isMoscow = CITIES[city].theme === 'fresh'
 
   const speciesCollectorCount = isMoscow
-    ? new Set(myCatches.filter((c) => cityForSectorId(c.territoryId) === 'moscow').map((c) => c.species)).size
+    ? new Set(myCatches.filter((c) => cityForSectorId(c.territoryId) === city).map((c) => c.species)).size
     : new Set(myCatches.filter((c) => c.speciesCategory === 'marine').map((c) => c.species)).size
   const record = personalRecord(myCatches)
   const earlyCatch = myCatches.some((c) => new Date(c.caughtAt).getHours() < 7)
@@ -196,7 +197,7 @@ export function computeAchievements(myCatches: Catch[], ctx: AchievementContext,
     {
       icon: 'allwaters',
       title: tn('ach.allwatersTitle'),
-      desc: isMoscow ? tn('ach.allwatersDescMoscow') : tn('ach.allwatersDescSea'),
+      desc: requiredWaterKinds.includes('sea') ? tn('ach.allwatersDescSea') : tn('ach.allwatersDescMoscow'),
       flavor: tn('ach.allwatersFlavor'),
       unlocked: waterKindsCaught.size >= requiredWaterKinds.length,
       progress: `${waterKindsCaught.size}/${requiredWaterKinds.length}`,

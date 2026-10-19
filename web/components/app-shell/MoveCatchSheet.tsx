@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAdminMoveCatch, useProfile, useTerritories } from '@/lib/supabase/queries'
 import { KIND_LABEL } from '@/lib/data/species'
+import { cityForSectorId } from '@/lib/data/city'
 import type { Catch, Territory } from '@/lib/data/types'
 
 const NEIGHBOURS_ON_MAP = 18
@@ -36,7 +37,7 @@ type Candidate = { t: Territory; distance: number; dir: string; x: number; y: nu
 // is drawn as the real hexes around the current sector (tap one), with
 // search by number for anything further away.
 export function MoveCatchSheet({ c, onClose }: { c: Catch; onClose: () => void }) {
-  const { data: territories = [] } = useTerritories()
+  const { data: territories = [] } = useTerritories(cityForSectorId(c.territoryId))
   const { data: owner } = useProfile(c.userId)
   const ownerName = owner?.displayName ?? null
   const move = useAdminMoveCatch()

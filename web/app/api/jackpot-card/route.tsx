@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { CITIES, asCityId } from '@/lib/data/city'
 import { isLang, translate, type Lang, type TKey, type TVars } from '@/lib/i18n/core'
 
 // The slots jackpot as a 1080×1920 card — what «В историю» and «Скачать» on
@@ -66,7 +67,8 @@ const COINS: [number, number, number, number][] = [
 
 export async function GET(request: Request) {
   const url = new URL(request.url)
-  const city = url.searchParams.get('city') === 'moscow' ? 'moscow' : 'batumi'
+  const city = asCityId(url.searchParams.get('city'))
+  const fresh = CITIES[city].theme === 'fresh'
   const prize = url.searchParams.get('prize') === 'coins' ? 'coins' : 'frame'
   const coins = Math.max(0, Math.min(100000, Number(url.searchParams.get('coins')) || 0))
   const langParam = url.searchParams.get('lang')
@@ -89,11 +91,11 @@ export async function GET(request: Request) {
       lang === 'ka' ? googleFont('Noto Sans Georgian', 800) : Promise.resolve(null),
       fetch(`${url.origin}/brand/logo_2.svg`).then((r) => r.text()).catch(() => null),
       dataUrl(`${url.origin}/brand/coin.svg`),
-      dataUrl(`${url.origin}/slots/png/${city === 'moscow' ? 'som' : 'katran'}.png`),
+      dataUrl(`${url.origin}/slots/png/${fresh ? 'som' : 'katran'}.png`),
       avatarUrl ? dataUrl(avatarUrl) : Promise.resolve(null),
     ])
     const logo = logoSvg ? `data:image/svg+xml;base64,${Buffer.from(logoSvg.replace(/class="cls-1"/g, 'fill="#FFFFFF"')).toString('base64')}` : null
-    const prizeText = prize === 'frame' ? t(city === 'moscow' ? 'slots.moscow.rewards.jackpot' : 'slots.rewards.jackpot') : `+${t('common.coins', { count: coins })}`
+    const prizeText = prize === 'frame' ? t(fresh ? 'slots.moscow.rewards.jackpot' : 'slots.rewards.jackpot') : `+${t('common.coins', { count: coins })}`
 
     return new ImageResponse(
       (

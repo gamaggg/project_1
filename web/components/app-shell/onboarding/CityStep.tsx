@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { CITY_LIST, storeCity, type CityId } from '@/lib/data/city'
+import { storeCity, type CityId } from '@/lib/data/city'
+import { CountryCityPicker } from '@/components/app-shell/CountryCityPicker'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { tn } from '@/lib/i18n/runtime'
 
@@ -33,19 +34,7 @@ export function CityStep({ onBack, onDone, preview }: { onBack: () => void; onDo
             <circle cx="12" cy="10" r="2.6" fill="#fff" />
           </svg>
         </div>
-        <div className="city-chips">
-          {CITY_LIST.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className={`city-chip${selected === c.id ? ' selected' : ''}`}
-              onClick={() => setSelected(c.id)}
-            >
-              <span className="city-chip-dot" />
-              {c.name}
-            </button>
-          ))}
-        </div>
+        <CountryCityPicker selected={selected} onSelect={setSelected} variant="intro" />
       </div>
       <div className="intro-copy">
         <div className="intro-title">{tn('onb.whereCatch')}</div>

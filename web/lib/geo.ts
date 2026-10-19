@@ -14,7 +14,7 @@ export const GEO_BONUS = 50
 // Where panoramas come from, north to south: Batumi's coast up to Kobuleti
 // (scripts/geo-import.mjs --max-lat, no Ureki / Grigoleti); all of Moscow.
 // The map opens on all of it for the pick — no part of the city singled out.
-export const GEO_AREA_MAX_LAT: Record<GeoCity, number> = { batumi: 41.9, moscow: 90 }
+export const GEO_AREA_MAX_LAT: Record<GeoCity, number> = { batumi: 41.9, moscow: 90, spb: 90, sochi: 90, tbilisi: 90 }
 
 // The sector's record on the result screen is a real fish — from this
 // weight or this length (get_geo_sector); a 50 g goby isn't one.
@@ -73,7 +73,7 @@ export type GeoResult = {
 
 export type GeoToday = {
   day: string
-  city: 'batumi' | 'moscow'
+  city: GeoCity
   nextReset: string
   panorama: GeoPanorama | null
   result: GeoResult | null
@@ -126,7 +126,7 @@ export type AdminGeoPlanDay = {
   locked: boolean
 }
 
-export type GeoCity = 'batumi' | 'moscow'
+export type GeoCity = import('@/lib/data/city').CityId
 
 // The answer's sector, told (get_geo_sector).
 export type GeoSectorStory = {

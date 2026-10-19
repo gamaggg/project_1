@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { PanoramaViewer } from '@/components/app-shell/PanoramaViewer'
+import { CITIES, CITY_LIST } from '@/lib/data/city'
 import { useAdminGeoFill, useAdminGeoList, useAdminGeoPlan, useAdminGeoReview, useAdminGeoSetDay, useTerritories } from '@/lib/supabase/queries'
 import { geoImageUrl, type AdminGeoPanorama, type AdminGeoPlanDay, type GeoCity } from '@/lib/geo'
 
@@ -84,9 +85,9 @@ export function AdminGeoScreen({ active }: { active: boolean }) {
   return (
     <div className="admin-geo">
       <div className="admin-geo-tabs small" role="tablist" aria-label="Город">
-        {(['batumi', 'moscow'] as const).map((c) => (
+        {CITY_LIST.map((info) => info.id).map((c) => (
           <button key={c} role="tab" aria-selected={city === c} className={city === c ? 'on' : undefined} onClick={() => setCity(c)}>
-            {c === 'batumi' ? 'Батуми' : 'Москва'}
+            {CITIES[c].name}
             <span className="admin-geo-tab-n">{cityTotal(c)}</span>
           </button>
         ))}
@@ -103,7 +104,7 @@ export function AdminGeoScreen({ active }: { active: boolean }) {
       {tab === 'plan' ? (
         <GeoPlan key={city} city={city} approved={inCity('approved')} active={active} />
       ) : (
-        <GeoReview key={`${city}:${tab}`} status={tab} list={inCity(tab)} loading={lists[tab].isLoading} reviewed={counts.approved + counts.rejected} active={active} />
+        <GeoReview key={`${city}:${tab}`} city={city} status={tab} list={inCity(tab)} loading={lists[tab].isLoading} reviewed={counts.approved + counts.rejected} active={active} />
       )}
     </div>
   )
@@ -117,8 +118,8 @@ type Undo = {
   text: string
 }
 
-function GeoReview({ status, list, loading, reviewed, active }: { status: Status; list: AdminGeoPanorama[]; loading: boolean; reviewed: number; active: boolean }) {
-  const { data: territories = [] } = useTerritories()
+function GeoReview({ city, status, list, loading, reviewed, active }: { city: GeoCity; status: Status; list: AdminGeoPanorama[]; loading: boolean; reviewed: number; active: boolean }) {
+  const { data: territories = [] } = useTerritories(city)
   const review = useAdminGeoReview()
   const [index, setIndex] = useState(0)
   const [yaw, setYaw] = useState<number | null>(null)

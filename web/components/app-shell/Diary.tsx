@@ -19,7 +19,7 @@ import {
 } from '@/lib/supabase/queries'
 import { uploadDiaryPhoto } from '@/lib/supabase/storage'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
-import { CATEGORIES_BY_CITY, CATEGORY_LABEL } from '@/lib/data/species'
+import { CATEGORIES_BY_CITY, CATEGORY_LABEL, speciesOfCity } from '@/lib/data/species'
 import { CITIES, cityForSectorId } from '@/lib/data/city'
 import { formatCatchMeta } from '@/lib/format'
 import { downscaleToJpeg, readPhotoMeta } from '@/lib/exif'
@@ -710,7 +710,7 @@ function GallerySheet({ onClose, onToast }: { onClose: () => void; onToast: (msg
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   const { data: species = [] } = useSpecies()
-  const { data: territories = [] } = useTerritories()
+  const { data: territories = [] } = useTerritories(profile?.city ?? 'batumi')
   const add = useAddDiaryCatch()
   const inputRef = useRef<HTMLInputElement>(null)
   const [fish, setFish] = useState<GalleryFish[]>([])
@@ -831,7 +831,7 @@ function GallerySheet({ onClose, onToast }: { onClose: () => void; onToast: (msg
                   <option value="">{t('diary.pickSpecies')}</option>
                   {categories.map((cat) => (
                     <optgroup key={cat} label={CATEGORY_LABEL[cat]}>
-                      {species
+                      {speciesOfCity(species, city)
                         .filter((s) => s.category === cat)
                         .map((s) => (
                           <option key={s.key} value={s.key}>

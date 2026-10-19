@@ -1,6 +1,7 @@
 'use client'
 
-import { CITY_LIST, type CityId } from '@/lib/data/city'
+import type { CityId } from '@/lib/data/city'
+import { CountryCityPicker } from '@/components/app-shell/CountryCityPicker'
 import { tn } from '@/lib/i18n/runtime'
 
 // Rendered by FishZoneApp itself, not nested inside a screen's scrolling
@@ -19,20 +20,15 @@ export function CityPickerModal({ city, onChange, onClose }: { city: CityId; onC
         <div className="modal-title" style={{ textAlign: 'center' }}>
           {tn('nav.city')}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
-          {CITY_LIST.map((c) => (
-            <button
-              key={c.id}
-              className="btn-secondary"
-              style={c.id === city ? { borderColor: 'var(--accent)', color: 'var(--accent)' } : undefined}
-              onClick={() => {
-                onChange(c.id)
-                onClose()
-              }}
-            >
-              {c.name}
-            </button>
-          ))}
+        <div style={{ marginTop: 14 }}>
+          <CountryCityPicker
+            selected={city}
+            variant="modal"
+            onSelect={(id) => {
+              onChange(id)
+              onClose()
+            }}
+          />
         </div>
       </div>
     </div>

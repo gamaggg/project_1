@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAdminEditCatch, useProfile, useSpecies } from '@/lib/supabase/queries'
-import { CATEGORY_LABEL, CATEGORIES_BY_CITY, type SpeciesCategory } from '@/lib/data/species'
+import { CATEGORY_LABEL, CATEGORIES_BY_CITY, speciesOfCity, type SpeciesCategory } from '@/lib/data/species'
 import { cityForSectorId } from '@/lib/data/city'
 import { formatWeightGrams } from '@/lib/format'
 import { useKeyboardInset } from '@/lib/useKeyboardInset'
@@ -52,7 +52,7 @@ export function EditCatchSheet({ c, onClose }: { c: Catch; onClose: () => void }
   // The species list loads after the sheet opens; until a chip is tapped,
   // the category follows the catch's own species.
   const shownCategory = category ?? species.find((s) => s.key === c.species)?.category ?? categories[0]
-  const options = species.filter((s) => s.category === shownCategory)
+  const options = speciesOfCity(species, cityForSectorId(c.territoryId)).filter((s) => s.category === shownCategory)
 
   const length = parseLength(lengthCm)
   const weight = parseWeightGrams(weightG)
