@@ -3753,9 +3753,10 @@ html[lang="ka"] .profile-duo:not(.single) .profile-geo-card .profile-clan-name{l
 .diary-day.trip{background:#FBF8F1; box-shadow:none; border:1px solid #EFE8DA;}
 .diary-day.trip .diary-note{background:var(--surface);}
 .diary-day-count{flex:0 0 auto; font-size:12.5px; font-weight:800; color:var(--ink-faint); font-variant-numeric:tabular-nums;}
-/* Weather in the diary: one quiet line, not a row of pills. */
-.diary-day .catch-conditions-chips{gap:3px 14px;}
-.diary-day .catch-conditions-chip{height:auto; padding:0; background:none; font-size:12.5px; color:var(--ink-soft);}
+/* Weather in the diary. The glass chip look (nav-glass.css) is back on these, so they are pills again and need
+   their own room: the text sat flush against the pill's edge with padding 0. */
+.diary-day .catch-conditions-chips{gap:6px;}
+.diary-day .catch-conditions-chip{height:26px; padding:0 10px; font-size:12.5px; color:var(--ink-soft);}
 /* «Засчитаны в игре» / «Только в дневнике» */
 .diary-group{margin-top:14px;}
 .diary-group-head{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; font-size:12px; font-weight:800; color:var(--ink-soft);}
