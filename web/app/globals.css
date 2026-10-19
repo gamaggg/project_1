@@ -1477,9 +1477,10 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .map-sheet-container{
   /* The card floats over the menu by the same gap the menu floats over the
      bottom of the screen (--nav-bottom): the row below holds 8px of room for
-     the selection ring, so the container sits that much less above the menu
-     (--nav-h is the bar's height plus its own bottom gap). */
-  position:absolute; left:0; right:0; bottom:calc(var(--nav-h, 82px) + var(--nav-bottom, 12px) - 8px); z-index:700;
+     the selection ring, so the container sits that much less above the menu.
+     It is placed from the menu's own edge (--nav-lift, its height --nav-height from
+     BottomNav), not from the measured --nav-h, which lagged behind a changing viewport. */
+  position:absolute; left:0; right:0; bottom:calc(var(--nav-lift, 10px) + var(--nav-height, 70px) + var(--nav-bottom, 10px) - 8px); z-index:700;
   display:flex; flex-direction:column; gap:9px;
   /* Full width, but only its pieces take touches: the empty space beside
      the week-recap sticker (or above a card) passes swipes to the map. */
@@ -1489,7 +1490,7 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .map-sheet-row{
   /* One card, no strip to swipe (MapScreen) — 8px top/bottom is room for
      the selection pulse's ring (map-sheet-card-pulse, up to 6px spread). */
-  padding:8px 12px;
+  padding:8px 10px;
 }
 .map-sheet-card{
   min-width:0;

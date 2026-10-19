@@ -82,6 +82,8 @@ export function BottomNav({
     // gap it floats at).
     const set = () => {
       document.documentElement.style.setProperty('--nav-h', `${el.offsetHeight + parseFloat(getComputedStyle(el).bottom) || 0}px`)
+      // The bar's own height alone: the sector card is placed from it in CSS (--nav-lift).
+      document.documentElement.style.setProperty('--nav-height', `${el.offsetHeight}px`)
       place()
     }
     set()

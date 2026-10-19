@@ -7,14 +7,21 @@
    (same selectors, same specificity, later in the cascade). */
 
 :root {
-  /* How far the floating nav sits above the bottom of the screen — also the
-     gap the map's sector card keeps above the nav. */
-  --nav-bottom: calc(8px + max(0px, env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px) - 14px));
+  /* One gap for the floating nav: the same 10px it keeps from the left and right edges,
+     under it (from the bottom of the screen) and above it (what the map's sector card
+     keeps). It used to follow the home-indicator inset (28px on an iPhone). */
+  --nav-bottom: 10px;
+  /* How far the nav's bottom edge sits above the bottom of the layout viewport; the sector
+     card is placed from it (globals.css .map-sheet-container). */
+  --nav-lift: var(--nav-bottom);
 }
+/* The iPhone home-screen app: the layout viewport is --vp-gap shorter than the screen, so the
+   gap is taken off to keep the visible one at --nav-bottom. */
+html.ios-standalone { --nav-lift: calc(var(--nav-bottom) - var(--vp-gap)); }
 .bottomnav {
   left: 10px;
   right: 10px;
-  bottom: var(--nav-bottom);
+  bottom: var(--nav-lift);
   min-height: 70px;
   padding: 0 6px;
   /* A full semicircle at each end (half the height); the capsule inside is inset 7px, so its own radius is 7px less and the two arcs share one centre. */
@@ -1402,7 +1409,7 @@ html[lang="ka"] .challenges-week-top { padding-top: 40px; }
 .map-sheet-card .badge:not(.badge-shield) { box-shadow: 0 0 0 1px rgba(23, 24, 27, 0.1) inset; }
 
 /* The iPhone home-screen app: globals.css pins the old full-width bar to the real bottom (bottom: -vp-gap), which beat the floating bar's own offset and glued it to the edge, over the home indicator. The floating bar keeps its offset (the gap under it, the safe area) and only takes the viewport's missing height off it. */
-html.ios-standalone .bottomnav { bottom: calc(var(--nav-bottom) - var(--vp-gap)); }
+html.ios-standalone .bottomnav { bottom: var(--nav-lift); }
 
 /* Telegram fullscreen (class set in AuthProvider.applyTelegramChrome): its «Назад» / «⋯» float over a band at the top (--tg-safe-area-top). Screens that open with a picture or a coloured banner — the catch photo, the profile (own and another's), the sector, the clan — run up under that band instead of starting below it on a blank white strip, the way the map and the iPhone home-screen app already do. Their top buttons are moved down by the band. */
 html.tg-band {
