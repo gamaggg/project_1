@@ -16,7 +16,8 @@ const REPORTED_KEY = 'range:beaconReported'
 const HEARTBEAT_EARLY_MS = 3_000
 const HEARTBEAT_MS = 15_000
 const EARLY_FOR_MS = 60_000
-const MAX_AGE_MS = 15 * 60_000
+// A last beat older than this is a page that was set aside, not one killed in front of the player.
+const AWAY_AFTER_MS = 60_000
 const REPORT_EVERY_MS = 60 * 60_000
 
 type Beacon = { screen: string; at: number; started: number; clean: boolean; nodes: number; canvases: number; screens: number; images: number; heapMB: number | null; nav: string; trail: string; ver?: string }
@@ -66,7 +67,10 @@ function platform(): string {
 export function installCrashBeacon(report: (message: string) => void): () => void {
   const prev = read()
   const now = Date.now()
-  if (prev && !prev.clean && now - prev.at < MAX_AGE_MS) {
+  // The page beats every 15 s while it is in front. A last beat minutes old means the page
+  // was not running — the player had left (iOS freezes the page without a word, then
+  // discards it) — so the relaunch is not a crash in front of them and is not reported.
+  if (prev && !prev.clean && now - prev.at < AWAY_AFTER_MS) {
     let last = 0
     try {
       last = Number(localStorage.getItem(REPORTED_KEY) ?? 0)
