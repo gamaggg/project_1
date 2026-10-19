@@ -844,7 +844,7 @@ export const ka: Dict = {
     profileFallback: 'პროფილი',
     joinedPre: 'RANGE-ში ',
     joinedPost: '-დან',
-    city: 'ქალაქი: {city}',
+    city: '{city}',
     speciesOfFish: { one: 'სახეობა', other: 'სახეობა' },
     challengesTitle: 'კვირის გამოწვევები',
     challengesSub: 'შეასრულე და მიიღე ჯილდოები',

@@ -842,7 +842,7 @@ export const en: Dict = {
     profileFallback: 'Profile',
     joinedPre: 'In RANGE since ',
     joinedPost: '',
-    city: 'City: {city}',
+    city: '{city}',
     speciesOfFish: { one: 'species', other: 'species' },
     challengesTitle: 'Weekly challenges',
     challengesSub: 'Complete them and earn rewards',

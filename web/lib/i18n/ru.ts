@@ -843,7 +843,7 @@ export const ru = {
     profileFallback: 'Профиль',
     joinedPre: 'В RANGE с ',
     joinedPost: '',
-    city: 'Город: {city}',
+    city: '{city}',
     speciesOfFish: { one: 'вид рыб', few: 'вида рыб', many: 'видов рыб', other: 'видов рыб' },
     challengesTitle: 'Челленджи недели',
     challengesSub: 'Выполняй и получай награды',
