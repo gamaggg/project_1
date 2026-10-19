@@ -8,6 +8,8 @@
 // note «left cleanly». If the next launch finds a note that was NOT marked, the
 // last launch ended without warning — and that is reported to the super admins
 // with the screen it happened on and what the page weighed.
+import { lightMapLabel, markDeviceStrained, realPixelRatio } from '@/lib/mapbox/lightMode'
+
 // The build this page runs (short): the report names the one that died, and the one the next launch runs.
 const BUILD = (process.env.APP_VERSION ?? 'dev').slice(0, 7)
 const KEY = 'range:beacon'
@@ -60,7 +62,7 @@ function platform(): string {
   const standalone = (navigator as Navigator & { standalone?: boolean }).standalone === true
   // Outside Telegram the script still answers, with platform «unknown».
   const inTelegram = !!tg?.platform && tg.platform !== 'unknown'
-  return [inTelegram ? `Telegram ${tg?.platform} ${tg?.version ?? ''}`.trim() : standalone ? 'главный экран' : 'браузер (не Telegram)', `${innerWidth}×${innerHeight}`, `dpr ${devicePixelRatio}`].join(', ')
+  return [inTelegram ? `Telegram ${tg?.platform} ${tg?.version ?? ''}`.trim() : standalone ? 'главный экран' : 'браузер (не Telegram)', `${innerWidth}×${innerHeight}`, `dpr ${realPixelRatio()}`, lightMapLabel()].filter(Boolean).join(', ')
 }
 
 // `report` is how the super admins hear of it (lib/supabase/queries.ts reportClientError).
@@ -71,6 +73,9 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
   // was not running — the player had left (iOS freezes the page without a word, then
   // discards it) — so the relaunch is not a crash in front of them and is not reported.
   if (prev && !prev.clean && now - prev.at < AWAY_AFTER_MS) {
+    // The system discarded the page in front of the player: this phone is short of memory,
+    // so its map starts lighter from now on (lib/mapbox/lightMode.ts).
+    markDeviceStrained()
     let last = 0
     try {
       last = Number(localStorage.getItem(REPORTED_KEY) ?? 0)

@@ -19,6 +19,7 @@ import { useSkinAssetsVersion, useSkinPatterns } from '@/lib/map/skinPattern'
 import { getCurrentCoords, queryGeolocationPermission } from '@/lib/geolocation'
 import { hapticTap } from '@/lib/telegram/haptics'
 import { applyCurrentLightPreset } from '@/lib/mapbox/lightPreset'
+import { mapLoad } from '@/lib/mapbox/lightMode'
 import { tn } from '@/lib/i18n/runtime'
 
 // Trial swap from OpenFreeMap — a custom Mapbox Standard style, hand-tuned to
@@ -686,6 +687,8 @@ export const LeafletMap = forwardRef<
         leafletRef.current = L
         guardMapboxBridge(L)
 
+        // Old and weak phones get a lighter map (lower pixel ratio, smaller buffers and tile cache).
+        const load = mapLoad()
         const map = L.map(containerRef.current, {
           zoomControl: false,
           attributionControl: false,
@@ -702,7 +705,7 @@ export const LeafletMap = forwardRef<
           // redrawn into it on every settled move. 0.3 (~2.6× area) still
           // covers an ordinary swipe and roughly halves both costs, which
           // matters on phones where this sat next to the GL map's own buffers.
-          renderer: L.canvas({ padding: 0.3 }),
+          renderer: L.canvas({ padding: load.polygonPadding }),
         })
         mapRef.current = map
 
@@ -712,7 +715,14 @@ export const LeafletMap = forwardRef<
         // moot regardless, since the bridge (mapbox-gl-leaflet, imported above
         // for its L.mapboxGL side-effect registration) always hardcodes its own
         // internal mapbox-gl instance to attributionControl: false already.
-        const glLayer = L.mapboxGL({ style: MAPBOX_STYLE_URL, accessToken: MAPBOX_TOKEN })
+        // padding and maxTileCacheSize go through the bridge to the Mapbox map itself; the
+        // bridge's own types do not list them.
+        const glLayer = L.mapboxGL({
+          style: MAPBOX_STYLE_URL,
+          accessToken: MAPBOX_TOKEN,
+          padding: load.glPadding,
+          ...(load.tileCache ? { maxTileCacheSize: load.tileCache } : {}),
+        } as Parameters<typeof L.mapboxGL>[0])
         glLayer.addTo(map)
         L.control
           .attribution({ prefix: false })
