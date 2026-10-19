@@ -477,8 +477,9 @@ export function ProfileScreen({
   const isSuperAdmin = useIsSuperAdmin()
   // «Где это?» only while the city has a panorama of the day — not for a city without the
   // game yet (the new ones), super admin included: they fill the game from the panorama
-  // review, not from this card.
-  const showGeoCard = !!geo?.panorama
+  // review, not from this card. Nor a game played earlier today in the city moved from: the
+  // server keeps it the day's until midnight, but it is not this city's.
+  const showGeoCard = !!geo?.panorama && geo.city === city
   const { data: reports = [] } = useReports()
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(user?.id ?? null)
   const { data: earnedAchievements } = useEarnedAchievements(user?.id ?? null)
