@@ -1673,7 +1673,19 @@ export function FishZoneApp() {
             "Выполнен челлендж" notification — on every launch, whether
             or not this screen is ever opened. */}
         <Screen id="screen-challenges" current={currentScreen} onBack={pop} eager>
-          {myProfile && <ChallengesScreen onBack={pop} active={currentScreen === 'screen-challenges'} />}
+          {myProfile && (
+            <ChallengesScreen
+              onBack={pop}
+              active={currentScreen === 'screen-challenges'}
+              // Back to the city the week's challenges were given for: the same switch as the profile's
+              // picker, but staying on this screen, where the set now appears.
+              onSwitchCity={(next) => {
+                setCity(next)
+                storeCity(next)
+                updateProfile.mutate({ city: next })
+              }}
+            />
+          )}
         </Screen>
         <Screen id="screen-clans" current={currentScreen} onBack={pop}>
           {myProfile && <ClanListScreen city={myProfile.city} onBack={pop} onOpenClan={openClan} onCreate={() => openClanEditor('create', null)} />}

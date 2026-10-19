@@ -4682,3 +4682,20 @@ button.geo-fact{cursor:pointer;}
 .country-city.selected .country-city-dot{background:var(--accent); box-shadow:0 0 0 4px rgba(252,82,0,.18);}
 .country-list--modal .country-card, .country-list--modal .country-city{width:100%;}
 @media (prefers-reduced-motion: reduce){.country-card, .country-city, .country-card-chevron, .country-drop{transition:none;}}
+
+/* The week's challenges belong to another city (ChallengesScreen): a note with the way back. */
+.challenges-other-city{
+  position:relative; display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; margin-top:6px; padding:26px 22px 22px;
+  border-radius:26px; overflow:hidden;
+  background:linear-gradient(180deg, #FFF4EA 0%, #FFFFFF 62%); box-shadow:0 1px 0 #fff inset, 0 0 0 1px rgba(252,82,0,.12), 0 14px 34px rgba(80,45,15,.12);
+}
+.challenges-other-city::before{
+  content:''; position:absolute; top:-70px; left:50%; width:240px; height:240px; margin-left:-120px; border-radius:50%;
+  background:radial-gradient(circle, rgba(252,82,0,.16), rgba(252,82,0,0) 68%); pointer-events:none;
+}
+.challenges-other-city-art{position:relative; display:flex; align-items:center; justify-content:center; gap:10px; width:100%; margin-bottom:2px;}
+.challenges-other-city-pin{display:inline-flex; align-items:center; justify-content:center; width:46px; height:46px; border-radius:50%; background:#fff; box-shadow:0 6px 16px rgba(252,82,0,.22), 0 0 0 1px rgba(252,82,0,.14);}
+.challenges-other-city-title{position:relative; font-size:19px; line-height:1.2; font-weight:800; color:var(--ink); text-wrap:balance;}
+.challenges-other-city-text{position:relative; font-size:14px; line-height:1.45; color:var(--ink-soft); max-width:320px;}
+.challenges-other-city-btn{position:relative; width:100%; margin-top:8px;}
+

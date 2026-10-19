@@ -343,6 +343,8 @@ function BuffsSection({
         const buff = buffs.find((b) => b.id === 'extra_challenge')
         if (!buff) return null
         const bought = weekState?.extraSlotBought ?? false
+        // The extra challenge goes on top of this city's set: no set here (it is in another city), nothing to add to.
+        if (!bought && (weekState?.slotCount ?? 0) === 0) return null
         return (
           <BuffRow
             buff={buff}

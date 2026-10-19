@@ -1908,6 +1908,7 @@ export type Database = {
         Args: { p_timezone: string }
         Returns: { swap_used: boolean; extra_slot_bought: boolean; slot_count: number; week_ends_at: string }[]
       }
+      get_my_other_city_challenges: { Args: { p_city: string }; Returns: string | null }
       swap_challenge: { Args: { p_user_challenge_id: number; p_city: string }; Returns: undefined }
       buy_extra_challenge: { Args: { p_city: string; p_timezone: string }; Returns: undefined }
       buy_shield: { Args: { p_territory_id: string }; Returns: undefined }

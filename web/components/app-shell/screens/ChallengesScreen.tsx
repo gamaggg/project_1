@@ -8,7 +8,8 @@ import { ChallengeCountdown } from '@/components/app-shell/ChallengeCountdown'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { usePurchaseFlow } from '@/components/app-shell/usePurchaseFlow'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useMyChallenges, useChallengeWeekState, useSwapChallenge, useBuyExtraChallenge, useBuffs, useProfile, type WeeklyChallenge } from '@/lib/supabase/queries'
+import { useMyChallenges, useChallengeWeekState, useOtherCityChallenges, useSwapChallenge, useBuyExtraChallenge, useBuffs, useProfile, type WeeklyChallenge } from '@/lib/supabase/queries'
+import { CITIES, type CityId } from '@/lib/data/city'
 import { tn } from '@/lib/i18n/runtime'
 
 const TIER_LABEL: Record<WeeklyChallenge['tier'], string> = {
@@ -52,12 +53,14 @@ type Completion = { doneCount: number; total: number; coinsEarned: number; coins
 // parallel challenge week (and a second payout) just by switching city tabs
 // mid-week (found via a live "Картограф" completion nobody could find in
 // the visible set — it belonged to the other city's week).
-export function ChallengesScreen({ onBack, active }: { onBack: () => void; active: boolean }) {
+export function ChallengesScreen({ onBack, active, onSwitchCity }: { onBack: () => void; active: boolean; onSwitchCity: (city: CityId) => void }) {
   const { user } = useAuth()
   const { data: myProfile } = useProfile(user?.id ?? null)
   const city = myProfile?.city ?? 'batumi'
   const { data: challenges = [], isLoading, refetch } = useMyChallenges(city)
   const { data: weekState, refetch: refetchWeekState } = useChallengeWeekState(city)
+  // This week's set may belong to another city (see useOtherCityChallenges): then this city shows a note, not the set.
+  const { data: otherCity, refetch: refetchOtherCity } = useOtherCityChallenges(city, !isLoading && challenges.length === 0)
   const { data: buffs = [] } = useBuffs()
   const swapChallenge = useSwapChallenge(city)
   const buyExtraChallenge = useBuyExtraChallenge(city)
@@ -100,10 +103,11 @@ export function ChallengesScreen({ onBack, active }: { onBack: () => void; activ
         }
       })
       refetchWeekState()
+      void refetchOtherCity()
     }
     wasActiveRef.current = active
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, refetch, refetchWeekState])
+  }, [active, refetch, refetchWeekState, refetchOtherCity])
 
   const doneCount = challenges.filter((c) => !!c.completedAt).length
   const total = challenges.length
@@ -140,6 +144,23 @@ export function ChallengesScreen({ onBack, active }: { onBack: () => void; activ
             {[0, 1, 2].map((i) => (
               <SkeletonBlock key={i} height={104} radius={18} style={{ marginBottom: 10 }} />
             ))}
+          </div>
+        )}
+        {!isLoading && total === 0 && otherCity && (
+          <div className="challenges-other-city">
+            <div className="challenges-other-city-art" aria-hidden>
+              <span className="challenges-other-city-pin">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 21c-4-4.5-7-8-7-11a7 7 0 0 1 14 0c0 3-3 6.5-7 11z" fill="#FC5200" />
+                  <circle cx="12" cy="10" r="2.6" fill="#fff" />
+                </svg>
+              </span>
+            </div>
+            <div className="challenges-other-city-title">{tn('weekly.otherCityTitle')}</div>
+            <div className="challenges-other-city-text">{tn('weekly.otherCityText', { city: CITIES[otherCity].name })}</div>
+            <button type="button" className="btn-primary challenges-other-city-btn" onClick={() => onSwitchCity(otherCity)}>
+              {tn('weekly.otherCityBtn', { city: CITIES[otherCity].name })}
+            </button>
           </div>
         )}
         {!isLoading && total > 0 && (
@@ -292,7 +313,7 @@ export function ChallengesScreen({ onBack, active }: { onBack: () => void; activ
             )
           })}
 
-        {!isLoading && (weekState?.slotCount ?? 0) < 4 && !(weekState?.extraSlotBought ?? false) && (
+        {!isLoading && total > 0 && (weekState?.slotCount ?? 0) < 4 && !(weekState?.extraSlotBought ?? false) && (
           <button
             className="challenge-extra-btn"
             disabled={buyExtraChallenge.isPending}

@@ -2247,6 +2247,9 @@ export const en: Dict = {
     hintLight: 'Easy: one catch or a couple of actions.',
     hintMedium: 'Medium: a couple of trips to the water.',
     hintHard: 'Hard: for real anglers — and a bigger reward.',
+    otherCityBtn: 'Back to {city}',
+    otherCityTitle: 'Your challenges are running in another city',
+    otherCityText: 'Challenges belong to a city and count catches only there. This week started in {city}: switch back and everything is where you left it. New ones come on Monday.',
   },
   terms: {
     title: 'Terms of use',

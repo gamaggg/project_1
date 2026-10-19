@@ -7,7 +7,7 @@ import { reportsEnabled } from '@/lib/errorReporting'
 import { useAuth } from '@/components/providers/AuthProvider'
 import type { Territory, TerritoryCoHolder, TerritoryStatus, Catch, ProfileSummary, ActivityEntry, TerritoryKind, Species, Profile, CatchReport, AdminAction, AdminListEntry, AdminPermissions, UserListEntry, CityPlayer, WeeklyLeaderboardEntry, UserAward, AwardKind, CatchComment, ClanSummary, ClanDetail, ClanMember, ClanEligibility, ClanInvite, ClanChest, ClanRace, ClanWarCandidate, ClanChatMessage, ClanChatSummary, ClanRoleId } from '@/lib/data/types'
 import type { SpeciesCategory } from '@/lib/data/species'
-import { CITIES, cityForSectorId, type CityId } from '@/lib/data/city'
+import { CITIES, asCityId, cityForSectorId, type CityId } from '@/lib/data/city'
 import { compareSectors } from '@/lib/data/sectorOrder'
 import type { ShareKind } from '@/lib/guestShare'
 import type { Database } from '@/lib/types'
@@ -2488,6 +2488,23 @@ export function useChallengeWeekState(city: CityId) {
         slotCount: row?.slot_count ?? 0,
         weekEndsAt: row?.week_ends_at ?? null,
       }
+    },
+  })
+}
+
+// The city whose set of weekly challenges is the player's this week, when the city shown has
+// none (challenges belong to the city they were given for and count catches only there:
+// get_my_other_city_challenges). Null when the shown city has its own set or there is none.
+export function useOtherCityChallenges(city: CityId, enabled: boolean) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['other-city-challenges', user?.id ?? null, city],
+    enabled: !!user && enabled,
+    queryFn: async (): Promise<CityId | null> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('get_my_other_city_challenges', { p_city: city })
+      if (error) throw error
+      return data ? asCityId(data) : null
     },
   })
 }

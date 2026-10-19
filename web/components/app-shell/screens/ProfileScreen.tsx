@@ -475,9 +475,10 @@ export function ProfileScreen({
   const canModerateReports = useCanModerateReports()
   const canReviewPanoramas = useCanReviewPanoramas()
   const isSuperAdmin = useIsSuperAdmin()
-  // «Где это?» once the city has a panorama of the day (or for a super
-  // admin, who fills the game).
-  const showGeoCard = !!geo?.panorama || isSuperAdmin
+  // «Где это?» only while the city has a panorama of the day — not for a city without the
+  // game yet (the new ones), super admin included: they fill the game from the panorama
+  // review, not from this card.
+  const showGeoCard = !!geo?.panorama
   const { data: reports = [] } = useReports()
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(user?.id ?? null)
   const { data: earnedAchievements } = useEarnedAchievements(user?.id ?? null)
