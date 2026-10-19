@@ -8,7 +8,23 @@ import type { createClient } from '@/lib/supabase/client'
 // Telegram already belongs to is signed in, none is made (someone who plays
 // on the web must not get a second, empty account just by opening the Mini
 // App). True only for Welcome's explicit «start».
-export async function trySignInWithTelegram(supabase: ReturnType<typeof createClient>, create: boolean) {
+// One attempt at a time per kind: a double tap on «start» (or the launch check and «start»
+// together) used to send two sign-ins for a brand-new player at once — one made the
+// account, the other hit the duplicate and the server answered 500.
+const inFlight: Partial<Record<'check' | 'create', Promise<boolean>>> = {}
+
+export function trySignInWithTelegram(supabase: ReturnType<typeof createClient>, create: boolean): Promise<boolean> {
+  const kind = create ? 'create' : 'check'
+  const running = inFlight[kind]
+  if (running) return running
+  const attempt = signIn(supabase, create).finally(() => {
+    delete inFlight[kind]
+  })
+  inFlight[kind] = attempt
+  return attempt
+}
+
+async function signIn(supabase: ReturnType<typeof createClient>, create: boolean) {
   const initData = window.Telegram?.WebApp?.initData
   if (!initData) return false
   try {

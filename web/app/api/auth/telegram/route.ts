@@ -54,10 +54,21 @@ async function handlePOST(request: Request) {
       email_confirm: true,
       user_metadata: { display_name: displayName, telegram_username: tgUser.username ?? null },
     })
-    if (createError || !created.user) return NextResponse.json({ error: 'could not create account' }, { status: 500 })
-    // handle_new_user() just inserted the profiles row (see the trigger) — attach the telegram_id to it.
-    const { error: linkError } = await admin.from('profiles').update({ telegram_id: tgUser.id }).eq('id', created.user.id)
-    if (linkError) return NextResponse.json({ error: 'could not link account' }, { status: 500 })
+    if (createError || !created.user) {
+      // Two sign-ins of the same new player at once: the other one made the account (our insert
+      // hit the duplicate). Wait for it to attach the telegram_id, then sign this one in too.
+      let madeByOther = false
+      for (let i = 0; i < 6 && !madeByOther; i++) {
+        await new Promise((r) => setTimeout(r, 400))
+        const { data } = await admin.from('profiles').select('id').eq('telegram_id', tgUser.id).maybeSingle()
+        madeByOther = !!data
+      }
+      if (!madeByOther) return NextResponse.json({ error: 'could not create account' }, { status: 500 })
+    } else {
+      // handle_new_user() just inserted the profiles row (see the trigger) — attach the telegram_id to it.
+      const { error: linkError } = await admin.from('profiles').update({ telegram_id: tgUser.id }).eq('id', created.user.id)
+      if (linkError) return NextResponse.json({ error: 'could not link account' }, { status: 500 })
+    }
   }
 
   const { data: linkData, error: linkGenError } = await admin.auth.admin.generateLink({ type: 'magiclink', email: signInEmail })
