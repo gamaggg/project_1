@@ -18,6 +18,9 @@ import {
   useCanReviewPanoramas,
   useCanViewStats,
   useAllTerritoryIds,
+  useExtraSectors,
+  extraSectorsKey,
+  fetchSectorsById,
   useFindUserByPublicId,
   useUnreadNotificationCount,
   logChallengeEvent,
@@ -232,7 +235,16 @@ export function FishZoneApp() {
     setCity(loadStoredCity())
     setCityReady(true)
   }, [])
-  const { data: territories = [], isLoading: territoriesFetching, isSuccess: territoriesReady } = useTerritories(cityReady ? city : null)
+  const { data: cityTerritoryRows = [], isLoading: territoriesFetching, isSuccess: territoriesReady } = useTerritories(cityReady ? city : null)
+  // Sectors of other cities opened from an activity entry, a catch or a profile (the list above only has
+  // the player's city and their own sectors elsewhere): fetched by id when first opened, kept for the session.
+  const [extraSectorIds, setExtraSectorIds] = useState<string[]>([])
+  const { data: extraSectors } = useExtraSectors(extraSectorIds)
+  const territories = useMemo(() => {
+    if (!extraSectors?.length) return cityTerritoryRows
+    const have = new Set(cityTerritoryRows.map((t) => t.id))
+    return [...cityTerritoryRows, ...extraSectors.filter((t) => !have.has(t.id))]
+  }, [cityTerritoryRows, extraSectors])
   const territoriesLoading = territoriesFetching || !cityReady
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- the profile city (a fetched value) overrides the stored one
@@ -790,14 +802,30 @@ export function FishZoneApp() {
       showToast(tn('common.copyFailed'))
     }
   }
-  function openTerritory(id: string) {
+  async function openTerritory(id: string) {
     // A "Последние действия"/activity link can point at a sector a super
     // admin has since deleted (admin_delete_territory) — it's gone from
     // `territories` (see useTerritories' is_deleted filter), so guard
-    // against pushing a screen that'd render blank.
+    // against pushing a screen that'd render blank. A sector of another city is
+    // not in the list either (only the player's city is loaded): fetch it by id
+    // first, and only a sector that really is gone says so.
     if (!territories.some((t) => t.id === id)) {
-      showToast(tn('shell.sectorGone'))
-      return
+      const ids = extraSectorIds.includes(id) ? extraSectorIds : [...extraSectorIds, id].slice(-30)
+      let found: Awaited<ReturnType<typeof fetchSectorsById>> = []
+      try {
+        found = await queryClient.fetchQuery({
+          queryKey: extraSectorsKey(user?.id, ids),
+          queryFn: () => fetchSectorsById(ids, user?.id, queryClient),
+          staleTime: 60_000,
+        })
+      } catch {
+        found = []
+      }
+      if (!found.some((t) => t.id === id)) {
+        showToast(tn('shell.sectorGone'))
+        return
+      }
+      setExtraSectorIds(ids)
     }
     setViewingTerritoryId(id)
     push({ screen: 'screen-territory', territoryId: id })
@@ -1216,7 +1244,7 @@ export function FishZoneApp() {
   useEffect(() => {
     if (deepLinkOpened.current || territoriesLoading || !territories.length) return
     const id = new URLSearchParams(window.location.search).get('territory')
-    if (id && territories.some((t) => t.id === id)) {
+    if (id) {
       deepLinkOpened.current = true
       // eslint-disable-next-line react-hooks/set-state-in-effect -- opens a screen once from the launch URL (external input)
       openTerritory(id)

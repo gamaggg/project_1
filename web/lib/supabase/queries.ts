@@ -84,6 +84,88 @@ function toCoHolders(raw: unknown, myId: string | undefined): TerritoryCoHolder[
 // and each row carries its corners, so everyone loading every city would make the start
 // heavier by more than twice for nothing. `city` null: not known yet (the stored or profile
 // city is read right after the first render), nothing is fetched.
+const TERRITORY_COLUMNS =
+  'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted, shield_until, owner_equipped_skin, owner_territory_color, owner_clan_id, owner_clan_name, owner_clan_crest, co_holders, capturer_id, hot_until, legend_id, defense'
+
+type TerritoryViewRow = Pick<
+  Database['public']['Views']['territories_with_stats']['Row'],
+  'id' | 'kind' | 'lat' | 'lng' | 'corners' | 'owner_id' | 'owner_avatar_url' | 'owner_display_name' | 'catch_count' | 'last_catch_at' | 'is_deleted' | 'shield_until' | 'owner_equipped_skin' | 'owner_territory_color' | 'owner_clan_id' | 'owner_clan_name' | 'owner_clan_crest' | 'co_holders' | 'capturer_id' | 'hot_until' | 'legend_id' | 'defense'
+>
+
+// One territories_with_stats row (undefined: a sector nobody has touched yet) and its geometry → Territory.
+function territoryFromRow(
+  row: TerritoryViewRow | undefined,
+  id: string,
+  kind: TerritoryKind,
+  lat: number,
+  lng: number,
+  corners: [number, number][],
+  userId: string | undefined
+): Territory {
+  const ownerId = row?.owner_id ?? null
+  const status: TerritoryStatus = ownerId === null ? 'free' : ownerId === userId ? 'mine' : 'other'
+  return {
+    id,
+    kind,
+    lat,
+    lng,
+    corners,
+    ownerId,
+    ownerAvatarUrl: row?.owner_avatar_url ?? null,
+    ownerDisplayName: row?.owner_display_name ?? null,
+    status,
+    catchCount: row?.catch_count ?? 0,
+    lastCatchAt: row?.last_catch_at ?? null,
+    shieldUntil: row?.shield_until ?? null,
+    ownerEquippedSkin: row?.owner_equipped_skin ?? null,
+    ownerColor: row?.owner_territory_color ?? null,
+    ownerClanId: row?.owner_clan_id ?? null,
+    ownerClanName: row?.owner_clan_name ?? null,
+    ownerClanCrest: row?.owner_clan_crest ?? null,
+    coHolders: toCoHolders(row?.co_holders, userId),
+    capturerId: row?.capturer_id ?? null,
+    hotUntil: row?.hot_until ?? null,
+    legendId: row?.legend_id ?? null,
+    defense: row?.defense ?? 0,
+  }
+}
+
+// A few sectors outside the loaded city (useTerritories loads the player's city and their own sectors
+// elsewhere): the ones opened from an activity entry, a catch or a profile of another city. Fetched by id.
+export function extraSectorsKey(userId: string | null | undefined, ids: string[]) {
+  return ['territories-extra', userId ?? null, [...ids].sort().join(',')] as const
+}
+export async function fetchSectorsById(ids: string[], userId: string | undefined, queryClient: ReturnType<typeof useQueryClient>): Promise<Territory[]> {
+  if (!ids.length) return []
+  const supabase = createClient()
+  const [geometry, res] = await Promise.all([
+    queryClient.ensureQueryData(sectorsGeometryQuery),
+    supabase.from('territories_with_stats').select(TERRITORY_COLUMNS).in('id', ids),
+  ])
+  if (res.error) throw res.error
+  const geomById = new Map(geometry.map((g) => [g.id, g]))
+  const out: Territory[] = []
+  for (const row of res.data) {
+    if (!row.id || row.is_deleted) continue
+    const g = geomById.get(row.id)
+    if (g) out.push(territoryFromRow(row, row.id, (row.kind as TerritoryKind | null) ?? g.kind, g.lat, g.lng, g.corners, userId))
+    else if (row.corners && row.kind && row.lat != null && row.lng != null)
+      out.push(territoryFromRow(row, row.id, row.kind as TerritoryKind, row.lat, row.lng, row.corners as unknown as [number, number][], userId))
+  }
+  return out
+}
+export function useExtraSectors(ids: string[]) {
+  const { user, sessionReady } = useAuth()
+  const queryClient = useQueryClient()
+  return useQuery({
+    queryKey: extraSectorsKey(user?.id, ids),
+    enabled: sessionReady && ids.length > 0,
+    placeholderData: keepPreviousData,
+    staleTime: 60_000,
+    queryFn: () => fetchSectorsById(ids, user?.id, queryClient),
+  })
+}
+
 export function useTerritories(city: CityId | null) {
   const { user, sessionReady } = useAuth()
   const queryClient = useQueryClient()
@@ -97,8 +179,7 @@ export function useTerritories(city: CityId | null) {
       const prefix = city ? CITIES[city].idPrefix : ''
       const parallelPages = (city && TERRITORY_PARALLEL_PAGES[city]) || 1
       const supabase = createClient()
-      const columns =
-        'id, kind, lat, lng, corners, owner_id, owner_avatar_url, owner_display_name, catch_count, last_catch_at, is_deleted, shield_until, owner_equipped_skin, owner_territory_color, owner_clan_id, owner_clan_name, owner_clan_crest, co_holders, capturer_id, hot_until, legend_id, defense'
+      const columns = TERRITORY_COLUMNS
       // PostgREST caps a single response at 1000 rows by default and stays
       // silent about it (no error, just a truncated array) — the table
       // crossed that count once admin-added sectors piled up, which is how
@@ -137,35 +218,8 @@ export function useTerritories(city: CityId | null) {
       const byId = new Map(data.map((row) => [row.id, row]))
       const staticIds = new Set(geometry.map((g) => g.id))
 
-      function toTerritory(id: string, kind: TerritoryKind, lat: number, lng: number, corners: [number, number][]): Territory {
-        const row = byId.get(id)
-        const ownerId = row?.owner_id ?? null
-        const status: TerritoryStatus = ownerId === null ? 'free' : ownerId === user?.id ? 'mine' : 'other'
-        return {
-          id,
-          kind,
-          lat,
-          lng,
-          corners,
-          ownerId,
-          ownerAvatarUrl: row?.owner_avatar_url ?? null,
-          ownerDisplayName: row?.owner_display_name ?? null,
-          status,
-          catchCount: row?.catch_count ?? 0,
-          lastCatchAt: row?.last_catch_at ?? null,
-          shieldUntil: row?.shield_until ?? null,
-          ownerEquippedSkin: row?.owner_equipped_skin ?? null,
-          ownerColor: row?.owner_territory_color ?? null,
-          ownerClanId: row?.owner_clan_id ?? null,
-          ownerClanName: row?.owner_clan_name ?? null,
-          ownerClanCrest: row?.owner_clan_crest ?? null,
-          coHolders: toCoHolders(row?.co_holders, user?.id),
-          capturerId: row?.capturer_id ?? null,
-          hotUntil: row?.hot_until ?? null,
-          legendId: row?.legend_id ?? null,
-          defense: row?.defense ?? 0,
-        }
-      }
+      const toTerritory = (id: string, kind: TerritoryKind, lat: number, lng: number, corners: [number, number][]): Territory =>
+        territoryFromRow(byId.get(id), id, kind, lat, lng, corners, user?.id)
 
       // The static file holds Batumi and Moscow both: only this city's sectors, and the
       // ones the player holds elsewhere (they came with their rows), are shown.
