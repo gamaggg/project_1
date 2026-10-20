@@ -60,7 +60,6 @@ export function SignInStep({ onBack, onForgotPassword }: { onBack: () => void; o
             />
           </div>
           <CaptchaBox captcha={captcha} />
-          {captcha.failed && <div className="auth-error">{tn('onb.captchaFailed')}</div>}
           {error && <div className="auth-error">{error}</div>}
           <button className="btn-primary" type="submit" disabled={pending || !captcha.ready}>
             {pending ? tn('onb.wait') : tn('onb.doSignIn')}

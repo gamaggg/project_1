@@ -4752,6 +4752,29 @@ button.geo-fact{cursor:pointer;}
 .challenges-other-city-text{position:relative; font-size:14px; line-height:1.45; color:var(--ink-soft); max-width:320px;}
 .challenges-other-city-btn{position:relative; width:100%; margin-top:8px;}
 
-/* Cloudflare Turnstile (lib/captcha.tsx): the check above a sign-in / sign-up button. */
-.captcha-inline{display:flex; justify-content:center; min-height:65px; margin:14px 0 4px;}
-.captcha-inline iframe{max-width:100%;}
+/* Cloudflare Turnstile (lib/captcha.tsx): our plate above a sign-in / sign-up button. A hexagon checks itself
+   and claims itself like a sector; Cloudflare's own tick shows in .captcha-widget only when it asks. */
+.captcha-plate{margin:18px 0 20px; padding:14px 16px; border:1px solid var(--line); border-radius:14px; background:var(--surface); box-shadow:var(--shadow-sm); box-sizing:border-box; transition:border-color .25s var(--ease), background-color .25s var(--ease);}
+.captcha-plate-row{display:flex; align-items:center; justify-content:center; gap:12px; min-height:34px;}
+.captcha-plate-text{flex:0 1 auto; min-width:0; text-align:center; font-size:14px; font-weight:700; color:var(--ink-soft); transition:color .25s var(--ease);}
+.captcha-hex{flex:0 0 auto; overflow:visible;}
+.captcha-hex-shape{fill:var(--accent-soft); stroke:var(--accent); stroke-width:2; stroke-linejoin:round; transform-origin:15px 15px; transition:fill .3s var(--ease), stroke .3s var(--ease);}
+.captcha-hex-check{fill:none; stroke:#fff; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:22; stroke-dashoffset:22; animation:captcha-check .32s .12s var(--ease-out) forwards;}
+.captcha-hex-x{fill:none; stroke:#fff; stroke-width:2.4; stroke-linecap:round;}
+.captcha-plate.is-checking .captcha-hex-shape, .captcha-plate.is-ask .captcha-hex-shape{animation:captcha-pulse 1.3s var(--ease-in-out) infinite;}
+.captcha-plate.is-done{border-color:color-mix(in srgb, var(--green) 40%, var(--line)); background:color-mix(in srgb, var(--green) 5%, var(--surface));}
+.captcha-plate.is-done .captcha-hex-shape{fill:var(--green); stroke:var(--green); animation:captcha-claim .4s var(--ease-out);}
+.captcha-plate.is-done .captcha-plate-text{color:#1E7A39;}
+.captcha-plate.is-failed .captcha-hex-shape{fill:#D6452F; stroke:#D6452F;}
+.captcha-plate.is-failed .captcha-plate-text{color:#B63A2A;}
+.captcha-retry{flex:0 0 auto; padding:7px 12px; border:none; border-radius:10px; background:#F3F1EC; font:inherit; font-size:13px; font-weight:800; color:var(--ink); cursor:pointer;}
+/* Cloudflare's own tick is shown alone, flat and full width (not inside our plate); once it has passed it is
+   tucked away and our plate says so. */
+.captcha-plate{position:relative;}
+.captcha-plate:not(.is-ask) .captcha-widget{position:absolute; left:0; right:0; top:0; height:0; overflow:hidden; opacity:0; pointer-events:none;}
+.captcha-plate.is-ask{padding:0; border:none; background:transparent; box-shadow:none; border-radius:0;}
+.captcha-plate.is-ask .captcha-plate-row{display:none;}
+@keyframes captcha-pulse{0%,100%{transform:scale(1); opacity:1;} 50%{transform:scale(.88); opacity:.65;}}
+@keyframes captcha-claim{0%{transform:scale(.7);} 60%{transform:scale(1.12);} 100%{transform:scale(1);}}
+@keyframes captcha-check{to{stroke-dashoffset:0;}}
+@media (prefers-reduced-motion: reduce){.captcha-plate.is-checking .captcha-hex-shape, .captcha-plate.is-ask .captcha-hex-shape, .captcha-plate.is-done .captcha-hex-shape{animation:none;} .captcha-hex-check{animation:none; stroke-dashoffset:0;}}

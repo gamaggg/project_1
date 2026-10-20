@@ -123,7 +123,6 @@ export function AccountStep({ onBack, preview, onPreviewDone }: { onBack: () => 
           {mismatch && <div style={{ fontSize: 12.5, color: '#D33', marginTop: 4 }}>{tn('onb.mismatch')}</div>}
         </div>
         {!preview && <CaptchaBox captcha={captcha} />}
-        {captcha.failed && <div className="auth-error">{tn('onb.captchaFailed')}</div>}
         {error && <div className="auth-error">{error}</div>}
         <div style={{ flex: 1 }} />
         <button className="intro-cta" type="submit" disabled={!canSubmit || pending} style={!canSubmit || pending ? { opacity: 0.4, pointerEvents: 'none' } : undefined}>

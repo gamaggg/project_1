@@ -159,7 +159,6 @@ export function ForgotPasswordFlow({ onDone, onCancel }: { onDone: () => void; o
           <input id="forgot-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
         </div>
         <CaptchaBox captcha={captcha} />
-        {captcha.failed && <div className="auth-error">{tn('onb.captchaFailed')}</div>}
         {error && <div className="auth-error">{error}</div>}
         <div style={{ flex: 1 }} />
         <button className="intro-cta" type="submit" disabled={!email.trim() || !captcha.ready || pending} style={!email.trim() || !captcha.ready || pending ? { opacity: 0.4, pointerEvents: 'none' } : undefined}>

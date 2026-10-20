@@ -114,7 +114,6 @@ export function OtpCodeStep({
           {verifyError && <div className="auth-error">{verifyError}</div>}
           {resendError && <div className="auth-error">{resendError}</div>}
           <CaptchaBox captcha={captcha} />
-          {captcha.failed && <div className="auth-error">{tn('onb.captchaFailed')}</div>}
           <button type="button" className="otp-resend" disabled={cooldown > 0 || !captcha.ready} onClick={handleResend}>
             {cooldown > 0 ? tn('onb.resendIn', { sec: cooldown }) : resent ? tn('onb.resent') : tn('onb.resend')}
           </button>
