@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { tn } from '@/lib/i18n/runtime'
+import { getCaptchaToken, isCaptchaError } from '@/lib/captcha'
 
 // Mirrors the old AuthForm's signin mode exactly (same copy, same error
 // text) — just given its own screen now that AuthForm itself is retired.
@@ -21,9 +22,17 @@ export function SignInStep({ onBack, onForgotPassword }: { onBack: () => void; o
     setError(null)
     setPending(true)
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    let captchaToken: string | undefined
+    try {
+      captchaToken = await getCaptchaToken()
+    } catch {
+      setPending(false)
+      setError(tn('onb.captchaFailed'))
+      return
+    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken } })
     setPending(false)
-    if (error) setError(error.code === 'email_not_confirmed' ? tn('onb.needConfirm') : tn('onb.badLogin'))
+    if (error) setError(isCaptchaError(error) ? tn('onb.captchaFailed') : error.code === 'email_not_confirmed' ? tn('onb.needConfirm') : tn('onb.badLogin'))
   }
 
   return (

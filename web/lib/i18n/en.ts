@@ -2042,6 +2042,7 @@ export const en: Dict = {
     haveAcc: 'I already have an account',
     needConfirm: 'Confirm your email with the code from the message we sent when you signed up',
     badLogin: 'Wrong email or password',
+    captchaFailed: 'The “I am not a robot” check did not pass. Reload the page and try again.',
     signIn: 'Sign in',
     signInSub: 'Sign in to claim territories',
     doSignIn: 'Sign in',

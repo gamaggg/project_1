@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { OtpCodeStep } from '@/components/app-shell/onboarding/OtpCodeStep'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { tn } from '@/lib/i18n/runtime'
+import { getCaptchaToken, isCaptchaError } from '@/lib/captcha'
 
 // Rendered by FishZoneApp itself (see `recoveryMode`), not nested inside
 // OnboardingFlow — verifyOtp's 'recovery' type sets a real session the
@@ -32,9 +33,17 @@ export function ForgotPasswordFlow({ onDone, onCancel }: { onDone: () => void; o
     setError(null)
     setPending(true)
     const supabase = createClient()
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim())
+    let captchaToken: string | undefined
+    try {
+      captchaToken = await getCaptchaToken()
+    } catch {
+      setPending(false)
+      setError(tn('onb.captchaFailed'))
+      return
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { captchaToken })
     setPending(false)
-    if (error) setError(error.message)
+    if (error) setError(isCaptchaError(error) ? tn('onb.captchaFailed') : error.message)
     else setStep('code')
   }
 
@@ -60,7 +69,14 @@ export function ForgotPasswordFlow({ onDone, onCancel }: { onDone: () => void; o
         ctaLabel={tn('common.next')}
         onBack={() => setStep('email')}
         onVerified={() => setStep('password')}
-        onResend={() => createClient().auth.resetPasswordForEmail(email.trim())}
+        onResend={async () => {
+          try {
+            const captchaToken = await getCaptchaToken()
+            return await createClient().auth.resetPasswordForEmail(email.trim(), { captchaToken })
+          } catch {
+            return { error: { message: 'captcha_failed' } }
+          }
+        }}
       />
     )
   }

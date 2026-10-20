@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { OtpCodeStep } from '@/components/app-shell/onboarding/OtpCodeStep'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { tn } from '@/lib/i18n/runtime'
+import { getCaptchaToken, isCaptchaError } from '@/lib/captcha'
 
 // First real step of the wizard: creates the Supabase account right away
 // (no name/details/color yet — those get filled in via useUpdateProfile in
@@ -48,9 +49,17 @@ export function AccountStep({ onBack, preview, onPreviewDone }: { onBack: () => 
     setError(null)
     setPending(true)
     const supabase = createClient()
-    const { data, error } = await supabase.auth.signUp({ email, password })
+    let captchaToken: string | undefined
+    try {
+      captchaToken = await getCaptchaToken()
+    } catch {
+      setPending(false)
+      setError(tn('onb.captchaFailed'))
+      return
+    }
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { captchaToken } })
     setPending(false)
-    if (error) setError(error.message)
+    if (error) setError(isCaptchaError(error) ? tn('onb.captchaFailed') : error.message)
     else if (!data.session) setAwaitingConfirmation(true)
   }
 
@@ -64,7 +73,14 @@ export function AccountStep({ onBack, preview, onPreviewDone }: { onBack: () => 
         ctaLabel={tn('onb.confirm')}
         onBack={() => setAwaitingConfirmation(false)}
         onVerified={() => {}}
-        onResend={() => createClient().auth.resend({ type: 'signup', email })}
+        onResend={async () => {
+          try {
+            const captchaToken = await getCaptchaToken()
+            return await createClient().auth.resend({ type: 'signup', email, options: { captchaToken } })
+          } catch {
+            return { error: { message: 'captcha_failed' } }
+          }
+        }}
       />
     )
   }
