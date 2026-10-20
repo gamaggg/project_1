@@ -119,7 +119,7 @@ export const FAQ_EN: FaqSection[] = [
         q: 'Where do I see the bite forecast?',
         a: [
           'On the map — the «Bite» badge with today’s score. Tap it and the forecast opens: pick a day at the top (today and 3 more), the big number is the score for that whole day, with the best time beside it.',
-          'Slide your finger along the «By the hour» scale — under it you see the bite and the weather for the chosen hour: air, wind, pressure, wave. Below — what helps the bite (green dot) and what hurts it (red); the sea water temperature is there too, for reference — it does not affect the score.',
+          'Slide your finger along the «By the hour» scale — under it you see that hour’s score («3/5») and the weather: air, wind, pressure, wave. The scale has the numbers 1–5 on its left: each bar stands at the level of its score, and the current number lights up. Below — what helps the bite (green dot) and what hurts it (red); the sea water temperature is there too, for reference — it does not affect the score.',
           'On the sector screen — the forecast for that place and «What’s biting here»: which fish, when and on what they are caught here.',
         ],
       },

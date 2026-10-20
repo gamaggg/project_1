@@ -36,6 +36,9 @@ export type Score = 1 | 2 | 3 | 4 | 5
 // weather that went into it.
 export type ForecastHour = {
   score: Score
+  // The same score as a position on the 0–5 scale the hour bars are drawn on: the integer part
+  // is score − 1, so a bar always stands in its score's band.
+  level: number
   temp: number
   wind: number
   windDir: number
@@ -174,6 +177,27 @@ function lightFactor(hour: number, sunrise: number, sunset: number): number {
 function scoreFromRaw(raw: number): Score {
   return raw >= 1.04 ? 5 : raw >= 0.92 ? 4 : raw >= 0.78 ? 3 : raw >= 0.62 ? 2 : 1
 }
+// The raw factor as a height on the 0–5 scale: each score owns one band (score 3 = 2…3), the
+// band edges are scoreFromRaw's thresholds, and the bars between them rise in a straight line.
+const LEVEL_POINTS: [number, number][] = [
+  [0.4, 0],
+  [0.62, 1],
+  [0.78, 2],
+  [0.92, 3],
+  [1.04, 4],
+  [1.16, 5],
+]
+function levelFromRaw(raw: number): number {
+  if (raw <= LEVEL_POINTS[0][0]) return 0
+  for (let i = 1; i < LEVEL_POINTS.length; i++) {
+    const [r1, l1] = LEVEL_POINTS[i]
+    if (raw <= r1) {
+      const [r0, l0] = LEVEL_POINTS[i - 1]
+      return l0 + ((raw - r0) / (r1 - r0)) * (l1 - l0)
+    }
+  }
+  return 5
+}
 // A front going through: a big swing over the day hurts all of it, not
 // just the hours where the six-hour change shows.
 function daySwing(hpa: number): number {
@@ -254,6 +278,7 @@ export function scoreForecast(raw: RawForecast, catchHours: number[] | null, now
       hours,
       hourly: idx.map((i, h) => ({
         score: scoreFromRaw(scored[h]),
+        level: levelFromRaw(scored[h]),
         temp: raw.temp[i],
         wind: raw.wind[i],
         windDir: raw.windDir[i],

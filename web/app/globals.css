@@ -3616,11 +3616,19 @@ html[lang="ka"] .profile-duo:not(.single) .profile-geo-card .profile-clan-name{l
 .forecast-hint{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:var(--ink-faint);}
 .forecast-hint::before{content:''; width:14px; height:2px; border-radius:1px; background:currentColor; box-shadow:-4px 0 0 0 transparent; animation:forecast-hint 1.6s var(--ease-in-out) infinite;}
 @keyframes forecast-hint{0%,100%{transform:translateX(-3px);} 50%{transform:translateX(3px);}}
-.forecast-chart{position:relative; height:96px; margin-top:6px; padding-top:28px; touch-action:none; cursor:ew-resize; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; outline:none; border-radius:8px;}
+.forecast-chart-wrap{position:relative; margin-top:6px;}
+.forecast-chart{position:relative; height:120px; margin-left:20px; padding-top:28px; touch-action:none; cursor:ew-resize; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; outline:none; border-radius:8px;}
 .forecast-chart:focus-visible{box-shadow:0 0 0 2px var(--accent);}
 .forecast-chart-bars{display:grid; grid-template-columns:repeat(24,minmax(0,1fr)); align-items:end; gap:2px; height:100%;}
 .forecast-chart-bars i{display:block; border-radius:3px 3px 1px 1px; background:color-mix(in srgb, var(--c) 34%, #E9E6DF); transition:background-color .12s var(--ease);}
 .forecast-chart-bars i.past{opacity:.4;}
+.forecast-chart-grid{position:absolute; left:0; right:0; top:28px; bottom:0; pointer-events:none;}
+.forecast-chart-grid i{position:absolute; left:0; right:0; height:0; border-top:1px dashed rgba(23,24,27,.13);}
+.forecast-axis{position:absolute; left:0; top:28px; bottom:0; width:16px; pointer-events:none;}
+.forecast-axis span{position:absolute; left:0; width:100%; transform:translateY(50%); text-align:center; font-size:10.5px; font-weight:800; line-height:1; color:var(--ink-faint); font-variant-numeric:tabular-nums; transition:color .12s var(--ease), transform .12s var(--ease);}
+.forecast-axis span.on{color:color-mix(in srgb, var(--c) 82%, #17181B); transform:translateY(50%) scale(1.25);}
+.forecast-hours-axis{margin-left:20px;}
+.forecast-hour-num{font-variant-numeric:tabular-nums;}
 .forecast-chart-bars i.sel{background:var(--c); opacity:1;}
 .forecast-chart-best{position:absolute; top:17px; height:7px; border:1.5px solid var(--accent); border-bottom:none; border-radius:4px 4px 0 0; pointer-events:none;}
 .forecast-chart-best span{position:absolute; left:50%; bottom:9px; transform:translateX(-50%); font-size:10.5px; font-weight:800; letter-spacing:.03em; color:var(--accent); white-space:nowrap;}
@@ -3641,7 +3649,7 @@ html[lang="ka"] .profile-duo:not(.single) .profile-geo-card .profile-clan-name{l
 .forecast-tone{display:inline-block; flex:0 0 auto; width:8px; height:8px; margin-right:7px; border-radius:50%; background:#CFCBC2; vertical-align:1px;}
 .forecast-tone.good{background:#3FA35A;}
 .forecast-tone.bad{background:#E0503F;}
-@media (prefers-reduced-motion: reduce){.forecast-hint::before{animation:none;} .forecast-chart-cursor, .forecast-chart-bars i{transition:none;}}
+@media (prefers-reduced-motion: reduce){.forecast-hint::before{animation:none;} .forecast-chart-cursor, .forecast-chart-bars i, .forecast-axis span{transition:none;}}
 .forecast-block{padding:12px 14px; border-radius:16px; background:#F7F6F2;}
 .forecast-label{display:block; font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-faint);}
 .forecast-hours i.on{background:var(--accent);}

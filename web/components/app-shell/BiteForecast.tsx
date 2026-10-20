@@ -273,7 +273,6 @@ function ForecastSheet({
 
   const day = tabs[dayIdx] ?? days[0]
   const today = isToday(day)
-  const peak = Math.max(...day.hours)
   const at = day.hourly[hour]
   const tones = dayTones(day)
   const moonPct = Math.round(day.moon.illumination * 100)
@@ -361,6 +360,14 @@ function ForecastSheet({
               <span className="forecast-label">{t('forecast.hours')}</span>
               {!dragged && <span className="forecast-hint">{t('forecast.scrub')}</span>}
             </div>
+            <div className="forecast-chart-wrap">
+            <div className="forecast-axis" aria-hidden>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <span key={n} className={n === at.score ? 'on' : ''} style={{ bottom: `${((n - 0.5) / 5) * 100}%`, ['--c' as string]: SCORE_COLOR[n as ForecastDay['score']] }}>
+                  {n}
+                </span>
+              ))}
+            </div>
             <div
               ref={chartRef}
               className="forecast-chart"
@@ -404,13 +411,19 @@ function ForecastSheet({
                   <i
                     key={h}
                     className={`${h === hour ? 'sel' : ''}${today && h < nowHour ? ' past' : ''}`}
-                    style={{ height: `${Math.max(10, (v / peak) * 100)}%`, ['--c' as string]: SCORE_COLOR[day.hourly[h].score] }}
+                    style={{ height: `${Math.max(6, (day.hourly[h].level / 5) * 100)}%`, ['--c' as string]: SCORE_COLOR[day.hourly[h].score] }}
                   />
+                ))}
+              </div>
+              <div className="forecast-chart-grid" aria-hidden>
+                {[1, 2, 3, 4].map((n) => (
+                  <i key={n} style={{ bottom: `${(n / 5) * 100}%` }} />
                 ))}
               </div>
               <div className="forecast-chart-cursor" style={{ left: `${((hour + 0.5) / 24) * 100}%` }} />
             </div>
-            <div className="insights-hours-axis" aria-hidden>
+            </div>
+            <div className="insights-hours-axis forecast-hours-axis" aria-hidden>
               <span>0</span>
               <span>6</span>
               <span>12</span>
@@ -423,6 +436,7 @@ function ForecastSheet({
                 <b className="forecast-hour-time">{today && hour === nowHour ? `${t('forecast.now')} · ${hh(hour)}` : hh(hour)}</b>
                 <span className="forecast-hour-score">
                   <ScoreBars score={at.score} size={14} />
+                  <b className="forecast-hour-num">{at.score}/5</b>
                   {scoreLabel(at.score)}
                 </span>
               </div>
