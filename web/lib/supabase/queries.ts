@@ -1152,6 +1152,7 @@ export function useProfile(userId: string | null) {
         canViewAllUsers: data.can_view_all_users ?? null,
         canAddCatchFromGallery: data.can_add_catch_from_gallery ?? null,
         canReviewPanoramas: data.can_review_panoramas ?? null,
+        canViewStats: data.can_view_stats ?? null,
         equippedFrame: data.equipped_frame ?? null,
         coins: data.coins ?? null,
         equippedNameStyle: data.equipped_name_style ?? null,
@@ -1340,7 +1341,7 @@ export function useIsSuperAdmin() {
 // Gates one of the 4 delegable admin actions on the *viewer's own* account —
 // a super admin always passes (they're not limited by the granular flags),
 // a plain admin needs is_admin plus the specific permission column.
-function useAdminFlag(flag: 'canModerateReports' | 'canBlockUsers' | 'canAddCatchManually' | 'canViewAllUsers' | 'canAddCatchFromGallery' | 'canReviewPanoramas') {
+function useAdminFlag(flag: 'canModerateReports' | 'canBlockUsers' | 'canAddCatchManually' | 'canViewAllUsers' | 'canAddCatchFromGallery' | 'canReviewPanoramas' | 'canViewStats') {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   return !!profile?.isSuperAdmin || (!!profile?.isAdmin && !!profile?.[flag])
@@ -1363,6 +1364,10 @@ export function useCanAddCatchFromGallery() {
 // «Где это?» panoramas: review them and plan the days (admin_geo_* RPCs).
 export function useCanReviewPanoramas() {
   return useAdminFlag('canReviewPanoramas')
+}
+// «Статистика»: the super admin, or an admin given the switch (get_app_stats_range checks the same).
+export function useCanViewStats() {
+  return useAdminFlag('canViewStats')
 }
 
 // The real, unmasked permission set for one admin (profiles_with_stats masks
@@ -1387,6 +1392,7 @@ export function useAdminPermissions(userId: string | null) {
         canViewAllUsers: row?.can_view_all_users ?? false,
         canAddCatchFromGallery: row?.can_add_catch_from_gallery ?? false,
         canReviewPanoramas: row?.can_review_panoramas ?? false,
+        canViewStats: row?.can_view_stats ?? false,
       }
     },
   })
@@ -1409,6 +1415,7 @@ export function useSetAdminPermissions() {
       canViewAllUsers: boolean
       canAddCatchFromGallery: boolean
       canReviewPanoramas: boolean
+      canViewStats: boolean
     }) => {
       const supabase = createClient()
       const { error } = await supabase.rpc('admin_set_admin', {
@@ -1420,6 +1427,7 @@ export function useSetAdminPermissions() {
         p_can_view_all_users: args.canViewAllUsers,
         p_can_add_catch_from_gallery: args.canAddCatchFromGallery,
         p_can_review_panoramas: args.canReviewPanoramas,
+        p_can_view_stats: args.canViewStats,
       })
       if (error) throw error
     },

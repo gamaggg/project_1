@@ -14,6 +14,7 @@ import {
   useUpdateProfile,
   useCanModerateReports,
   useCanReviewPanoramas,
+  useCanViewStats,
   useIsSuperAdmin,
   useReports,
   useHasClaimedFromOthers,
@@ -474,6 +475,7 @@ export function ProfileScreen({
   const { data: myCatches = [], isPending: myCatchesPending } = useMyCatches()
   const canModerateReports = useCanModerateReports()
   const canReviewPanoramas = useCanReviewPanoramas()
+  const canViewStats = useCanViewStats()
   const isSuperAdmin = useIsSuperAdmin()
   // «Где это?» only while the city has a panorama of the day — not for a city without the
   // game yet (the new ones), super admin included: they fill the game from the panorama
@@ -867,6 +869,14 @@ export function ProfileScreen({
           </button>
         </div>
       )}
+      {/* An admin given the statistics switch; the super admin has the same button below. */}
+      {canViewStats && !isSuperAdmin && (
+        <div style={{ marginTop: canModerateReports || canReviewPanoramas ? 12 : 24 }}>
+          <button className="btn-secondary" onClick={onOpenAdminStats}>
+            Статистика
+          </button>
+        </div>
+      )}
       {isSuperAdmin && (
         <>
           <div style={{ marginTop: 12 }}>
@@ -959,14 +969,14 @@ export function ProfileScreen({
       )}
 
       {showAddToHomeScreen && (
-        <div style={{ marginTop: isTelegramAccount || canModerateReports || canReviewPanoramas || isSuperAdmin ? 12 : 24 }}>
+        <div style={{ marginTop: isTelegramAccount || canModerateReports || canReviewPanoramas || canViewStats || isSuperAdmin ? 12 : 24 }}>
           <button className="btn-secondary" onClick={promptAddToHomeScreen}>
             {tn('profile.addHome')}
           </button>
         </div>
       )}
 
-      <div style={{ marginTop: showAddToHomeScreen || isTelegramAccount || canModerateReports || canReviewPanoramas || isSuperAdmin ? 12 : 24, paddingBottom: 24 }}>
+      <div style={{ marginTop: showAddToHomeScreen || isTelegramAccount || canModerateReports || canReviewPanoramas || canViewStats || isSuperAdmin ? 12 : 24, paddingBottom: 24 }}>
         <button className="btn-secondary" onClick={onSignOut}>
           {tn('common.signOut')}
         </button>

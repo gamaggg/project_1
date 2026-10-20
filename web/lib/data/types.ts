@@ -125,6 +125,7 @@ export type Profile = {
   canViewAllUsers: boolean | null
   canAddCatchFromGallery: boolean | null
   canReviewPanoramas: boolean | null
+  canViewStats: boolean | null
   // Owned avatar frame (see lib/data/shopItems.ts), shown to every viewer
   // like heroBg — null means no frame equipped.
   equippedFrame: string | null
@@ -157,6 +158,7 @@ export type AdminPermissions = {
   canViewAllUsers: boolean
   canAddCatchFromGallery: boolean
   canReviewPanoramas: boolean
+  canViewStats: boolean
 }
 
 // One player in the Рейтинг tab's «Все игроки» list (useAllPlayers).

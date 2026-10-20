@@ -727,6 +727,7 @@ export type Database = {
           can_block_users: boolean
           can_moderate_reports: boolean
           can_review_panoramas: boolean
+          can_view_stats: boolean
           can_view_all_users: boolean
           city: string
           coins: number
@@ -763,6 +764,7 @@ export type Database = {
           can_block_users?: boolean
           can_moderate_reports?: boolean
           can_review_panoramas?: boolean
+          can_view_stats?: boolean
           can_view_all_users?: boolean
           city?: string
           coins?: number
@@ -799,6 +801,7 @@ export type Database = {
           can_block_users?: boolean
           can_moderate_reports?: boolean
           can_review_panoramas?: boolean
+          can_view_stats?: boolean
           can_view_all_users?: boolean
           city?: string
           coins?: number
@@ -1495,6 +1498,7 @@ export type Database = {
           can_block_users: boolean | null
           can_moderate_reports: boolean | null
           can_review_panoramas: boolean | null
+          can_view_stats: boolean | null
           can_view_all_users: boolean | null
           catches_count: number | null
           city: string | null
@@ -1533,6 +1537,7 @@ export type Database = {
           can_block_users?: never
           can_moderate_reports?: never
           can_review_panoramas?: never
+          can_view_stats?: never
           can_view_all_users?: never
           catches_count?: never
           city?: string | null
@@ -1567,6 +1572,7 @@ export type Database = {
           can_block_users?: never
           can_moderate_reports?: never
           can_review_panoramas?: never
+          can_view_stats?: never
           can_view_all_users?: never
           catches_count?: never
           city?: string | null
@@ -1836,6 +1842,7 @@ export type Database = {
           p_can_block_users?: boolean
           p_can_moderate_reports?: boolean
           p_can_review_panoramas?: boolean
+          p_can_view_stats?: boolean
           p_can_view_all_users?: boolean
           p_is_admin: boolean
           p_user_id: string
@@ -2010,6 +2017,7 @@ export type Database = {
           can_block_users: boolean
           can_moderate_reports: boolean
           can_review_panoramas: boolean
+          can_view_stats: boolean
           can_view_all_users: boolean
           is_admin: boolean
         }[]

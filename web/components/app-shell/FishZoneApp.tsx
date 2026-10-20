@@ -16,6 +16,7 @@ import {
   useIsSuperAdmin,
   useCanAddCatchFromGallery,
   useCanReviewPanoramas,
+  useCanViewStats,
   useAllTerritoryIds,
   useFindUserByPublicId,
   useUnreadNotificationCount,
@@ -206,6 +207,7 @@ export function FishZoneApp() {
   const isSuperAdmin = useIsSuperAdmin()
   const canAddCatchFromGallery = useCanAddCatchFromGallery()
   const canReviewPanoramas = useCanReviewPanoramas()
+  const canViewStats = useCanViewStats()
   const { data: allTerritoryIds = [] } = useAllTerritoryIds()
   const confirmCatchMutation = useConfirmCatch()
   const addDiaryCatch = useAddDiaryCatch()
@@ -1930,7 +1932,7 @@ export function FishZoneApp() {
           )}
         </Screen>
         <Screen id="screen-admin-stats" current={currentScreen} onBack={pop}>
-          {isSuperAdmin && <AdminStatsScreen onBack={pop} active={currentScreen === 'screen-admin-stats'} />}
+          {canViewStats && <AdminStatsScreen onBack={pop} active={currentScreen === 'screen-admin-stats'} />}
         </Screen>
         <Screen id="screen-admin-log" current={currentScreen} onBack={pop}>
           <AdminActionsScreen title="Последние действия" onBack={pop} onOpenUser={openUserProfile} onOpenTerritory={openTerritory} />
