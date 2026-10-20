@@ -52,6 +52,10 @@ export type ForecastHour = {
 export type ForecastDay = {
   date: string
   score: Score
+  // What the day card says next to the day score so it does not look odd beside the bars: the score
+  // of an ordinary daytime hour (the mean the day score is half made of) and of the best window.
+  avgScore: Score
+  bestScore: Score | null
   // 24 hourly factors, local hours 0–23.
   hours: number[]
   hourly: ForecastHour[]
@@ -275,6 +279,8 @@ export function scoreForecast(raw: RawForecast, catchHours: number[] | null, now
     days.push({
       date: day.date,
       score: scoreFromRaw(rawScore),
+      avgScore: scoreFromRaw(dayMean),
+      bestScore: best ? scoreFromRaw(window3(scored, best.from)) : null,
       hours,
       hourly: idx.map((i, h) => ({
         score: scoreFromRaw(scored[h]),

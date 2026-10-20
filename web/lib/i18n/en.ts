@@ -208,6 +208,7 @@ export const en: Dict = {
     source: 'Weather: Open-Meteo.com',
     dayScore: 'Score for the whole day',
     bestShort: 'best {from}–{to}',
+    dayTypical: 'A typical hour is {avg}/5, the best window {best}/5',
     now: 'Now',
     scrub: 'drag to explore',
     bestMark: 'best',

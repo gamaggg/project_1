@@ -210,6 +210,7 @@ export const ka: Dict = {
     source: 'ამინდი: Open-Meteo.com',
     dayScore: 'შეფასება მთელი დღისთვის',
     bestShort: 'საუკეთესო {from}–{to}',
+    dayTypical: 'ჩვეულებრივი საათი — {avg}/5, საუკეთესო დრო — {best}/5',
     now: 'ახლა',
     scrub: 'გაატარე თითი',
     bestMark: 'საუკეთესო',

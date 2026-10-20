@@ -345,6 +345,9 @@ function ForecastSheet({
                   </>
                 )}
               </div>
+              {day.bestScore != null && (day.avgScore !== day.score || day.bestScore !== day.score) && (
+                <div className="forecast-today-typical">{t('forecast.dayTypical', { avg: day.avgScore, best: day.bestScore })}</div>
+              )}
             </div>
             <div className="forecast-today-weather">
               <WeatherIcon kind={weatherKind(day.code)} size={30} />

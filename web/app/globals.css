@@ -3602,6 +3602,7 @@ html[lang="ka"] .profile-duo:not(.single) .profile-geo-card .profile-clan-name{l
 .forecast-today-text{flex:1; min-width:0;}
 .forecast-today-label{font-size:16px; font-weight:800;}
 .forecast-today-best{margin-top:3px; font-size:13px; font-weight:700; color:var(--ink-soft);}
+.forecast-today-typical{margin-top:5px; font-size:12px; font-weight:700; line-height:1.3; color:var(--ink-faint); font-variant-numeric:tabular-nums;}
 .forecast-today-weather{display:flex; flex-direction:column; align-items:center; gap:2px; flex:0 0 auto; font-size:12.5px; font-weight:800; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
 .forecast-today-weather small{font-size:11px; font-weight:700; color:var(--ink-faint);}
 /* The sheet: day tabs reuse the sector card's day cells; the chosen one takes its score's colour. */

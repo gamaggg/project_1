@@ -209,6 +209,7 @@ export const ru = {
     source: 'Погода: Open-Meteo.com',
     dayScore: 'Оценка на весь день',
     bestShort: 'лучше всего {from}–{to}',
+    dayTypical: 'Обычный час — {avg}/5, лучшее время — {best}/5',
     now: 'Сейчас',
     scrub: 'веди пальцем',
     bestMark: 'лучшее',
