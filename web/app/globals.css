@@ -4752,7 +4752,6 @@ button.geo-fact{cursor:pointer;}
 .challenges-other-city-text{position:relative; font-size:14px; line-height:1.45; color:var(--ink-soft); max-width:320px;}
 .challenges-other-city-btn{position:relative; width:100%; margin-top:8px;}
 
-/* Cloudflare Turnstile (lib/captcha.ts): invisible, takes no room until it needs a tick from the person,
-   then the box shows over whatever step is open. */
-.captcha-box{position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom,0px) + 96px); transform:translateX(-50%); z-index:2147483000; max-width:calc(100vw - 24px);}
-
+/* Cloudflare Turnstile (lib/captcha.tsx): the check above a sign-in / sign-up button. */
+.captcha-inline{display:flex; justify-content:center; min-height:65px; margin:14px 0 4px;}
+.captcha-inline iframe{max-width:100%;}

@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { OtpCodeStep } from '@/components/app-shell/onboarding/OtpCodeStep'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { tn } from '@/lib/i18n/runtime'
-import { getCaptchaToken, isCaptchaError } from '@/lib/captcha'
+import { CaptchaBox, isCaptchaError, useCaptcha } from '@/lib/captcha'
 
 // Rendered by FishZoneApp itself (see `recoveryMode`), not nested inside
 // OnboardingFlow — verifyOtp's 'recovery' type sets a real session the
@@ -24,25 +24,19 @@ export function ForgotPasswordFlow({ onDone, onCancel }: { onDone: () => void; o
   const [error, setError] = useState<string | null>(null)
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
+  const captcha = useCaptcha()
   const mismatch = passwordConfirm.length > 0 && password !== passwordConfirm
   const passwordValid = password.length >= 6 && passwordConfirm.length >= 6 && !mismatch
 
   async function handleSendCode(e: React.FormEvent) {
     e.preventDefault()
-    if (!email.trim()) return
+    if (!email.trim() || !captcha.ready) return
     setError(null)
     setPending(true)
     const supabase = createClient()
-    let captchaToken: string | undefined
-    try {
-      captchaToken = await getCaptchaToken()
-    } catch {
-      setPending(false)
-      setError(tn('onb.captchaFailed'))
-      return
-    }
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { captchaToken })
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { captchaToken: captcha.token ?? undefined })
     setPending(false)
+    captcha.reset()
     if (error) setError(isCaptchaError(error) ? tn('onb.captchaFailed') : error.message)
     else setStep('code')
   }
@@ -69,14 +63,7 @@ export function ForgotPasswordFlow({ onDone, onCancel }: { onDone: () => void; o
         ctaLabel={tn('common.next')}
         onBack={() => setStep('email')}
         onVerified={() => setStep('password')}
-        onResend={async () => {
-          try {
-            const captchaToken = await getCaptchaToken()
-            return await createClient().auth.resetPasswordForEmail(email.trim(), { captchaToken })
-          } catch {
-            return { error: { message: 'captcha_failed' } }
-          }
-        }}
+        onResend={(captchaToken) => createClient().auth.resetPasswordForEmail(email.trim(), { captchaToken })}
       />
     )
   }
@@ -171,9 +158,11 @@ export function ForgotPasswordFlow({ onDone, onCancel }: { onDone: () => void; o
           <label htmlFor="forgot-email">Email</label>
           <input id="forgot-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
         </div>
+        <CaptchaBox captcha={captcha} />
+        {captcha.failed && <div className="auth-error">{tn('onb.captchaFailed')}</div>}
         {error && <div className="auth-error">{error}</div>}
         <div style={{ flex: 1 }} />
-        <button className="intro-cta" type="submit" disabled={!email.trim() || pending} style={!email.trim() || pending ? { opacity: 0.4, pointerEvents: 'none' } : undefined}>
+        <button className="intro-cta" type="submit" disabled={!email.trim() || !captcha.ready || pending} style={!email.trim() || !captcha.ready || pending ? { opacity: 0.4, pointerEvents: 'none' } : undefined}>
           {pending ? tn('onb.sending') : tn('onb.sendCode')}
         </button>
       </form>

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { tn } from '@/lib/i18n/runtime'
-import { getCaptchaToken, isCaptchaError } from '@/lib/captcha'
+import { CaptchaBox, isCaptchaError, useCaptcha } from '@/lib/captcha'
 
 // Mirrors the old AuthForm's signin mode exactly (same copy, same error
 // text) — just given its own screen now that AuthForm itself is retired.
@@ -16,22 +16,17 @@ export function SignInStep({ onBack, onForgotPassword }: { onBack: () => void; o
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const captcha = useCaptcha()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!captcha.ready) return
     setError(null)
     setPending(true)
     const supabase = createClient()
-    let captchaToken: string | undefined
-    try {
-      captchaToken = await getCaptchaToken()
-    } catch {
-      setPending(false)
-      setError(tn('onb.captchaFailed'))
-      return
-    }
-    const { error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken } })
+    const { error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken: captcha.token ?? undefined } })
     setPending(false)
+    captcha.reset()
     if (error) setError(isCaptchaError(error) ? tn('onb.captchaFailed') : error.code === 'email_not_confirmed' ? tn('onb.needConfirm') : tn('onb.badLogin'))
   }
 
@@ -64,8 +59,10 @@ export function SignInStep({ onBack, onForgotPassword }: { onBack: () => void; o
               placeholder={tn('onb.min6')}
             />
           </div>
+          <CaptchaBox captcha={captcha} />
+          {captcha.failed && <div className="auth-error">{tn('onb.captchaFailed')}</div>}
           {error && <div className="auth-error">{error}</div>}
-          <button className="btn-primary" type="submit" disabled={pending}>
+          <button className="btn-primary" type="submit" disabled={pending || !captcha.ready}>
             {pending ? tn('onb.wait') : tn('onb.doSignIn')}
           </button>
           <button type="button" className="otp-resend" style={{ display: 'block', margin: '14px auto 0', textAlign: 'center' }} onClick={onForgotPassword}>

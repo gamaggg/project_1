@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { OtpCodeStep } from '@/components/app-shell/onboarding/OtpCodeStep'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { tn } from '@/lib/i18n/runtime'
-import { getCaptchaToken, isCaptchaError } from '@/lib/captcha'
+import { CaptchaBox, isCaptchaError, useCaptcha } from '@/lib/captcha'
 
 // First real step of the wizard: creates the Supabase account right away
 // (no name/details/color yet — those get filled in via useUpdateProfile in
@@ -36,12 +36,15 @@ export function AccountStep({ onBack, preview, onPreviewDone }: { onBack: () => 
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false)
+  const captcha = useCaptcha()
   const mismatch = passwordConfirm.length > 0 && password !== passwordConfirm
   const valid = email.trim().length > 0 && password.length >= 6 && passwordConfirm.length >= 6 && !mismatch
+  // The preview page makes no account, so no check either.
+  const canSubmit = valid && (preview || captcha.ready)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!valid) return
+    if (!canSubmit) return
     if (preview) {
       onPreviewDone?.()
       return
@@ -49,16 +52,9 @@ export function AccountStep({ onBack, preview, onPreviewDone }: { onBack: () => 
     setError(null)
     setPending(true)
     const supabase = createClient()
-    let captchaToken: string | undefined
-    try {
-      captchaToken = await getCaptchaToken()
-    } catch {
-      setPending(false)
-      setError(tn('onb.captchaFailed'))
-      return
-    }
-    const { data, error } = await supabase.auth.signUp({ email, password, options: { captchaToken } })
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { captchaToken: captcha.token ?? undefined } })
     setPending(false)
+    captcha.reset()
     if (error) setError(isCaptchaError(error) ? tn('onb.captchaFailed') : error.message)
     else if (!data.session) setAwaitingConfirmation(true)
   }
@@ -73,14 +69,7 @@ export function AccountStep({ onBack, preview, onPreviewDone }: { onBack: () => 
         ctaLabel={tn('onb.confirm')}
         onBack={() => setAwaitingConfirmation(false)}
         onVerified={() => {}}
-        onResend={async () => {
-          try {
-            const captchaToken = await getCaptchaToken()
-            return await createClient().auth.resend({ type: 'signup', email, options: { captchaToken } })
-          } catch {
-            return { error: { message: 'captcha_failed' } }
-          }
-        }}
+        onResend={(captchaToken) => createClient().auth.resend({ type: 'signup', email, options: { captchaToken } })}
       />
     )
   }
@@ -133,9 +122,11 @@ export function AccountStep({ onBack, preview, onPreviewDone }: { onBack: () => 
           />
           {mismatch && <div style={{ fontSize: 12.5, color: '#D33', marginTop: 4 }}>{tn('onb.mismatch')}</div>}
         </div>
+        {!preview && <CaptchaBox captcha={captcha} />}
+        {captcha.failed && <div className="auth-error">{tn('onb.captchaFailed')}</div>}
         {error && <div className="auth-error">{error}</div>}
         <div style={{ flex: 1 }} />
-        <button className="intro-cta" type="submit" disabled={!valid || pending} style={!valid || pending ? { opacity: 0.4, pointerEvents: 'none' } : undefined}>
+        <button className="intro-cta" type="submit" disabled={!canSubmit || pending} style={!canSubmit || pending ? { opacity: 0.4, pointerEvents: 'none' } : undefined}>
           {pending ? tn('onb.wait') : tn('common.next')}
         </button>
       </form>

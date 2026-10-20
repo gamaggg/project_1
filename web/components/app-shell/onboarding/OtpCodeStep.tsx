@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { BackButton } from '@/components/app-shell/BackButton'
 import type { EmailOtpType } from '@supabase/supabase-js'
 import { tn } from '@/lib/i18n/runtime'
+import { CaptchaBox, isCaptchaError, useCaptcha } from '@/lib/captcha'
 
 // Supabase Auth sends at most one email per address per 60 seconds; a
 // shorter countdown let people press «ещё раз» straight into a 429.
@@ -33,7 +34,8 @@ export function OtpCodeStep({
   ctaLabel: string
   onBack: () => void
   onVerified: () => void
-  onResend: () => Promise<{ error: { message: string } | null }>
+  // Gets the one-time captcha token (undefined when the captcha is off).
+  onResend: (captchaToken: string | undefined) => Promise<{ error: { message: string } | null }>
 }) {
   const [code, setCode] = useState('')
   const [verifyError, setVerifyError] = useState<string | null>(null)
@@ -41,6 +43,7 @@ export function OtpCodeStep({
   const [resendError, setResendError] = useState<string | null>(null)
   const [resent, setResent] = useState(false)
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_S)
+  const captcha = useCaptcha()
 
   useEffect(() => {
     if (cooldown <= 0) return
@@ -61,11 +64,12 @@ export function OtpCodeStep({
   }
 
   async function handleResend() {
-    if (cooldown > 0) return
+    if (cooldown > 0 || !captcha.ready) return
     setResendError(null)
     setResent(false)
-    const { error } = await onResend()
-    if (error) setResendError(tn('onb.resendFail'))
+    const { error } = await onResend(captcha.token ?? undefined)
+    captcha.reset()
+    if (error) setResendError(isCaptchaError(error) ? tn('onb.captchaFailed') : tn('onb.resendFail'))
     else {
       setResent(true)
       setCooldown(RESEND_COOLDOWN_S)
@@ -109,7 +113,9 @@ export function OtpCodeStep({
         <div>
           {verifyError && <div className="auth-error">{verifyError}</div>}
           {resendError && <div className="auth-error">{resendError}</div>}
-          <button type="button" className="otp-resend" disabled={cooldown > 0} onClick={handleResend}>
+          <CaptchaBox captcha={captcha} />
+          {captcha.failed && <div className="auth-error">{tn('onb.captchaFailed')}</div>}
+          <button type="button" className="otp-resend" disabled={cooldown > 0 || !captcha.ready} onClick={handleResend}>
             {cooldown > 0 ? tn('onb.resendIn', { sec: cooldown }) : resent ? tn('onb.resent') : tn('onb.resend')}
           </button>
         </div>
