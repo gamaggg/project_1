@@ -4705,7 +4705,7 @@ button.geo-fact{cursor:pointer;}
 }
 
 /* ---------- Country, then city (CountryCityPicker): sign-up and the profile's city modal ---------- */
-.flag{display:inline-block; vertical-align:-0.18em; flex:0 0 auto; filter:drop-shadow(0 1px 1.5px rgba(23,24,27,.18));}
+.flag{display:inline-block; vertical-align:-0.18em; flex:0 0 auto; border-radius:2.5px; overflow:hidden; filter:drop-shadow(0 1px 1.5px rgba(23,24,27,.18));}
 .country-list{display:flex; flex-direction:column; gap:10px; width:min(340px, 100%);}
 .country-block{display:flex; flex-direction:column;}
 .country-card{

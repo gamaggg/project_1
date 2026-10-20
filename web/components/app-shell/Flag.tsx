@@ -1,17 +1,15 @@
 import type { CountryId } from '@/lib/data/city'
 
 // Country flags as small inline SVGs: the same on every phone (emoji flags are drawn as two
-// letters on some systems), and no image to load. A rounded sticker, 3:2.
+// letters on some systems), and no image to load. A rounded sticker, 3:2: the corners are cut by the
+// svg's own border-radius (.flag in globals.css), not a clipPath with an id — several flags of one
+// country sit on the page at once (every mounted screen), and url(#id) takes the first one in the
+// document, which may be on a hidden screen, where it clips everything away.
 export function Flag({ country, height = 18 }: { country: CountryId; height?: number }) {
   const width = Math.round((height * 3) / 2)
   return (
     <svg className="flag" width={width} height={height} viewBox="0 0 30 20" aria-hidden role="img">
-      <defs>
-        <clipPath id={`flag-clip-${country}`}>
-          <rect width="30" height="20" rx="3" />
-        </clipPath>
-      </defs>
-      <g clipPath={`url(#flag-clip-${country})`}>
+      <g>
         {country === 'ru' ? (
           <>
             <rect width="30" height="7" fill="#FFFFFF" />
