@@ -123,8 +123,10 @@ function applyTelegramChrome() {
   // both (device + content, per Telegram's docs). The CSS already adds env(safe-area-inset-top), so only
   // what it lacks goes into the variable: on an iPhone that is just `content` (unchanged), on Android,
   // where env() is 0, the status bar too — without it the buttons covered the top of our panels.
+  // Android only: the iPhone WebView's numbers already worked, so it keeps the plain `content` value.
+  const isAndroid = webApp.platform === 'android' || webApp.platform === 'android_x'
   const top =
-    webApp.isFullscreen === true && content !== null
+    isAndroid && webApp.isFullscreen === true && content !== null
       ? Math.max(content, device + content - envSafeAreaTop())
       : (content ?? device)
   const bottom = webApp.contentSafeAreaInset?.bottom ?? webApp.safeAreaInset?.bottom ?? 0
