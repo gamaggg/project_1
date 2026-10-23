@@ -2396,6 +2396,8 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .onboarding-welcome .btn-primary{box-shadow:0 12px 26px rgba(252,82,0,.38), 0 2px 4px rgba(120,30,0,.3);}
 .welcome-link{min-height:44px; border:none; background:none; color:#DCE3EC; font-family:inherit; font-size:16px; font-weight:700; cursor:pointer;}
 .welcome-link:hover{color:#fff;}
+.welcome-link:disabled{opacity:.6; cursor:default;}
+.welcome-link-note{color:#DCE3EC; font-size:13px; font-weight:600; line-height:1.35; text-align:center; padding:0 8px;}
 .welcome-link:focus-visible{outline:2px solid #FFD84D; outline-offset:2px; border-radius:8px;}
 @keyframes onboardingCardIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
 .welcome-invite{

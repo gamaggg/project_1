@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyTelegramInitData } from '@/lib/telegram/verifyInitData'
 import { telegramEmail } from '@/lib/telegram/accounts'
-import { withErrorReport } from '@/lib/serverErrors'
+import { record as reportServerError, withErrorReport } from '@/lib/serverErrors'
 
 // Bridges a Telegram Mini App session into Supabase Auth. Supabase has no
 // native "Sign in with Telegram" provider, so this mints a magic-link token
@@ -27,7 +27,14 @@ async function handlePOST(request: Request) {
   const mayCreate = create !== false
 
   const tgUser = verifyTelegramInitData(initData, botToken)
-  if (!tgUser) return NextResponse.json({ error: 'invalid signature' }, { status: 401 })
+  if (!tgUser) {
+    // The reason has to be readable later: the client swallows this answer and the player just
+    // sees the sign-in screen. A stale auth_date means Telegram handed over old launch data.
+    const authDate = Number(new URLSearchParams(initData).get('auth_date'))
+    const age = authDate ? `auth_date ${Math.round((Date.now() / 1000 - authDate) / 3600)} h old` : 'no auth_date'
+    await reportServerError('auth/telegram', `initData rejected (bad signature or older than 24 h): ${age}`)
+    return NextResponse.json({ error: 'invalid signature' }, { status: 401 })
+  }
 
   const admin = createAdminClient()
   const email = telegramEmail(tgUser.id)
@@ -63,7 +70,7 @@ async function handlePOST(request: Request) {
         const { data } = await admin.from('profiles').select('id').eq('telegram_id', tgUser.id).maybeSingle()
         madeByOther = !!data
       }
-      if (!madeByOther) return NextResponse.json({ error: 'could not create account' }, { status: 500 })
+      if (!madeByOther) return NextResponse.json({ error: `could not create account: ${createError?.message ?? 'no user'}` }, { status: 500 })
     } else {
       // handle_new_user() just inserted the profiles row (see the trigger) — attach the telegram_id to it.
       const { error: linkError } = await admin.from('profiles').update({ telegram_id: tgUser.id }).eq('id', created.user.id)
@@ -72,7 +79,7 @@ async function handlePOST(request: Request) {
   }
 
   const { data: linkData, error: linkGenError } = await admin.auth.admin.generateLink({ type: 'magiclink', email: signInEmail })
-  if (linkGenError || !linkData.properties) return NextResponse.json({ error: 'could not sign in' }, { status: 500 })
+  if (linkGenError || !linkData.properties) return NextResponse.json({ error: `could not sign in: ${linkGenError?.message ?? 'no link'}` }, { status: 500 })
 
   return NextResponse.json({ email: signInEmail, token: linkData.properties.email_otp })
 }

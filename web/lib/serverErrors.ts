@@ -21,7 +21,7 @@ export function withErrorReport<A extends unknown[]>(route: string, handler: (..
 // hence the narrow cast.
 type ErrorsTable = { from: (table: 'client_errors') => { insert: (row: { context: string; message: string; network: boolean }) => PromiseLike<unknown> } }
 
-async function record(route: string, message: string) {
+export async function record(route: string, message: string) {
   try {
     const db = createAdminClient() as unknown as ErrorsTable
     await db.from('client_errors').insert({ context: `api:${route}`.slice(0, 40), message: message.slice(0, 500), network: false })

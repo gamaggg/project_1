@@ -280,6 +280,13 @@ export const FAQ_EN: FaqSection[] = [
         a: ['The most important things: your sector was taken or is under attack, new followers, the week’s results, «Still fishing?» if there has been no catch for a while. At night messages wait until 8 am. Turn it off with the «Telegram notifications» switch at the bottom of the profile or with the /stop command in the bot.'],
       },
       {
+        q: 'How do I get into my account on another device?',
+        a: [
+          'In Telegram, just open RANGE: the account is tied to your Telegram and comes up by itself on any device where you are signed in to the same Telegram. If the first screen showed up anyway, tap «Sign in with Telegram».',
+          'On the website in a browser, Telegram does not tell us who you are, so you need an email and password. If your account was made through Telegram, link an email in advance: Profile → «Link email».',
+        ],
+      },
+      {
         q: 'How do I write to support?',
         a: [
           'At the bottom of the profile — «How to play», under the search — «No answer here? Write to support». Describe what happened and attach a screenshot if needed.',

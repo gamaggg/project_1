@@ -44,7 +44,7 @@ export function OnboardingFlow({
   // Opened from a friend's invite link — Welcome mentions the start bonus.
   invited?: boolean
 }) {
-  const { user, signOut, signInWithTelegram } = useAuth()
+  const { user, signOut, signInWithTelegram, signInWithExistingTelegram } = useAuth()
   // Only true for an account that just got silently created by the Telegram
   // auto-sign-in (see AuthProvider) — offers a way out for someone who
   // actually already has an email account, instead of stranding them on a
@@ -127,6 +127,7 @@ export function OnboardingFlow({
         // «I already have one» signs in by email, and (inside Telegram) that account
         // then takes this Telegram over (app/api/auth/telegram/link).
         onSignIn={() => setStep('signin')}
+        onTelegramSignIn={viaTelegram && !user ? signInWithExistingTelegram : undefined}
         onFinish={() => void afterIntro()}
       />
   ) : null

@@ -8,6 +8,7 @@ import { loadCoast } from '@/components/app-shell/onboarding/WelcomeMap'
 import { createJourneyScene, type Bands, type JourneyScene, type Stage } from '@/lib/welcome/journeyScene'
 import type { TickerLine } from '@/lib/welcome/coastScene'
 import { tn } from '@/lib/i18n/runtime'
+import type { TelegramSignInResult } from '@/lib/telegram/signIn'
 
 // The welcome screen and the two intro screens after it as one picture: a single
 // night map (lib/welcome/journeyScene.ts) whose camera flies from stop to stop —
@@ -33,6 +34,7 @@ export function IntroJourney({
   stage,
   onStage,
   onSignIn,
+  onTelegramSignIn,
   onFinish,
   continueMode,
   onContinue,
@@ -41,6 +43,9 @@ export function IntroJourney({
   stage: Stage
   onStage: (next: Stage) => void
   onSignIn?: () => void
+  // Inside Telegram with nobody signed in: «Войти через Telegram» for someone whose Telegram
+  // already has an account but the silent sign-in at launch did not get through.
+  onTelegramSignIn?: () => Promise<TelegramSignInResult>
   // «Продолжить» on the last stop.
   onFinish: () => void
   // Inside Telegram with an account already made: the welcome offers «Продолжить»
@@ -54,6 +59,7 @@ export function IntroJourney({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const sceneRef = useRef<JourneyScene | null>(null)
   const [scene, setScene] = useState<JourneyScene | null>(null)
+  const [tgState, setTgState] = useState<'idle' | 'pending' | 'no_account' | 'failed'>('idle')
   const viewRef = useRef({ w: 0, h: 0 })
   const bandsRef = useRef<Bands>({ welcome: { top: 150, bottom: 450 }, 'territory-intro': { top: 90, bottom: 450 }, 'catch-intro': { top: 90, bottom: 450 } })
   const wHead = useRef<HTMLDivElement>(null)
@@ -382,6 +388,27 @@ export function IntroJourney({
               <button className="btn-primary jp-in" style={delay(6)} onClick={go('territory-intro')}>
                 {tn('onb.captureFirst')}
               </button>
+              {onTelegramSignIn && (
+                <>
+                  <button
+                    className="welcome-link jp-in"
+                    style={delay(7)}
+                    disabled={tgState === 'pending'}
+                    onClick={async () => {
+                      setTgState('pending')
+                      const result = await onTelegramSignIn()
+                      setTgState(result === 'ok' ? 'idle' : result)
+                    }}
+                  >
+                    {tgState === 'pending' ? tn('onb.tgSignInWait') : tn('onb.tgSignIn')}
+                  </button>
+                  {(tgState === 'no_account' || tgState === 'failed') && (
+                    <div className="welcome-link-note" role="status">
+                      {tn(tgState === 'no_account' ? 'onb.tgNoAccount' : 'onb.tgFailed')}
+                    </div>
+                  )}
+                </>
+              )}
               <button className="welcome-link jp-in" style={delay(7)} onClick={onSignIn}>
                 {tn('onb.haveAcc')}
               </button>

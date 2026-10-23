@@ -5,7 +5,7 @@ import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { ensureSession, flushSessionReport, setExpectedUser } from '@/lib/supabase/session'
 import { reportsEnabled, setGuestRefusalHandler } from '@/lib/errorReporting'
-import { trySignInWithTelegram } from '@/lib/telegram/signIn'
+import { trySignInWithTelegram, type TelegramSignInResult } from '@/lib/telegram/signIn'
 import { forgetOfflineData, lastKnownUser, rememberUser } from '@/lib/offlineCache'
 import { installCrashBeacon } from '@/lib/crashBeacon'
 
@@ -25,9 +25,12 @@ type AuthState = {
   // back into the same telegram_id-linked account rather than leaving them
   // stuck navigating the wizard with no session.
   signInWithTelegram: () => Promise<boolean>
+  // Welcome's «Войти через Telegram»: signs in only an account this Telegram already
+  // belongs to — never makes one — and says why when it did not.
+  signInWithExistingTelegram: () => Promise<TelegramSignInResult>
 }
 
-const AuthContext = createContext<AuthState>({ user: null, loading: true, sessionReady: false, signOut: async () => {}, signInWithTelegram: async () => false })
+const AuthContext = createContext<AuthState>({ user: null, loading: true, sessionReady: false, signOut: async () => {}, signInWithTelegram: async () => false, signInWithExistingTelegram: async () => 'failed' })
 
 type TelegramSafeAreaInset = { top: number; bottom: number; left: number; right: number }
 
@@ -215,7 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSessionReady(true)
         return
       }
-      if (!data.user && (await trySignInWithTelegram(supabase, false))) {
+      if (!data.user && (await trySignInWithTelegram(supabase, false)) === 'ok') {
         const { data: refreshed } = await supabase.auth.getUser()
         setUser(refreshed.user)
       } else {
@@ -293,7 +296,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Telegram has none yet.
   async function signInWithTelegram() {
     const supabase = createClient()
-    const ok = await trySignInWithTelegram(supabase, true)
+    const ok = (await trySignInWithTelegram(supabase, true)) === 'ok'
     if (ok) {
       const { data } = await supabase.auth.getUser()
       setUser(data.user)
@@ -301,7 +304,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return ok
   }
 
-  return <AuthContext.Provider value={{ user, loading, sessionReady, signOut, signInWithTelegram }}>{children}</AuthContext.Provider>
+  async function signInWithExistingTelegram() {
+    const supabase = createClient()
+    const result = await trySignInWithTelegram(supabase, false)
+    if (result === 'ok') {
+      const { data } = await supabase.auth.getUser()
+      setUser(data.user)
+    }
+    return result
+  }
+
+  return <AuthContext.Provider value={{ user, loading, sessionReady, signOut, signInWithTelegram, signInWithExistingTelegram }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
