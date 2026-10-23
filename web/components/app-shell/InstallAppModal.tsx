@@ -5,17 +5,17 @@ import { createPortal } from 'react-dom'
 import { tn } from '@/lib/i18n/runtime'
 import { IosInstallGuide } from '@/components/app-shell/InstallIosGuide'
 import { useInstallApp } from '@/lib/installApp'
-import { useTelegramHomeScreen } from '@/lib/telegram/useTelegramHomeScreen'
 
 // How to put RANGE on the home screen — a page of steps per place it is opened
-// from. Inside Telegram it is Telegram's own flow (a button that calls it); in
-// a browser it is Share → Add to Home Screen on iPhone, the browser menu (or
-// Chrome's one-tap offer) on Android. Portalled to <body> like the other modals.
+// from. Inside Telegram it is two steps in the Mini App's own menu (⋮ at the
+// top; the WebApp.addToHomeScreen() button was dropped — it only sent people to
+// another Telegram page of instructions). In a browser it is Share → Add to Home
+// Screen on iPhone, the browser menu (or Chrome's one-tap offer) on Android.
+// Portalled to <body> like the other modals.
 type Tab = 'ios' | 'android'
 
 export function InstallAppModal({ onClose }: { onClose: () => void }) {
   const { platform, canPromptNative, promptNative } = useInstallApp()
-  const { status, promptAdd } = useTelegramHomeScreen()
   const [picked, setPicked] = useState<Tab | null>(null)
   const tab: Tab = picked ?? (platform === 'android' ? 'android' : 'ios')
 
@@ -52,17 +52,7 @@ export function InstallAppModal({ onClose }: { onClose: () => void }) {
           </ol>
         )}
 
-        {platform === 'telegram' &&
-          (status === 'unknown' || status === 'missed' ? (
-            <>
-              <button className="btn-primary" onClick={promptAdd}>
-                {tn('install.tgButton')}
-              </button>
-              <div className="install-note">{tn('install.tgFallback')}</div>
-            </>
-          ) : (
-            <div className="install-note">{tn('install.tgFallback')}</div>
-          ))}
+        {platform === 'telegram' && <div className="install-note">{tn('install.tgNote')}</div>}
 
         {platform !== 'telegram' && tab === 'android' && (
           <>

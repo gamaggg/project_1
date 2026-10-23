@@ -21,9 +21,5 @@ export function useTelegramHomeScreen() {
     return () => webApp.offEvent?.('homeScreenAdded', onAdded)
   }, [])
 
-  function promptAdd() {
-    window.Telegram?.WebApp?.addToHomeScreen?.()
-  }
-
-  return { status, promptAdd }
+  return { status }
 }

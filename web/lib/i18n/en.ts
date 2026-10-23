@@ -853,10 +853,9 @@ export const en: Dict = {
     androidS3: 'Choose “Install app” (or “Add to Home screen”) and confirm.',
     androidNote: 'In another browser the option is usually in the same menu. The icon appears on your home screen.',
     androidInstall: 'Install',
-    tgS1: 'Tap the button below — Telegram shows its own window.',
-    tgS2: 'Confirm “Add” — the RANGE icon appears on your phone’s home screen.',
-    tgButton: 'Add to home screen',
-    tgFallback: 'Did the button do nothing? Tap ⋮ in the top right corner of the RANGE window and choose “Add to Home Screen”. You need an up-to-date Telegram — update it in your app store.',
+    tgS1: 'Tap the three dots in the top right corner of the RANGE window.',
+    tgS2: 'Choose “Add to Home Screen” and confirm.',
+    tgNote: 'No such option? Update Telegram in your app store.',
   },
   profile: {
     tgNotifications: 'Telegram notifications',
