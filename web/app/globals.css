@@ -1864,7 +1864,7 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .award-ring-badge{
   position:absolute; width:40px; height:40px; margin:-20px 0 0 -20px; border-radius:50%; cursor:pointer;
   display:flex; align-items:center; justify-content:center; color:#fff; padding:0;
-  border:2.5px solid var(--surface); --medal-drop:0 5px 14px rgba(0,0,0,0.22);
+  border:0; --medal-drop:0 5px 14px rgba(0,0,0,0.22);
   font-family:inherit; z-index:2;
   animation-name:award-drift; animation-timing-function:ease-in-out; animation-iteration-count:infinite; animation-direction:alternate;
 }
