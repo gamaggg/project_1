@@ -121,13 +121,13 @@ export const AWARD_ICONS: Record<AwardKind, React.ReactNode> = {
     </svg>
   ),
   // Held a hot sector to the end of the week (settle_hot_sectors): the
-  // sector's hexagon with the hot-sector flame inside — the same flame as on
-  // the map (lib/map/hotFlame.ts), so it reads as «that» sector.
+  // sector's hexagon (regular, flat-top, as the map draws it) with the
+  // hot-sector flame inside — the same flame as on the map
+  // (lib/map/hotFlame.ts), so it reads as «that» sector.
   hot_sector: (
     <svg viewBox="0 0 24 24">
-      <path d="M7.5 2.8h9L21.4 12l-4.9 9.2h-9L2.6 12z" fill="currentColor" />
-      <path d="M12 2.8h4.5L21.4 12l-4.9 9.2H12z" fill="#000" opacity=".1" />
-      <path transform="translate(4.56 3.62) scale(.62)" style={CUT} d={HOT_FLAME_PATH} />
+      <path d="M6.8 3h10.4l5.2 9-5.2 9H6.8l-5.2-9z" fill="currentColor" strokeLinejoin="round" />
+      <path transform="translate(4.08 2.76) scale(.66)" style={CUT} d={HOT_FLAME_PATH} />
     </svg>
   ),
 }
