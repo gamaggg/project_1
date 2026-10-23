@@ -664,6 +664,8 @@ html.has-lightbox:root .bottomnav::after{
 
 /* ---- Terms of use modal (see TermsOfUseModal.tsx) ---- */
 .install-modal-card{max-height:86vh; display:flex; flex-direction:column; padding-bottom:16px;}
+/* The orange button's drop glow lands on the note under it: flat here. */
+.install-modal-card .btn-primary{box-shadow:none;}
 .install-modal-body{flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding-right:2px;}
 .install-modal-foot{flex:0 0 auto; padding-top:12px; position:relative;}
 .install-modal-foot.fade::before{content:''; position:absolute; left:0; right:0; top:-14px; height:14px; background:linear-gradient(to top,var(--surface),rgba(255,255,255,0)); pointer-events:none;}
