@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useProfile } from '@/lib/supabase/queries'
+import { captureInstallPrompt } from '@/lib/installApp'
 
 // Switches the offline mode on (public/sw.js): registers the service worker a
 // moment after the page is up — never in the way of the first paint — and on
@@ -48,6 +49,9 @@ export function ServiceWorkerRegister() {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   const isAdmin = profile?.isSuperAdmin ?? false
+
+  // Chrome's install offer fires once, early — kept for the profile's «Add to home screen».
+  useEffect(() => captureInstallPrompt(), [])
 
   useEffect(() => {
     if (process.env.NODE_ENV !== 'production' || !('serviceWorker' in navigator)) return

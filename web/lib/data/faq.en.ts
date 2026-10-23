@@ -287,6 +287,17 @@ export const FAQ_EN: FaqSection[] = [
         ],
       },
       {
+        q: 'How do I add RANGE to my home screen?',
+        a: [
+          'Profile → «Add RANGE to your home screen» — step-by-step instructions for your phone. The icon opens the game full screen, with no address bar. The button is gone once RANGE is already opened from the home screen.',
+          [
+            'iPhone: open RANGE in Safari → Share → «Add to Home Screen» → «Add».',
+            'Android: open it in Chrome → ⋮ → «Install app» (or «Add to Home screen»).',
+            'Telegram: the button in the profile brings up Telegram’s own window — confirm «Add». If it did nothing — ⋮ in the corner of the RANGE window → «Add to Home Screen» (you need an up-to-date Telegram).',
+          ],
+        ],
+      },
+      {
         q: 'How do I write to support?',
         a: [
           'At the bottom of the profile — «How to play», under the search — «No answer here? Write to support». Describe what happened and attach a screenshot if needed.',
