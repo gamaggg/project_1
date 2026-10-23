@@ -1230,6 +1230,10 @@ export const en: Dict = {
     skin_depth: 'Depths',
     skin_compass: 'Wind rose',
     skin_school: 'School of fish',
+    skin_lightning: 'Lightning',
+    skin_sonar: 'Fish finder',
+    skin_lighthouse: 'Lighthouse',
+    skin_aquarium: 'Aquarium',
   },
   shopFrame: {
     frame_bronze: 'Bronze frame',

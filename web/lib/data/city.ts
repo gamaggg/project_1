@@ -18,7 +18,7 @@ export type CityInfo = {
   country: CountryId
   idPrefix: string
   name: string
-  // Shown under the page title on the Территории tab.
+  // Shown under the page title on the Сектора tab.
   boundaryLabel: string
   timezone: string
   center: [number, number]

@@ -1,5 +1,5 @@
 import { tnd } from '@/lib/i18n/runtime'
-// Visual catalog for the "Скин территории" shop items — same reasoning as
+// Visual catalog for the "Скин сектора" shop items — same reasoning as
 // nameStyles.ts/shopItems.ts: the DB row is just id/category/name/price, the
 // name/order lives here. Unlike frames/name styles, a skin has no fixed color
 // of its own: the actual look — a repeating line pattern — is drawn by
@@ -13,6 +13,8 @@ import { tnd } from '@/lib/i18n/runtime'
 export type TerritorySkin = {
   id: string
   label: string
+  // Painted live by lib/map/animatedSkins.ts instead of tiled from public/skins/<id>.svg.
+  animated?: boolean
 }
 
 export const TERRITORY_SKINS: TerritorySkin[] = [
@@ -59,6 +61,19 @@ export const TERRITORY_SKINS: TerritorySkin[] = [
     } },
   { id: 'skin_school', get label() {
       return tnd('skin.skin_school')
+    } },
+  // Animated (see lib/map/animatedSkins.ts): drawn live over the sector, no SVG.
+  { id: 'skin_sonar', animated: true, get label() {
+      return tnd('skin.skin_sonar')
+    } },
+  { id: 'skin_aquarium', animated: true, get label() {
+      return tnd('skin.skin_aquarium')
+    } },
+  { id: 'skin_lighthouse', animated: true, get label() {
+      return tnd('skin.skin_lighthouse')
+    } },
+  { id: 'skin_lightning', animated: true, get label() {
+      return tnd('skin.skin_lightning')
     } },
 ]
 

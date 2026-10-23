@@ -6,6 +6,8 @@ import { CITIES, type CityId } from '@/lib/data/city'
 import { COLOR_PREVIEW_SECTORS } from '@/lib/data/colorPreviewSectors'
 import { FREE_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { useSkinAssetsVersion, useSkinPatterns } from '@/lib/map/skinPattern'
+import { isAnimatedSkin } from '@/lib/map/animatedSkins'
+import { createAnimatedSkinLayer } from '@/lib/map/animatedSkinLayer'
 import { previewTileUrl } from '@/lib/mapbox/rasterTiles'
 
 // For ChangeColorModal: judging a color needs to see it on real sector shapes
@@ -27,6 +29,7 @@ export function TerritoryColorPreviewMap({
   const mapRef = useRef<import('leaflet').Map | null>(null)
   const demoLayersRef = useRef<import('leaflet').Polygon[]>([])
   const demoCornersRef = useRef<[number, number][][]>([])
+  const animatedSkinsRef = useRef<ReturnType<typeof createAnimatedSkinLayer> | null>(null)
   const getSkinPattern = useSkinPatterns()
   const skinAssetsVersion = useSkinAssetsVersion()
   // Each demo polygon needs its own fill: several of them share this one
@@ -39,7 +42,8 @@ export function TerritoryColorPreviewMap({
   // render the same real-world hex at a different pixel size depending on
   // latitude).
   function computeFillStyle(corners: [number, number][]) {
-    if (!equippedSkin) return myTerritoryColor
+    // An animated skin is painted over the plain tint by animatedSkinLayer.ts.
+    if (!equippedSkin || isAnimatedSkin(equippedSkin)) return myTerritoryColor
     const map = mapRef.current
     if (!map) return myTerritoryColor
     const layerPoints = corners.map(([lat, lng]) => map.latLngToLayerPoint([lat, lng]))
@@ -51,6 +55,12 @@ export function TerritoryColorPreviewMap({
     const height = Math.max(...ys) - offsetY
     const pattern = getSkinPattern(equippedSkin, myTerritoryColor, offsetX, offsetY, height, width)
     return pattern ?? myTerritoryColor
+  }
+
+  function syncAnimatedSkin() {
+    animatedSkinsRef.current?.set(
+      isAnimatedSkin(equippedSkin) ? demoCornersRef.current.map((corners) => ({ skinId: equippedSkin!, color: myTerritoryColor, tile: corners, clip: corners })) : []
+    )
   }
 
   useEffect(() => {
@@ -73,6 +83,7 @@ export function TerritoryColorPreviewMap({
         preferCanvas: true,
       }).setView(cityInfo.colorPreviewCenter, cityInfo.zoom)
       mapRef.current = map
+      animatedSkinsRef.current = createAnimatedSkinLayer(L, map)
       L.tileLayer(previewTileUrl(), { tileSize: 256 }).addTo(map)
       context.forEach((s) => {
         L.polygon(s.corners, { color: FREE_TERRITORY_COLOR, weight: 1.2, fillColor: FREE_TERRITORY_COLOR, fillOpacity: 0.14, opacity: 0.6 }).addTo(map)
@@ -92,9 +103,12 @@ export function TerritoryColorPreviewMap({
           opacity: 0.95,
         }).addTo(map)
       })
+      syncAnimatedSkin()
     })
     return () => {
       cancelled = true
+      animatedSkinsRef.current?.destroy()
+      animatedSkinsRef.current = null
       mapRef.current?.remove()
       mapRef.current = null
       demoLayersRef.current = []
@@ -112,6 +126,7 @@ export function TerritoryColorPreviewMap({
       const fillStyle = corners ? computeFillStyle(corners) : myTerritoryColor
       layer.setStyle({ color: myTerritoryColor, fillColor: fillStyle as unknown as string, fillOpacity: typeof fillStyle === 'string' ? 0.4 : 1 })
     })
+    syncAnimatedSkin()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myTerritoryColor, equippedSkin, skinAssetsVersion])
 

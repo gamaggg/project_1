@@ -100,7 +100,9 @@ export function CaptchaBox({ captcha }: { captcha: Captcha }) {
           'after-interactive-callback': () => set('checking'),
           'expired-callback': () => set('checking'),
           'timeout-callback': () => set('failed'),
-          'error-callback': () => {
+          'error-callback': (code: unknown) => {
+            // The code says why (110200 — domain not on the widget; 6xxxxx/3xxxxx — the challenge itself failed).
+            console.warn('[captcha] Turnstile error', code)
             set('failed')
             return true
           },

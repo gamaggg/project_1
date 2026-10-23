@@ -46,13 +46,13 @@ const notoGeorgian = Noto_Sans_Georgian({
 })
 
 const TITLE = 'RANGE: Cast & Claim Territory'
-const DESCRIPTION = 'Каждый улов меняет карту. Захватывай территории, собирай награды, обгоняй соперников.'
+const DESCRIPTION = 'Каждый улов меняет карту. Захватывай сектора, собирай награды, обгоняй соперников.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: TITLE,
   description: DESCRIPTION,
-  keywords: ['рыбалка', 'Батуми', 'Москва', 'территории', 'RANGE', 'береговая рыбалка', 'Грузия'],
+  keywords: ['рыбалка', 'Батуми', 'Москва', 'сектора', 'RANGE', 'береговая рыбалка', 'Грузия'],
   alternates: {
     canonical: SITE_URL,
   },

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { resolveTerritorySkin } from '@/lib/data/territorySkins'
+import { isAnimatedSkin } from '@/lib/map/animatedSkins'
 
 // Each territory_skin's actual artwork is the user's own hand-drawn SVG,
 // served as-is from public/skins/<id>.svg — nothing here redraws or
@@ -66,7 +67,8 @@ function getSkinImage(skinId: string): HTMLImageElement | null {
 type SkinLook = { tint: number; lines: number; bold: number }
 
 function buildSkinCanvas(skinId: string, color: string, tileHeight: number, tileWidth?: number, look?: SkinLook): HTMLCanvasElement | null {
-  if (!resolveTerritorySkin(skinId)) return null
+  // An animated skin has no artwork to tile — it's painted live (animatedSkinLayer.ts).
+  if (!resolveTerritorySkin(skinId) || isAnimatedSkin(skinId)) return null
   const img = getSkinImage(skinId)
   if (!img) return null
   const height = Math.round(tileHeight)

@@ -27,7 +27,7 @@ const PRESETS: { id: Preset; label: string }[] = [
 const SCREEN_NAMES: Record<string, string> = {
   'screen-map': 'Карта',
   'screen-territory': 'Сектор',
-  'screen-territories': 'Территории',
+  'screen-territories': 'Сектора',
   'screen-catches': 'Список уловов',
   'screen-catch-photo': 'Улов',
   'screen-camera': 'Камера',

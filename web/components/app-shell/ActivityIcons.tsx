@@ -28,6 +28,8 @@ const AWARD_BY_TITLE: Record<string, string> = {
 
 const ACHIEVEMENT_BY_TITLE: Record<string, string> = {
   'Первый улов': 'first',
+  'Три сектора': 'territory',
+  // Titles issued before the rename stay in the feed as they were written.
   'Три территории': 'territory',
   'Коллекционер видов': 'species',
   'Ранний рыбак': 'sunrise',
@@ -43,6 +45,7 @@ const ACHIEVEMENT_BY_TITLE: Record<string, string> = {
   'Постоянный клиент': 'loyal',
   'Хозяин побережья': 'landlord',
   'Известный рыбак': 'popular',
+  'Отбил сектор': 'conqueror',
   'Отбил территорию': 'conqueror',
 }
 

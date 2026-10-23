@@ -43,7 +43,7 @@ export function BottomNav({
     }
     ind.style.opacity = '1'
     // As wide as the tab, and always at least 18px wider than its label, so a
-    // long name (Территории, ტერიტორიები) has room on both sides; never under
+    // long name (Сектора, სექტორები) has room on both sides; never under
     // 54px for a short one. Centred on the tab and kept 6px inside the bar (the
     // capsule's top, bottom and radius are in the stylesheet, so it sits
     // concentric with the bar's own rounded edge).

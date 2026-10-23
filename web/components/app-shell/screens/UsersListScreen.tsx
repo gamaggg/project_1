@@ -129,7 +129,7 @@ export function UsersListScreen({
             Уловы
           </div>
           <div className={`filter-chip${sort === 'territories' ? ' active' : ''}`} onClick={() => setSort('territories')}>
-            Территории
+            Сектора
           </div>
           <div className={`filter-chip${sort === 'name' ? ' active' : ''}`} onClick={() => setSort('name')}>
             Имя
@@ -156,7 +156,7 @@ export function UsersListScreen({
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, fontSize: 14.5 }}>{u.displayName}</div>
                     <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
-                      ID: {u.publicId} · Уловов {u.catchesCount} · Территорий {u.territoriesCount} · {formatWhen(u.createdAt)}
+                      ID: {u.publicId} · Уловов {u.catchesCount} · Секторов {u.territoriesCount} · {formatWhen(u.createdAt)}
                     </div>
                   </div>
                   {picking ? (

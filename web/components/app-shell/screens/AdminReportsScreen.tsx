@@ -189,7 +189,7 @@ export function AdminReportsScreen({
                 <div style={{ fontWeight: 700, fontSize: 14 }}>{r.reason}</div>
                 <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
                   <button className="activity-who-btn" onClick={() => onOpenTerritory(r.territoryId)}>
-                    Территория {r.territoryId}
+                    Сектор {r.territoryId}
                   </button>
                   {r.speciesName ? ` · ${r.speciesName}` : ''}
                 </div>

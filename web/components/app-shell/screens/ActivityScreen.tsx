@@ -19,7 +19,7 @@ import { currentLocale } from '@/lib/i18n/runtime'
 import { localAwardSubtitle, localAwardTitle, localChallengeName } from '@/lib/data/dbText'
 
 // «Все» — your own notifications plus every fisher's catches in your city;
-// «Друзья» — catches by people you follow; «Мои территории» — your sectors.
+// «Друзья» — catches by people you follow; «Мои сектора» — your sectors.
 type Filter = 'all' | 'friends' | 'mine'
 
 // A run of one fisher's catches on one sector — consecutive in the feed,

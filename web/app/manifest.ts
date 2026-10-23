@@ -9,7 +9,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: '/',
     name: 'RANGE',
     short_name: 'RANGE',
-    description: 'Каждый улов меняет карту. Захватывай территории, собирай награды, обгоняй соперников.',
+    description: 'Каждый улов меняет карту. Захватывай сектора, собирай награды, обгоняй соперников.',
     start_url: '/',
     scope: '/',
     display: 'standalone',

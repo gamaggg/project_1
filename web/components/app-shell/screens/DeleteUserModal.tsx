@@ -35,7 +35,7 @@ export function DeleteUserModal({
         </div>
         <div className="modal-title">Удалить пользователя {userName}?</div>
         <div className="modal-body">
-          Аккаунт, его уловы и территории будут удалены без возможности восстановления.
+          Аккаунт, его уловы и сектора будут удалены без возможности восстановления.
         </div>
         <button className="btn-danger" disabled={deleteUser.isPending} onClick={handleConfirm}>
           {deleteUser.isPending ? 'Удаляем…' : 'Удалить пользователя'}

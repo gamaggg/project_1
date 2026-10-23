@@ -16,6 +16,8 @@ const HOT_COLOR = '#FC5200'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { resolveTerritorySkin } from '@/lib/data/territorySkins'
 import { useSkinAssetsVersion, useSkinPatterns } from '@/lib/map/skinPattern'
+import { isAnimatedSkin } from '@/lib/map/animatedSkins'
+import { createAnimatedSkinLayer, type AnimatedSkinEntry } from '@/lib/map/animatedSkinLayer'
 import { getCurrentCoords, queryGeolocationPermission } from '@/lib/geolocation'
 import { hapticTap } from '@/lib/telegram/haptics'
 import { applyCurrentLightPreset } from '@/lib/mapbox/lightPreset'
@@ -263,6 +265,8 @@ export const LeafletMap = forwardRef<
     homeZoomRef.current = fallbackZoom ?? FALLBACK_ZOOM
     const leafletRef = useRef<typeof import('leaflet') | null>(null)
     const getSkinPattern = useSkinPatterns()
+    // Paints the animated skins over the map's own canvas (see animatedSkinLayer.ts).
+    const animatedSkinsRef = useRef<ReturnType<typeof createAnimatedSkinLayer> | null>(null)
     // Skin SVGs load async — this ticks once a given skin's file lands, so
     // sectors using it repaint with the real pattern instead of staying on
     // the flat-color fallback they render with while it's still loading.
@@ -338,6 +342,7 @@ export const LeafletMap = forwardRef<
       const drawRank = (t: Territory) =>
         selectedIds?.has(t.id) ? 4 : t.status === 'free' ? 0 : clanLayerRef.current && !t.ownerClanCrest ? 1 : t.status === 'mine' ? 3 : 2
       const drawOrder = [...territories].sort((a, b) => drawRank(a) - drawRank(b))
+      const animatedSkins: AnimatedSkinEntry[] = []
       drawOrder.forEach((t) => {
         const isSelectedForDeletion = selectedIds?.has(t.id) ?? false
         const inClanView = clanLayerRef.current
@@ -356,9 +361,15 @@ export const LeafletMap = forwardRef<
         // never clashes with it (see territorySkins.ts). None on the «Кланы»
         // layer, which paints whole clans in one colour.
         let tile: { offsetX: number; offsetY: number; width: number; height: number } | null = null
-        const skinPattern = (skinId: string | null, tint: string): CanvasPattern | null => {
+        const skinPattern = (skinId: string | null, tint: string, clip: [number, number][] = t.corners): CanvasPattern | null => {
           const skin = !inClanView && t.status !== 'free' ? resolveTerritorySkin(skinId) : null
           if (!skin || !map) return null
+          // An animated skin is no pattern: the sector keeps its plain tint here and
+          // the overlay paints the moving lines (the whole hex, cut to `clip`).
+          if (isAnimatedSkin(skin.id)) {
+            animatedSkins.push({ skinId: skin.id, color: tint, tile: t.corners, clip })
+            return null
+          }
           if (!tile) {
             // Both the tile's position AND its size are measured from this
             // specific sector's own corners, not a shared sample from
@@ -394,7 +405,7 @@ export const LeafletMap = forwardRef<
           const holders = sectorHolders(t)
           split.parts.forEach((part, i) => {
             const partColor = inClanView ? color : i === 0 ? color : holders[i].isMe ? myTerritoryColor : (holders[i].color ?? OTHER_TERRITORY_COLOR)
-            const partPattern = skinPattern(holders[i].equippedSkin, partColor)
+            const partPattern = skinPattern(holders[i].equippedSkin, partColor, part)
             L.polygon(part, {
               stroke: false,
               fillColor: (partPattern ?? partColor) as unknown as string,
@@ -482,6 +493,7 @@ export const LeafletMap = forwardRef<
           }).addTo(hotBadges)
         }
       })
+      animatedSkinsRef.current?.set(animatedSkins)
       drawLabels()
     }
 
@@ -872,6 +884,7 @@ export const LeafletMap = forwardRef<
           onClickEmptyMapRef.current?.(e.latlng.lat, e.latlng.lng)
         })
 
+        animatedSkinsRef.current = createAnimatedSkinLayer(L, map)
         draw(territories)
         updateLabelVisibility()
       })
@@ -900,6 +913,8 @@ export const LeafletMap = forwardRef<
         // into the mapbox-gl bridge after the map is gone ("Cannot read
         // properties of null (reading 'getZoom')").
         mapRef.current?.stop()
+        animatedSkinsRef.current?.destroy()
+        animatedSkinsRef.current = null
         mapRef.current?.remove()
         mapRef.current = null
       }

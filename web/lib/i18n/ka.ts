@@ -1232,6 +1232,10 @@ export const ka: Dict = {
     skin_depth: 'სიღრმეები',
     skin_compass: 'ქარების ვარდი',
     skin_school: 'თევზების გუნდი',
+    skin_lightning: 'ელვა',
+    skin_sonar: 'ექოლოტი',
+    skin_lighthouse: 'შუქურა',
+    skin_aquarium: 'აკვარიუმი',
   },
   shopFrame: {
     frame_bronze: 'ბრინჯაოს ჩარჩო',
