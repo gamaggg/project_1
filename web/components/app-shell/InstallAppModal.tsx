@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { tn } from '@/lib/i18n/runtime'
+import { IosInstallGuide } from '@/components/app-shell/InstallIosGuide'
 import { useInstallApp } from '@/lib/installApp'
 import { useTelegramHomeScreen } from '@/lib/telegram/useTelegramHomeScreen'
 
@@ -18,12 +19,8 @@ export function InstallAppModal({ onClose }: { onClose: () => void }) {
   const [picked, setPicked] = useState<Tab | null>(null)
   const tab: Tab = picked ?? (platform === 'android' ? 'android' : 'ios')
 
-  const steps =
-    platform === 'telegram'
-      ? [tn('install.tgS1'), tn('install.tgS2')]
-      : tab === 'ios'
-        ? [tn('install.iosS1'), tn('install.iosS2'), tn('install.iosS3'), tn('install.iosS4')]
-        : [tn('install.androidS1'), tn('install.androidS2'), tn('install.androidS3')]
+  const pictured = platform !== 'telegram' && tab === 'ios'
+  const steps = platform === 'telegram' ? [tn('install.tgS1'), tn('install.tgS2')] : [tn('install.androidS1'), tn('install.androidS2'), tn('install.androidS3')]
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
@@ -41,14 +38,18 @@ export function InstallAppModal({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
-        <ol className="install-steps">
-          {steps.map((text, i) => (
-            <li key={i}>
-              <span className="install-step-n">{i + 1}</span>
-              <span>{text}</span>
-            </li>
-          ))}
-        </ol>
+        {pictured ? (
+          <IosInstallGuide />
+        ) : (
+          <ol className="install-steps">
+            {steps.map((text, i) => (
+              <li key={i}>
+                <span className="install-step-n">{i + 1}</span>
+                <span>{text}</span>
+              </li>
+            ))}
+          </ol>
+        )}
 
         {platform === 'telegram' &&
           (status === 'unknown' || status === 'missed' ? (

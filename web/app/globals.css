@@ -672,6 +672,19 @@ html.has-lightbox:root .bottomnav::after{
 .install-steps li{display:flex; gap:10px; align-items:flex-start; font-size:14px; line-height:1.45; color:var(--ink);}
 .install-step-n{flex:0 0 auto; width:22px; height:22px; border-radius:50%; background:var(--accent-soft); color:var(--accent); font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; margin-top:1px;}
 .install-note{font-size:12.5px; color:var(--ink-faint); line-height:1.45; margin-top:10px;}
+.install-tabs-sub{margin-top:12px;}
+.install-cards{display:flex; flex-direction:column; gap:12px; margin:14px 0 6px;}
+.install-card{border-radius:16px; overflow:hidden; background:#F6F6F4;}
+.install-shot{background:#E6EBF3; line-height:0;}
+.install-art{width:100%; height:auto; display:block;}
+.install-art text{font-family:inherit;}
+.install-cap{padding:12px 14px 14px; text-align:center;}
+.install-cap-title{font-size:17px; font-weight:800; letter-spacing:-0.2px;}
+.install-cap p{margin:4px 0 0; font-size:14px; line-height:1.45; color:var(--ink);}
+.install-cap p.install-cap-note{font-size:12.5px; color:var(--ink-faint);}
+.install-pulse{transform-box:fill-box; transform-origin:center; animation:install-pulse 1.7s ease-out infinite;}
+@keyframes install-pulse{0%{transform:scale(0.92); opacity:0.95;} 70%{transform:scale(1.22); opacity:0;} 100%{transform:scale(1.22); opacity:0;}}
+@media (prefers-reduced-motion: reduce){.install-pulse{animation:none;}}
 .terms-modal-card{max-height:80vh; display:flex; flex-direction:column;}
 .terms-modal-updated{font-size:12px; color:var(--ink-faint); margin-top:2px;}
 .terms-modal-body{overflow-y:auto; margin-top:14px; padding-right:2px;}
