@@ -4,7 +4,7 @@ import { useState, type ReactNode } from 'react'
 import { tn } from '@/lib/i18n/runtime'
 import { SITE_URL } from '@/lib/site'
 
-// The iPhone steps as pictures: a cropped phone per step with the thing to tap
+// The iPhone and Telegram steps as pictures: a cropped phone per step with the thing to tap
 // pulsing, like a bank's «how to install the web app» page. Two flows, because
 // Safari changed in iOS 26 — the old one has Share in the bottom bar, the new
 // one hides it behind «⋯» and adds the «Open as Web App» switch. Everything is
@@ -375,6 +375,70 @@ function ArtNewAdd() {
   )
 }
 
+// Telegram's Mini App header: «Close» left, the app's name, «⋯» right.
+function TgHeader({ pulse }: { pulse: boolean }) {
+  return (
+    <>
+      <rect x="55" y="16" width="130" height="200" fill="#F2F2F7" />
+      <rect x="55" y="16" width="130" height="36" fill="#fff" />
+      <text x="63" y="38" fontSize="7.5" fill={BLUE}>
+        {tn('common.close')}
+      </text>
+      <text x="120" y="32" textAnchor="middle" fontSize="8" fontWeight="700" fill={INK}>
+        RANGE
+      </text>
+      <text x="120" y="42" textAnchor="middle" fontSize="5.5" fill="#8E8E93">
+        {tn('install.lblMiniApp')}
+      </text>
+      <circle cx="170" cy="34" r="10" fill="#EDEDF1" />
+      {[-4.5, 0, 4.5].map((dx) => (
+        <circle key={dx} cx={170 + dx} cy="34" r="1.2" fill={INK} />
+      ))}
+      {pulse && <circle className="install-pulse" cx="170" cy="34" r="12" fill="none" style={{ stroke: 'var(--accent)' }} strokeWidth="2.5" />}
+    </>
+  )
+}
+
+// 1 (Telegram) — the «⋯» at the top right of the Mini App.
+function ArtTgDots() {
+  return (
+    <Scene kind="top">
+      <TgHeader pulse />
+      <AppIcon x={104} y={72} s={32} />
+      <Bars x={78} y={118} widths={[84, 60]} />
+    </Scene>
+  )
+}
+
+// 2 (Telegram) — its menu, «Add to Home Screen» lifted out of the blur.
+function ArtTgAdd() {
+  return (
+    <Scene
+      kind="top"
+      over={
+        <>
+          <rect x="38" y="82" width="164" height="28" rx="14" fill="#fff" filter="url(#install-shadow)" />
+          <text x="52" y="99.5" fontSize="7.8" fontWeight="500" fill={INK}>
+            {tn('install.lblTgAdd')}
+          </text>
+          <rect x="178" y="90.5" width="11" height="11" rx="2.5" fill="none" stroke={INK} strokeWidth="1.2" />
+          <path d="M183.5 93.5 v5 M181 96 h5" stroke={INK} strokeWidth="1.2" strokeLinecap="round" />
+          <Pulse x={38} y={82} w={164} h={28} r={14} />
+        </>
+      }
+    >
+      <TgHeader pulse={false} />
+      <rect x="64" y="56" width="120" height="116" rx="12" fill="#fff" filter="url(#install-shadow)" />
+      {[66, 118, 144].map((y) => (
+        <g key={y}>
+          <Bars x={74} y={y + 6} widths={[66]} color="#D5D6DB" />
+          <rect x="164" y={y + 3} width="10" height="10" rx="2.5" fill="#D5D6DB" />
+        </g>
+      ))}
+    </Scene>
+  )
+}
+
 type Step = { art: ReactNode; text: string; note?: string }
 
 function stepsFor(version: Version): Step[] {
@@ -398,6 +462,32 @@ function stepsFor(version: Version): Step[] {
   ]
 }
 
+function Cards({ steps, cardKey }: { steps: Step[]; cardKey: string }) {
+  return (
+    <div className="install-cards">
+      {steps.map((s, i) => (
+        <div className="install-card" key={`${cardKey}-${i}`}>
+          <div className="install-shot">{s.art}</div>
+          <div className="install-cap">
+            <div className="install-cap-title">{i === steps.length - 1 ? tn('install.done') : tn('install.step', { n: i + 1 })}</div>
+            <p>{s.text}</p>
+            {s.note && <p className="install-cap-note">{s.note}</p>}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function TelegramInstallGuide() {
+  const steps: Step[] = [
+    { art: <ArtTgDots />, text: tn('install.tgS1') },
+    { art: <ArtTgAdd />, text: tn('install.tgS2'), note: tn('install.tgNote') },
+    { art: <ArtHomeScreen />, text: tn('install.doneCap') },
+  ]
+  return <Cards steps={steps} cardKey="tg" />
+}
+
 export function IosInstallGuide() {
   // iOS 26 Safari still calls itself 18.x in its user agent, so the version
   // can't be read; the newer flow is first since most phones are on it by now.
@@ -413,18 +503,7 @@ export function IosInstallGuide() {
           </button>
         ))}
       </div>
-      <div className="install-cards">
-        {steps.map((s, i) => (
-          <div className="install-card" key={`${version}-${i}`}>
-            <div className="install-shot">{s.art}</div>
-            <div className="install-cap">
-              <div className="install-cap-title">{i === steps.length - 1 ? tn('install.done') : tn('install.step', { n: i + 1 })}</div>
-              <p>{s.text}</p>
-              {s.note && <p className="install-cap-note">{s.note}</p>}
-            </div>
-          </div>
-        ))}
-      </div>
+      <Cards steps={steps} cardKey={version} />
     </div>
   )
 }

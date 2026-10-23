@@ -855,6 +855,8 @@ export const en: Dict = {
     androidInstall: 'Install',
     tgS1: 'Tap the three dots in the top right corner of the RANGE window.',
     tgS2: 'Choose “Add to Home Screen” and confirm.',
+    lblMiniApp: 'mini app',
+    lblTgAdd: 'Add to Home Screen',
     tgNote: 'No such option? Update Telegram in your app store.',
   },
   profile: {

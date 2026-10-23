@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { tn } from '@/lib/i18n/runtime'
-import { IosInstallGuide } from '@/components/app-shell/InstallIosGuide'
+import { IosInstallGuide, TelegramInstallGuide } from '@/components/app-shell/InstallGuides'
 import { useInstallApp } from '@/lib/installApp'
 
 // How to put RANGE on the home screen — a page of steps per place it is opened
@@ -19,8 +19,8 @@ export function InstallAppModal({ onClose }: { onClose: () => void }) {
   const [picked, setPicked] = useState<Tab | null>(null)
   const tab: Tab = picked ?? (platform === 'android' ? 'android' : 'ios')
 
-  const pictured = platform !== 'telegram' && tab === 'ios'
-  const steps = platform === 'telegram' ? [tn('install.tgS1'), tn('install.tgS2')] : [tn('install.androidS1'), tn('install.androidS2'), tn('install.androidS3')]
+  const pictured = platform === 'telegram' || tab === 'ios'
+  const steps = [tn('install.androidS1'), tn('install.androidS2'), tn('install.androidS3')]
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
@@ -39,7 +39,9 @@ export function InstallAppModal({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
-        {pictured ? (
+        {platform === 'telegram' ? (
+          <TelegramInstallGuide />
+        ) : pictured ? (
           <IosInstallGuide />
         ) : (
           <ol className="install-steps">
@@ -51,8 +53,6 @@ export function InstallAppModal({ onClose }: { onClose: () => void }) {
             ))}
           </ol>
         )}
-
-        {platform === 'telegram' && <div className="install-note">{tn('install.tgNote')}</div>}
 
         {platform !== 'telegram' && tab === 'android' && (
           <>
