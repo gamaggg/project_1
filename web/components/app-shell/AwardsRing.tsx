@@ -1,7 +1,7 @@
 'use client'
 
 import type { UserAward } from '@/lib/data/types'
-import { AWARD_ICONS, AWARD_COLOR, isKnownAward } from '@/components/app-shell/awardIcons'
+import { AWARD_ICONS, awardMedalStyle, isKnownAward } from '@/components/app-shell/awardIcons'
 
 // Wraps an avatar with its earned medals floating in a ring around it (see
 // the awards proposal) — collapses to just the avatar when there are none,
@@ -54,7 +54,6 @@ export function AwardsRing({ awards: allAwards, radius = 96, onOpenAward, childr
         const angle = (i / awards.length) * Math.PI * 2 - Math.PI / 2
         const cx = Math.cos(angle) * radius
         const cy = Math.sin(angle) * radius
-        const { color, colorHi } = AWARD_COLOR[award.kind]
         // Deterministic-but-varied per-badge drift (seeded off the award's own
         // id) so several badges sharing the same @keyframes don't all move in
         // lockstep — no Math.random() here, this re-renders on every parent
@@ -69,18 +68,19 @@ export function AwardsRing({ awards: allAwards, radius = 96, onOpenAward, childr
         return (
           <button
             key={award.id}
-            className="award-ring-badge"
+            className="award-medal award-medal-shine award-ring-badge"
             style={
               {
                 left: `calc(50% + ${cx}px)`,
                 top: `calc(50% + ${cy}px)`,
-                background: `linear-gradient(160deg, ${colorHi}, ${color})`,
+                ...awardMedalStyle(award.kind),
                 '--dx1': `${dx1}px`,
                 '--dy1': `${dy1}px`,
                 '--dx2': `${dx2}px`,
                 '--dy2': `${dy2}px`,
                 animationDuration: `${3 + (seed % 3)}s`,
                 animationDelay: `${-(seed % 4)}s`,
+                '--shine-delay': `${-((seed * 7) % 6)}s`,
               } as React.CSSProperties
             }
             onClick={() => onOpenAward(award)}

@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import type { UserAward } from '@/lib/data/types'
-import { AWARD_ICONS, AWARD_COLOR } from '@/components/app-shell/awardIcons'
+import { AWARD_ICONS, AWARD_COLOR, awardMedalStyle } from '@/components/app-shell/awardIcons'
 import { seededRandom, seedFrom } from '@/lib/seededRandom'
 import { tn } from '@/lib/i18n/runtime'
 
@@ -43,7 +43,7 @@ export function AwardDetailModal({ award, onClose }: { award: UserAward; onClose
         </div>
         <div className="award-detail-icon-wrap">
           <div className="award-detail-icon-glow" style={{ background: `radial-gradient(circle, ${color}, transparent 70%)` }} />
-          <div className="award-detail-icon" style={{ background: `linear-gradient(160deg, ${colorHi}, ${color})` }}>
+          <div className="award-medal award-medal-shine award-detail-icon" style={awardMedalStyle(award.kind in AWARD_COLOR ? award.kind : 'weekly_rank')}>
             {AWARD_ICONS[award.kind]}
           </div>
         </div>

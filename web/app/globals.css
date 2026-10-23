@@ -1816,6 +1816,41 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .challenge-complete-title-all{font-size:21px; margin-top:2px;}
 .challenge-complete-sub{font-size:13.5px; color:var(--ink-soft); margin-top:7px; line-height:1.45; max-width:250px; margin-left:auto; margin-right:auto;}
 
+/* ---------- Medal look (awardIcons.tsx) ----------
+   A struck medal: the colour pair from awardMedalStyle (--c, --ch) as the
+   field, a soft gloss from the top-left, a shaded lower edge, a bevelled rim
+   and an inner ring. .award-medal-shine adds a glint that sweeps across now
+   and then (not on feed icons: a list of them would all be animating). */
+.award-medal{
+  position:relative; overflow:hidden; isolation:isolate;
+  --medal-bg:
+    radial-gradient(120% 90% at 28% 6%, rgba(255,255,255,.34), rgba(255,255,255,0) 50%),
+    linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,.26)),
+    linear-gradient(160deg, var(--ch), var(--c) 52%);
+  background:var(--medal-bg);
+  box-shadow:
+    inset 0 0 0 1.5px rgba(255,255,255,.3),
+    inset 0 2px 2px rgba(255,255,255,.5),
+    inset 0 -3px 5px rgba(0,0,0,.22),
+    var(--medal-drop, 0 0 0 transparent);
+}
+.avatar.award-medal{background:var(--medal-bg);}
+.award-medal::before{
+  content:''; position:absolute; inset:3.5px; border-radius:50%; pointer-events:none; z-index:0;
+  border:1px solid rgba(255,255,255,.42); box-shadow:0 0 0 1px rgba(0,0,0,.06);
+}
+.award-medal > svg{position:relative; z-index:1; filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.38));}
+.award-medal-shine::after{
+  content:''; position:absolute; top:-10%; bottom:-10%; left:0; width:42%; z-index:2; pointer-events:none;
+  background:linear-gradient(105deg, rgba(255,255,255,0), rgba(255,255,255,.6), rgba(255,255,255,0));
+  transform:translateX(-170%);
+  animation:award-shine 6s ease-in-out infinite; animation-delay:var(--shine-delay, 0s);
+}
+@keyframes award-shine{
+  0%,72%{transform:translateX(-170%);}
+  100%{transform:translateX(340%);}
+}
+
 /* ---------- AwardsRing (see AwardsRing.tsx / awardIcons.tsx) ---------- */
 .award-ring-stage{position:relative; display:flex; align-items:center; justify-content:center; margin:0 auto;}
 /* The medals circle the stage's centre, so the avatar has to sit exactly
@@ -1829,11 +1864,11 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .award-ring-badge{
   position:absolute; width:40px; height:40px; margin:-20px 0 0 -20px; border-radius:50%; cursor:pointer;
   display:flex; align-items:center; justify-content:center; color:#fff; padding:0;
-  border:2.5px solid var(--surface); box-shadow:0 5px 14px rgba(0,0,0,0.22);
+  border:2.5px solid var(--surface); --medal-drop:0 5px 14px rgba(0,0,0,0.22);
   font-family:inherit; z-index:2;
   animation-name:award-drift; animation-timing-function:ease-in-out; animation-iteration-count:infinite; animation-direction:alternate;
 }
-.award-ring-badge svg{width:18px; height:18px;}
+.award-ring-badge svg{width:21px; height:21px;}
 @keyframes award-drift{
   0%{transform:translate(var(--dx1), var(--dy1));}
   100%{transform:translate(var(--dx2), var(--dy2));}
@@ -1878,12 +1913,15 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
   width:100%; height:100%; border-radius:50%;
   display:flex; align-items:center; justify-content:center; color:#fff;
 }
-.award-detail-icon svg{width:34px; height:34px;}
+.award-detail-icon svg{width:44px; height:44px;}
+.award-detail-icon{--medal-drop:0 8px 20px rgba(0,0,0,0.2);}
+.award-detail-icon::before{inset:6px; border-width:1.5px;}
 .award-detail-title{position:relative; z-index:2; font-size:18px; font-weight:800; margin-bottom:6px;}
 .award-detail-subtitle{position:relative; z-index:2; font-size:12px; font-weight:700; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:12px;}
 .award-detail-desc{position:relative; z-index:2; font-size:13px; color:var(--ink-soft); line-height:1.5; margin-bottom:6px;}
 @media (prefers-reduced-motion: reduce){
   .award-ring-badge{animation:none;}
+  .award-medal-shine::after{animation:none; opacity:0;}
   .award-detail-card, .award-detail-icon-glow, .award-detail-confetti-piece{animation:none !important; opacity:1 !important; transform:none !important;}
 }
 

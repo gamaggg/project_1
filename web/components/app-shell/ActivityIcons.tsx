@@ -1,4 +1,4 @@
-import { AWARD_ICONS, AWARD_COLOR } from '@/components/app-shell/awardIcons'
+import { AWARD_ICONS, AWARD_COLOR, awardMedalStyle } from '@/components/app-shell/awardIcons'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import type { AwardKind } from '@/lib/data/types'
 
@@ -150,9 +150,8 @@ export function AwardFeedIcon({ title }: { title: string | null }) {
   // Only medal kinds this build can draw (the regatta medal ships with clans).
   const awardKind = mapped && mapped in AWARD_COLOR ? (mapped as AwardKind) : undefined
   if (awardKind) {
-    const { color, colorHi } = AWARD_COLOR[awardKind]
     return (
-      <div className="avatar feed-icon" style={{ background: `linear-gradient(160deg, ${colorHi}, ${color})` }}>
+      <div className="avatar feed-icon award-medal" style={awardMedalStyle(awardKind)}>
         {AWARD_ICONS[awardKind]}
       </div>
     )
