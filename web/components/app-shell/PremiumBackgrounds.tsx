@@ -540,9 +540,13 @@ function drawFishDetailed(
   ctx.restore()
   ctx.fillStyle = fin
   ctx.beginPath()
-  ctx.moveTo(0.14, -0.15)
-  ctx.lineTo(-0.02, -0.31)
-  ctx.lineTo(-0.2, -0.14)
+  // Both ends of the root sit inside the back (its outline is at about -0.155
+  // at x .14 and -0.10 at x -.18), so the body covers the join and the fin
+  // grows out of it instead of hanging off a corner; the trailing edge sweeps
+  // back in a curve.
+  ctx.moveTo(0.14, -0.11)
+  ctx.quadraticCurveTo(0.05, -0.2, -0.03, -0.285)
+  ctx.quadraticCurveTo(-0.06, -0.18, -0.18, -0.07)
   ctx.closePath()
   ctx.fill()
   ctx.beginPath()
