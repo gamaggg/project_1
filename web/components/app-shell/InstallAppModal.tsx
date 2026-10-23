@@ -76,8 +76,9 @@ export function InstallAppModal({ onClose }: { onClose: () => void }) {
         )}
 
         </div>
-        {/* Outside the scrolling part: a long guide never pushes it off screen. */}
-        <div className="install-modal-foot">
+        {/* Outside the scrolling part: a long guide never pushes it off screen. The fade above it
+            is only for the long, pictured guide — on a short page it would cover the text. */}
+        <div className={`install-modal-foot${pictured ? ' fade' : ''}`}>
           <button className="btn-secondary" onClick={onClose}>
             {tn('common.close')}
           </button>
