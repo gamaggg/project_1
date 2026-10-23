@@ -663,7 +663,10 @@ html.has-lightbox:root .bottomnav::after{
 @media (prefers-reduced-motion: reduce){.slots-card-shine{animation:none; display:none;} .slots-card-count{animation:none;}}
 
 /* ---- Terms of use modal (see TermsOfUseModal.tsx) ---- */
-.install-modal-card{max-height:86vh; display:flex; flex-direction:column; padding-bottom:16px;}
+/* Inside Telegram its «Close» and «⋯» sit over the top of the page: the guide
+   starts below them (and above the bottom bar), however tall it gets. */
+.install-overlay{padding-top:max(24px, calc(env(safe-area-inset-top) + var(--tg-safe-area-top, 0px) + 12px)); padding-bottom:max(24px, calc(env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px) + 12px));}
+.install-modal-card{max-height:100%; display:flex; flex-direction:column; padding-bottom:16px;}
 /* The orange button's drop glow lands on the note under it: flat here. */
 .install-modal-card .btn-primary{box-shadow:none;}
 .install-modal-body{flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding-right:2px;}

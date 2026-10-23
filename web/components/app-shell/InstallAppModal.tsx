@@ -23,7 +23,7 @@ export function InstallAppModal({ onClose }: { onClose: () => void }) {
   const steps = [tn('install.androidS1'), tn('install.androidS2'), tn('install.androidS3')]
 
   return createPortal(
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay install-overlay" onClick={onClose}>
       <div className="modal-card modal-card-wide install-modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="install-modal-body">
         <div className="modal-title">{tn('install.title')}</div>
