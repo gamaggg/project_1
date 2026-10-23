@@ -167,7 +167,6 @@ export const ka: Dict = {
     mineHere: { one: 'აქ გაქვს {count} დაჭერა', other: 'აქ გაქვს {count} დაჭერა' },
     progressOf: '{mine} / 10',
     needShort: 'საჭიროა 10 დაჭერა 90 დღეში',
-    profileCount: { one: '{count} სექტორის ლეგენდა', other: '{count} სექტორის ლეგენდა' },
   },
   forecast: {
     title: 'კბენის პროგნოზი',
@@ -1319,6 +1318,7 @@ export const ka: Dict = {
     zvezdochet: 'ვარსკვლავთმხედველი',
     zelenushka: 'ზელენუშკა',
     zubar: 'დენტექსი',
+    kalkan: 'კალკანი',
     kamenny_okun: 'ქვის ქორჭილა',
     katran: 'კატრანი',
     kefal: 'ქეფალი',

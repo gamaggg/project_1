@@ -100,10 +100,30 @@ declare global {
 // device's" (safeAreaInset alone is just the device notch, already covered
 // by env(safe-area-inset-top)) — see globals.css's --tg-safe-area-top.
 // Bot API 8.0+; both fields are undefined on older clients, hence the `?? 0`.
+// What the page itself gets from env(safe-area-inset-top) (the notch / status bar): the iPhone WebView
+// gives it, an Android WebView gives 0 — measured, since the CSS adds it on top of --tg-safe-area-top.
+function envSafeAreaTop(): number {
+  const probe = document.createElement('div')
+  probe.style.cssText = 'position:fixed;top:0;left:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top)'
+  document.body.appendChild(probe)
+  const px = parseFloat(getComputedStyle(probe).paddingTop) || 0
+  probe.remove()
+  return px
+}
+
 function applyTelegramChrome() {
   const webApp = window.Telegram?.WebApp
   if (!webApp) return
-  const top = webApp.contentSafeAreaInset?.top ?? webApp.safeAreaInset?.top ?? 0
+  const content = webApp.contentSafeAreaInset?.top ?? null
+  const device = webApp.safeAreaInset?.top ?? 0
+  // Fullscreen: Telegram's «Закрыть» / «⋯» sit BELOW the device's own top inset, so the page has to clear
+  // both (device + content, per Telegram's docs). The CSS already adds env(safe-area-inset-top), so only
+  // what it lacks goes into the variable: on an iPhone that is just `content` (unchanged), on Android,
+  // where env() is 0, the status bar too — without it the buttons covered the top of our panels.
+  const top =
+    webApp.isFullscreen === true && content !== null
+      ? Math.max(content, device + content - envSafeAreaTop())
+      : (content ?? device)
   const bottom = webApp.contentSafeAreaInset?.bottom ?? webApp.safeAreaInset?.bottom ?? 0
   document.documentElement.style.setProperty('--tg-safe-area-top', `${top}px`)
   document.documentElement.style.setProperty('--tg-safe-area-bottom', `${bottom}px`)

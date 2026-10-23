@@ -165,7 +165,6 @@ export const en: Dict = {
     mineHere: { one: 'You have {count} catch here', other: 'You have {count} catches here' },
     progressOf: '{mine} of 10',
     needShort: 'Takes 10 catches in 90 days',
-    profileCount: { one: 'Legend of {count} sector', other: 'Legend of {count} sectors' },
   },
   forecast: {
     title: 'Bite forecast',
@@ -1317,6 +1316,7 @@ export const en: Dict = {
     zvezdochet: 'Stargazer',
     zelenushka: 'Wrasse',
     zubar: 'Dentex',
+    kalkan: 'Turbot',
     kamenny_okun: 'Rock perch',
     katran: 'Spiny dogfish',
     kefal: 'Mullet',

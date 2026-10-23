@@ -1329,12 +1329,12 @@ html:not([lang="ru"]) .challenges-week-top{padding-top:22px;}
    Ordinary screens start 12px lower so their titles clear it; the ones that
    open on a photo or a coloured hero — a catch, a profile, a sector's map —
    run it up under the status bar instead and keep only their buttons below
-   the blur. The map's panel starts 14px lower for the same reason. */
+   the blur (a profile's row of coins and share starts right under the safe area: no extra 22px). The map's panel starts 14px lower for the same reason. */
 .ios-standalone{--standalone-top:calc(env(safe-area-inset-top) + 12px);}
 .ios-standalone .screen{padding-top:var(--standalone-top);}
 .ios-standalone .shop-sticky-top, .ios-standalone .clan-editor-top{--sticky-reach:var(--standalone-top);}
 .ios-standalone #screen-catch-photo, .ios-standalone #screen-profile, .ios-standalone #screen-user-profile, .ios-standalone #screen-territory{padding-top:0;}
-.ios-standalone .profile-hero{padding-top:calc(10px + var(--standalone-top));}
+.ios-standalone .profile-hero{padding-top:env(safe-area-inset-top);}
 .ios-standalone .sector-hero-map .territory-thumb-wrap{height:calc(230px + var(--standalone-top));}
 .ios-standalone .sector-hero-map-icons{top:calc(10px + var(--standalone-top));}
 .ios-standalone #screen-map{--map-top-inset:calc(env(safe-area-inset-top) + 14px);}
@@ -3562,7 +3562,6 @@ button.race-lane{cursor:pointer;}
 .clan-admin-slots-text span{font-size:12px; color:var(--ink-soft);}
 
 /* ===== Легенда в профиле ===== */
-.profile-legend-chip{display:inline-flex; align-items:center; gap:6px; margin-top:12px; padding:6px 12px 6px 10px; border-radius:999px; background:#FBF6EA; border:1px solid #F1E3C2; font-size:12.5px; font-weight:800; color:#9A6B12;}
 
 /* ===== Прогноз клёва ===== */
 .score-bars{display:block; flex:0 0 auto;}

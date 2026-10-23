@@ -61,6 +61,10 @@ const SCIENTIFIC_NAME_TO_BASE_KEY: Record<string, string> = {
   'sciaena umbra': 'gorbyl',
   'serranus scriba': 'kamenny_okun',
   'sarda sarda': 'pelamida',
+  // The Black Sea turbot (kalkan) is counted as Scophthalmus maximus by the recogniser too.
+  'scophthalmus maximus': 'kalkan',
+  'scophthalmus maeoticus': 'kalkan',
+  'psetta maeotica': 'kalkan',
 }
 
 // The Gulf of Finland and Neva Bay species Saint Petersburg adds (keys *_spb). Checked first: they

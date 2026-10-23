@@ -166,7 +166,6 @@ export const ru = {
     mineHere: { one: 'У тебя здесь {count} улов', few: 'У тебя здесь {count} улова', many: 'У тебя здесь {count} уловов', other: 'У тебя здесь {count} улова' },
     progressOf: '{mine} из 10',
     needShort: 'Нужно 10 уловов за 90 дней',
-    profileCount: { one: 'Легенда {count} сектора', few: 'Легенда {count} секторов', many: 'Легенда {count} секторов', other: 'Легенда {count} сектора' },
   },
   forecast: {
     title: 'Прогноз клёва',
@@ -1318,6 +1317,7 @@ export const ru = {
     zvezdochet: 'Звездочёт',
     zelenushka: 'Зеленушка',
     zubar: 'Зубарь',
+    kalkan: 'Калкан',
     kamenny_okun: 'Каменный окунь',
     katran: 'Катран',
     kefal: 'Кефаль',

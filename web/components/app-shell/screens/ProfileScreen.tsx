@@ -50,7 +50,6 @@ import { CITIES, type CityId } from '@/lib/data/city'
 import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
 import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
 import { useTelegramHomeScreen } from '@/lib/telegram/useTelegramHomeScreen'
-import { LaurelIcon } from '@/components/app-shell/SectorInsights'
 import { useT, TRANSLATION_READY } from '@/lib/i18n'
 import { LanguagePicker } from '@/components/app-shell/LanguagePicker'
 import { tn } from '@/lib/i18n'
@@ -496,7 +495,6 @@ export function ProfileScreen({
   const t = useT()
   const mySpecies = speciesBreakdown(myCatches)
   const speciesCount = mySpecies.length
-  const legendCount = user ? allTerritories.filter((tr) => tr.legendId === user.id).length : 0
   const record = personalRecord(myCatches)
   const achievements = computeAchievements(
     myCatches,
@@ -631,13 +629,6 @@ export function ProfileScreen({
           <span>{pluralFollowers(profile?.followersCount ?? 0)}</span>
         </button>
       </div>
-
-      {legendCount > 0 && (
-        <div className="profile-legend-chip">
-          <LaurelIcon size={15} />
-          {t('legend.profileCount', { count: legendCount })}
-        </div>
-      )}
 
       <div className="profile-cta-row">
         <button data-tour="challenges" className="profile-cta-btn profile-cta-challenges tap-scale" onClick={onOpenChallenges}>
