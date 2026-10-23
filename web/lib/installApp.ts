@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from 'react'
 import { insideTelegram } from '@/lib/openExternal'
+import { useTelegramHomeScreen } from '@/lib/telegram/useTelegramHomeScreen'
 
 export type InstallPlatform = 'telegram' | 'ios' | 'android' | 'other'
 
@@ -67,4 +68,14 @@ export function useInstallApp() {
   }
 
   return { platform, installed, canPromptNative, promptNative }
+}
+
+// Whether there is anything to offer: a phone's browser that has not been
+// opened from the home screen yet, or Telegram until its own «add» is done.
+// A computer gets nothing (no home screen to put it on).
+export function useCanInstall(): boolean {
+  const { platform, installed } = useInstallApp()
+  const { status } = useTelegramHomeScreen()
+  if (platform === 'telegram') return status === 'unknown' || status === 'missed'
+  return (platform === 'ios' || platform === 'android') && !installed
 }

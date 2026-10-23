@@ -25,6 +25,7 @@ export function InstallAppModal({ onClose }: { onClose: () => void }) {
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card modal-card-wide install-modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="install-modal-body">
         <div className="modal-title">{tn('install.title')}</div>
         <div className="install-sub">{tn('install.sub')}</div>
 
@@ -74,9 +75,13 @@ export function InstallAppModal({ onClose }: { onClose: () => void }) {
           </>
         )}
 
-        <button className="btn-secondary" style={{ marginTop: 12 }} onClick={onClose}>
-          {tn('common.close')}
-        </button>
+        </div>
+        {/* Outside the scrolling part: a long guide never pushes it off screen. */}
+        <div className="install-modal-foot">
+          <button className="btn-secondary" onClick={onClose}>
+            {tn('common.close')}
+          </button>
+        </div>
       </div>
     </div>,
     document.body

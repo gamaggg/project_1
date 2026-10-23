@@ -49,8 +49,7 @@ import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { CITIES, type CityId } from '@/lib/data/city'
 import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
 import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
-import { useTelegramHomeScreen } from '@/lib/telegram/useTelegramHomeScreen'
-import { useInstallApp } from '@/lib/installApp'
+import { useCanInstall } from '@/lib/installApp'
 import { InstallAppModal } from '@/components/app-shell/InstallAppModal'
 import { useT, TRANSLATION_READY } from '@/lib/i18n'
 import { LanguagePicker } from '@/components/app-shell/LanguagePicker'
@@ -516,12 +515,8 @@ export function ProfileScreen({
   // api/auth/telegram/route.ts) — never a real address the person chose, so
   // offering "Link email" only makes sense while it's still this pattern.
   const isTelegramAccount = user?.email?.endsWith('@telegram.catchrange.com') ?? false
-  const { status: homeScreenStatus } = useTelegramHomeScreen()
-  const { platform: installPlatform, installed: appInstalled } = useInstallApp()
   const [installOpen, setInstallOpen] = useState(false)
-  // Telegram: its own "add" flow is on offer until done. A browser: iPhone or
-  // Android, until RANGE is already opened from the home screen.
-  const showAddToHomeScreen = installPlatform === 'telegram' ? homeScreenStatus === 'unknown' || homeScreenStatus === 'missed' : (installPlatform === 'ios' || installPlatform === 'android') && !appInstalled
+  const showAddToHomeScreen = useCanInstall()
 
   function handleShareProfile() {
     if (!profile?.publicId) return

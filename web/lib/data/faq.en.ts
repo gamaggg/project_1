@@ -289,7 +289,7 @@ export const FAQ_EN: FaqSection[] = [
       {
         q: 'How do I add RANGE to my home screen?',
         a: [
-          'Profile → «Add RANGE to your home screen» — step-by-step instructions for your phone. The icon opens the game full screen, with no address bar. The button is gone once RANGE is already opened from the home screen.',
+          'Profile → «Add RANGE to your home screen» — step-by-step instructions for your phone. The icon opens the game full screen, with no address bar. The button is gone once RANGE is already opened from the home screen. Once, when you land on the map, the app offers this by itself; if you closed it, the button stays in the profile.',
           [
             'iPhone on iOS 26 or newer: open RANGE in Safari → the three dots at the bottom right → «Share» → «Show More» → «Add to Home Screen» → turn on «Open as Web App» → «Add».',
             'iPhone on an earlier iOS: open RANGE in Safari → Share (in the middle of the bottom bar) → «Add to Home Screen» → «Add».',

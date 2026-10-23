@@ -38,6 +38,7 @@ import { useAdminActionsReadState } from '@/lib/activityRead'
 import { useAchievementUnlock } from '@/lib/achievementUnlock'
 import { APP_LINK_EVENT } from '@/components/app-shell/AppLinkText'
 import { useWeekTopModal } from '@/lib/weekTopModal'
+import { InstallOffer } from '@/components/app-shell/InstallOffer'
 import { useClanBattleCeremony } from '@/lib/clanBattleCeremony'
 import { HotSectorsTour, useHotSectorsTour } from '@/components/app-shell/HotSectorsTour'
 import { useShopRewardsCount } from '@/lib/shopRewards'
@@ -470,10 +471,10 @@ export function FishZoneApp() {
   const [toast, setToast] = useState<string | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  function showToast(msg: string) {
+  function showToast(msg: string, ms = 1700) {
     setToast(msg)
     if (toastTimer.current) clearTimeout(toastTimer.current)
-    toastTimer.current = setTimeout(() => setToast(null), 1700)
+    toastTimer.current = setTimeout(() => setToast(null), ms)
   }
   useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current) }, [])
 
@@ -2215,6 +2216,21 @@ export function FishZoneApp() {
         />
       )}
       <LanguageSync />
+      {/* Once: «add RANGE to your home screen», after the celebrations and tours,
+          on the map only. */}
+      <InstallOffer
+        blocked={
+          !myProfile?.onboardingCompleted ||
+          currentScreen !== 'screen-map' ||
+          !!geoPlay ||
+          showWeekTop ||
+          clanCeremony.show ||
+          !!unlockedAchievement ||
+          showingTrophyScene ||
+          hotTour.show
+        }
+        onToast={showToast}
+      />
       {/* The week's hot sectors, once per week — a tour over the map after
           onboarding, behind every celebration above. Seen from the moment it
           starts: leaving the map or closing the app halfway ends it for good. */}
