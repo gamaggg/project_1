@@ -11,6 +11,11 @@ function storageKey(userId: string, city: CityId) {
   return `fishzone:seenWeekTop:${userId}:${city}`
 }
 
+// The week's recap pop-up of the city on screen: for anyone, not only the ones in its top 10 (somebody who
+// moved to a city to see what goes on there gets it too), as long as the city had at least one catch last
+// week (the leaderboard lists only players with catches, so a city nobody fished in stays quiet).
+// `entry` is the player's own line when they were in the top 10 (the congratulations), else null and the
+// pop-up tells who led the city.
 // One flag per user holding the last dismissed week's Monday (YYYY-MM-DD) —
 // not a growing set like useAchievementUnlock's, since only ever one "current
 // last week" exists at a time. Once that Monday rolls forward past what's
@@ -27,6 +32,7 @@ export function useWeekTopModal(city: CityId) {
 
   const weekKey = tbilisiWeekStart(-1, cityInfo.timezone).toISOString().slice(0, 10)
   const entry = lastWeekEntries?.find((e) => e.userId === user?.id) ?? null
+  const leader = lastWeekEntries?.[0] ?? null
 
   useEffect(() => {
     if (!user) return
@@ -43,7 +49,7 @@ export function useWeekTopModal(city: CityId) {
     }
   }
 
-  const show = isSuccess && ui.ready && !!entry && seenWeek !== weekKey
+  const show = isSuccess && ui.ready && !!leader && seenWeek !== weekKey
 
-  return { show, entry, dismiss }
+  return { show, entry, leader, dismiss }
 }

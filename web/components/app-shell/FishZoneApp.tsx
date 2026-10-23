@@ -256,7 +256,7 @@ export function FishZoneApp() {
   const { data: myCatchesForNewbie, isSuccess: myCatchesReady } = useMyCatches()
   const isNewbie = myCatchesReady && (myCatchesForNewbie?.length ?? 0) === 0
   const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories, territoriesReady, city)
-  const { show: showWeekTop, entry: weekTopEntry, dismiss: dismissWeekTop } = useWeekTopModal(city)
+  const { show: showWeekTop, entry: weekTopEntry, leader: weekTopLeader, dismiss: dismissWeekTop } = useWeekTopModal(city)
   const clanCeremony = useClanBattleCeremony(city, myProfile?.clanId ?? null)
   const hotTour = useHotSectorsTour(territories, city)
   useRealtimeSync()
@@ -2189,9 +2189,11 @@ export function FishZoneApp() {
       {openAward && <AwardDetailModal award={openAward} onClose={() => setOpenAward(null)} />}
       {/* Deferred behind the achievement modal above so the two celebrations
           never stack — this one waits its turn and appears once that clears. */}
-      {showWeekTop && weekTopEntry && !unlockedAchievement && !showingTrophyScene && (
+      {showWeekTop && weekTopLeader && !unlockedAchievement && !showingTrophyScene && (
         <WeekTopModal
           entry={weekTopEntry}
+          leader={weekTopLeader}
+          city={city}
           onViewRecap={() => {
             dismissWeekTop()
             openLastWeek()
