@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Territory } from '@/lib/data/types'
+import { createClient } from '@/lib/supabase/client'
 
 const MAX_DISTANCE_M = 400 // half the 600m hex width, plus slack for GPS error
 
@@ -30,20 +31,45 @@ const GEO_GRANTED_EVENT = 'fishzone:geo-granted'
 export async function getCurrentCoords(): Promise<Coords | null> {
   if (typeof navigator === 'undefined' || !navigator.geolocation) return null
 
-  const position = await new Promise<GeolocationPosition | null>((resolve) => {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve(pos),
-      () => resolve(null),
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30_000 }
-    )
-  })
-  if (!position) return null
+  const attempt = (options: PositionOptions) =>
+    new Promise<GeolocationPosition | GeolocationPositionError>((resolve) => {
+      navigator.geolocation.getCurrentPosition(resolve, resolve, options)
+    })
+  let result = await attempt({ enableHighAccuracy: true, timeout: 8000, maximumAge: 30_000 })
+  // No satellite fix / timed out (not a refusal): once more on the coarse
+  // network position, which a phone indoors or just after a permission prompt
+  // usually has even when GPS doesn't.
+  if ('code' in result && result.code !== result.PERMISSION_DENIED) {
+    result = await attempt({ enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 })
+  }
+  if ('code' in result) {
+    reportGeoFailure(result)
+    return null
+  }
+  const position = result
   localStorage.setItem(GEO_GRANTED_KEY, '1')
   window.dispatchEvent(new Event(GEO_GRANTED_EVENT))
   const coords = { lat: position.coords.latitude, lng: position.coords.longitude }
   publishFix(coords)
   allowLive()
   return coords
+}
+
+// Which refusal it was (1 = the phone/app says no, 2 = no position available,
+// 3 = timed out) is the only way to tell a player's settings from a bug of
+// ours — same idea as the camera's «camera» row. Once per page load: a player
+// tapping «+» again in a dead spot shouldn't fill the table.
+let geoFailureReported = false
+function reportGeoFailure(err: GeolocationPositionError) {
+  if (geoFailureReported) return
+  geoFailureReported = true
+  const where = window.Telegram?.WebApp?.platform ?? 'web'
+  void createClient()
+    .rpc('report_client_error', { p_context: 'geolocation', p_message: `code ${err.code}: ${err.message} · ${where}`.slice(0, 300) })
+    .then(
+      () => {},
+      () => {}
+    )
 }
 
 // The live position: one watchPosition for the whole app, held only while
