@@ -1184,6 +1184,7 @@ export const ru = {
     flame: 'Пламя',
     moon: 'Луна',
     crossed_rods: 'Удочки',
+    swirl: 'Вихрь',
     trout: 'Форель',
     lure: 'Воблер',
     catfish: 'Сом',

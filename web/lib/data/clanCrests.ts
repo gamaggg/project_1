@@ -256,6 +256,18 @@ export const CREST_SYMBOLS: CrestSymbol[] = [
     ],
   },
   {
+    id: 'swirl',
+    get label() {
+      return tnd('crestSymbol.swirl')
+    },
+    level: 1,
+    parts: [
+      // Eight sickle blades turning round the centre — one path, each blade
+      // the same curve rotated by 45°.
+      { d: 'M24.0 24.0C20.0 11.5 26.0 5.0 39.0 7.0C32.0 9.5 27.5 16.5 24.0 24.0ZM24.0 24.0C30.0 12.3 38.8 12.0 46.6 22.6C39.9 19.4 31.8 21.2 24.0 24.0ZM24.0 24.0C36.5 20.0 43.0 26.0 41.0 39.0C38.5 32.0 31.5 27.5 24.0 24.0ZM24.0 24.0C35.7 30.0 36.0 38.8 25.4 46.6C28.6 39.9 26.8 31.8 24.0 24.0ZM24.0 24.0C28.0 36.5 22.0 43.0 9.0 41.0C16.0 38.5 20.5 31.5 24.0 24.0ZM24.0 24.0C18.0 35.7 9.2 36.0 1.4 25.4C8.1 28.6 16.2 26.8 24.0 24.0ZM24.0 24.0C11.5 28.0 5.0 22.0 7.0 9.0C9.5 16.0 16.5 20.5 24.0 24.0ZM24.0 24.0C12.3 18.0 12.0 9.2 22.6 1.4C19.4 8.1 21.2 16.2 24.0 24.0Z', mode: 'fill' },
+    ],
+  },
+  {
     id: 'trout',
     get label() {
       return tnd('crestSymbol.trout')

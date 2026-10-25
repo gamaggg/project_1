@@ -1183,6 +1183,7 @@ export const ka: Dict = {
     flame: 'ალი',
     moon: 'მთვარე',
     crossed_rods: 'ანკესები',
+    swirl: 'მორევი',
     trout: 'კალმახი',
     lure: 'ვობლერი',
     catfish: 'ლოქო',

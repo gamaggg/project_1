@@ -1181,6 +1181,7 @@ export const en: Dict = {
     flame: 'Flame',
     moon: 'Moon',
     crossed_rods: 'Fishing rods',
+    swirl: 'Swirl',
     trout: 'Trout',
     lure: 'Wobbler',
     catfish: 'Catfish',
