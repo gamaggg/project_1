@@ -1523,16 +1523,20 @@ export function FishZoneApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, myProfile?.onboardingCompleted])
 
-  if (authLoading || (user && myProfileLoading)) {
-    return <LoadingShell />
-  }
-
+  // Above the loading gate: the moment the recovery code is confirmed a
+  // session appears and the profile starts loading (`user && myProfileLoading`),
+  // which would swap this flow for LoadingShell and drop its step — the visitor
+  // came back to the account without ever setting a new password.
   if (recoveryMode) {
     return (
       <div className="app-shell">
         <ForgotPasswordFlow onDone={() => setRecoveryMode(false)} onCancel={() => setRecoveryMode(false)} />
       </div>
     )
+  }
+
+  if (authLoading || (user && myProfileLoading)) {
+    return <LoadingShell />
   }
 
   if (linkingEmail) {
