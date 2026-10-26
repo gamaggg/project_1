@@ -75,9 +75,11 @@ export function mapLoad(): MapLoad {
   return decided
 }
 
-// For the crash report: «лёгкая карта» when the map was drawn lighter, else nothing.
-export function lightMapLabel(): string {
-  return decided?.light ? 'лёгкая карта' : ''
+// For the crash note kept on the phone: true / false once the map has been set up on
+// this page, null before that. The report of a discarded page needs the dead page's
+// answer, not the new page's (the new one has not drawn a map yet when it reports).
+export function lightMapState(): boolean | null {
+  return decided ? decided.light : null
 }
 
 export function realPixelRatio(): number {

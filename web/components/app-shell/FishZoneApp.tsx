@@ -50,7 +50,8 @@ import { addOfflineCatch } from '@/lib/offlineCatches'
 import { useOfflineCatchQueue, useOnline } from '@/lib/useOfflineCatches'
 import { useT } from '@/lib/i18n'
 import { useQueryClient } from '@tanstack/react-query'
-import { inviteLink, parseGuestShare, refParam, rememberClanInvite, rememberRef, takeRememberedRef, type ClanInvite } from '@/lib/guestShare'
+import { forgetRememberedRef, parseGuestShare, peekRememberedRef, refParam, rememberClanInvite, rememberRef, type ClanInvite } from '@/lib/guestShare'
+import { readLaunchSearch, shareLink } from '@/lib/telegram/startParam'
 import { GuestShareScreen } from '@/components/app-shell/GuestShareScreen'
 import { formatCatchMeta, formatCooldown, type SpeciesEntry } from '@/lib/format'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
@@ -645,7 +646,6 @@ export function FishZoneApp() {
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   function navClick(id: TabScreenId) {
     resetTo({ screen: id })
@@ -709,7 +709,7 @@ export function FishZoneApp() {
   // invitation — it opens the clan with a working «Вступить».
   async function shareClan(clanId: number, name: string, inviteCode?: string | null) {
     const invite = inviteCode ? `&invite=${encodeURIComponent(inviteCode)}` : ''
-    const url = `${window.location.origin}${window.location.pathname}?clan=${clanId}${invite}${refParam(myProfile?.publicId)}`
+    const url = shareLink(`clan=${clanId}${invite}${refParam(myProfile?.publicId)}`)
     const text = tn('shell.joinClan', { name })
     const webApp = window.Telegram?.WebApp
     if (insideTelegram() && webApp?.openTelegramLink) {
@@ -790,7 +790,7 @@ export function FishZoneApp() {
   }
   // «Где это?»'s result — a line or two and the link that opens the game.
   async function shareGeo(text: string) {
-    const url = `${window.location.origin}${window.location.pathname}?geo=1${refParam(myProfile?.publicId)}`
+    const url = shareLink(`geo=1${refParam(myProfile?.publicId)}`)
     const webApp = window.Telegram?.WebApp
     if (insideTelegram() && webApp?.openTelegramLink) {
       webApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`)
@@ -1158,7 +1158,7 @@ export function FishZoneApp() {
   // deep-link effect below, which opens screen-territory straight from it.
   async function shareTerritory(territoryId: string) {
     track('share', { what: 'territory' }, city)
-    const url = `${window.location.origin}${window.location.pathname}?territory=${territoryId}${refParam(myProfile?.publicId)}`
+    const url = shareLink(`territory=${territoryId}${refParam(myProfile?.publicId)}`)
     try {
       await navigator.clipboard.writeText(url)
       showToast(tn('shell.sectorLinkCopied'))
@@ -1177,7 +1177,7 @@ export function FishZoneApp() {
   // the Mini App, the clipboard elsewhere — same as shareClan.
   async function inviteFriends() {
     if (!myProfile?.publicId) return
-    const url = inviteLink(myProfile.publicId)
+    const url = shareLink(`ref=${encodeURIComponent(myProfile.publicId)}`)
     const text = tn('shell.inviteText')
     const webApp = window.Telegram?.WebApp
     if (insideTelegram() && webApp?.openTelegramLink) {
@@ -1193,7 +1193,7 @@ export function FishZoneApp() {
   }
   async function shareProfile(publicId: string, text: string) {
     track('share', { what: 'profile' }, city)
-    const url = `${window.location.origin}${window.location.pathname}?user=${publicId}${refParam(myProfile?.publicId)}`
+    const url = shareLink(`user=${publicId}${refParam(myProfile?.publicId)}`)
     try {
       await navigator.clipboard.writeText(`${text}\n${url}`)
       showToast(tn('shell.profileLinkCopied'))
@@ -1207,7 +1207,7 @@ export function FishZoneApp() {
   // ?achievement= deep-link effect below splits on the first ':' and
   // resolves publicId the same way the ?user= one does.
   async function shareAchievement(publicId: string, icon: string, text: string) {
-    const url = `${window.location.origin}${window.location.pathname}?achievement=${publicId}:${icon}${refParam(myProfile?.publicId)}`
+    const url = shareLink(`achievement=${publicId}:${icon}${refParam(myProfile?.publicId)}`)
     try {
       await navigator.clipboard.writeText(`${text}\n${url}`)
       showToast(tn('shell.achievementLinkCopied'))
@@ -1221,7 +1221,7 @@ export function FishZoneApp() {
   // ?catch= deep-link effect below can open it straight away.
   async function shareCatch(catchId: number, text: string) {
     track('share', { what: 'catch' }, city)
-    const url = `${window.location.origin}${window.location.pathname}?catch=${catchId}${refParam(myProfile?.publicId)}`
+    const url = shareLink(`catch=${catchId}${refParam(myProfile?.publicId)}`)
     try {
       await navigator.clipboard.writeText(`${text}\n${url}`)
       showToast(tn('shell.catchLinkCopied'))
@@ -1406,7 +1406,6 @@ export function FishZoneApp() {
     if (lastWeekDeepLinkOpened.current || !user || myProfileLoading) return
     if (new URLSearchParams(window.location.search).get('lastweek') !== '1') return
     lastWeekDeepLinkOpened.current = true
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens a screen once from the launch URL (external input)
     openLastWeek()
     window.history.replaceState(null, '', window.location.pathname)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1419,7 +1418,6 @@ export function FishZoneApp() {
     if (challengesDeepLinkOpened.current || !user) return
     if (new URLSearchParams(window.location.search).get('challenges') !== '1') return
     challengesDeepLinkOpened.current = true
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens a screen once from the launch URL (external input)
     openChallenges()
     window.history.replaceState(null, '', window.location.pathname)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1431,7 +1429,6 @@ export function FishZoneApp() {
     if (geoDeepLinkOpened.current || !user) return
     if (new URLSearchParams(window.location.search).get('geo') !== '1') return
     geoDeepLinkOpened.current = true
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens a screen once from the launch URL (external input)
     openGeo()
     window.history.replaceState(null, '', window.location.pathname)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1460,7 +1457,6 @@ export function FishZoneApp() {
     if (raceDeepLinkOpened.current || !user || myProfileLoading) return
     if (new URLSearchParams(window.location.search).get('race') !== '1') return
     raceDeepLinkOpened.current = true
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens a screen once from the launch URL (external input)
     openClanRace()
     window.history.replaceState(null, '', window.location.pathname)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1471,7 +1467,7 @@ export function FishZoneApp() {
   // kept so signing up pays the invite bonus (claim_referral below).
   // Read once at launch: the deep-link effects below clear the query string
   // after opening their screen, but the guest view must keep what it was opened with.
-  const [launchSearch] = useState(() => (typeof window === 'undefined' ? '' : window.location.search))
+  const [launchSearch] = useState(readLaunchSearch)
   const guestShare = useMemo(() => parseGuestShare(launchSearch), [launchSearch])
   const [guestAuth, setGuestAuth] = useState<'account' | 'signin' | null>(null)
   // Development only: «&guest=1» shows the guest view in a signed-in session,
@@ -1513,10 +1509,14 @@ export function FishZoneApp() {
   useEffect(() => {
     if (!user || !myProfile?.onboardingCompleted || referralChecked.current) return
     referralChecked.current = true
-    const remembered = takeRememberedRef()
+    const remembered = peekRememberedRef()
     if (!remembered) return
     claimReferral.mutate(remembered, {
+      // Only an answer from the server clears the remembered ref; a failed
+      // request (no network, a 5xx) leaves it for the next launch.
       onSuccess: (r) => {
+        forgetRememberedRef()
+        track('referral_claim', { ok: r.ok, reason: r.ok ? null : r.reason, source: remembered.source }, city)
         if (r.ok) showToast(r.referrerName ? tn('shell.referralBonusFrom', { coins: r.coins, name: r.referrerName }) : tn('shell.referralBonus', { coins: r.coins }))
       },
     })

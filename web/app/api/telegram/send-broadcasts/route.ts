@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { isCronRequest } from '@/lib/cronAuth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { withErrorReport } from '@/lib/serverErrors'
 
@@ -15,10 +16,9 @@ const BATCH_SIZE = 30
 // job — same pattern as send-followups/route.ts, just queue-per-recipient
 // instead of one row per bot-starter). Queued by admin_post_announcement
 // when a super admin checks "Отправить в Telegram" in PostAnnouncementModal
-// — see queries.ts's useAdminPostAnnouncement.
+// — see queries/activity.ts's useAdminPostAnnouncement.
 async function handleGET(req: Request) {
-  const auth = req.headers.get('authorization')
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isCronRequest(req)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 

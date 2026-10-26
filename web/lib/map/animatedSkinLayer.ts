@@ -39,7 +39,15 @@ export function createAnimatedSkinLayer(L: typeof Leaflet, map: Leaflet.Map) {
   let active = true
   let zooming = false
 
+  // The canvas is as big as the screen (about 5 MB on a phone), and few players have an
+  // animated skin: with nothing to draw it is shrunk to 0×0, which frees its memory, and
+  // it is sized up again when the first animated sector arrives (set below).
   function resize() {
+    if (entries.length === 0) {
+      canvas.width = 0
+      canvas.height = 0
+      return
+    }
     const size = map.getSize()
     canvas.width = Math.round(size.x * dpr)
     canvas.height = Math.round(size.y * dpr)
@@ -143,9 +151,10 @@ export function createAnimatedSkinLayer(L: typeof Leaflet, map: Leaflet.Map) {
       entries = next
       if (next.length === 0) {
         stop()
-        ctx?.clearRect(0, 0, canvas.width, canvas.height)
+        resize()
         return
       }
+      resize()
       paint()
       start()
     },

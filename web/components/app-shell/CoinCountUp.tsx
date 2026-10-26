@@ -40,7 +40,6 @@ export function CoinCountUp({
       if (t < 1) raf = requestAnimationFrame(tick)
     }
     return () => cancelAnimationFrame(raf)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [from, to, durationMs])
 
   return (
@@ -81,7 +80,6 @@ export function LiveCoinBalance({ value, durationMs = 600 }: { value: number; du
       if (t < 1) raf = requestAnimationFrame(tick)
     }
     return () => cancelAnimationFrame(raf)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, durationMs])
 
   return <>{display}</>

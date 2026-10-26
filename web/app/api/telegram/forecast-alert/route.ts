@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { isCronRequest } from '@/lib/cronAuth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { CITIES, asCityId, type CityId } from '@/lib/data/city'
 import { fetchRawForecast, nowInZone, scoreForecast } from '@/lib/forecast/bite'
@@ -12,7 +13,7 @@ import { withErrorReport } from '@/lib/serverErrors'
 const hh = (h: number) => `${String(h % 24).padStart(2, '0')}:00`
 
 async function handleGET(req: Request) {
-  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isCronRequest(req)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
   const cityParam = new URL(req.url).searchParams.get('city')

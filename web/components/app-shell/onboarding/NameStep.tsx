@@ -4,7 +4,9 @@ import { useState } from 'react'
 import { useUpdateProfile } from '@/lib/supabase/queries'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { TermsOfUseModal } from '@/components/app-shell/TermsOfUseModal'
-import { tn } from '@/lib/i18n/runtime'
+import { openExternal } from '@/lib/openExternal'
+import { PRIVACY_PATHS } from '@/lib/data/privacy'
+import { currentLanguage, tn } from '@/lib/i18n/runtime'
 
 const NAME_RE = /^[\p{L}\p{N}]{2,}$/u
 
@@ -73,6 +75,17 @@ export function NameStep({
               }}
             >
               {tn('onb.terms')}
+            </span>{' '}
+            {tn('onb.and')}{' '}
+            <span
+              className="terms-link"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                openExternal(`${window.location.origin}${PRIVACY_PATHS[currentLanguage()]}`)
+              }}
+            >
+              {tn('onb.privacy')}
             </span>
           </label>
         </div>

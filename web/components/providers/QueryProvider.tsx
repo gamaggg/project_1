@@ -15,7 +15,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
         defaultOptions: {
           queries: {
             // Sectors, catches and notifications are refreshed the moment they
-            // change (useRealtimeSync in lib/supabase/queries.ts), so returning
+            // change (useRealtimeSync in lib/supabase/queries/realtime.ts), so returning
             // to the app only needs to refetch what's been sitting for a while.
             // At 15s every hop back from a Telegram chat refetched ~15 queries,
             // the bulk of the project's API requests and log ingest.

@@ -8,7 +8,7 @@
 // note «left cleanly». If the next launch finds a note that was NOT marked, the
 // last launch ended without warning — and that is reported to the super admins
 // with the screen it happened on and what the page weighed.
-import { lightMapLabel, markDeviceStrained, realPixelRatio } from '@/lib/mapbox/lightMode'
+import { lightMapState, markDeviceStrained, realPixelRatio } from '@/lib/mapbox/lightMode'
 
 // The build this page runs (short): the report names the one that died, and the one the next launch runs.
 const BUILD = (process.env.APP_VERSION ?? 'dev').slice(0, 7)
@@ -22,7 +22,7 @@ const EARLY_FOR_MS = 60_000
 const AWAY_AFTER_MS = 60_000
 const REPORT_EVERY_MS = 60 * 60_000
 
-type Beacon = { screen: string; at: number; started: number; clean: boolean; nodes: number; canvases: number; screens: number; images: number; heapMB: number | null; nav: string; trail: string; ver?: string }
+type Beacon = { screen: string; at: number; started: number; clean: boolean; nodes: number; canvases: number; screens: number; images: number; heapMB: number | null; nav: string; trail: string; ver?: string; light?: boolean | null }
 
 function read(): Beacon | null {
   try {
@@ -57,15 +57,22 @@ function heapMB(): number | null {
   return m ? Math.round(m.usedJSHeapSize / 1048576) : null
 }
 
-function platform(): string {
+// What the dead page drew: the report used to name the NEW page's map, which does not exist yet
+// when it reports, so «лёгкая карта» was missing from 70 of 71 reports (26.10) and it was unknown
+// whether the phones that were discarded again were already on the light map.
+function mapLabel(light: boolean | null | undefined): string {
+  return light ? 'лёгкая карта' : light === false ? 'полная карта' : 'карта не создана'
+}
+
+function platform(light: boolean | null | undefined): string {
   const tg = window.Telegram?.WebApp as { platform?: string; version?: string } | undefined
   const standalone = (navigator as Navigator & { standalone?: boolean }).standalone === true
   // Outside Telegram the script still answers, with platform «unknown».
   const inTelegram = !!tg?.platform && tg.platform !== 'unknown'
-  return [inTelegram ? `Telegram ${tg?.platform} ${tg?.version ?? ''}`.trim() : standalone ? 'главный экран' : 'браузер (не Telegram)', `${innerWidth}×${innerHeight}`, `dpr ${realPixelRatio()}`, lightMapLabel()].filter(Boolean).join(', ')
+  return [inTelegram ? `Telegram ${tg?.platform} ${tg?.version ?? ''}`.trim() : standalone ? 'главный экран' : 'браузер (не Telegram)', `${innerWidth}×${innerHeight}`, `dpr ${realPixelRatio()}`, mapLabel(light)].filter(Boolean).join(', ')
 }
 
-// `report` is how the super admins hear of it (lib/supabase/queries.ts reportClientError).
+// `report` is how the super admins hear of it (lib/supabase/queries/errors.ts reportClientError).
 export function installCrashBeacon(report: (message: string) => void): () => void {
   const prev = read()
   const now = Date.now()
@@ -87,7 +94,7 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
       const lived = Math.round((prev.at - prev.started) / 1000)
       report(
         `страница сброшена без ухода в фон: экран ${prev.screen}; жила ${lived} с, последний сигнал ${Math.round((now - prev.at) / 1000)} с назад; ` +
-          `узлов ${prev.nodes}, экранов ${prev.screens}, canvas ${prev.canvases}${prev.images !== undefined ? `, картинок ${prev.images}` : ''}${prev.heapMB !== null ? `, куча ${prev.heapMB} МБ` : ''}; открыта как ${prev.nav ?? '?'}; версия ${prev.ver ?? '?'}${prev.ver && prev.ver !== BUILD ? `, теперь ${BUILD}` : ''}; ${platform()}${prev.trail ? `; путь: ${prev.trail}` : ''}`
+          `узлов ${prev.nodes}, экранов ${prev.screens}, canvas ${prev.canvases}${prev.images !== undefined ? `, картинок ${prev.images}` : ''}${prev.heapMB !== null ? `, куча ${prev.heapMB} МБ` : ''}; открыта как ${prev.nav ?? '?'}; версия ${prev.ver ?? '?'}${prev.ver && prev.ver !== BUILD ? `, теперь ${BUILD}` : ''}; ${platform(prev.light)}${prev.trail ? `; путь: ${prev.trail}` : ''}`
       )
     }
   }
@@ -110,12 +117,15 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
       clean,
       nodes: document.getElementsByTagName('*').length,
       canvases: document.getElementsByTagName('canvas').length,
-      screens: document.querySelectorAll('.screen').length,
+      // Screens with something mounted in them: every screen has its wrapper from the start (29),
+      // so counting the wrappers said nothing.
+      screens: Array.from(document.querySelectorAll('.screen')).filter((s) => s.childElementCount > 0).length,
       images: document.getElementsByTagName('img').length,
       heapMB: heapMB(),
       nav: navType,
       trail: trail.join(' → '),
       ver: BUILD,
+      light: lightMapState(),
     })
   }
   beat(false)

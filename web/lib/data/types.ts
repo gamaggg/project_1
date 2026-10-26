@@ -175,7 +175,7 @@ export type CityPlayer = {
 }
 
 // One row from profiles_with_stats for the admin "Все пользователи" list —
-// shaped in queries.ts (useAllUsers), not the full Profile (no need for the
+// shaped in queries/players.ts (useAllUsers), not the full Profile (no need for the
 // self-only masked fields there).
 export type UserListEntry = {
   id: string
@@ -187,7 +187,7 @@ export type UserListEntry = {
   territoriesCount: number
 }
 
-// One row from get_weekly_leaderboard(), shaped in queries.ts
+// One row from get_weekly_leaderboard(), shaped in queries/players.ts
 // (useWeeklyLeaderboard). Ranked by sectors first-claimed this Batumi week
 // (Mon 00:00 – Sun 23:59), catches this week as the tiebreaker/secondary
 // stat — see DECISIONS.md.
@@ -244,7 +244,7 @@ export type ProfileSummary = {
 }
 
 // One row from catch_reports, joined with what an admin needs to act on it —
-// shaped in queries.ts (useReports), not a raw DB row.
+// shaped in queries/social.ts (useReports), not a raw DB row.
 export type CatchReport = {
   id: number
   catchId: number
@@ -258,7 +258,7 @@ export type CatchReport = {
 }
 
 // One row from admin_actions, joined with the admin's display name — shaped
-// in queries.ts (useAdminActions), used for "Последние действия".
+// in queries/admin.ts (useAdminActions), used for "Последние действия".
 export type AdminAction = {
   id: number
   adminName: string
@@ -290,7 +290,7 @@ export type PendingCatch = {
 
 // id is a string, not the raw activity_log bigint — 'follow' entries are
 // synthesized client-side from the `follows` table (see useActivity in
-// queries.ts), so ids need a namespaced format (`log:123` / `follow:<uid>`)
+// queries/activity.ts), so ids need a namespaced format (`log:123` / `follow:<uid>`)
 // to guarantee no collision between the two sources. territoryId/territoryKind
 // are absent on 'follow' entries (a subscription isn't tied to any sector).
 export type ActivityEntry = {

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useSpecies, useLastCatchChoices } from '@/lib/supabase/queries'
 import { CATEGORIES_BY_CITY, KIND_LABEL, METHODS, BAITS_BY_CITY, speciesOfCity } from '@/lib/data/species'
 import { matchFishialSpecies } from '@/lib/data/fishSpeciesMatch'
+import { createClient } from '@/lib/supabase/client'
 import { cityForSectorId } from '@/lib/data/city'
 import { formatWeightGrams } from '@/lib/format'
 import { HexBadge } from '@/components/app-shell/HexBadge'
@@ -156,8 +157,18 @@ export function ConfirmScreen({
     // only 100/month for the whole app, shared across every angler.
     if (species.length === 0) return
     let cancelled = false
-    fetch('/api/recognize-fish', { method: 'POST', headers: { 'Content-Type': capturedPhoto.type || 'image/jpeg' }, body: capturedPhoto })
-      .then((res) => (res.ok ? res.json() : { candidates: [] }))
+    // The route answers only signed-in players (it spends a shared Fishial credit).
+    createClient()
+      .auth.getSession()
+      .then(({ data }) => {
+        const token = data.session?.access_token
+        if (!token) return { candidates: [] }
+        return fetch('/api/recognize-fish', {
+          method: 'POST',
+          headers: { 'Content-Type': capturedPhoto.type || 'image/jpeg', Authorization: `Bearer ${token}` },
+          body: capturedPhoto,
+        }).then((res) => (res.ok ? res.json() : { candidates: [] }))
+      })
       .then((data: { candidates: { scientificName: string; confidence: number }[] }) => {
         if (cancelled || touchedSpeciesRef.current) return
         const allKeys = new Set(species.filter((s) => categories.includes(s.category)).map((s) => s.key))

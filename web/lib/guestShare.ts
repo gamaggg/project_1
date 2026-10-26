@@ -36,22 +36,29 @@ export function rememberRef(ref: string, source: ShareKind | 'invite') {
   } catch {}
 }
 
-export function takeRememberedRef(): { ref: string; source: string } | null {
+// The remembered ref stays in storage until the server has answered for it
+// (forgetRememberedRef): a failed request — no network, a 5xx — is tried again
+// on the next launch, within the week. It used to be removed before the request,
+// so one failure lost the invite for good.
+export function peekRememberedRef(): { ref: string; source: string } | null {
   try {
     const raw = localStorage.getItem(REF_KEY)
     if (!raw) return null
-    localStorage.removeItem(REF_KEY)
     const v = JSON.parse(raw) as { ref?: string; source?: string; at?: number }
-    if (!v.ref || !v.at || Date.now() - v.at > REF_TTL_MS) return null
+    if (!v.ref || !v.at || Date.now() - v.at > REF_TTL_MS) {
+      localStorage.removeItem(REF_KEY)
+      return null
+    }
     return { ref: v.ref, source: v.source ?? '' }
   } catch {
     return null
   }
 }
 
-// The profile's «Пригласить друзей» link — the app itself, credited to you.
-export function inviteLink(publicId: string): string {
-  return `${window.location.origin}/?ref=${encodeURIComponent(publicId)}`
+export function forgetRememberedRef() {
+  try {
+    localStorage.removeItem(REF_KEY)
+  } catch {}
 }
 
 // «&ref=<public id>» for share links, when the sharer's id is known.

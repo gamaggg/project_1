@@ -1,6 +1,6 @@
 import type { Catch } from '@/lib/data/types'
 import type { SpeciesCategory } from '@/lib/data/species'
-import { currentLocale, tn, tnd } from '@/lib/i18n/runtime'
+import { currentLocale, tn } from '@/lib/i18n/runtime'
 
 export type SpeciesEntry = {
   key: string

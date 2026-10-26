@@ -28,7 +28,8 @@ export function SkinPreview({ skinId, color, width = 120 }: { skinId: string; co
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const dpr = window.devicePixelRatio || 1
+    // At most 2, like the other canvases: a shop screen of preview cards at a pixel ratio of 3 is 2.25 times the memory.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
     const height = Math.round(width / 1.1547)
     canvas.width = width * dpr
     canvas.height = height * dpr

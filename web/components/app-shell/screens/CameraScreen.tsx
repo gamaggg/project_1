@@ -113,7 +113,6 @@ export function CameraScreen({
     return () => {
       cancelled = true
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active])
 
   // The <video> only mounts once state becomes 'live', so the stream can't be

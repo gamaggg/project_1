@@ -11,8 +11,21 @@ const nextConfig: NextConfig = {
     // itself (lib/appUpdate.ts). Vercel sets the commit; locally it's 'dev'.
     APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA ?? "dev",
   },
+  // The «Powered by Next.js» header tells a scanner which framework to try exploits for.
+  poweredByHeader: false,
   async headers() {
     return [
+      {
+        // Everywhere: files are read as the type we send (an uploaded image can't be
+        // run as a script), and the address of the page isn't passed on to other sites.
+        // Deliberately no X-Frame-Options / frame-ancestors: Telegram Web opens the
+        // Mini App inside a frame, and a ban on framing would blank it there.
+        source: "/(.*)",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
       {
         // The service worker (public/sw.js) must never be served from a stale
         // cache, or a fix to it would not reach phones for days.

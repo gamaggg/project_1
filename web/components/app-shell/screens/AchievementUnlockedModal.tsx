@@ -40,7 +40,6 @@ export function AchievementUnlockedModal({
 
   useEffect(() => {
     hapticSuccess()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function handleShare() {

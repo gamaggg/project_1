@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { withErrorReport } from '@/lib/serverErrors'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 // Proxies to Fishial (fishial.ai) so FISHIAL_API_KEY/SECRET never reach the
 // client — the browser only ever talks to this route, never to
@@ -33,9 +34,19 @@ async function getAccessToken(): Promise<string> {
 
 async function handlePOST(request: Request) {
   try {
+    // Signed-in players only: every call spends one of the app's shared
+    // Fishial credits, so an open route let anyone burn them (and our
+    // bandwidth) with a loop. The app sends its session token, as the
+    // Telegram link route does.
+    const accessToken = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
+    if (!accessToken) return NextResponse.json({ candidates: [] }, { status: 401 })
+    const { data: auth } = await createAdminClient().auth.getUser(accessToken)
+    if (!auth.user) return NextResponse.json({ candidates: [] }, { status: 401 })
+
     const contentType = request.headers.get('content-type') ?? 'image/jpeg'
     const imageBytes = await request.arrayBuffer()
-    if (imageBytes.byteLength === 0 || imageBytes.byteLength > 20 * 1024 * 1024) {
+    // A catch photo is ~350 KB (1600 px JPEG); 8 MB is generous.
+    if (imageBytes.byteLength === 0 || imageBytes.byteLength > 8 * 1024 * 1024) {
       return NextResponse.json({ candidates: [] })
     }
 

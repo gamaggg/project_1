@@ -42,7 +42,7 @@ declare global {
         // Unverified copy of initData's fields — only for harmless hints like
         // the interface language; anything that matters goes through the
         // signed initData on the server.
-        initDataUnsafe?: { user?: { language_code?: string; is_premium?: boolean } }
+        initDataUnsafe?: { user?: { language_code?: string; is_premium?: boolean }; start_param?: string }
         ready: () => void
         expand: () => void
         requestFullscreen?: () => void

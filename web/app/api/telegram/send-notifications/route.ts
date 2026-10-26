@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { isCronRequest } from '@/lib/cronAuth'
 import { SITE_URL } from '@/lib/site'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { pluralSectors, pluralCatches } from '@/lib/format'
@@ -333,8 +334,7 @@ function renderMessage(notification: NotificationRef): Message | null {
 // out. (A run of catches by the same angler is already one row: the queueing
 // trigger skips a follow_catch within 3 hours of the previous one.)
 async function handleGET(req: Request) {
-  const auth = req.headers.get('authorization')
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isCronRequest(req)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 

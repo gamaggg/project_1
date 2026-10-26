@@ -45,14 +45,37 @@ const notoGeorgian = Noto_Sans_Georgian({
   preload: false,
 })
 
-const TITLE = 'RANGE: Cast & Claim Territory'
-const DESCRIPTION = 'Каждый улов меняет карту. Захватывай сектора, собирай награды, обгоняй соперников.'
+const TITLE = 'RANGE — рыболовная игра-карта: лови рыбу и захватывай сектора'
+const DESCRIPTION =
+  'Каждый улов меняет карту. Фотографируй улов, захватывай сектора у воды, собирай кланы и награды. Батуми, Москва, Санкт-Петербург, Сочи, Тбилиси. Бесплатно, в Telegram и в браузере.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: TITLE,
   description: DESCRIPTION,
-  keywords: ['рыбалка', 'Батуми', 'Москва', 'Московская область', 'МО', 'сектора', 'RANGE', 'береговая рыбалка', 'Грузия'],
+  keywords: [
+    'рыбалка',
+    'рыболовная игра',
+    'карта рыбалки',
+    'прогноз клёва',
+    'Батуми',
+    'Москва',
+    'Московская область',
+    'МО',
+    'Санкт-Петербург',
+    'Сочи',
+    'Тбилиси',
+    'сектора',
+    'RANGE',
+    'береговая рыбалка',
+    'Грузия',
+  ],
+  // Search consoles: the codes come from Google Search Console and Yandex Webmaster
+  // (the «HTML tag» method); set them in the Vercel environment, not in the code.
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION,
+  },
   alternates: {
     canonical: SITE_URL,
   },

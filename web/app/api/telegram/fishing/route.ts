@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { isCronRequest } from '@/lib/cronAuth'
 import { runFishingReminders } from '@/lib/telegram/fishing'
 import { withErrorReport } from '@/lib/serverErrors'
 
@@ -7,7 +8,7 @@ import { withErrorReport } from '@/lib/serverErrors'
 // sends the reminders that are due. ?dry=1 — nothing written or sent, just
 // who would be reminded right now.
 async function handleGET(req: Request) {
-  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isCronRequest(req)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
   try {

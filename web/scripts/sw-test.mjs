@@ -166,7 +166,6 @@ const w2 = makeWorker(net)
 await w2.fire('install', {})
 assets.version = 'B4'
 assets.urls = ['/_next/static/chunks/a.js', '/_next/static/chunks/zz.js']
-let cnt = 0
 const flaky = async (i) => { const p = (typeof i === 'string' ? i : i.url).replace(ORIGIN, ''); if (p.includes('zz')) throw new TypeError('lost'); return net(i) }
 const w3 = makeWorker(flaky)
 for (const [n2, c] of w2.stores) { const nc = new MemCache(); for (const [k, v] of c.m) nc.m.set(k, v); w3.stores.set(n2, nc) }

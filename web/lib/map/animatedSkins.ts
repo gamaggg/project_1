@@ -437,21 +437,6 @@ const sonar: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
   ctx.fill()
 }
 
-// A four-pointed sparkle (a thin 8-vertex star) centred on x,y, in the current fill.
-function starShape(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
-  ctx.beginPath()
-  ctx.moveTo(x, y - size)
-  ctx.lineTo(x + size * 0.16, y - size * 0.16)
-  ctx.lineTo(x + size, y)
-  ctx.lineTo(x + size * 0.16, y + size * 0.16)
-  ctx.lineTo(x, y + size)
-  ctx.lineTo(x - size * 0.16, y + size * 0.16)
-  ctx.lineTo(x - size, y)
-  ctx.lineTo(x - size * 0.16, y - size * 0.16)
-  ctx.closePath()
-  ctx.fill()
-}
-
 // «Маяк»: a lighthouse on a rock over a night sea, always standing in the
 // middle of the sector. Its lamp turns a full circle: the beam sweeps round the
 // tower in perspective — behind it, out to one side, then toward the viewer,

@@ -7,9 +7,11 @@
     "build": "next build && node scripts/precache-manifest.mjs",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "db:contract": "node ../tools/db-contract/check-rpc-contract.mjs",
     "i18n:audit": "node scripts/i18n-audit.mjs",
-    "test:sw": "node scripts/sw-test.mjs"
+    "test:sw": "node scripts/sw-test.mjs",
+    "test": "node --no-warnings --import ./scripts/test-register.mjs --test \"tests/*.test.mjs\""
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",
@@ -19,7 +21,7 @@
     "leaflet": "^1.9.4",
     "mapbox-gl": "^3.30.0",
     "mapbox-gl-leaflet": "^0.0.16",
-    "next": "16.3.4",
+    "next": "16.4.3",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "simplex-noise": "^4.0.3"
@@ -31,7 +33,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.3.4",
+    "eslint-config-next": "16.4.3",
     "typescript": "^5"
   }
 }
