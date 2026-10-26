@@ -208,6 +208,7 @@ export function ClanScreen({
   const [eventsShown, setEventsShown] = useState(5)
   // Screens stay mounted: when this one is left, the journal folds back to the latest lines.
   const rootRef = useRef<HTMLDivElement>(null)
+  const tabsRef = useRef<HTMLDivElement>(null)
   const loaded = !!clan
   useEffect(() => {
     const el = rootRef.current
@@ -338,8 +339,16 @@ export function ClanScreen({
             <span className="clan-league-dot" style={{ background: league.color }} />
             {league.label} · {clan.trophies}
           </button>
-          {/* Capacity grows with the level — its explanation is the level sheet. */}
-          <button type="button" className="clan-chip tap-scale" onClick={() => setInfo('level')} aria-label={tn('clan.slotsAria')}>
+          {/* «3/20» is about people: it takes you to the roster. */}
+          <button
+            type="button"
+            className="clan-chip tap-scale"
+            onClick={() => {
+              setTab('members')
+              requestAnimationFrame(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+            }}
+            aria-label={tn('clan.slotsAria')}
+          >
             {clan.members.length}/{clan.capacity}
           </button>
           <button type="button" className="clan-chip tap-scale" onClick={() => setInfo('sectors')} aria-label={tn('clan.sectorsAria')}>
@@ -480,7 +489,7 @@ export function ClanScreen({
         {error && <div className="clan-error">{error}</div>}
         {isMember && !clan.disbanded && <ClanChatCard clanId={clan.id} onOpen={() => onOpenChat(clan.id)} />}
 
-        <div className="clan-tabs" style={{ marginTop: 16 }}>
+        <div ref={tabsRef} className="clan-tabs" style={{ marginTop: 16 }}>
           <button className={`clan-tab${tab === 'members' ? ' on' : ''}`} onClick={() => setTab('members')}>
             {tn('guest.members')}
           </button>
