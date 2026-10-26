@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: TITLE,
   description: DESCRIPTION,
-  keywords: ['рыбалка', 'Батуми', 'Москва', 'сектора', 'RANGE', 'береговая рыбалка', 'Грузия'],
+  keywords: ['рыбалка', 'Батуми', 'Москва', 'Московская область', 'МО', 'сектора', 'RANGE', 'береговая рыбалка', 'Грузия'],
   alternates: {
     canonical: SITE_URL,
   },

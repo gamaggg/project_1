@@ -344,7 +344,7 @@ export const ru = {
     preparing: 'Готовим картинку…',
   },
   recap: {
-    cityIn: { batumi: 'в Батуми', moscow: 'в Москве', spb: 'в Петербурге', sochi: 'в Сочи', tbilisi: 'в Тбилиси' },
+    cityIn: { batumi: 'в Батуми', moscow: 'в Москве и МО', spb: 'в Петербурге', sochi: 'в Сочи', tbilisi: 'в Тбилиси' },
     stickerWeek: 'Неделя',
     bannerTitle: 'Неделя {cityIn}',
     bannerSub: 'Итоги {from} – {to}',
@@ -736,8 +736,8 @@ export const ru = {
   city: {
     batumiName: 'Батуми',
     batumiBoundary: 'Море, реки и озёра Батуми',
-    moscowName: 'Москва',
-    moscowBoundary: 'Реки, озёра и пруды Москвы',
+    moscowName: 'Москва и МО',
+    moscowBoundary: 'Реки, озёра и пруды Москвы и МО',
     spbName: 'Санкт-Петербург',
     spbBoundary: 'Нева, реки, каналы и залив Петербурга',
     sochiName: 'Сочи',

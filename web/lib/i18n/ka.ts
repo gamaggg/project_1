@@ -345,7 +345,7 @@ export const ka: Dict = {
     preparing: 'სურათს ვამზადებთ…',
   },
   recap: {
-    cityIn: { batumi: 'ბათუმში', moscow: 'მოსკოვში', spb: 'სანკტ-პეტერბურგში', sochi: 'სოჭში', tbilisi: 'თბილისში' },
+    cityIn: { batumi: 'ბათუმში', moscow: 'მოსკოვსა და მოსკოვის ოლქში', spb: 'სანკტ-პეტერბურგში', sochi: 'სოჭში', tbilisi: 'თბილისში' },
     stickerWeek: 'კვირა',
     bannerTitle: 'კვირა {cityIn}',
     bannerSub: '{from} – {to} შედეგები',
@@ -737,8 +737,8 @@ export const ka: Dict = {
   city: {
     batumiName: 'ბათუმი',
     batumiBoundary: 'ბათუმის ზღვა, მდინარეები და ტბები',
-    moscowName: 'მოსკოვი',
-    moscowBoundary: 'მოსკოვის მდინარეები, ტბები და ტბორები',
+    moscowName: 'მოსკოვი და მოსკოვის ოლქი',
+    moscowBoundary: 'მოსკოვისა და მოსკოვის ოლქის მდინარეები, ტბები და ტბორები',
     spbName: 'სანკტ-პეტერბურგი',
     spbBoundary: 'ნევა, მდინარეები, არხები და ფინეთის ყურე',
     sochiName: 'სოჭი',

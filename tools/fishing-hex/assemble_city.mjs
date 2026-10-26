@@ -17,6 +17,7 @@ const CITY = process.argv[2];
 const hex = fs.readFileSync(`hex_${CITY}.geojson`, 'utf8');
 const water = fs.readFileSync(`water_${CITY}.geojson`, 'utf8');
 const excluded = fs.existsSync(`excluded_${CITY}.geojson`) ? fs.readFileSync(`excluded_${CITY}.geojson`, 'utf8') : '{"type":"FeatureCollection","features":[]}';
+const extra = fs.existsSync(`extra_${CITY}.geojson`) ? fs.readFileSync(`extra_${CITY}.geojson`, 'utf8') : '{"type":"FeatureCollection","features":[]}';
 const tiles = fs.existsSync('tiles.json') ? fs.readFileSync('tiles.json', 'utf8') : 'null';
 // Public (pk.) Mapbox token for the preview basemap only — not read from
 // web/.env.local automatically (this is a standalone Node script, not
@@ -60,6 +61,7 @@ const html = `<!doctype html>
 const HEX = ${hex};
 const WATER = ${water};
 const EXC = ${excluded};
+const EXTRA = ${extra};   // контекст: границы и уже существующие сектора (extra_<город>.geojson)
 const TILES = ${tiles};   // null, если tiles.json не было
 const COLOR = { sea: '#1B7A9C', river: '#4E8A3A', lake: '#5A5FB5', pond: '#9B59B6' };
 const NAME  = { sea: 'море', river: 'река', lake: 'озеро', pond: 'пруд' };
@@ -129,6 +131,10 @@ const hexLayer = L.geoJSON(HEX, {
 const excLayer = L.geoJSON(EXC, {
   style: { color: '#D32F2F', fillColor: '#D32F2F', weight: 1.2, dashArray: '3 3', fillOpacity: .3 },
   onEachFeature(f, layer) { layer.bindTooltip((f.properties.reason || '') + (f.properties.name ? ': ' + f.properties.name : '') + ' (' + NAME[f.properties.kind] + ')'); },
+}).addTo(map);
+L.geoJSON(EXTRA, {
+  interactive: false,
+  style: (f) => f.properties.role === 'ring' ? { color: '#000', weight: 3, fill: false } : { color: '#555', weight: .5, fillColor: '#888', fillOpacity: .25 },
 }).addTo(map);
 map.fitBounds(hexLayer.getBounds());
 

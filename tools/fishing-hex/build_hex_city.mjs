@@ -300,11 +300,77 @@ if (CFG.damBox && fs.existsSync(roadsFile)) {
 }
 const nearDam = (pt) => damLines.some((l) => pt[0] >= l.bb[0] - 0.01 && pt[0] <= l.bb[2] + 0.01 && pt[1] >= l.bb[1] - 0.006 && pt[1] <= l.bb[3] + 0.006 && turf.pointToLineDistance(pt, l.geom, { units: 'meters' }) <= DAM_BUFFER_M);
 
+
+// Константы «бесконечной» сетки от рамки: порт buildGrid из web/lib/data/hexGrid.ts.
+function latticeFrom(b, sideM) {
+  const R = 6371008.8;
+  const hav = (lng1, lat1, lng2, lat2) => {
+    const t = (d) => (d * Math.PI) / 180;
+    const a = Math.sin(t(lat2 - lat1) / 2) ** 2 + Math.cos(t(lat1)) * Math.cos(t(lat2)) * Math.sin(t(lng2 - lng1) / 2) ** 2;
+    return 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * R;
+  };
+  const [west, south, east, north] = [b.w - 0.01, b.s - 0.01, b.e + 0.01, b.n + 0.01];
+  const cy = (south + north) / 2;
+  const cx = (west + east) / 2;
+  const cellWidth = ((sideM * 2) / hav(west, cy, east, cy)) * (east - west);
+  const cellHeight = ((sideM * 2) / hav(cx, south, cx, north)) * (north - south);
+  const radius = cellWidth / 2;
+  const hexWidth = radius * 2;
+  const hexHeight = (Math.sqrt(3) / 2) * cellHeight;
+  const xInterval = (3 / 4) * hexWidth;
+  const yInterval = hexHeight;
+  const boxW = east - west;
+  const boxH = north - south;
+  const xCount = Math.floor((boxW - hexWidth) / (hexWidth - radius / 2));
+  const xAdjust = (xCount * xInterval - radius / 2 - boxW) / 2 - radius / 2 + xInterval / 2;
+  const yCount = Math.floor((boxH - hexHeight) / hexHeight);
+  let yAdjust = (boxH - yCount * hexHeight) / 2;
+  if (yCount * hexHeight - boxH > hexHeight / 2) yAdjust -= hexHeight / 4;
+  return { west, south, cellWidth, cellHeight, hexHeight, xInterval, yInterval, xAdjust, yAdjust };
+}
+
 // ---------- сетка ----------
 
 const side = WIDTH_M / Math.sqrt(3);
-const grid = turf.hexGrid([BBOX.w - 0.01, BBOX.s - 0.01, BBOX.e + 0.01, BBOX.n + 0.01], side, { units: 'meters' });
+let grid;
+if (CFG.gridFrom) {
+  // Сетка «бесконечная» от рамки gridFrom: те же формулы, что web/lib/data/hexGrid.ts (buildGrid,
+  // cellCenter, hexCorners). Так новые соты ложатся на уже существующие сектора города без сдвига.
+  const g = latticeFrom(CFG.gridFrom, side);
+  const feats = [];
+  const xMin = Math.floor((BBOX.w - g.west + g.xAdjust) / g.xInterval) - 1;
+  const xMax = Math.ceil((BBOX.e - g.west + g.xAdjust) / g.xInterval) + 1;
+  for (let x = xMin; x <= xMax; x++) {
+    const odd = ((x % 2) + 2) % 2 === 1;
+    const yShift = odd ? g.hexHeight / 2 : 0;
+    const yMin = Math.floor((BBOX.s - g.south - g.yAdjust + yShift) / g.yInterval) - 1;
+    const yMax = Math.ceil((BBOX.n - g.south - g.yAdjust + yShift) / g.yInterval) + 1;
+    for (let y = yMin; y <= yMax; y++) {
+      const lng = x * g.xInterval + g.west - g.xAdjust;
+      let lat = y * g.yInterval + g.south + g.yAdjust;
+      if (odd) lat -= g.hexHeight / 2;
+      const ring = [];
+      for (let i = 0; i <= 6; i++) {
+        const a = ((2 * Math.PI) / 6) * (i % 6);
+        ring.push([lng + (g.cellWidth / 2) * Math.cos(a), lat + (g.cellHeight / 2) * Math.sin(a)]);
+      }
+      feats.push({ type: 'Feature', properties: { gx: x, gy: y }, geometry: { type: 'Polygon', coordinates: [ring] } });
+    }
+  }
+  grid = { features: feats };
+} else {
+  grid = turf.hexGrid([BBOX.w - 0.01, BBOX.s - 0.01, BBOX.e + 0.01, BBOX.n + 0.01], side, { units: 'meters' });
+}
 console.error('сот в сетке:', grid.features.length);
+
+// Сектора, которые уже есть в игре (Москва в МКАД): новые соты внутри этого кольца не строим.
+const excludeRing = CFG.excludeFile ? JSON.parse(fs.readFileSync(CFG.excludeFile, 'utf8')).features : null;
+// Сектора, что уже есть в базе (existing_<город>.json: id, lat, lng, is_deleted — их кладёт dedupe_ckad.mjs):
+// соту не строим, если её центр совпал с живым сектором или ближе 400 м к нему (наложение).
+const existing = CFG.existingFile && fs.existsSync(CFG.existingFile) ? JSON.parse(fs.readFileSync(CFG.existingFile, 'utf8')).filter((r) => !r.is_deleted) : [];
+let droppedExisting = 0;
+const overlapsExisting = ([x, y]) => existing.some((r) => Math.abs(r.lat - y) < 0.004 && Math.abs(r.lng - x) < 0.0065 && turf.distance([x, y], [r.lng, r.lat], { units: 'meters' }) < 400);
+const insideExcluded = (pt) => excludeRing && excludeRing.some((p) => turf.booleanPointInPolygon(pt, p));
 
 const indexed = Object.fromEntries(Object.entries(water).map(([k, v]) => [k, v.map((x) => ({ ...x, bb: turf.bbox(x.geom) }))]));
 const bboxHit = (a, b) => a[0] <= b[2] && a[2] >= b[0] && a[1] <= b[3] && a[3] >= b[1];
@@ -313,7 +379,8 @@ const kept = [];
 const excluded = [];
 grid.features.forEach((f, i) => {
   const center = turf.centroid(f).geometry.coordinates;
-  if (!inBox(center) || !insideCity(center)) return;
+  if (!inBox(center) || !insideCity(center) || insideExcluded(center)) return;
+  if (overlapsExisting(center)) { droppedExisting++; return; }
   const bb = turf.bbox(f);
   const touches = {};
   for (const k of PRIORITY) touches[k] = indexed[k].some((x) => bboxHit(bb, x.bb) && turf.booleanIntersects(f, x.geom));
@@ -332,7 +399,7 @@ grid.features.forEach((f, i) => {
 // влезает в 4 цифры. Номера фиксируются при импорте и дальше не меняются.
 const features = kept.map((x, n) => ({
   type: 'Feature',
-  properties: { id: CFG.prefix + String(n + 1).padStart(4, '0'), kind: x.kind, core: true, ...x.touches },
+  properties: { id: CFG.prefix + String(n + (CFG.idStart ?? 1)).padStart(4, '0'), kind: x.kind, core: true, ...(x.f.properties.gx !== undefined ? { gx: x.f.properties.gx, gy: x.f.properties.gy } : {}), ...x.touches },
   geometry: { type: 'Polygon', coordinates: [round(x.f.geometry.coordinates[0])] },
 }));
 fs.writeFileSync(`hex_${OUT}.geojson`, JSON.stringify({ type: 'FeatureCollection', features }));
@@ -345,4 +412,5 @@ fs.writeFileSync(
 const count = (k) => features.filter((f) => f.properties.kind === k).length;
 const byReason = {};
 for (const x of excluded) byReason[x.zone.reason] = (byReason[x.zone.reason] || 0) + 1;
+console.error('снято: совпало или наложилось на существующие сектора:', droppedExisting);
 console.log(JSON.stringify({ city: CITY, cells: features.length, sea: count('sea'), river: count('river'), lake: count('lake'), pond: count('pond'), excluded: excluded.length, excludedBy: byReason }));

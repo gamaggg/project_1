@@ -5,7 +5,7 @@ import { withErrorReport } from '@/lib/serverErrors'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
-const CITY: Record<string, string> = { batumi: 'Батуми', moscow: 'Москва' }
+const CITY: Record<string, string> = { batumi: 'Батуми', moscow: 'Москва и МО' }
 
 // «Написать в поддержку» (supabase-drafts/support.sql): forwards a player's
 // new request to every super admin's Telegram — the text, who wrote it and

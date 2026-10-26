@@ -343,7 +343,7 @@ export const en: Dict = {
     preparing: 'Preparing the image…',
   },
   recap: {
-    cityIn: { batumi: 'in Batumi', moscow: 'in Moscow', spb: 'in Saint Petersburg', sochi: 'in Sochi', tbilisi: 'in Tbilisi' },
+    cityIn: { batumi: 'in Batumi', moscow: 'in Moscow & MO', spb: 'in Saint Petersburg', sochi: 'in Sochi', tbilisi: 'in Tbilisi' },
     stickerWeek: 'Week',
     bannerTitle: 'Your week {cityIn}',
     bannerSub: '{from} – {to} recap',
@@ -735,8 +735,8 @@ export const en: Dict = {
   city: {
     batumiName: 'Batumi',
     batumiBoundary: "Batumi's sea, rivers and lakes",
-    moscowName: 'Moscow',
-    moscowBoundary: "Moscow's rivers, lakes and ponds",
+    moscowName: 'Moscow & MO',
+    moscowBoundary: "Rivers, lakes and ponds of Moscow & MO",
     spbName: 'Saint Petersburg',
     spbBoundary: 'The Neva, rivers, canals and the Gulf of Finland',
     sochiName: 'Sochi',

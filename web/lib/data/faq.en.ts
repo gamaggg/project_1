@@ -18,7 +18,7 @@ export const FAQ_EN: FaqSection[] = [
       {
         q: 'Which cities can I play in?',
         a: [
-          'Five right now: Batumi, Moscow, Saint Petersburg, Sochi (with Adler) and Tbilisi. You pick the city when you sign up and can change it later: Profile → «City».',
+          'Five right now: Batumi, Moscow & MO, Saint Petersburg, Sochi (with Adler) and Tbilisi. «Moscow & MO» has sectors both in Moscow itself and in the Moscow Region up to the Central Ring Road (TsKAD). You pick the city when you sign up and can change it later: Profile → «City».',
           'Sectors run only along the water where you can actually fish: sea, rivers, lakes and ponds. There are none in reserves, ports, airports, military areas or other closed places. Every city has its own rating, clans and clan battle, and its local time zone.',
           'Sochi and Batumi play the marine and freshwater species of the Black Sea and its rivers. Tbilisi plays freshwater species (river, lake, pond). Moscow has the predator and peaceful fish of its rivers and ponds. Saint Petersburg has the same as Moscow plus the Gulf of Finland and Neva Bay species: smelt, Baltic herring, eel, flounder, salmon and more.',
         ],
@@ -147,7 +147,7 @@ export const FAQ_EN: FaqSection[] = [
           'The coins for a catch depend only on the species — size and weight do not matter. The rarer the fish, the more it pays.',
           { title: 'Batumi and Sochi', rows: BATUMI_ROWS },
           { title: 'Tbilisi', rows: TBILISI_ROWS },
-          { title: 'Moscow', rows: MOSCOW_ROWS },
+          { title: 'Moscow & MO', rows: MOSCOW_ROWS },
           { title: 'Saint Petersburg', rows: SPB_ROWS },
           'On a hot sector the coins for a catch double, «Double coins» double too, and together it is ×3, not ×4. If the catch claimed the sector, there is another +25 on top (+50 with «Double coins»).',
         ],
@@ -260,7 +260,7 @@ export const FAQ_EN: FaqSection[] = [
       {
         q: 'Where can I see all the players?',
         a: [
-          'The «Territories» tab → «Rating» → «All players»: everyone who plays, from all cities (you can keep only Batumi or Moscow). The order is «By rating» (first those with more sectors, then catches — all time) or «By name»; search by name is at the top, and to its right a filter: players without a clan (whom you can invite), in a clan, with sectors, new in two weeks, by city. Tap a player and their profile opens.',
+          'The «Territories» tab → «Rating» → «All players»: everyone who plays, from all cities (you can keep only Batumi or Moscow & MO). The order is «By rating» (first those with more sectors, then catches — all time) or «By name»; search by name is at the top, and to its right a filter: players without a clan (whom you can invite), in a clan, with sectors, new in two weeks, by city. Tap a player and their profile opens.',
         ],
       },
       {

@@ -14,7 +14,7 @@ const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
 
 type Due = { chat_id: number; user_id: string | null; step: string; city: string | null; name: string | null; data: Record<string, unknown> | null }
 
-const CITY_IN: Record<string, string> = { batumi: 'Батуми', moscow: 'Москве', spb: 'Петербурге', sochi: 'Сочи', tbilisi: 'Тбилиси' }
+const CITY_IN: Record<string, string> = { batumi: 'Батуми', moscow: 'Москве и МО', spb: 'Петербурге', sochi: 'Сочи', tbilisi: 'Тбилиси' }
 
 function text(d: Due): string {
   const city = CITY_IN[d.city ?? 'batumi'] ?? 'Батуми'

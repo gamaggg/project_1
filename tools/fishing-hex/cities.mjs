@@ -46,6 +46,20 @@ export const CONFIG = {
     priority: ['river', 'lake', 'pond'],
     canalAsRiver: true,
   },
+  // Москва между МКАД и ЦКАД: те же сектора M…, та же сетка, что у Москвы в МКАД (gridFrom —
+  // рамка, по которой считалась её сетка: фаза сот берётся от неё, а не от рамки ЦКАД).
+  moscow_ckad: {
+    prefix: 'M',
+    bbox: { s: 55.3, w: 36.85, n: 56.22, e: 38.59 },
+    gridFrom: { s: 55.5718, w: 37.3688, n: 55.9111, e: 37.8435 },
+    boundaryFile: 'ckad_ring.geojson',
+    excludeFile: 'mkad_ring.geojson',
+    existingFile: 'existing_moscow.json', // что уже в базе, чтобы не наложиться
+    idStart: 4598, // в базе последний сектор Москвы M4597
+
+    priority: ['river', 'lake', 'pond'],
+    canalAsRiver: false,
+  },
   // Только для проверки уже существующих секторов Москвы по новым правилам: выходные файлы
   // идут в hex_moscow_check.geojson, настоящие hex_moscow.geojson не трогаются.
   moscow_check: {

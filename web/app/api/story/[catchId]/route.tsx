@@ -24,9 +24,9 @@ const DARE: Record<string, string> = {
   ka: 'შეძლებ მეტის დაჭერას?',
 }
 const CITY: Record<string, Record<string, string>> = {
-  ru: { B: 'Батуми', M: 'Москва' },
-  en: { B: 'Batumi', M: 'Moscow' },
-  ka: { B: 'ბათუმი', M: 'მოსკოვი' },
+  ru: { B: 'Батуми', M: 'Москва и МО' },
+  en: { B: 'Batumi', M: 'Moscow & MO' },
+  ka: { B: 'ბათუმი', M: 'მოსკოვი და მოსკოვის ოლქი' },
 }
 
 // Fonts and the logo are the same for every card: fetched once per server

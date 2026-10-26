@@ -53,9 +53,10 @@ function hotRank(t: Territory): number {
 
 const TERRITORY_PAGE_SIZE = 1000
 // A city's rows (deleted ones included) come in 1000-row pages; the first pages are asked for
-// together when the city is known to fill more than one (Moscow ~1.2k, Saint Petersburg ~1.5k),
-// so the second page costs no extra round trip. The other cities fit one page.
-const TERRITORY_PARALLEL_PAGES: Partial<Record<CityId, number>> = { moscow: 2, spb: 2 }
+// together when the city is known to fill more than one (Moscow ~5.1k since the sectors up to the
+// Central Ring Road, Saint Petersburg ~1.5k), so the next pages cost no extra round trip. The other
+// cities fit one page.
+const TERRITORY_PARALLEL_PAGES: Partial<Record<CityId, number>> = { moscow: 6, spb: 2 }
 
 // territories_with_stats.co_holders is a jsonb array of {id, avatar_url,
 // display_name, equipped_skin}, oldest share first — null when nobody shares
