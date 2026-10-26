@@ -7,9 +7,15 @@ import { trySignInWithTelegram } from '@/lib/telegram/signIn'
 // won't upload, nothing saves, and even the error report is refused, so
 // nobody hears about it (seen 08.10 in Telegram on an iPhone: the session
 // was gone 5 s after a silent Telegram sign-in). On the first such refusal
-// this restores the session — silently through Telegram inside the Mini
-// App — or, when it can't, signs out on this device so the player lands on
-// the sign-in screen instead of a broken app. Only the latter is reported.
+// this looks again, refreshes the token and restores the session — silently
+// through Telegram inside the Mini App.
+//
+// It NEVER signs anyone out (rule of the owner, 26.10: a player leaves only
+// by pressing «Выйти» or by clearing the browser's data). Until 26.10 a session that could
+// not be read was ended on the spot, and one such case was a false alarm: the server had
+// refreshed the session that very second. Now, when nothing brings the session back, the
+// player stays in the app and the failed action reports its own error; the next try looks
+// again. The report waits in this tab until a session is back, since as a guest it is refused.
 
 let expectedUserId: string | null = null
 let signedInAt = 0
@@ -54,8 +60,18 @@ export function ensureSession(): Promise<boolean> {
   inflight ??= (async () => {
     const supabase = createClient()
     const expected = expectedUserId
-    const { data } = await supabase.auth.getSession()
+    let { data } = await supabase.auth.getSession()
+    if (data.session?.user.id !== expected) {
+      // A token refresh in flight can make the session read as empty for a moment (26.10: the server
+      // refreshed a player's session at 13:20:42 and the app, asking the same second, signed them out
+      // of a perfectly good session). One more look after a short wait before calling it lost.
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+      ;({ data } = await supabase.auth.getSession())
+    }
     if (data.session?.user.id === expected) return true
+    // A stored refresh token can still bring it back.
+    const { data: refreshed } = await supabase.auth.refreshSession()
+    if (refreshed.session?.user.id === expected) return true
     const why = diagnostics()
     if (await trySignInWithTelegram(supabase, false)) {
       const { data: again } = await supabase.auth.getSession()
@@ -64,15 +80,20 @@ export function ensureSession(): Promise<boolean> {
       // couldn't bring back is reported, below.
       if (again.session?.user.id === expected) return true
     }
-    // Nothing to restore it with: back to the sign-in screen on this device
-    // (AuthProvider hears SIGNED_OUT). The report can't go out as a guest, so
-    // it waits in this tab until the player is back in.
-    pendingReport = `сессия пропала ${why} — игрок отправлен на вход`
-    await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
+    // Nothing brought it back: the player stays where they are, and the report
+    // goes out once a session is there again (flushSessionReport).
+    pendingReport = `сессия не читается ${why} — игрок оставлен в приложении`
     return false
-  })().finally(() => {
-    inflight = null
-  })
+  })()
+    .then((ok) => {
+      // The player now stays signed in through a failure, so AuthProvider never sees them «come
+      // back»: a report held back by an earlier failure goes out on the next check that succeeds.
+      if (ok) flushSessionReport()
+      return ok
+    })
+    .finally(() => {
+      inflight = null
+    })
   return inflight
 }
 
