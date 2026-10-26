@@ -1369,6 +1369,9 @@ html:not([lang="ru"]) .challenges-week-top{padding-top:22px;}
 .ios-standalone .sector-hero-map .territory-thumb-wrap{height:calc(230px + var(--standalone-top));}
 .ios-standalone .sector-hero-map-icons{top:calc(10px + var(--standalone-top));}
 .ios-standalone #screen-map{--map-top-inset:calc(env(safe-area-inset-top) + 14px);}
+/* A phone with the zoomed display («Вид: Увеличено» / page zoom) lays the page out under 360 CSS px, and every CSS px is then
+   bigger on the glass — the 14px blur reserve grew into a visible gap above the panel. Under 360px it is dropped. */
+@media (max-width:359px){.ios-standalone #screen-map{--map-top-inset:env(safe-area-inset-top);}}
 /* The iPhone home-screen app (.ios-standalone, set in app/layout.tsx). iOS
    26+ gives it a viewport the top safe area short of the screen (844pt
    iPhone: innerHeight, 100dvh and position:fixed inset:0 are 797, 100vh and
