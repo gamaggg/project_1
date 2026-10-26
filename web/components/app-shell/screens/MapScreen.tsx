@@ -184,20 +184,20 @@ export const MapScreen = forwardRef<
       ro.disconnect()
     }
   }, [clanLayer])
-  // The panel's height (it changes with the clan battle footer and the legend
-  // wrapping) goes to the map as --map-hud-h: on a short phone the zoom and
-  // locate buttons hang from its bottom edge instead of the middle of the
-  // screen, where the sector card covered the locate button.
+  // The bottom block's height (the sector card and what sits on it; it changes
+  // with the card's contents) goes to the map as --map-sheet-h: on a short phone
+  // the locate button stands right above it instead of the middle of the screen,
+  // where the sector card covered it.
   const mapWrapRef = useRef<HTMLDivElement>(null)
-  const hudRef = useRef<HTMLDivElement>(null)
+  const sheetRef = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
     const wrap = mapWrapRef.current
-    const hud = hudRef.current
-    if (!wrap || !hud) return
-    const publish = () => wrap.style.setProperty('--map-hud-h', `${hud.offsetHeight}px`)
+    const sheet = sheetRef.current
+    if (!wrap || !sheet) return
+    const publish = () => wrap.style.setProperty('--map-sheet-h', `${sheet.offsetHeight}px`)
     publish()
     const ro = new ResizeObserver(publish)
-    ro.observe(hud)
+    ro.observe(sheet)
     return () => ro.disconnect()
   }, [])
   // Clans holding sectors in this city, biggest first — the clan legend.
@@ -413,7 +413,7 @@ export const MapScreen = forwardRef<
             floating at different sizes — brand + «Игроки | Кланы» on the
             first line, what the colours mean right under it, and for clan
             members the clan battle as the panel's own orange footer. */}
-        <div className="map-hud" data-tour="map-hud" ref={hudRef}>
+        <div className="map-hud" data-tour="map-hud">
           <div className="map-hud-bar">
             {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
             <img src="/brand/logo_2.svg" alt="RANGE" className="map-hud-logo" />
@@ -514,7 +514,7 @@ export const MapScreen = forwardRef<
             </button>
           )}
         </div>
-        <div className="map-sheet-container">
+        <div className="map-sheet-container" ref={sheetRef}>
           {offlinePending && offlinePending.count > 0 && (
             <div className="offline-pill" role="status">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
