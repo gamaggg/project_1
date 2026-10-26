@@ -1,4 +1,4 @@
-import { OPERATOR, type PrivacyDoc } from '@/lib/data/privacy.shared'
+import type { PrivacyDoc } from '@/lib/data/privacy.shared'
 
 export const PRIVACY_EN: PrivacyDoc = {
   lang: 'en',
@@ -11,8 +11,8 @@ export const PRIVACY_EN: PrivacyDoc = {
     {
       title: 'Who is responsible for your data',
       blocks: [
-        `Data operator: ${OPERATOR.name}.`,
-        `You can contact us through the ${OPERATOR.bot} bot (the support section in the app) or by email at ${OPERATOR.email}.`,
+        'Data operator: the owner of the RANGE project (catchrange.com).',
+        'You can contact us in the app: «Profile» → «How to play» → «Write to support». We reply in the chat of your request and you get a notification.',
         'This policy is the same for every city and country where RANGE runs. When we add a new city, the policy stays the same.',
       ],
     },
@@ -57,6 +57,7 @@ export const PRIVACY_EN: PrivacyDoc = {
           'accept the terms of use and this policy;',
           'agree to the processing of your data as described here, including its transfer to the services in section 6 outside your country.',
         ],
+        'We store the date and the version of the terms you accepted in your profile when you finish signing up. Only we can see this.',
         'By pressing «Start» in our Telegram bot, you agree to receive notifications and messages from RANGE: about your sectors and catches, rewards, weekly results and project news. You can turn them off at any time: in «Profile» or by stopping the bot.',
         'You can withdraw your consent by deleting your account (section 8).',
       ],

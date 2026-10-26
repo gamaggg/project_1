@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { SITE_URL } from '@/lib/site'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isEmptyTelegramAccount } from '@/lib/telegram/accounts'
+import { miniAppUrlForPayload } from '@/lib/telegram/startParamCodec'
 import { stopFishingDay } from '@/lib/telegram/fishing'
 import { withErrorReport } from '@/lib/serverErrors'
 import { TRANSLATION_READY, langFromLocale, translate, type Lang, type TKey, type TVars } from '@/lib/i18n/core'
@@ -197,6 +198,11 @@ async function handlePOST(req: Request) {
       return NextResponse.json({ ok: true })
     }
 
+    // "/start r_<query>": someone opened a share link inside Telegram (lib/telegram/startParam.ts).
+    // The button opens the Mini App at the address the plain web link would have had, so the
+    // invite (?ref=) and the shared screen reach the app instead of being lost on the way.
+    const appUrl = miniAppUrlForPayload(payload, SITE_URL)
+
     await fetch(`${TELEGRAM_API}/sendPhoto`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -205,7 +211,7 @@ async function handlePOST(req: Request) {
         photo: `${SITE_URL}/telegram/welcome.png`,
         caption: say(langOf(message.from), 'bot.welcome'),
         reply_markup: {
-          inline_keyboard: [[{ text: say(langOf(message.from), 'bot.openBtn'), web_app: { url: SITE_URL } }]],
+          inline_keyboard: [[{ text: say(langOf(message.from), 'bot.openBtn'), web_app: { url: appUrl } }]],
         },
       }),
     })

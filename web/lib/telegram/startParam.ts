@@ -1,48 +1,35 @@
 import { insideTelegram } from '@/lib/openExternal'
+import { TELEGRAM_BOT_URL } from '@/lib/data/landing.shared'
+import { botStartPayload, decodeStartParam, encodeStartParam } from '@/lib/telegram/startParamCodec'
+
+export { decodeStartParam, encodeStartParam }
 
 // Share links that survive the trip through Telegram.
 //
 // A plain catchrange.com/?ref=… link opens in Telegram's built-in browser, not
 // in the Mini App, and the two keep separate storage: the invite is lost the
 // moment the friend opens the bot (found 26.10: of 56 new players who came
-// through Telegram, 2 arrived by an invite). A t.me link with ?startapp=… opens
-// the Mini App itself and hands it that value as `start_param`.
-//
-// startapp may only hold letters, digits, «_» and «-», so the query of the
-// ordinary link (clan=3&invite=…&ref=…) is carried as base64url, and at launch
-// it is put back into the address bar — every existing deep-link effect then
-// works unchanged.
-//
-// Needs NEXT_PUBLIC_TG_APP_LINK: the Mini App's link from BotFather
-// (https://t.me/catchrangebot/<short name>, or https://t.me/catchrangebot
-// when a main Mini App is set). Unset, share links stay as they were.
+// through Telegram, 2 arrived by an invite). Inside Telegram a share link now
+// goes through the bot instead:
+//   · t.me/<bot>/<app>?startapp=… (or t.me/<bot>?startapp=…) — opens the Mini App
+//     itself and hands it `start_param`. Needs NEXT_PUBLIC_TG_APP_LINK: the Mini App's
+//     link from BotFather (a Main Mini App, or an app short name). Best: one tap.
+//   · t.me/<bot>?start=r_… — works with no BotFather setup: the bot answers /start with
+//     the usual welcome and a button that opens the Mini App at catchrange.com/?<query>
+//     (app/api/telegram/webhook), so the app sees the same address a web link would give.
+// The query of the ordinary link (clan=3&invite=…&ref=…) is carried as base64url, since both
+// parameters allow only letters, digits, «_» and «-». At launch a start_param is put back
+// into the address bar, so every existing deep-link effect works unchanged.
 
-const MAX_PARAM = 512
-const SAFE_QUERY = /^[A-Za-z0-9_=&%.:+\-]*$/
-
-export function encodeStartParam(query: string): string {
-  const bytes = new TextEncoder().encode(query)
-  const b64 = btoa(Array.from(bytes, (b) => String.fromCharCode(b)).join(''))
-  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-}
-
-export function decodeStartParam(param: string): string | null {
-  if (!param || param.length > MAX_PARAM || !/^[A-Za-z0-9_-]+$/.test(param)) return null
-  try {
-    const b64 = param.replace(/-/g, '+').replace(/_/g, '/')
-    const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4))
-    const query = new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)))
-    return SAFE_QUERY.test(query) ? query : null
-  } catch {
-    return null
-  }
-}
-
-// The address a share link points at: the Mini App through Telegram when we are
-// inside it and the link is configured, the website otherwise.
+// The address a share link points at: through Telegram when we are inside it, the website
+// otherwise (and when the query is too long for the bot's 64-character start parameter).
 export function shareLink(query: string): string {
-  const appLink = process.env.NEXT_PUBLIC_TG_APP_LINK
-  if (appLink && insideTelegram()) return `${appLink}?startapp=${encodeStartParam(query)}`
+  if (insideTelegram()) {
+    const appLink = process.env.NEXT_PUBLIC_TG_APP_LINK
+    if (appLink) return `${appLink}?startapp=${encodeStartParam(query)}`
+    const payload = botStartPayload(query)
+    if (payload) return `${TELEGRAM_BOT_URL}?start=${payload}`
+  }
   return `${window.location.origin}${window.location.pathname}?${query}`
 }
 
