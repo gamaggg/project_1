@@ -70,11 +70,12 @@ export const metadata: Metadata = {
     'береговая рыбалка',
     'Грузия',
   ],
-  // Search consoles: the codes come from Google Search Console and Yandex Webmaster
-  // (the «HTML tag» method); set them in the Vercel environment, not in the code.
+  // Search consoles (the «HTML tag» method of Google Search Console and Yandex Webmaster).
+  // The codes are public — they sit in the page source — so they live here; the Vercel
+  // variables, when set, take over. Both consoles were set up for https://catchrange.com on 26.10.2026.
   verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
-    yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION,
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ?? 'Xvr_2BtgjJxoRe1AiSDNdgjM1US1nKoBbLzeJbNNOeM',
+    yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION ?? '974e85f35a586811',
   },
   alternates: {
     canonical: SITE_URL,
