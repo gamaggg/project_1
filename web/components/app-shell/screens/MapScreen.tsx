@@ -184,6 +184,22 @@ export const MapScreen = forwardRef<
       ro.disconnect()
     }
   }, [clanLayer])
+  // The panel's height (it changes with the clan battle footer and the legend
+  // wrapping) goes to the map as --map-hud-h: on a short phone the zoom and
+  // locate buttons hang from its bottom edge instead of the middle of the
+  // screen, where the sector card covered the locate button.
+  const mapWrapRef = useRef<HTMLDivElement>(null)
+  const hudRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const wrap = mapWrapRef.current
+    const hud = hudRef.current
+    if (!wrap || !hud) return
+    const publish = () => wrap.style.setProperty('--map-hud-h', `${hud.offsetHeight}px`)
+    publish()
+    const ro = new ResizeObserver(publish)
+    ro.observe(hud)
+    return () => ro.disconnect()
+  }, [])
   // Clans holding sectors in this city, biggest first — the clan legend.
   const clanStandings = (() => {
     if (!clanLayer) return []
@@ -375,7 +391,7 @@ export const MapScreen = forwardRef<
           </button>
         </div>
       )}
-      <div className="map-wrap">
+      <div className="map-wrap" ref={mapWrapRef}>
         <MapView
           ref={mapRef}
           territories={territories}
@@ -397,7 +413,7 @@ export const MapScreen = forwardRef<
             floating at different sizes — brand + «Игроки | Кланы» on the
             first line, what the colours mean right under it, and for clan
             members the clan battle as the panel's own orange footer. */}
-        <div className="map-hud" data-tour="map-hud">
+        <div className="map-hud" data-tour="map-hud" ref={hudRef}>
           <div className="map-hud-bar">
             {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
             <img src="/brand/logo_2.svg" alt="RANGE" className="map-hud-logo" />

@@ -1548,3 +1548,19 @@ html.ios-standalone #screen-clan .clan-hero { margin-top: 0; margin-left: 0; mar
 
 /* «Добавить игроков» under the roster card. */
 .war-add-btn { margin-top: 2px; margin-bottom: 12px; padding: 8px 14px; font-size: 13px; }
+
+/* iPhone SE (≤380px wide). The map's top panel and the sector card leave little map, so the panel gets lower:
+   «Игроки | Кланы» is as tall as the Казна chip beside it (28px), the clan battle plaque is slimmer, and on a short
+   screen the zoom and locate buttons hang from the panel's bottom edge instead of the middle, where the sector card
+   covered the locate button. */
+@media (max-width: 380px) {
+  .map-hud .map-layer-switch { height: 28px; box-sizing: border-box; }
+  html .map-hud .map-layer-opt { padding-top: 0; padding-bottom: 0; line-height: 1; }
+  .map-hud .hud-boosts { height: 28px; }
+  .map-race-pill:not(.has-cta) { padding-top: 7px; padding-bottom: 7px; }
+  .map-race-pill:not(.has-cta) .map-race-pill-body { gap: 4px; }
+}
+@media (max-width: 380px) and (max-height: 700px) {
+  .map-controls { top: calc(6px + var(--map-top-inset, 0px) + var(--map-hud-h, 150px) + 10px); transform: none; gap: 8px; }
+  .map-control-btn { width: 36px; height: 36px; }
+}
