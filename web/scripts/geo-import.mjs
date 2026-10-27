@@ -33,7 +33,7 @@
 // NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.
 
 import { randomUUID } from 'node:crypto'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { createClient } from '@supabase/supabase-js'
 import sharp from 'sharp'
@@ -76,12 +76,19 @@ function metresToSegment(lat, lng, a, b) {
 }
 
 // The sector's own hexagon: from the static geometry when the sector is
-// there (public/data/sectors.json), else built round its centre the same
+// there (public/data/sectors-<prefix>.<version>.json), else built round its centre the same
 // way — corners east and west 346 m out, flat sides 300 m north and south.
 const staticCorners = new Map()
 {
-  const geometry = JSON.parse(await readFile(new URL('../public/data/sectors.json', import.meta.url), 'utf8'))
-  for (const g of geometry) if (g.corners) staticCorners.set(g.id, g.corners)
+  // The old single file first, then the newest per-city files (public/data/sectors-<prefix>.<version>.json).
+  const dir = new URL('../public/data/', import.meta.url)
+  const names = (await readdir(dir)).filter((n) => /^sectors-[A-Z]\.[0-9TZ]+\.json$/.test(n)).sort()
+  const files = []
+  try {
+    files.push(JSON.parse(await readFile(new URL('sectors.json', dir), 'utf8')))
+  } catch {} // gone once the old apps have left
+  for (const name of names) files.push(JSON.parse(await readFile(new URL(name, dir), 'utf8')).sectors)
+  for (const geometry of files) for (const g of geometry) if (g.corners) staticCorners.set(g.id, g.corners)
 }
 function hexOf(sector) {
   const known = staticCorners.get(sector.id)

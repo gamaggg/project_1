@@ -18,7 +18,7 @@ import { CLAN_ROLE_LABEL, type ClanRole } from '@/lib/data/clanLevels'
 import { computeAchievements } from '@/lib/data/achievements'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { tn } from '@/lib/i18n'
-import { CITIES, asCityId } from '@/lib/data/city'
+import { CITIES, asCityId, cityForSectorId } from '@/lib/data/city'
 
 const BONUS = 100
 
@@ -159,8 +159,8 @@ export function GuestShareScreen({ share, onSignUp, onSignIn }: { share: GuestSh
 }
 
 function TerritoryBody({ t, onLocked }: { t: TerritoryPreview; onLocked: (what: string) => () => void }) {
-  const { data: geometry } = useSectorsGeometry()
-  const corners = t.corners ?? geometry?.find((g) => g.id === t.id)?.corners ?? null
+  const { data: geometry } = useSectorsGeometry(cityForSectorId(t.id))
+  const corners = t.corners ?? geometry?.sectors.find((g) => g.id === t.id)?.corners ?? null
   // Only what the static mini-map reads; no coordinates beyond the outline.
   const territory: Territory | null = corners
     ? {

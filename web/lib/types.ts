@@ -1351,6 +1351,7 @@ export type Database = {
           id: string
           is_deleted: boolean
           kind: Database["public"]["Enums"]["territory_kind"] | null
+          kind_changed_at: string | null
           lat: number | null
           lng: number | null
           owner_id: string | null
@@ -1363,6 +1364,7 @@ export type Database = {
           id: string
           is_deleted?: boolean
           kind?: Database["public"]["Enums"]["territory_kind"] | null
+          kind_changed_at?: string | null
           lat?: number | null
           lng?: number | null
           owner_id?: string | null
@@ -1375,6 +1377,7 @@ export type Database = {
           id?: string
           is_deleted?: boolean
           kind?: Database["public"]["Enums"]["territory_kind"] | null
+          kind_changed_at?: string | null
           lat?: number | null
           lng?: number | null
           owner_id?: string | null
@@ -1615,6 +1618,7 @@ export type Database = {
           id: string | null
           is_deleted: boolean | null
           kind: Database["public"]["Enums"]["territory_kind"] | null
+          kind_changed_at: string | null
           last_catch_at: string | null
           lat: number | null
           lng: number | null
