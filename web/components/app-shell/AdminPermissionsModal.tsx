@@ -13,9 +13,10 @@ const PERMISSIONS: { key: keyof Omit<AdminPermissions, 'isAdmin'>; label: string
   { key: 'canAddCatchFromGallery', label: 'Добавление улова фото из галереи' },
   { key: 'canReviewPanoramas', label: 'Панорамы «Где это?»: отбор и план' },
   { key: 'canViewStats', label: 'Статистика приложения' },
+  { key: 'canViewLimits', label: 'Лимиты сервисов' },
 ]
 
-const EMPTY_PERMS = { canModerateReports: false, canBlockUsers: false, canAddCatchManually: false, canViewAllUsers: false, canAddCatchFromGallery: false, canReviewPanoramas: false, canViewStats: false }
+const EMPTY_PERMS = { canModerateReports: false, canBlockUsers: false, canAddCatchManually: false, canViewAllUsers: false, canAddCatchFromGallery: false, canReviewPanoramas: false, canViewStats: false, canViewLimits: false }
 
 // Rendered by FishZoneApp itself, not nested inside a screen's scrolling
 // `.screen-inner` — same reason as EditProfileModal/ChangeColorModal (a
@@ -44,6 +45,7 @@ export function AdminPermissionsModal({ userId, onClose }: { userId: string; onC
       canAddCatchFromGallery: perms.canAddCatchFromGallery,
       canReviewPanoramas: perms.canReviewPanoramas,
       canViewStats: perms.canViewStats,
+      canViewLimits: perms.canViewLimits,
     })
   }
 

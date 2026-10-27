@@ -16,6 +16,7 @@ import {
   useIsSuperAdmin,
   useCanAddCatchFromGallery,
   useCanReviewPanoramas,
+  useCanViewLimits,
   useCanViewStats,
   useAllTerritoryIds,
   useExtraSectors,
@@ -106,6 +107,7 @@ import { AdminGeoScreen } from '@/components/app-shell/screens/AdminGeoScreen'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { ChallengesScreen } from '@/components/app-shell/screens/ChallengesScreen'
 import { AdminStatsScreen } from '@/components/app-shell/screens/AdminStatsScreen'
+import { AdminLimitsScreen } from '@/components/app-shell/screens/AdminLimitsScreen'
 import { FaqScreen } from '@/components/app-shell/screens/FaqScreen'
 import { ClanListScreen } from '@/components/app-shell/screens/ClanListScreen'
 import { ClanScreen } from '@/components/app-shell/screens/ClanScreen'
@@ -145,6 +147,7 @@ export type ScreenId =
   | 'screen-admin-access'
   | 'screen-admin-log'
   | 'screen-admin-stats'
+  | 'screen-admin-limits'
   | 'screen-faq'
   | 'screen-achievements'
   | 'screen-achievement-detail'
@@ -185,6 +188,7 @@ type StackEntry =
   | { screen: 'screen-admin-access' }
   | { screen: 'screen-admin-log' }
   | { screen: 'screen-admin-stats' }
+  | { screen: 'screen-admin-limits' }
   | { screen: 'screen-faq' }
   | { screen: 'screen-achievements'; userId: string }
   | { screen: 'screen-achievement-detail'; userId: string; icon: Achievement['icon'] }
@@ -213,6 +217,7 @@ export function FishZoneApp() {
   const canAddCatchFromGallery = useCanAddCatchFromGallery()
   const canReviewPanoramas = useCanReviewPanoramas()
   const canViewStats = useCanViewStats()
+  const canViewLimits = useCanViewLimits()
   const { data: allTerritoryIds = [] } = useAllTerritoryIds()
   const confirmCatchMutation = useConfirmCatch()
   const addDiaryCatch = useAddDiaryCatch()
@@ -1867,6 +1872,7 @@ export function FishZoneApp() {
             onOpenReports={() => push({ screen: 'screen-admin-reports' })}
             onOpenAdminAccess={() => push({ screen: 'screen-admin-access' })}
             onOpenAdminStats={() => push({ screen: 'screen-admin-stats' })}
+            onOpenAdminLimits={() => push({ screen: 'screen-admin-limits' })}
             onOpenFaq={() => push({ screen: 'screen-faq' })}
             onOpenAdminLog={() => {
               markAdminLogRead()
@@ -1966,6 +1972,9 @@ export function FishZoneApp() {
         </Screen>
         <Screen id="screen-admin-stats" current={currentScreen} onBack={pop}>
           {canViewStats && <AdminStatsScreen onBack={pop} active={currentScreen === 'screen-admin-stats'} />}
+        </Screen>
+        <Screen id="screen-admin-limits" current={currentScreen} onBack={pop}>
+          {canViewLimits && <AdminLimitsScreen onBack={pop} active={currentScreen === 'screen-admin-limits'} />}
         </Screen>
         <Screen id="screen-admin-log" current={currentScreen} onBack={pop}>
           <AdminActionsScreen title="Последние действия" onBack={pop} onOpenUser={openUserProfile} onOpenTerritory={openTerritory} />

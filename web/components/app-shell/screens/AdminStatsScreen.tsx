@@ -52,6 +52,7 @@ const SCREEN_NAMES: Record<string, string> = {
   'screen-admin-access': 'Доступы',
   'screen-admin-log': 'Последние действия',
   'screen-admin-stats': 'Статистика',
+  'screen-admin-limits': 'Лимиты сервисов',
 }
 
 const ONBOARDING_STEPS: { id: string; name: string }[] = [

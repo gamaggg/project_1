@@ -56,6 +56,7 @@ export function useAdminPermissions(userId: string | null) {
         canAddCatchFromGallery: row?.can_add_catch_from_gallery ?? false,
         canReviewPanoramas: row?.can_review_panoramas ?? false,
         canViewStats: row?.can_view_stats ?? false,
+        canViewLimits: row?.can_view_limits ?? false,
       }
     },
   })
@@ -79,6 +80,7 @@ export function useSetAdminPermissions() {
       canAddCatchFromGallery: boolean
       canReviewPanoramas: boolean
       canViewStats: boolean
+      canViewLimits: boolean
     }) => {
       const supabase = createClient()
       const { error } = await supabase.rpc('admin_set_admin', {
@@ -91,6 +93,7 @@ export function useSetAdminPermissions() {
         p_can_add_catch_from_gallery: args.canAddCatchFromGallery,
         p_can_review_panoramas: args.canReviewPanoramas,
         p_can_view_stats: args.canViewStats,
+        p_can_view_limits: args.canViewLimits,
       })
       if (error) throw error
     },

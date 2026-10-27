@@ -728,6 +728,7 @@ export type Database = {
           can_moderate_reports: boolean
           can_review_panoramas: boolean
           can_view_stats: boolean
+          can_view_limits: boolean
           can_view_all_users: boolean
           city: string
           coins: number
@@ -765,6 +766,7 @@ export type Database = {
           can_moderate_reports?: boolean
           can_review_panoramas?: boolean
           can_view_stats?: boolean
+          can_view_limits?: boolean
           can_view_all_users?: boolean
           city?: string
           coins?: number
@@ -802,6 +804,7 @@ export type Database = {
           can_moderate_reports?: boolean
           can_review_panoramas?: boolean
           can_view_stats?: boolean
+          can_view_limits?: boolean
           can_view_all_users?: boolean
           city?: string
           coins?: number
@@ -1499,6 +1502,7 @@ export type Database = {
           can_moderate_reports: boolean | null
           can_review_panoramas: boolean | null
           can_view_stats: boolean | null
+          can_view_limits: boolean | null
           can_view_all_users: boolean | null
           catches_count: number | null
           city: string | null
@@ -1538,6 +1542,7 @@ export type Database = {
           can_moderate_reports?: never
           can_review_panoramas?: never
           can_view_stats?: never
+          can_view_limits?: never
           can_view_all_users?: never
           catches_count?: never
           city?: string | null
@@ -1573,6 +1578,7 @@ export type Database = {
           can_moderate_reports?: never
           can_review_panoramas?: never
           can_view_stats?: never
+          can_view_limits?: never
           can_view_all_users?: never
           catches_count?: never
           city?: string | null
@@ -1843,6 +1849,7 @@ export type Database = {
           p_can_moderate_reports?: boolean
           p_can_review_panoramas?: boolean
           p_can_view_stats?: boolean
+          p_can_view_limits?: boolean
           p_can_view_all_users?: boolean
           p_is_admin: boolean
           p_user_id: string
@@ -1977,6 +1984,7 @@ export type Database = {
       claim_first_steps: { Args: Record<string, never>; Returns: Json }
       log_app_events: { Args: { p_device: string; p_session: string; p_events: Json }; Returns: number }
       get_app_stats: { Args: { p_days?: number; p_tz?: string }; Returns: Json }
+      get_service_limits: { Args: Record<string, never>; Returns: Json }
       get_app_stats_range: { Args: { p_from?: string | null; p_to?: string | null; p_bucket?: string; p_tz?: string }; Returns: Json }
       collect_treasury: { Args: Record<string, never>; Returns: Json }
       spin_slots: { Args: Record<string, never>; Returns: Json }
@@ -2018,6 +2026,7 @@ export type Database = {
           can_moderate_reports: boolean
           can_review_panoramas: boolean
           can_view_stats: boolean
+          can_view_limits: boolean
           can_view_all_users: boolean
           is_admin: boolean
         }[]
