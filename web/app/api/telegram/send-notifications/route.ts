@@ -39,7 +39,8 @@ type NotificationRef = {
   owner: OwnerRef | OwnerRef[] | null
   payload: Record<string, unknown> | null
 }
-type Message = { text: string; buttonLabel: string; url: string }
+// extraButtons: plain link buttons under the main one (an alert's «write to this player» links).
+type Message = { text: string; buttonLabel: string; url: string; extraButtons?: { text: string; url: string }[] }
 
 function first<T>(value: T | T[] | null): T | null {
   if (Array.isArray(value)) return value[0] ?? null
@@ -92,7 +93,14 @@ function renderMessage(notification: NotificationRef): Message | null {
       // For the super admins: stays in Russian, whoever's language is set.
       const text = notification.payload?.text as string | undefined
       if (!text) return null
-      return { text: `⚠️ RANGE — тревога\n${text}`, buttonLabel: 'Открыть RANGE', url: SITE_URL }
+      // Who it hit (system_health_tick puts up to three players in the payload): a button
+      // that opens a chat with each one who has Telegram linked.
+      const players = (notification.payload?.players as { name?: string; tg_id?: number | null }[] | undefined) ?? []
+      const extraButtons = players
+        .filter((p) => typeof p.tg_id === 'number')
+        .slice(0, 3)
+        .map((p) => ({ text: `Написать: ${p.name ?? 'игрок'}`.slice(0, 60), url: `tg://user?id=${p.tg_id}` }))
+      return { text: `⚠️ RANGE — тревога\n${text}`, buttonLabel: 'Открыть RANGE', url: SITE_URL, extraButtons }
     }
     case 'clan_invite':
     case 'clan_join_request':
@@ -390,17 +398,21 @@ async function handleGET(req: Request) {
     // process ever sees a language set for one message.
     setCurrentLanguage('ru')
 
-    const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: row.chat_id,
-        text,
-        reply_markup: {
-          inline_keyboard: [[{ text: message.buttonLabel, web_app: { url: message.url } }]],
-        },
-      }),
-    })
+    const send = (extra: { text: string; url: string }[]) =>
+      fetch(`${TELEGRAM_API}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: row.chat_id,
+          text,
+          reply_markup: {
+            inline_keyboard: [[{ text: message.buttonLabel, web_app: { url: message.url } }], ...extra.map((b) => [{ text: b.text, url: b.url }])],
+          },
+        }),
+      })
+    let res = await send(message.extraButtons ?? [])
+    // A tg://user link can be refused (the person's privacy settings); the alert itself must still arrive.
+    if (res.status === 400 && message.extraButtons?.length) res = await send([])
 
     if (res.ok) {
       await admin.from('telegram_outbox').update({ sent_at: new Date().toISOString() }).eq('id', row.id)

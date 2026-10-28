@@ -28,6 +28,13 @@ const GEO_GRANTED_EVENT = 'fishzone:geo-granted'
 // Wraps getCurrentPosition in a promise; never rejects — null on denial/timeout/
 // unavailable API, so callers don't need a try/catch for the "no location" case
 // (see DECISIONS.md — asked for on-demand from the "+" button, not eagerly).
+// Why the last getCurrentCoords came back empty (null after a success). 1 means the phone
+// or Telegram refused, which only the player can fix in their settings (see GeoHelpModal).
+let lastFailureCode: number | null = null
+export function geoRefused(): boolean {
+  return lastFailureCode === 1
+}
+
 export async function getCurrentCoords(): Promise<Coords | null> {
   if (typeof navigator === 'undefined' || !navigator.geolocation) return null
 
@@ -43,9 +50,11 @@ export async function getCurrentCoords(): Promise<Coords | null> {
     result = await attempt({ enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 })
   }
   if ('code' in result) {
+    lastFailureCode = result.code
     reportGeoFailure(result)
     return null
   }
+  lastFailureCode = null
   const position = result
   localStorage.setItem(GEO_GRANTED_KEY, '1')
   window.dispatchEvent(new Event(GEO_GRANTED_EVENT))

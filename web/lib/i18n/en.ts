@@ -681,6 +681,16 @@ export const en: Dict = {
     km: 'km',
     kg: 'kg',
   },
+  geoHelp: {
+    title: 'Turn on location',
+    lead: "Your phone doesn't give the app your location, so we can't tell whether you're near a sector. You can switch it on here:",
+    stepIosTg: 'Open Settings on your iPhone|Go to “Privacy & Security”|Open “Location Services”|Find Telegram in the list|Choose “While Using the App”',
+    stepIosWeb: 'Open Settings on your iPhone|Go to “Privacy & Security”|Open “Location Services”|Find Safari and choose “While Using”|Go back to Safari and tap “aA” in the address bar|Open “Website Settings”, then “Location”|Choose “Allow”',
+    stepAndroidTg: 'Open your phone’s Settings|Go to “Apps” and choose Telegram|Open “Permissions”, then “Location”|Choose “Allow only while using the app”',
+    stepAndroidWeb: 'Open your phone’s Settings|Go to “Apps” and choose Chrome|Open “Permissions”, then “Location”|Choose “Allow”',
+    stepOther: 'Click the icon left of the site address|Find “Location”|Choose “Allow”',
+    retry: "I've turned it on, check again",
+  },
   shell: {
     joinClan: 'Join the clan “{name}” in RANGE',
     clanLinkCopied: 'Clan link copied — send it to your friends',

@@ -32,7 +32,9 @@ import {
   useSubmitGeoGuess,
   reportClientError,
 } from '@/lib/supabase/queries'
-import { getCurrentCoords, nearestTerritory, queryGeolocationPermission } from '@/lib/geolocation'
+import { geoRefused, getCurrentCoords, nearestTerritory, queryGeolocationPermission } from '@/lib/geolocation'
+import { showGeoHelp } from '@/lib/geoHelp'
+import { GeoHelpModal } from '@/components/app-shell/GeoHelpModal'
 import { copyCatchPhotoToDiary, uploadCatchPhoto, uploadDiaryPhoto } from '@/lib/supabase/storage'
 import { ensureSession } from '@/lib/supabase/session'
 import { useAdminActionsReadState } from '@/lib/activityRead'
@@ -969,11 +971,10 @@ export function FishZoneApp() {
       // denied — the browser blocks getCurrentPosition silently forever
       // after that, no retry will ever succeed without a settings change.
       const permission = await queryGeolocationPermission()
-      showToast(
-        permission === 'denied'
-          ? tn('shell.geoDenied')
-          : tn('shell.geoFailed')
-      )
+      // A refusal (code 1 or the stored decision) gets the steps for this phone; any other
+      // failure keeps the plain «try again».
+      if (permission === 'denied' || geoRefused()) showGeoHelp(handlePlus)
+      else showToast(tn('shell.geoFailed'))
       return
     }
     mapHandleRef.current?.showUserLocation(coords.lat, coords.lng)
@@ -1982,6 +1983,7 @@ export function FishZoneApp() {
       </div>
 
       <div className={`toast${toast ? ' show' : ''}`}>{toast}</div>
+      <GeoHelpModal />
 
       {outOfZone && (
         <div className="modal-overlay" onClick={() => setOutOfZone(false)}>

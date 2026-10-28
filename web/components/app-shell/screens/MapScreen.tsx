@@ -8,7 +8,8 @@ import type { GeoMarks, LeafletMapHandle } from '@/components/app-shell/LeafletM
 import type { Territory } from '@/lib/data/types'
 import { CITIES, cityForSectorId, type CityId } from '@/lib/data/city'
 import { formatWhen } from '@/lib/format'
-import { getCurrentCoords, nearestTerritory, useGeolocationPermission, watchLiveLocation, type Coords } from '@/lib/geolocation'
+import { geoRefused, getCurrentCoords, nearestTerritory, useGeolocationPermission, watchLiveLocation, type Coords } from '@/lib/geolocation'
+import { showGeoHelp } from '@/lib/geoHelp'
 import { observeScreenActive } from '@/lib/observeScreenActive'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
@@ -274,11 +275,15 @@ export const MapScreen = forwardRef<
 
   // Self-contained "locate me" button — just recenters the map on the
   // visitor's position, unrelated to the "+" catch flow (no sector matching,
-  // no camera). Silently no-ops on denial/error, same as the geolocation used
-  // elsewhere never throws.
+  // no camera). A refusal opens the how-to-switch-it-on card; other failures
+  // stay silent, same as the geolocation used elsewhere never throws.
   async function handleLocate() {
     const coords = await getCurrentCoords()
-    if (!coords) return
+    if (!coords) {
+      // The phone refused: say where to switch it on instead of doing nothing.
+      if (geoRefused()) showGeoHelp(handleLocate)
+      return
+    }
     mapRef.current?.showUserLocation(coords.lat, coords.lng)
     mapRef.current?.flyToLocation(coords.lat, coords.lng)
   }
