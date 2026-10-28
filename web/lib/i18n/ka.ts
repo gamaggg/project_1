@@ -1421,6 +1421,8 @@ export const ka: Dict = {
     sinets_spb: 'სინეცი',
     beloglazka_spb: 'ბელოგლაზკა',
     sig_spb: 'სიგი',
+    rechnaya_forel_msk: 'მდინარის კალმახი',
+    raduzhnaya_forel_msk: 'ცისარტყელა კალმახი',
   },
   bait: {
     microjig: 'მიკროჯიგი',

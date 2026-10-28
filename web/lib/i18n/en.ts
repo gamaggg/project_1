@@ -1419,6 +1419,8 @@ export const en: Dict = {
     sinets_spb: 'Blue bream',
     beloglazka_spb: 'White-eye bream',
     sig_spb: 'Whitefish',
+    rechnaya_forel_msk: 'River trout',
+    raduzhnaya_forel_msk: 'Rainbow trout',
   },
   bait: {
     microjig: 'Micro jig',

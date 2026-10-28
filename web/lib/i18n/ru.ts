@@ -1422,6 +1422,8 @@ export const ru = {
     sinets_spb: 'Синец',
     beloglazka_spb: 'Белоглазка',
     sig_spb: 'Сиг',
+    rechnaya_forel_msk: 'Речная форель',
+    raduzhnaya_forel_msk: 'Радужная форель',
   },
   bait: {
     microjig: 'Микроджиг',
