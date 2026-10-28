@@ -1486,8 +1486,11 @@ html.ios-standalone #screen-clan .clan-hero { margin-top: 0; margin-left: 0; mar
 /* The lane warms to gold towards the line, the boat stops rowing and glows, the trail turns gold. */
 .race-lane.finished::before { content: ''; position: absolute; top: 0; bottom: 0; left: 30%; right: 12px; background: radial-gradient(ellipse 100% 50% at 100% 50%, rgba(255, 205, 92, 0.28), rgba(255, 205, 92, 0.12) 45%, rgba(255, 205, 92, 0) 100%); pointer-events: none; }
 .race-lane.finished .race-boat-bob { animation: none; filter: drop-shadow(0 0 9px rgba(255, 207, 96, 0.9)); }
-.race-lane.finished .race-oar { animation: none; }
-.race-lane.finished .race-trail { opacity: 0.7; height: 6px; margin-top: 8px; background: linear-gradient(90deg, rgba(255, 214, 120, 0), rgba(255, 200, 80, 0.55)); }
+.race-lane.finished .rb-pad, .race-lane.finished .rb-lean, .race-lane.finished .rb-dn { animation: none; }
+/* At the line the leader throws both arms up. */
+.race-lane.finished .rb-sw { animation: none; transform: rotate(-150deg); }
+.race-lane.finished .rb-sw.b { transform: rotate(150deg); }
+.race-lane.finished .race-trail { opacity: 0.7; height: 6px; background: linear-gradient(90deg, rgba(255, 214, 120, 0), rgba(255, 200, 80, 0.55)); }
 .race-spark { position: absolute; width: 8px; height: 8px; background: #FFE08A; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); opacity: 0; animation: race-twinkle 2s ease-in-out infinite; pointer-events: none; z-index: 3; }
 .race-spark.s1 { left: calc(var(--boat) * 0.2); top: 14%; animation-delay: 0s; }
 .race-spark.s2 { left: calc(var(--boat) * 0.62); top: 2%; width: 6px; height: 6px; animation-delay: 0.7s; }

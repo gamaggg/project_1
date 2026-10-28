@@ -1,11 +1,11 @@
 'use client'
 
 import { HexLoader } from '@/components/app-shell/HexLoader'
-import { memo, useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useClanRace } from '@/lib/supabase/queries'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
-import { resolveCrest, shadeHex } from '@/lib/data/clanCrests'
-import { ClanCrest } from '@/components/app-shell/ClanCrest'
+import { resolveCrest } from '@/lib/data/clanCrests'
+import { BOAT_HEIGHT, RaceBoat, boatUnits, crewOf } from '@/components/app-shell/RaceBoat'
 import { ChallengeCountdown } from '@/components/app-shell/ChallengeCountdown'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
 import type { CityId } from '@/lib/data/city'
@@ -23,64 +23,12 @@ export function formatMeters(m: number): string {
   return m >= 10_000 ? `${(m / 1000).toLocaleString(currentLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })} ${tn('fmt.km')}` : `${m.toLocaleString(currentLocale())} ${tn('fmt.m')}`
 }
 
-// A side-on rowing boat — we are rowers: a long hull in the clan's primary
-// colour with its secondary stripe, two rowers (a team) in the clan's colours
-// pulling their oars (the oars sweep back and forth), and the clan's crest
-// flying from the stern pole. The bow points right, at the finish.
-const SKIN = '#F0C9A0'
-const SKIN_EDGE = '#C99A6B'
-const WOOD = '#B98A55'
-
-// One rower facing the bow: hips at x, hands on the oar's handle, the oar
-// passing through the oarlock on the gunwale and dipping behind into the water.
-function Rower({ x, jersey, cap, blade }: { x: number; jersey: string; cap: string; blade: string }) {
-  const sh = x + 5
-  const lock = x + 2.5
-  const handle = x + 16
-  const bladeX = lock - 15.5
-  return (
-    <>
-      <path d={`M${x} 29.5 L${x + 10} 28.2 L${x + 11.5} 31.6`} stroke="#2C3340" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <path d={`M${x} 29 L${sh} 17.5`} stroke={jersey} strokeWidth="6.4" strokeLinecap="round" />
-      <circle cx={sh + 1.6} cy="12.2" r="3.9" fill={SKIN} />
-      <path d={`M${sh - 2.3} 11.8Q${sh - 1.8} 6.8 ${sh + 1.8} 7.3Q${sh + 5.2} 7.6 ${sh + 5.5} 11.8Z`} fill={cap} />
-      <path d={`M${sh + 4.6} 11.4H${sh + 8.4}`} stroke={cap} strokeWidth="1.7" strokeLinecap="round" />
-      {/* the arm has its own darker edge, so a pale shirt never swallows it */}
-      <path d={`M${sh + 0.5} 19.6 L${sh + 8} 23.2`} stroke={SKIN_EDGE} strokeWidth="3.4" strokeLinecap="round" />
-      <path d={`M${sh + 0.5} 19.6 L${sh + 8} 23.2`} stroke={SKIN} strokeWidth="2.2" strokeLinecap="round" />
-      <g className="race-oar" style={{ transformOrigin: `${lock}px 29.2px` }}>
-        <path d={`M${handle} 22.5 L${bladeX + 0.5} 38`} stroke={WOOD} strokeWidth="1.7" strokeLinecap="round" />
-        <ellipse cx={bladeX} cy="38" rx="5.6" ry="2" transform={`rotate(-28 ${bladeX} 38)`} fill={blade} stroke="rgba(0,0,0,.25)" strokeWidth=".6" />
-      </g>
-    </>
-  )
-}
-
-export const RaceBoat = memo(function RaceBoat({ crest, size = 56 }: { crest: unknown; size?: number }) {
-  const c = resolveCrest(crest)
-  const hull = shadeHex(c.primary, -0.18)
-  const height = size * 0.625
-  const flag = Math.round(size * 0.3)
-  return (
-    <span className="race-boat" style={{ width: size, height }}>
-      <svg viewBox="0 0 80 50" width={size} height={height} aria-hidden>
-        <rect x="8.2" y="9" width="1.6" height="22" rx=".8" fill="#3B2E25" />
-        <path d="M4 30H76Q70 41.5 54 42.5H24Q11 41.5 4 30Z" fill={hull} />
-        <path d="M7.5 34H72.5" stroke={c.secondary} strokeWidth="2.2" strokeLinecap="round" />
-        <path d="M13 40.2Q40 43 67 40.2" stroke="rgba(0,0,0,.18)" strokeWidth="1.2" fill="none" />
-        <Rower x={24} jersey={shadeHex(c.primary, 0.2)} cap={c.secondary} blade={c.secondary} />
-        <Rower x={46} jersey={shadeHex(c.primary, -0.06)} cap={c.secondary} blade={c.secondary} />
-      </svg>
-      <span className="race-boat-crest" style={{ left: size * 0.1 - flag / 2 + 1, top: size * 0.02 }}>
-        <ClanCrest crest={crest} size={flag} />
-      </span>
-    </span>
-  )
-})
-
 // The river itself: one lane per clan in race order, the start on the left
 // and a chequered finish line on the right. Boats row in from the start on
-// first paint, then glide when their position changes (transform only).
+// first paint, then glide when their position changes (transform only). All
+// boats of one river share one scale (px per boat unit), chosen so the longest
+// crew takes at most half of the track; each lane gets its own boat length
+// (--boat), so the bow, not the stern, meets the finish line.
 export function RaceRiver({
   clans,
   highlightId,
@@ -92,9 +40,24 @@ export function RaceRiver({
   onOpenClan?: (id: number) => void
   boatSize?: number
 }) {
-  const laneHeight = Math.round(boatSize * 0.86)
+  const ref = useRef<HTMLDivElement>(null)
+  const [width, setWidth] = useState(340)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    setWidth(el.clientWidth || 340)
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() => setWidth(el.clientWidth || 340))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const crews = clans.map((c) => crewOf(c.finish))
+  const track = Math.max(120, width - 42)
+  const unit = Math.max(0.2, Math.min(boatSize / 80, (0.5 * track) / boatUnits(Math.max(3, ...crews))))
+  const laneHeight = Math.round(BOAT_HEIGHT * unit) + 18
   return (
-    <div className="race-river" style={{ ['--boat' as string]: `${boatSize}px`, ['--lane' as string]: `${laneHeight}px` }}>
+    <div ref={ref} className="race-river" style={{ ['--boat' as string]: `${boatUnits(3) * unit}px`, ['--lane' as string]: `${laneHeight}px` }}>
       <div className="race-river-flow" aria-hidden />
       <div className="race-river-head">
         <span>{tn('race.start')}</span>
@@ -114,7 +77,7 @@ export function RaceRiver({
             <Lane
               key={c.id}
               className={`race-lane${mine ? ' mine' : ''}${c.finishedAt ? ' finished' : ''}`}
-              style={{ ['--c' as string]: primary, ['--p' as string]: p, ['--i' as string]: i }}
+              style={{ ['--c' as string]: primary, ['--p' as string]: p, ['--i' as string]: i, ['--boat' as string]: `${boatUnits(crews[i]) * unit}px`, ['--wl' as string]: `${Math.round(13 * unit) + 1}px` }}
               onClick={onOpenClan ? () => onOpenClan(c.id) : undefined}
               aria-label={tn('race.laneAria', { place: tn('race.place', { rank: c.rank }), name: c.name, done: formatMeters(c.meters), total: formatMeters(c.finish) })}
             >
@@ -122,9 +85,8 @@ export function RaceRiver({
               <span className="race-track">
                 <span className="race-boat-pos">
                   <span className="race-trail" />
-                  <span className="race-wake" />
                   <span className="race-boat-bob">
-                    <RaceBoat crest={c.crest} size={boatSize} />
+                    <RaceBoat crest={c.crest} crew={crews[i]} unit={unit} />
                   </span>
                   {/* Crossed the line: sparks around the boat, which rests and glows. */}
                   {c.finishedAt && (

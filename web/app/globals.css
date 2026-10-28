@@ -3216,22 +3216,27 @@ button.race-lane{cursor:pointer;}
 /* Boats move along a track that ends where the bow meets the finish line:
    translateX(100%) of a full-track-wide box = the whole track. */
 .race-track{position:absolute; top:0; bottom:0; left:30px; right:calc(12px + var(--boat));}
-.race-trail{position:absolute; top:50%; margin-top:5px; height:9px; border-radius:5px; opacity:.55;
-  left:calc(-30px - var(--p) * 100%); width:calc(30px + var(--p) * 100% + var(--boat) * .25);
+.race-trail{position:absolute; bottom:var(--wl,10px); height:5px; border-radius:3px; opacity:.4;
+  left:calc(-30px - var(--p) * 100%); width:calc(30px + var(--p) * 100% + var(--boat) * .5);
   background:linear-gradient(90deg, rgba(255,255,255,0), color-mix(in srgb, var(--c) 60%, rgba(255,255,255,.25)));}
 .race-boat-pos{position:absolute; inset:0; transform:translateX(calc(var(--p) * 100%)); transition:transform 1.2s var(--ease-out); animation:race-sail-in 1.4s var(--ease-out) calc(var(--i) * 90ms) both; pointer-events:none;}
 @keyframes race-sail-in{from{transform:translateX(0);}}
 .race-boat-bob{position:absolute; left:0; bottom:2px; display:block; animation:race-bob 2.8s var(--ease-in-out) calc(var(--i) * -0.7s) infinite; transform-origin:50% 90%;}
-@keyframes race-bob{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-2px) rotate(2deg);}}
-.race-boat{position:relative; display:block; filter:drop-shadow(0 3px 3px rgba(0,0,0,.28));}
+@keyframes race-bob{0%,100%{transform:translateY(0) rotate(-1deg);}50%{transform:translateY(-1.5px) rotate(1deg);}}
+.race-boat{position:relative; display:block;}
 .race-boat svg{display:block; overflow:visible;}
-.race-oar{transform-box:view-box; animation:race-oar 1.5s var(--ease-in-out) infinite alternate;}
-@keyframes race-oar{from{transform:rotate(-7deg);} to{transform:rotate(7deg);}}
-.race-boat-crest{position:absolute; line-height:0;}
-.race-wake{position:absolute; left:calc(var(--boat) * -0.35); bottom:3px; width:calc(var(--boat) * 0.7); height:6px; border-radius:50%;
-  background:radial-gradient(ellipse at 100% 50%, rgba(255,255,255,.7), rgba(255,255,255,0) 70%); animation:race-wake 1.6s var(--ease-in-out) infinite;}
-@keyframes race-wake{0%,100%{transform:scaleX(1); opacity:.8;}50%{transform:scaleX(.7); opacity:.45;}}
-.race-lane.finished .race-wake{display:none;}
+/* One stroke = 1.3 s: the paddles sweep, the torsos lean, the leader's arms swing and he hops, all on one phase. */
+.rb-pad, .rb-lean, .rb-dn, .rb-sw{transform-box:view-box;}
+.rb-pad{animation:rb-pad 1.3s var(--ease-in-out) infinite alternate;}
+.rb-lean{animation:rb-lean 1.3s var(--ease-in-out) infinite alternate;}
+.rb-dn{animation:rb-dn 1.3s var(--ease-in-out) infinite alternate;}
+.rb-sw{animation:rb-sw 1.3s var(--ease-in-out) infinite alternate;}
+@keyframes rb-pad{from{transform:skewX(-13deg);} to{transform:skewX(13deg);}}
+@keyframes rb-lean{from{transform:skewX(2.5deg);} to{transform:skewX(-2.5deg);}}
+@keyframes rb-dn{from{transform:translateY(0);} to{transform:translateY(-1.8px);}}
+@keyframes rb-sw{from{transform:rotate(65deg);} to{transform:rotate(-100deg);}}
+/* Crest and roster size above the stern. */
+.race-boat-tag{position:absolute; left:0; bottom:100%; margin-bottom:1px; display:flex; align-items:center; gap:4px; white-space:nowrap; font-size:10px; font-weight:800; line-height:1; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.5);}
 .race-lane-empty{display:flex; align-items:center; justify-content:center; padding:0 40px;}
 .race-empty-text{font-size:12.5px; font-weight:700; color:rgba(255,255,255,.75); text-align:center;}
 
@@ -3261,7 +3266,7 @@ button.race-lane{cursor:pointer;}
 .race-rule-note{font-size:12.5px; color:var(--ink-soft); line-height:1.45; margin:10px 0 12px;}
 .race-rule-note + .race-rule-note{margin-top:-4px;}
 @media (prefers-reduced-motion: reduce){
-  .race-river-flow, .race-boat-bob, .race-wake, .race-boat-pos, .race-oar, .race-standing, .race-standing-fill, .race-rower-fill{animation:none;}
+  .race-river-flow, .race-boat-bob, .rb-pad, .rb-lean, .rb-dn, .rb-sw, .race-boat-pos, .race-standing, .race-standing-fill, .race-rower-fill{animation:none;}
 }
 /* Clan battle — the orange footer of .map-hud, brand orange so it reads
    as the one call to action up there; one shine sweep after it lands, then

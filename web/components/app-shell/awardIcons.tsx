@@ -108,16 +108,22 @@ export const AWARD_ICONS: Record<AwardKind, React.ReactNode> = {
       <polygon points={sparkle(12, 12, 2.2)} fill="currentColor" />
     </svg>
   ),
-  // The clan's rowing boat crossing first (the regatta boat, see
-  // ClanRace.tsx): a rower in a hull, the oar in the water, a wake behind.
+  // The clan's long racing boat crossing first (the regatta boat, see
+  // RaceBoat.tsx): a hull with raised ends, three rowers, the leader standing
+  // at the bow with his arms up, a wake behind.
   clan_race_winner: (
     <svg viewBox="0 0 24 24">
-      <circle cx="12.4" cy="5.4" r="2.2" fill="currentColor" />
-      <path d="M9.4 13.8 11 8.5h2.7l.9 3.1-.5 2.2Z" fill="currentColor" />
-      <path d="M2.5 15h19l-2.8 4H5.3Z" fill="currentColor" />
-      <path d="M2.5 15h19l-.9 1.3H3.4Z" fill="#000" opacity=".12" />
-      <path d="M8 13.2 18.8 20" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-      <path d="M2.5 21.8c1.6-1.1 3.2-1.1 4.8 0s3.2 1.1 4.8 0 3.2-1.1 4.8 0 3.2 1.1 4.8 0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none" opacity=".6" />
+      <path d="M1.8 10.4c.5 3.2 2.3 4.5 5.2 4.5h10c3.2 0 4.7-2.4 5.4-6.4.5 5.8-1.6 9.6-5.6 9.6H7.3c-3.6 0-5.1-2.4-5.5-7.7Z" fill="currentColor" />
+      <path d="M2 11.6c.8 1.6 2.4 2.1 5 2.1h10c2.4 0 3.8-.9 4.7-2.7l-.3 1.9c-.9 1.5-2.2 2.1-4.4 2.1H7c-2.5 0-4-.6-5-3.4Z" fill="#000" opacity=".14" />
+      <circle cx="6.6" cy="9.6" r="1.4" fill="currentColor" />
+      <circle cx="10" cy="9.6" r="1.4" fill="currentColor" />
+      <circle cx="13.4" cy="9.6" r="1.4" fill="currentColor" />
+      <path d="M6.4 14V11.3M9.8 14V11.3M13.2 14V11.3" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <path d="M8 11.8 4.6 18.6M11.4 11.8 8 18.6M14.8 11.8 11.4 18.6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" fill="none" />
+      <circle cx="18.2" cy="4.6" r="1.6" fill="currentColor" />
+      <path d="M18.2 6.6v6.6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M18.2 8 20.9 4.8M18.2 8 15.5 4.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+      <path d="M1.8 21.8c1.6-1.1 3.2-1.1 4.8 0s3.2 1.1 4.8 0 3.2-1.1 4.8 0 3.2 1.1 4.8 0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none" opacity=".6" />
     </svg>
   ),
   // Held a hot sector to the end of the week (settle_hot_sectors): the
