@@ -761,6 +761,7 @@ export const en: Dict = {
     underShield: 'Shielded',
     clan: 'Clan',
     geoOff: "Location is off — turn it on and we'll find you on the map",
+    geoAsk: "We'll show you on the map — tap Allow",
     allow: 'Allow',
     layerLabel: 'Map colouring',
     players: 'Players',

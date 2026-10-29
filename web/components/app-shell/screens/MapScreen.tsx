@@ -390,7 +390,7 @@ export const MapScreen = forwardRef<
             <path d="M12 21c-4-4.5-7-8-7-11a7 7 0 0 1 14 0c0 3-3 6.5-7 11z" />
             <circle cx="12" cy="10" r="2.3" />
           </svg>
-          <div className="map-geo-banner-text">{tn('map.geoOff')}</div>
+          <div className="map-geo-banner-text">{tn(geoPermission === 'denied' ? 'map.geoOff' : 'map.geoAsk')}</div>
           <button className="map-geo-banner-btn tap-scale" onClick={handleLocate}>
             {tn('map.allow')}
           </button>
