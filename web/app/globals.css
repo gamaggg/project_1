@@ -215,7 +215,20 @@ body{
 
 /* Catch screen, Reels-style (CatchPhotoScreen): the photo fills the screen, the facts sit on it
    at the bottom left over a soft blur that fades out upward, the reactions in a right-hand column. */
-.catch-reel-ambient{position:absolute; left:-10%; top:-10%; width:120%; height:120%; object-fit:cover; filter:blur(28px) brightness(.78) saturate(1.2); pointer-events:none;}
+/* Turning pages: the photo slides in from the side the page came from, the facts rise a touch after it; the buttons,
+   arrows and reactions stay put. Short and soft on purpose. */
+@keyframes catch-page-next{from{opacity:0; transform:translate3d(30px,0,0) scale(1.02);}}
+@keyframes catch-page-prev{from{opacity:0; transform:translate3d(-30px,0,0) scale(1.02);}}
+@keyframes catch-info-rise{from{opacity:0; transform:translate3d(0,10px,0);}}
+.catch-reel.pg-next .catch-photo-layer{animation:catch-page-next .26s var(--ease-out) both;}
+.catch-reel.pg-prev .catch-photo-layer{animation:catch-page-prev .26s var(--ease-out) both;}
+.catch-reel.pg-next .catch-reel-info, .catch-reel.pg-prev .catch-reel-info{animation:catch-info-rise .3s var(--ease-out) .05s both;}
+@media (prefers-reduced-motion: reduce){.catch-reel.pg-next .catch-photo-layer, .catch-reel.pg-prev .catch-photo-layer, .catch-reel.pg-next .catch-reel-info, .catch-reel.pg-prev .catch-reel-info{animation:none;}}
+/* 56% of the height, but never lower than the reactions column (up to four buttons, ~250px above the menu) lets it be. */
+.catch-arrow{position:absolute; top:min(56%, calc(100% - var(--nav-h, 82px) - 304px)); width:44px; height:64px; margin-top:-32px; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:.7; filter:drop-shadow(0 1px 3px rgba(0,0,0,.6)); z-index:2;}
+.catch-arrow:active{opacity:1;}
+@keyframes catch-ambient-in{from{opacity:0;}}
+.catch-reel-ambient{animation:catch-ambient-in .3s var(--ease-out) both; position:absolute; left:-10%; top:-10%; width:120%; height:120%; object-fit:cover; filter:blur(28px) brightness(.78) saturate(1.2); pointer-events:none;}
 .catch-reel-top{position:absolute; left:0; right:0; top:0; height:120px; pointer-events:none; background:linear-gradient(to bottom, rgba(10,11,12,.42), rgba(10,11,12,0));}
 .catch-reel-shade{position:absolute; left:0; right:0; bottom:0; height:52%; pointer-events:none; background:linear-gradient(to top, rgba(10,11,12,.8) 0%, rgba(10,11,12,.46) 48%, rgba(10,11,12,0) 100%); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); -webkit-mask-image:linear-gradient(to top, #000 0%, #000 42%, transparent 100%); mask-image:linear-gradient(to top, #000 0%, #000 42%, transparent 100%);}
 .catch-reel-counter{position:absolute; left:50%; transform:translateX(-50%); height:28px; display:flex; align-items:center; padding:0 11px; border-radius:20px; background:rgba(23,24,27,.5); color:#fff; font-size:11.5px; font-weight:700; margin-top:4px; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);}

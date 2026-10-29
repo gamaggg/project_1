@@ -1,6 +1,6 @@
 'use client'
 
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useCatchById, useCatchesByTerritory, useCatchLikes, useToggleCatchLike, useIsSuperAdmin, useCatchComments, useProfile, useIsFollowing, useSetFollowing } from '@/lib/supabase/queries'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -50,6 +50,7 @@ function CatchPhotoLayer({ src, alt, tour, onZoom }: { src: string; alt: string;
     if (img?.complete && img.naturalWidth) setNat({ w: img.naturalWidth, h: img.naturalHeight })
   }, [src])
 
+  // Until the picture's size is known it is not shown at all (it would be drawn unscaled, then jump to its real size).
   let style: React.CSSProperties = { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: '50% 36%' }
   if (box && nat && box.w > 0 && box.h > 0) {
     // 12% bigger than «fits whole»: the blurred bands above and below shrink, and a portrait frame loses about 6% at each side.
@@ -72,9 +73,9 @@ function CatchPhotoLayer({ src, alt, tour, onZoom }: { src: string; alt: string;
   }
 
   return (
-    <div ref={boxRef} style={{ position: 'absolute', inset: 0, cursor: 'zoom-in' }} onClick={onZoom}>
+    <div ref={boxRef} className="catch-photo-layer" style={{ position: 'absolute', inset: 0, cursor: 'zoom-in' }} onClick={onZoom}>
       <img className="catch-reel-ambient" src={src} alt="" aria-hidden />
-      <img ref={imgRef} data-catch-photo data-tour={tour ? 'photo-zoom' : undefined} src={src} alt={alt} style={{ display: 'block', ...style }} onLoad={(e) => setNat({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })} />
+      <img ref={imgRef} data-catch-photo data-tour={tour ? 'photo-zoom' : undefined} src={src} alt={alt} style={{ display: 'block', opacity: nat ? 1 : 0, transition: 'opacity .2s ease-out', ...style }} onLoad={(e) => setNat({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })} />
     </div>
   )
 }
@@ -183,9 +184,21 @@ export function CatchPhotoScreen({
   const prevCatch = sectorIndex > 0 ? sectorCatches[sectorIndex - 1] : null
   const nextCatch = sectorIndex >= 0 && sectorIndex < sectorCatches.length - 1 ? sectorCatches[sectorIndex + 1] : null
 
+  // Which way the last page turn went: the new catch slides in from that side (see .pg-next / .pg-prev).
+  const [turn, setTurn] = useState<'next' | 'prev' | null>(null)
   function goTo(id: number) {
+    const to = sectorCatches.findIndex((sc) => sc.id === id)
+    setTurn(to > sectorIndex ? 'next' : 'prev')
     setActiveId(id)
   }
+  // The neighbours' photos are fetched ahead, so a page turn does not wait for the picture.
+  const prevPhoto = prevCatch?.photoUrl
+  const nextPhoto = nextCatch?.photoUrl
+  useEffect(() => {
+    for (const url of [prevPhoto, nextPhoto]) {
+      if (url) new Image().src = url
+    }
+  }, [prevPhoto, nextPhoto])
 
   // Swipe = a plain horizontal drag past a threshold, measured on release.
   const touchStart = useRef<{ x: number; y: number } | null>(null)
@@ -247,14 +260,14 @@ export function CatchPhotoScreen({
     // so the keyed inner wrapper below is free to remount per catch without
     // dropping a gesture mid-swipe.
     <div
-      className="screen-inner catch-reel"
+      className={`screen-inner catch-reel${turn ? ` pg-${turn}` : ''}`}
       style={{ padding: 0, display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0 }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
       {/* Keyed by activeId so the whole catch plays one simple fade-in as a
           unit when paging (see globals.css). */}
-      <div key={activeId} className="catch-fade-in" style={{ position: 'relative', flex: '1 1 auto', minHeight: 0, background: '#000', overflow: 'hidden' }}>
+      <div key={activeId} className={turn ? undefined : 'catch-fade-in'} style={{ position: 'relative', flex: '1 1 auto', minHeight: 0, background: '#000', overflow: 'hidden' }}>
         <CatchPhotoLayer src={c.photoUrl} alt={c.speciesName} tour={c.mine} onZoom={() => setZoomed(true)} />
         <div className="catch-reel-top" />
         <div className="catch-reel-shade" />
@@ -302,17 +315,18 @@ export function CatchPhotoScreen({
             {sectorIndex + 1} / {sectorCatches.length}
           </div>
         )}
+        {/* No circles: just a see-through chevron at each edge (the touch area stays a comfortable size). */}
         {prevCatch && (
-          <div className="icon-btn catch-nav-btn tap-scale" style={{ position: 'absolute', top: '40%', left: 12, transform: 'translateY(-50%)' }} onClick={() => goTo(prevCatch.id)} title={tn('catch.prev')}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 6l-6 6 6 6" />
+          <div className="catch-arrow tap-scale" style={{ left: 4 }} onClick={() => goTo(prevCatch.id)} title={tn('catch.prev')} role="button" aria-label={tn('catch.prev')}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M15 5l-7 7 7 7" />
             </svg>
           </div>
         )}
         {nextCatch && (
-          <div className="icon-btn catch-nav-btn tap-scale" style={{ position: 'absolute', top: '40%', right: 12, transform: 'translateY(-50%)' }} onClick={() => goTo(nextCatch.id)} title={tn('catch.next')}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 6l6 6-6 6" />
+          <div className="catch-arrow tap-scale" style={{ right: 4 }} onClick={() => goTo(nextCatch.id)} title={tn('catch.next')} role="button" aria-label={tn('catch.next')}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M9 5l7 7-7 7" />
             </svg>
           </div>
         )}
