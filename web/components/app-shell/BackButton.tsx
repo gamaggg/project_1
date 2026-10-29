@@ -23,6 +23,7 @@ export function BackButton({
   variant = 'icon',
   stroke = '#17181B',
   registerNative = true,
+  className,
 }: {
   onClick: () => void
   variant?: 'icon' | 'intro'
@@ -39,6 +40,8 @@ export function BackButton({
   // (this prop's default) mount and unmount cleanly on their own, so they're
   // safe to self-register.
   registerNative?: boolean
+  // 'icon' only — an extra class for the round button (e.g. the see-through look over a photo).
+  className?: string
 }) {
   // Read once per mount, matching the pattern already used elsewhere (see
   // OnboardingFlow's viaTelegram) — initData doesn't change mid-session.
@@ -58,7 +61,7 @@ export function BackButton({
 
   const hiddenStyle: CSSProperties | undefined = viaTelegram ? { visibility: 'hidden', pointerEvents: 'none' } : undefined
   return (
-    <div className="icon-btn tap-scale" onClick={viaTelegram ? undefined : onClick} style={hiddenStyle} aria-hidden={viaTelegram}>
+    <div className={`icon-btn tap-scale${className ? ` ${className}` : ''}`} onClick={viaTelegram ? undefined : onClick} style={hiddenStyle} aria-hidden={viaTelegram}>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="icon-back">
         <path d="M15 18l-6-6 6-6" />
       </svg>

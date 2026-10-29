@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useAuth } from '@/components/providers/AuthProvider'
 import {
@@ -32,6 +32,8 @@ const VISIBLE_REPLIES = 2
 // The counter ring only appears near the limit; below that it's noise.
 const COUNTER_FROM = 250
 const RING_LENGTH = 2 * Math.PI * 9
+// The quick-reaction row above the input (tap = added to the text, like Instagram's).
+const QUICK_EMOJI = ['❤️', '🙌', '🔥', '👏', '😢', '😍', '😮', '😂']
 
 // Rendered by FishZoneApp at the app-shell level like every other modal
 // (see DECISIONS.md) — a bottom sheet over whatever screen opened it
@@ -75,6 +77,36 @@ export function CommentsSheet({
   // With the keyboard up the layer is the visible part of the screen, so the sheet
   // (and its input bar) stays above the keyboard.
   const visible = useVisibleViewport()
+  // The photo card flies up from where the catch screen shows the photo (and back on close):
+  // the same picture moves and shrinks instead of a new one appearing.
+  const photoRef = useRef<HTMLImageElement>(null)
+  const flyFrom = useRef<string | null>(null)
+  const photoUrl = theCatch?.photoUrl
+  useLayoutEffect(() => {
+    const img = photoRef.current
+    if (!img || !photoUrl) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const fly = () => {
+      const to = img.getBoundingClientRect()
+      const src = document.querySelector<HTMLImageElement>('img[data-catch-photo]')
+      if (!src || !src.naturalWidth || !to.width || !to.height) {
+        img.animate([{ opacity: 0, transform: 'scale(1.12)' }, { opacity: 1, transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.22,1,.36,1)' })
+        return
+      }
+      // Where the screen draws the picture: contained in its box, a little above the middle (see CatchPhotoScreen).
+      const box = src.getBoundingClientRect()
+      const k = Math.min(box.width / src.naturalWidth, box.height / src.naturalHeight)
+      const w = src.naturalWidth * k
+      const h = src.naturalHeight * k
+      const left = box.left + (box.width - w) / 2
+      const top = box.top + (box.height - h) * 0.36
+      const from = `translate(${left - to.left}px, ${top - to.top}px) scale(${w / to.width}, ${h / to.height})`
+      flyFrom.current = from
+      img.animate([{ transform: from, borderRadius: '0px' }, { transform: 'none', borderRadius: '18px' }], { duration: 440, easing: 'cubic-bezier(.22,1,.36,1)' })
+    }
+    if (img.complete && img.naturalWidth) fly()
+    else img.addEventListener('load', fly, { once: true })
+  }, [photoUrl])
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const dragStartY = useRef<number | null>(null)
@@ -119,6 +151,11 @@ export function CommentsSheet({
   function close() {
     if (closing) return
     setClosing(true)
+    const img = photoRef.current
+    if (img) {
+      if (flyFrom.current) img.animate([{ transform: 'none' }, { transform: flyFrom.current }], { duration: 230, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' })
+      else img.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: 'forwards' })
+    }
     setTimeout(onClose, 220)
   }
 
@@ -317,10 +354,16 @@ export function CommentsSheet({
 
   return (
     <div
-      className={`comments-overlay${closing ? ' is-closing' : ''}`}
+      className={`comments-overlay comments-insta${closing ? ' is-closing' : ''}${visible ? ' comments-kb' : ''}`}
       style={visible ? { top: visible.top, height: visible.height, bottom: 'auto' } : undefined}
       onClick={close}
     >
+      {/* The catch shrinks into a card above the sheet, like Instagram's reel above its comments. */}
+      {theCatch?.photoUrl && (
+        <div className="comments-photo" aria-hidden>
+          <img ref={photoRef} src={theCatch.photoUrl} alt="" decoding="async" />
+        </div>
+      )}
       <div
         className={`comments-sheet${closing ? ' is-closing' : ''}`}
         style={{
@@ -417,10 +460,31 @@ export function CommentsSheet({
               </button>
             </div>
           )}
+          {user && !muted && (
+            <div className="comments-emoji">
+              {QUICK_EMOJI.map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  className="tap-scale"
+                  onClick={() => {
+                    setText((t) => (t + e).slice(0, COMMENT_MAX_LENGTH + 20))
+                    inputRef.current?.focus()
+                  }}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+          )}
           {muted ? (
             <div className="comments-muted">{mutedMessage(mutedUntil)}</div>
           ) : (
-            <div className={`comments-input-box${error ? ' has-error' : ''}${shaking ? ' shake' : ''}`} onAnimationEnd={() => setShaking(false)}>
+            <div className="comments-compose-row">
+              <div className="avatar comments-me" aria-hidden>
+                {me?.avatarUrl ? <img src={thumbUrl(me.avatarUrl, 96)} alt="" decoding="async" /> : (me?.displayName ?? '?').slice(0, 1).toUpperCase()}
+              </div>
+              <div className={`comments-input-box${error ? ' has-error' : ''}${shaking ? ' shake' : ''}`} onAnimationEnd={() => setShaking(false)}>
               <textarea
                 ref={inputRef}
                 rows={1}
@@ -467,6 +531,7 @@ export function CommentsSheet({
                   <path d="M12 19V5M5 12l7-7 7 7" />
                 </svg>
               </button>
+              </div>
             </div>
           )}
           {error && !muted && <div className="comments-error">{error}</div>}

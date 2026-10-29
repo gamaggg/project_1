@@ -1,14 +1,12 @@
 'use client'
 
-import { SkeletonBlock } from '@/components/app-shell/Skeleton'
-import { useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
-import { useCatchById, useCatchesByTerritory, useCatchLikes, useToggleCatchLike, useIsSuperAdmin, useCatchComments } from '@/lib/supabase/queries'
+import { useCatchById, useCatchesByTerritory, useCatchLikes, useToggleCatchLike, useIsSuperAdmin, useCatchComments, useProfile, useIsFollowing, useSetFollowing } from '@/lib/supabase/queries'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import { CatchConditions } from '@/components/app-shell/CatchConditions'
 import { StoryButton } from '@/components/app-shell/StoryButton'
-import { CatcherLabel } from '@/components/app-shell/screens/TerritoryScreen'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { PhotoViewer } from '@/components/app-shell/PhotoViewer'
 import { EditMyCatchSheet } from '@/components/app-shell/EditMyCatchSheet'
@@ -25,6 +23,96 @@ function likersSummary(likers: ProfileSummary[]): string {
   if (names.length === 1) return names[0]
   if (names.length === 2) return tn('catch.likersTwo', { a: names[0], b: names[1] })
   return tn('catch.likersMany', { a: names[0], b: names[1], n: names.length - 2 })
+}
+
+const PHOTO_ZOOM = 1.12
+
+// The photo, almost whole (a touch enlarged, see PHOTO_ZOOM). Where its proportions leave empty space (above and below a wide frame, at the sides
+// of a narrow one) a blurred copy of the same picture fills it, and the sharp photo's edges fade into that copy,
+// so there is no black void and no hard seam. A photo that fills the screen in some direction is not faded there.
+function CatchPhotoLayer({ src, alt, tour, onZoom }: { src: string; alt: string; tour: boolean; onZoom: () => void }) {
+  const boxRef = useRef<HTMLDivElement>(null)
+  const imgRef = useRef<HTMLImageElement>(null)
+  const [box, setBox] = useState<{ w: number; h: number } | null>(null)
+  const [nat, setNat] = useState<{ w: number; h: number } | null>(null)
+
+  useLayoutEffect(() => {
+    const el = boxRef.current
+    if (!el) return
+    const measure = () => setBox({ w: el.clientWidth, h: el.clientHeight })
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  useLayoutEffect(() => {
+    const img = imgRef.current
+    if (img?.complete && img.naturalWidth) setNat({ w: img.naturalWidth, h: img.naturalHeight })
+  }, [src])
+
+  let style: React.CSSProperties = { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: '50% 36%' }
+  if (box && nat && box.w > 0 && box.h > 0) {
+    // 12% bigger than «fits whole»: the blurred bands above and below shrink, and a portrait frame loses about 6% at each side.
+    const k = Math.min(box.w / nat.w, box.h / nat.h) * PHOTO_ZOOM
+    const w = Math.round(nat.w * k)
+    const h = Math.round(nat.h * k)
+    // A little above the middle, so the facts at the bottom cover less of the picture.
+    const left = Math.round((box.w - w) / 2)
+    const top = Math.round((box.h - h) * 0.36)
+    const fadeV = h < box.h - 2 ? Math.round(Math.min(56, h * 0.12)) : 0
+    const fadeH = w < box.w - 2 ? Math.round(Math.min(40, w * 0.1)) : 0
+    const masks: string[] = []
+    if (fadeV) masks.push(`linear-gradient(to bottom, transparent 0, #000 ${fadeV}px, #000 calc(100% - ${fadeV}px), transparent 100%)`)
+    if (fadeH) masks.push(`linear-gradient(to right, transparent 0, #000 ${fadeH}px, #000 calc(100% - ${fadeH}px), transparent 100%)`)
+    style = { position: 'absolute', left, top, width: w, height: h }
+    if (masks.length) {
+      const mask = masks.join(', ')
+      Object.assign(style, { WebkitMaskImage: mask, maskImage: mask, WebkitMaskComposite: 'source-in', maskComposite: 'intersect' })
+    }
+  }
+
+  return (
+    <div ref={boxRef} style={{ position: 'absolute', inset: 0, cursor: 'zoom-in' }} onClick={onZoom}>
+      <img className="catch-reel-ambient" src={src} alt="" aria-hidden />
+      <img ref={imgRef} data-catch-photo data-tour={tour ? 'photo-zoom' : undefined} src={src} alt={alt} style={{ display: 'block', ...style }} onLoad={(e) => setNat({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })} />
+    </div>
+  )
+}
+
+// Who caught it, Reels-style: round avatar and the name (the name opens the profile).
+function CatchAuthor({ userId, mine, onOpenUser }: { userId: string; mine: boolean; onOpenUser: (id: string) => void }) {
+  const { data: profile } = useProfile(userId)
+  const name = mine ? tn('sector.you') : (profile?.displayName ?? '')
+  const avatar = (
+    <span className="reel-avatar" aria-hidden>
+      {profile?.avatarUrl ? <img src={thumbUrl(profile.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : (name || '?').slice(0, 1).toUpperCase()}
+    </span>
+  )
+  if (mine) {
+    return (
+      <span className="reel-author">
+        {avatar}
+        <span className="reel-author-name">{name}</span>
+      </span>
+    )
+  }
+  return (
+    <button className="reel-author" onClick={() => onOpenUser(userId)}>
+      {avatar}
+      {name ? <span className="reel-author-name">{name}</span> : <span className="skel" style={{ display: 'inline-block', width: 64, height: 9 }} />}
+    </button>
+  )
+}
+
+// «Подписаться» right beside the name, like Reels: a pill that flips to «Отписаться» once followed.
+function FollowPill({ userId }: { userId: string }) {
+  const { data: isFollowing } = useIsFollowing(userId)
+  const setFollowing = useSetFollowing()
+  return (
+    <button className={`reel-pill tap-scale${isFollowing ? ' on' : ''}`} disabled={setFollowing.isPending} onClick={() => setFollowing.mutate({ followeeId: userId, following: !isFollowing })}>
+      {isFollowing ? tn('profile.unfollow') : tn('profile.follow')}
+    </button>
+  )
 }
 
 // A real screen (pushed on the stack, reachable via ?catch=<id>) rather than
@@ -126,15 +214,10 @@ export function CatchPhotoScreen({
           <div style={{ position: 'absolute', top: 'calc(12px + var(--standalone-top, 0px))', left: 12 }}>
             <BackButton onClick={onBack} registerNative={false} />
           </div>
-        </div>
-        <div style={{ position: 'relative', flex: '0 0 auto', marginTop: -18, borderRadius: '20px 20px 0 0', background: 'var(--surface)', padding: '18px 20px calc(var(--nav-h, 82px) + 18px)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <SkeletonBlock height={11} width={90} radius={6} />
-          <SkeletonBlock height={24} width="46%" radius={8} />
-          <SkeletonBlock height={14} width="58%" radius={7} />
-          <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-            <SkeletonBlock height={28} width={64} radius={14} />
-            <SkeletonBlock height={28} width={88} radius={14} />
-            <SkeletonBlock height={28} width={110} radius={14} />
+          <div style={{ position: 'absolute', left: 16, bottom: 'calc(var(--nav-h, 82px) + 14px)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div className="catch-reel-skel" style={{ width: 110, height: 12 }} />
+            <div className="catch-reel-skel" style={{ width: 190, height: 24 }} />
+            <div className="catch-reel-skel" style={{ width: 240, height: 14 }} />
           </div>
         </div>
       </div>
@@ -153,254 +236,166 @@ export function CatchPhotoScreen({
     toggleLike.mutate({ catchId: c!.id, liked: likedByMe })
   }
 
+  const commentLine = commentPreview[commentPreview.length - 1]
+  const iconStroke = { fill: 'none', stroke: '#fff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' } as const
+
   return (
-    // No .header-row — a separate white bar above the photo left dead space
-    // at the top. Back/delete float over the photo instead (padding:0 here,
-    // restored on the sheet below so the fixed bottom nav still clears it).
+    // Like a Reels page: the photo takes the whole screen, shown whole (letterboxed on black, never cropped), who/what/where sit on it at the
+    // bottom left over a soft blur, the reactions in a column at the right. No white sheet —
+    // the photo gets all the room. Back and the owner's tools float over the top.
     // Touch handlers live on this outer shell (stays mounted across swipes)
     // so the keyed inner wrapper below is free to remount per catch without
     // dropping a gesture mid-swipe.
     <div
-      className="screen-inner"
+      className="screen-inner catch-reel"
       style={{ padding: 0, display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0 }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Keyed by activeId so the whole catch — photo and sheet together —
-          plays one simple fade-in as a unit when paging (see globals.css).
-          flex column/flex:1/minHeight:0 repeats the outer shell's own rule
-          so the fill-the-remaining-space photo sizing (see below) still
-          works one level down. */}
-      <div key={activeId} className="catch-fade-in" style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0 }}>
-        <div style={{ position: 'relative', flex: '1 1 auto', minHeight: 0 }}>
-          {/* A capped ratio (object-fit:cover crops instead of a portrait
-              photo's full native height) keeps the photo from pushing the
-              action row below the fold — flex:1 above fills exactly the
-              space the sheet's own height leaves behind, on any screen
-              height. */}
-          <img data-tour={c.mine ? 'photo-zoom' : undefined} src={c.photoUrl} alt={c.speciesName} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', cursor: 'zoom-in' }} onClick={() => setZoomed(true)} />
-          {/* --standalone-top: the photo runs up under the status bar in
-              the iPhone home-screen app, the buttons stay below its blur. */}
-          <div style={{ position: 'absolute', top: 'calc(12px + var(--standalone-top, 0px))', left: 12 }}>
-            <BackButton onClick={onBack} registerNative={false} />
-          </div>
-          {isSuperAdmin && (
-            <div style={{ position: 'absolute', top: 'calc(12px + var(--standalone-top, 0px))', right: 12, display: 'flex', gap: 8 }}>
-              <div className="icon-btn tap-scale" onClick={() => setEditing(true)} title={tn('weekly.editTitle')}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 20h9" />
-                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
-                </svg>
-              </div>
-              <div className="icon-btn tap-scale" onClick={() => setMoving(true)} title={tn('weekly.moveTitle')}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M7 4 3 8l4 4M3 8h13a5 5 0 0 1 0 10h-3" />
-                </svg>
-              </div>
-              <div className="icon-btn tap-scale" onClick={() => onDeleteCatch(c.id)} title={tn('weekly.deleteTitle')}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D33" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M10 11v6M14 11v6M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" />
-                </svg>
-              </div>
-            </div>
-          )}
-          {zoomed && <PhotoViewer src={c.photoUrl} alt={c.speciesName} onClose={() => setZoomed(false)} />}
-          {c.mine && !isSuperAdmin && (
-            <div style={{ position: 'absolute', top: 'calc(12px + var(--standalone-top, 0px))', right: 12 }}>
-              <div className="icon-btn tap-scale" onClick={() => setEditingMine(true)} title={tn('catch.addDetailsTitle')} aria-label={tn('catch.addDetailsTitle')}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 20h9" />
-                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
-                </svg>
-              </div>
-            </div>
-          )}
-          {editingMine && <EditMyCatchSheet c={c} onClose={() => setEditingMine(false)} />}
-          {moving && <MoveCatchSheet c={c} onClose={() => setMoving(false)} />}
-          {editing && <EditCatchSheet c={c} onClose={() => setEditing(false)} />}
-          {prevCatch && (
-            <div className="icon-btn tap-scale" style={{ position: 'absolute', top: '50%', left: 12, transform: 'translateY(-50%)' }} onClick={() => goTo(prevCatch.id)} title={tn('catch.prev')}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M15 6l-6 6 6 6" />
-              </svg>
-            </div>
-          )}
-          {nextCatch && (
-            <div className="icon-btn tap-scale" style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)' }} onClick={() => goTo(nextCatch.id)} title={tn('catch.next')}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 6l6 6-6 6" />
-              </svg>
-            </div>
-          )}
-          {sectorCatches.length > 1 && sectorIndex >= 0 && (
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 30,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                background: 'rgba(23,24,27,0.5)',
-                color: '#fff',
-                fontSize: 11.5,
-                fontWeight: 700,
-                padding: '3px 10px',
-                borderRadius: 20,
-              }}
-            >
-              {sectorIndex + 1} / {sectorCatches.length}
-            </div>
-          )}
+      {/* Keyed by activeId so the whole catch plays one simple fade-in as a
+          unit when paging (see globals.css). */}
+      <div key={activeId} className="catch-fade-in" style={{ position: 'relative', flex: '1 1 auto', minHeight: 0, background: '#000', overflow: 'hidden' }}>
+        <CatchPhotoLayer src={c.photoUrl} alt={c.speciesName} tour={c.mine} onZoom={() => setZoomed(true)} />
+        <div className="catch-reel-top" />
+        <div className="catch-reel-shade" />
+        {/* --standalone-top: the photo runs up under the status bar in
+            the iPhone home-screen app, the buttons stay below its blur. */}
+        <div style={{ position: 'absolute', top: 'calc(12px + var(--standalone-top, 0px))', left: 12 }}>
+          <BackButton onClick={onBack} registerNative={false} className="catch-nav-btn" />
         </div>
-        {/* A rounded-top sheet pulled up over the photo's bottom edge (common
-            photo-detail pattern) reads as a distinct layer of facts/actions
-            even though --surface and --bg are the same white — the shadow and
-            the photo's own color underneath do the separating. */}
-        <div
-          style={{
-            position: 'relative',
-            flex: '0 0 auto',
-            marginTop: -18,
-            borderRadius: '20px 20px 0 0',
-            background: 'var(--surface)',
-            boxShadow: '0 -6px 18px rgba(23,24,27,0.07)',
-            // Clear of the floating menu (--nav-h: its height and the gap under it) plus some air.
-            padding: '18px 20px calc(var(--nav-h, 82px) + 18px)',
-          }}
-        >
-          {/* Identity + reaction share one row (like reads as a lightweight
-              reaction to who/what, not a standalone action), the facts about
-              the catch stack right under it, and the two heavier social
-              actions (report/share) get their own button row at the bottom —
-              grouped by weight instead of one flat strip of controls. */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <CatcherLabel userId={c.userId} mine={c.mine} onOpenUser={onOpenUser} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div
-                className={`icon-btn tap-scale${justLiked ? ' like-pop-anim' : ''}`}
-                style={{
-                  width: 32,
-                  height: 32,
-                  ...(likedByMe ? { background: 'rgba(211,51,51,0.1)', border: '1px solid rgba(211,51,51,0.3)' } : {}),
-                }}
-                onClick={handleToggleLike}
-                onAnimationEnd={() => setJustLiked(false)}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill={likedByMe ? '#D33' : 'none'} stroke={likedByMe ? '#D33' : '#17181B'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                </svg>
-              </div>
-              <div
-                key={likes?.count ?? 0}
-                className={justLiked ? 'like-count-pop-anim' : undefined}
-                style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-soft)', minWidth: 12, cursor: likes?.count ? 'pointer' : undefined }}
-                onClick={() => (likes?.count ? onOpenLikers(likes.likers) : undefined)}
-              >
-                {likes?.count ?? 0}
-              </div>
-              <div
-                className="icon-btn tap-scale"
-                style={{ width: 32, height: 32, marginLeft: 6 }}
-                onClick={() => onOpenComments(c.id)}
-                aria-label={tn('guest.commentsAfter')}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-4-.9L3 20l1.1-4a8.4 8.4 0 0 1-1.1-4.5A8.5 8.5 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5z" />
-                </svg>
-              </div>
-              <div
-                style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-soft)', minWidth: 12, cursor: 'pointer' }}
-                onClick={() => onOpenComments(c.id)}
-              >
-                {commentCount}
-              </div>
+        {isSuperAdmin && (
+          <div style={{ position: 'absolute', top: 'calc(12px + var(--standalone-top, 0px))', right: 12, display: 'flex', gap: 8 }}>
+            <div className="icon-btn catch-nav-btn tap-scale" onClick={() => setEditing(true)} title={tn('weekly.editTitle')}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+              </svg>
+            </div>
+            <div className="icon-btn catch-nav-btn tap-scale" onClick={() => setMoving(true)} title={tn('weekly.moveTitle')}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M7 4 3 8l4 4M3 8h13a5 5 0 0 1 0 10h-3" />
+              </svg>
+            </div>
+            <div className="icon-btn catch-nav-btn tap-scale" onClick={() => onDeleteCatch(c.id)} title={tn('weekly.deleteTitle')}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D33" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M10 11v6M14 11v6M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" />
+              </svg>
             </div>
           </div>
-
-          {/* Tapping either this or the count above opens PeopleListModal —
-              the Instagram "liked by" sheet, with search and a follow button
-              per row (see FishZoneApp's viewingLikersFor). */}
-          {!!likes?.likers.length && (
-            <div className="tap-scale" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, cursor: 'pointer' }} onClick={() => onOpenLikers(likes.likers)}>
-              <div style={{ display: 'flex' }}>
-                {likes.likers.slice(0, 3).map((l, i) => (
-                  <div
-                    key={l.userId}
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: '50%',
-                      overflow: 'hidden',
-                      background: 'var(--ink)',
-                      color: '#fff',
-                      fontSize: 10,
-                      fontWeight: 800,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 0 0 2px var(--surface)',
-                      marginLeft: i === 0 ? 0 : -8,
-                      flex: '0 0 auto',
-                    }}
-                  >
-                    {l.avatarUrl ? <img src={thumbUrl(l.avatarUrl, 96)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" decoding="async" /> : l.displayName.slice(0, 1).toUpperCase()}
-                  </div>
-                ))}
-              </div>
-              <div style={{ fontSize: 12.5, color: 'var(--ink-soft)' }}>{tn('catch.likedBy', { names: likersSummary(likes.likers) })}</div>
+        )}
+        {zoomed && <PhotoViewer src={c.photoUrl} alt={c.speciesName} onClose={() => setZoomed(false)} />}
+        {c.mine && !isSuperAdmin && (
+          <div style={{ position: 'absolute', top: 'calc(12px + var(--standalone-top, 0px))', right: 12 }}>
+            <div className="icon-btn catch-nav-btn tap-scale" onClick={() => setEditingMine(true)} title={tn('catch.addDetailsTitle')} aria-label={tn('catch.addDetailsTitle')}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+              </svg>
             </div>
-          )}
+          </div>
+        )}
+        {editingMine && <EditMyCatchSheet c={c} onClose={() => setEditingMine(false)} />}
+        {moving && <MoveCatchSheet c={c} onClose={() => setMoving(false)} />}
+        {editing && <EditCatchSheet c={c} onClose={() => setEditing(false)} />}
+        {sectorCatches.length > 1 && sectorIndex >= 0 && (
+          <div className="catch-reel-counter" style={{ top: 'calc(12px + var(--standalone-top, 0px))' }}>
+            {sectorIndex + 1} / {sectorCatches.length}
+          </div>
+        )}
+        {prevCatch && (
+          <div className="icon-btn catch-nav-btn tap-scale" style={{ position: 'absolute', top: '40%', left: 12, transform: 'translateY(-50%)' }} onClick={() => goTo(prevCatch.id)} title={tn('catch.prev')}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 6l-6 6 6 6" />
+            </svg>
+          </div>
+        )}
+        {nextCatch && (
+          <div className="icon-btn catch-nav-btn tap-scale" style={{ position: 'absolute', top: '40%', right: 12, transform: 'translateY(-50%)' }} onClick={() => goTo(nextCatch.id)} title={tn('catch.next')}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </div>
+        )}
 
-          <div style={{ fontWeight: 800, fontSize: 20, marginTop: likes?.likers.length ? 12 : 4 }}>{c.speciesName}</div>
-          {meta && <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 2 }}>{meta}</div>}
-          <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <button className="section-link" style={{ fontSize: 12.5 }} onClick={() => onOpenTerritory(c.territoryId)}>
-              {tn('guest.sectorTitle', { id: c.territoryId })}
+        {/* The reactions: like (its count opens who liked), comments, share, and — on someone else's catch — report. */}
+        <div className="catch-reel-rail">
+          <div className="reel-act-col">
+            <button className={`reel-act tap-scale${justLiked ? ' like-pop-anim' : ''}`} onClick={handleToggleLike} aria-pressed={likedByMe} onAnimationEnd={() => setJustLiked(false)}>
+              <svg width="30" height="30" viewBox="0 0 24 24" {...iconStroke} fill={likedByMe ? '#FF3B5C' : 'none'} stroke={likedByMe ? '#FF3B5C' : '#fff'}>
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
             </button>
-            <span>· {formatWhen(c.caughtAt)}</span>
+            <button key={likes?.count ?? 0} className={`reel-count${justLiked ? ' like-count-pop-anim' : ''}`} onClick={() => (likes?.count ? onOpenLikers(likes.likers) : undefined)}>
+              {likes?.count ?? 0}
+            </button>
           </div>
-          <CatchConditions catchId={c.id} caughtAt={c.caughtAt} territoryId={c.territoryId} />
-
-          <div className="catch-comments-preview tap-scale" onClick={() => onOpenComments(c.id)}>
-            {commentPreview.map((cm) => (
-              <div key={cm.id} className="catch-comments-preview-line">
-                <b>{cm.displayName}</b> {cm.body}
-              </div>
-            ))}
-            <div className="catch-comments-preview-more">{commentCount ? tn('catch.allComments', { count: commentCount }) : tn('catch.writeComment')}</div>
+          <div className="reel-act-col">
+            <button className="reel-act tap-scale" onClick={() => onOpenComments(c.id)} aria-label={tn('guest.commentsAfter')}>
+              <svg width="29" height="29" viewBox="0 0 24 24" {...iconStroke}>
+                <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-4-.9L3 20l1.1-4a8.4 8.4 0 0 1-1.1-4.5A8.5 8.5 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5z" />
+              </svg>
+            </button>
+            <button className="reel-count" onClick={() => onOpenComments(c.id)}>
+              {commentCount}
+            </button>
           </div>
-
-          <div style={{ height: 1, background: 'var(--line)', margin: '16px 0' }} />
-
-          <div className="catch-actions" style={{ display: 'flex', gap: 8 }}>
-            {user && !c.mine && (
-              <button className="btn-secondary" style={{ flex: 1, padding: '9px 14px', fontSize: 13 }} onClick={() => onReportPhoto(c.id)}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 3v18M5 4h12l-2.5 4L17 12H5" />
-                </svg>
-                {tn('catch.report')}
-              </button>
-            )}
-            <button
-              className="btn-secondary"
-              style={{ flex: 1, padding: '9px 14px', fontSize: 13 }}
-              onClick={() => onShare(c.id, tn('catch.shareText', { species: c.speciesName }))}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <div className="reel-act-col">
+            <button className="reel-act tap-scale" onClick={() => onShare(c.id, tn('catch.shareText', { species: c.speciesName }))} aria-label={tn('common.share')}>
+              <svg width="28" height="28" viewBox="0 0 24 24" {...iconStroke}>
                 <path d="M12 15V4M12 4 8 8M12 4l4 4" />
                 <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
               </svg>
-              {tn('common.share')}
             </button>
+          </div>
+          {user && !c.mine && (
+            <div className="reel-act-col">
+              <button className="reel-act tap-scale" onClick={() => onReportPhoto(c.id)} aria-label={tn('catch.report')}>
+                <svg width="25" height="25" viewBox="0 0 24 24" {...iconStroke}>
+                  <path d="M5 3v18M5 4h12l-2.5 4L17 12H5" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Who caught it, what, where and when, the latest comment, the weather —
+            on the blur at the bottom left, clear of the reactions column. */}
+        <div className="catch-reel-info">
+          <div className="reel-author-row">
+            <CatchAuthor userId={c.userId} mine={c.mine} onOpenUser={onOpenUser} />
+            {user && !c.mine && <FollowPill userId={c.userId} />}
             {c.mine && <StoryButton catchId={c.id} caption={`${c.speciesName}${meta ? ` ${meta}` : ''}`} onToast={onToast} />}
             {c.mine && (
-              <button data-tour="edit-catch" className="btn-secondary" style={{ flex: 1, fontSize: 13 }} onClick={() => setEditingMine(true)}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <button data-tour="edit-catch" className="reel-pill tap-scale" onClick={() => setEditingMine(true)}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d="M12 20h9" />
                   <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
                 </svg>
                 {c.lengthCm == null && c.weightKg == null ? tn('catch.sizeWeight') : tn('catch.edit')}
               </button>
             )}
+          </div>
+          <div className="reel-species">
+            {c.speciesName}
+            {meta && <span className="reel-meta">{meta}</span>}
+          </div>
+          <div className="reel-where">
+            <button className="reel-sector" onClick={() => onOpenTerritory(c.territoryId)}>
+              {tn('guest.sectorTitle', { id: c.territoryId })}
+            </button>
+            <span>· {formatWhen(c.caughtAt)}</span>
+          </div>
+          <div className="reel-comments tap-scale" onClick={() => onOpenComments(c.id)}>
+            {commentLine && (
+              <div className="reel-comment-line">
+                <b>{commentLine.displayName}</b> {commentLine.body}
+              </div>
+            )}
+            <div className="reel-comment-more">{commentCount ? tn('catch.allComments', { count: commentCount }) : tn('catch.writeComment')}</div>
+          </div>
+          {/* A sideways scroll of the weather strip must not page to the next catch. */}
+          <div className="reel-weather" onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
+            <CatchConditions catchId={c.id} caughtAt={c.caughtAt} territoryId={c.territoryId} compact />
           </div>
         </div>
       </div>

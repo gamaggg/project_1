@@ -209,6 +209,47 @@ body{
   box-shadow:var(--shadow-sm);
 }
 .icon-btn:active{transform:scale(0.94);}
+/* The «previous / next catch» arrows sit over the photo's middle: see-through glass so they don't hide the fish. */
+/* .icon-btn.catch-nav-btn: outranks the glass look nav-glass.css puts on every .icon-btn. */
+.icon-btn.catch-nav-btn{background:rgba(255,255,255,.34); border-color:rgba(255,255,255,.4); box-shadow:none; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);}
+
+/* Catch screen, Reels-style (CatchPhotoScreen): the photo fills the screen, the facts sit on it
+   at the bottom left over a soft blur that fades out upward, the reactions in a right-hand column. */
+.catch-reel-ambient{position:absolute; left:-10%; top:-10%; width:120%; height:120%; object-fit:cover; filter:blur(28px) brightness(.78) saturate(1.2); pointer-events:none;}
+.catch-reel-top{position:absolute; left:0; right:0; top:0; height:120px; pointer-events:none; background:linear-gradient(to bottom, rgba(10,11,12,.42), rgba(10,11,12,0));}
+.catch-reel-shade{position:absolute; left:0; right:0; bottom:0; height:52%; pointer-events:none; background:linear-gradient(to top, rgba(10,11,12,.8) 0%, rgba(10,11,12,.46) 48%, rgba(10,11,12,0) 100%); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); -webkit-mask-image:linear-gradient(to top, #000 0%, #000 42%, transparent 100%); mask-image:linear-gradient(to top, #000 0%, #000 42%, transparent 100%);}
+.catch-reel-counter{position:absolute; left:50%; transform:translateX(-50%); height:28px; display:flex; align-items:center; padding:0 11px; border-radius:20px; background:rgba(23,24,27,.5); color:#fff; font-size:11.5px; font-weight:700; margin-top:4px; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);}
+.catch-reel-skel{border-radius:8px; background:rgba(255,255,255,.14);}
+.catch-reel-rail{position:absolute; right:8px; bottom:calc(var(--nav-h, 82px) + 14px); display:flex; flex-direction:column; align-items:center; gap:14px; z-index:2;}
+.reel-act-col{display:flex; flex-direction:column; align-items:center; gap:1px;}
+.reel-act{width:46px; height:42px; display:flex; align-items:center; justify-content:center; background:none; border:none; padding:0; cursor:pointer; filter:drop-shadow(0 1px 3px rgba(0,0,0,.55));}
+.reel-count{background:none; border:none; padding:0 4px; color:#fff; font:inherit; font-size:12.5px; font-weight:800; min-width:20px; text-align:center; cursor:pointer; text-shadow:0 1px 3px rgba(0,0,0,.65);}
+.catch-reel-info{position:absolute; left:16px; right:74px; bottom:calc(var(--nav-h, 82px) + 14px); display:flex; flex-direction:column; align-items:flex-start; gap:6px; z-index:2; pointer-events:none; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.55);}
+.catch-reel-info > *{pointer-events:auto; max-width:100%;}
+.reel-author-row{display:flex; align-items:center; gap:8px; width:100%; min-width:0;}
+.reel-author-row > .reel-pill, .reel-author-row > .story-btn{flex:0 0 auto;}
+.reel-author{display:inline-flex; align-items:center; gap:8px; min-width:0; flex:0 1 auto; background:none; border:none; padding:0; color:#fff; font:inherit; cursor:pointer; text-shadow:inherit;}
+.reel-avatar{width:34px; height:34px; border-radius:50%; overflow:hidden; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background:var(--ink); color:#fff; font-size:13px; font-weight:800; box-shadow:0 0 0 1.5px rgba(255,255,255,.85);}
+.reel-avatar img{width:100%; height:100%; object-fit:cover; display:block;}
+.reel-author-name{font-size:14.5px; font-weight:800; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.reel-pill{display:inline-flex; align-items:center; gap:5px; height:30px; padding:0 12px; border-radius:999px; border:1.5px solid rgba(255,255,255,.7); background:rgba(23,24,27,.18); color:#fff; font:inherit; font-size:12.5px; font-weight:800; cursor:pointer; white-space:nowrap; text-shadow:none;}
+.catch-reel .story-btn{flex:none; height:30px; padding:0 12px; border-radius:999px; font-size:12.5px; white-space:nowrap; text-shadow:none;}
+.reel-pill.on{border-color:rgba(255,255,255,.4); color:rgba(255,255,255,.85);}
+.reel-pill:disabled{opacity:.6;}
+.reel-species{font-size:22px; font-weight:800; line-height:1.15;}
+.reel-meta{font-size:14px; font-weight:700; opacity:.88; margin-left:8px;}
+.reel-where{font-size:13px; font-weight:700; opacity:.92; display:flex; flex-wrap:wrap; gap:0 6px;}
+.reel-sector{background:none; border:none; padding:0; font:inherit; font-weight:800; color:#FFB48A; cursor:pointer; text-shadow:inherit;}
+.reel-comments{cursor:pointer; max-width:100%;}
+.reel-comment-line{font-size:13.5px; line-height:1.35; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.reel-comment-more{font-size:12.5px; font-weight:700; opacity:.72; margin-top:1px;}
+.reel-weather{width:100%; min-width:0;}
+.catch-reel .catch-conditions{margin-top:0;}
+.catch-reel .catch-conditions-chips{flex-wrap:nowrap; overflow-x:auto; margin-top:0; scrollbar-width:none; -webkit-overflow-scrolling:touch;}
+.catch-reel .catch-conditions-chips::-webkit-scrollbar{display:none;}
+.catch-reel .catch-conditions-chip:not(.skeleton){flex:0 0 auto; height:26px; background:rgba(23,24,27,.46); box-shadow:none; color:#fff; text-shadow:none; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);}
+.catch-reel .catch-conditions-chip.skeleton{flex:0 0 auto; height:26px;}
+.catch-reel .catch-conditions-chip.skeleton{background:linear-gradient(100deg,rgba(255,255,255,.1) 30%,rgba(255,255,255,.22) 50%,rgba(255,255,255,.1) 70%); background-size:240% 100%; backdrop-filter:none;}
 /* The "<" chevron's point sits on its own left edge, so centering its 18px
    bounding box in the circle (the default) reads as slightly right-heavy —
    nudge it left so the glyph's visual weight, not its box, is centered. */
@@ -2891,6 +2932,25 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 @media (prefers-reduced-motion: reduce){
   .comments-overlay, .comments-sheet, .comment-enter, .comment-flash, .comment-menu, .comments-input-box.shake, .comments-dialog, .comments-dialog-backdrop, .comments-toast{animation:none;}
 }
+
+/* Comments, Instagram-style layout in the app's own light look (CommentsSheet): the catch's photo shrinks into a
+   card above a white sheet. .comments-insta outranks the glass overlay/sheet looks in nav-glass.css. */
+.comments-overlay.comments-insta{background:rgba(10,14,18,.74); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);}
+.comments-insta .comments-sheet{height:62%; border-radius:26px 26px 0 0;}
+.comments-insta .comments-head{border-bottom:none; justify-content:center; position:relative; padding:6px 16px 8px;}
+.comments-insta .comments-close{position:absolute; right:14px; top:2px;}
+.comments-insta .comments-compose{padding-top:4px;}
+.comments-emoji{display:flex; justify-content:space-between; padding:6px 4px 10px;}
+.comments-emoji button{background:none; border:none; padding:2px 5px; font-size:25px; line-height:1; cursor:pointer;}
+.comments-compose-row{display:flex; align-items:flex-end; gap:10px;}
+.comments-compose-row .comments-input-box{flex:1; min-width:0;}
+.comments-me{width:34px; height:34px; font-size:13px; flex:0 0 auto; margin-bottom:2px;}
+.comments-me img{width:100%; height:100%; object-fit:cover; display:block; border-radius:50%;}
+.comments-photo{position:absolute; left:0; right:0; top:calc(56px + var(--standalone-top, 0px)); bottom:calc(62% + 14px); display:flex; align-items:center; justify-content:center; padding:0 28px; pointer-events:none;}
+.comments-photo img{transform-origin:0 0; max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; border-radius:18px; box-shadow:0 8px 30px rgba(0,0,0,.45);}
+/* With the keyboard up the sheet takes the whole visible area and the photo steps aside. */
+.comments-kb.comments-insta .comments-sheet{height:100%; max-height:100%; border-radius:0;}
+.comments-kb .comments-photo{display:none;}
 
 /* Catch card: comment button + preview (see CatchPhotoScreen.tsx) */
 .catch-comments-preview{margin-top:12px; cursor:pointer;}
