@@ -253,6 +253,21 @@ export function ClanChatScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastKey, chat.isSuccess, chat.data?.pages.length])
 
+  // Tapping the input brings the reader to the latest messages: the list
+  // shrinks as the keyboard opens (and the webview may resize a moment
+  // later), so the bottom is re-pinned a few times while that settles.
+  const focusScrollTimers = useRef<ReturnType<typeof setTimeout>[]>([])
+  function scrollToLatestOnFocus() {
+    focusScrollTimers.current.forEach(clearTimeout)
+    focusScrollTimers.current = [0, 150, 350, 700].map((ms) =>
+      setTimeout(() => {
+        const el = listRef.current
+        if (el) el.scrollTop = el.scrollHeight
+      }, ms),
+    )
+  }
+  useEffect(() => () => focusScrollTimers.current.forEach(clearTimeout), [])
+
   function onScroll() {
     const el = listRef.current
     if (!el) return
@@ -520,7 +535,10 @@ export function ClanChatScreen({
                   updateMention(e.currentTarget)
                   rememberCaret(e.currentTarget)
                 }}
-                onFocus={() => setEmojiOpen(false)}
+                onFocus={() => {
+                  setEmojiOpen(false)
+                  scrollToLatestOnFocus()
+                }}
                 onBlur={(e) => {
                   setMention(null)
                   rememberCaret(e.currentTarget)

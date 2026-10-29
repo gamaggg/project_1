@@ -136,10 +136,34 @@ export function CommentsSheet({
     onOpenUser(id)
   }
 
+  // Tapping the input brings the reader to the latest comments: the list
+  // shrinks as the keyboard opens (and the webview may resize a moment
+  // later), so the bottom is re-pinned a few times while that settles.
+  // Replying focuses the input too, but there the reader stays where the
+  // comment they answer is.
+  const skipFocusScroll = useRef(false)
+  const focusScrollTimers = useRef<ReturnType<typeof setTimeout>[]>([])
+  function scrollToLatestOnFocus() {
+    if (skipFocusScroll.current) {
+      skipFocusScroll.current = false
+      return
+    }
+    focusScrollTimers.current.forEach(clearTimeout)
+    focusScrollTimers.current = [0, 150, 350, 700].map((ms) =>
+      setTimeout(() => {
+        const list = listRef.current
+        if (list) list.scrollTop = list.scrollHeight
+      }, ms),
+    )
+  }
+  useEffect(() => () => focusScrollTimers.current.forEach(clearTimeout), [])
+
   function startReply(c: CatchComment) {
     setReplyTo({ rootId: c.parentId ?? c.id, userId: c.userId, name: c.displayName })
     setMenuFor(null)
     setError(null)
+    // Already focused: no focus event follows, so don't leave the flag set.
+    skipFocusScroll.current = document.activeElement !== inputRef.current
     inputRef.current?.focus()
   }
 
@@ -408,6 +432,7 @@ export function CommentsSheet({
                   if (error) setError(null)
                   autosize(e.target)
                 }}
+                onFocus={scrollToLatestOnFocus}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault()
