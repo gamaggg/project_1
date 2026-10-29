@@ -74,8 +74,12 @@ function buildSkinCanvas(skinId: string, color: string, tileHeight: number, tile
   const height = Math.round(tileHeight)
   const width = Math.round(tileWidth ?? height * SVG_ASPECT)
   // createPattern throws on a 0-sized canvas (InvalidStateError), which
-  // aborted drawing every sector after it on the map.
-  if (width < 1 || height < 1) return null
+  // aborted drawing every sector after it on the map. NaN passes a plain
+  // `< 1` check, so it has to be ruled out explicitly.
+  if (!(width >= 1) || !(height >= 1)) return null
+  // drawImage throws the same error on an image the browser has dropped or
+  // could not decode (a loaded SVG can come back with no size at all).
+  if (!img.complete || img.naturalWidth < 1) return null
   const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height
@@ -83,7 +87,11 @@ function buildSkinCanvas(skinId: string, color: string, tileHeight: number, tile
   if (!ctx) return null
   const b = look?.bold ?? 0
   const nudges = b > 0 ? [[0, 0], [b, 0], [-b, 0], [0, b], [0, -b]] : [[0, 0]]
-  for (const [dx, dy] of nudges) ctx.drawImage(img, dx, dy, width, height)
+  try {
+    for (const [dx, dy] of nudges) ctx.drawImage(img, dx, dy, width, height)
+  } catch {
+    return null
+  }
   ctx.globalCompositeOperation = 'source-in'
   ctx.fillStyle = color
   if (look) ctx.globalAlpha = look.lines
@@ -108,7 +116,11 @@ function buildSkinCanvas(skinId: string, color: string, tileHeight: number, tile
 export function buildSkinPattern(skinId: string, color: string, tileHeight = DEFAULT_TILE_HEIGHT, tileWidth?: number): CanvasPattern | null {
   const canvas = buildSkinCanvas(skinId, color, tileHeight, tileWidth)
   if (!canvas) return null
-  return canvas.getContext('2d')!.createPattern(canvas, 'no-repeat')
+  try {
+    return canvas.getContext('2d')!.createPattern(canvas, 'no-repeat')
+  } catch {
+    return null
+  }
 }
 
 // Ticks whenever any skin SVG finishes its one-time async load, so a
@@ -176,8 +188,13 @@ export function useSkinPatterns() {
       canvas = buildSkinCanvas(skinId, color, bucketedHeight, bucketedWidth, look)
       canvasCacheRef.current.set(key, canvas)
     }
-    if (!canvas) return null
-    const pattern = canvas.getContext('2d')!.createPattern(canvas, 'no-repeat')
+    if (!canvas || canvas.width < 1 || canvas.height < 1) return null
+    let pattern: CanvasPattern | null = null
+    try {
+      pattern = canvas.getContext('2d')!.createPattern(canvas, 'no-repeat')
+    } catch {
+      return null
+    }
     if (!pattern) return null
     // The raster is built at the bucketed size, so it has to be stretched
     // onto this sector's real box — painted at its own size it fell up to
