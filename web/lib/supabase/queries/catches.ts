@@ -226,8 +226,9 @@ export function useAdminMoveCatch() {
 }
 
 // Super admin: correct a catch's species, length and weight (see
-// admin_edit_catch). Coins already paid for it stay as they were; the
-// angler's achievements are re-synced server-side. Resolves with what
+// admin_edit_catch). A new species re-prices the coins paid for the catch
+// and sends the angler a notice; their achievements are re-synced
+// server-side. Resolves with what
 // changed, in the words the admin journal uses.
 export function useAdminEditCatch() {
   const queryClient = useQueryClient()

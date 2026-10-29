@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useActivity, useCityFeed, useMarkNotificationsRead } from '@/lib/supabase/queries'
 import type { CityId } from '@/lib/data/city'
 import type { ActivityEntry } from '@/lib/data/types'
-import { CATEGORY_GRADIENT, KIND_LABEL } from '@/lib/data/species'
+import { CATEGORY_GRADIENT, KIND_LABEL, localSpeciesNameLoose } from '@/lib/data/species'
 import { formatCatchMeta, formatWhen, pluralSectors, pluralCatches } from '@/lib/format'
 import { FishIcon } from '@/components/app-shell/icons'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
@@ -481,6 +481,21 @@ export function ActivityScreen({
                 title = tn('activity.geoDone')
                 sub = tn('activity.geoDoneSub', { id: a.territoryId ?? '', coins: n('coins') || 50 })
                 if (a.territoryId) action = () => onOpenTerritory(a.territoryId!)
+              } else if (ev.kind === 'catch_species_changed') {
+                // An admin corrected the species of this player's catch
+                // (admin_edit_catch): what it was, what it is, the coin change.
+                tone = 'blue'
+                icon = FEED_ICONS.pencil
+                title = tn('activity.speciesChanged')
+                const coinsDelta = n('coins')
+                sub = [
+                  tn('activity.speciesChangedSub', { from: localSpeciesNameLoose(String(p.from ?? '')), to: localSpeciesNameLoose(String(p.to ?? '')) }),
+                  coinsDelta ? tn('activity.speciesChangedCoins', { delta: `${coinsDelta > 0 ? '+' : '−'}${Math.abs(coinsDelta)}` }) : null,
+                  a.territoryId ? tn('activity.speciesChangedSector', { id: a.territoryId }) : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')
+                if (a.catchId) action = () => onOpenPhoto(a.catchId!)
               } else if (ev.kind === 'catch_edited') {
                 // Super admins: a player changed the numbers of their catch
                 // (edit_my_catch) — what changed, one tap to the catch.

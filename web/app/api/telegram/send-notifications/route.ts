@@ -6,6 +6,7 @@ import { pluralSectors, pluralCatches } from '@/lib/format'
 import { setCurrentLanguage, tn } from '@/lib/i18n/runtime'
 import { isLang, type Lang } from '@/lib/i18n/core'
 import { localAwardTitle, localChallengeName } from '@/lib/data/dbText'
+import { localSpeciesNameLoose } from '@/lib/data/species'
 import { withErrorReport } from '@/lib/serverErrors'
 import { asCityId, cityForSectorId, type CityId } from '@/lib/data/city'
 
@@ -302,6 +303,21 @@ function renderMessage(notification: NotificationRef): Message | null {
         text: tn('tg.geoBonus', { id: notification.territory_id ?? '', coins: tn('common.coins', { count: coins }) }),
         buttonLabel: tn('tg.btnRange'),
         url: `${SITE_URL}/?geo=1`,
+      }
+    }
+    case 'catch_species_changed': {
+      // An admin corrected the species of this player's catch (admin_edit_catch).
+      if (!notification.catch_id) return null
+      const delta = Number(notification.payload?.coins ?? 0)
+      return {
+        text: tn('tg.speciesChanged', {
+          id: notification.territory_id ?? '',
+          from: localSpeciesNameLoose(String(notification.payload?.from ?? '')),
+          to: localSpeciesNameLoose(String(notification.payload?.to ?? '')),
+          coins: delta ? tn('tg.speciesChangedCoins', { delta: `${delta > 0 ? '+' : '−'}${Math.abs(delta)}` }) : '',
+        }),
+        buttonLabel: tn('tg.btnCatch'),
+        url: `${SITE_URL}/?catch=${notification.catch_id}`,
       }
     }
     case 'catch_edited': {
