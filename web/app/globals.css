@@ -2286,6 +2286,11 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .rating-podium-name{font-weight:800; font-size:13.5px; text-align:center; max-width:98px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .rating-podium-stat-main{font-weight:800; font-size:13.5px; color:var(--accent);}
 .rating-podium-stat-sub{font-size:11px; color:var(--ink-faint); margin-top:-4px;}
+/* The viewer's own place in the week's rating: a tinted row and a small «Ты» mark. */
+.terr-list-item.rating-row-me{background:var(--accent-soft);}
+.rating-me-tag{flex:0 0 auto; font-size:10.5px; font-weight:800; line-height:1; color:var(--accent); background:var(--accent-soft); padding:3px 7px; border-radius:8px; margin-left:6px;}
+.rating-row-me .rating-me-tag{background:rgba(252,82,0,.16);}
+.rating-podium-item.is-me .rating-podium-name{color:var(--accent);}
 .rating-list-rank{width:18px; flex:0 0 auto; text-align:center; font-weight:800; font-size:13.5px; color:var(--ink-faint);}
 
 .rating-podium-glow{

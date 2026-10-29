@@ -435,9 +435,7 @@ export function TerritoryScreen({
           </div>
         </div>
 
-        <SectorForecastCard territory={territory} city={cityForSectorId(territory.id)} />
-        <SectorInsightsCard territory={territory} />
-
+        {/* The latest catches come first, right under the sector's numbers; the forecast and the insights follow. */}
         <div className="section-title-row" style={{ marginTop: 22 }}>
           <div className="section-title">{tn('profile.recentCatches')}</div>
           {catches.length > recent.length && (
@@ -480,6 +478,9 @@ export function TerritoryScreen({
             </div>
           )
         )}
+
+        <SectorForecastCard territory={territory} city={cityForSectorId(territory.id)} />
+        <SectorInsightsCard territory={territory} />
 
         {isSuperAdmin && (
           <button className="btn-secondary" style={{ marginTop: 24, color: '#D33' }} onClick={() => onDeleteTerritory(territory.id)}>

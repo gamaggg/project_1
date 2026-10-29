@@ -3,6 +3,7 @@
 import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useState } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
+import { useAuth } from '@/components/providers/AuthProvider'
 import { useClanBadges, useWeeklyLeaderboard } from '@/lib/supabase/queries'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import type { WeeklyLeaderboardEntry } from '@/lib/data/types'
@@ -69,16 +70,19 @@ export function PodiumItem({
   onOpenUser,
   enterDelayMs,
   clanCrest,
+  isMe = false,
 }: {
   entry: WeeklyLeaderboardEntry
   rank: 1 | 2 | 3
   onOpenUser: (id: string) => void
   enterDelayMs?: number
   clanCrest?: unknown
+  // The viewer's own place gets a mark.
+  isMe?: boolean
 }) {
   return (
     <button
-      className={`rating-podium-item${rank === 1 ? ' rank-1' : ''}${enterDelayMs !== undefined ? ' rating-podium-item-enter' : ''}`}
+      className={`rating-podium-item${rank === 1 ? ' rank-1' : ''}${enterDelayMs !== undefined ? ' rating-podium-item-enter' : ''}${isMe ? ' is-me' : ''}`}
       style={enterDelayMs !== undefined ? { animationDelay: `${enterDelayMs}ms` } : undefined}
       onClick={() => onOpenUser(entry.userId)}
     >
@@ -86,6 +90,7 @@ export function PodiumItem({
       <div className="rating-podium-name">
         {clanCrest != null && <ClanCrest crest={clanCrest} size={16} className="rating-name-crest" />}
         {entry.displayName}
+        {isMe && <span className="rating-me-tag">{tn('sector.you')}</span>}
       </div>
       <div className="rating-podium-stat-main">{entry.sectorsThisWeek} {pluralSectors(entry.sectorsThisWeek)}</div>
       <div className="rating-podium-stat-sub">{entry.catchesThisWeek} {pluralCatches(entry.catchesThisWeek)}</div>
@@ -96,11 +101,13 @@ export function PodiumItem({
 export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUser: (id: string) => void }) {
   const [scope, setScope] = useState<Scope>('all')
   const cityInfo = CITIES[city]
-  const { data: entries = [], isLoading } = useWeeklyLeaderboard(scope === 'friends', 0, cityInfo.idPrefix, cityInfo.timezone)
+  const { user } = useAuth()
+  // Everyone who caught something this week, not only the first ten.
+  const { data: entries = [], isLoading } = useWeeklyLeaderboard(scope === 'friends', 0, cityInfo.idPrefix, cityInfo.timezone, 500)
   const { data: badges } = useClanBadges(city, entries.length > 0)
 
   const podium = entries.slice(0, 3)
-  const rest = entries.slice(3, 10)
+  const rest = entries.slice(3)
   const slots = podiumSlots(podium)
 
   return (
@@ -126,7 +133,7 @@ export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUs
           <div className="rating-podium">
             {slots.map((entry, i) =>
               entry ? (
-                <PodiumItem key={entry.userId} entry={entry} rank={entry.rank as 1 | 2 | 3} onOpenUser={onOpenUser} clanCrest={badges?.get(entry.userId)?.crest} />
+                <PodiumItem key={entry.userId} entry={entry} rank={entry.rank as 1 | 2 | 3} onOpenUser={onOpenUser} clanCrest={badges?.get(entry.userId)?.crest} isMe={entry.userId === user?.id} />
               ) : (
                 <div key={`empty-${i}`} className="rating-podium-item" aria-hidden />
               )
@@ -140,7 +147,7 @@ export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUs
                 return (
                   <button
                     key={entry.userId}
-                    className="terr-list-item"
+                    className={`terr-list-item${entry.userId === user?.id ? ' rating-row-me' : ''}`}
                     style={{ borderBottom: i < rest.length - 1 ? '1px solid var(--line)' : 'none' }}
                     onClick={() => onOpenUser(entry.userId)}
                   >
@@ -152,6 +159,7 @@ export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUs
                       <div style={{ fontWeight: 700, fontSize: 14.5, display: 'flex', alignItems: 'center', gap: 6 }}>
                         {badges?.get(entry.userId) && <ClanCrest crest={badges.get(entry.userId)!.crest} size={16} />}
                         {entry.displayName}
+                        {entry.userId === user?.id && <span className="rating-me-tag">{tn('sector.you')}</span>}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>

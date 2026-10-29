@@ -84,16 +84,18 @@ export function useAllPlayers(enabled: boolean) {
 // A fresh query per scope (not client-side refiltering of one big list) —
 // "friends" would otherwise need every profile's full follow graph client-side
 // just to filter ten rows.
-export function useWeeklyLeaderboard(friendsOnly: boolean, weekOffset: number = 0, cityPrefix: string = 'B', timezone: string = 'Asia/Tbilisi') {
+// `limit`: the podium screens need only the top (10 by default); the current-week rating asks for everyone who
+// caught something this week (the RPC already leaves out those with nothing).
+export function useWeeklyLeaderboard(friendsOnly: boolean, weekOffset: number = 0, cityPrefix: string = 'B', timezone: string = 'Asia/Tbilisi', limit: number = 10) {
   const { user } = useAuth()
   return useQuery({
-    queryKey: ['weekly-leaderboard', friendsOnly, weekOffset, cityPrefix],
+    queryKey: ['weekly-leaderboard', friendsOnly, weekOffset, cityPrefix, limit],
     enabled: !!user,
     queryFn: async (): Promise<WeeklyLeaderboardEntry[]> => {
       const supabase = createClient()
       const { data, error } = await supabase.rpc('get_weekly_leaderboard', {
         p_friends_only: friendsOnly,
-        p_limit: 10,
+        p_limit: limit,
         p_week_offset: weekOffset,
         p_city_prefix: cityPrefix,
         p_timezone: timezone,
