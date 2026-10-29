@@ -23,7 +23,10 @@ type TorchCapabilities = { torch?: boolean; focusMode?: string[] }
 // ImageCapture (Chrome/Android) takes a real still from the sensor — full
 // resolution, the phone's own processing — instead of a frame of the
 // preview video. Not in TS's DOM lib; iOS has no such API.
-type ImageCaptureLike = { takePhoto: () => Promise<Blob> }
+type ImageCaptureLike = {
+  takePhoto: (settings?: { fillLightMode?: 'auto' | 'off' | 'flash' }) => Promise<Blob>
+  getPhotoCapabilities: () => Promise<{ fillLightMode?: string[] }>
+}
 declare const ImageCapture: { new (track: MediaStreamTrack): ImageCaptureLike } | undefined
 
 // Draws any image source down to MAX_PHOTO_SIDE on its long side and encodes
@@ -65,6 +68,9 @@ export function CameraScreen({
   const [state, setState] = useState<CameraState>('intro')
   const [torchSupported, setTorchSupported] = useState(false)
   const [torchOn, setTorchOn] = useState(false)
+  // No torch API on the phone, but the camera can still fire its flash with the shot (ImageCapture, Android) —
+  // the same button then means "flash on the shutter" instead of a lit lamp.
+  const [flashOnShot, setFlashOnShot] = useState(false)
   // A sensor still takes a moment (Android) — the shutter waits for it.
   const [shooting, setShooting] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -136,6 +142,22 @@ export function CameraScreen({
     return () => timers.forEach(window.clearTimeout)
   }, [state, torchSupported])
 
+  useEffect(() => {
+    if (state !== 'live' || torchSupported || flashOnShot || typeof ImageCapture === 'undefined') return
+    const track = streamRef.current?.getVideoTracks()[0]
+    if (!track) return
+    let cancelled = false
+    new ImageCapture(track)
+      .getPhotoCapabilities()
+      .then((caps) => {
+        if (!cancelled && caps.fillLightMode?.includes('flash')) setFlashOnShot(true)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [state, torchSupported, flashOnShot])
+
   async function requestCamera() {
     setState('requesting')
     try {
@@ -153,6 +175,7 @@ export function CameraScreen({
         track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] } as unknown as MediaTrackConstraints).catch(() => {})
       }
       setTorchSupported(!!caps?.torch)
+      setFlashOnShot(false)
       setTorchOn(false)
       setState('live')
       // Chrome on Android fills `torch` in only once the camera has started, so the read above can come
@@ -181,6 +204,10 @@ export function CameraScreen({
     const track = streamRef.current?.getVideoTracks()[0]
     if (!track) return
     const next = !torchOn
+    if (!torchSupported) {
+      setTorchOn(next)
+      return
+    }
     try {
       await track.applyConstraints({ advanced: [{ torch: next }] } as unknown as MediaTrackConstraints)
       setTorchOn(next)
@@ -210,10 +237,11 @@ export function CameraScreen({
     const video = videoRef.current
     if (!video || !video.videoWidth || shooting) return
     const track = streamRef.current?.getVideoTracks()[0]
-    if (track && !torchOn && typeof ImageCapture !== 'undefined') {
+    const flashNow = torchOn && !torchSupported
+    if (track && (!torchOn || flashNow) && typeof ImageCapture !== 'undefined') {
       setShooting(true)
       try {
-        const still = await new ImageCapture(track).takePhoto()
+        const still = await new ImageCapture(track).takePhoto(flashNow ? { fillLightMode: 'flash' } : undefined)
         const bitmap = await createImageBitmap(still)
         encodePhoto(bitmap, bitmap.width, bitmap.height, (blob) => {
           bitmap.close()
@@ -260,7 +288,7 @@ export function CameraScreen({
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </div>
-          {isLive && torchSupported && (
+          {isLive && (torchSupported || flashOnShot) && (
             <div className={`cam-round-btn tap-scale${torchOn ? ' active' : ''}`} onClick={toggleTorch}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill={torchOn ? '#fff' : 'none'} stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" />
