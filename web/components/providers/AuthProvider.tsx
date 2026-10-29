@@ -50,6 +50,14 @@ declare global {
         // 'ios' | 'android' | 'android_x' | 'tdesktop' | 'macos' | 'weba' |
         // 'webk' | 'unigram' | 'unknown'
         platform?: string
+        // Bot API 8.0+: Telegram's own geolocation, asked through the app itself rather
+        // than the web view — works where navigator.geolocation is refused by the web view.
+        LocationManager?: {
+          isInited: boolean
+          isLocationAvailable: boolean
+          init: (cb?: () => void) => unknown
+          getLocation: (cb: (data: { latitude: number; longitude: number } | null) => void) => unknown
+        }
         // Bot API 7.10+: the strip Telegram draws below the page on iOS (by
         // the home indicator) — white unless the app colours it.
         setBottomBarColor?: (color: string) => void

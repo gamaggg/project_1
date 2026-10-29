@@ -15,6 +15,12 @@ function stepKey() {
   const ua = navigator.userAgent
   const ios = platform === 'ios' || /iPhone|iPad|iPod/.test(ua)
   const android = platform === 'android' || /Android/.test(ua)
+  // Telegram on a computer: the Mac app says «macos», Telegram Desktop says «tdesktop» on
+  // both Mac and Windows, so the system is read from the user agent as well.
+  if (tg && !ios && !android) {
+    if (platform === 'macos' || /Mac/.test(ua)) return 'geoHelp.stepMacTg'
+    if (platform === 'tdesktop' || /Windows/.test(ua)) return 'geoHelp.stepWinTg'
+  }
   if (ios) return tg ? 'geoHelp.stepIosTg' : 'geoHelp.stepIosWeb'
   if (android) return tg ? 'geoHelp.stepAndroidTg' : 'geoHelp.stepAndroidWeb'
   return 'geoHelp.stepOther'

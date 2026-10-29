@@ -49,19 +49,55 @@ export async function getCurrentCoords(): Promise<Coords | null> {
   if ('code' in result && result.code !== result.PERMISSION_DENIED) {
     result = await attempt({ enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 })
   }
+  let coords: Coords
   if ('code' in result) {
-    lastFailureCode = result.code
-    reportGeoFailure(result)
-    return null
+    // The web view refuses (Telegram on a laptop, or a phone whose Telegram has no location
+    // access for web pages): ask Telegram itself, which has its own prompt and its own setting.
+    const viaTelegram = await telegramLocation()
+    if (!viaTelegram) {
+      lastFailureCode = result.code
+      reportGeoFailure(result)
+      return null
+    }
+    coords = viaTelegram
+  } else {
+    coords = { lat: result.coords.latitude, lng: result.coords.longitude }
   }
   lastFailureCode = null
-  const position = result
   localStorage.setItem(GEO_GRANTED_KEY, '1')
   window.dispatchEvent(new Event(GEO_GRANTED_EVENT))
-  const coords = { lat: position.coords.latitude, lng: position.coords.longitude }
   publishFix(coords)
   allowLive()
   return coords
+}
+
+// Telegram Mini Apps (Bot API 8.0+). Null when not inside Telegram, the client is too old,
+// the player declined Telegram's own prompt, or nothing answers within the time limit.
+async function telegramLocation(): Promise<Coords | null> {
+  const app = window.Telegram?.WebApp
+  const manager = app?.LocationManager
+  if (!app?.initData || !manager || !app.isVersionAtLeast?.('8.0')) return null
+  try {
+    if (!manager.isInited) {
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, 3000)
+        manager.init(() => {
+          clearTimeout(timer)
+          resolve()
+        })
+      })
+    }
+    if (!manager.isInited || !manager.isLocationAvailable) return null
+    return await new Promise<Coords | null>((resolve) => {
+      const timer = setTimeout(() => resolve(null), 30_000)
+      manager.getLocation((data) => {
+        clearTimeout(timer)
+        resolve(data ? { lat: data.latitude, lng: data.longitude } : null)
+      })
+    })
+  } catch {
+    return null
+  }
 }
 
 // Which refusal it was (1 = the phone/app says no, 2 = no position available,

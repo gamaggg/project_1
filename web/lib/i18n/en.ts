@@ -688,6 +688,8 @@ export const en: Dict = {
     stepIosWeb: 'Open Settings on your iPhone|Go to “Privacy & Security”|Open “Location Services”|Find Safari and choose “While Using”|Go back to Safari and tap “aA” in the address bar|Open “Website Settings”, then “Location”|Choose “Allow”',
     stepAndroidTg: 'Open your phone’s Settings|Go to “Apps” and choose Telegram|Open “Permissions”, then “Location”|Choose “Allow only while using the app”',
     stepAndroidWeb: 'Open your phone’s Settings|Go to “Apps” and choose Chrome|Open “Permissions”, then “Location”|Choose “Allow”',
+    stepMacTg: 'Open System Settings on your Mac|Go to “Privacy & Security”|Open “Location Services” and turn it on|Find Telegram in the list and switch it on|Restart Telegram and open the game again',
+    stepWinTg: 'Open Windows Settings|Go to “Privacy & security”, then “Location”|Turn on “Location services” and “Let desktop apps access your location”|Restart Telegram and open the game again',
     stepOther: 'Click the icon left of the site address|Find “Location”|Choose “Allow”',
     retry: "I've turned it on, check again",
   },
