@@ -124,6 +124,18 @@ export function CameraScreen({
     }
   }, [state])
 
+  useEffect(() => {
+    if (state !== 'live' || torchSupported) return
+    const timers = [300, 800, 1600, 3200].map((ms) =>
+      window.setTimeout(() => {
+        const track = streamRef.current?.getVideoTracks()[0]
+        const caps = track?.getCapabilities?.() as unknown as TorchCapabilities | undefined
+        if (caps?.torch) setTorchSupported(true)
+      }, ms)
+    )
+    return () => timers.forEach(window.clearTimeout)
+  }, [state, torchSupported])
+
   async function requestCamera() {
     setState('requesting')
     try {
@@ -143,6 +155,8 @@ export function CameraScreen({
       setTorchSupported(!!caps?.torch)
       setTorchOn(false)
       setState('live')
+      // Chrome on Android fills `torch` in only once the camera has started, so the read above can come
+      // up empty: the effect below asks again while the preview warms up.
     } catch (err) {
       setState('denied')
       // Which refusal it was (NotAllowedError = the app or the phone says no, NotFoundError / NotReadableError =
