@@ -35,17 +35,36 @@ export function useKeyboardInset(ref: RefObject<HTMLElement | null>): number {
       const below = frame.getBoundingClientRect().bottom - (vv.offsetTop + vv.height)
       setInset(Math.max(0, Math.round(below)))
     }
+    // Telegram on iPhone shrinks the webview a moment after the keyboard
+    // opens, and no visualViewport/window event is guaranteed to follow — the
+    // gap measured just before stayed and the input was lifted twice, leaving
+    // the message list squeezed to a sliver. Watch the frame itself, and
+    // re-measure a few times after focus while the keyboard animates in/out.
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update)
+    ro?.observe(frame)
+    const timers: ReturnType<typeof setTimeout>[] = []
+    const settle = () => {
+      timers.forEach(clearTimeout)
+      timers.length = 0
+      for (const ms of [0, 120, 300, 600, 1000]) timers.push(setTimeout(update, ms))
+    }
     vv.addEventListener('resize', update)
     vv.addEventListener('scroll', update)
     window.addEventListener('resize', update)
     // iOS may scroll the page itself to bring the input into view.
     window.addEventListener('scroll', update, { passive: true })
+    el.addEventListener('focusin', settle)
+    el.addEventListener('focusout', settle)
     update()
     return () => {
+      ro?.disconnect()
+      timers.forEach(clearTimeout)
       vv.removeEventListener('resize', update)
       vv.removeEventListener('scroll', update)
       window.removeEventListener('resize', update)
       window.removeEventListener('scroll', update)
+      el.removeEventListener('focusin', settle)
+      el.removeEventListener('focusout', settle)
     }
   }, [ref])
   return inset
