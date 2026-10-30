@@ -23,7 +23,7 @@ updated: 2026-10-07
 | `/api/telegram/send-onboarding` | pg_cron, 15 мин | напоминания до первого улова |
 | `/api/telegram/fishing` | pg_cron, 5 мин | «Ещё на рыбалке?» |
 | `/api/telegram/forecast-alert` | pg_cron, 19:00 | «Завтра хороший клёв» ([[Прогноз клёва]]) |
-| `/api/support/notify` | новое обращение в поддержку | пересылает супер-админам в бота |
+| `/api/support/notify` | новое обращение или сообщение в поддержку | пересылает супер-админам в бота (и админу, начавшему чат, с флагом `can_message_players`) |
 | `/api/recognize-fish` | экран подтверждения улова | прокси к Fishial: вид рыбы по фото |
 | `/api/catch-conditions` | карточка улова | погода в час улова из Open-Meteo, кэш в `catch_conditions` |
 | `/api/version` | открытое приложение | версия деплоя, по ней старая вкладка перезагружается |

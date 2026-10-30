@@ -57,6 +57,7 @@ export function useAdminPermissions(userId: string | null) {
         canReviewPanoramas: row?.can_review_panoramas ?? false,
         canViewStats: row?.can_view_stats ?? false,
         canViewLimits: row?.can_view_limits ?? false,
+        canMessagePlayers: row?.can_message_players ?? false,
       }
     },
   })
@@ -81,6 +82,7 @@ export function useSetAdminPermissions() {
       canReviewPanoramas: boolean
       canViewStats: boolean
       canViewLimits: boolean
+      canMessagePlayers: boolean
     }) => {
       const supabase = createClient()
       const { error } = await supabase.rpc('admin_set_admin', {
@@ -94,6 +96,7 @@ export function useSetAdminPermissions() {
         p_can_review_panoramas: args.canReviewPanoramas,
         p_can_view_stats: args.canViewStats,
         p_can_view_limits: args.canViewLimits,
+        p_can_message_players: args.canMessagePlayers,
       })
       if (error) throw error
     },

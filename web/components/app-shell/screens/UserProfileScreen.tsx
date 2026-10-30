@@ -12,6 +12,7 @@ import {
   useIsAdmin,
   useIsSuperAdmin,
   useCanBlockUsers,
+  useCanMessagePlayers,
   useSetBlocked,
   useHasClaimedFromOthers,
   useEarnedAchievements,
@@ -39,6 +40,7 @@ import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
 import { tn } from '@/lib/i18n'
+import { AdminSupportChatSheet } from '@/components/app-shell/AdminSupportChatSheet'
 
 // Rendered by FishZoneApp itself, not nested inside a screen's scrolling
 // `.screen-inner` — same clipping reasoning as every other app-shell-level
@@ -115,6 +117,8 @@ export function UserProfileScreen({
   const isAdmin = useIsAdmin()
   const isSuperAdmin = useIsSuperAdmin()
   const canBlockUsers = useCanBlockUsers()
+  const canMessagePlayers = useCanMessagePlayers()
+  const [supportChatOpen, setSupportChatOpen] = useState(false)
   const setBlocked = useSetBlocked()
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(userId)
   const { data: earnedAchievements } = useEarnedAchievements(userId)
@@ -275,6 +279,13 @@ export function UserProfileScreen({
             Удалённых модератором уловов: {reportDeletionCount}
           </div>
         )}
+
+        {canMessagePlayers && user?.id !== userId && (
+          <button className="btn-secondary" style={{ marginTop: 8 }} onClick={() => setSupportChatOpen(true)}>
+            Написать в поддержку
+          </button>
+        )}
+        {supportChatOpen && <AdminSupportChatSheet userId={userId} name={profile?.displayName ?? 'Игрок'} onClose={() => setSupportChatOpen(false)} />}
 
         {isSuperAdmin && !profile?.isSuperAdmin && (
           <div style={{ marginTop: 8 }}>

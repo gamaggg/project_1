@@ -15,7 +15,9 @@ const CITY: Record<string, string> = { batumi: 'Батуми', moscow: 'Моск
 // after the request is saved, for the player's own request only; a second
 // call for the same request does nothing. With `messageId` it forwards a
 // follow-up the player wrote in that same request (support_chat.sql) — a
-// reply to it answers the same request too.
+// reply to it answers the same request too. A request a support admin
+// started (admin-support-30-10: started_by) also goes to that admin while
+// they keep the «писать игрокам» switch; their reply in the bot counts too.
 async function handlePOST(req: Request) {
   const supabase = await createClient()
   const {
@@ -26,7 +28,7 @@ async function handlePOST(req: Request) {
   if (!ticketId) return NextResponse.json({ error: 'ticketId' }, { status: 400 })
 
   const admin = createAdminClient()
-  const { data: ticket } = await admin.from('support_tickets').select('id, user_id, body, photo_path, created_at').eq('id', ticketId).single()
+  const { data: ticket } = await admin.from('support_tickets').select('id, user_id, body, photo_path, created_at, started_by').eq('id', ticketId).single()
   if (!ticket || ticket.user_id !== user.id) return NextResponse.json({ error: 'not found' }, { status: 404 })
 
   // What to forward: the request itself (once), or one follow-up in it.
@@ -46,10 +48,14 @@ async function handlePOST(req: Request) {
     if (already) return NextResponse.json({ sent: 0, already: true })
   }
 
-  const [{ data: author }, { data: admins }] = await Promise.all([
+  const [{ data: author }, { data: supers }, { data: starter }] = await Promise.all([
     admin.from('profiles').select('display_name, public_id, city').eq('id', user.id).single(),
     admin.from('profiles').select('telegram_id').eq('is_super_admin', true).not('telegram_id', 'is', null),
+    ticket.started_by
+      ? admin.from('profiles').select('telegram_id').eq('id', ticket.started_by).eq('is_admin', true).eq('can_message_players', true).not('telegram_id', 'is', null)
+      : Promise.resolve({ data: [] as { telegram_id: number | null }[] }),
   ])
+  const admins = [...new Map([...(supers ?? []), ...(starter ?? [])].map((a) => [a.telegram_id, a])).values()]
   const who = [author?.display_name ?? 'Игрок', author?.public_id ? `ID ${author.public_id}` : null, CITY[author?.city ?? ''] ?? null].filter(Boolean).join(' · ')
   const head = `${headLine}\nот ${who}`
   const foot = '↩️ Ответь на это сообщение, чтобы ответить игроку'
@@ -60,7 +66,7 @@ async function handlePOST(req: Request) {
   }
 
   let sent = 0
-  for (const a of admins ?? []) {
+  for (const a of admins) {
     const chatId = a.telegram_id as number
     const ids: number[] = []
     const send = async (method: string, body: Record<string, unknown>) => {

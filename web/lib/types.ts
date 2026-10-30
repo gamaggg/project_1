@@ -729,6 +729,7 @@ export type Database = {
           can_review_panoramas: boolean
           can_view_stats: boolean
           can_view_limits: boolean
+          can_message_players: boolean
           can_view_all_users: boolean
           city: string
           coins: number
@@ -767,6 +768,7 @@ export type Database = {
           can_review_panoramas?: boolean
           can_view_stats?: boolean
           can_view_limits?: boolean
+          can_message_players?: boolean
           can_view_all_users?: boolean
           city?: string
           coins?: number
@@ -805,6 +807,7 @@ export type Database = {
           can_review_panoramas?: boolean
           can_view_stats?: boolean
           can_view_limits?: boolean
+          can_message_players?: boolean
           can_view_all_users?: boolean
           city?: string
           coins?: number
@@ -1201,15 +1204,15 @@ export type Database = {
         Relationships: []
       }
       support_tickets: {
-        Row: { id: number; user_id: string; body: string; photo_path: string | null; created_at: string; answered_at: string | null }
-        Insert: { id?: never; user_id: string; body: string; photo_path?: string | null; created_at?: string; answered_at?: string | null }
-        Update: { id?: never; user_id?: string; body?: string; photo_path?: string | null; created_at?: string; answered_at?: string | null }
+        Row: { id: number; user_id: string; body: string; photo_path: string | null; created_at: string; answered_at: string | null; started_by: string | null }
+        Insert: { id?: never; user_id: string; body: string; photo_path?: string | null; created_at?: string; answered_at?: string | null; started_by?: string | null }
+        Update: { id?: never; user_id?: string; body?: string; photo_path?: string | null; created_at?: string; answered_at?: string | null; started_by?: string | null }
         Relationships: []
       }
       support_replies: {
-        Row: { id: number; ticket_id: number; admin_id: string | null; body: string; created_at: string }
-        Insert: { id?: never; ticket_id: number; admin_id?: string | null; body: string; created_at?: string }
-        Update: { id?: never; ticket_id?: number; admin_id?: string | null; body?: string; created_at?: string }
+        Row: { id: number; ticket_id: number; admin_id: string | null; body: string; photo_path: string | null; created_at: string }
+        Insert: { id?: never; ticket_id: number; admin_id?: string | null; body: string; photo_path?: string | null; created_at?: string }
+        Update: { id?: never; ticket_id?: number; admin_id?: string | null; body?: string; photo_path?: string | null; created_at?: string }
         Relationships: [
           { foreignKeyName: "support_replies_ticket_id_fkey"; columns: ["ticket_id"]; isOneToOne: false; referencedRelation: "support_tickets"; referencedColumns: ["id"] },
         ]
@@ -1506,6 +1509,7 @@ export type Database = {
           can_review_panoramas: boolean | null
           can_view_stats: boolean | null
           can_view_limits: boolean | null
+          can_message_players: boolean | null
           can_view_all_users: boolean | null
           catches_count: number | null
           city: string | null
@@ -1546,6 +1550,7 @@ export type Database = {
           can_review_panoramas?: never
           can_view_stats?: never
           can_view_limits?: never
+          can_message_players?: never
           can_view_all_users?: never
           catches_count?: never
           city?: string | null
@@ -1582,6 +1587,7 @@ export type Database = {
           can_review_panoramas?: never
           can_view_stats?: never
           can_view_limits?: never
+          can_message_players?: never
           can_view_all_users?: never
           catches_count?: never
           city?: string | null
@@ -1854,6 +1860,7 @@ export type Database = {
           p_can_review_panoramas?: boolean
           p_can_view_stats?: boolean
           p_can_view_limits?: boolean
+          p_can_message_players?: boolean
           p_can_view_all_users?: boolean
           p_is_admin: boolean
           p_user_id: string
@@ -1985,6 +1992,9 @@ export type Database = {
       create_support_ticket: { Args: { p_body: string; p_photo_path?: string }; Returns: number }
       add_support_message: { Args: { p_ticket_id: number; p_body: string; p_photo_path?: string }; Returns: number }
       answer_support_ticket: { Args: { p_ticket_id: number; p_admin_telegram: number; p_body: string }; Returns: string }
+      admin_send_support_message: { Args: { p_user_id: string; p_body: string; p_ticket_id?: number; p_photo_path?: string }; Returns: number }
+      admin_get_support_chat: { Args: { p_user_id: string }; Returns: Json }
+      can_message_players: { Args: Record<string, never>; Returns: boolean }
       claim_first_steps: { Args: Record<string, never>; Returns: Json }
       log_app_events: { Args: { p_device: string; p_session: string; p_events: Json }; Returns: number }
       get_app_stats: { Args: { p_days?: number; p_tz?: string }; Returns: Json }
@@ -2031,6 +2041,7 @@ export type Database = {
           can_review_panoramas: boolean
           can_view_stats: boolean
           can_view_limits: boolean
+          can_message_players: boolean
           can_view_all_users: boolean
           is_admin: boolean
         }[]

@@ -43,6 +43,7 @@ export function useProfile(userId: string | null) {
         canReviewPanoramas: data.can_review_panoramas ?? null,
         canViewStats: data.can_view_stats ?? null,
         canViewLimits: data.can_view_limits ?? null,
+        canMessagePlayers: data.can_message_players ?? null,
         equippedFrame: data.equipped_frame ?? null,
         coins: data.coins ?? null,
         equippedNameStyle: data.equipped_name_style ?? null,
@@ -75,7 +76,7 @@ export function useIsSuperAdmin() {
 // Gates one of the 4 delegable admin actions on the *viewer's own* account —
 // a super admin always passes (they're not limited by the granular flags),
 // a plain admin needs is_admin plus the specific permission column.
-function useAdminFlag(flag: 'canModerateReports' | 'canBlockUsers' | 'canAddCatchManually' | 'canViewAllUsers' | 'canAddCatchFromGallery' | 'canReviewPanoramas' | 'canViewStats' | 'canViewLimits') {
+function useAdminFlag(flag: 'canModerateReports' | 'canBlockUsers' | 'canAddCatchManually' | 'canViewAllUsers' | 'canAddCatchFromGallery' | 'canReviewPanoramas' | 'canViewStats' | 'canViewLimits' | 'canMessagePlayers') {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   return !!profile?.isSuperAdmin || (!!profile?.isAdmin && !!profile?.[flag])
@@ -106,6 +107,10 @@ export function useCanViewStats() {
 // «Лимиты сервисов»: the super admin, or an admin given the switch (get_service_limits checks the same).
 export function useCanViewLimits() {
   return useAdminFlag('canViewLimits')
+}
+// «Написать игроку» in the support chat: the super admin, or an admin given the switch (can_message_players() checks the same).
+export function useCanMessagePlayers() {
+  return useAdminFlag('canMessagePlayers')
 }
 
 export function useUpdateProfile() {
