@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTelegramBackButton } from '@/lib/telegram/useTelegramBackButton'
 import { tn } from '@/lib/i18n'
 import { createClient } from '@/lib/supabase/client'
+import { showCameraHelp } from '@/lib/geoHelp'
 
 // Long side of the saved photo. Was 1280 on the width alone — and with no
 // resolution asked of the camera, phones streamed 640×480 anyway: catch
@@ -185,6 +186,9 @@ export function CameraScreen({
       // Which refusal it was (NotAllowedError = the app or the phone says no, NotFoundError / NotReadableError =
       // no camera or another app holds it) is the only way to tell a player's settings from a bug of ours.
       const e = err as { name?: string; message?: string } | null
+      // The player (or the phone's settings) said no: only they can switch it back on, so show
+      // where, like for the location. No camera / camera busy is not theirs to fix here.
+      if (e?.name === 'NotAllowedError') showCameraHelp(() => void requestCamera())
       const where = window.Telegram?.WebApp?.platform ?? 'web'
       void createClient()
         .rpc('report_client_error', { p_context: 'camera', p_message: `${e?.name ?? 'Error'}: ${e?.message ?? ''} · ${where}`.slice(0, 300) })

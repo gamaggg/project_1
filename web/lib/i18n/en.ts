@@ -697,6 +697,18 @@ export const en: Dict = {
     stepOther: 'Click the icon left of the site address|Find “Location”|Choose “Allow”',
     retry: "I've turned it on, check again",
   },
+  cameraHelp: {
+    title: 'Turn on the camera',
+    lead: "Camera access is blocked in your settings, so the app can't open it. Without a photo the catch doesn't count and the sector can't be held. You can switch it on here:",
+    stepIosTg: 'Open Settings on your iPhone|Go to “Privacy & Security”|Open “Camera”|Find Telegram in the list and switch it on|Go back to Telegram and open the game again',
+    stepIosWeb: 'Open Settings on your iPhone|Find Safari (in newer iOS it is under “Apps”)|Open “Camera” and choose “Allow”|Go back to Safari and tap “aA” in the address bar|Open “Website Settings”, then “Camera”|Choose “Allow”',
+    stepAndroidTg: 'Open your phone’s Settings|Go to “Apps” and choose Telegram|Open “Permissions”, then “Camera”|Choose “Allow only while using the app”',
+    stepAndroidWeb: 'Open your phone’s Settings|Go to “Apps” and choose Chrome|Open “Permissions”, then “Camera”|Choose “Allow only while using the app”|Go back to Chrome and tap the icon left of the site address|Open “Permissions” and turn on “Camera”',
+    stepMacTg: 'Open System Settings on your Mac|Go to “Privacy & Security”|Open “Camera”|Find Telegram in the list and switch it on|Restart Telegram and open the game again',
+    stepWinTg: 'Open Windows Settings|Go to “Privacy & security”, then “Camera”|Turn on “Camera access” and “Let desktop apps access your camera”|Restart Telegram and open the game again',
+    stepOther: 'Click the icon left of the site address|Find “Camera”|Choose “Allow”',
+    retry: "I've turned it on, check again",
+  },
   shell: {
     joinClan: 'Join the clan “{name}” in RANGE',
     clanLinkCopied: 'Clan link copied — send it to your friends',
