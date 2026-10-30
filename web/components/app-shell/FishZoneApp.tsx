@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import {
   useTerritories,
@@ -488,6 +488,9 @@ export function FishZoneApp() {
 
   const topEntry = stack[stack.length - 1]
   const currentScreen: ScreenId = topEntry.screen
+  // Screens whose contents stay built while hidden: the bottom-nav tabs and
+  // whatever «назад» can still return to. Everything else lets go (see Screen).
+  const keptScreens = useMemo(() => new Set<ScreenId>([...NAV_SCREENS, ...stack.map((e) => e.screen)]), [stack])
   const territoriesInitialFilter = topEntry.screen === 'screen-territories' ? topEntry.initialFilter : undefined
   const territoriesInitialMode = topEntry.screen === 'screen-territories' ? topEntry.initialMode : undefined
   // Usage stats (lib/analytics): which screens get opened, and the camera
@@ -1589,6 +1592,7 @@ export function FishZoneApp() {
   return (
     <div className="app-shell">
       <div className="screens">
+        <KeptScreens.Provider value={keptScreens}>
         <Screen id="screen-map" current={currentScreen} eager>
           <MapScreen
             ref={mapHandleRef}
@@ -1980,6 +1984,7 @@ export function FishZoneApp() {
         <Screen id="screen-admin-log" current={currentScreen} onBack={pop}>
           <AdminActionsScreen title="Последние действия" onBack={pop} onOpenUser={openUserProfile} onOpenTerritory={openTerritory} />
         </Screen>
+        </KeptScreens.Provider>
       </div>
 
       <div className={`toast${toast ? ' show' : ''}`}>{toast}</div>
@@ -2308,14 +2313,25 @@ export function FishZoneApp() {
 // BackButton's registerNative doc) — gated on `current === id` so only the
 // actually-visible screen ever holds it, regardless of how many earlier
 // screens are still mounted underneath.
-// A screen's contents are built the first time it's opened and kept from
-// then on (screens never unmount — see DECISIONS.md). Building all of them
-// at launch meant rendering, and firing the queries of, screens most
+// A screen's contents are built the first time it's opened. Building all of
+// them at launch meant rendering, and firing the queries of, screens most
 // sessions never open — shop, last week's podium, and for admins a
 // ~5000-node action log plus the full user list — which is what slowed
 // startup on older phones. The .screen wrapper itself always exists, so
 // the CSS fade still runs on first open. `eager` is for a screen that has
 // to be live from launch whether or not it's opened.
+//
+// Once built, the contents stay only while the screen is kept (a tab, or
+// still in the stack under the top — see keptScreens). A screen left any
+// other way lets its contents go UNMOUNT_AFTER_MS later: kept for a whole
+// session, every shop, clan, profile and photo ever opened held its
+// pictures and canvases, and iOS discarded the page once enough piled up
+// (30.10: up to 11 screens, 13 canvases and 351 pictures in a report). The
+// delay lets the fade-out finish, a quick return find the screen as it
+// was, and work started there (a slot spin, a request) settle first.
+const UNMOUNT_AFTER_MS = 10_000
+const KeptScreens = createContext<ReadonlySet<ScreenId>>(new Set())
+
 function Screen({
   id,
   current,
@@ -2335,6 +2351,13 @@ function Screen({
   // Set during render, not in an effect, so the first open renders the
   // contents in the same pass instead of flashing an empty screen first.
   if (isCurrent && !visited) setVisited(true)
+  const keptScreens = useContext(KeptScreens)
+  const kept = eager || isCurrent || keptScreens.has(id)
+  useEffect(() => {
+    if (kept || !visited) return
+    const timer = window.setTimeout(() => setVisited(false), UNMOUNT_AFTER_MS)
+    return () => window.clearTimeout(timer)
+  }, [kept, visited])
   return (
     <div className={`screen${isCurrent ? ' active' : ''}`} id={id}>
       {(eager || visited) && children}
