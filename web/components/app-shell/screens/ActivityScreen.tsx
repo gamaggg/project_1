@@ -446,6 +446,12 @@ export function ActivityScreen({
                 title = n('score') >= 5 ? tr('activity.forecastGreat', { score: n('score') }) : tr('activity.forecastGood', { score: n('score') })
                 sub = p.from && p.to ? tr('activity.forecastSub', { from: String(p.from), to: String(p.to) }) : null
                 action = onOpenMap
+              } else if (ev.kind === 'sector_forecast') {
+                tone = 'blue'
+                icon = FEED_ICONS.bars
+                title = tr('activity.sectorForecast', { id: a.territoryId ?? '', score: n('score') })
+                sub = p.from && p.to ? tr('activity.forecastSub', { from: String(p.from), to: String(p.to) }) : null
+                if (a.territoryId) action = () => onOpenTerritory(a.territoryId!)
               } else if (ev.kind === 'sector_attacked') {
                 tone = 'red'
                 icon = FEED_ICONS.shield

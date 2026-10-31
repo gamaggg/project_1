@@ -23,7 +23,7 @@ import { tn } from '@/lib/i18n/runtime'
 // user would multiply writes for no gain — so they're fetched globally and
 // merged back in at the right chronological spot.
 // Game notifications drawn as one generic row in «Активность».
-const GAME_EVENT_KINDS = new Set(['hot_sector_week', 'hot_sector_won', 'legend_gained', 'legend_lost', 'bite_forecast', 'daily_reward_reminder', 'sector_attacked', 'support_reply', 'admin_gift', 'geo_bonus', 'catch_edited', 'catch_species_changed'])
+const GAME_EVENT_KINDS = new Set(['hot_sector_week', 'hot_sector_won', 'legend_gained', 'legend_lost', 'bite_forecast', 'sector_forecast', 'daily_reward_reminder', 'sector_attacked', 'support_reply', 'admin_gift', 'geo_bonus', 'catch_edited', 'catch_species_changed'])
 
 export function useActivity() {
   const { user } = useAuth()

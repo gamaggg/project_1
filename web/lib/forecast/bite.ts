@@ -315,6 +315,22 @@ export function scoreForecast(raw: RawForecast, catchHours: number[] | null, now
   return days
 }
 
+// «Завтра утром хороший клёв у твоего сектора»: the best three hours starting
+// 04:00–09:00 (over by noon), scored like the day card's best window. For a day
+// scored without catch hours (`hours` is then the weather-and-light score).
+export function bestMorning(day: ForecastDay): { score: Score; from: number; to: number } | null {
+  let best: { score: Score; from: number; to: number } | null = null
+  let bestMean = 0
+  for (let s = 4; s <= 9; s++) {
+    const m = (day.hours[s] + day.hours[s + 1] + day.hours[s + 2]) / 3
+    if (m > bestMean) {
+      bestMean = m
+      best = { score: scoreFromRaw(m), from: s, to: s + 3 }
+    }
+  }
+  return best
+}
+
 // How each of the day's inputs leans, from the same factor curves the score
 // is made of — what the sheet's «Что влияет» dots show.
 export type Tone = 'good' | 'ok' | 'bad'

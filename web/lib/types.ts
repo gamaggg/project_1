@@ -1495,6 +1495,24 @@ export type Database = {
           },
         ]
       }
+      territory_shares: {
+        Row: {
+          joined_at: string
+          territory_id: string
+          user_id: string
+        }
+        Insert: {
+          joined_at?: string
+          territory_id: string
+          user_id: string
+        }
+        Update: {
+          joined_at?: string
+          territory_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       profiles_with_stats: {
@@ -1987,6 +2005,7 @@ export type Database = {
       get_sector_insights: { Args: { p_territory_id: string }; Returns: Json }
       get_city_week_recap: { Args: { p_city: string; p_week_offset?: number; p_user?: string }; Returns: Json }
       queue_bite_forecast: { Args: { p_city: string; p_for_date: string; p_score: number; p_from: string; p_to: string }; Returns: number }
+      queue_sector_forecast: { Args: { p_city: string; p_for_date: string; p_items: Json }; Returns: number }
       onboarding_due: { Args: { p_limit?: number }; Returns: { chat_id: number; user_id: string | null; step: string; city: string | null; name: string | null; data: Json }[] }
       get_first_steps: { Args: Record<string, never>; Returns: Json }
       create_support_ticket: { Args: { p_body: string; p_photo_path?: string }; Returns: number }

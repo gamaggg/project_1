@@ -296,6 +296,23 @@ function renderMessage(notification: NotificationRef): Message | null {
         url: SITE_URL,
       }
     }
+    case 'sector_forecast': {
+      // «Завтра утром хороший клёв у твоего сектора» (forecast-alert → queue_sector_forecast).
+      const score = notification.payload?.score as number | undefined
+      const from = notification.payload?.from as string | undefined
+      const to = notification.payload?.to as string | undefined
+      if (!score || !from || !to || !notification.territory_id) return null
+      return {
+        text: tn('tg.sectorForecast', {
+          id: notification.territory_id,
+          quality: score >= 5 ? tn('tg.forecastGreat') : tn('tg.forecastGood'),
+          score,
+          from,
+          to,
+        }),
+        ...sector(notification.territory_id),
+      }
+    }
     case 'geo_bonus': {
       // «Где это?»'s quest done: a catch in the day's panorama sector.
       const coins = Number(notification.payload?.coins ?? 50)
