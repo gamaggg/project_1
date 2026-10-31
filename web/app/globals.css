@@ -1643,6 +1643,148 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
   50%{filter:drop-shadow(0 0 11px rgba(252,82,0,1)); opacity:1;}
 }
 @media (prefers-reduced-motion: reduce){.sector-highlight{animation:none;}}
+/* The moment after a catch (LeafletMap playSectorMoment), told with faces: the
+   catcher's avatar knocks the old holder's out (.smx-steal), drops onto a free
+   sector (.smx-capture), bounces off one it only attacks (.smx-attack) or hops on
+   its own (.smx-own); the new colour floods the hex from where it lands. Timed
+   from --smx-hit (the moment of impact); sizes from --smx-r (the hex radius). */
+.leaflet-marker-icon.moment-hidden{opacity:0 !important;}
+.sector-moment-fx{background:transparent; border:none;}
+.smx{position:relative; width:0; height:0; pointer-events:none; transition:opacity .4s;}
+.sector-moment-fx.out .smx{opacity:0;}
+.smx-hex{position:absolute; overflow:visible;}
+.smx-hex polygon, .smx-hex circle{transform-box:fill-box; transform-origin:center;}
+.smx-flood{transform:scale(0); animation:smxFlood .55s cubic-bezier(.2,.8,.3,1) var(--smx-hit) both;}
+/* Only a flood replaces the old face of the hex; under an attack or the owner's own catch it stays — the real sector is hidden meanwhile, so without it the sector vanished. */
+.smx-capture .smx-hex-old{animation:smxOldFade .35s ease-out calc(var(--smx-hit) + 300ms) both;}
+.smx-steal .smx-hex-old{animation:smxShake .24s ease-in-out var(--smx-hit), smxOldFade .35s ease-out calc(var(--smx-hit) + 300ms) both;}
+.smx-hex-new{opacity:0; animation:smxFade .3s ease-out calc(var(--smx-hit) + 200ms) both;}
+.smx-hex-edge{opacity:0; animation:smxEdge .7s ease-out var(--smx-hit) both;}
+@keyframes smxFlood{to{transform:scale(1);}}
+@keyframes smxOldFade{to{opacity:0;}}
+@keyframes smxShake{0%,100%{transform:translate(0,0);} 25%{transform:translate(-5px,2px);} 50%{transform:translate(5px,-2px);} 75%{transform:translate(-2px,1px);}}
+@keyframes smxEdge{0%{opacity:0;} 25%{opacity:1;} 100%{opacity:0;}}
+@keyframes smxFade{from{opacity:0;} to{opacity:1;}}
+
+.smx-face{position:absolute; left:-21px; top:-29px; width:42px; height:42px; border-radius:50%; overflow:hidden; border:3px solid var(--smx-ring); box-shadow:0 4px 14px rgba(23,24,27,.35); background:linear-gradient(160deg,#FF7A38,var(--accent) 70%); color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800;}
+.smx-face img{width:100%; height:100%; object-fit:cover;}
+/* Free sector: the catcher drops in from above like a flag, with a squash on landing. */
+.smx-capture .smx-new{animation:smxDrop .6s cubic-bezier(.5,0,.6,1.4) both;}
+@keyframes smxDrop{
+  0%{transform:translateY(calc(var(--smx-r) * -1.6)) scale(1.5); opacity:0;}
+  20%{opacity:1;}
+  70%{transform:translateY(0) scale(1);}
+  82%{transform:translateY(2px) scale(1.22,.8);}
+  100%{transform:translateY(0) scale(1); opacity:1;}
+}
+/* Someone else's sector: the catcher charges in from below and knocks the holder out. */
+.smx-steal .smx-new{animation:smxCharge .6s cubic-bezier(.55,0,.75,.3) both, smxLand .3s ease-out .6s forwards;}
+@keyframes smxCharge{
+  0%{transform:translate(calc(var(--smx-r) * -1.3), calc(var(--smx-r) * 1.1)) scale(.7); opacity:0;}
+  15%{opacity:1;}
+  66%{transform:translate(0,0) scale(1.15); opacity:1;}
+  100%{transform:translate(0,0) scale(1.22,.82); opacity:1;}
+}
+@keyframes smxLand{from{transform:scale(1.22,.82);} to{transform:scale(1);}}
+.smx-steal .smx-old{animation:smxKnock .75s cubic-bezier(.15,.7,.3,1) var(--smx-hit) both;}
+@keyframes smxKnock{
+  0%{transform:translate(0,0) rotate(0) scale(1); opacity:1;}
+  100%{transform:translate(calc(var(--smx-r) * 1.4), calc(var(--smx-r) * -1.3)) rotate(420deg) scale(.4); opacity:0;}
+}
+/* An attack: the catcher hits, bounces off and leaves; the holder staggers and stays. */
+.smx-attack .smx-new{animation:smxBounceOff 1.15s both;}
+@keyframes smxBounceOff{
+  0%{transform:translate(calc(var(--smx-r) * -1.3), calc(var(--smx-r) * 1.1)) scale(.7); opacity:0; animation-timing-function:cubic-bezier(.55,0,.75,.3);}
+  10%{opacity:1;}
+  35%{transform:translate(-34px, 4px) scale(1.05); opacity:1; animation-timing-function:ease-out;}
+  45%{transform:translate(-40px, 4px) scale(.82,1.15);}
+  100%{transform:translate(calc(var(--smx-r) * -1), calc(var(--smx-r) * .8)) rotate(-45deg) scale(.6); opacity:0;}
+}
+.smx-attack .smx-old{animation:smxStagger .7s ease-out var(--smx-hit) both;}
+@keyframes smxStagger{
+  0%{transform:translate(0,0) rotate(0);}
+  20%{transform:translate(12px,-2px) rotate(14deg);}
+  45%{transform:translate(-4px,0) rotate(-6deg);}
+  70%{transform:translate(2px,0) rotate(3deg);}
+  100%{transform:translate(0,0) rotate(0);}
+}
+/* The holder's own catch: a happy hop. */
+.smx-own .smx-new{animation:smxHop .7s ease-out both;}
+@keyframes smxHop{0%,100%{transform:translateY(0);} 30%{transform:translateY(-18px);} 55%{transform:translateY(0) scale(1.12,.88);} 75%{transform:translateY(-6px) scale(1);}}
+
+.smx-ring{position:absolute; left:calc(var(--smx-r) * -1); top:calc(var(--smx-r) * -1); width:calc(var(--smx-r) * 2); height:calc(var(--smx-r) * 2); box-sizing:border-box; border-radius:50%; border:4px solid var(--smx-color); opacity:0; animation:smxRing .8s cubic-bezier(.22,1,.36,1) var(--smx-hit) both;}
+.smx-capture .smx-ring{border-color:rgba(255,255,255,.9);}
+.smx-attack .smx-ring{border-color:#E24B4A; border-width:3px;}
+.smx-own .smx-ring{border-width:3px; animation-delay:120ms;}
+@keyframes smxRing{0%{transform:scale(.12); opacity:.85;} 100%{transform:scale(1.15); opacity:0;}}
+
+.smx-label{position:absolute; left:0; top:calc(var(--smx-r) * -1 - 6px); transform:translate(-50%, -100%); display:flex; align-items:center; gap:6px; white-space:nowrap; background:#fff; color:#17181B; font-size:13px; font-weight:800; padding:6px 12px 6px 9px; border-radius:999px; box-shadow:0 6px 18px rgba(0,0,0,.18); opacity:0; animation:smxLabel .38s ease-out calc(var(--smx-hit) + 300ms) both;}
+.smx-label i{width:10px; height:10px; border-radius:50%; background:var(--smx-color);}
+.smx-attack .smx-label{color:#B42323;}
+.smx-attack .smx-label i{background:#E24B4A;}
+@keyframes smxLabel{0%{transform:translate(-50%, -60%) scale(.6); opacity:0;} 70%{transform:translate(-50%, -100%) scale(1.05); opacity:1;} 100%{transform:translate(-50%, -100%) scale(1); opacity:1;}}
+.smx-pips{position:absolute; left:0; top:calc(var(--smx-r) * .45); transform:translateX(-50%); display:flex; gap:4px; padding:4px 6px; border-radius:999px; background:rgba(255,255,255,.92); box-shadow:0 3px 10px rgba(0,0,0,.14); opacity:0; animation:smxFade .2s ease-out calc(var(--smx-hit) + 400ms) both;}
+.smx-pips span{width:14px; height:8px; border-radius:4px; background:#D9DADF;}
+.smx-pips span.on{background:var(--smx-pip);}
+.smx-pips span.gained{animation:smxPipIn .32s ease-out calc(var(--smx-hit) + 600ms) both;}
+.smx-pips span.lost{animation:smxPipLost .6s ease-out calc(var(--smx-hit) + 450ms) both;}
+@keyframes smxPipIn{0%{transform:scale(.4); background:#D9DADF;} 60%{transform:scale(1.35); background:var(--smx-pip);} 100%{transform:scale(1); background:var(--smx-pip);}}
+@keyframes smxPipLost{0%{transform:scale(1); background:var(--smx-pip);} 40%{transform:scale(1.4); background:#E24B4A;} 100%{transform:scale(1); background:#D9DADF;}}
+.smx.calm, .smx.calm *{animation-duration:.01ms !important; animation-delay:0ms !important;}
+.smx.calm .smx-ring{display:none;}
+.smx-coins{position:fixed; z-index:9000; pointer-events:none; padding:5px 12px; border-radius:999px; background:#F5B921; color:#412402; font-size:14px; font-weight:800; box-shadow:0 6px 16px rgba(0,0,0,.2); transform:translate(-50%, -50%);}
+.navitem.coin-bump .navitem-icon-wrap{animation:navCoinBump .45s ease-out;}
+@keyframes navCoinBump{0%{transform:scale(1);} 40%{transform:scale(1.22);} 100%{transform:scale(1);}}
+
+/* «Пока тебя не было» (AwayReplay): covers the whole app while it plays — a
+   vignette over the map, the news card dropping in on top, the buttons rising
+   at the bottom once the scene is over. The victim's scene itself: the label
+   and the hit ring in alarm red instead of the catcher's colours. */
+.away-replay{--away-accent:#E24B4A; position:fixed; inset:0; z-index:3200; touch-action:none; background:radial-gradient(ellipse 75% 60% at 50% 50%, transparent 40%, rgba(4,8,20,.6) 100%); animation:awayFade .4s ease-out both;}
+.away-replay.attacked{--away-accent:#F5A524;}
+.away-card{position:absolute; left:16px; right:16px; top:calc(14px + env(safe-area-inset-top, 0px) + var(--tg-safe-area-top, 0px)); max-width:420px; margin:0 auto; padding:12px 14px 14px; border-radius:22px; overflow:hidden; color:#fff;
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--away-accent) 38%, transparent) 0%, transparent 55%),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,.035) 0 10px, transparent 10px 20px),
+    linear-gradient(160deg, #1B1424 0%, #0E1220 100%);
+  box-shadow:0 16px 40px rgba(0,0,0,.4), 0 0 0 1.5px color-mix(in srgb, var(--away-accent) 70%, transparent), 0 0 28px color-mix(in srgb, var(--away-accent) 35%, transparent);
+  animation:awayDrop .6s cubic-bezier(.2,1.25,.35,1) both, awayJolt .4s ease-out .95s;}
+.away-tag{display:flex; align-items:center; gap:7px; font-size:11px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; color:var(--away-accent);}
+.away-tag i{width:7px; height:7px; border-radius:50%; background:var(--away-accent); box-shadow:0 0 0 0 var(--away-accent); animation:awayPulse 1.4s ease-out infinite;}
+.away-tag span{margin-left:auto; padding:2px 8px; border-radius:999px; background:rgba(255,255,255,.1); color:rgba(255,255,255,.75); letter-spacing:.04em;}
+.away-row{display:flex; align-items:center; gap:14px; margin-top:12px;}
+.away-duel{position:relative; flex:none; width:84px; height:52px;}
+.away-face{position:absolute; top:50%; border-radius:50%; display:flex; align-items:center; justify-content:center; overflow:hidden; background:var(--away-ring); color:#fff; font-weight:900;}
+.away-face img{width:100%; height:100%; object-fit:cover;}
+.away-face.by{left:0; width:50px; height:50px; margin-top:-25px; z-index:2; font-size:16px; box-shadow:0 0 0 3px #15121F, 0 0 0 5px var(--away-accent), 0 6px 16px rgba(0,0,0,.4); animation:awayCharge .45s cubic-bezier(.5,0,.6,1.4) .35s both;}
+.away-face.me{right:0; width:38px; height:38px; margin-top:-19px; z-index:1; font-size:12px; box-shadow:0 0 0 2.5px #15121F, 0 0 0 4px var(--away-ring); animation:awayRecoil .5s ease-out .78s both;}
+.lost .away-face.me{animation:awayRecoil .5s ease-out .78s both, awayGrey .4s ease-out .9s both;}
+.away-crack{position:absolute; inset:0; background:linear-gradient(45deg, transparent calc(50% - 1.5px), #15121F calc(50% - 1.5px), #15121F calc(50% + 1.5px), transparent calc(50% + 1.5px)), linear-gradient(-45deg, transparent calc(50% - 1.5px), #15121F calc(50% - 1.5px), #15121F calc(50% + 1.5px), transparent calc(50% + 1.5px)); opacity:0; animation:awayFade .2s ease-out .85s both;}
+.away-minus{position:absolute; z-index:3; right:-6px; bottom:2px; padding:1px 5px; border-radius:999px; background:var(--away-accent); color:#1B1424; font-size:10px; font-weight:900; font-style:normal; opacity:0; animation:awayPop .35s cubic-bezier(.2,1.6,.4,1) .9s both;}
+.away-burst{position:absolute; left:40px; top:50%; width:22px; height:22px; margin-top:-11px; z-index:3; fill:#FFD34D; stroke:#fff; stroke-width:1; filter:drop-shadow(0 0 6px rgba(255,190,40,.9)); opacity:0; animation:awayBurst .5s ease-out .74s both;}
+.away-text{min-width:0;}
+.away-title{font-size:19px; font-weight:900; line-height:1.12; letter-spacing:-.01em; animation:awaySlide .4s ease-out .2s both;}
+.away-sub{display:flex; align-items:center; gap:8px; margin-top:6px; font-size:13px; font-weight:600; color:rgba(255,255,255,.72); animation:awaySlide .4s ease-out .3s both;}
+.away-who{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.away-hex{flex:none; padding:3px 9px; background:color-mix(in srgb, var(--away-hex) 85%, #000); color:#fff; font-size:11.5px; font-weight:900; letter-spacing:.03em; clip-path:polygon(8% 0, 92% 0, 100% 50%, 92% 100%, 8% 100%, 0 50%);}
+.away-actions{position:absolute; left:16px; right:16px; bottom:calc(16px + env(safe-area-inset-bottom, 0px)); max-width:420px; margin:0 auto; padding:14px; border-radius:20px; background:var(--surface, #fff); color:var(--ink, #17181B); box-shadow:0 14px 36px rgba(0,0,0,.3); animation:awayRise .4s cubic-bezier(.2,1,.35,1) both;}
+.away-actions p{margin:0 0 12px; font-size:14px; line-height:1.4; font-weight:600;}
+.away-buttons{display:flex; gap:8px;}
+.away-buttons button{flex:1;}
+.smx.victim .smx-label{color:#B42323;}
+.smx.victim .smx-ring{border-color:#E24B4A;}
+@keyframes awayFade{from{opacity:0;} to{opacity:1;}}
+@keyframes awayDrop{from{opacity:0; transform:translateY(-130%) scale(.96);} to{opacity:1; transform:none;}}
+@keyframes awayCharge{0%{transform:translateX(-46px) scale(.7); opacity:0;} 70%{transform:translateX(10px) scale(1.06); opacity:1;} 100%{transform:none; opacity:1;}}
+@keyframes awayRecoil{0%{transform:none;} 30%{transform:translateX(9px) rotate(16deg);} 100%{transform:translateX(3px) rotate(8deg);}}
+@keyframes awayGrey{to{filter:grayscale(1) brightness(.75);}}
+@keyframes awayBurst{0%{transform:scale(.2) rotate(-30deg); opacity:0;} 35%{transform:scale(1.35) rotate(10deg); opacity:1;} 100%{transform:scale(.9) rotate(20deg); opacity:0;}}
+@keyframes awayPop{from{transform:scale(.3); opacity:0;} to{transform:none; opacity:1;}}
+@keyframes awaySlide{from{transform:translateX(12px); opacity:0;} to{transform:none; opacity:1;}}
+@keyframes awayJolt{0%,100%{translate:0 0;} 20%{translate:-5px 0;} 45%{translate:4px 0;} 70%{translate:-2px 0;}}
+@keyframes awayPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--away-accent) 70%, transparent);} 100%{box-shadow:0 0 0 9px transparent;}}
+@keyframes awayRise{from{opacity:0; transform:translateY(40px);} to{opacity:1; transform:none;}}
+@media (prefers-reduced-motion: reduce){.away-replay, .away-card, .away-face, .away-actions, .away-title, .away-sub, .away-burst, .away-crack, .away-minus{animation:none;} .away-crack, .away-minus{opacity:1;} .lost .away-face.me{filter:grayscale(1) brightness(.75);} .away-tag i{animation:none;}}
 .leaflet-territory-marker-wrap{background:transparent; border:none; box-shadow:none;}
 .leaflet-territory-marker{display:flex; flex-direction:column; align-items:center; gap:3px; pointer-events:none;}
 .leaflet-territory-label{
@@ -4434,6 +4576,12 @@ button.standing-col{cursor:pointer;}
 .first-steps-text{display:flex; flex-direction:column; gap:2px; min-width:0;}
 .first-steps-text b{font-size:14.5px; font-weight:800;}
 .first-steps-text span{font-size:12.5px; line-height:1.35; color:var(--ink-soft); font-weight:600;}
+/* «Задание новичка»: the 7-day first-catch bonus, above the steps and on the pill. */
+.first-steps-pill.newbie{color:var(--accent);}
+.first-steps-newbie{margin-top:14px; padding:12px 14px; border-radius:14px; background:color-mix(in srgb, var(--accent) 10%, var(--surface)); border:1px solid color-mix(in srgb, var(--accent) 35%, transparent); display:flex; flex-direction:column; gap:3px;}
+.first-steps-newbie b{font-size:14.5px; font-weight:800; color:var(--accent);}
+.first-steps-newbie span{font-size:13px; line-height:1.4; font-weight:600; color:var(--ink);}
+.first-steps-newbie .first-steps-newbie-left{font-size:12.5px; color:var(--ink-soft);}
 
 /* «Написать в поддержку» (FaqScreen.tsx). */
 .support-card{display:flex; align-items:center; gap:12px; width:100%; margin-top:10px; padding:12px 14px; border-radius:16px; border:1px solid var(--line); background:var(--surface); font:inherit; color:var(--ink); text-align:left; cursor:pointer;}

@@ -4,7 +4,7 @@ import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useMemo, u
 import { useFirstSteps } from '@/lib/supabase/queries'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { MapView } from '@/components/app-shell/MapView'
-import type { GeoMarks, LeafletMapHandle } from '@/components/app-shell/LeafletMap'
+import type { GeoMarks, LeafletMapHandle, SectorMoment } from '@/components/app-shell/LeafletMap'
 import type { Territory } from '@/lib/data/types'
 import { CITIES, cityForSectorId, type CityId } from '@/lib/data/city'
 import { formatWhen } from '@/lib/format'
@@ -256,6 +256,7 @@ export const MapScreen = forwardRef<
     focusTerritories: (ids: string[]) => mapRef.current?.focusTerritories(ids),
     showArea: (points: [number, number][], minZoom: number) => mapRef.current?.showArea(points, minZoom),
     territoriesOutline: (ids: string[]) => mapRef.current?.territoriesOutline(ids) ?? null,
+    playSectorMoment: (moment: SectorMoment, onDone?: () => void) => mapRef.current?.playSectorMoment(moment, onDone),
     showTerritory: (id: string) => {
       handlePolygonSelect(id)
       mapRef.current?.flyToTerritory(id)

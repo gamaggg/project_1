@@ -524,6 +524,12 @@ export const ru = {
     claim: 'Забрать',
     claimed: '+{coins} монет — первые шаги пройдены!',
     progress: 'Выполнено {done} из {total}',
+    newbieTitle: 'Задание новичка',
+    newbieText: 'Поймай первую рыбу до {date} — монеты за неё втрое и щит в запас.',
+    newbieLeft: 'Осталось {left}',
+    pillNewbie: 'Первый улов ×3 · {left}',
+    leftDays: { one: '{count} день', few: '{count} дня', many: '{count} дней', other: '{count} дня' },
+    leftHours: { one: '{count} час', few: '{count} часа', many: '{count} часов', other: '{count} часа' },
     steps: {
       catch: { title: 'Поймай первую рыбу', hint: 'Встань в секторе и нажми камеру внизу экрана' },
       fortify: { title: 'Укрепи сектор', hint: 'Поймай ещё одну рыбу в том же секторе — его защита вырастет' },
@@ -774,6 +780,10 @@ export const ru = {
     tbilisiBoundary: 'Кура, озёра и реки Тбилиси',
   },
   map: {
+    // The moment after a catch, played over the sector on the map (LeafletMap playSectorMoment).
+    moment: { captured: 'Сектор твой · {id}', stolen: 'Отбит у {name} · {id}', attacked: '−1 защита · {id}', fortified: 'Защита +1 · {id}', lost: 'Сектор отбит · {id}', hitBy: '−1 защита · {id}' },
+    // «Пока тебя не было»: what happened to the player's sectors while they were away (AwayReplay).
+    away: { title: 'Пока тебя не было', counter: '{n} из {total}', lostTitle: 'Твой сектор отбили', attackedTitle: 'Твой сектор атаковали', lostText: 'Сектор {id} теперь у соперника. Чтобы вернуть, лови в нём: каждый улов снимает защиту, при нуле сектор снова твой.', attackedText: 'Сектор {id} устоял, защита {defense} из 3. Поймай в нём рыбу, чтобы укрепить.', toSector: 'К сектору', next: 'Дальше', close: 'Понятно' },
     mine: 'Моя',
     myShare: 'Моя доля',
     free: 'Свободна',

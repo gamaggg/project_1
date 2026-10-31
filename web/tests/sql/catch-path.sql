@@ -50,6 +50,8 @@ begin
   insert into auth.users (id, email, aud, role, raw_user_meta_data) values
     (a, 'catch-test-a-' || a || '@example.invalid', 'authenticated', 'authenticated', '{"display_name":"Тест А"}'),
     (b, 'catch-test-b-' || b || '@example.invalid', 'authenticated', 'authenticated', '{"display_name":"Тест Б"}');
+  -- Не новички: «Задание новичка» (первый улов ×3 в первые 7 дней) проверяется отдельно, здесь только правила улова.
+  update public.profiles set created_at = now() - interval '30 days' where id in (a, b);
 
   select tt.id into sector from public.territories tt
   where tt.owner_id is null and not tt.is_deleted and tt.id like 'B%'

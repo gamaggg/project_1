@@ -525,6 +525,12 @@ export const ka: Dict = {
     claim: 'აიღე',
     claimed: '+{coins} მონეტა — პირველი ნაბიჯები გავლილია!',
     progress: 'შესრულებულია {done} / {total}',
+    newbieTitle: 'ახალბედას დავალება',
+    newbieText: 'დაიჭირე პირველი თევზი {date}-მდე — მისთვის სამმაგი მონეტა და ფარი მარაგში.',
+    newbieLeft: 'დარჩა {left}',
+    pillNewbie: 'პირველი დაჭერა ×3 · {left}',
+    leftDays: { one: '{count} დღე', other: '{count} დღე' },
+    leftHours: { one: '{count} საათი', other: '{count} საათი' },
     steps: {
       catch: { title: 'დაიჭირე პირველი თევზი', hint: 'დადექი სექტორში და დააჭირე კამერას ქვემოთ' },
       fortify: { title: 'გაამაგრე სექტორი', hint: 'დაიჭირე კიდევ ერთი თევზი იმავე სექტორში — დაცვა გაიზრდება' },
@@ -775,6 +781,8 @@ export const ka: Dict = {
     tbilisiBoundary: 'მტკვარი, ტბები და მდინარეები თბილისში',
   },
   map: {
+    moment: { captured: 'სექტორი შენია · {id}', stolen: 'წაერთვა {name}-ს · {id}', attacked: '−1 დაცვა · {id}', fortified: 'დაცვა +1 · {id}', lost: 'სექტორი წაგერთვა · {id}', hitBy: '−1 დაცვა · {id}' },
+    away: { title: 'სანამ არ იყავი', counter: '{n} / {total}', lostTitle: 'შენი სექტორი წაგართვეს', attackedTitle: 'შენს სექტორს შეუტიეს', lostText: 'სექტორი {id} ახლა მეტოქისაა. დასაბრუნებლად იქ ითევზავე: ყოველი დაჭერა დაცვას აკლებს, ნულზე სექტორი ისევ შენია.', attackedText: 'სექტორმა {id} გაუძლო, დაცვა {defense} / 3. დაიჭირე იქ თევზი, რომ გაამაგრო.', toSector: 'სექტორზე', next: 'შემდეგი', close: 'გასაგებია' },
     mine: 'ჩემია',
     myShare: 'ჩემი წილი',
     free: 'თავისუფალია',

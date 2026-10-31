@@ -5,8 +5,20 @@ import { createPortal } from 'react-dom'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { useClaimFirstSteps, useFirstSteps, type FirstStepKey } from '@/lib/supabase/queries'
 import { useI18n } from '@/lib/i18n'
+import { currentLocale } from '@/lib/i18n/runtime'
 
 const ORDER: FirstStepKey[] = ['catch', 'fortify', 'treasury', 'daily', 'challenge', 'clan']
+
+// «Задание новичка»: what's left of the 7 days for the first catch to pay triple,
+// or null when there's no such task (already caught, too late, an older server).
+function newbieDeadline(until: string | null | undefined, t: ReturnType<typeof useI18n>['t']) {
+  if (!until) return null
+  const ms = new Date(until).getTime() - Date.now()
+  if (!(ms > 0)) return null
+  const left = ms >= 86_400_000 ? t('firstSteps.leftDays', { count: Math.floor(ms / 86_400_000) }) : t('firstSteps.leftHours', { count: Math.ceil(ms / 3_600_000) })
+  const date = new Date(until).toLocaleString(currentLocale(), { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+  return { left, date }
+}
 
 // «Первые шаги» on the map, right of the «Неделя» sticker: a newcomer's six
 // steps with progress, then «Забрать 100» once all are done (the server
@@ -19,11 +31,12 @@ export function FirstStepsPill({ onToast }: { onToast?: (msg: string) => void })
   if (!data || !data.eligible || data.claimed) return null
   const done = ORDER.filter((k) => data.steps[k]).length
   const all = done === ORDER.length
+  const newbie = data.steps.catch ? null : newbieDeadline(data.newbie_until, t)
   return (
     <>
       <button
         data-tour="first-steps"
-        className={`first-steps-pill tap-scale${all ? ' ready' : ''}`}
+        className={`first-steps-pill tap-scale${all ? ' ready' : ''}${newbie ? ' newbie' : ''}`}
         onClick={() => {
           void refetch()
           setOpen(true)
@@ -39,7 +52,7 @@ export function FirstStepsPill({ onToast }: { onToast?: (msg: string) => void })
             <span>{done}</span>
           </span>
         )}
-        {all ? t('firstSteps.pillReady', { coins: data.reward }) : t('firstSteps.pill', { done, total: ORDER.length })}
+        {all ? t('firstSteps.pillReady', { coins: data.reward }) : newbie ? t('firstSteps.pillNewbie', { left: newbie.left }) : t('firstSteps.pill', { done, total: ORDER.length })}
       </button>
       {open && <FirstStepsSheet onClose={() => setOpen(false)} onToast={onToast} />}
     </>
@@ -53,6 +66,7 @@ function FirstStepsSheet({ onClose, onToast }: { onClose: () => void; onToast?: 
   if (!data) return null
   const done = ORDER.filter((k) => data.steps[k]).length
   const all = done === ORDER.length
+  const newbie = data.steps.catch ? null : newbieDeadline(data.newbie_until, t)
   return createPortal(
     <div className="move-sheet-overlay" onClick={onClose}>
       <div className="move-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={t('firstSteps.title')}>
@@ -67,6 +81,13 @@ function FirstStepsSheet({ onClose, onToast }: { onClose: () => void; onToast?: 
           <div className="first-steps-sub">
             {t('firstSteps.sub', { coins: data.reward })} <CoinIcon size={16} />
           </div>
+          {newbie && (
+            <div className="first-steps-newbie">
+              <b>{t('firstSteps.newbieTitle')}</b>
+              <span>{t('firstSteps.newbieText', { date: newbie.date })}</span>
+              <span className="first-steps-newbie-left">{t('firstSteps.newbieLeft', { left: newbie.left })}</span>
+            </div>
+          )}
           <ul className="first-steps-list">
             {ORDER.map((k) => (
               <li key={k} className={data.steps[k] ? 'done' : ''}>

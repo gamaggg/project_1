@@ -174,7 +174,7 @@ function NavItem({
   children: React.ReactNode
 }) {
   return (
-    <div className={`navitem tap-scale${active ? ' active' : ''}`} onClick={() => onClick(id)}>
+    <div className={`navitem tap-scale${active ? ' active' : ''}`} data-nav={id} onClick={() => onClick(id)}>
       {children}
     </div>
   )

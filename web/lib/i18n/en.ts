@@ -523,6 +523,12 @@ export const en: Dict = {
     claim: 'Collect',
     claimed: '+{coins} coins — first steps done!',
     progress: '{done} of {total} done',
+    newbieTitle: 'Newcomer task',
+    newbieText: 'Catch your first fish by {date} — triple coins for it and a shield in reserve.',
+    newbieLeft: '{left} left',
+    pillNewbie: 'First catch ×3 · {left}',
+    leftDays: { one: '{count} day', other: '{count} days' },
+    leftHours: { one: '{count} hour', other: '{count} hours' },
     steps: {
       catch: { title: 'Catch your first fish', hint: 'Stand in a sector and tap the camera at the bottom' },
       fortify: { title: 'Fortify a sector', hint: 'Catch one more fish in the same sector — its defense grows' },
@@ -773,6 +779,8 @@ export const en: Dict = {
     tbilisiBoundary: 'The Kura, lakes and rivers of Tbilisi',
   },
   map: {
+    moment: { captured: 'Sector is yours · {id}', stolen: 'Taken from {name} · {id}', attacked: '−1 defense · {id}', fortified: 'Defense +1 · {id}', lost: 'Sector taken · {id}', hitBy: '−1 defense · {id}' },
+    away: { title: 'While you were away', counter: '{n} of {total}', lostTitle: 'Your sector was taken', attackedTitle: 'Your sector was attacked', lostText: 'Sector {id} now belongs to a rival. To win it back, fish there: each catch removes a defense point, at zero the sector is yours again.', attackedText: 'Sector {id} held, defense {defense} of 3. Catch a fish there to fortify it.', toSector: 'To the sector', next: 'Next', close: 'Got it' },
     mine: 'Mine',
     myShare: 'My share',
     free: 'Free',

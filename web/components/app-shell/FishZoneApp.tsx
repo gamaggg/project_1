@@ -44,6 +44,9 @@ import { useWeekTopModal } from '@/lib/weekTopModal'
 import { InstallOffer } from '@/components/app-shell/InstallOffer'
 import { useClanBattleCeremony } from '@/lib/clanBattleCeremony'
 import { HotSectorsTour, useHotSectorsTour } from '@/components/app-shell/HotSectorsTour'
+import { AwayReplay } from '@/components/app-shell/AwayReplay'
+import { markAwayReplaySeen, useAwayEvents } from '@/lib/supabase/queries/awayReplay'
+import { pickAwayEvents, type AwayReplayData } from '@/lib/data/awayEvents'
 import { useShopRewardsCount } from '@/lib/shopRewards'
 import { hasVisibleTypedText, useAppUpdate } from '@/lib/appUpdate'
 import { insideTelegram } from '@/lib/openExternal'
@@ -57,7 +60,8 @@ import { forgetRememberedRef, parseGuestShare, peekRememberedRef, refParam, reme
 import { readLaunchSearch, shareLink } from '@/lib/telegram/startParam'
 import { GuestShareScreen } from '@/components/app-shell/GuestShareScreen'
 import { formatCatchMeta, formatCooldown, type SpeciesEntry } from '@/lib/format'
-import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
+import { DEFAULT_TERRITORY_COLOR, resolveTerritoryColor } from '@/lib/data/territoryColors'
+import type { SectorMoment } from '@/components/app-shell/LeafletMap'
 import { draftHexAt } from '@/lib/data/hexGrid'
 import { CITIES, cityFirst, cityForSectorId, loadStoredCity, storeCity, type CityId } from '@/lib/data/city'
 import { ShieldedSectorModal } from '@/components/app-shell/ShieldedSectorModal'
@@ -268,6 +272,15 @@ export function FishZoneApp() {
   const { show: showWeekTop, entry: weekTopEntry, leader: weekTopLeader, dismiss: dismissWeekTop } = useWeekTopModal(city)
   const clanCeremony = useClanBattleCeremony(city, myProfile?.clanId ?? null)
   const hotTour = useHotSectorsTour(territories, city)
+  // «Пока тебя не было»: picked once, when the city's sectors are in, and kept
+  // until the replay closes (the sectors change under it as it plays).
+  const awayRows = useAwayEvents(!!myProfile?.onboardingCompleted && territoriesReady)
+  const [away, setAway] = useState<AwayReplayData | null | undefined>(undefined)
+  // Settled during render (React's derived-state pattern), once: a failed fetch
+  // is no news, and the tours below wait for this to be settled.
+  if (away === undefined && (awayRows.isError || (awayRows.data && territoriesReady && myProfile))) {
+    setAway(awayRows.data && myProfile ? pickAwayEvents(awayRows.data.rows, territories, myProfile.territoryColor ?? DEFAULT_TERRITORY_COLOR) : null)
+  }
   useRealtimeSync()
   // One «app_open» per launch, signed in or not (the funnel starts before
   // an account exists).
@@ -461,6 +474,8 @@ export function FishZoneApp() {
   const [catchAttackDefense, setCatchAttackDefense] = useState<number | null>(null)
   // Took the sector but the +25 was already paid for it today.
   const [catchCaptureNoCoins, setCatchCaptureNoCoins] = useState(false)
+  // What the map plays over the sector once the success screen is closed (playSectorMoment).
+  const [catchMoment, setCatchMoment] = useState<SectorMoment | null>(null)
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null)
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [photoStatus, setPhotoStatus] = useState<PhotoStatus>('uploading')
@@ -987,6 +1002,7 @@ export function FishZoneApp() {
       mapHandleRef.current?.flyToTerritory(found.id)
       setCatchTerritoryId(found.id)
       setIsAdminCatchFlow(false)
+      setCatchMoment(null)
       setCameraSessionId((n) => n + 1)
       push({ screen: 'screen-camera' })
       return
@@ -1088,6 +1104,20 @@ export function FishZoneApp() {
       setCatchCaptureCoins(result.captureCoins)
       setCatchClanSupport(result.clanSupport)
       setCatchClanShare(result.clanSupport && !!t && (t.coHolders.some((h) => h.isMe) || t.coHolders.length < 3))
+      const myColor = myProfile?.territoryColor ?? DEFAULT_TERRITORY_COLOR
+      const fromColor = t ? resolveTerritoryColor(t.status, myColor, t.ownerColor) : resolveTerritoryColor('free', myColor)
+      setCatchMoment({
+        id: catchTerritoryId,
+        kind: result.attacked ? 'attack' : captured ? (t?.status === 'other' ? 'steal' : 'capture') : 'own',
+        fromColor,
+        toColor: captured ? myColor : fromColor,
+        fromAvatarUrl: t?.ownerAvatarUrl ?? null,
+        fromName: t?.ownerDisplayName ?? null,
+        toAvatarUrl: myProfile?.avatarUrl ?? null,
+        toName: myProfile?.displayName ?? null,
+        defense: result.defense ?? null,
+        coins: result.speciesCoins + result.captureCoins,
+      })
       setPendingCatch(payload)
       track('catch_saved', { territory: catchTerritoryId }, city)
       setSavedCatchId(null)
@@ -1162,6 +1192,10 @@ export function FishZoneApp() {
     setPhotoUrl(null)
     setCatchTerritoryId(null)
     navClick('screen-map')
+    // Once the map has faded back in (.screen transition, .3 s).
+    const moment = catchMoment
+    setCatchMoment(null)
+    if (moment) window.setTimeout(() => mapHandleRef.current?.playSectorMoment(moment), 380)
   }
   // Real clipboard write, not a fake toast — the link round-trips through the
   // deep-link effect below, which opens screen-territory straight from it.
@@ -2247,14 +2281,37 @@ export function FishZoneApp() {
           clanCeremony.show ||
           !!unlockedAchievement ||
           showingTrophyScene ||
-          hotTour.show
+          hotTour.show ||
+          away !== null
         }
         onToast={showToast}
       />
       {/* The week's hot sectors, once per week — a tour over the map after
           onboarding, behind every celebration above. Seen from the moment it
           starts: leaving the map or closing the app halfway ends it for good. */}
+      {/* «Пока тебя не было»: right after the celebrations, before the hot-sector
+          tour. The map stays at the last sector when it closes. */}
+      {away &&
+        !geoPlay &&
+        currentScreen === 'screen-map' &&
+        !showWeekTop &&
+        !clanCeremony.show &&
+        !unlockedAchievement &&
+        !showingTrophyScene && (
+          <AwayReplay
+            events={away.events}
+            me={{ name: myProfile?.displayName ?? null, avatarUrl: myProfile?.avatarUrl ?? null, color: myProfile?.territoryColor ?? DEFAULT_TERRITORY_COLOR }}
+            play={(moment, onDone) => {
+              markAwayReplaySeen(away.newest)
+              if (mapHandleRef.current) mapHandleRef.current.playSectorMoment(moment, onDone)
+              else onDone()
+            }}
+            onOpenSector={(id) => mapHandleRef.current?.showTerritory(id)}
+            onClose={() => setAway(null)}
+          />
+        )}
       {hotTour.show &&
+        away === null &&
         !geoPlay &&
         myProfile?.onboardingCompleted &&
         currentScreen === 'screen-map' &&

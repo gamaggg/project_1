@@ -32,6 +32,13 @@ export const FAQ_EN: FaqSection[] = [
         ],
       },
       {
+        q: 'What is the «Newcomer task»?',
+        a: [
+          'Catch your first fish within 7 days of signing up and it pays triple the usual coins for its species, plus a shield in reserve (if you already have 3 shields, no new one is added). Coins for taking the sector come as usual.',
+          'The task is given once. The time left shows on the «First steps» card on the map; in Telegram the bot reminds you on day 3 and day 6.',
+        ],
+      },
+      {
         q: 'How do I log a catch?',
         a: [
           'Stand in a sector, tap the orange camera button at the bottom of the screen, photograph the fish and pick the species. Length, weight, method and bait are optional.',

@@ -19,7 +19,7 @@ import { useSkinAssetsVersion, useSkinPatterns } from '@/lib/map/skinPattern'
 import { isAnimatedSkin } from '@/lib/map/animatedSkins'
 import { createAnimatedSkinLayer, type AnimatedSkinEntry } from '@/lib/map/animatedSkinLayer'
 import { getCurrentCoords, queryGeolocationPermission } from '@/lib/geolocation'
-import { hapticTap } from '@/lib/telegram/haptics'
+import { hapticSuccess, hapticTap, hapticWarning } from '@/lib/telegram/haptics'
 import { applyCurrentLightPreset } from '@/lib/mapbox/lightPreset'
 import { mapLoad } from '@/lib/mapbox/lightMode'
 import { tn } from '@/lib/i18n/runtime'
@@ -50,6 +50,32 @@ export type LeafletMapHandle = {
   // panel on top and the hint below — not zoomed below minZoom; no animation.
   showArea: (points: [number, number][], minZoom: number) => void
   territoriesOutline: (ids: string[]) => [number, number][][] | null
+  // onDone: the moment has played out and the sector is back on the map.
+  playSectorMoment: (moment: SectorMoment, onDone?: () => void) => void
+}
+
+// The moment right after a catch, played over its sector when the map comes back
+// (FishZoneApp finishCatchFlow): the catcher takes a free sector or knocks the old
+// holder out of theirs, an attack knocks a defense mark off, the owner's own catch
+// adds one — and the coins fly into the profile tab, where the balance lives.
+export type SectorMoment = {
+  id: string
+  kind: 'capture' | 'steal' | 'attack' | 'own'
+  // What the sector looked like before the catch and after it, and whose faces:
+  // the holder before the catch (a free sector has none) and the catcher.
+  fromColor: string
+  toColor: string
+  fromAvatarUrl: string | null
+  fromName: string | null
+  toAvatarUrl: string | null
+  toName: string | null
+  // The sector's defense after the catch (0–3), null when unknown.
+  defense: number | null
+  coins: number
+  // «Пока тебя не было» (AwayReplay): the same steal/attack told to the holder who
+  // lost — their face is the one knocked out (from*), the catcher's comes in (to*);
+  // a long, slow flight in, and nobody can stop it by touching the map.
+  victim?: boolean
 }
 
 export type GeoMarks = { picked: string | null; answer: string | null; spot: [number, number] | null; dim: boolean }
@@ -275,6 +301,16 @@ export const LeafletMap = forwardRef<
     // so the redraw effect below rebuilds skin patterns sized to match (see
     // hexTileHeight() and skinPattern.ts's tileHeight param).
     const [zoomTick, setZoomTick] = useState(0)
+    // The sector the after-catch moment is playing on (playSectorMoment): its polygon
+    // and its label are made invisible in place while it plays — the moment draws the
+    // sector and the faces itself, and the map has usually repainted the sector in the
+    // new colour already. In place, not by redrawing: a full redraw rebuilt every
+    // avatar label on screen, which made them jump.
+    const momentIdRef = useRef<string | null>(null)
+    // Ends the moment on screen right away — a new one never plays over an old one.
+    const endMomentRef = useRef<(() => void) | null>(null)
+    const sectorLayersRef = useRef(new Map<string, L.Path[]>())
+    const labelMarkersRef = useRef(new Map<string, L.Marker[]>())
     const markersLayerRef = useRef<L.LayerGroup | null>(null)
     const labelsLayerRef = useRef<L.LayerGroup | null>(null)
     const hotBadgesLayerRef = useRef<L.LayerGroup | null>(null)
@@ -287,6 +323,9 @@ export const LeafletMap = forwardRef<
     // per-polygon-DOM-node cost that ruled out SVG for the other ~700
     // sectors doesn't apply here.
     const highlightLayerRef = useRef<L.LayerGroup | null>(null)
+    // The after-catch moment (playSectorMoment) — its own group, so retargeting the
+    // tap highlight (which clears highlightLayer) can't cut it short.
+    const momentLayerRef = useRef<L.LayerGroup | null>(null)
     const svgRendererRef = useRef<L.Renderer | null>(null)
     const userMarkerRef = useRef<L.Marker | null>(null)
     const cleanupLightPresetRef = useRef<(() => void) | null>(null)
@@ -318,6 +357,12 @@ export const LeafletMap = forwardRef<
       territoriesRef.current = territories
       markersLayer.clearLayers()
       labelsLayer.clearLayers()
+      sectorLayersRef.current = new Map()
+      const keep = (id: string, layer: L.Path) => {
+        const list = sectorLayersRef.current.get(id)
+        if (list) list.push(layer)
+        else sectorLayersRef.current.set(id, [layer])
+      }
       // Preview of sectors an admin is about to create (see
       // onLongPressEmptyMap below) — plain non-interactive outlines, dashed
       // to read as "not committed yet", drawn first so real sector polygons
@@ -406,13 +451,14 @@ export const LeafletMap = forwardRef<
           split.parts.forEach((part, i) => {
             const partColor = inClanView ? color : i === 0 ? color : holders[i].isMe ? myTerritoryColor : (holders[i].color ?? OTHER_TERRITORY_COLOR)
             const partPattern = skinPattern(holders[i].equippedSkin, partColor, part)
-            L.polygon(part, {
+            const partPoly = L.polygon(part, {
               stroke: false,
               fillColor: (partPattern ?? partColor) as unknown as string,
               // A skin pattern has its tint and line alpha baked in (see skinPattern.ts).
               fillOpacity: partPattern ? 1 : fillOpacity,
               interactive: false,
             }).addTo(markersLayer)
+            keep(t.id, partPoly)
           })
         }
         const poly = L.polygon(t.corners, {
@@ -424,11 +470,13 @@ export const LeafletMap = forwardRef<
           fillOpacity: split ? 0 : pattern ? 1 : fillOpacity,
           opacity: 0.9,
         }).addTo(markersLayer)
+        keep(t.id, poly)
         if (split) {
-          L.polyline(
+          const cuts = L.polyline(
             split.cuts.map((cut) => [split.center, cut]),
             { color: '#FFFFFF', weight: 1.5, opacity: 0.9, interactive: false }
           ).addTo(markersLayer)
+          keep(t.id, cuts)
         }
         // Long-press (super admin only — onLongPressTerritory is only ever
         // passed down when the caller already checked) starts/extends a
@@ -494,6 +542,7 @@ export const LeafletMap = forwardRef<
         }
       })
       animatedSkinsRef.current?.set(animatedSkins)
+      if (momentIdRef.current) hideSector(momentIdRef.current, true)
       drawLabels()
     }
 
@@ -505,13 +554,38 @@ export const LeafletMap = forwardRef<
     // view killed and reloaded. Rebuilt on moveend (see the init effect), so
     // what's off screen simply doesn't exist. Reads everything from refs:
     // the map listener binds this once, on first render.
+    // Makes a sector's own polygons and labels invisible, or brings them back — in
+    // place, nothing redrawn (see momentIdRef).
+    function hideSector(id: string, hidden: boolean) {
+      for (const layer of sectorLayersRef.current.get(id) ?? []) {
+        const o = layer.options as L.PathOptions & { momentOrig?: { opacity?: number; fillOpacity?: number } }
+        if (hidden) {
+          if (o.momentOrig) continue
+          o.momentOrig = { opacity: o.opacity, fillOpacity: o.fillOpacity }
+          layer.setStyle({ opacity: 0, fillOpacity: 0 })
+        } else if (o.momentOrig) {
+          const orig = o.momentOrig
+          delete o.momentOrig
+          layer.setStyle(orig)
+        }
+      }
+      for (const m of labelMarkersRef.current.get(id) ?? []) m.getElement()?.classList.toggle('moment-hidden', hidden)
+    }
+
     function drawLabels() {
       const L = leafletRef.current
       const map = mapRef.current
       const labelsLayer = labelsLayerRef.current
       if (!L || !map || !labelsLayer) return
       labelsLayer.clearLayers()
+      labelMarkersRef.current = new Map()
       if (map.getZoom() < withShift(LABEL_MIN_ZOOM, zoomShiftRef.current)) return
+      const keepLabel = (id: string, marker: L.Marker) => {
+        const list = labelMarkersRef.current.get(id)
+        if (list) list.push(marker)
+        else labelMarkersRef.current.set(id, [marker])
+        if (id === momentIdRef.current) marker.getElement()?.classList.add('moment-hidden')
+      }
       // Padded so a marker isn't created/destroyed right as it crosses the
       // edge — the strip just outside the viewport is already built by the
       // time a drag brings it in.
@@ -525,7 +599,7 @@ export const LeafletMap = forwardRef<
         // layer keeps the single crest: the holders are one clan anyway.
         const split = !clanLayerRef.current && !plainRef.current && !selectedIdsRef.current?.has(t.id) ? sectorSplit(t) : null
         if (split) {
-          L.marker([t.lat, t.lng], {
+          const idMarker = L.marker([t.lat, t.lng], {
             icon: L.divIcon({
               className: 'leaflet-territory-marker-wrap',
               html: `<div class="leaflet-territory-marker">${idLabelHtml(t)}</div>`,
@@ -533,11 +607,12 @@ export const LeafletMap = forwardRef<
             }),
             interactive: false,
           }).addTo(labelsLayer)
+          keepLabel(t.id, idMarker)
           const width = map.latLngToContainerPoint(t.corners[0]).distanceTo(map.latLngToContainerPoint(t.corners[3]))
           const factor = split.parts.length === 2 ? 0.26 : split.parts.length === 3 ? 0.22 : 0.2
           const size = Math.round(Math.min(26, Math.max(16, width * factor)))
           sectorHolders(t).forEach((h, i) => {
-            L.marker(split.centroids[i], {
+            const faceMarker = L.marker(split.centroids[i], {
               icon: L.divIcon({
                 className: 'leaflet-territory-marker-wrap',
                 html: `<div class="leaflet-territory-avatar" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.4)}px">${avatarInnerHtml(h.avatarUrl, h.displayName)}</div>`,
@@ -545,10 +620,11 @@ export const LeafletMap = forwardRef<
               }),
               interactive: false,
             }).addTo(labelsLayer)
+            keepLabel(t.id, faceMarker)
           })
           return
         }
-        L.marker([t.lat, t.lng], {
+        const marker = L.marker([t.lat, t.lng], {
           icon: L.divIcon({
             className: 'leaflet-territory-marker-wrap',
             html: territoryMarkerHtml(t, clanLayerRef.current, plainRef.current),
@@ -556,6 +632,7 @@ export const LeafletMap = forwardRef<
           }),
           interactive: false,
         }).addTo(labelsLayer)
+        keepLabel(t.id, marker)
       })
     }
 
@@ -596,6 +673,63 @@ export const LeafletMap = forwardRef<
         // map zoomed far out comes in to 14, where a sector still reads.
         const targetZoom = Math.max(map.getZoom(), withShift(14, zoomShiftRef.current))
         map.flyTo([t.lat, t.lng], targetZoom, { duration: 0.5 })
+      },
+      playSectorMoment(moment: SectorMoment, onDone?: () => void) {
+        const L = leafletRef.current
+        const map = mapRef.current
+        const t = territoriesRef.current.find((x) => x.id === moment.id) ?? territories.find((x) => x.id === moment.id)
+        if (!L || !map || !t || !momentLayerRef.current) {
+          onDone?.()
+          return
+        }
+        const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+        let started = false
+        const start = () => {
+          if (started) return
+          started = true
+          endMomentRef.current?.()
+          momentIdRef.current = t.id
+          hideSector(t.id, true)
+          endMomentRef.current = runSectorMoment(L, map, momentLayerRef.current!, t, moment, reduced, () => {
+            momentIdRef.current = null
+            endMomentRef.current = null
+            hideSector(t.id, false)
+            onDone?.()
+          })
+        }
+        // The victim's replay always lands at one closer zoom, so several in a row
+        // don't creep in further each time.
+        const zoom = moment.victim ? withShift(15.5, zoomShiftRef.current) : Math.max(map.getZoom(), withShift(15, zoomShiftRef.current))
+        const size = map.getSize()
+        const mid = L.point(size.x / 2, size.y / 2)
+        const arrived = () => Math.abs(map.getZoom() - zoom) < 0.05 && map.latLngToContainerPoint([t.lat, t.lng]).distanceTo(mid) < 8
+        // Already there: no flight — a flight ends in moveend, which rebuilds every
+        // label on screen for nothing.
+        if (!moment.victim && arrived()) {
+          start()
+          return
+        }
+        // The victim's replay doesn't fly across the city: the map cuts to just above
+        // the sector and pushes slowly in. Zooming in only ever shows what the canvas
+        // has already drawn — a flight that zooms out on the way reveals more than
+        // its padding holds, and sectors came in cut off until the flight ended.
+        if (moment.victim && !reduced) map.setView([t.lat, t.lng], zoom - 1.5, { animate: false })
+        const flight = reduced ? 0 : moment.victim ? 1.8 : 0.6
+        map.flyTo([t.lat, t.lng], zoom, { duration: flight })
+        // Start on the moveend that ends at the sector, not on any moveend: one from
+        // the cut above, or from a flight this one interrupted, came first and
+        // started the moment mid-flight — drawn at the wrong size, the real sector
+        // hidden under it, so the sector seemed to vanish.
+        const onMoveEnd = () => {
+          if (!arrived()) return
+          map.off('moveend', onMoveEnd)
+          start()
+        }
+        map.on('moveend', onMoveEnd)
+        window.setTimeout(() => {
+          map.off('moveend', onMoveEnd)
+          start()
+        }, flight * 1000 + 400)
       },
       showUserLocation: placeUserMarker,
       flyToView(center: [number, number], zoom: number) {
@@ -757,6 +891,7 @@ export const LeafletMap = forwardRef<
         // compositing layer its glow filter gets) was 2.2× the viewport.
         svgRendererRef.current = L.svg({ padding: 0.2 })
         highlightLayerRef.current = L.layerGroup().addTo(map)
+        momentLayerRef.current = L.layerGroup().addTo(map)
 
         // Over the player's last known position if there is one (the dot appears with it),
         // else the city's own centre.
@@ -992,3 +1127,141 @@ export const LeafletMap = forwardRef<
     return <div id="leafletMap" ref={containerRef} />
   }
 )
+
+// The after-catch moment itself (see SectorMoment), told with faces: the catcher's
+// avatar comes in and knocks the old holder's off a sector it takes, drops onto a
+// free one like a flag, bounces off one it only attacks (the holder staggers but
+// stays), hops on its own. The new colour floods the hex from where it lands. One
+// marker holds it all — the hex drawn in SVG at its on-screen size, the faces, the
+// label and the defense marks — animated in CSS (.smx*, globals.css); the real
+// sector and its label are hidden meanwhile and come back at the end.
+const MOMENT_HIT_AT: Record<SectorMoment['kind'], number> = { capture: 420, steal: 400, attack: 400, own: 0 }
+let momentSeq = 0
+function runSectorMoment(
+  L: typeof import('leaflet'),
+  map: L.Map,
+  layer: L.LayerGroup,
+  t: Territory,
+  moment: SectorMoment,
+  reduced: boolean,
+  // Gives the sector back to the map, as the moment fades.
+  onHandBack: () => void
+): () => void {
+  const centre = map.latLngToLayerPoint([t.lat, t.lng])
+  const pts = t.corners.map((c) => map.latLngToLayerPoint(c).subtract(centre))
+  const r = Math.max(...pts.map((p) => Math.hypot(p.x, p.y)))
+  const box = Math.ceil(r * 2 + 8)
+  const half = box / 2
+  const poly = pts.map((p) => `${(p.x + half).toFixed(1)},${(p.y + half).toFixed(1)}`).join(' ')
+  const clip = `smx-clip-${++momentSeq}`
+  const fromOpacity = moment.kind === 'capture' ? 0.22 : 0.32
+  const floods = moment.kind === 'capture' || moment.kind === 'steal'
+  const hitAt = reduced ? 0 : MOMENT_HIT_AT[moment.kind]
+
+  const face = (url: string | null, name: string | null, cls: string, ring: string) =>
+    `<div class="smx-face ${cls}" style="--smx-ring:${ring}">${avatarInnerHtml(url, name)}</div>`
+  const oldFace = moment.kind === 'steal' || moment.kind === 'attack' ? face(moment.fromAvatarUrl, moment.fromName, 'smx-old', moment.fromColor) : ''
+  const newFace = face(moment.toAvatarUrl, moment.toName, 'smx-new', moment.kind === 'attack' ? '#E24B4A' : moment.toColor)
+
+  // Defense marks after the catch: a capture starts at 1, an attack knocks the last
+  // one off (drawn in the holder's colour), the owner's own catch lights a new one.
+  const after = floods ? 1 : Math.max(0, Math.min(3, moment.defense ?? 1))
+  const changed = moment.kind === 'attack' ? after : after - 1
+  const pips = [0, 1, 2]
+    .map((i) => {
+      const on = moment.kind === 'attack' ? i <= after : i < after
+      const cls = i === changed ? (moment.kind === 'attack' ? ' lost' : ' gained') : ''
+      return `<span class="${on ? 'on' : ''}${cls}"></span>`
+    })
+    .join('')
+  const label = moment.victim
+    ? moment.kind === 'steal'
+      ? tn('map.moment.lost', { id: t.id, name: moment.toName ?? tn('common.angler') })
+      : tn('map.moment.hitBy', { id: t.id, name: moment.toName ?? tn('common.angler') })
+    : moment.kind === 'capture'
+      ? tn('map.moment.captured', { id: t.id })
+      : moment.kind === 'steal'
+        ? tn('map.moment.stolen', { id: t.id, name: moment.fromName ?? tn('common.angler') })
+        : moment.kind === 'attack'
+          ? tn('map.moment.attacked', { id: t.id })
+          : tn('map.moment.fortified', { id: t.id })
+  const pipColor = moment.kind === 'attack' ? moment.fromColor : moment.toColor
+
+  const html =
+    `<div class="smx smx-${moment.kind}${moment.victim ? ' victim' : ''}${reduced ? ' calm' : ''}" style="--smx-color:${moment.toColor};--smx-from:${moment.fromColor};--smx-pip:${pipColor};--smx-hit:${hitAt}ms;--smx-r:${Math.round(r)}px">` +
+    `<svg class="smx-hex" width="${box}" height="${box}" viewBox="0 0 ${box} ${box}" style="left:${-half}px;top:${-half}px">` +
+    `<defs><clipPath id="${clip}"><polygon points="${poly}"/></clipPath></defs>` +
+    `<polygon class="smx-hex-old" points="${poly}" fill="${moment.fromColor}" fill-opacity="${fromOpacity}" stroke="${moment.fromColor}" stroke-opacity=".9" stroke-width="1.5"/>` +
+    (floods
+      ? `<g clip-path="url(#${clip})"><circle class="smx-flood" cx="${half}" cy="${half}" r="${(r * 1.05).toFixed(1)}" fill="${moment.toColor}" fill-opacity=".32"/></g>` +
+        `<polygon class="smx-hex-new" points="${poly}" fill="none" stroke="${moment.toColor}" stroke-opacity=".9" stroke-width="1.5"/>`
+      : `<polygon class="smx-hex-edge" points="${poly}" fill="none" stroke="${moment.kind === 'attack' ? '#E24B4A' : moment.toColor}" stroke-width="3"/>`) +
+    `</svg>` +
+    `<span class="smx-ring"></span>` +
+    oldFace +
+    newFace +
+    `<div class="smx-label"><i></i>${escapeHtml(label)}</div>` +
+    `<div class="smx-pips">${pips}</div></div>`
+
+  const fx = L.marker([t.lat, t.lng], {
+    icon: L.divIcon({ className: 'sector-moment-fx', html, iconSize: [0, 0] }),
+    interactive: false,
+    zIndexOffset: 3000,
+  }).addTo(layer)
+
+  const timers: number[] = []
+  const later = (ms: number, fn: () => void) => timers.push(window.setTimeout(fn, ms))
+  later(hitAt, () => (moment.victim ? hapticWarning() : moment.kind === 'attack' ? hapticTap() : hapticSuccess()))
+  if (moment.coins > 0 && !reduced) later(hitAt + 700, () => flyCoins(map, t, moment.coins))
+
+  // A pinch or drag mid-moment would leave the drawing behind (it's sized to the
+  // zoom it started at): end it right away instead.
+  let ended = false
+  const end = () => {
+    if (ended) return
+    ended = true
+    timers.forEach(window.clearTimeout)
+    map.off('zoomstart', end)
+    onHandBack()
+    fx.getElement()?.classList.add('out')
+    window.setTimeout(() => layer.removeLayer(fx), 450)
+  }
+  // The victim's replay can't be cut short — the map is covered while it plays.
+  if (!moment.victim) map.on('zoomstart', end)
+  timers.push(window.setTimeout(end, hitAt + (moment.victim ? 3000 : 2300)))
+  return end
+}
+
+// «+55» rising off the sector and landing on the profile tab, which gives a bump.
+function flyCoins(map: L.Map, t: Territory, coins: number) {
+  const target = document.querySelector<HTMLElement>('.bottomnav [data-nav="screen-profile"]')
+  const box = map.getContainer().getBoundingClientRect()
+  const from = map.latLngToContainerPoint([t.lat, t.lng])
+  const x0 = box.left + from.x
+  const y0 = box.top + from.y
+  const to = target?.getBoundingClientRect()
+  const x1 = to ? to.left + to.width / 2 : x0
+  const y1 = to ? to.top + to.height / 2 : y0 - 120
+  const chip = document.createElement('div')
+  chip.className = 'smx-coins'
+  chip.textContent = `+${coins}`
+  chip.style.left = `${x0}px`
+  chip.style.top = `${y0}px`
+  document.body.appendChild(chip)
+  const anim = chip.animate(
+    [
+      { transform: 'translate(-50%, -50%) scale(.6)', opacity: 0 },
+      { transform: 'translate(-50%, calc(-50% - 46px)) scale(1.05)', opacity: 1, offset: 0.3 },
+      { transform: `translate(calc(-50% + ${x1 - x0}px), calc(-50% + ${y1 - y0}px)) scale(.55)`, opacity: 0.9 },
+    ],
+    { duration: 850, easing: 'cubic-bezier(.5, 0, .75, 0)', fill: 'forwards' }
+  )
+  anim.onfinish = () => {
+    chip.remove()
+    if (!target) return
+    target.classList.remove('coin-bump')
+    void target.offsetWidth
+    target.classList.add('coin-bump')
+    window.setTimeout(() => target.classList.remove('coin-bump'), 500)
+  }
+}

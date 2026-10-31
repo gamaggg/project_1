@@ -22,17 +22,28 @@ function text(d: Due): string {
   const hi = d.name ? `${d.name}, ` : ''
   const data = d.data ?? {}
   switch (d.step) {
-    case 'new_2h': {
+    case 'new_2h':
+    case 'new_day3': {
       const free = Number(data.free ?? 0)
       const sector = data.sector ? String(data.sector) : null
       const n = Number(data.sector_catches ?? 0)
+      // «Задание новичка»: the first catch within 7 days of signing up pays triple and brings a shield.
+      const until = data.until ? String(data.until) : null
       return [
-        `🎣 ${hi}на карте в ${city} сейчас ${free} свободных секторов — любой станет твоим с первым уловом.`,
+        d.step === 'new_day3'
+          ? `🎣 ${hi}до ${until ?? 'конца недели'} первый улов приносит втрое больше монет и щит в запас. Осталось 4 дня.`
+          : `🎣 ${hi}на карте в ${city} сейчас ${free} свободных секторов — любой станет твоим с первым уловом.`,
+        d.step === 'new_day3' ? `Свободных секторов в ${city}: ${free}.` : null,
         sector ? `Самое живое место недели — сектор ${sector}: ${n} ${pluralCatches(n)} за 7 дней.` : null,
+        d.step === 'new_2h' && until ? `Задание новичка: поймай первую рыбу до ${until} — монеты за неё втрое и щит в запас.` : null,
         'Сфотографируй рыбу на месте — и сектор твой.',
       ]
         .filter(Boolean)
         .join('\n\n')
+    }
+    case 'new_day6': {
+      const until = data.until ? String(data.until) : null
+      return `⏳ ${hi}последний день задания новичка${until ? ` — до ${until}` : ''}.\n\nПервый улов сейчас = сектор на карте, монеты за рыбу втрое и щит в запас. Потом бонус сгорит.`
     }
     case 'new_friday':
       return 'Завтра суббота — главный рыбацкий день 🎣\n\nПоймай первую рыбу на выходных: сектор сразу станет твоим, а за улов придут монеты.'
