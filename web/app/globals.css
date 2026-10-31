@@ -73,15 +73,6 @@ body{
 }
 .like-count-pop-anim{display:inline-block; animation:like-count-pop .3s var(--ease-out);}
 
-/* CatchPhotoScreen's swipe/button pagination between a sector's catches —
-   the simplest thing that still reads as a transition and still avoids the
-   white-flash problem (opacity animation exposes the plain white .screen
-   background behind the photo — see the fix history in git log for this
-   file). transform-only, no direction/exit-phase choreography: the new
-   catch just settles in from a hair smaller. */
-@keyframes catch-fade-in{from{transform:scale(0.98);} to{transform:scale(1);}}
-.catch-fade-in{animation:catch-fade-in .18s var(--ease-out);}
-
 .app-shell{
   max-width:480px;
   margin:0 auto;
@@ -215,15 +206,10 @@ body{
 
 /* Catch screen, Reels-style (CatchPhotoScreen): the photo fills the screen, the facts sit on it
    at the bottom left over a soft blur that fades out upward, the reactions in a right-hand column. */
-/* Turning pages: the photo slides in from the side the page came from, the facts rise a touch after it; the buttons,
-   arrows and reactions stay put. Short and soft on purpose. */
-@keyframes catch-page-next{from{opacity:0; transform:translate3d(30px,0,0) scale(1.02);}}
-@keyframes catch-page-prev{from{opacity:0; transform:translate3d(-30px,0,0) scale(1.02);}}
-@keyframes catch-info-rise{from{opacity:0; transform:translate3d(0,10px,0);}}
-.catch-reel.pg-next .catch-photo-layer{animation:catch-page-next .26s var(--ease-out) both;}
-.catch-reel.pg-prev .catch-photo-layer{animation:catch-page-prev .26s var(--ease-out) both;}
-.catch-reel.pg-next .catch-reel-info, .catch-reel.pg-prev .catch-reel-info{animation:catch-info-rise .3s var(--ease-out) .05s both;}
-@media (prefers-reduced-motion: reduce){.catch-reel.pg-next .catch-photo-layer, .catch-reel.pg-prev .catch-photo-layer, .catch-reel.pg-next .catch-reel-info, .catch-reel.pg-prev .catch-reel-info{animation:none;}}
+/* Turning pages is a slider: only the photos sit side by side on a track the finger drags (CatchPhotoScreen moves it by hand),
+   the next and previous photo already drawn beside the current one; the facts over them stay put. */
+.catch-track{position:absolute; inset:0; will-change:transform;}
+.catch-page{position:absolute; inset:0; overflow:hidden;}
 /* 56% of the height, but never lower than the reactions column (up to four buttons, ~250px above the menu) lets it be. */
 .catch-arrow{position:absolute; top:min(56%, calc(100% - var(--nav-h, 82px) - 304px)); width:44px; height:64px; margin-top:-32px; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:.7; filter:drop-shadow(0 1px 3px rgba(0,0,0,.6)); z-index:2;}
 .catch-arrow:active{opacity:1;}

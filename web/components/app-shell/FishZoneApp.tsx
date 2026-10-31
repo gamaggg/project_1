@@ -410,6 +410,8 @@ export function FishZoneApp() {
   // CameraScreen's allowGallery prop below never opens up for it.
   const [isAdminCatchFlow, setIsAdminCatchFlow] = useState(false)
   const [viewingCatchId, setViewingCatchId] = useState<number | null>(null)
+  // Whose catches the photo screen pages through (opened from a profile or «Мои уловы»); null = the catch's sector.
+  const [viewingCatchFeedUserId, setViewingCatchFeedUserId] = useState<string | null>(null)
   const [editingProfile, setEditingProfile] = useState(false)
   const [changingColor, setChangingColor] = useState(false)
   const [confirmingSignOut, setConfirmingSignOut] = useState(false)
@@ -866,8 +868,10 @@ export function FishZoneApp() {
   // that back button didn't actually close (see DECISIONS.md).
   // commentId comes from a comment notification or a ?comment= link — the
   // sheet opens on top of the catch with that comment flashed.
-  function openCatchPhoto(id: number, commentId?: number | null) {
+  // feedUserId: opened from a player's catches, so the swipe goes through theirs, not the sector's.
+  function openCatchPhoto(id: number, commentId?: number | null, feedUserId?: string | null) {
     setViewingCatchId(id)
+    setViewingCatchFeedUserId(feedUserId ?? null)
     push({ screen: 'screen-catch-photo', catchId: id })
     if (commentId) setViewingCommentsFor({ catchId: id, highlightId: commentId })
     // Feeds "Наблюдатель" — own-catch views are logged too but don't count
@@ -1811,13 +1815,14 @@ export function FishZoneApp() {
         </Screen>
         <Screen id="screen-catches" current={currentScreen} onBack={pop}>
           {(catchesUserId || catchesTerritoryId) && (
-            <MyCatchesScreen userId={catchesUserId} territoryId={catchesTerritoryId} onBack={pop} onOpenPhoto={openCatchPhoto} onOpenUser={openUserProfile} onOpenTerritory={openTerritory} onToast={showToast} />
+            <MyCatchesScreen userId={catchesUserId} territoryId={catchesTerritoryId} onBack={pop} onOpenPhoto={(id) => openCatchPhoto(id, null, catchesTerritoryId ? null : catchesUserId)} onOpenUser={openUserProfile} onOpenTerritory={openTerritory} onToast={showToast} />
           )}
         </Screen>
         <Screen id="screen-catch-photo" current={currentScreen} onBack={pop}>
           {viewingCatchId !== null && (
             <CatchPhotoScreen
               catchId={viewingCatchId}
+              feedUserId={viewingCatchFeedUserId}
               active={currentScreen === 'screen-catch-photo'}
               onBack={pop}
               onOpenUser={openUserProfile}
@@ -1907,7 +1912,7 @@ export function FishZoneApp() {
             onChangeColor={() => setChangingColor(true)}
             onLinkEmail={() => setLinkingEmail(true)}
             onOpenCityPicker={() => setChangingCity(true)}
-            onOpenPhoto={openCatchPhoto}
+            onOpenPhoto={(id) => openCatchPhoto(id, null, user?.id)}
             onOpenReports={() => push({ screen: 'screen-admin-reports' })}
             onOpenAdminAccess={() => push({ screen: 'screen-admin-access' })}
             onOpenAdminStats={() => push({ screen: 'screen-admin-stats' })}
@@ -1947,7 +1952,7 @@ export function FishZoneApp() {
               allTerritories={territories}
               onBack={pop}
               onOpenTerritory={openTerritory}
-              onOpenPhoto={openCatchPhoto}
+              onOpenPhoto={(id) => openCatchPhoto(id, null, viewingUserId)}
               onOpenAchievements={() => openAchievements(viewingUserId)}
               onOpenAchievementDetail={(icon) => openAchievementDetail(viewingUserId, icon)}
               onOpenAllCatches={() => push({ screen: 'screen-catches', userId: viewingUserId })}
