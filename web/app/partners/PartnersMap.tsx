@@ -157,9 +157,15 @@ export function PartnersMap({ city, shopName, discount, promo, week, opened, onO
     )
     io.observe(box)
 
+    // The box changes size after the map is built (the page switches between the phone and the computer
+    // layout, or the window is resized): Leaflet has to re-measure, or the sectors drift off the base map.
+    const ro = new ResizeObserver(() => map?.invalidateSize({ pan: false }))
+    ro.observe(box)
+
     return () => {
       cancelled = true
       io.disconnect()
+      ro.disconnect()
       markerRef.current = null
       map?.remove()
       map = null
