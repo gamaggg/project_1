@@ -1,28 +1,41 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useSyncExternalStore } from 'react'
 import type { PartnerCity, PartnersDoc } from '@/lib/data/partners.shared'
 import { SHOP_POS } from '@/lib/data/partnersMapData'
 import { PartnersMap } from './PartnersMap'
 import { ShopSheet } from './ShopSheet'
 
+// A computer screen: the card stands beside the map instead of rising as a phone sheet.
+const WIDE = '(min-width: 900px)'
+function subscribeWide(onChange: () => void) {
+  const mq = window.matchMedia(WIDE)
+  mq.addEventListener('change', onChange)
+  return () => mq.removeEventListener('change', onChange)
+}
+const isWide = () => window.matchMedia(WIDE).matches
+const notWide = () => false
+
 // The shop's package as three switches over the game's own map: the pin is always there,
 // the promo code and the weekly catch can be turned on to see what players get.
 export function PartnersDemo({ doc, city }: { doc: PartnersDoc; city: PartnerCity }) {
   const d = doc.demo
+  const wide = useSyncExternalStore(subscribeWide, isWide, notWide)
   const [promo, setPromo] = useState(false)
   const [week, setWeek] = useState(false)
   const [open, setOpen] = useState(false)
   const [touched, setTouched] = useState(false)
+  const [pulse, setPulse] = useState(0)
 
   const openSheet = useCallback(() => {
     setOpen(true)
     setTouched(true)
+    setPulse((n) => n + 1)
   }, [])
   const closeSheet = useCallback(() => setOpen(false), [])
 
   return (
-    <div className="pt-demo">
+    <div className={wide ? 'pt-demo pt-demo-wide' : 'pt-demo'}>
       <div className="pt-switches" role="group">
         <span className="pt-sw pt-sw-on pt-sw-fixed">
           <i aria-hidden="true">✓</i>
@@ -49,10 +62,14 @@ export function PartnersDemo({ doc, city }: { doc: PartnersDoc; city: PartnerCit
           </span>
         )}
         <PartnersMap city={city} shopName={d.shop.name} discount={d.promo.discount} promo={promo} week={week} opened={touched} onOpen={openSheet} />
-        {!touched && <span className="pt-hint">{d.hint}</span>}
+        {!touched && !wide && <span className="pt-hint">{d.hint}</span>}
       </div>
 
-      <ShopSheet doc={doc} city={city} open={open} promo={promo} week={week} coords={SHOP_POS[city]} onClose={closeSheet} />
+      {wide ? (
+        <ShopSheet doc={doc} city={city} open={false} promo={promo} week={week} coords={SHOP_POS[city]} onClose={closeSheet} inline pulse={pulse} />
+      ) : (
+        <ShopSheet doc={doc} city={city} open={open} promo={promo} week={week} coords={SHOP_POS[city]} onClose={closeSheet} />
+      )}
     </div>
   )
 }

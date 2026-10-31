@@ -5,12 +5,12 @@ import type { PartnersCityText } from '@/lib/data/partners.shared'
 export const PARTNERS_MOSCOW: Partial<Record<Lang, PartnersCityText>> = {
   ru: {
     cityName: 'Москва и область',
-    metaTitle: 'RANGE для магазинов — ваш магазин на карте рыбаков Москвы',
+    metaTitle: 'RANGE для бизнеса — ваше место на карте рыбаков Москвы',
     metaDescription:
-      'Рыбаки Москвы и области уже играют в RANGE. Покажем ваш магазин на карте у воды, дадим им промокод и сделаем «Улов недели» от вашего имени.',
-    eyebrow: 'Для рыболовных магазинов Москвы и области',
-    lead: 'RANGE — игра-карта, в которой рыбаки Москвы и области ловят рыбу и захватывают сектора у рек и прудов. Мы покажем им ваш магазин именно там, где они выбирают снасти и наживку.',
-    pilot: 'Набираем магазины в Москве и области. Первые 10 дней бесплатно: подключим магазин и покажем, как рыбаки находят вас на карте.',
+      'Рыбаки Москвы и области уже играют в RANGE. Покажем ваш магазин, баню, кафе или прокат на карте у воды, дадим игрокам промокод и сделаем «Улов недели» от вашего имени.',
+    eyebrow: 'Для бизнеса Москвы и области',
+    lead: 'RANGE — игра-карта, в которой рыбаки Москвы и области ловят рыбу и захватывают сектора у рек и прудов. Магазин снастей, баня после рыбалки, кафе, прокат лодок или база отдыха — покажем вас именно там, где они рыбачат.',
+    pilot: 'Набираем партнёров в Москве и области. Первые 10 дней бесплатно: добавим вас на карту и покажем, как рыбаки вас находят.',
     cityStatLabel: 'из них в Москве и области',
     address: 'Набережная ул., 12',
     shopDist: '400 м от воды',
@@ -23,12 +23,12 @@ export const PARTNERS_MOSCOW: Partial<Record<Lang, PartnersCityText>> = {
   },
   en: {
     cityName: 'Moscow and the region',
-    metaTitle: 'RANGE for shops — your shop on the anglers’ map of Moscow',
+    metaTitle: 'RANGE for business — your place on the anglers’ map of Moscow',
     metaDescription:
-      'Anglers in Moscow and the region already play RANGE. We show your shop on the map by the water, give players a promo code and run a “Catch of the week” in your name.',
-    eyebrow: 'For fishing shops in Moscow and the region',
-    lead: 'RANGE is a map game where anglers in Moscow and the region catch fish and claim sectors by rivers and ponds. We show them your shop right where they pick tackle and bait.',
-    pilot: 'We are signing up shops in Moscow and the region. The first 10 days are free: we connect your shop and show how anglers find you on the map.',
+      'Anglers in Moscow and the region already play RANGE. We show your shop, bathhouse, café or rental on the map by the water, give players a promo code and run a “Catch of the week” in your name.',
+    eyebrow: 'For businesses in Moscow and the region',
+    lead: 'RANGE is a map game where anglers in Moscow and the region catch fish and claim sectors by rivers and ponds. A tackle shop, a bathhouse after fishing, a café, a boat rental or a holiday base — we show you right where they fish.',
+    pilot: 'We are signing up partners in Moscow and the region. The first 10 days are free: we put you on the map and show how anglers find you.',
     cityStatLabel: 'of them in Moscow and the region',
     address: '12 Naberezhnaya St',
     shopDist: '400 m from the water',
