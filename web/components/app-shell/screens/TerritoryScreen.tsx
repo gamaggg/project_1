@@ -386,6 +386,7 @@ export function TerritoryScreen({
           <SectorLegendRow
             territory={territory}
             onOpenUser={onOpenUser}
+            onOpenPhoto={onOpenPhoto}
             aside={territory.ownerId ? <SectorDefenseAside territory={territory} myClanId={myProfile?.clanId ?? null} /> : undefined}
           />
           {holdsThis && (

@@ -167,6 +167,7 @@ export const ka: Dict = {
     mineHere: { one: 'აქ გაქვს {count} დაჭერა', other: 'აქ გაქვს {count} დაჭერა' },
     progressOf: '{mine} / 10',
     needShort: 'საჭიროა 10 დაჭერა 90 დღეში',
+    trophy: 'სექტორის ტროფეი',
   },
   forecast: {
     title: 'კბენის პროგნოზი',

@@ -165,6 +165,7 @@ export const en: Dict = {
     mineHere: { one: 'You have {count} catch here', other: 'You have {count} catches here' },
     progressOf: '{mine} of 10',
     needShort: 'Takes 10 catches in 90 days',
+    trophy: 'Sector trophy',
   },
   forecast: {
     title: 'Bite forecast',

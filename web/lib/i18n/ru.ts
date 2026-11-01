@@ -166,6 +166,7 @@ export const ru = {
     mineHere: { one: 'У тебя здесь {count} улов', few: 'У тебя здесь {count} улова', many: 'У тебя здесь {count} уловов', other: 'У тебя здесь {count} улова' },
     progressOf: '{mine} из 10',
     needShort: 'Нужно 10 уловов за 90 дней',
+    trophy: 'Трофей сектора',
   },
   forecast: {
     title: 'Прогноз клёва',

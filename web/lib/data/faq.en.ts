@@ -123,6 +123,10 @@ export const FAQ_EN: FaqSection[] = [
         a: ['The angler who caught the most in the sector over the last 90 days — at least 10 catches. Their avatar is in a laurel wreath on the sector screen.'],
       },
       {
+        q: 'What is a sector trophy?',
+        a: ['The biggest fish ever caught in the sector: the heaviest catch with a weight, or, if nobody has entered a weight here, the longest one. It shows on the sector screen next to the legend once at least one catch has a weight or a length. Tap it to open the photo.'],
+      },
+      {
         q: 'Where do I see the bite forecast?',
         a: [
           'On the map — the «Bite» badge with today’s score. Tap it and the forecast opens: pick a day at the top (today and 3 more), the big number is the score for that whole day, with the best time beside it.',

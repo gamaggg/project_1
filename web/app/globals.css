@@ -4480,6 +4480,18 @@ button.standing-col{cursor:pointer;}
 .standing-hint{font-size:12px; line-height:1.35; font-weight:600; color:var(--ink-soft);}
 .standing-avatar{width:26px; height:26px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#FF7A38,var(--accent) 70%); color:#fff; font-size:10px; font-weight:800;}
 .standing-avatar img{width:100%; height:100%; object-fit:cover; display:block;}
+.standing-col-trophy .standing-head{color:#C24A0A;}
+.standing-legend-count{font-weight:800; color:#9A6B12; font-variant-numeric:tabular-nums;}
+.standing-trophy-photo{flex:0 0 auto; width:42px; height:42px; border-radius:10px; overflow:hidden; background:var(--line);}
+.standing-trophy-photo img{width:100%; height:100%; object-fit:cover; display:block;}
+.standing-trophy-size{font-weight:800; color:var(--accent); font-variant-numeric:tabular-nums;}
+/* The defense under legend | trophy: one full-width row, the shields and the
+   line beside them instead of under. */
+.standing-wide{grid-column:1 / -1; border-top:1px solid var(--line);}
+.standing-wide .standing-col{flex-direction:row; flex-wrap:wrap; align-items:center; column-gap:12px; row-gap:4px;}
+.standing-wide .standing-head{flex-basis:100%;}
+.standing-wide .standing-main{height:auto;}
+.standing-wide .standing-hint{flex:1; min-width:120px;}
 /* After an attack (ConfirmScreen): the sector's shields left, on the dark trophy card. */
 .catch-trophy-attack{display:flex; align-items:center; justify-content:center; gap:8px; margin:-10px auto 16px; max-width:300px; text-align:left; font-size:13.5px; font-weight:700; line-height:1.35; color:rgba(255,255,255,.88); animation:comment-in .5s var(--ease-out) 1.35s both;}
 .catch-trophy-attack .defense-shields svg{stroke:rgba(255,255,255,.45);}

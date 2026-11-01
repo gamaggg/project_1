@@ -1,11 +1,12 @@
 'use client'
 
 import { SkeletonBlock } from '@/components/app-shell/Skeleton'
-import { useSectorInsights, useSpecies, type SectorInsights as Insights } from '@/lib/supabase/queries'
+import { useCatchesByTerritory, useProfile, useSectorInsights, useSpecies, type SectorInsights as Insights } from '@/lib/supabase/queries'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useT } from '@/lib/i18n'
 import { useAuth } from '@/components/providers/AuthProvider'
-import type { Territory } from '@/lib/data/types'
+import { formatCatchMeta, formatWhen } from '@/lib/format'
+import type { Catch, Territory } from '@/lib/data/types'
 
 // The sector legend's mark — a small laurel wreath, gold.
 export function LaurelIcon({ size = 16, color = '#C9921F' }: { size?: number; color?: string }) {
@@ -203,17 +204,23 @@ export function SectorLegendRow({
   territory,
   onOpenUser,
   aside,
+  onOpenPhoto,
 }: {
   territory: Territory
   onOpenUser: (id: string) => void
-  // The sector's defense (SectorDefenseAside) — legend and defense share one
-  // card, two equal columns built the same way: label, a mark with its
-  // number, a short line under it.
+  // Opens the sector trophy's photo; the trophy column shows only with it.
+  onOpenPhoto?: (catchId: number) => void
+  // The sector's defense (SectorDefenseAside). The card's columns are built
+  // the same way: label, a mark with its name or number, a short line under
+  // it. With a trophy it's legend | trophy and the defense a full-width row
+  // under them; without one, legend | defense as before.
   aside?: React.ReactNode
 }) {
   const t = useT()
   const { user } = useAuth()
   const { data } = useSectorInsights(territory.id)
+  const { data: catches = [] } = useCatchesByTerritory(onOpenPhoto ? territory.id : null)
+  const trophy = onOpenPhoto ? sectorTrophy(catches) : null
   const legend = data?.legend ?? null
   const mine = data?.myCount ?? null
   const isMe = !!legend && legend.id === user?.id
@@ -241,7 +248,9 @@ export function SectorLegendRow({
         <b>{isMe ? t('legend.you') : legend.name}</b>
       </span>
       <span className="standing-hint">
-        {t('legend.catchesPeriod', { count: legend.count })}
+        {/* The legend's own count stands out (like the trophy's size); the
+            viewer's line under it stays quiet. */}
+        <span className="standing-legend-count">{t('legend.catchesPeriod', { count: legend.count })}</span>
         {mine !== null && !isMe && (
           <>
             <br />
@@ -263,9 +272,57 @@ export function SectorLegendRow({
   )
 
   return (
-    <div data-tour="standing" className={`sector-standing${aside ? '' : ' solo'}`}>
+    <div data-tour="standing" className={`sector-standing${aside || trophy ? '' : ' solo'}`}>
       {column}
-      {aside}
+      {trophy && onOpenPhoto ? (
+        <>
+          <SectorTrophyColumn trophy={trophy} onOpenPhoto={onOpenPhoto} />
+          {aside && <div className="standing-wide">{aside}</div>}
+        </>
+      ) : (
+        aside
+      )}
     </div>
+  )
+}
+
+// The sector's biggest fish of all time: the heaviest weighed catch, or,
+// when nobody has weighed one here, the longest measured. Ties go to the
+// longer fish, then to whoever caught it first. Null when no catch here has
+// either.
+export function sectorTrophy(catches: Catch[]): Catch | null {
+  const weighed = catches.filter((c) => c.weightKg)
+  const pool = weighed.length ? weighed : catches.filter((c) => c.lengthCm)
+  if (!pool.length) return null
+  const key = (c: Catch) => (weighed.length ? Number(c.weightKg) : c.lengthCm!)
+  return pool.reduce((a, b) => {
+    if (key(b) !== key(a)) return key(b) > key(a) ? b : a
+    if ((b.lengthCm ?? 0) !== (a.lengthCm ?? 0)) return (b.lengthCm ?? 0) > (a.lengthCm ?? 0) ? b : a
+    return b.caughtAt < a.caughtAt ? b : a
+  })
+}
+
+// «Трофей сектора»: the legend's twin column — the fish's photo and
+// species, its size, who caught it and when. Opens the photo.
+function SectorTrophyColumn({ trophy, onOpenPhoto }: { trophy: Catch; onOpenPhoto: (catchId: number) => void }) {
+  const t = useT()
+  const { data: catcher } = useProfile(trophy.mine ? null : trophy.userId)
+  const who = trophy.mine ? t('legend.you') : catcher?.displayName ?? '…'
+  return (
+    <button className="standing-col standing-col-trophy tap-scale" onClick={() => onOpenPhoto(trophy.id)}>
+      <span className="standing-head">{t('legend.trophy')}</span>
+      <span className="standing-main">
+        <span className="standing-trophy-photo">
+          {/* eslint-disable-next-line @next/next/no-img-element -- small catch thumbnail, same as the sector's catch rows */}
+          <img src={thumbUrl(trophy.photoUrl, 160)} alt={trophy.speciesName} loading="lazy" decoding="async" />
+        </span>
+        <b>{trophy.speciesName}</b>
+      </span>
+      <span className="standing-hint">
+        <span className="standing-trophy-size">{formatCatchMeta(trophy.lengthCm, trophy.weightKg)}</span>
+        <br />
+        {who} · {formatWhen(trophy.caughtAt).split('·')[0].trim()}
+      </span>
+    </button>
   )
 }
