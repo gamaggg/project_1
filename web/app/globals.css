@@ -42,6 +42,12 @@ button, input, textarea, select{font-family:inherit;}
    sector ids, avatar initials and attribution should read in the app's
    face. Two classes so this outranks leaflet.css whatever the load order. */
 .app-shell .leaflet-container{font-family:inherit;}
+/* The «© Mapbox · © OpenStreetMap» line sits in the map's bottom-right
+   corner, right under the floating bottom menu: a tap just off «Профиль»
+   opened mapbox.com / openstreetmap.org. The text stays (it has to be
+   shown), but it no longer takes taps — they fall through to the map. */
+#leafletMap .leaflet-control-attribution,
+#leafletMap .leaflet-control-attribution a{pointer-events:none;}
 body{
   /* Was a neutral letterbox gray for the desktop-width side margins (see
      .app-shell's max-width:480px) — but on iOS standalone PWA, .app-shell's
