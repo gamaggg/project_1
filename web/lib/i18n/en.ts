@@ -1584,6 +1584,9 @@ export const en: Dict = {
   },
   catch: {
     title: 'Catch',
+    downloadPhoto: 'Download photo',
+    photoSaved: 'Photo saved',
+    photoSaveFailed: "Couldn't download the photo, try again",
     newTerritory: 'This sector is now yours',
     saved: 'Catch logged',
     clanShare: "You share a clan-mate's sector — now it's split between you",

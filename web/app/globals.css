@@ -248,6 +248,7 @@ body{
 .catch-reel .story-btn{flex:none; height:30px; padding:0 12px; border-radius:999px; font-size:12.5px; white-space:nowrap; text-shadow:none;}
 .reel-pill.on{border-color:rgba(255,255,255,.4); color:rgba(255,255,255,.85);}
 .reel-pill:disabled{opacity:.6;}
+.reel-pill-icon{width:30px; padding:0; justify-content:center;}
 .reel-species{font-size:22px; font-weight:800; line-height:1.15;}
 .reel-meta{font-size:14px; font-weight:700; opacity:.88; margin-left:8px;}
 .reel-where{font-size:13px; font-weight:700; opacity:.92; display:flex; flex-wrap:wrap; gap:0 6px;}

@@ -8,6 +8,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import { CatchConditions } from '@/components/app-shell/CatchConditions'
 import { StoryButton } from '@/components/app-shell/StoryButton'
+import { downloadImage } from '@/lib/story'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { PhotoViewer } from '@/components/app-shell/PhotoViewer'
 import { EditMyCatchSheet } from '@/components/app-shell/EditMyCatchSheet'
@@ -572,6 +573,7 @@ function CatchFacts({
         {c.mine && (
           <div className="reel-mine-row">
             <StoryButton catchId={c.id} caption={`${c.speciesName}${meta ? ` ${meta}` : ''}`} onToast={onToast} />
+            <DownloadPhotoButton catchId={c.id} photoUrl={c.photoUrl} onToast={onToast} />
             <button key={editLabel} ref={swapIn} data-tour="edit-catch" className="reel-pill tap-scale" onClick={() => setEditingMine(true)}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M12 20h9" />
@@ -607,5 +609,29 @@ function CatchFacts({
         </div>
       </div>
     </>
+  )
+}
+
+// «Скачать фото» — the owner saves the stored photo (1600 px JPEG, the size
+// every catch photo is kept at): Telegram's own save prompt, or a plain
+// download in a browser (lib/story.ts). Icon only, so the owner's row stays
+// one line on a narrow phone.
+function DownloadPhotoButton({ catchId, photoUrl, onToast }: { catchId: number; photoUrl: string; onToast: (msg: string) => void }) {
+  const [busy, setBusy] = useState(false)
+
+  async function download() {
+    setBusy(true)
+    const result = await downloadImage(photoUrl, `range-${catchId}.jpg`)
+    setBusy(false)
+    if (result === 'downloaded') onToast(tn('catch.photoSaved'))
+    if (result === 'failed') onToast(tn('catch.photoSaveFailed'))
+  }
+
+  return (
+    <button className="reel-pill reel-pill-icon tap-scale" disabled={busy} onClick={() => void download()} aria-label={tn('catch.downloadPhoto')} title={tn('catch.downloadPhoto')}>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M12 4v11M7 10.5l5 5 5-5M5 20h14" />
+      </svg>
+    </button>
   )
 }

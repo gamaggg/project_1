@@ -58,6 +58,10 @@ export const FAQ_EN: FaqSection[] = [
         ],
       },
       {
+        q: 'Can I download the photo of my catch?',
+        a: ['Yes. Open your catch: in the row under your name, next to «To story», there is a button with a down arrow. In Telegram it opens its save prompt, in a browser the photo downloads. You get the photo as the app stores it: up to 1600 pixels on the long side, without the date and place it was taken.'],
+      },
+      {
         q: 'Why is my catch not saved?',
         a: [
           [
