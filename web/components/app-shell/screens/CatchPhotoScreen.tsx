@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useCatchById, useCatchesByTerritory, useCatchesByUser, useCatchLikes, useToggleCatchLike, useIsSuperAdmin, useCatchComments, useCatchConditions, useProfile, useIsFollowing, useSetFollowing } from '@/lib/supabase/queries'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -74,8 +75,13 @@ function CatchPhotoLayer({ src, alt, current, tour, onZoom }: { src: string; alt
 
   return (
     <div ref={boxRef} className="catch-photo-layer" style={{ position: 'absolute', inset: 0, cursor: 'zoom-in' }} onClick={onZoom}>
-      <img className="catch-reel-ambient" src={src} alt="" aria-hidden />
-      <img ref={imgRef} data-catch-photo={current || undefined} data-tour={tour ? 'photo-zoom' : undefined} src={src} alt={alt} style={{ display: 'block', opacity: nat ? 1 : 0, transition: 'opacity .2s ease-out', ...style }} onLoad={(e) => setNat({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })} />
+      <img className="catch-reel-ambient" src={src} alt="" aria-hidden decoding="async" />
+      <img ref={imgRef} data-catch-photo={current || undefined} data-tour={tour ? 'photo-zoom' : undefined} src={src} alt={alt} decoding="async" style={{ display: 'block', opacity: nat ? 1 : 0, transition: 'opacity .2s ease-out', ...style }} onLoad={(e) => setNat({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })} />
+      {/* The soft blur under the facts at the bottom: a blurred copy of the photo that slides with it. A backdrop blur
+          over sliding photos is redrawn every frame, which is what made paging stutter on phones. */}
+      <div className="catch-photo-soft" aria-hidden>
+        {nat && <img src={src} alt="" decoding="async" style={style} />}
+      </div>
     </div>
   )
 }
@@ -159,22 +165,19 @@ export function CatchPhotoScreen({
 } & CatchPageHandlers) {
   // Paging swaps which catch this screen shows without pushing a new stack
   // entry per swipe (which would make "back" have to click through every
-  // catch you passed) — activeId starts at the prop and only diverges once
-  // you actually swipe/tap; a fresh catchId from the outside (a new
-  // openCatchPhoto/deep-link while this screen is still mounted — Screen
-  // never unmounts, see DECISIONS.md) resyncs it.
+  // catch you passed). FishZoneApp keys this screen by each opening, so a
+  // new tap on a catch (even the one opened last time) starts from it.
   const [activeId, setActiveId] = useState(catchId)
-  const [synced, setSynced] = useState({ catchId, feedUserId })
-  if (catchId !== synced.catchId || feedUserId !== synced.feedUserId) {
-    setSynced({ catchId, feedUserId })
-    setActiveId(catchId)
-  }
   const [zoomed, setZoomed] = useState(false)
   if (zoomed && !active) setZoomed(false)
 
   const { data: byId } = useCatchById(activeId)
+  // The sector of the catch it was opened on, kept: every catch paged to is in it, and the list must not drop
+  // out while the next catch's own fetch is on the way.
+  const [sectorId, setSectorId] = useState<string | null>(null)
+  if (!feedUserId && !sectorId && byId?.territoryId) setSectorId(byId.territoryId)
   const { data: byUser = [] } = useCatchesByUser(feedUserId)
-  const { data: bySector = [] } = useCatchesByTerritory(feedUserId ? null : (byId?.territoryId ?? null))
+  const { data: bySector = [] } = useCatchesByTerritory(feedUserId ? null : sectorId)
   const feed = feedUserId ? byUser : bySector
   const index = feed.findIndex((x) => x.id === activeId)
   // The list already has the catch while its own fetch is on the way, so a page turn never shows a blank screen.
@@ -194,7 +197,12 @@ export function CatchPhotoScreen({
   const ahead = index >= 0 ? [feed[index - PRELOAD_AHEAD]?.photoUrl, feed[index + PRELOAD_AHEAD]?.photoUrl].filter(Boolean).join(' ') : ''
   useEffect(() => {
     for (const url of ahead.split(' ')) {
-      if (url) new Image().src = url
+      if (!url) continue
+      // Decoded too, off the main thread, so the photo is ready to draw when it slides in.
+      const img = new Image()
+      img.decoding = 'async'
+      img.src = url
+      img.decode().catch(() => {})
     }
   }, [ahead])
 
@@ -210,38 +218,63 @@ export function CatchPhotoScreen({
   // After a page turn the new catch sits in the middle slot: the track goes back to 0 before the frame is drawn.
   useLayoutEffect(() => setTrack(0, 0), [activeId])
 
-  const settling = useRef<{ toId: number | null; timer: number } | null>(null)
+  // One page step: the screen's width and the gap between photos.
+  const pageWidth = () => (shellRef.current?.clientWidth ?? 0) + PAGE_GAP
+  const settling = useRef<{ toId: number | null; dir: number; timer: number } | null>(null)
+  // The new catch is put in the middle in the same frame the slide ends (flushSync), so the old one never flashes back.
   function finishSettle() {
     const s = settling.current
     if (!s) return
     settling.current = null
     window.clearTimeout(s.timer)
-    if (s.toId != null) setActiveId(s.toId)
+    if (s.toId != null) flushSync(() => setActiveId(s.toId!))
   }
+  // The neighbours as of the last commit: a slide ended with flushSync mid-handler must not use the stale ones.
+  const nav = useRef({ prevCatch, nextCatch })
+  useLayoutEffect(() => {
+    nav.current = { prevCatch, nextCatch }
+  })
   // dir 1 = to the next catch, -1 = to the previous one, 0 = back into place.
   function settle(dir: -1 | 0 | 1) {
-    const to = dir === 1 ? nextCatch : dir === -1 ? prevCatch : null
-    const w = (shellRef.current?.clientWidth ?? 0) + PAGE_GAP
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (to && reduced) {
+    const to = dir === 1 ? nav.current.nextCatch : dir === -1 ? nav.current.prevCatch : null
+    if (to && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setActiveId(to.id)
       return
     }
-    setTrack(to ? -dir * w : 0, SETTLE_MS)
-    settling.current = { toId: to?.id ?? null, timer: window.setTimeout(finishSettle, SETTLE_MS + 60) }
+    setTrack(to ? -dir * pageWidth() : 0, SETTLE_MS)
+    settling.current = { toId: to?.id ?? null, dir: to ? dir : 0, timer: window.setTimeout(finishSettle, SETTLE_MS + 60) }
+  }
+  // A new touch (or arrow) while a page is still sliding takes it over where it is now, like a native gallery:
+  // the slide is ended on the spot and the track keeps the same place on the screen. Returns that offset.
+  function interruptSettle(): number {
+    const s = settling.current
+    const el = trackRef.current
+    if (!s || !el) return 0
+    let x = new DOMMatrixReadOnly(getComputedStyle(el).transform).m41
+    settling.current = null
+    window.clearTimeout(s.timer)
+    if (s.toId != null) {
+      flushSync(() => setActiveId(s.toId!))
+      x += s.dir * pageWidth()
+    }
+    setTrack(x, 0)
+    return x
   }
 
   // The finger drags the pages; which way it is going is decided after the first few pixels, an up-down move is left alone.
-  const gesture = useRef<{ x: number; y: number; axis: 'x' | 'y' | null; dx: number; lastX: number; lastT: number; v: number } | null>(null)
+  // base: where the track was when the finger came down (mid-slide it is not 0); w: the screen width, read once per gesture.
+  const gesture = useRef<{ x: number; y: number; base: number; w: number; axis: 'x' | 'y' | null; dx: number; lastX: number; lastT: number; v: number } | null>(null)
   const suppressClickUntil = useRef(0)
   function handleTouchStart(e: React.TouchEvent) {
     // Touches in a sheet or the zoom viewer (portals, outside this element) are not page turns.
-    if (settling.current || e.touches.length > 1 || !shellRef.current?.contains(e.target as Node)) {
+    if (e.touches.length > 1 || !shellRef.current?.contains(e.target as Node)) {
       gesture.current = null
       return
     }
+    const base = interruptSettle()
     const t = e.touches[0]
-    gesture.current = { x: t.clientX, y: t.clientY, axis: null, dx: 0, lastX: t.clientX, lastT: e.timeStamp, v: 0 }
+    // Caught mid-slide, the finger is already dragging the page sideways.
+    gesture.current = { x: t.clientX, y: t.clientY, base, w: shellRef.current.clientWidth || 1, axis: base ? 'x' : null, dx: base, lastX: t.clientX, lastT: e.timeStamp, v: 0 }
   }
   function handleTouchMove(e: React.TouchEvent) {
     const g = gesture.current
@@ -252,11 +285,11 @@ export function CatchPhotoScreen({
       return
     }
     const t = e.touches[0]
-    const dx = t.clientX - g.x
-    const dy = t.clientY - g.y
+    const mx = t.clientX - g.x
+    const my = t.clientY - g.y
     if (!g.axis) {
-      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return
-      g.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+      if (Math.abs(mx) < 8 && Math.abs(my) < 8) return
+      g.axis = Math.abs(mx) > Math.abs(my) ? 'x' : 'y'
     }
     if (g.axis !== 'x') return
     const dt = e.timeStamp - g.lastT
@@ -264,9 +297,9 @@ export function CatchPhotoScreen({
     g.lastX = t.clientX
     g.lastT = e.timeStamp
     // Past the first or the last catch the page gives only a little and harder the further it goes.
-    const w = shellRef.current?.clientWidth || 1
-    const edge = (dx > 0 && !prevCatch) || (dx < 0 && !nextCatch)
-    g.dx = edge ? Math.sign(dx) * w * 0.28 * (1 - 1 / (Math.abs(dx) / w + 1)) : dx
+    const dx = g.base + mx
+    const edge = (dx > 0 && !nav.current.prevCatch) || (dx < 0 && !nav.current.nextCatch)
+    g.dx = edge ? Math.sign(dx) * g.w * 0.28 * (1 - 1 / (Math.abs(dx) / g.w + 1)) : dx
     setTrack(g.dx, 0)
   }
   function handleTouchEnd(e: React.TouchEvent) {
@@ -276,15 +309,20 @@ export function CatchPhotoScreen({
     suppressClickUntil.current = performance.now() + 400
     // A finger that stopped before letting go has no flick left in it.
     const v = e.timeStamp - g.lastT > 90 ? 0 : g.v
-    const w = shellRef.current?.clientWidth || 1
-    if ((g.dx < -w * 0.3 || v < -0.35) && g.dx < 0) settle(1)
-    else if ((g.dx > w * 0.3 || v > 0.35) && g.dx > 0) settle(-1)
+    // Caught mid-slide and let go without dragging: it lands on whichever photo is nearer.
+    if (g.base && Math.abs(g.lastX - g.x) < 8) settle(g.dx < -g.w / 2 ? 1 : g.dx > g.w / 2 ? -1 : 0)
+    else if ((g.dx < -g.w * 0.3 || v < -0.35) && g.dx < 0) settle(1)
+    else if ((g.dx > g.w * 0.3 || v > 0.35) && g.dx > 0) settle(-1)
     else settle(0)
   }
   function handleTouchCancel() {
     const g = gesture.current
     gesture.current = null
     if (g?.axis === 'x') settle(0)
+  }
+  function handleArrow(dir: -1 | 1) {
+    interruptSettle()
+    settle(dir)
   }
   // Letting go after a drag must not count as a tap on the photo (that opens the zoom).
   function handleClickCapture(e: React.MouseEvent) {
@@ -355,14 +393,14 @@ export function CatchPhotoScreen({
         )}
         {/* No circles: just a see-through chevron at each edge (the touch area stays a comfortable size). */}
         {prevCatch && (
-          <div className="catch-arrow tap-scale" style={{ left: 4 }} onClick={() => !settling.current && settle(-1)} title={tn('catch.prev')} role="button" aria-label={tn('catch.prev')}>
+          <div className="catch-arrow tap-scale" style={{ left: 4 }} onClick={() => handleArrow(-1)} title={tn('catch.prev')} role="button" aria-label={tn('catch.prev')}>
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M15 5l-7 7 7 7" />
             </svg>
           </div>
         )}
         {nextCatch && (
-          <div className="catch-arrow tap-scale" style={{ right: 4 }} onClick={() => !settling.current && settle(1)} title={tn('catch.next')} role="button" aria-label={tn('catch.next')}>
+          <div className="catch-arrow tap-scale" style={{ right: 4 }} onClick={() => handleArrow(1)} title={tn('catch.next')} role="button" aria-label={tn('catch.next')}>
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M9 5l7 7-7 7" />
             </svg>

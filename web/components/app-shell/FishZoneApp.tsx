@@ -412,6 +412,8 @@ export function FishZoneApp() {
   const [viewingCatchId, setViewingCatchId] = useState<number | null>(null)
   // Whose catches the photo screen pages through (opened from a profile or «Мои уловы»); null = the catch's sector.
   const [viewingCatchFeedUserId, setViewingCatchFeedUserId] = useState<string | null>(null)
+  // Counts openings: the photo screen is keyed by it, so every tap on a catch starts from that catch (not where the last paging stopped).
+  const [catchOpenSeq, setCatchOpenSeq] = useState(0)
   const [editingProfile, setEditingProfile] = useState(false)
   const [changingColor, setChangingColor] = useState(false)
   const [confirmingSignOut, setConfirmingSignOut] = useState(false)
@@ -872,6 +874,7 @@ export function FishZoneApp() {
   function openCatchPhoto(id: number, commentId?: number | null, feedUserId?: string | null) {
     setViewingCatchId(id)
     setViewingCatchFeedUserId(feedUserId ?? null)
+    setCatchOpenSeq((n) => n + 1)
     push({ screen: 'screen-catch-photo', catchId: id })
     if (commentId) setViewingCommentsFor({ catchId: id, highlightId: commentId })
     // Feeds "Наблюдатель" — own-catch views are logged too but don't count
@@ -1821,6 +1824,7 @@ export function FishZoneApp() {
         <Screen id="screen-catch-photo" current={currentScreen} onBack={pop}>
           {viewingCatchId !== null && (
             <CatchPhotoScreen
+              key={catchOpenSeq}
               catchId={viewingCatchId}
               feedUserId={viewingCatchFeedUserId}
               active={currentScreen === 'screen-catch-photo'}
