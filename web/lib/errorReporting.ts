@@ -115,6 +115,19 @@ export function reportingFetch(report: Reporter): typeof fetch {
 // a chunk after a deploy (lib/appUpdate.ts reloads it).
 const IGNORED_JS = /^(Script error\.?|ResizeObserver loop|Load failed|Failed to fetch|NetworkError|AbortError|ChunkLoadError|Loading chunk)/i
 
+// The first place in the app's own code a stack points to («/_next/…/chunk.js:1:2345»), for an error that
+// came without one: a rejected promise, or an error event with no file. 01.11 an InvalidStateError arrived
+// with no place at all, and the built files are one line long, so the column is what finds the code.
+function firstFrame(stack: unknown): string {
+  if (typeof stack !== 'string') return ''
+  const origin = window.location.origin
+  for (const line of stack.split('\n')) {
+    const m = line.match(/(https?:\/\/[^\s)]+?):(\d+):(\d+)/)
+    if (m && m[1].startsWith(origin)) return `${m[1].replace(origin, '')}:${m[2]}:${m[3]}`
+  }
+  return ''
+}
+
 export function installGlobalErrorReporting(report: Reporter): () => void {
   if (!reportsEnabled) return () => {}
   const send = (name: string, message: string, where: string) => {
@@ -125,13 +138,15 @@ export function installGlobalErrorReporting(report: Reporter): () => void {
   const onError = (e: ErrorEvent) => {
     if (e.filename && !e.filename.startsWith(window.location.origin)) return
     const err = e.error as Error | undefined
-    send(err?.name ?? 'Error', err?.message ?? e.message ?? '', e.filename ? `${e.filename.replace(window.location.origin, '')}:${e.lineno}` : '')
+    const where = e.filename ? `${e.filename.replace(window.location.origin, '')}:${e.lineno}:${e.colno}` : firstFrame(err?.stack)
+    send(err?.name ?? 'Error', err?.message ?? e.message ?? '', where)
   }
   const onRejection = (e: PromiseRejectionEvent) => {
-    const r = e.reason as { name?: string; message?: string; code?: string } | undefined
+    const r = e.reason as { name?: string; message?: string; code?: string; stack?: string } | undefined
     // A Supabase error that reached here was already judged by reportingFetch.
     if (r && typeof r === 'object' && 'code' in r && !(r instanceof Error)) return
-    send(r?.name ?? 'Error', r?.message ?? String(e.reason ?? ''), '')
+    // «promise» when the stack has no place in our code (Safari gives a DOM error none): at least it says how it came.
+    send(r?.name ?? 'Error', r?.message ?? String(e.reason ?? ''), firstFrame(r?.stack) || 'promise')
   }
   window.addEventListener('error', onError)
   window.addEventListener('unhandledrejection', onRejection)
