@@ -1384,6 +1384,7 @@ export const en: Dict = {
   species: {
     amur: 'Grass carp',
     golavl: 'Chub',
+    elets: 'Dace',
     karas: 'Crucian carp',
     karp: 'Carp',
     kumzha: 'Sea trout',
@@ -1432,6 +1433,7 @@ export const en: Dict = {
     lin_msk: 'Tench',
     peskar_msk: 'Gudgeon',
     plotva_msk: 'Roach',
+    elets_msk: 'Dace',
     tolstolobik_msk: 'Silver carp',
     uklejka_msk: 'Bleak',
     bersh_msk: 'Volga zander',

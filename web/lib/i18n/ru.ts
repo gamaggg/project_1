@@ -1389,6 +1389,7 @@ export const ru = {
   species: {
     amur: 'Амур',
     golavl: 'Голавль',
+    elets: 'Елец',
     karas: 'Карась',
     karp: 'Карп',
     kumzha: 'Кумжа',
@@ -1437,6 +1438,7 @@ export const ru = {
     lin_msk: 'Линь',
     peskar_msk: 'Пескарь',
     plotva_msk: 'Плотва',
+    elets_msk: 'Елец',
     tolstolobik_msk: 'Толстолобик',
     uklejka_msk: 'Уклейка',
     bersh_msk: 'Берш',

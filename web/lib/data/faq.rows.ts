@@ -1,10 +1,10 @@
 // The «how many coins for which fish» rows (species.coin_value, as of
-// species_korean_perch, 10.10) — shared by the Russian FAQ and its
+// species_elets, 01.11) — shared by the Russian FAQ and its
 // translations, which swap the fish names for the reader's language.
 // Kept free of imports so faq.ts and the translated files can all load it.
 export const BATUMI_ROWS: [number, string][] = [
   [5, 'барабуля, марамойка, морская собачка, ставрида'],
-  [10, 'зеленушка, морской бычок, окунь, скорпена'],
+  [10, 'елец, зеленушка, морской бычок, окунь, скорпена'],
   [15, 'смарида'],
   [20, 'карась, кефаль, морской карась'],
   [25, 'голавль, луфарь, морской дракон, сарган'],
@@ -17,7 +17,7 @@ export const BATUMI_ROWS: [number, string][] = [
 
 export const MOSCOW_ROWS: [number, string][] = [
   [5, 'ёрш, пескарь, плотва, ротан, уклейка'],
-  [10, 'бычок, густера, красноперка'],
+  [10, 'бычок, густера, елец, красноперка'],
   [15, 'окунь'],
   [20, 'карась'],
   [25, 'голавль, лещ, линь, язь'],
@@ -30,7 +30,7 @@ export const MOSCOW_ROWS: [number, string][] = [
 // Tbilisi plays Batumi's freshwater species (no sea): the same prices, those fish only.
 export const TBILISI_ROWS: [number, string][] = [
   [5, 'марамойка'],
-  [10, 'окунь'],
+  [10, 'елец, окунь'],
   [20, 'карась'],
   [25, 'голавль'],
   [50, 'амур, карп, толстолобик, усач, щука'],
@@ -42,7 +42,7 @@ export const TBILISI_ROWS: [number, string][] = [
 // Saint Petersburg plays Moscow's species and adds the Gulf of Finland and Neva Bay ones.
 export const SPB_ROWS: [number, string][] = [
   [5, 'колюшка, пескарь, плотва, ротан, уклейка, ёрш'],
-  [10, 'белоглазка, бычок, густера, корюшка, красноперка, салака, синец'],
+  [10, 'белоглазка, бычок, густера, елец, корюшка, красноперка, салака, синец'],
   [15, 'окунь, чехонь'],
   [20, 'карась'],
   [25, 'голавль, лещ, линь, ряпушка, язь'],

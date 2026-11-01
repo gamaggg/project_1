@@ -1386,6 +1386,7 @@ export const ka: Dict = {
   species: {
     amur: 'ამური',
     golavl: 'ჭანარი',
+    elets: 'ელეცი',
     karas: 'კარასი',
     karp: 'კობრი',
     kumzha: 'კუმჟა',
@@ -1434,6 +1435,7 @@ export const ka: Dict = {
     lin_msk: 'ლინი',
     peskar_msk: 'პესკარი',
     plotva_msk: 'პლოტვა',
+    elets_msk: 'ელეცი',
     tolstolobik_msk: 'ტოლსტოლობიკი',
     uklejka_msk: 'უკლეიკა',
     bersh_msk: 'ბერში',

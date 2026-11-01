@@ -42,6 +42,8 @@ const SCIENTIFIC_NAME_TO_BASE_KEY: Record<string, string> = {
   'lota lota': 'nalim_msk',
   'perccottus glenii': 'rotan_msk',
   'leuciscus idus': 'yaz_msk',
+  // Елец: elets for Batumi, Sochi and Tbilisi, elets_msk for Moscow and Petersburg.
+  'leuciscus leuciscus': 'elets',
   'gymnocephalus cernua': 'yorsh_msk',
   'trachinus draco': 'morskoy_drakon',
   'trachurus mediterraneus': 'stavrida',

@@ -180,7 +180,7 @@ const RU: FaqSection[] = [
         ],
       },
       {
-        // species.coin_value as of species_korean_perch (10.10)
+        // species.coin_value as of species_elets (01.11)
         q: 'Сколько монет за какую рыбу?',
         a: [
           'Монеты за улов зависят только от вида рыбы — размер и вес не важны. Чем реже рыба, тем дороже.',
