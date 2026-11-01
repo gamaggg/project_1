@@ -567,8 +567,11 @@ function CatchFacts({
         <div key={c.userId} ref={swapIn} className="reel-author-row">
           <CatchAuthor userId={c.userId} mine={c.mine} onOpenUser={onOpenUser} />
           {user && !c.mine && <FollowPill userId={c.userId} />}
-          {c.mine && <StoryButton catchId={c.id} caption={`${c.speciesName}${meta ? ` ${meta}` : ''}`} onToast={onToast} />}
-          {c.mine && (
+        </div>
+        {/* The owner's two buttons get their own row: beside the name they squeezed it down to one letter. */}
+        {c.mine && (
+          <div className="reel-mine-row">
+            <StoryButton catchId={c.id} caption={`${c.speciesName}${meta ? ` ${meta}` : ''}`} onToast={onToast} />
             <button key={editLabel} ref={swapIn} data-tour="edit-catch" className="reel-pill tap-scale" onClick={() => setEditingMine(true)}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M12 20h9" />
@@ -576,8 +579,8 @@ function CatchFacts({
               </svg>
               {editLabel}
             </button>
-          )}
-        </div>
+          </div>
+        )}
         <div key={`${c.speciesName}|${meta}`} ref={swapIn} className="reel-species">
           {c.speciesName}
           {meta && <span className="reel-meta">{meta}</span>}

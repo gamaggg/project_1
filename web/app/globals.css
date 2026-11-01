@@ -233,6 +233,7 @@ body{
 .catch-reel-info > *{pointer-events:auto; max-width:100%;}
 .reel-author-row{display:flex; align-items:center; gap:8px; width:100%; min-width:0;}
 .reel-author-row > .reel-pill, .reel-author-row > .story-btn{flex:0 0 auto;}
+.reel-mine-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
 .reel-author{display:inline-flex; align-items:center; gap:8px; min-width:0; flex:0 1 auto; background:none; border:none; padding:0; color:#fff; font:inherit; cursor:pointer; text-shadow:inherit;}
 .reel-avatar{width:34px; height:34px; border-radius:50%; overflow:hidden; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background:var(--ink); color:#fff; font-size:13px; font-weight:800; box-shadow:0 0 0 1.5px rgba(255,255,255,.85);}
 .reel-avatar img{width:100%; height:100%; object-fit:cover; display:block;}
