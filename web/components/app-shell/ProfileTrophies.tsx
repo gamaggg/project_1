@@ -8,9 +8,11 @@ import { thumbUrl } from '@/lib/supabase/imageUrl'
 // «Трофеи» on both profiles (own and someone else's): up to three biggest sized
 // catches (trophies() in lib/data/achievements.ts) as a podium — the first one
 // big on its own photo, the second and third as small cards beside each other.
-// A tap opens the photo.
-export function ProfileTrophies({ catches, onOpenPhoto }: { catches: Catch[]; onOpenPhoto: (id: number) => void }) {
+// A tap opens the photo, and the swipe there goes through the trophies only.
+export function ProfileTrophies({ catches, onOpenPhoto }: { catches: Catch[]; onOpenPhoto: (id: number, feedIds: number[]) => void }) {
   if (!catches.length) return null
+  // The photo pages through these trophies only, not all the player's catches.
+  const ids = catches.map((c) => c.id)
   const [first, ...rest] = catches
   const firstMeta = [formatCatchMeta(first.lengthCm, first.weightKg), new Date(first.caughtAt).toLocaleDateString(currentLocale(), { day: 'numeric', month: 'short' })].filter(Boolean).join(' · ')
   return (
@@ -19,7 +21,7 @@ export function ProfileTrophies({ catches, onOpenPhoto }: { catches: Catch[]; on
         <div className="section-title">{tn('profile.trophies')}</div>
         <span className="trophy-top">{tn('profile.trophiesTop', { count: catches.length })}</span>
       </div>
-      <button className="trophy-hero tap-scale" onClick={() => onOpenPhoto(first.id)}>
+      <button className="trophy-hero tap-scale" onClick={() => onOpenPhoto(first.id, ids)}>
         <img src={thumbUrl(first.photoUrl, 720)} alt={first.speciesName} loading="lazy" decoding="async" />
         <TrophyMedal place={1} />
         <span className="trophy-hero-text">
@@ -30,7 +32,7 @@ export function ProfileTrophies({ catches, onOpenPhoto }: { catches: Catch[]; on
       {rest.length > 0 && (
         <div className="trophy-rest">
           {rest.map((c, i) => (
-            <button key={c.id} className="trophy-small tap-scale" onClick={() => onOpenPhoto(c.id)}>
+            <button key={c.id} className="trophy-small tap-scale" onClick={() => onOpenPhoto(c.id, ids)}>
               <span className="trophy-small-thumb">
                 <img src={thumbUrl(c.photoUrl, 240)} alt={c.speciesName} loading="lazy" decoding="async" />
                 <TrophyMedal place={i + 2} />

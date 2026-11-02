@@ -446,7 +446,8 @@ export function ProfileScreen({
   onChangeColor: () => void
   onLinkEmail: () => void
   onOpenCityPicker: () => void
-  onOpenPhoto: (catchId: number) => void
+  // feedIds: swipe through only these catches (the «Трофеи» podium).
+  onOpenPhoto: (catchId: number, feedIds?: number[]) => void
   onOpenReports: () => void
   onOpenAdminAccess: () => void
   onOpenAdminStats: () => void

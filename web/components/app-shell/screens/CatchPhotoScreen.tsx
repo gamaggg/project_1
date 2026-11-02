@@ -147,18 +147,21 @@ type CatchPageHandlers = {
 // moved). Self-contained like MyCatchesScreen/AchievementDetailScreen — a
 // shared link may open straight into this screen with nothing else loaded.
 // Pages through the list it was opened from: a player's catches (feedUserId,
-// from a profile or «Мои уловы») or else the catch's sector. Only the photos
+// from a profile or «Мои уловы»), only some of them in a set order (feedIds with
+// feedUserId: the profile's «Трофеи»), or else the catch's sector. Only the photos
 // slide (they follow the finger, the neighbours beside them); the facts and
 // reactions stay on the screen and swap what changed once the page lands.
 export function CatchPhotoScreen({
   catchId,
   feedUserId,
+  feedIds = null,
   active,
   onBack,
   ...handlers
 }: {
   catchId: number
   feedUserId: string | null
+  feedIds?: number[] | null
   // False once the screen is no longer the one on top (the screens stay
   // mounted) — an open photo viewer goes with it.
   active: boolean
@@ -179,7 +182,7 @@ export function CatchPhotoScreen({
   if (!feedUserId && !sectorId && byId?.territoryId) setSectorId(byId.territoryId)
   const { data: byUser = [] } = useCatchesByUser(feedUserId)
   const { data: bySector = [] } = useCatchesByTerritory(feedUserId ? null : sectorId)
-  const feed = feedUserId ? byUser : bySector
+  const feed = feedUserId ? (feedIds ? feedIds.flatMap((id) => byUser.filter((x) => x.id === id)) : byUser) : bySector
   const index = feed.findIndex((x) => x.id === activeId)
   // The list already has the catch while its own fetch is on the way, so a page turn never shows a blank screen.
   const c = byId?.id === activeId ? byId : index >= 0 ? feed[index] : undefined

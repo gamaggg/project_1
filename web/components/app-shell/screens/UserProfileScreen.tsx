@@ -105,7 +105,8 @@ export function UserProfileScreen({
   allTerritories: Territory[]
   onBack: () => void
   onOpenTerritory: (id: string) => void
-  onOpenPhoto: (catchId: number) => void
+  // feedIds: swipe through only these catches (the «Трофеи» podium).
+  onOpenPhoto: (catchId: number, feedIds?: number[]) => void
   onOpenAchievements: () => void
   onOpenAchievementDetail: (icon: Achievement['icon']) => void
   onOpenAllCatches: () => void

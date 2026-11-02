@@ -412,6 +412,7 @@ export function FishZoneApp() {
   const [viewingCatchId, setViewingCatchId] = useState<number | null>(null)
   // Whose catches the photo screen pages through (opened from a profile or «Мои уловы»); null = the catch's sector.
   const [viewingCatchFeedUserId, setViewingCatchFeedUserId] = useState<string | null>(null)
+  const [viewingCatchFeedIds, setViewingCatchFeedIds] = useState<number[] | null>(null)
   // Counts openings: the photo screen is keyed by it, so every tap on a catch starts from that catch (not where the last paging stopped).
   const [catchOpenSeq, setCatchOpenSeq] = useState(0)
   const [editingProfile, setEditingProfile] = useState(false)
@@ -871,9 +872,11 @@ export function FishZoneApp() {
   // commentId comes from a comment notification or a ?comment= link — the
   // sheet opens on top of the catch with that comment flashed.
   // feedUserId: opened from a player's catches, so the swipe goes through theirs, not the sector's.
-  function openCatchPhoto(id: number, commentId?: number | null, feedUserId?: string | null) {
+  // feedIds: only these of the player's catches, in this order («Трофеи» on a profile).
+  function openCatchPhoto(id: number, commentId?: number | null, feedUserId?: string | null, feedIds?: number[] | null) {
     setViewingCatchId(id)
     setViewingCatchFeedUserId(feedUserId ?? null)
+    setViewingCatchFeedIds(feedUserId && feedIds?.length ? feedIds : null)
     setCatchOpenSeq((n) => n + 1)
     push({ screen: 'screen-catch-photo', catchId: id })
     if (commentId) setViewingCommentsFor({ catchId: id, highlightId: commentId })
@@ -1844,6 +1847,7 @@ export function FishZoneApp() {
               key={catchOpenSeq}
               catchId={viewingCatchId}
               feedUserId={viewingCatchFeedUserId}
+              feedIds={viewingCatchFeedIds}
               active={currentScreen === 'screen-catch-photo'}
               onBack={pop}
               onOpenUser={openUserProfile}
@@ -1933,7 +1937,7 @@ export function FishZoneApp() {
             onChangeColor={() => setChangingColor(true)}
             onLinkEmail={() => setLinkingEmail(true)}
             onOpenCityPicker={() => setChangingCity(true)}
-            onOpenPhoto={(id) => openCatchPhoto(id, null, user?.id)}
+            onOpenPhoto={(id, feedIds) => openCatchPhoto(id, null, user?.id, feedIds)}
             onOpenReports={() => push({ screen: 'screen-admin-reports' })}
             onOpenAdminAccess={() => push({ screen: 'screen-admin-access' })}
             onOpenAdminStats={() => push({ screen: 'screen-admin-stats' })}
@@ -1974,7 +1978,7 @@ export function FishZoneApp() {
               allTerritories={territories}
               onBack={pop}
               onOpenTerritory={openTerritory}
-              onOpenPhoto={(id) => openCatchPhoto(id, null, viewingUserId)}
+              onOpenPhoto={(id, feedIds) => openCatchPhoto(id, null, viewingUserId, feedIds)}
               onOpenAchievements={() => openAchievements(viewingUserId)}
               onOpenAchievementDetail={(icon) => openAchievementDetail(viewingUserId, icon)}
               onOpenAllCatches={() => push({ screen: 'screen-catches', userId: viewingUserId })}
