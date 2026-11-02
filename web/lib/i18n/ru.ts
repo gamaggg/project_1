@@ -947,7 +947,7 @@ export const ru = {
     myTerritories: 'Мои сектора',
     allMyTerritories: 'Все мои сектора',
     noTerritories: 'Пока нет своих секторов',
-    record: 'Личный рекорд',
+    trophies: 'Трофеи',
     inviteTitle: 'Пригласи друзей',
     inviteSub: '+100 монет другу на старт и тебе — когда он поймает первую рыбу',
     linkEmail: 'Привязать почту',

@@ -942,7 +942,7 @@ export const en: Dict = {
     myTerritories: 'My sectors',
     allMyTerritories: 'All my sectors',
     noTerritories: "You don't own any sectors yet",
-    record: 'Personal record',
+    trophies: 'Trophies',
     inviteTitle: 'Invite friends',
     inviteSub: '+100 coins for your friend to start, and for you — when they catch their first fish',
     linkEmail: 'Link email',

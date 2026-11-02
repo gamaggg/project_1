@@ -87,7 +87,7 @@ export function computeAchievements(myCatches: Catch[], ctx: AchievementContext,
   const speciesCollectorCount = isMoscow
     ? new Set(myCatches.filter((c) => cityForSectorId(c.territoryId) === city).map((c) => c.species)).size
     : new Set(myCatches.filter((c) => c.speciesCategory === 'marine').map((c) => c.species)).size
-  const record = personalRecord(myCatches)
+  const record = trophies(myCatches, 1)[0] ?? null // the longest catch, if any has a length
   const earlyCatch = myCatches.some((c) => new Date(c.caughtAt).getHours() < 7)
   // "После 00:00" — bounded to the dead of night (before dawn), otherwise
   // "any time from midnight onward" would just mean "always true".
@@ -260,11 +260,12 @@ export function computeAchievements(myCatches: Catch[], ctx: AchievementContext,
   return list.sort((a, b) => Number(b.unlocked) - Number(a.unlocked)) // unlocked first, stable otherwise
 }
 
-// Only among catches where a size was actually given — see DECISIONS.md, size
-// is optional now. No sized catches -> no record, rather than crashing/picking
-// an arbitrary one.
-export function personalRecord(myCatches: Catch[]): Catch | null {
-  const sized = myCatches.filter((c) => c.lengthCm !== null)
-  if (!sized.length) return null
-  return sized.reduce((a, b) => (b.lengthCm! > a.lengthCm! ? b : a))
+// «Трофеи» in the profile: up to three biggest catches among those where a size
+// was actually given (size is optional, see DECISIONS.md). Longest first; when
+// fewer than three have a length, the rest are the heaviest of those with only a
+// weight (owner, 02.11.2026). No sized catches -> no block.
+export function trophies(myCatches: Catch[], limit = 3): Catch[] {
+  const byLength = myCatches.filter((c) => c.lengthCm !== null).sort((a, b) => b.lengthCm! - a.lengthCm!)
+  const byWeight = myCatches.filter((c) => c.lengthCm === null && c.weightKg !== null).sort((a, b) => b.weightKg! - a.weightKg!)
+  return [...byLength, ...byWeight].slice(0, limit)
 }

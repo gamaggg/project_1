@@ -22,8 +22,9 @@ import {
 } from '@/lib/supabase/queries'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { AwardsRing, type AwardGroup } from '@/components/app-shell/AwardsRing'
+import { ProfileTrophies } from '@/components/app-shell/ProfileTrophies'
 import { AchievementCard } from '@/components/app-shell/AchievementCard'
-import { computeAchievements, heldTerritories, personalRecord, type Achievement } from '@/lib/data/achievements'
+import { computeAchievements, heldTerritories, trophies, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatJoinedDate, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
 import type { Territory, ProfileSummary } from '@/lib/data/types'
@@ -136,7 +137,7 @@ export function UserProfileScreen({
 
   const catchSpecies = speciesBreakdown(catches)
   const speciesCount = catchSpecies.length
-  const record = personalRecord(catches)
+  const topCatches = trophies(catches)
   const viewedCity = profile?.city ?? 'batumi'
   const achievements = computeAchievements(
     catches,
@@ -426,22 +427,7 @@ export function UserProfileScreen({
           )}
         </div>
 
-        {record && (
-          <>
-            <div className="section-title" style={{ marginTop: 24 }}>
-              {tn('profile.record')}
-            </div>
-            <div className="card tap-scale" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }} onClick={() => onOpenPhoto(record.id)}>
-              <div className="fish-thumb" style={{ width: 52, height: 52 }}>
-                <img src={thumbUrl(record.photoUrl, 720)} alt={record.speciesName} loading="lazy" decoding="async" />
-              </div>
-              <div>
-                <div style={{ fontWeight: 800, fontSize: 16 }}>{record.speciesName}</div>
-                <div style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 700, marginTop: 2 }}>{record.lengthCm} {tn('fmt.cm')}</div>
-              </div>
-            </div>
-          </>
-        )}
+        <ProfileTrophies catches={topCatches} onOpenPhoto={onOpenPhoto} />
       </div>
       </div>
     </>

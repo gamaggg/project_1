@@ -30,8 +30,9 @@ import {
 } from '@/lib/supabase/queries'
 import { AwardsRing, type AwardGroup } from '@/components/app-shell/AwardsRing'
 import { uploadAvatar } from '@/lib/supabase/storage'
+import { ProfileTrophies } from '@/components/app-shell/ProfileTrophies'
 import { AchievementCard } from '@/components/app-shell/AchievementCard'
-import { computeAchievements, heldTerritories, personalRecord, type Achievement } from '@/lib/data/achievements'
+import { computeAchievements, heldTerritories, trophies, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { resolveClanBackground } from '@/lib/data/clanBackgrounds'
@@ -500,7 +501,7 @@ export function ProfileScreen({
   const t = useT()
   const mySpecies = speciesBreakdown(myCatches)
   const speciesCount = mySpecies.length
-  const record = personalRecord(myCatches)
+  const topCatches = trophies(myCatches)
   const achievements = computeAchievements(
     myCatches,
     {
@@ -831,22 +832,7 @@ export function ProfileScreen({
         )}
       </div>
 
-      {record && (
-        <>
-          <div className="section-title" style={{ marginTop: 24 }}>
-            {tn('profile.record')}
-          </div>
-          <div className="card tap-scale" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }} onClick={() => onOpenPhoto(record.id)}>
-            <div className="fish-thumb" style={{ width: 52, height: 52 }}>
-              <img src={thumbUrl(record.photoUrl, 720)} alt={record.speciesName} loading="lazy" decoding="async" />
-            </div>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: 16 }}>{record.speciesName}</div>
-              <div style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 700, marginTop: 2 }}>{record.lengthCm} {tn('fmt.cm')}</div>
-            </div>
-          </div>
-        </>
-      )}
+      <ProfileTrophies catches={topCatches} onOpenPhoto={onOpenPhoto} />
 
       {canModerateReports && (
         <div className="btn-wrap" style={{ marginTop: 24 }}>

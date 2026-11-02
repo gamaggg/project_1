@@ -944,7 +944,7 @@ export const ka: Dict = {
     myTerritories: 'ჩემი ტერიტორიები',
     allMyTerritories: 'ჩემი ყველა ტერიტორია',
     noTerritories: 'შენ ჯერ არცერთი ტერიტორია არ გაქვს',
-    record: 'პირადი რეკორდი',
+    trophies: 'ტროფეები',
     inviteTitle: 'მოიწვიე მეგობრები',
     inviteSub: '+100 მონეტა მეგობარს სტარტზე და შენც — როცა ის პირველ თევზს დაიჭერს',
     linkEmail: 'ელფოსტის მიბმა',

@@ -62,6 +62,10 @@ export const FAQ_EN: FaqSection[] = [
         a: ['Yes. Open your catch: in the row under your name, next to «To story», there is a button with a down arrow. In Telegram it opens its save prompt, in a browser the photo downloads. You get the photo as the app stores it: up to 1600 pixels on the long side, without the date and place it was taken.'],
       },
       {
+        q: 'What are «Trophies» in the profile?',
+        a: ['Up to three of your biggest catches: the longest first; if fewer than three have a length, the heaviest of those with only a weight fill the rest. Catches without a length or weight are not shown. Other players see this block in your profile too; a tap opens the photo of the catch.'],
+      },
+      {
         q: 'Why is my catch not saved?',
         a: [
           [
