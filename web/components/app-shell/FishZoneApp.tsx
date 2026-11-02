@@ -341,6 +341,11 @@ export function FishZoneApp() {
       '.wheel-quick-btn',
       '.perm-switch',
       '.rating-tab',
+      '.rating-view',
+      '.shop-tab',
+      '.diary-tabs button',
+      '.swipe-act',
+      'button.fish-cal-cell',
       '.rating-podium-item',
       '.city-chip',
       '.intro-cta',
@@ -1719,6 +1724,7 @@ export function FishZoneApp() {
             onOpenUser={openUserProfile}
             onOpenClan={openClan}
             onOpenClans={openClans}
+            onShowOnMap={showTerritoryOnMap}
           />
         </Screen>
         <Screen id="screen-last-week" current={currentScreen} onBack={pop}>
@@ -1966,6 +1972,7 @@ export function FishZoneApp() {
             onOpenClan={openClan}
             onOpenGeo={openGeo}
             onOpenAdminGeo={() => push({ screen: 'screen-admin-geo' })}
+            active={currentScreen === 'screen-profile'}
             adminPanelActive={currentScreen === 'screen-profile' && !postingAnnouncement && editingPublicIdUserId === null && grantingCoinsUserId === null && grantingSpinsUserId === null}
           />
         </Screen>

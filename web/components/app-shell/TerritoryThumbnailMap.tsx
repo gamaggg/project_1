@@ -19,11 +19,16 @@ export function TerritoryThumbnailMap({
   myTerritoryColor,
   ownerAvatarUrl,
   ownerInitials,
+  claimFx = false,
 }: {
   territory: Territory
   myTerritoryColor: string
   ownerAvatarUrl?: string | null
   ownerInitials?: string | null
+  // The sector screen's arrival: the map settles in from a little closer
+  // while the hex's outline is drawn round in its colour and its fill
+  // flashes once — the same "claimed" beat the map plays on a capture.
+  claimFx?: boolean
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<import('leaflet').Map | null>(null)
@@ -40,6 +45,8 @@ export function TerritoryThumbnailMap({
   const shared = holders.length > 1
   const holdersKey = holders.map((h) => `${h.id}:${h.isMe}:${h.color ?? ''}`).join(',')
   const [partOffsets, setPartOffsets] = useState<{ key: string; offsets: { x: number; y: number }[] } | null>(null)
+  // The hex's corners in the container's pixels, for the claimFx outline.
+  const [claim, setClaim] = useState<{ id: string; points: string; color: string } | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -84,6 +91,16 @@ export function TerritoryThumbnailMap({
         ).addTo(map)
       }
       map.fitBounds(poly.getBounds(), { padding: [10, 10] })
+      if (claimFx) {
+        setClaim({
+          id: territory.id,
+          points: territory.corners.map((c) => {
+            const p = map.latLngToContainerPoint(c)
+            return `${Math.round(p.x)},${Math.round(p.y)}`
+          }).join(' '),
+          color,
+        })
+      }
       if (split) {
         const middle = map.latLngToContainerPoint(split.center)
         setPartOffsets({
@@ -105,9 +122,16 @@ export function TerritoryThumbnailMap({
 
   const offsets = shared && partOffsets?.key === holdersKey ? partOffsets.offsets : null
 
+  const claimNow = claimFx && claim?.id === territory.id ? claim : null
+
   return (
-    <div className="territory-thumb-wrap">
+    <div className={`territory-thumb-wrap${claimFx ? ' claim-fx' : ''}${claimNow ? ' go' : ''}`}>
       <div className="territory-thumb-map" ref={containerRef} />
+      {claimNow && (
+        <svg key={claimNow.id} className="territory-thumb-claim" aria-hidden style={{ '--claim': claimNow.color } as React.CSSProperties}>
+          <polygon points={claimNow.points} pathLength={1} />
+        </svg>
+      )}
       <div className="territory-thumb-overlay">
         {territory.ownerId && !shared && (
           <div className="territory-thumb-avatar">

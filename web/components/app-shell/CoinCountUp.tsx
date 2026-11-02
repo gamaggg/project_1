@@ -84,3 +84,45 @@ export function LiveCoinBalance({ value, durationMs = 600 }: { value: number; du
 
   return <>{display}</>
 }
+
+// A plain number that counts up from 0 each time `play` turns true (a tab or
+// screen coming into view — screens here stay mounted, so mounting says
+// nothing) and ticks between old and new values while it's shown. Without
+// `play` (undefined) it counts up once, on mount.
+export function CountUp({ value, play, durationMs = 700 }: { value: number; play?: boolean; durationMs?: number }) {
+  const [display, setDisplay] = useState(play === false ? value : 0)
+  const displayRef = useRef(display)
+  const playedRef = useRef(false)
+
+  useEffect(() => {
+    if (play === false) {
+      // Ready at zero for the next time it comes into view.
+      playedRef.current = false
+      const raf = requestAnimationFrame(() => {
+        displayRef.current = 0
+        setDisplay(0)
+      })
+      return () => cancelAnimationFrame(raf)
+    }
+    // Coming into view: from zero; already in view: from wherever it is.
+    const from = playedRef.current ? displayRef.current : 0
+    playedRef.current = true
+    const to = value
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    let start: number | null = null
+    let raf = requestAnimationFrame(tick)
+    function tick(ts: number) {
+      if (start === null) start = ts
+      const t = reduced || from === to ? 1 : Math.min(1, (ts - start) / durationMs)
+      const eased = 1 - (1 - t) ** 3
+      const next = Math.round(from + (to - from) * eased)
+      displayRef.current = next
+      setDisplay(next)
+      if (t < 1) raf = requestAnimationFrame(tick)
+    }
+    return () => cancelAnimationFrame(raf)
+  }, [value, play, durationMs])
+
+  // Out of view it just shows the value (the count-up replays on the way back in).
+  return <>{play === false ? value : display}</>
+}

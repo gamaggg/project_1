@@ -55,7 +55,7 @@ export function MyCatchesScreen({
       </div>
       <div className="screen-inner">
         {isOwn && (
-          <div className="diary-tabs" role="tablist">
+          <div className="diary-tabs" role="tablist" style={{ '--i': tab === 'diary' ? 1 : 0 } as React.CSSProperties}>
             <button role="tab" aria-selected={tab === 'catches'} className={tab === 'catches' ? 'on' : undefined} onClick={() => setTab('catches')}>
               {t('diary.tabCatches')}
             </button>

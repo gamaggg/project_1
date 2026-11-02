@@ -258,6 +258,8 @@ export function SectorLegendRow({
           </>
         )}
       </span>
+      {/* The viewer against the legend: how much of the legend's count they have. */}
+      {mine !== null && !isMe && <LegendRace mine={mine} of={legend.count} />}
     </button>
   ) : (
     // Nobody yet: how far along the viewer is, against the 10 it takes.
@@ -268,6 +270,7 @@ export function SectorLegendRow({
         <b>{t('legend.progressOf', { mine: mine ?? 0 })}</b>
       </span>
       <span className="standing-hint">{t('legend.needShort')}</span>
+      <LegendRace mine={mine ?? 0} of={10} />
     </div>
   )
 
@@ -283,6 +286,18 @@ export function SectorLegendRow({
         aside
       )}
     </div>
+  )
+}
+
+// A thin bar under the legend column, filled to the viewer's share of what
+// it takes (the legend's count, or the 10 a first legend needs), growing in
+// when the card shows. The numbers are in the text right above it.
+export function LegendRace({ mine, of }: { mine: number; of: number }) {
+  const share = of > 0 ? Math.min(1, mine / of) : 0
+  return (
+    <span className={`legend-race${share >= 1 ? ' full' : ''}`} aria-hidden>
+      <span className="legend-race-fill" style={{ '--share': share } as React.CSSProperties} />
+    </span>
   )
 }
 

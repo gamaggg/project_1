@@ -4,13 +4,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Territory, TerritoryStatus } from '@/lib/data/types'
 import { pluralSectors } from '@/lib/format'
 import { useCanViewAllUsers } from '@/lib/supabase/queries'
-import { CITIES, type CityId } from '@/lib/data/city'
+import { CITIES, cityForSectorId, type CityId } from '@/lib/data/city'
 import { WeeklyLeaderboard } from '@/components/app-shell/screens/WeeklyLeaderboard'
 import { PlayersDirectory } from '@/components/app-shell/screens/PlayersDirectory'
 import { ClanRating } from '@/components/app-shell/screens/ClanRating'
 import { compareSectors, SECTOR_SORT_LABEL, type SectorSort } from '@/lib/data/sectorOrder'
 import { SortMenu } from '@/components/app-shell/SortMenu'
-import { ProfileSectorRow } from '@/components/app-shell/ProfileSectors'
+import { SwipeSectorRow } from '@/components/app-shell/ProfileSectors'
+import { RouteModal } from '@/components/app-shell/RouteModal'
 import { tn } from '@/lib/i18n'
 
 type Filter = 'all' | TerritoryStatus
@@ -36,6 +37,7 @@ export function TerritoriesListScreen({
   onOpenUser,
   onOpenClan,
   onOpenClans,
+  onShowOnMap,
   heldElsewhere,
 }: {
   territories: Territory[]
@@ -49,10 +51,15 @@ export function TerritoriesListScreen({
   onOpenUser: (id: string) => void
   onOpenClan: (id: number) => void
   onOpenClans: () => void
+  // «На карте» behind a swiped row (sectors of the city on the map only).
+  onShowOnMap: (id: string) => void
   // The viewer's sectors in the other city — «Мои» lists them after this city's.
   heldElsewhere?: Territory[]
 }) {
   const [mode, setMode] = useState<Mode>('territories')
+  // The row swiped open, and the sector whose «Маршрут» sheet is up.
+  const [swipedId, setSwipedId] = useState<string | null>(null)
+  const [routeTo, setRouteTo] = useState<Territory | null>(null)
   // The Рейтинг tab: this week's leaderboard, or everyone in the city.
   const [ratingView, setRatingView] = useState<'week' | 'players'>('week')
   const [filter, setFilter] = useState<Filter>(initialFilter ?? 'all')
@@ -160,18 +167,30 @@ export function TerritoriesListScreen({
             </div>
             <SortMenu value={sort} options={SECTOR_SORT_LABEL} onChange={setSort} label={tn('terr.sortLabel')} />
           </div>
-          <div className="card" style={{ overflow: 'hidden' }}>
+          {/* Keyed by the filter and order, so a new pick deals the rows in again. */}
+          <div key={`${filter}|${sort}`} className="card sector-list" style={{ overflow: 'hidden' }}>
             {list.length ? (
               // Same row as the sectors on the profile (ProfileSectorRow): water tag, catches and
-              // when the last one was, marks for shared / shield / hot.
+              // when the last one was, marks for shared / shield / hot — here swipeable for route / map.
               list.slice(0, visibleCount).map((t, i) => (
-                <ProfileSectorRow key={t.id} t={t} last={i === Math.min(list.length, visibleCount) - 1} onOpen={onOpenTerritory} />
+                <SwipeSectorRow
+                  key={t.id}
+                  t={t}
+                  last={i === Math.min(list.length, visibleCount) - 1}
+                  open={swipedId === t.id}
+                  onSwipe={setSwipedId}
+                  onOpen={onOpenTerritory}
+                  onRoute={setRouteTo}
+                  onShowOnMap={cityForSectorId(t.id) === city ? onShowOnMap : undefined}
+                  style={i < 14 ? { animationDelay: `${i * 28}ms` } : { animation: 'none' }}
+                />
               ))
             ) : (
               <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>{tn('terr.empty')}</div>
             )}
           </div>
           <div ref={sentinelRef} aria-hidden />
+          {routeTo && <RouteModal lat={routeTo.lat} lng={routeTo.lng} onClose={() => setRouteTo(null)} />}
         </>
       )}
     </div>

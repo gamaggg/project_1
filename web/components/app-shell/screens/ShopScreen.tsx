@@ -77,6 +77,17 @@ export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpen
   const buyItem = useBuyShopItem()
   const equipItem = useEquipShopItem()
   const coins = profile?.coins ?? 0
+  // The last change to the balance while the Shop is open — «−300» floats up
+  // off it and the coin flips (a purchase, a refund, a slot win coming back).
+  // Adjusted during render, the moment the new balance arrives; only between
+  // two loaded balances, so the first load isn't a "+1077".
+  const loadedCoins = profile ? coins : null
+  const [prevCoins, setPrevCoins] = useState(loadedCoins)
+  const [coinDelta, setCoinDelta] = useState<{ n: number; amount: number } | null>(null)
+  if (loadedCoins !== prevCoins) {
+    setPrevCoins(loadedCoins)
+    if (loadedCoins !== null && prevCoins !== null) setCoinDelta({ n: (coinDelta?.n ?? 0) + 1, amount: loadedCoins - prevCoins })
+  }
   const { request, modal: purchaseModal } = usePurchaseFlow(coins)
   const [category, setCategory] = useState<Category>('avatar_frame')
   const [historyOpen, setHistoryOpen] = useState(false)
@@ -142,9 +153,17 @@ export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpen
             button — it doesn't need a whole card of its own. */}
         <div className="shop-wallet">
           <div className="shop-wallet-balance">
-            <CoinIcon size={28} />
+            <span key={coinDelta?.n ?? 0} className={`shop-wallet-coin${coinDelta ? ' flip' : ''}`}>
+              <CoinIcon size={28} />
+            </span>
             <span className="shop-wallet-num">
               <LiveCoinBalance value={coins} />
+              {coinDelta && (
+                <span key={coinDelta.n} className={`shop-wallet-delta${coinDelta.amount < 0 ? ' minus' : ''}`} aria-hidden>
+                  {coinDelta.amount < 0 ? '−' : '+'}
+                  {Math.abs(coinDelta.amount)}
+                </span>
+              )}
             </span>
             <span className="shop-wallet-label">{tn('shop.walletLabel')}</span>
             <button className="shop-wallet-history" onClick={() => setHistoryOpen(true)}>

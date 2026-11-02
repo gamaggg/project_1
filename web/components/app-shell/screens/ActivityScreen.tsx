@@ -9,6 +9,7 @@ import { CATEGORY_GRADIENT, KIND_LABEL, localSpeciesNameLoose } from '@/lib/data
 import { formatCatchMeta, formatWhen, pluralSectors, pluralCatches } from '@/lib/format'
 import { FishIcon } from '@/components/app-shell/icons'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { PullIndicator, pullShift, usePullToRefresh } from '@/components/app-shell/PullToRefresh'
 import { AwardFeedIcon, FeedIcon, FEED_ICONS } from '@/components/app-shell/ActivityIcons'
 import { useT } from '@/lib/i18n'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
@@ -217,8 +218,10 @@ export function ActivityScreen({
   onOpenFaq?: (ticketId?: number | null) => void
 }) {
   const tr = useT()
-  const { data: activity = [], isLoading, isSuccess } = useActivity()
-  const { data: cityFeed = [] } = useCityFeed(city)
+  const { data: activity = [], isLoading, isSuccess, refetch: refetchActivity } = useActivity()
+  const { data: cityFeed = [], refetch: refetchCityFeed } = useCityFeed(city)
+  // Pulled down from the top: the notifications and the city's catches again.
+  const { ref: ptrRef, pull, dragging, refreshing } = usePullToRefresh(() => Promise.all([refetchActivity(), refetchCityFeed()]))
   const markRead = useMarkNotificationsRead()
   const [filter, setFilter] = useState<Filter>('all')
   // Opening the screen is what marks things read, but the dots have to stay
@@ -291,7 +294,8 @@ export function ActivityScreen({
   const hasPersonal = activity.some((a) => a.kind !== 'announcement') || cityFeed.length > 0
 
   return (
-    <div className="screen-inner">
+    <div className="screen-inner" ref={ptrRef} style={pullShift(pull, dragging)}>
+      <PullIndicator pull={pull} refreshing={refreshing} />
       <div className="page-title">{tn('activity.title')}</div>
       <div className="page-sub">{tn('activity.sub')}</div>
       <div className="filter-row">
@@ -305,7 +309,8 @@ export function ActivityScreen({
           {tn('profile.myTerritories')}
         </div>
       </div>
-      <div>
+      {/* Keyed by the filter, so a new tab deals its rows in again. */}
+      <div key={filter} className="activity-list">
         {!isLoading && !hasPersonal && filter === 'all' && (
           <div style={{ padding: '22px 20px 26px', textAlign: 'center' }}>
             <div style={{ fontSize: 14.5, fontWeight: 800 }}>{tn('activity.quiet')}</div>

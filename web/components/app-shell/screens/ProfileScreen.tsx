@@ -46,6 +46,7 @@ import { resolveAvatarFrame } from '@/lib/data/shopItems'
 import { AvatarFrameRing } from '@/components/app-shell/AvatarFrameRing'
 import { StyledName } from '@/components/app-shell/StyledName'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { CountUp, LiveCoinBalance } from '@/components/app-shell/CoinCountUp'
 import { AdminPanel, ADMIN_ICONS } from '@/components/app-shell/AdminPanel'
 import { insideTelegram } from '@/lib/openExternal'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
@@ -433,6 +434,7 @@ export function ProfileScreen({
   onOpenClan,
   onOpenGeo,
   onOpenAdminGeo,
+  active,
   adminPanelActive,
 }: {
   myTerritories: Territory[]
@@ -473,6 +475,8 @@ export function ProfileScreen({
   onOpenClan: (id: number) => void
   onOpenGeo: () => void
   onOpenAdminGeo: () => void
+  // The profile tab is the one on screen: its numbers count up each time it comes into view.
+  active: boolean
   // The profile is on screen and no admin window is over it (AdminPanel reopens its sheet then).
   adminPanelActive: boolean
 }) {
@@ -554,7 +558,7 @@ export function ProfileScreen({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
           <button className="coin-pill tap-scale" onClick={onOpenShop}>
             <CoinIcon size={16} className="coin-pill-icon" />
-            {profile?.coins ?? 0}
+            <LiveCoinBalance value={profile?.coins ?? 0} />
           </button>
           <div className="icon-btn tap-scale" onClick={handleShareProfile}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -621,22 +625,22 @@ export function ProfileScreen({
       <div className="profile-body">
       <div className="hero-stat-grid">
         <button className="hero-stat" onClick={onOpenAllTerritories}>
-          <b>{myTerritories.length}</b>
+          <b><CountUp value={myTerritories.length} play={active} /></b>
           <span>{pluralTerritories(myTerritories.length)}</span>
         </button>
         <button data-tour="diary" className="hero-stat" onClick={onOpenAllCatches}>
-          <b>{myCatchesPending ? <span className="skel hero-stat-skel" /> : myCatches.length}</b>
+          <b>{myCatchesPending ? <span className="skel hero-stat-skel" /> : <CountUp value={myCatches.length} play={active} />}</b>
           <span>{pluralCatches(myCatches.length)}</span>
         </button>
         <button data-tour="species-stats" className="hero-stat" onClick={() => onOpenSpecies(mySpecies)}>
-          <b>{speciesCount}</b>
+          <b><CountUp value={speciesCount} play={active} /></b>
           <span>{tn('profile.speciesOfFish', { count: speciesCount })}</span>
         </button>
         <button
           className="hero-stat"
           onClick={() => (profile?.followersCount ?? 0) > 0 && onOpenFollowers(followers)}
         >
-          <b>{profile?.followersCount ?? 0}</b>
+          <b><CountUp value={profile?.followersCount ?? 0} play={active} /></b>
           <span>{pluralFollowers(profile?.followersCount ?? 0)}</span>
         </button>
       </div>

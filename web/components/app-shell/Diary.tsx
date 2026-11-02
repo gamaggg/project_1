@@ -27,6 +27,8 @@ import { nearestTerritory } from '@/lib/geolocation'
 import { useI18n } from '@/lib/i18n'
 import { currentLocale } from '@/lib/i18n/runtime'
 import { useNow } from '@/lib/useNow'
+import { CountUp } from '@/components/app-shell/CoinCountUp'
+import { hapticSelect } from '@/lib/telegram/haptics'
 import type { Catch } from '@/lib/data/types'
 
 // Дневник рыбака: fishing days, newest first. A day gathers the real
@@ -34,7 +36,7 @@ import type { Catch } from '@/lib/data/types'
 // live only here, and the owner's note — a note on a day without catches is
 // a «рыбалка без улова». Everything diary-only is visible to the owner alone.
 
-type Day = {
+export type Day = {
   day: string
   catches: Catch[]
   gallery: DiaryCatch[]
@@ -181,6 +183,130 @@ export function DiaryView({
 // with the most catches. Each number opens what's behind it.
 type StatEntry = { id: number; real: boolean; species: string; name: string; lengthCm: number | null; weightKg: number | null; at: string; place: string | null; day: string; photoUrl: string; gallery: DiaryCatch | null }
 type Period = 'all' | 'week' | 'month'
+
+// «Лучшее время», opened: «Уловы по часам» as a bar per hour of the day,
+// left to right like the bite forecast's hours, the best three in orange.
+// A finger (or a tap) on the chart picks an hour: its bar darkens and a
+// bubble over it says how many were caught then; until then the bubble sits
+// over the best window. The hint above says the chart can be touched.
+export function HourChart({ hours, best }: { hours: number[]; best: number }) {
+  const { t } = useI18n()
+  const [hour, setHour] = useState<number | null>(null)
+  const max = Math.max(1, ...hours)
+  const inBest = (h: number) => (h - best + 24) % 24 < 3
+  const pad = (h: number) => `${String(h % 24).padStart(2, '0')}:00`
+  function pick(e: React.PointerEvent<HTMLDivElement>) {
+    const box = e.currentTarget.getBoundingClientRect()
+    const h = Math.min(23, Math.max(0, Math.floor(((e.clientX - box.left) / box.width) * 24)))
+    if (h !== hour) {
+      hapticSelect()
+      setHour(h)
+    }
+  }
+  const count = hour === null ? hours[best] + hours[(best + 1) % 24] + hours[(best + 2) % 24] : hours[hour]
+  // Where the bubble points: the picked hour's middle, or the best window's.
+  const at = ((hour === null ? best + 1.5 : hour + 0.5) / 24) * 100
+  return (
+    <div className="hour-chart">
+      <div className="hour-chart-head">
+        <span className="hour-chart-title">{t('diary.hoursTitle')}</span>
+        <span className="hour-chart-hint">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M8 12V5a2 2 0 0 1 4 0v6M12 10a2 2 0 0 1 4 0v2M16 11a2 2 0 0 1 4 0v4a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.4L4 15.5a2 2 0 0 1 3.3-2.3L8 14" />
+          </svg>
+          {t('diary.hoursHint')}
+        </span>
+      </div>
+      <div
+        className="hour-chart-plot"
+        onPointerDown={(e) => {
+          pick(e)
+          try {
+            e.currentTarget.setPointerCapture(e.pointerId)
+          } catch {
+            // no live pointer to hold (a synthetic event): the tap still picks the hour
+          }
+        }}
+        onPointerMove={(e) => e.buttons > 0 && pick(e)}
+      >
+        <div className={`hour-chart-bubble${hour === null ? ' best' : ''}`} style={{ left: `clamp(54px, ${at}%, calc(100% - 54px))` }}>
+          <b>{hour === null ? `${pad(best)}–${pad(best + 3)}` : `${pad(hour)}–${pad(hour + 1)}`}</b>
+          <span>
+            {count} {t('diary.statCatches', { count })}
+          </span>
+        </div>
+        <div className="hour-chart-bars">
+          {hours.map((n, h) => (
+            <span
+              key={h}
+              className={`hour-chart-bar${inBest(h) ? ' best' : ''}${hour === h ? ' on' : ''}${n === 0 ? ' none' : ''}`}
+              style={{ height: `${n === 0 ? 4 : 10 + (n / max) * 90}%`, animationDelay: `${h * 18}ms` }}
+            />
+          ))}
+        </div>
+        <div className="hour-chart-axis" aria-hidden>
+          {[0, 6, 12, 18, 24].map((h) => (
+            <span key={h} style={{ left: `${(h / 24) * 100}%` }}>
+              {h}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// «Рыбалки за 12 недель»: a square per day, a column per week (Monday on
+// top), warmer the more was caught; a fishing day without a catch is a
+// tinted outline. A tap scrolls to that day's card below and lights it up.
+const CAL_WEEKS = 12
+export function FishingCalendar({ days, now }: { days: Day[]; now: number }) {
+  const { t } = useI18n()
+  const byDay = new Map(days.map((d) => [d.day, d]))
+  const today = new Date(now)
+  const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7))
+  const todayKey = isoDay(today)
+  const cells: { key: string; day: Day | undefined; future: boolean; level: number }[] = []
+  for (let w = 0; w < CAL_WEEKS; w++) {
+    for (let r = 0; r < 7; r++) {
+      const date = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() - (CAL_WEEKS - 1 - w) * 7 + r)
+      const key = isoDay(date)
+      const day = byDay.get(key)
+      const n = day ? day.catches.length + day.gallery.length : 0
+      cells.push({ key, day, future: key > todayKey, level: n === 0 ? 0 : n === 1 ? 1 : n <= 3 ? 2 : n <= 6 ? 3 : 4 })
+    }
+  }
+  function open(key: string) {
+    const el = document.getElementById(`diary-day-${key}`)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el.classList.remove('diary-day-lit')
+    void el.offsetWidth
+    el.classList.add('diary-day-lit')
+  }
+  return (
+    <div className="fish-cal">
+      <div className="fish-cal-title">{t('diary.calendarTitle')}</div>
+      <div className="fish-cal-grid">
+        {cells.map((c, i) =>
+          c.future ? (
+            <span key={c.key} className="fish-cal-cell future" />
+          ) : (
+            <button
+              key={c.key}
+              type="button"
+              className={`fish-cal-cell l${c.level}${c.day && c.level === 0 ? ' trip' : ''}${c.key === todayKey ? ' today' : ''}`}
+              style={{ animationDelay: `${(Math.floor(i / 7) + (i % 7)) * 16}ms` }}
+              disabled={!c.day}
+              aria-label={c.key}
+              onClick={() => open(c.key)}
+            />
+          )
+        )}
+      </div>
+    </div>
+  )
+}
 type StatSheet = 'trips' | 'catches' | 'species' | 'places'
 const SHEET_TITLE = { trips: 'diary.sheetTrips', catches: 'diary.sheetCatches', species: 'diary.sheetSpecies', places: 'diary.sheetPlaces' } as const
 
@@ -202,6 +328,7 @@ function DiaryStats({
   const { t } = useI18n()
   const [period, setPeriod] = useState<Period>('all')
   const [sheet, setSheet] = useState<StatSheet | null>(null)
+  const [dialOpen, setDialOpen] = useState(false)
 
   // The last 7 / 30 days, today included, on this phone's calendar.
   const now = useNow(3_600_000)
@@ -267,9 +394,20 @@ function DiaryStats({
 
   return (
     <div className="diary-stats">
-      <div className="diary-stats-periods" role="tablist" data-tour="diary-periods">
+      {/* The white pill slides under the chosen period (::before, placed by --i). */}
+      <div className="diary-stats-periods" role="tablist" data-tour="diary-periods" style={{ '--i': periods.findIndex((p) => p.id === period) } as React.CSSProperties}>
         {periods.map((p) => (
-          <button key={p.id} type="button" role="tab" aria-selected={period === p.id} className={period === p.id ? 'on' : undefined} onClick={() => setPeriod(p.id)}>
+          <button
+            key={p.id}
+            type="button"
+            role="tab"
+            aria-selected={period === p.id}
+            className={period === p.id ? 'on' : undefined}
+            onClick={() => {
+              if (p.id !== period) hapticSelect()
+              setPeriod(p.id)
+            }}
+          >
             {p.label}
           </button>
         ))}
@@ -277,7 +415,9 @@ function DiaryStats({
       <div className="diary-stats-nums" data-tour="diary-numbers">
         {tiles.map((tile) => (
           <button key={tile.id} type="button" className="tap-scale" onClick={() => setSheet(tile.id)}>
-            <b>{tile.value}</b>
+            <b>
+              <CountUp value={tile.value} />
+            </b>
             <span>{tile.label}</span>
           </button>
         ))}
@@ -299,7 +439,7 @@ function DiaryStats({
             </button>
           )}
           {best >= 0 && (
-            <div className="diary-stats-line">
+            <button type="button" className={`diary-stats-line tap-scale${dialOpen ? ' open' : ''}`} aria-expanded={dialOpen} onClick={() => setDialOpen(!dialOpen)}>
               <span className="diary-stats-icon" aria-hidden>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="9" />
@@ -310,10 +450,15 @@ function DiaryStats({
               <b>
                 {pad(best)}–{pad(best + 3)}
               </b>
-            </div>
+              <svg className="diary-stats-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
           )}
+          {best >= 0 && dialOpen && <HourChart hours={hours} best={best} />}
         </div>
       )}
+      <FishingCalendar days={days} now={now} />
 
       {sheet && (
         <Sheet title={`${t(SHEET_TITLE[sheet])} · ${periodLabel.toLowerCase()}`} onClose={() => setSheet(null)}>

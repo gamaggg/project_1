@@ -13,6 +13,7 @@ import './intro-demo.css'
 import './journey.css'
 import './hex-loader.css'
 import './profile-blocks.css'
+import './alive.css'
 
 const manrope = Manrope({
   subsets: ['latin', 'cyrillic'],

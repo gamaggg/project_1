@@ -132,7 +132,7 @@ export const FAQ_EN: FaqSection[] = [
       },
       {
         q: 'Who is a sector legend?',
-        a: ['The angler who caught the most in the sector over the last 90 days — at least 10 catches. Their avatar is in a laurel wreath on the sector screen.'],
+        a: ['The angler who caught the most in the sector over the last 90 days — at least 10 catches. Their avatar is in a laurel wreath on the sector screen. The bar under it shows your catches here against theirs (and while there is no legend yet — against 10).'],
       },
       {
         q: 'What is a sector trophy?',
@@ -288,6 +288,10 @@ export const FAQ_EN: FaqSection[] = [
         ],
       },
       {
+        q: 'How do I quickly get a route to a sector?',
+        a: ['On the «Territories» tab, swipe a sector row to the left — «Route» (pick a maps app: Google, Yandex, Apple) and «On the map» (for sectors of the city on the map now) appear. On the sector screen — the same «Route» button under the coordinates. And the «Activity» feed refreshes when you pull it down from the very top.'],
+      },
+      {
         q: 'What is «Week in the city»?',
         a: ['A sticker on the map with last week’s results: how much was caught, the main fish and anglers, your own numbers. The angler of the week is whoever caught the most in the city that week; on a tie, whoever has more sectors of the week (as in the weekly rating). You can share each slide. The cross hides the sticker until next week’s results — only in this city, the other cities keep theirs.'],
       },
@@ -300,6 +304,7 @@ export const FAQ_EN: FaqSection[] = [
         a: [
           'In «My catches» — the «Diary» tab: fishing days with the weather, notes, trips without a catch and catches from the gallery.',
           'At the top — your statistics for all time, the last 7 or 30 days: how many trips, catches, species and places, the record (the heaviest fish, or the longest if the weight is not given) and the best time — the three hours when you bite most often. Tap a number and what is behind it opens: fishing days, all photos, species with the best size, places. Under every photo — the time it was caught.',
+          'Tap «Best time» and the «Catches by hour» chart opens, the best three hours in orange: slide a finger along it or tap a bar, and the hour and how many catches it has appear above it. Below — «Fishing days, last 12 weeks»: a square per day, brighter the more you caught. Tap a day and the diary scrolls to it.',
           'Each day has a «⋯» at the top right: add or edit a note and «Delete entry» — after confirmation the note and the gallery photos for that day disappear. Catches counted in the game stay: they are part of the game.',
         ],
       },

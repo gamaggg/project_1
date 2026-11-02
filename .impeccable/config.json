@@ -103,7 +103,7 @@
         "rule": "bounce-easing",
         "value": "cubic-bezier(.2, .9, .3, 1.3)",
         "createdAt": "2026-09-30T10:11:09.260Z",
-        "reason": "User confirmed (2026-09-27): overshoot on rewards/ceremonies/avatar pop-ins is intentional game feel — clan battle podium ceremony, sector thumbnail avatar pop"
+        "reason": "Claude: one-shot celebratory pops in a game UI (sector claim, shield fill, item equipped, coin flip/hop), matching the app's existing overshoot pops (thumbPartIn); list and switch motion moved to ease-out-quint"
       },
       {
         "rule": "bounce-easing",
@@ -128,6 +128,24 @@
         "value": "cubic-bezier(.2, 1.6, .4, 1)",
         "createdAt": "2026-10-09T10:20:18.601Z",
         "reason": "Slots jackpot: «ДЖЕКПОТ!» slams in with an overshoot — a deliberate game-style effect the user asked for"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.2, .9, .3, 1.35)",
+        "createdAt": "2026-11-02T12:01:16.184Z",
+        "reason": "Claude: one-shot celebratory pops in a game UI (sector claim, shield fill, item equipped, coin flip/hop), matching the app's existing overshoot pops (thumbPartIn); list and switch motion moved to ease-out-quint"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.2, .9, .3, 1.5)",
+        "createdAt": "2026-11-02T12:01:16.208Z",
+        "reason": "Claude: one-shot celebratory pops in a game UI (sector claim, shield fill, item equipped, coin flip/hop), matching the app's existing overshoot pops (thumbPartIn); list and switch motion moved to ease-out-quint"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.3, .7, .3, 1.2)",
+        "createdAt": "2026-11-02T12:01:16.230Z",
+        "reason": "Claude: one-shot celebratory pops in a game UI (sector claim, shield fill, item equipped, coin flip/hop), matching the app's existing overshoot pops (thumbPartIn); list and switch motion moved to ease-out-quint"
       }
     ]
   }

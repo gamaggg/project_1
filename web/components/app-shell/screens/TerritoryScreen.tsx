@@ -24,6 +24,7 @@ import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { TerritoryThumbnailMapView } from '@/components/app-shell/TerritoryThumbnailMapView'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { CountUp } from '@/components/app-shell/CoinCountUp'
 import { useDoubleCoinsUntil } from '@/components/app-shell/DoubleCoinsChip'
 import { tn, currentLocale } from '@/lib/i18n'
 
@@ -301,6 +302,7 @@ export function TerritoryScreen({
           myTerritoryColor={myTerritoryColor}
           ownerAvatarUrl={ownerProfile?.avatarUrl ?? null}
           ownerInitials={(ownerProfile?.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()}
+          claimFx
         />
         {onShowOnMap && (
           // The whole hero map is the tap target; the chip just says so.
@@ -419,7 +421,9 @@ export function TerritoryScreen({
 
         <div className="sector-stat-strip">
           <div>
-            <div className="value">{territory.catchCount}</div>
+            <div className="value">
+              <CountUp key={territory.id} value={territory.catchCount} />
+            </div>
             <div className="label">{tn('sector.catchesLabel')}</div>
           </div>
           <div>
