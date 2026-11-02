@@ -86,8 +86,11 @@ export const AWARD_ICONS: Record<AwardKind, React.ReactNode> = {
   // Season legend: a flame within a flame.
   season_legend: (
     <svg viewBox="0 0 24 24">
+      {/* The flame's box is centred at (12.9, 13.25): moved onto the medal's centre. */}
+      <g transform="translate(-0.9 -1.25)">
       <path d="M12 21.6c4.1 0 6.7-2.8 6.7-6.5 0-2.9-1.7-5.2-2.9-6.4.2 1.8-.8 2.6-1.7 1.8.3-2.3-.9-4.6-2.7-5.6.7 2.2-.8 3.6-2.2 5.3-1.2 1.4-2.1 2.8-2.1 4.6 0 3.7 2.6 6.8 4.9 6.8z" fill="currentColor" />
       <path d="M12 20.4c2.2 0 3.6-1.5 3.6-3.4 0-1.6-.9-2.7-1.8-3.5 0 1-.6 1.5-1.2 1.1-.1-1.3-.8-2.4-1.6-3 .3 1.2-.4 2.1-1.2 2.9-.6.7-1.3 1.6-1.3 2.6 0 2 1.4 3.3 2.5 3.3z" style={CUT} />
+      </g>
     </svg>
   ),
   // Night watch: a crescent with stars.

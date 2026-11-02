@@ -2342,6 +2342,10 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
   position:absolute; inset:-5px; z-index:2; pointer-events:none;
   animation:frameSwim 12s linear infinite; will-change:transform;
 }
+/* The fish swims over the photo but under the avatar's own buttons
+   (palette and pencil): they stay on top and tappable. */
+.avatar-frame-ring ~ * .avatar-edit-btn,
+.avatar-frame-ring ~ * .avatar-color-btn{z-index:3;}
 .frame-swim img{
   position:absolute; left:50%; top:2.5px; width:46%; height:auto; transform:translate(-50%, -50%);
   filter:drop-shadow(0 1.5px 2px rgba(10,14,30,.45)); user-select:none; -webkit-user-drag:none;
