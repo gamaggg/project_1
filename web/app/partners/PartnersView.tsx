@@ -159,7 +159,7 @@ export function PartnersView({ lang, city }: { lang: Lang; city: PartnerCity }) 
       <section className="pt-contact" id="contact" aria-labelledby="contact-t">
         <h2 id="contact-t">{doc.formTitle}</h2>
         <p>{doc.formLead}</p>
-        <PartnersForm doc={doc} />
+        <PartnersForm doc={doc} city={city} />
       </section>
 
       <section className="pt-app" aria-labelledby="app-t">

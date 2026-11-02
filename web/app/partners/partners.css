@@ -199,6 +199,11 @@
 .pt-submit{width:100%; border:0; cursor:pointer; font-family:inherit;}
 .pt-msg{margin:0; font-size:14px; color:rgba(255,255,255,0.85);}
 .pt-msg-err{color:#FFB38A; font-weight:700;}
+.pt-trap{position:absolute; left:-9999px; width:1px; height:1px; opacity:0; pointer-events:none;}
+.pt-submit:disabled{opacity:.7; cursor:default;}
+.pt-sent{align-self:start; padding:22px 20px; border-radius:var(--radius-m); background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);}
+.pt-sent h3{font-size:22px; line-height:1.25; font-weight:800;}
+.pt-sent p{margin:8px 0 0; color:rgba(255,255,255,0.85);}
 .pt-direct p{margin:0 0 10px; font-size:14px; font-weight:700; color:rgba(255,255,255,0.7);}
 .pt-direct ul{display:grid; gap:8px; margin:0; padding:0; list-style:none;}
 .pt-direct a{display:flex; justify-content:space-between; gap:12px; min-height:50px; align-items:center; padding:0 16px; border:1px solid rgba(255,255,255,0.25); border-radius:var(--radius-m); color:#fff; text-decoration:none; font-weight:800;}

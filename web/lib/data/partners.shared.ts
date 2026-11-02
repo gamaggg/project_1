@@ -63,7 +63,6 @@ export type PartnersCityText = {
 export type PartnersDoc = {
   lang: Lang
   cityName: string
-  fCity: string
   metaTitle: string
   metaDescription: string
   eyebrow: string
@@ -131,9 +130,10 @@ export type PartnersDoc = {
   fComment: string
   fSubmit: string
   fSent: string
+  fSentTitle: string
+  fSending: string
+  fFailed: string
   fRequired: string
-  messageHead: string
-  messageContact: string
   orWrite: string
   contactTelegram: string
   contactPhone: string

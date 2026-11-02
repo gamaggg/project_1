@@ -1,85 +1,94 @@
 'use client'
 
 import { useState } from 'react'
-import type { PartnersDoc, PlanId } from '@/lib/data/partners.shared'
+import type { PartnerCity, PartnersDoc, PlanId } from '@/lib/data/partners.shared'
 import { PARTNER_CONTACTS } from '@/lib/data/partners.shared'
 
-// No server, no database: the form only writes the message and opens Telegram
-// with it filled in, so the shop owner sends it from their own account.
-export function PartnersForm({ doc }: { doc: PartnersDoc }) {
+// The request goes to /api/partner-lead: it is saved in the database and forwarded to the owner's Telegram,
+// so it is not lost if the person never presses «Send» in a chat. The hidden «website» field is for scripts.
+export function PartnersForm({ doc, city }: { doc: PartnersDoc; city: PartnerCity }) {
   const [shop, setShop] = useState('')
   const [contact, setContact] = useState('')
   const [comment, setComment] = useState('')
+  const [trap, setTrap] = useState('')
   const [picked, setPicked] = useState<PlanId[]>([])
-  const [state, setState] = useState<'idle' | 'error' | 'sent'>('idle')
+  const [state, setState] = useState<'idle' | 'error' | 'sending' | 'failed' | 'sent'>('idle')
 
   const toggle = (id: PlanId) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (state === 'sending') return
     if (!shop.trim() || !contact.trim()) {
       setState('error')
       return
     }
-    const names = doc.plans.filter((p) => picked.includes(p.id)).map((p) => p.name)
-    const text = [
-      doc.messageHead,
-      `${doc.fCity}: ${doc.cityName}`,
-      `${doc.fShop}: ${shop.trim()}`,
-      `${doc.messageContact}: ${contact.trim()}`,
-      names.length ? `${doc.fInterest}: ${names.join(', ')}` : '',
-      comment.trim(),
-    ]
-      .filter(Boolean)
-      .join('\n')
-    window.open(`https://t.me/${PARTNER_CONTACTS.telegram}?text=${encodeURIComponent(text)}`, '_blank', 'noopener')
-    setState('sent')
+    setState('sending')
+    try {
+      const res = await fetch('/api/partner-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ city, lang: doc.lang, name: shop, contact, interest: picked, comment, website: trap }),
+      })
+      setState(res.ok ? 'sent' : 'failed')
+    } catch {
+      setState('failed')
+    }
   }
 
   const tel = PARTNER_CONTACTS.phone.replace(/[^\d+]/g, '')
 
   return (
     <div className="pt-form-wrap">
-      <form className="pt-form" onSubmit={submit} noValidate>
-        <label>
-          <span>{doc.fShop}</span>
-          <input value={shop} onChange={(e) => setShop(e.target.value)} autoComplete="organization" />
-        </label>
-        <label>
-          <span>{doc.fContact}</span>
-          <input
-            value={contact}
-            onChange={(e) => setContact(e.target.value)}
-            placeholder={doc.fContactHint}
-            autoComplete="off"
-          />
-        </label>
-        <fieldset>
-          <legend>{doc.fInterest}</legend>
-          <div className="pt-chips">
-            {doc.plans.map((p) => (
-              <button
-                type="button"
-                key={p.id}
-                aria-pressed={picked.includes(p.id)}
-                className={picked.includes(p.id) ? 'pt-chip pt-chip-on' : 'pt-chip'}
-                onClick={() => toggle(p.id)}
-              >
-                {p.name}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        <label>
-          <span>{doc.fComment}</span>
-          <textarea rows={3} value={comment} onChange={(e) => setComment(e.target.value)} />
-        </label>
-        <button className="landing-btn landing-btn-primary pt-submit" type="submit">
-          {doc.fSubmit}
-        </button>
-        {state === 'error' && <p className="pt-msg pt-msg-err">{doc.fRequired}</p>}
-        {state === 'sent' && <p className="pt-msg">{doc.fSent}</p>}
-      </form>
+      {state === 'sent' ? (
+        <div className="pt-sent" role="status">
+          <h3>{doc.fSentTitle}</h3>
+          <p>{doc.fSent}</p>
+        </div>
+      ) : (
+        <form className="pt-form" onSubmit={submit} noValidate>
+          <label>
+            <span>{doc.fShop}</span>
+            <input value={shop} onChange={(e) => setShop(e.target.value)} autoComplete="organization" maxLength={120} />
+          </label>
+          <label>
+            <span>{doc.fContact}</span>
+            <input
+              value={contact}
+              onChange={(e) => setContact(e.target.value)}
+              placeholder={doc.fContactHint}
+              autoComplete="off"
+              maxLength={160}
+            />
+          </label>
+          <fieldset>
+            <legend>{doc.fInterest}</legend>
+            <div className="pt-chips">
+              {doc.plans.map((p) => (
+                <button
+                  type="button"
+                  key={p.id}
+                  aria-pressed={picked.includes(p.id)}
+                  className={picked.includes(p.id) ? 'pt-chip pt-chip-on' : 'pt-chip'}
+                  onClick={() => toggle(p.id)}
+                >
+                  {p.name}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+          <label>
+            <span>{doc.fComment}</span>
+            <textarea rows={3} value={comment} onChange={(e) => setComment(e.target.value)} maxLength={1000} />
+          </label>
+          <input className="pt-trap" name="website" value={trap} onChange={(e) => setTrap(e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden="true" />
+          <button className="landing-btn landing-btn-primary pt-submit" type="submit" disabled={state === 'sending'}>
+            {state === 'sending' ? doc.fSending : doc.fSubmit}
+          </button>
+          {state === 'error' && <p className="pt-msg pt-msg-err">{doc.fRequired}</p>}
+          {state === 'failed' && <p className="pt-msg pt-msg-err">{doc.fFailed}</p>}
+        </form>
+      )}
 
       <div className="pt-direct">
         <p>{doc.orWrite}</p>
