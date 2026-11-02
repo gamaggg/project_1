@@ -189,7 +189,7 @@ export const FAQ_EN: FaqSection[] = [
       },
       {
         q: 'What do I spend coins on?',
-        a: ['In the shop — avatar frames, profile backgrounds, name styles and sector skins (everyone sees them on the map). You can try anything on before buying. Boosts are there too.'],
+        a: ['In the shop — avatar frames, profile backgrounds, name styles and sector skins (everyone sees them on the map and on the sector screen). You can try anything on before buying. Boosts are there too.'],
       },
       {
         q: 'What do boosts do?',

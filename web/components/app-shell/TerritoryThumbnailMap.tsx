@@ -6,8 +6,10 @@ import { useEffect, useRef, useState } from 'react'
 import type { Territory } from '@/lib/data/types'
 import { resolveTerritoryColor, OTHER_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { previewTileUrl } from '@/lib/mapbox/rasterTiles'
-import { currentLightPreset } from '@/lib/mapbox/lightPreset'
 import { splitSector } from '@/lib/map/sectorParts'
+import { useSkinAssetsVersion, useSkinPatterns } from '@/lib/map/skinPattern'
+import { isAnimatedSkin } from '@/lib/map/animatedSkins'
+import { createAnimatedSkinLayer, type AnimatedSkinEntry } from '@/lib/map/animatedSkinLayer'
 import { tn } from '@/lib/i18n/runtime'
 
 // A static, single-sector preview for TerritoryScreen — not the interactive
@@ -33,21 +35,51 @@ export function TerritoryThumbnailMap({
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<import('leaflet').Map | null>(null)
+  // The holders' equipped skins, as on the big map (LeafletMap.tsx): each fill, so a skin that
+  // finishes loading after the map was built can be put in (skinAssetsVersion below).
+  const fillsRef = useRef<{ layer: import('leaflet').Polygon; skin: string | null; color: string; opacity: number; clip: [number, number][] }[]>([])
+  const animatedSkinsRef = useRef<ReturnType<typeof createAnimatedSkinLayer> | null>(null)
+  const getSkinPattern = useSkinPatterns()
+  const skinAssetsVersion = useSkinAssetsVersion()
   // Shared by clan-mates: the hex is cut into one part per holder (see
   // lib/map/sectorParts.ts), and each holder's avatar sits in their part —
   // as a pixel offset from the map's center, which is the sector's center
   // (fitBounds below) and stays put when the box resizes.
   const holders = territory.ownerId
     ? [
-        { id: territory.ownerId, avatarUrl: ownerAvatarUrl ?? null, initials: ownerInitials ?? '', isMe: territory.status === 'mine', color: territory.ownerColor },
-        ...territory.coHolders.map((h) => ({ id: h.id, avatarUrl: h.avatarUrl, initials: (h.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase(), isMe: h.isMe, color: h.color })),
+        { id: territory.ownerId, avatarUrl: ownerAvatarUrl ?? null, initials: ownerInitials ?? '', isMe: territory.status === 'mine', color: territory.ownerColor, skin: territory.ownerEquippedSkin },
+        ...territory.coHolders.map((h) => ({ id: h.id, avatarUrl: h.avatarUrl, initials: (h.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase(), isMe: h.isMe, color: h.color, skin: h.equippedSkin })),
       ]
     : []
   const shared = holders.length > 1
-  const holdersKey = holders.map((h) => `${h.id}:${h.isMe}:${h.color ?? ''}`).join(',')
+  const holdersKey = holders.map((h) => `${h.id}:${h.isMe}:${h.color ?? ''}:${h.skin ?? ''}`).join(',')
   const [partOffsets, setPartOffsets] = useState<{ key: string; offsets: { x: number; y: number }[] } | null>(null)
   // The hex's corners in the container's pixels, for the claimFx outline.
   const [claim, setClaim] = useState<{ id: string; points: string; color: string } | null>(null)
+
+  // A skin's fill for one polygon: a pattern laid on the whole hex's box (so each part of a shared sector shows its
+  // own slice of its holder's skin), or null — no skin, an animated one (painted over the tint by the overlay), or
+  // its picture not loaded yet.
+  function skinFill(skin: string | null, color: string) {
+    const map = mapRef.current
+    if (!skin || territory.status === 'free' || isAnimatedSkin(skin) || !map) return null
+    const pts = territory.corners.map((c) => map.latLngToLayerPoint(c))
+    const xs = pts.map((p) => p.x)
+    const ys = pts.map((p) => p.y)
+    const x = Math.min(...xs)
+    const y = Math.min(...ys)
+    return getSkinPattern(skin, color, x, y, Math.max(...ys) - y, Math.max(...xs) - x)
+  }
+  function paintSkins() {
+    const animated: AnimatedSkinEntry[] = []
+    for (const f of fillsRef.current) {
+      const pattern = skinFill(f.skin, f.color)
+      // A CanvasPattern is a legal fillStyle next to a colour string; Leaflet's types just don't know it. It carries its own tint (skinPattern.ts).
+      f.layer.setStyle({ fillColor: (pattern ?? f.color) as unknown as string, fillOpacity: pattern ? 1 : f.opacity })
+      if (f.skin && territory.status !== 'free' && isAnimatedSkin(f.skin)) animated.push({ skinId: f.skin, color: f.color, tile: territory.corners, clip: f.clip })
+    }
+    animatedSkinsRef.current?.set(animated)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -68,16 +100,17 @@ export function TerritoryThumbnailMap({
       })
       mapRef.current = map
       const tiles = L.tileLayer(previewTileUrl(), { tileSize: 256 }).addTo(map)
+      // The view first: a skin pattern is placed in the map's layer pixels, which only exist once it is set.
+      map.fitBounds(L.latLngBounds(territory.corners), { padding: [10, 10] })
+      animatedSkinsRef.current = createAnimatedSkinLayer(L, map)
       const color = resolveTerritoryColor(territory.status, myTerritoryColor, territory.ownerColor)
       const fillOpacity = territory.status === 'free' ? 0.22 : 0.32
       const split = shared ? splitSector(territory.corners, holders.length) : null
+      const fills: typeof fillsRef.current = []
       split?.parts.forEach((part, i) => {
-        L.polygon(part, {
-          stroke: false,
-          fillColor: i === 0 ? color : holders[i].isMe ? myTerritoryColor : (holders[i].color ?? OTHER_TERRITORY_COLOR),
-          fillOpacity,
-          interactive: false,
-        }).addTo(map)
+        const partColor = i === 0 ? color : holders[i].isMe ? myTerritoryColor : (holders[i].color ?? OTHER_TERRITORY_COLOR)
+        const layer = L.polygon(part, { stroke: false, fillColor: partColor, fillOpacity, interactive: false }).addTo(map)
+        fills.push({ layer, skin: holders[i].skin, color: partColor, opacity: fillOpacity, clip: part })
       })
       const poly = L.polygon(territory.corners, {
         color,
@@ -86,13 +119,15 @@ export function TerritoryThumbnailMap({
         fillOpacity: split ? 0 : fillOpacity,
         opacity: 0.9,
       }).addTo(map)
+      if (!split) fills.push({ layer: poly, skin: holders[0]?.skin ?? null, color, opacity: fillOpacity, clip: territory.corners })
+      fillsRef.current = fills
+      paintSkins()
       if (split) {
         L.polyline(
           split.cuts.map((cut) => [split.center, cut]),
           { color: '#FFFFFF', weight: 2, opacity: 0.95, interactive: false }
         ).addTo(map)
       }
-      map.fitBounds(poly.getBounds(), { padding: [10, 10] })
       if (claimFx) {
         const next = {
           id: territory.id,
@@ -124,11 +159,20 @@ export function TerritoryThumbnailMap({
     return () => {
       cancelled = true
       window.clearTimeout(claimTimer)
+      animatedSkinsRef.current?.destroy()
+      animatedSkinsRef.current = null
+      fillsRef.current = []
       mapRef.current?.remove()
       mapRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [territory.id, territory.status, holdersKey, myTerritoryColor])
+
+  // A skin picture that finished loading after the map was built.
+  useEffect(() => {
+    paintSkins()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [skinAssetsVersion])
 
   const offsets = shared && partOffsets?.key === holdersKey ? partOffsets.offsets : null
 
@@ -136,8 +180,7 @@ export function TerritoryThumbnailMap({
 
   return (
     <div className={`territory-thumb-wrap${claimFx ? ' claim-fx' : ''}${claimNow ? ' go' : ''}`}>
-      {/* At night the tiles are dark-v11 (previewTileUrl): a tile still loading shows the map's own dark ground, not a light square. */}
-      <div className={`territory-thumb-map${currentLightPreset() === 'night' ? ' night' : ''}`} ref={containerRef} />
+      <div className="territory-thumb-map" ref={containerRef} />
       {claimNow && (
         <svg key={claimNow.id} className="territory-thumb-claim" aria-hidden style={{ '--claim': claimNow.color } as React.CSSProperties}>
           <polygon points={claimNow.points} pathLength={1} />

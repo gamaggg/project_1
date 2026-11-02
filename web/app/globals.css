@@ -1288,7 +1288,6 @@ html:not([lang="ru"]) .challenges-week-top{padding-top:22px;}
 .owner-avatar img{width:100%; height:100%; object-fit:cover;}
 .territory-thumb-wrap{position:relative; isolation:isolate; width:100%; height:150px; border-radius:var(--radius-l); overflow:hidden; margin-top:16px; box-shadow:var(--shadow-sm);}
 .territory-thumb-map{width:100%; height:100%; background:#DCE7E9;}
-.territory-thumb-map.night{background:#2B2B2B;}
 .territory-thumb-overlay{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:6px; pointer-events:none; z-index:1000;}
 .territory-thumb-avatar{width:30px; height:30px; border-radius:50%; overflow:hidden; border:2px solid #fff; box-shadow:0 2px 6px rgba(23,24,27,0.35); background:linear-gradient(160deg,#FF7A38,var(--accent) 70%); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800;}
 .territory-thumb-avatar img{width:100%; height:100%; object-fit:cover;}
@@ -1310,8 +1309,7 @@ html:not([lang="ru"]) .challenges-week-top{padding-top:22px;}
    edge on each side: horizontal scroll, and the back/share icons (positioned
    relative to this box) clipped half off-screen. */
 .sector-hero-map{position:relative; isolation:isolate;}
-/* The bottom fades into the screen instead of ending in a hard line beside the card (stark with the dark night map). */
-.sector-hero-map .territory-thumb-wrap{height:230px; border-radius:0; margin-top:0; box-shadow:none; -webkit-mask-image:linear-gradient(to bottom, #000 calc(100% - 40px), transparent); mask-image:linear-gradient(to bottom, #000 calc(100% - 40px), transparent);}
+.sector-hero-map .territory-thumb-wrap{height:230px; border-radius:0; margin-top:0; box-shadow:none;}
 /* Just 10px: .screen already pads its top by the notch + Telegram header
    (--tg-safe-area-top), and this hero sits inside that padding — adding the
    insets again pushed the share button halfway down the map in the Mini App. */
