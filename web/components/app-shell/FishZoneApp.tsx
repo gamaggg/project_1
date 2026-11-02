@@ -1461,6 +1461,19 @@ export function FishZoneApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, myProfileLoading])
 
+  // Opens a ?rating=1 link (from a rating_overtaken Telegram notification)
+  // straight into the weekly rating — of the profile city, the one the
+  // notification is about, so it waits for the profile like ?lastweek=1.
+  const ratingDeepLinkOpened = useRef(false)
+  useEffect(() => {
+    if (ratingDeepLinkOpened.current || !user || myProfileLoading) return
+    if (new URLSearchParams(window.location.search).get('rating') !== '1') return
+    ratingDeepLinkOpened.current = true
+    openWeeklyRating()
+    window.history.replaceState(null, '', window.location.pathname)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, myProfileLoading])
+
   // Opens a ?challenges=1 link (from a challenge_completed/challenges_week_done
   // Telegram notification) straight into the weekly challenges screen.
   const challengesDeepLinkOpened = useRef(false)

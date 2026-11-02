@@ -511,6 +511,12 @@ export function ActivityScreen({
                 const changes = Array.isArray(p.changes) ? (p.changes as string[]).join('; ') : ''
                 sub = [typeof p.species === 'string' ? p.species : null, a.territoryId ? `сектор ${a.territoryId}` : null].filter(Boolean).join(' · ') + (changes ? `: ${changes}` : '')
                 if (a.catchId) action = () => onOpenPhoto(a.catchId!)
+              } else if (ev.kind === 'rating_overtaken') {
+                // Went down from the top 10 of the city's weekly rating (rating_tick).
+                icon = FEED_ICONS.podium
+                title = tr('activity.ratingOvertaken', { rank: n('rank') })
+                sub = [tr('activity.ratingOvertakenSub', { prev: n('prev_rank') }), a.who ? tr('activity.ratingAhead', { name: a.who }) : null].filter(Boolean).join(' · ')
+                action = onOpenRating
               } else if (ev.kind === 'daily_reward_reminder') {
                 tone = 'green'
                 icon = FEED_ICONS.gift

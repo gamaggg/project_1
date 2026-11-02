@@ -253,6 +253,15 @@ function renderMessage(notification: NotificationRef): Message | null {
       if (!notification.territory_id) return null
       return { text: tn('tg.legendGained', { id: notification.territory_id, catches: `${n} ${pluralCatches(n)}` }), ...sector(notification.territory_id) }
     }
+    case 'rating_overtaken': {
+      const rank = notification.payload?.rank as number | undefined
+      if (!rank) return null
+      return {
+        text: tn('tg.ratingOvertaken', { rank, ahead: actor?.display_name ? tn('tg.ratingAhead', { name: actor.display_name }) : '' }),
+        buttonLabel: tn('tg.btnRating'),
+        url: `${SITE_URL}/?rating=1`,
+      }
+    }
     case 'legend_lost':
       if (!notification.territory_id) return null
       return { text: tn('tg.legendLost', { actor: actorName, id: notification.territory_id }), ...sector(notification.territory_id) }

@@ -293,7 +293,7 @@ export const FAQ_EN: FaqSection[] = [
       },
       {
         q: 'What does the Telegram bot send?',
-        a: ['The most important things: your sector was taken or is under attack, new followers, the week’s results, «Still fishing?» if there has been no catch for a while. At night messages wait until 8 am. Turn it off with the «Telegram notifications» switch at the bottom of the profile or with the /stop command in the bot.'],
+        a: ['The most important things: your sector was taken or is under attack, new followers, the week’s results, «you were overtaken in the weekly rating» (if you were in your city’s top 10 and went down; at most once in 3 hours, the same goes to «Activity»), «Still fishing?» if there has been no catch for a while. At night messages wait until 8 am. Turn it off with the «Telegram notifications» switch at the bottom of the profile or with the /stop command in the bot.'],
       },
       {
         q: 'How do I get into my account on another device?',
