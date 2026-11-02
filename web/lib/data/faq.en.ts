@@ -281,7 +281,11 @@ export const FAQ_EN: FaqSection[] = [
       },
       {
         q: 'What is «Week in the city»?',
-        a: ['A sticker on the map with last week’s results: how much was caught, the main fish and anglers, your own numbers. The angler of the week is whoever caught the most in the city that week; on a tie, whoever captured more sectors. You can share each slide. The cross hides the sticker until next week’s results — only in this city, the other cities keep theirs.'],
+        a: ['A sticker on the map with last week’s results: how much was caught, the main fish and anglers, your own numbers. The angler of the week is whoever caught the most in the city that week; on a tie, whoever has more sectors of the week (as in the weekly rating). You can share each slide. The cross hides the sticker until next week’s results — only in this city, the other cities keep theirs.'],
+      },
+      {
+        q: 'How is the weekly rating counted?',
+        a: ['Sectors of the week first, then catches in the city that week. A sector of the week is one you captured this week and still hold, or a share in a clanmate’s sector you joined this week. A catch on your own sector is not a capture: an old sector does not become a sector of the week. The week’s results use the same numbers.'],
       },
       {
         q: 'Where is my diary?',

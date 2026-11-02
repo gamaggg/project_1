@@ -13,6 +13,7 @@ export type WeekRecap = {
   prev: { catches: number; anglers: number; captures: number }
   topSpecies: { key: string; name: string; count: number; photoUrl: string | null }[]
   trophy: { catchId: number; species: string; lengthCm: number | null; weightKg: number | null; photoUrl: string; territoryId: string; userId: string; name: string | null; avatarUrl: string | null } | null
+  // captures: sectors of the week, the rating's count (_weekly_sector_counts), not capture events.
   angler: { userId: string; name: string | null; avatarUrl: string | null; catches: number; captures: number } | null
   sector: { territoryId: string; catches: number; kind: string | null } | null
   contested: { territoryId: string; changes: number } | null

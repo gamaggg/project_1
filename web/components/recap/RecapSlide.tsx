@@ -83,14 +83,18 @@ function Frame({ id, env, children, photo }: { id: SlideId; env: SlideEnv; child
       </div>
     )
   }
+  // Boxes by top + width + height, not by right/bottom: the image renderer
+  // for «Поделиться» (satori) gave a box set by top and bottom no height at
+  // all, so every slide's content collapsed into a heap under the kicker and
+  // the footer was gone (02.11).
   const text = (
     <>
-      <div style={{ position: 'absolute', top: 170, left: 84, right: 84, display: 'flex', color: YELLOW, fontSize: 38, fontWeight: 800, letterSpacing: 1 }}>
+      <div style={{ position: 'absolute', top: 170, left: 84, width: SLIDE_W - 168, display: 'flex', color: YELLOW, fontSize: 38, fontWeight: 800, letterSpacing: 1 }}>
         {env.t('recap.kicker')} · {dayRange(env)}
       </div>
-      <div style={{ position: 'absolute', top: 250, left: 84, right: 84, bottom: env.branded ? 170 : 220, display: 'flex', flexDirection: 'column' }}>{children}</div>
+      <div style={{ position: 'absolute', top: 250, left: 84, width: SLIDE_W - 168, height: SLIDE_H - 250 - (env.branded ? 170 : 220), display: 'flex', flexDirection: 'column' }}>{children}</div>
       {env.branded && (
-        <div style={{ position: 'absolute', left: 84, right: 84, bottom: 90, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ position: 'absolute', left: 84, top: SLIDE_H - 90 - 66, width: SLIDE_W - 168, height: 66, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {env.logo ? (
             // eslint-disable-next-line @next/next/no-img-element -- shared markup for the image renderer
             <img src={env.logo} width={230} height={66} alt="" />
