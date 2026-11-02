@@ -131,7 +131,7 @@ import { CatchPhotoScreen } from '@/components/app-shell/screens/CatchPhotoScree
 import { PeopleListModal } from '@/components/app-shell/screens/PeopleListModal'
 import type { ProfileSummary } from '@/lib/data/types'
 import { AwardDetailModal } from '@/components/app-shell/AwardDetailModal'
-import type { UserAward } from '@/lib/data/types'
+import type { AwardGroup } from '@/components/app-shell/AwardsRing'
 import type { Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import { tn } from '@/lib/i18n'
@@ -427,7 +427,7 @@ export function FishZoneApp() {
   // Same top-level gate as recoveryMode, triggered from ProfileScreen instead
   // of OnboardingFlow — see LinkEmailFlow.
   const [linkingEmail, setLinkingEmail] = useState(false)
-  const [openAward, setOpenAward] = useState<UserAward | null>(null)
+  const [openAward, setOpenAward] = useState<AwardGroup | null>(null)
   const [editingAdminAccessId, setEditingAdminAccessId] = useState<string | null>(null)
   const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null)
   // A catch refused by someone else's shield, kept so it can go to the diary.
@@ -2263,7 +2263,7 @@ export function FishZoneApp() {
       {unlockedAchievement && !showingTrophyScene && (
         <AchievementUnlockedModal achievement={unlockedAchievement} onClose={dismissUnlockedAchievement} onShowToast={showToast} />
       )}
-      {openAward && <AwardDetailModal award={openAward} onClose={() => setOpenAward(null)} />}
+      {openAward && <AwardDetailModal group={openAward} onClose={() => setOpenAward(null)} />}
       {/* Deferred behind the achievement modal above so the two celebrations
           never stack — this one waits its turn and appears once that clears. */}
       {showWeekTop && weekTopLeader && !unlockedAchievement && !showingTrophyScene && (

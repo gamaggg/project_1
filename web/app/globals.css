@@ -2096,14 +2096,30 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
    transform: the centring used to live inside the drift animation, so
    wherever the animation is off — iOS «Уменьшение движения», which Safari
    and Telegram both honour — every medal sat 20px right and 20px down. */
-.award-ring-badge{
-  position:absolute; width:40px; height:40px; margin:-20px 0 0 -20px; border-radius:50%; cursor:pointer;
-  display:flex; align-items:center; justify-content:center; color:#fff; padding:0;
-  border:0; --medal-drop:0 5px 14px rgba(0,0,0,0.22);
-  font-family:inherit; z-index:2;
+.award-ring-slot{
+  position:absolute; width:40px; height:40px; margin:-20px 0 0 -20px; z-index:2;
   animation-name:award-drift; animation-timing-function:ease-in-out; animation-iteration-count:infinite; animation-direction:alternate;
 }
+.award-ring-badge{
+  width:100%; height:100%; border-radius:50%; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; color:#fff; padding:0;
+  border:0; --medal-drop:0 5px 14px rgba(0,0,0,0.22);
+  font-family:inherit;
+}
 .award-ring-badge svg{width:21px; height:21px;}
+/* Outside the medal (it clips its shine): how many of the kind, the lock. */
+.award-ring-count, .award-ring-lock{
+  position:absolute; right:-4px; bottom:-3px; z-index:3; pointer-events:none;
+  min-width:17px; height:17px; padding:0 4px; border-radius:9px; box-sizing:border-box;
+  display:flex; align-items:center; justify-content:center;
+  background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.28);
+  font-size:10.5px; font-weight:800; line-height:1; color:#17181B; font-variant-numeric:tabular-nums;
+}
+.award-ring-lock{padding:0; width:17px; color:#6B7480;}
+/* Not earned yet: a grey medal, the emblem faded. */
+.award-medal.award-medal-locked{--c:#8F99A4; --ch:#D5DAE0;}
+.award-medal-locked > svg{opacity:.55;}
+.award-ring-badge.award-medal-locked{--medal-drop:0 3px 8px rgba(0,0,0,0.18);}
 @keyframes award-drift{
   0%{transform:translate(var(--dx1), var(--dy1));}
   100%{transform:translate(var(--dx2), var(--dy2));}
@@ -2154,8 +2170,12 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .award-detail-title{position:relative; z-index:2; font-size:18px; font-weight:800; margin-bottom:6px;}
 .award-detail-subtitle{position:relative; z-index:2; font-size:12px; font-weight:700; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:12px;}
 .award-detail-desc{position:relative; z-index:2; font-size:13px; color:var(--ink-soft); line-height:1.5; margin-bottom:6px;}
+.award-detail-how{position:relative; z-index:2; font-size:12.5px; font-weight:800; color:var(--ink); margin-bottom:4px;}
+.award-detail-list{position:relative; z-index:2; display:flex; flex-direction:column; gap:6px; margin-bottom:8px;}
+.award-detail-row{font-size:13px; color:var(--ink-soft); line-height:1.4;}
+.award-detail-row b{color:var(--ink); font-weight:800;}
 @media (prefers-reduced-motion: reduce){
-  .award-ring-badge{animation:none;}
+  .award-ring-slot{animation:none;}
   .award-medal-shine::after{animation:none; opacity:0;}
   .award-detail-card, .award-detail-icon-glow, .award-detail-confetti-piece{animation:none !important; opacity:1 !important; transform:none !important;}
 }

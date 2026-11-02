@@ -156,6 +156,9 @@ export function awardMedalStyle(kind: AwardKind): CSSProperties {
   return { '--c': color, '--ch': colorHi } as CSSProperties
 }
 
+// Every medal kind, in the order the ring lays them out.
+export const AWARD_KINDS = Object.keys(AWARD_COLOR) as AwardKind[]
+
 // A medal kind this build doesn't know yet (added server-side before the
 // client that draws it shipped) is skipped rather than crashing the ring.
 export function isKnownAward(kind: string): kind is AwardKind {

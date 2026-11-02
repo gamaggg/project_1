@@ -21,12 +21,12 @@ import {
   useFollowers,
 } from '@/lib/supabase/queries'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
-import { AwardsRing } from '@/components/app-shell/AwardsRing'
+import { AwardsRing, type AwardGroup } from '@/components/app-shell/AwardsRing'
 import { AchievementCard } from '@/components/app-shell/AchievementCard'
 import { computeAchievements, heldTerritories, personalRecord, type Achievement } from '@/lib/data/achievements'
 import { KIND_LABEL } from '@/lib/data/species'
 import { formatCatchMeta, formatJoinedDate, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
-import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
+import type { Territory, ProfileSummary } from '@/lib/data/types'
 import { CITIES } from '@/lib/data/city'
 import { Flag } from '@/components/app-shell/Flag'
 import { resolveHeroBackground } from '@/lib/data/heroBackgrounds'
@@ -98,7 +98,7 @@ export function UserProfileScreen({
   onOpenAchievementDetail: (icon: Achievement['icon']) => void
   onOpenAllCatches: () => void
   onDeleteUser: (id: string) => void
-  onOpenAward: (award: UserAward) => void
+  onOpenAward: (group: AwardGroup) => void
   onEditAdminAccess: (id: string) => void
   onEditPublicId: (id: string) => void
   onGrantCoins: (id: string) => void

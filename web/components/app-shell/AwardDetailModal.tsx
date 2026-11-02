@@ -1,8 +1,8 @@
 'use client'
 
 import { useMemo } from 'react'
-import type { UserAward } from '@/lib/data/types'
 import { AWARD_ICONS, AWARD_COLOR, awardMedalStyle } from '@/components/app-shell/awardIcons'
+import { medalName, type AwardGroup } from '@/components/app-shell/AwardsRing'
 import { seededRandom, seedFrom } from '@/lib/seededRandom'
 import { tn } from '@/lib/i18n/runtime'
 
@@ -11,11 +11,18 @@ const CONFETTI_EXTRA = '#FC5200'
 // Shown when tapping any medal in an AwardsRing — same overlay-at-app-level
 // idea as AchievementUnlockedModal, but this one's purely a viewer (any
 // visitor can open it, not just the owner, and it doesn't track "seen").
-export function AwardDetailModal({ award, onClose }: { award: UserAward; onClose: () => void }) {
-  const { color, colorHi } = AWARD_COLOR[award.kind] ?? AWARD_COLOR.weekly_rank
+// One medal of a kind: its own card, as before. Several (1st, 2nd and 3rd
+// place of the week): the kind's name and a line for each. None (a locked
+// medal on the owner's profile): grey, no confetti, and how to earn it.
+export function AwardDetailModal({ group, onClose }: { group: AwardGroup; onClose: () => void }) {
+  const { kind, awards } = group
+  const award = awards.length === 1 ? awards[0] : null
+  const locked = awards.length === 0
+  const { color, colorHi } = AWARD_COLOR[kind] ?? AWARD_COLOR.weekly_rank
 
   const confetti = useMemo(() => {
-    const rand = seededRandom(seedFrom(award.id))
+    if (locked) return []
+    const rand = seededRandom(seedFrom(awards[0].id))
     return Array.from({ length: 14 }, (_, i) => {
       const angle = rand() * Math.PI * 2
       const dist = 60 + rand() * 70
@@ -27,7 +34,7 @@ export function AwardDetailModal({ award, onClose }: { award: UserAward; onClose
         delay: rand() * 0.15,
       }
     })
-  }, [award.id, color, colorHi])
+  }, [locked, awards, color, colorHi])
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -42,14 +49,38 @@ export function AwardDetailModal({ award, onClose }: { award: UserAward; onClose
           ))}
         </div>
         <div className="award-detail-icon-wrap">
-          <div className="award-detail-icon-glow" style={{ background: `radial-gradient(circle, ${color}, transparent 70%)` }} />
-          <div className="award-medal award-medal-shine award-detail-icon" style={awardMedalStyle(award.kind in AWARD_COLOR ? award.kind : 'weekly_rank')}>
-            {AWARD_ICONS[award.kind]}
+          {!locked && <div className="award-detail-icon-glow" style={{ background: `radial-gradient(circle, ${color}, transparent 70%)` }} />}
+          <div className={`award-medal award-detail-icon${locked ? ' award-medal-locked' : ' award-medal-shine'}`} style={locked ? undefined : awardMedalStyle(kind in AWARD_COLOR ? kind : 'weekly_rank')}>
+            {AWARD_ICONS[kind]}
           </div>
         </div>
-        <div className="award-detail-title">{award.title}</div>
-        <div className="award-detail-subtitle">{award.subtitle}</div>
-        <div className="award-detail-desc">{award.description}</div>
+        {award ? (
+          <>
+            <div className="award-detail-title">{award.title}</div>
+            <div className="award-detail-subtitle">{award.subtitle}</div>
+            <div className="award-detail-desc">{award.description}</div>
+          </>
+        ) : locked ? (
+          <>
+            <div className="award-detail-title">{medalName(kind)}</div>
+            <div className="award-detail-subtitle">{tn('medals.locked')}</div>
+            <div className="award-detail-how">{tn('medals.howTitle')}</div>
+            <div className="award-detail-desc">{tn(`medals.how_${kind}`)}</div>
+          </>
+        ) : (
+          <>
+            <div className="award-detail-title">{medalName(kind)}</div>
+            <div className="award-detail-subtitle">{tn('medals.times', { count: awards.length })}</div>
+            <div className="award-detail-list">
+              {/* The week's places best first (titles «1 место»…), the rest newest first. */}
+              {[...awards].sort((x, y) => (kind === 'weekly_rank' ? x.title.localeCompare(y.title, 'ru', { numeric: true }) : 0)).map((a) => (
+                <div key={a.id} className="award-detail-row">
+                  <b>{a.title}</b> {a.subtitle}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
         <button className="unlock-modal-close tap-scale" onClick={onClose}>
           {tn('common.close')}
         </button>

@@ -231,7 +231,7 @@ export const FAQ_EN: FaqSection[] = [
       },
       {
         q: 'What are the medals around the avatar?',
-        a: ['Medals are for special events: for example, holding a hot sector until the end of the week. Achievements in the profile are for catches, fish species and sectors. An achievement you have earned stays for good: if you lose the sectors, it does not go away, and the reward is not paid a second time.'],
+        a: ['Medals are for special events: for example, holding a hot sector until the end of the week. There are nine of them. On your own profile you see them all: the ones you have are in colour, the rest are grey with a lock; tap a medal to see how to earn it. The trophies for 1st, 2nd and 3rd place of the week are one, and the number on it is how many different places you have. Achievements in the profile are for catches, fish species and sectors. An achievement you have earned stays for good: if you lose the sectors, it does not go away, and the reward is not paid a second time.'],
       },
     ],
   },

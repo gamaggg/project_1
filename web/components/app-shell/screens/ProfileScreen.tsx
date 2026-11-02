@@ -28,7 +28,7 @@ import {
   useClanChatSummary,
   useGeoToday,
 } from '@/lib/supabase/queries'
-import { AwardsRing } from '@/components/app-shell/AwardsRing'
+import { AwardsRing, type AwardGroup } from '@/components/app-shell/AwardsRing'
 import { uploadAvatar } from '@/lib/supabase/storage'
 import { AchievementCard } from '@/components/app-shell/AchievementCard'
 import { computeAchievements, heldTerritories, personalRecord, type Achievement } from '@/lib/data/achievements'
@@ -48,7 +48,7 @@ import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { insideTelegram } from '@/lib/openExternal'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { CITIES, type CityId } from '@/lib/data/city'
-import type { Territory, UserAward, ProfileSummary } from '@/lib/data/types'
+import type { Territory, ProfileSummary } from '@/lib/data/types'
 import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
 import { useCanInstall } from '@/lib/installApp'
 import { InstallAppModal } from '@/components/app-shell/InstallAppModal'
@@ -453,7 +453,7 @@ export function ProfileScreen({
   adminLogUnreadCount: number
   onOpenAchievements: () => void
   onOpenAchievementDetail: (icon: Achievement['icon']) => void
-  onOpenAward: (award: UserAward) => void
+  onOpenAward: (group: AwardGroup) => void
   onShareProfile: (publicId: string, text: string) => void
   // «Пригласи друзей» — the plain referral link (+100 coins each side).
   onInviteFriends: () => void
@@ -489,7 +489,7 @@ export function ProfileScreen({
   const { data: reports = [] } = useReports()
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(user?.id ?? null)
   const { data: earnedAchievements } = useEarnedAchievements(user?.id ?? null)
-  const { data: awards = [] } = useUserAwards(user?.id ?? null)
+  const { data: awards = [], isSuccess: awardsLoaded } = useUserAwards(user?.id ?? null)
   const { data: followers = [] } = useFollowers(user?.id ?? null)
   const equippedFrame = resolveAvatarFrame(profile?.equippedFrame)
 
@@ -557,7 +557,7 @@ export function ProfileScreen({
             </svg>
           </div>
         </div>
-        <AwardsRing awards={awards} onOpenAward={onOpenAward}>
+        <AwardsRing awards={awards} showLocked={awardsLoaded} onOpenAward={onOpenAward}>
           <div className="profile-hero-avatar-ring">
             {equippedFrame && (
               <AvatarFrameRing frame={equippedFrame} />
