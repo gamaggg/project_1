@@ -63,7 +63,7 @@ export const FAQ_EN: FaqSection[] = [
       },
       {
         q: 'What are «Trophies» in the profile?',
-        a: ['Up to three of your biggest catches: the longest first; if fewer than three have a length, the heaviest of those with only a weight fill the rest. Catches without a length or weight are not shown. Other players see this block in your profile too; a tap opens the photo of the catch.'],
+        a: ['Up to three of your biggest catches: the longest first; if fewer than three have a length, the heaviest of those with only a weight fill the rest. The first is shown big on its own photo with a gold medal, the second and third beside each other with silver and bronze. Catches without a length or weight are not shown. Other players see this block in your profile too; a tap opens the photo of the catch.'],
       },
       {
         q: 'Are there limits on catches and photos?',

@@ -30,14 +30,14 @@ import {
 } from '@/lib/supabase/queries'
 import { AwardsRing, type AwardGroup } from '@/components/app-shell/AwardsRing'
 import { uploadAvatar } from '@/lib/supabase/storage'
-import { ProfileTrophies } from '@/components/app-shell/ProfileTrophies'
+import { ProfileCatchRow, ProfileTrophies } from '@/components/app-shell/ProfileTrophies'
+import { ProfileSectorRow } from '@/components/app-shell/ProfileSectors'
 import { AchievementCard } from '@/components/app-shell/AchievementCard'
 import { computeAchievements, heldTerritories, trophies, type Achievement } from '@/lib/data/achievements'
-import { KIND_LABEL } from '@/lib/data/species'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { resolveClanBackground } from '@/lib/data/clanBackgrounds'
 import { CLAN_ROLE_LABEL } from '@/lib/data/clanLevels'
-import { formatCatchMeta, formatJoinedDate, pluralCatches, pluralFollowers, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
+import { formatJoinedDate, pluralCatches, pluralFollowers, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
 import { CTA_ICONS } from '@/components/app-shell/icons'
 import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorPreviewMap'
 import { DEFAULT_TERRITORY_COLOR, TERRITORY_COLORS } from '@/lib/data/territoryColors'
@@ -770,25 +770,7 @@ export function ProfileScreen({
       </div>
       <div className="card" style={{ overflow: 'hidden' }}>
         {recentMine.length ? (
-          recentMine.map((c, i) => {
-            const meta = formatCatchMeta(c.lengthCm, c.weightKg)
-            return (
-              <div
-                key={c.id}
-                className="tap-scale"
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recentMine.length - 1 ? '1px solid var(--line)' : 'none', cursor: 'pointer' }}
-                onClick={() => onOpenPhoto(c.id)}
-              >
-                <div className="fish-thumb" style={{ width: 46, height: 46 }}>
-                  <img src={thumbUrl(c.photoUrl, 240)} alt={c.speciesName} loading="lazy" decoding="async" />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14.5 }}>{c.speciesName}</div>
-                  {meta && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 1 }}>{meta}</div>}
-                </div>
-              </div>
-            )
-          })
+          recentMine.map((c, i) => <ProfileCatchRow key={c.id} c={c} last={i === recentMine.length - 1} onOpenPhoto={onOpenPhoto} />)
         ) : (
           myCatchesPending ? (
             <SkeletonRows count={3} />
@@ -809,24 +791,7 @@ export function ProfileScreen({
       <div className="card" style={{ overflow: 'hidden' }}>
         {visibleTerritories.length ? (
           visibleTerritories.map((t, i) => (
-            <button
-              key={t.id}
-              className="terr-list-item"
-              style={{ borderBottom: i < visibleTerritories.length - 1 ? '1px solid var(--line)' : 'none' }}
-              onClick={() => onOpenTerritory(t.id)}
-            >
-              <div
-                className="hex-aspect hex-shape"
-                style={{ width: 12, background: profile?.territoryColor ?? DEFAULT_TERRITORY_COLOR, flex: '0 0 auto', alignSelf: 'flex-start', marginTop: 4 }}
-              />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, fontSize: 14.5 }}>{t.id}</div>
-                <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{KIND_LABEL[t.kind]}</div>
-              </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A9AE" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 6l6 6-6 6" />
-              </svg>
-            </button>
+            <ProfileSectorRow key={t.id} t={t} last={i === visibleTerritories.length - 1} onOpen={onOpenTerritory} />
           ))
         ) : (
           <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>{tn('profile.noTerritories')}</div>

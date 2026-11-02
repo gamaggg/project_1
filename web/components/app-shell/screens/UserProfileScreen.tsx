@@ -24,11 +24,11 @@ import {
 } from '@/lib/supabase/queries'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { AwardsRing, type AwardGroup } from '@/components/app-shell/AwardsRing'
-import { ProfileTrophies } from '@/components/app-shell/ProfileTrophies'
+import { ProfileCatchRow, ProfileTrophies } from '@/components/app-shell/ProfileTrophies'
+import { ProfileSectorRow } from '@/components/app-shell/ProfileSectors'
 import { AchievementCard } from '@/components/app-shell/AchievementCard'
 import { computeAchievements, heldTerritories, trophies, type Achievement } from '@/lib/data/achievements'
-import { KIND_LABEL } from '@/lib/data/species'
-import { formatCatchMeta, formatJoinedDate, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
+import { formatJoinedDate, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
 import type { Territory, ProfileSummary } from '@/lib/data/types'
 import { CITIES } from '@/lib/data/city'
 import { Flag } from '@/components/app-shell/Flag'
@@ -400,25 +400,7 @@ export function UserProfileScreen({
         </div>
         <div className="card" style={{ overflow: 'hidden' }}>
           {recent.length ? (
-            recent.map((c, i) => {
-              const meta = formatCatchMeta(c.lengthCm, c.weightKg)
-              return (
-                <div
-                  key={c.id}
-                  className="tap-scale"
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < recent.length - 1 ? '1px solid var(--line)' : 'none', cursor: 'pointer' }}
-                  onClick={() => onOpenPhoto(c.id)}
-                >
-                  <div className="fish-thumb" style={{ width: 46, height: 46 }}>
-                    <img src={thumbUrl(c.photoUrl, 240)} alt={c.speciesName} loading="lazy" decoding="async" />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, fontSize: 14.5 }}>{c.speciesName}</div>
-                    {meta && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 1 }}>{meta}</div>}
-                  </div>
-                </div>
-              )
-            })
+            recent.map((c, i) => <ProfileCatchRow key={c.id} c={c} last={i === recent.length - 1} onOpenPhoto={onOpenPhoto} />)
           ) : catchesPending ? (
             <SkeletonRows count={3} />
           ) : (
@@ -432,21 +414,7 @@ export function UserProfileScreen({
         <div className="card" style={{ overflow: 'hidden' }}>
           {territories.length ? (
             territories.map((t, i) => (
-              <button
-                key={t.id}
-                className="terr-list-item"
-                style={{ borderBottom: i < territories.length - 1 ? '1px solid var(--line)' : 'none' }}
-                onClick={() => onOpenTerritory(t.id)}
-              >
-                <div style={{ width: 10, height: 10, borderRadius: 3, background: 'var(--blue)' }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14.5 }}>{t.id}</div>
-                  <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{KIND_LABEL[t.kind]}</div>
-                </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A9AE" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 6l6 6-6 6" />
-                </svg>
-              </button>
+              <ProfileSectorRow key={t.id} t={t} last={i === territories.length - 1} onOpen={onOpenTerritory} />
             ))
           ) : (
             <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>{tn('profile.noTerritoriesOther')}</div>

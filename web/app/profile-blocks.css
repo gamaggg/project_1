@@ -1,0 +1,80 @@
+/* Profile blocks (own and someone else's profile): «Трофеи» podium, the rows of
+   «Последние уловы» and of the sectors list, the sector numbers above it.
+   Components: ProfileTrophies.tsx, ProfileSectors.tsx. */
+
+/* ---- «Трофеи»: the first one big on its photo, the 2nd and 3rd beside each other ---- */
+.trophy-top{
+  font-size:12px; font-weight:800; letter-spacing:.2px;
+  color:var(--accent); background:var(--accent-soft);
+  padding:4px 10px; border-radius:20px;
+}
+.trophy-hero{
+  position:relative; display:block; width:100%; height:200px; padding:0;
+  border:none; border-radius:var(--radius-l); overflow:hidden; cursor:pointer;
+  background:#1C1D21; box-shadow:var(--shadow); font-family:inherit; text-align:left;
+}
+.trophy-hero img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+.trophy-hero::after{
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(180deg, rgba(10,11,13,0) 45%, rgba(10,11,13,.72) 100%);
+}
+.trophy-hero-text{
+  position:absolute; left:16px; right:16px; bottom:14px; z-index:1;
+  display:flex; flex-direction:column; gap:2px; color:#fff;
+}
+.trophy-hero-text b{font-size:19px; font-weight:800; letter-spacing:-.3px;}
+.trophy-hero-text span{font-size:13px; font-weight:600; opacity:.92;}
+.trophy-hero .trophy-medal{position:absolute; top:12px; left:12px; z-index:1; width:30px; height:30px; font-size:14px;}
+
+.trophy-rest{display:grid; grid-template-columns:repeat(auto-fit, minmax(0, 1fr)); gap:10px; margin-top:10px;}
+.trophy-small{
+  display:flex; align-items:center; gap:12px; min-width:0;
+  padding:12px; border:none; border-radius:var(--radius-m);
+  background:var(--surface); box-shadow:var(--shadow-sm);
+  cursor:pointer; font-family:inherit; text-align:left; color:var(--ink);
+}
+.trophy-small-thumb{position:relative; flex:0 0 auto; width:46px; height:46px;}
+.trophy-small-thumb img{width:100%; height:100%; object-fit:cover; border-radius:12px; display:block;}
+.trophy-small-thumb .trophy-medal{position:absolute; top:-6px; left:-6px; width:20px; height:20px; font-size:11px;}
+.trophy-small-text{display:flex; flex-direction:column; gap:2px; min-width:0;}
+.trophy-small-text b{font-size:14.5px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.trophy-small-text span{font-size:12.5px; font-weight:700; color:var(--accent); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+
+.trophy-medal{
+  display:inline-flex; align-items:center; justify-content:center;
+  border-radius:50%; font-weight:800; line-height:1;
+  box-shadow:0 0 0 2px #fff, 0 2px 6px rgba(23,24,27,.18);
+}
+.trophy-medal-1{background:linear-gradient(160deg,#FFD976,#E9A92B); color:#5C3D00;}
+.trophy-medal-2{background:linear-gradient(160deg,#EEF0F3,#B9BEC6); color:#3F444C;}
+.trophy-medal-3{background:linear-gradient(160deg,#F4B990,#C9764A); color:#5A2A10;}
+
+/* ---- rows of «Последние уловы» and of the sectors list ---- */
+.profile-row{
+  display:flex; align-items:center; gap:12px; width:100%;
+  padding:12px 14px; background:none; border:none; cursor:pointer;
+  font-family:inherit; text-align:left; color:var(--ink); overflow:hidden;
+}
+.profile-row-text{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+.profile-row-text > b{
+  display:block; min-width:0;
+  font-size:14.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.profile-row-text > b em{font-style:normal; font-weight:700; color:var(--accent);}
+.profile-row-text > span{font-size:12.5px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+
+/* ---- sectors: the water tag, the marks ---- */
+.profile-row-text > b.has-tag{display:flex; align-items:center; gap:7px;}
+.kind-tag{font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; flex:0 0 auto;}
+.kind-tag-sea{background:var(--blue-soft); color:#2A5FCC;}
+.kind-tag-river, .kind-tag-stream{background:#E0F2F7; color:#1A7590;}
+.kind-tag-lake{background:var(--green-soft); color:#22813C;}
+.kind-tag-pond{background:#EEF5DC; color:#5E7A12;}
+.sector-mark{
+  flex:0 0 auto; display:inline-flex; align-items:center; gap:4px;
+  font-size:11.5px; font-weight:800; padding:4px 8px; border-radius:20px; white-space:nowrap;
+}
+.sector-mark-shield{background:#DCF3EF; color:#0E8074;}
+.sector-mark-hot{background:#FFE9D6; color:#C2410C;}
+
+.sector-mark-shared{background:#EFEDFB; color:#5B4DC7;}
