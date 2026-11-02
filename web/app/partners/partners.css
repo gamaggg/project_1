@@ -23,8 +23,9 @@
 
 /* Demo: the game's own map with the shop on it, three switches above, a card that rises on tap. */
 .pt-demo{margin-top:20px; max-width:560px;}
-.pt-switches{display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-bottom:12px;}
+.pt-switches{display:grid; grid-template-columns:repeat(2, 1fr); gap:6px; margin-bottom:12px;}
 .pt-sw{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; min-height:62px; padding:8px 6px; border:1.5px dashed var(--ink-faint); border-radius:var(--radius-m); background:var(--surface); color:var(--ink); font-size:13px; font-weight:800; line-height:1.2; text-align:center; cursor:pointer; transition:background .2s var(--ease-out), border-color .2s var(--ease-out), color .2s var(--ease-out), transform .15s var(--ease);}
+.pt-sw small{font-size:11.5px; font-weight:600; opacity:.75;}
 .pt-sw i{display:flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:var(--accent-soft); color:var(--accent); font-style:normal; font-size:14px; line-height:1; transition:background .2s var(--ease-out), color .2s var(--ease-out);}
 .pt-sw:active{transform:scale(0.97);}
 .pt-sw-on{border:1.5px solid var(--ink); background:var(--ink); color:#fff;}
@@ -107,6 +108,7 @@
 /* a.pt-act-main wins over ".landing a{color:inherit}" so the label stays white */
 .pt-panel .pt-act.pt-act-main{background:linear-gradient(160deg,#FF6A1F,var(--accent) 65%); color:#fff; box-shadow:0 10px 22px rgba(252,82,0,0.28);}
 .pt-full{width:100%; margin-top:12px;}
+.pt-panel .pt-act.pt-full{box-shadow:none;}
 .pt-row{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px; padding:12px 14px; border-radius:12px; background:#F6F5F1;}
 .pt-row b{font-size:14.5px; font-weight:800;}
 .pt-label{display:block; font-size:11.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint);}
@@ -124,7 +126,6 @@
 .pt-ticket{display:flex; align-items:center; gap:8px; margin-top:12px; padding:10px 12px; border:2px dashed #7FC795; border-radius:14px; background:#fff; transition:border-color .2s var(--ease), box-shadow .3s var(--ease-out);}
 .pt-ticket b{flex:1; min-width:0; font-family:var(--font-display),'Oswald',sans-serif; font-size:22px; letter-spacing:0.06em; white-space:nowrap;}
 .pt-ticket > span{font-size:19px; font-weight:800; color:var(--green);}
-.pt-ticket button{flex:0 0 auto; min-height:36px; padding:0 10px; border:0; border-radius:10px; background:var(--green-soft); color:var(--green); font-family:inherit; font-size:13px; font-weight:800; cursor:pointer;}
 .pt-ticket-on{border-style:solid; border-color:var(--green); box-shadow:0 0 0 5px rgba(47,168,79,0.18);}
 .pt-week{background:var(--accent-soft);}
 .pt-chip-sponsor{display:inline-block; margin-bottom:8px; padding:3px 10px; border-radius:999px; background:var(--accent); color:#fff; font-size:11px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase;}
@@ -142,13 +143,31 @@
 .pt-demo-note{margin:16px 0 0; font-size:12.5px; color:var(--ink-soft); text-align:center;}
 .pt-toast{position:absolute; left:50%; bottom:calc(env(safe-area-inset-bottom) + 20px); z-index:6; transform:translateX(-50%); padding:10px 18px; border-radius:999px; background:var(--ink); color:#fff; font-size:14px; font-weight:700; box-shadow:var(--shadow-lg); white-space:nowrap; animation:pt-pop .25s var(--ease-out) both;}
 
-/* "See the game from the inside" strip. */
-.pt-app{display:grid; gap:18px; margin:48px 20px 0; padding:24px 20px; border-radius:var(--radius-l); background:var(--accent-soft);}
-.pt-app h2{font-family:var(--font-display),'Oswald',sans-serif; font-size:clamp(24px, 5vw, 32px); line-height:1.15; font-weight:700; text-transform:uppercase;}
-.pt-app p{margin:8px 0 0; max-width:50ch; color:var(--ink-soft);}
-.pt-app-btns{display:flex; flex-wrap:wrap; gap:10px;}
-.pt .pt-app .landing-btn-primary{color:#fff;}
-.pt-btn-light{border:2px solid var(--ink); color:var(--ink);}
+/* "See the game from the inside": an orange card, the words and the buttons on one side, three real screens in phone frames on the other. */
+.pt-app{position:relative; display:grid; gap:30px; margin:48px 20px 0; padding:32px 20px 30px; border-radius:var(--radius-l); color:#fff; overflow:hidden; background:radial-gradient(420px 300px at 90% 95%, rgba(255,255,255,0.24), transparent 70%), radial-gradient(340px 240px at 0% 0%, rgba(255,196,96,0.38), transparent 70%), linear-gradient(150deg,#FF7A38 0%,var(--accent) 55%,#E0368A 135%);}
+.pt-app::before{content:''; position:absolute; right:-70px; top:-50px; width:260px; height:226px; background:rgba(255,255,255,0.09); clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); pointer-events:none;}
+.pt-app > *{position:relative;}
+.pt-app .pt-app-eyebrow{display:inline-block; margin:0; padding:5px 12px; border-radius:999px; background:rgba(255,255,255,0.22); font-size:12px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase;}
+.pt-app h2{margin-top:14px; font-family:var(--font-display),'Oswald',sans-serif; font-size:clamp(30px, 7vw, 44px); line-height:1.1; font-weight:700; text-transform:uppercase; color:#fff;}
+.pt-app .pt-app-lead{max-width:44ch; margin:12px 0 0; font-size:16px; line-height:1.5; color:rgba(255,255,255,0.92);}
+.pt-app-points{display:grid; gap:12px; margin:24px 0 0; padding:0; list-style:none;}
+.pt-app-points li{display:flex; align-items:center; gap:12px;}
+.pt-app-hex{flex:0 0 auto; display:flex; align-items:center; justify-content:center; width:40px; height:35px; background:#fff; color:var(--accent); font-family:var(--font-display),'Oswald',sans-serif; font-size:17px; font-weight:700; clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);}
+.pt-app-points b{display:block; font-size:16px; line-height:1.25;}
+.pt-app-points span:not(.pt-app-hex){display:block; font-size:14px; line-height:1.35; color:rgba(255,255,255,0.86);}
+.pt-app-btns{display:flex; flex-wrap:wrap; gap:10px; margin-top:26px;}
+.pt .pt-app .landing-btn-primary{background:#fff; color:var(--accent); box-shadow:0 10px 24px rgba(110,20,0,0.28);}
+.pt .pt-app .pt-btn-light{border:2px solid rgba(255,255,255,0.75); background:transparent; color:#fff;}
+/* Three whole phones in a row: the map in the middle and in front, a sector and a catch behind it, tilted outwards. */
+.pt-phones{z-index:1; display:flex; justify-content:center; align-items:flex-end; padding:6px 0 8px;}
+.pt-phone{position:relative; flex:0 0 auto; width:min(27vw, 150px); aspect-ratio:393 / 852; padding:4px; border-radius:24px; background:#101114; box-shadow:0 22px 40px rgba(70,12,0,0.4), inset 0 0 0 1.5px #3a3c42;}
+.pt-phone-screen{position:relative; width:100%; height:100%; overflow:hidden; border-radius:20px; background:#0b0c0f;}
+/* The island sits over Telegram's own pill at the top of the screenshots. */
+.pt-phone-screen::before{content:''; position:absolute; z-index:2; top:0.5%; left:50%; width:30%; height:3.3%; transform:translateX(-50%); border-radius:999px; background:#000;}
+.pt-phone-screen img{display:block; width:100%; height:100%; object-fit:cover; object-position:50% 0;}
+.pt-phone-map{z-index:2; width:min(33vw, 182px); margin:0 -20px;}
+.pt-phone-sector{transform:rotate(-6deg) translateY(16px);}
+.pt-phone-catch{transform:rotate(6deg) translateY(16px);}
 
 /* Packages. */
 .pt-plans{display:grid; gap:14px; margin:24px 0 0; padding:0; list-style:none; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));}
@@ -162,22 +181,7 @@
 .pt-price{margin:auto 0 0; padding-top:18px; color:var(--ink-soft);}
 .pt-price b{font-family:var(--font-display), sans-serif; font-size:32px; color:var(--ink);}
 .pt-price-note{margin:2px 0 0; font-size:13px; color:var(--ink-soft);}
-.pt-bundle{display:grid; grid-template-columns:auto 1fr; align-items:center; gap:12px 14px; margin:18px 0 0; padding:16px 18px; border-radius:var(--radius-m); color:#fff; background:radial-gradient(260px 160px at 100% 0%, rgba(252,82,0,0.32), transparent 70%), var(--ink);}
-.pt-bundle-tag{display:flex; align-items:center; justify-content:center; width:62px; height:54px; background:linear-gradient(160deg,#FF6A1F,var(--accent) 65%); color:#fff; font-family:var(--font-display),'Oswald',sans-serif; font-size:21px; font-weight:700; clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); animation:pt-tag 2.8s ease-in-out infinite;}
-@keyframes pt-tag{0%,100%{transform:scale(1);} 50%{transform:scale(1.07);}}
-.pt-bundle-text{display:flex; flex-direction:column; gap:2px; min-width:0;}
-.pt-bundle-text b{font-size:17px; line-height:1.25;}
-.pt-bundle-text span{font-size:13.5px; color:rgba(255,255,255,0.72); line-height:1.35;}
-.pt-bundle-price{grid-column:1 / -1; display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 8px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.16);}
-.pt-bundle-price s{font-size:16px; color:rgba(255,255,255,0.5);}
-.pt-bundle-price i{font-style:normal; font-size:18px; font-weight:800; color:#FFB38A;}
-.pt-bundle-price b{font-family:var(--font-display),'Oswald',sans-serif; font-size:32px; line-height:1; color:#FFB38A;}
-.pt-bundle-price span{font-size:14px; color:rgba(255,255,255,0.72);}
-.pt-bundle-price em{margin-left:auto; align-self:center; padding:4px 12px; border-radius:999px; background:var(--green); color:#fff; font-style:normal; font-size:13px; font-weight:800; white-space:nowrap;}
-@media (min-width: 720px){
-  .pt-bundle{grid-template-columns:auto 1fr auto;}
-  .pt-bundle-price{grid-column:auto; padding-top:0; border-top:0; justify-content:flex-end;}
-}
+.pt-week-note{max-width:62ch; margin:22px 20px 0; padding:14px 16px; border-radius:var(--radius-m); background:var(--accent-soft); color:var(--ink); line-height:1.5;}
 
 /* Contact form. */
 .pt-contact{margin:56px 20px 0; padding:32px 20px; border-radius:var(--radius-l); background:var(--ink); color:#fff;}
@@ -205,11 +209,14 @@
   .pt-stats ul{grid-template-columns:repeat(4, 1fr);}
   .pt-stats p{text-align:left;}
   .pt-contact{margin:72px 48px 0; padding:44px 40px;}
-  .pt-app{grid-template-columns:1fr auto; align-items:center; margin:72px 48px 0; padding:32px 40px;}
+  .pt-app{grid-template-columns:minmax(0, 0.9fr) minmax(0, 1.1fr); align-items:center; gap:24px; margin:72px 48px 0; padding:48px 44px;}
+  .pt-phones{padding:10px 0 20px;}
+  .pt-phone{width:158px;}
+  .pt-phone-map{width:196px; margin:0 -18px;}
   .pt-form-wrap{grid-template-columns:minmax(0, 1.4fr) minmax(0, 1fr);}
 }
 
 @media (prefers-reduced-motion: reduce){
-  .pt-mk-ring,.pt-hint,.pt-mk-fresh .pt-mk-pin,.pt-bundle-tag{animation:none;}
+  .pt-mk-ring,.pt-hint,.pt-mk-fresh .pt-mk-pin{animation:none;}
   .pt-panel{transition:opacity .15s linear;}
 }

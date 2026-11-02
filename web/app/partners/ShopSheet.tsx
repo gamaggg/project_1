@@ -154,9 +154,6 @@ export function ShopSheet({ doc, city, open, promo, week, coords, onClose, inlin
               <div className={shown ? 'pt-ticket pt-ticket-on' : 'pt-ticket'}>
                 <b>{d.promo.code}</b>
                 <span>{d.promo.discount}</span>
-                <button onClick={() => copy(d.promo.code)} tabIndex={tab}>
-                  {sh.copy}
-                </button>
               </div>
               <button className="pt-act pt-act-main pt-full" onClick={() => setShown((v) => !v)} tabIndex={tab}>
                 {shown ? `✓ ${d.promo.shown}` : d.promo.show}

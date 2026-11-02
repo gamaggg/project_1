@@ -26,11 +26,12 @@ export const PARTNER_CONTACTS = {
 // Rounded down with a plus. Update before a new wave of outreach.
 export const PARTNER_STATS = { players: '380+', city: '180+', catches: '650+', cities: '5' }
 
-// Monthly prices in the city's currency; the first 10 days are free. All three packages at once
-// cost `bundle` when it is set, else the sum minus `off` per cent (the page does the sum and shows the real per cent).
-export const PARTNER_PRICES: Record<PartnerCity, { pin: number; promo: number; week: number; symbol: string; off?: number; bundle?: number }> = {
-  batumi: { pin: 49, promo: 69, week: 89, bundle: 159, symbol: '₾' },
-  moscow: { pin: 1490, promo: 2090, week: 2690, bundle: 4990, symbol: '₽' },
+// Monthly prices in the city's currency; the first 10 days are free. Two plans (decided 02.11.2026): Старт is the
+// pin and the promo code, Партнёр is Старт plus one week a month as the sponsor of the weekly prize.
+// Moscow is Batumi's price at about 30 ₽ per ₾, rounded.
+export const PARTNER_PRICES: Record<PartnerCity, { start: number; partner: number; symbol: string }> = {
+  batumi: { start: 59, partner: 99, symbol: '₾' },
+  moscow: { start: 1790, partner: 2990, symbol: '₽' },
 }
 
 // Real photos of the shop (files in public/partners/<city>/), when there are any; until then the card shows drawings.
@@ -41,7 +42,7 @@ export const PARTNER_PHOTOS: Record<PartnerCity, string[]> = {
   moscow: ['/partners/moscow/shop-1.jpg', '/partners/moscow/shop-2.jpg', '/partners/moscow/shop-3.jpg'],
 }
 
-export type PlanId = 'pin' | 'promo' | 'week'
+export type PlanId = 'start' | 'partner'
 
 // What differs on the Moscow page; everything else is the Batumi text.
 export type PartnersCityText = {
@@ -55,6 +56,7 @@ export type PartnersCityText = {
   address: string
   shopDist: string
   prize: string
+  prizeCost: string
   board: { name: string; result: string }[]
 }
 
@@ -74,6 +76,11 @@ export type PartnersDoc = {
   statsNote: string
   appTitle: string
   appText: string
+  appEyebrow: string
+  // The three things the phones show, in words next to them.
+  appPoints: { title: string; text: string }[]
+  // What the three phones show, left to right: a sector, the map, a catch.
+  appShots: [string, string, string]
   appTelegram: string
   appWeb: string
   whyTitle: string
@@ -83,7 +90,7 @@ export type PartnersDoc = {
     lead: string
     badge: string
     hint: string
-    tabs: Record<PlanId, string>
+    tabs: Record<PlanId, { name: string; sub: string }>
     shop: { name: string; kind: string; hours: string; dist: string; route: string }
     promo: { title: string; code: string; discount: string; text: string; show: string; shown: string; valid: string }
     week: { title: string; prize: string; prizeLabel: string; rule: string; board: { name: string; result: string }[] }
@@ -109,9 +116,9 @@ export type PartnersDoc = {
   plansLead: string
   plans: { id: PlanId; name: string; tagline: string; bullets: string[]; priceNote: string }[]
   perMonth: string
-  bundle: string
-  bundleNote: string
-  bundleSave: string
+  // How the sponsor's week goes; `{cost}` in the note is replaced with prizeCost.
+  weekPlan: { title: string; lead: string; steps: { title: string; text: string }[]; note: string }
+  prizeCost: string
   pilotBadge: string
   stepsTitle: string
   steps: { title: string; text: string }[]

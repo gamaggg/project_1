@@ -21,6 +21,7 @@ export function partnersDoc(lang: Lang, city: PartnerCity): PartnersDoc {
     lead: o.lead,
     pilot: o.pilot,
     sheet: { ...base.sheet, address: o.address },
+    prizeCost: o.prizeCost,
     stats: base.stats.map((s, i) => (i === 1 ? { ...s, label: o.cityStatLabel } : s)),
     demo: {
       ...base.demo,
