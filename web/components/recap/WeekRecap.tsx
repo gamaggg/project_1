@@ -14,11 +14,14 @@ import type { TKey } from '@/lib/i18n/core'
 import type { CityId } from '@/lib/data/city'
 
 const SLIDE_MS = 6000
-const HIDDEN_KEY = 'range:recap-hidden'
+// The hidden week is kept per city (since 02.11): hiding Batumi's week
+// leaves Moscow's. The old city-less keys (range:recap-hidden, recap_hidden)
+// are no longer read — someone who hid last week's sticker sees it once more.
+const hiddenKey = (city: CityId) => `range:recap-hidden:${city}`
 
-function readHidden(): string | null {
+function readHidden(city: CityId): string | null {
   try {
-    return window.localStorage.getItem(HIDDEN_KEY)
+    return window.localStorage.getItem(hiddenKey(city))
   } catch {
     return null
   }
@@ -29,31 +32,40 @@ function readHidden(): string | null {
 export function RecapBanner({ city, onFindFree }: { city: CityId; onFindFree: () => void }) {
   const { t } = useI18n()
   const [ready, setReady] = useState(false)
-  const [hidden, setHidden] = useState<string | null>(null)
+  // Tagged with its city: right after a city switch it still holds the old
+  // city's week, which must neither hide nor be copied to the new city.
+  const [hiddenFor, setHiddenFor] = useState<{ city: CityId; week: string | null } | null>(null)
+  const hidden = hiddenFor?.city === city ? hiddenFor.week : null
   const [confirming, setConfirming] = useState(false)
   const [open, setOpen] = useState(false)
   useEffect(() => {
-    // After the map's own first requests, not alongside them.
-    const id = window.setTimeout(() => {
-      setHidden(readHidden())
-      setReady(true)
-    }, 1200)
+    // After the map's own first requests, not alongside them; on a city
+    // switch later, at once, so the new city's hidden sticker doesn't flash.
+    const id = window.setTimeout(
+      () => {
+        setHiddenFor({ city, week: readHidden(city) })
+        setReady(true)
+      },
+      ready ? 0 : 1200
+    )
     return () => window.clearTimeout(id)
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `ready` only picks the delay
+  }, [city])
   // The hidden week is kept on the account too (lib/uiState.ts): a sticker
   // hidden on the phone stays hidden in Telegram on the desktop, and survives
   // iPhone Telegram dropping the Mini App's localStorage. Guests: this device.
   const ui = useUiState()
-  const remoteHidden = (ui.state?.recap_hidden as string | undefined) ?? null
+  const uiKey = `recap_hidden:${city}`
+  const remoteHidden = (ui.state?.[uiKey] as string | undefined) ?? null
   const hiddenWeek = [hidden, remoteHidden].filter((w): w is string => !!w).sort().pop() ?? null
   // Hidden on this device only (before the account kept it, or offline):
   // handed up to the account, so the other devices and a fresh sign-in get it.
   const { set: setUi } = ui
   useEffect(() => {
-    if (ui.ready && hidden && (!remoteHidden || hidden > remoteHidden)) setUi('recap_hidden', hidden)
-  }, [ui.ready, hidden, remoteHidden, setUi])
+    if (ui.ready && hidden && (!remoteHidden || hidden > remoteHidden)) setUi(uiKey, hidden)
+  }, [ui.ready, hidden, remoteHidden, setUi, uiKey])
   const { data } = useCityWeekRecap(city, ready && ui.ready)
-  if (!data || data.catches === 0) return null
+  if (!data || data.catches === 0 || hiddenFor?.city !== city) return null
 
   // «28.09–4.10»: fits a sticker, reads the same in every language.
   const dm = (iso: string) => {
@@ -103,10 +115,10 @@ export function RecapBanner({ city, onFindFree }: { city: CityId; onFindFree: ()
                   className="btn-primary"
                   onClick={() => {
                     try {
-                      window.localStorage.setItem(HIDDEN_KEY, data.weekStart)
+                      window.localStorage.setItem(hiddenKey(city), data.weekStart)
                     } catch {}
-                    setHidden(data.weekStart)
-                    ui.set('recap_hidden', data.weekStart)
+                    setHiddenFor({ city, week: data.weekStart })
+                    ui.set(uiKey, data.weekStart)
                     setConfirming(false)
                   }}
                 >

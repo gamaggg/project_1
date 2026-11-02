@@ -281,7 +281,7 @@ export const FAQ_EN: FaqSection[] = [
       },
       {
         q: 'What is «Week in the city»?',
-        a: ['A sticker on the map with last week’s results: how much was caught, the main fish and anglers, your own numbers. You can share each slide.'],
+        a: ['A sticker on the map with last week’s results: how much was caught, the main fish and anglers, your own numbers. You can share each slide. The cross hides the sticker until next week’s results — only in this city, the other cities keep theirs.'],
       },
       {
         q: 'Where is my diary?',
