@@ -221,12 +221,13 @@ body{
 /* The bottom blur behind the facts, inside each page (the shade above it is only a gradient): the photo blurred,
    showing through the same band the shade covers (52% of the height, solid in its lower 42%). */
 .catch-photo-soft{position:absolute; inset:0; pointer-events:none; -webkit-mask-image:linear-gradient(to top, #000 0%, #000 21.8%, transparent 52%); mask-image:linear-gradient(to top, #000 0%, #000 21.8%, transparent 52%);}
-.catch-photo-soft img{display:block; filter:blur(14px); animation:catch-ambient-in .3s var(--ease-out) both;}
+.catch-photo-soft img{display:block;}
 /* 56% of the height, but never lower than the reactions column (up to four buttons, ~250px above the menu) lets it be. */
 .catch-arrow{position:absolute; top:min(56%, calc(100% - var(--nav-h, 82px) - 304px)); width:44px; height:64px; margin-top:-32px; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:.7; filter:drop-shadow(0 1px 3px rgba(0,0,0,.6)); z-index:2;}
 .catch-arrow:active{opacity:1;}
 @keyframes catch-ambient-in{from{opacity:0;}}
-.catch-reel-ambient{animation:catch-ambient-in .3s var(--ease-out) both; position:absolute; left:-10%; top:-10%; width:120%; height:120%; object-fit:cover; filter:blur(28px) brightness(.78) saturate(1.2); pointer-events:none;}
+/* 30% scaled ×4 = the 120% box; blurred small and stretched to save graphics memory (BLUR_SHRINK in CatchPhotoScreen). */
+.catch-reel-ambient{animation:catch-ambient-in .3s var(--ease-out) both; position:absolute; left:-10%; top:-10%; width:30%; height:30%; transform:scale(4); transform-origin:0 0; object-fit:cover; filter:blur(7px) brightness(.78) saturate(1.2); pointer-events:none;}
 .catch-reel-top{position:absolute; left:0; right:0; top:0; height:120px; pointer-events:none; background:linear-gradient(to bottom, rgba(10,11,12,.42), rgba(10,11,12,0));}
 .catch-reel-shade{position:absolute; left:0; right:0; bottom:0; height:52%; pointer-events:none; background:linear-gradient(to top, rgba(10,11,12,.8) 0%, rgba(10,11,12,.46) 48%, rgba(10,11,12,0) 100%); -webkit-mask-image:linear-gradient(to top, #000 0%, #000 42%, transparent 100%); mask-image:linear-gradient(to top, #000 0%, #000 42%, transparent 100%);}
 .catch-reel-counter{position:absolute; left:50%; transform:translateX(-50%); height:28px; display:flex; align-items:center; padding:0 11px; border-radius:20px; background:rgba(23,24,27,.5); color:#fff; font-size:11.5px; font-weight:700; margin-top:4px; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);}
@@ -1287,6 +1288,7 @@ html:not([lang="ru"]) .challenges-week-top{padding-top:22px;}
 .owner-avatar img{width:100%; height:100%; object-fit:cover;}
 .territory-thumb-wrap{position:relative; isolation:isolate; width:100%; height:150px; border-radius:var(--radius-l); overflow:hidden; margin-top:16px; box-shadow:var(--shadow-sm);}
 .territory-thumb-map{width:100%; height:100%; background:#DCE7E9;}
+.territory-thumb-map.night{background:#2B2B2B;}
 .territory-thumb-overlay{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:6px; pointer-events:none; z-index:1000;}
 .territory-thumb-avatar{width:30px; height:30px; border-radius:50%; overflow:hidden; border:2px solid #fff; box-shadow:0 2px 6px rgba(23,24,27,0.35); background:linear-gradient(160deg,#FF7A38,var(--accent) 70%); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800;}
 .territory-thumb-avatar img{width:100%; height:100%; object-fit:cover;}
@@ -1308,7 +1310,8 @@ html:not([lang="ru"]) .challenges-week-top{padding-top:22px;}
    edge on each side: horizontal scroll, and the back/share icons (positioned
    relative to this box) clipped half off-screen. */
 .sector-hero-map{position:relative; isolation:isolate;}
-.sector-hero-map .territory-thumb-wrap{height:230px; border-radius:0; margin-top:0; box-shadow:none;}
+/* The bottom fades into the screen instead of ending in a hard line beside the card (stark with the dark night map). */
+.sector-hero-map .territory-thumb-wrap{height:230px; border-radius:0; margin-top:0; box-shadow:none; -webkit-mask-image:linear-gradient(to bottom, #000 calc(100% - 40px), transparent); mask-image:linear-gradient(to bottom, #000 calc(100% - 40px), transparent);}
 /* Just 10px: .screen already pads its top by the notch + Telegram header
    (--tg-safe-area-top), and this hero sits inside that padding — adding the
    insets again pushed the share button halfway down the map in the Mini App. */

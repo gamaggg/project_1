@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Territory } from '@/lib/data/types'
 import { resolveTerritoryColor, OTHER_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { previewTileUrl } from '@/lib/mapbox/rasterTiles'
+import { currentLightPreset } from '@/lib/mapbox/lightPreset'
 import { splitSector } from '@/lib/map/sectorParts'
 import { tn } from '@/lib/i18n/runtime'
 
@@ -50,6 +51,7 @@ export function TerritoryThumbnailMap({
 
   useEffect(() => {
     let cancelled = false
+    let claimTimer = 0
     import('leaflet').then((LModule) => {
       if (cancelled || !containerRef.current) return
       const L = (LModule as unknown as { default?: typeof LModule }).default ?? LModule
@@ -65,7 +67,7 @@ export function TerritoryThumbnailMap({
         preferCanvas: true,
       })
       mapRef.current = map
-      L.tileLayer(previewTileUrl(), { tileSize: 256 }).addTo(map)
+      const tiles = L.tileLayer(previewTileUrl(), { tileSize: 256 }).addTo(map)
       const color = resolveTerritoryColor(territory.status, myTerritoryColor, territory.ownerColor)
       const fillOpacity = territory.status === 'free' ? 0.22 : 0.32
       const split = shared ? splitSector(territory.corners, holders.length) : null
@@ -92,14 +94,21 @@ export function TerritoryThumbnailMap({
       }
       map.fitBounds(poly.getBounds(), { padding: [10, 10] })
       if (claimFx) {
-        setClaim({
+        const next = {
           id: territory.id,
           points: territory.corners.map((c) => {
             const p = map.latLngToContainerPoint(c)
             return `${Math.round(p.x)},${Math.round(p.y)}`
           }).join(' '),
           color,
-        })
+        }
+        // Played once the map's tiles are in (on a slow network at most 2 s later), not over grey squares.
+        const play = () => {
+          window.clearTimeout(claimTimer)
+          if (!cancelled) setClaim(next)
+        }
+        tiles.once('load', play)
+        claimTimer = window.setTimeout(play, 2000)
       }
       if (split) {
         const middle = map.latLngToContainerPoint(split.center)
@@ -114,6 +123,7 @@ export function TerritoryThumbnailMap({
     })
     return () => {
       cancelled = true
+      window.clearTimeout(claimTimer)
       mapRef.current?.remove()
       mapRef.current = null
     }
@@ -126,7 +136,8 @@ export function TerritoryThumbnailMap({
 
   return (
     <div className={`territory-thumb-wrap${claimFx ? ' claim-fx' : ''}${claimNow ? ' go' : ''}`}>
-      <div className="territory-thumb-map" ref={containerRef} />
+      {/* At night the tiles are dark-v11 (previewTileUrl): a tile still loading shows the map's own dark ground, not a light square. */}
+      <div className={`territory-thumb-map${currentLightPreset() === 'night' ? ' night' : ''}`} ref={containerRef} />
       {claimNow && (
         <svg key={claimNow.id} className="territory-thumb-claim" aria-hidden style={{ '--claim': claimNow.color } as React.CSSProperties}>
           <polygon points={claimNow.points} pathLength={1} />

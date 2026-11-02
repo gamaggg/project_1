@@ -28,13 +28,14 @@ function likersSummary(likers: ProfileSummary[]): string {
 }
 
 const PHOTO_ZOOM = 1.12
+// The two blurred copies are drawn this many times smaller and stretched back: a blur is a buffer the size of what is
+// blurred, and full-size copies on all three pages of the slider were enough for iOS to run out of graphics memory in
+// Telegram (01.11, 02.11). Under the blur the picture looks the same (measured: 21 MB of the page's 49 MB gone).
+const BLUR_SHRINK = 4
 
 // The photo, almost whole (a touch enlarged, see PHOTO_ZOOM). Where its proportions leave empty space (above and below a wide frame, at the sides
 // of a narrow one) a blurred copy of the same picture fills it, and the sharp photo's edges fade into that copy,
 // so there is no black void and no hard seam. A photo that fills the screen in some direction is not faded there.
-// Only the photo on the screen gets the two blurred copies: each is a full-screen filter buffer, and the two
-// neighbours' ones (six in all) were enough to make iOS drop the page in Telegram (01.11). A neighbour slides in
-// on black, and its blur fades in as it lands.
 function CatchPhotoLayer({ src, alt, current, tour, onZoom }: { src: string; alt: string; current: boolean; tour: boolean; onZoom: () => void }) {
   const boxRef = useRef<HTMLDivElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
@@ -57,6 +58,7 @@ function CatchPhotoLayer({ src, alt, current, tour, onZoom }: { src: string; alt
 
   // Until the picture's size is known it is not shown at all (it would be drawn unscaled, then jump to its real size).
   let style: React.CSSProperties = { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: '50% 36%' }
+  let softStyle: React.CSSProperties | null = null
   if (box && nat && box.w > 0 && box.h > 0) {
     // 12% bigger than «fits whole»: the blurred bands above and below shrink, and a portrait frame loses about 6% at each side.
     const k = Math.min(box.w / nat.w, box.h / nat.h) * PHOTO_ZOOM
@@ -75,15 +77,19 @@ function CatchPhotoLayer({ src, alt, current, tour, onZoom }: { src: string; alt
       const mask = masks.join(', ')
       Object.assign(style, { WebkitMaskImage: mask, maskImage: mask, WebkitMaskComposite: 'source-in', maskComposite: 'intersect' })
     }
+    // The same place and size, drawn BLUR_SHRINK times smaller and stretched from its top left corner.
+    softStyle = { position: 'absolute', left, top, width: w / BLUR_SHRINK, height: h / BLUR_SHRINK, transform: `scale(${BLUR_SHRINK})`, transformOrigin: '0 0', filter: `blur(${14 / BLUR_SHRINK}px)` }
   }
 
   return (
     <div ref={boxRef} className="catch-photo-layer" style={{ position: 'absolute', inset: 0, cursor: 'zoom-in' }} onClick={onZoom}>
-      {current && <img className="catch-reel-ambient" src={src} alt="" aria-hidden decoding="async" />}
+      <img className="catch-reel-ambient" src={src} alt="" aria-hidden decoding="async" />
       <img ref={imgRef} data-catch-photo={current || undefined} data-tour={tour ? 'photo-zoom' : undefined} src={src} alt={alt} decoding="async" style={{ display: 'block', opacity: nat ? 1 : 0, transition: 'opacity .2s ease-out', ...style }} onLoad={(e) => setNat({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })} />
       {/* The soft blur under the facts at the bottom: a blurred copy of the photo that slides with it. A backdrop blur
           over sliding photos is redrawn every frame, which is what made paging stutter on phones. */}
-      {current && <div className="catch-photo-soft" aria-hidden>{nat && <img src={src} alt="" decoding="async" style={style} />}</div>}
+      <div className="catch-photo-soft" aria-hidden>
+        {softStyle && <img src={src} alt="" decoding="async" style={softStyle} />}
+      </div>
     </div>
   )
 }

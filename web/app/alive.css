@@ -256,7 +256,10 @@ button.fish-cal-cell:not(:disabled):active{transform:scale(.8);}
 /* Sits just above the feed; the feed slides down by the pull (pullShift) and
    uncovers it. Line and hook are one drawing, centred on the line, swinging
    from the line's top. */
-.ptr{position:absolute; left:-20px; right:-20px; top:0; height:110px; transform:translateY(-100%); pointer-events:none; transition:opacity .2s;}
+/* left/right 0, not past the screen edges: a block wider than the screen gave the whole feed a sideways scroll. */
+.ptr{position:absolute; left:0; right:0; top:0; height:110px; transform:translateY(-100%); pointer-events:none; transition:opacity .2s;}
+/* The line goes on straight up off the screen above the swinging part, so it never starts in mid-air. */
+.ptr::before{content:''; position:absolute; bottom:100%; left:50%; width:1px; margin-left:-.5px; height:100vh; background:rgba(23,24,27,.35);}
 .ptr-hook{position:absolute; top:0; left:50%; margin-left:-12px; overflow:visible; transform-origin:12px 0; transition:transform .12s; color:#17181B;}
 .ptr-line{stroke:rgba(23,24,27,.35);}
 .ptr-hook-body{stroke:currentColor;}
