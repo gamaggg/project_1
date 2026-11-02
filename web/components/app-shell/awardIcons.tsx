@@ -61,16 +61,18 @@ export const AWARD_ICONS: Record<AwardKind, React.ReactNode> = {
       <polygon points={star(12, 11.9, 3.4, 1.45)} fill="currentColor" />
     </svg>
   ),
-  // Catch of the month: the fish itself, with a measuring rule under it.
+  // Catch of the month: a big fish over a measuring rule.
   catch_of_month: (
     <svg viewBox="0 0 24 24">
-      <g transform="translate(0 -1.6)">
-        <path d="M2.5 12C5 7.8 10 6.8 13.5 9c.9.6 1.6 1.2 2.1 1.9L21 7.5v9l-5.4-3.4c-.5.7-1.2 1.3-2.1 1.9C10 17.2 5 16.2 2.5 12z" fill="currentColor" />
-        <path d="M13.5 9c.9.6 1.6 1.2 2.1 1.9L21 7.5v9l-5.4-3.4c-.5.7-1.2 1.3-2.1 1.9z" fill="#000" opacity=".1" />
-        <path d="M10 9.3c1.3 1.7 1.3 3.9 0 5.5" fill="none" style={{ stroke: 'var(--c)' }} strokeWidth="1.3" strokeLinecap="round" opacity=".55" />
-        <circle cx="6.5" cy="11.3" r="1.1" style={CUT} />
+      <g transform="translate(0 -1.5)">
+        <path d="M9.4 7.3 11.2 4.7c1.2.1 2.2.8 2.8 1.8l-.6 1.4z" fill="currentColor" opacity=".85" />
+        <path d="M2.4 11.6c2.2-3.7 6.1-5.3 9.8-4.7 2.3.4 4.1 1.6 5.3 3.2l3.7-2.9c.5-.4 1.1 0 1 .6l-.8 3.8.8 3.8c.1.6-.5 1-1 .6l-3.7-2.9c-1.2 1.6-3 2.8-5.3 3.2-3.7.6-7.6-1-9.8-4.7z" fill="currentColor" />
+        <path d="M17.5 10.1l3.7-2.9c.5-.4 1.1 0 1 .6l-.8 3.8.8 3.8c.1.6-.5 1-1 .6l-3.7-2.9z" fill="#000" opacity=".12" />
+        <path d="M9.6 8.4c1.2 1.9 1.2 4.4 0 6.3" fill="none" style={{ stroke: 'var(--c)' }} strokeWidth="1.2" strokeLinecap="round" />
+        <circle cx="6.3" cy="10.8" r="1.1" style={CUT} />
       </g>
-      <path d="M3.5 20.5h17M5.5 20.5v-1.7M9 20.5v-1M12.5 20.5v-1.7M16 20.5v-1M19.5 20.5v-1.7" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity=".9" />
+      <rect x="3.6" y="17.6" width="16.8" height="3.3" rx="1" fill="currentColor" />
+      <path d="M6.2 17.6v1.6M9.1 17.6v1M12 17.6v1.6M14.9 17.6v1M17.8 17.6v1.6" style={{ stroke: 'var(--c)' }} strokeWidth="1.1" strokeLinecap="round" />
     </svg>
   ),
   // Lightning: a bolt with glints.
@@ -83,14 +85,15 @@ export const AWARD_ICONS: Record<AwardKind, React.ReactNode> = {
       <circle cx="20" cy="17.6" r=".95" fill="currentColor" opacity=".7" />
     </svg>
   ),
-  // Season legend: a flame within a flame.
+  // Season legend: a big flame with an inner flame cut out of it, the
+  // right half shaded and glints around it, drawn like the other medals.
   season_legend: (
     <svg viewBox="0 0 24 24">
-      {/* The flame's box is centred at (12.9, 13.25): moved onto the medal's centre. */}
-      <g transform="translate(-0.9 -1.25)">
-      <path d="M12 21.6c4.1 0 6.7-2.8 6.7-6.5 0-2.9-1.7-5.2-2.9-6.4.2 1.8-.8 2.6-1.7 1.8.3-2.3-.9-4.6-2.7-5.6.7 2.2-.8 3.6-2.2 5.3-1.2 1.4-2.1 2.8-2.1 4.6 0 3.7 2.6 6.8 4.9 6.8z" fill="currentColor" />
-      <path d="M12 20.4c2.2 0 3.6-1.5 3.6-3.4 0-1.6-.9-2.7-1.8-3.5 0 1-.6 1.5-1.2 1.1-.1-1.3-.8-2.4-1.6-3 .3 1.2-.4 2.1-1.2 2.9-.6.7-1.3 1.6-1.3 2.6 0 2 1.4 3.3 2.5 3.3z" style={CUT} />
-      </g>
+      <path d="M12 2.4c.6 2.6 2.6 4.3 4.3 6.2 1.6 1.8 2.6 3.7 2.6 6 0 3.9-3.1 6.9-6.9 6.9s-6.9-3-6.9-6.9c0-2.6 1.3-4.6 2.8-6.1.2 1.6 1 2.6 2.1 3.1-.6-3.3.6-6.6 2-9.2z" fill="currentColor" />
+      <path d="M12 2.4c.6 2.6 2.6 4.3 4.3 6.2 1.6 1.8 2.6 3.7 2.6 6 0 3.9-3.1 6.9-6.9 6.9z" fill="#000" opacity=".1" />
+      <path d="M12 11.3c.9 1.9 3.3 3.1 3.3 5.8 0 1.9-1.5 3.4-3.3 3.4s-3.3-1.5-3.3-3.4c0-1.3.6-2.2 1.4-3 .2.9.7 1.4 1.3 1.6-.2-1.6.1-3.1.6-4.4z" style={CUT} />
+      <polygon points={sparkle(19.6, 4.4, 2.2)} fill="currentColor" />
+      <polygon points={sparkle(4.4, 6, 1.4)} fill="currentColor" opacity=".8" />
     </svg>
   ),
   // Night watch: a crescent with stars.
