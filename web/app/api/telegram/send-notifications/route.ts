@@ -101,6 +101,9 @@ function renderMessage(notification: NotificationRef): Message | null {
         .filter((p) => typeof p.tg_id === 'number')
         .slice(0, 3)
         .map((p) => ({ text: `Написать: ${p.name ?? 'игрок'}`.slice(0, 60), url: `tg://user?id=${p.tg_id}` }))
+      // An anti-abuse freeze (_freeze_user) names the player: open their profile.
+      const publicId = notification.payload?.user_public_id as string | undefined
+      if (publicId) return { text: `⚠️ RANGE — тревога\n${text}`, buttonLabel: 'Открыть профиль', url: `${SITE_URL}/?user=${encodeURIComponent(publicId)}`, extraButtons }
       return { text: `⚠️ RANGE — тревога\n${text}`, buttonLabel: 'Открыть RANGE', url: SITE_URL, extraButtons }
     }
     case 'clan_invite':

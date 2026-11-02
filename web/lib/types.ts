@@ -1889,6 +1889,14 @@ export type Database = {
         Args: { p_blocked: boolean; p_user_id: string }
         Returns: undefined
       }
+      admin_get_freeze: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
+      admin_unfreeze: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       admin_set_public_id: {
         Args: { p_public_id: string; p_user_id: string }
         Returns: undefined

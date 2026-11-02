@@ -14,6 +14,8 @@ import {
   useCanBlockUsers,
   useCanMessagePlayers,
   useSetBlocked,
+  useAccountFreeze,
+  useUnfreeze,
   useHasClaimedFromOthers,
   useEarnedAchievements,
   useReportDeletionCount,
@@ -42,6 +44,15 @@ import { BackButton } from '@/components/app-shell/BackButton'
 import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
 import { tn } from '@/lib/i18n'
 import { AdminSupportChatSheet } from '@/components/app-shell/AdminSupportChatSheet'
+
+// Which anti-abuse check froze the account (profiles.frozen_reason, _abuse_check_catch / abuse_scan).
+const FREEZE_REASON: Record<string, string> = {
+  rhythm: 'Уловы шли ровно, как по таймеру',
+  teleport: '«Телепорт» между далёкими секторами',
+  volume: 'Слишком много уловов за сутки',
+  uploads: 'Слишком много фото за час',
+  reports: 'Слишком много жалоб за час',
+}
 
 // Rendered by FishZoneApp itself, not nested inside a screen's scrolling
 // `.screen-inner` — same clipping reasoning as every other app-shell-level
@@ -121,6 +132,8 @@ export function UserProfileScreen({
   const canMessagePlayers = useCanMessagePlayers()
   const [supportChatOpen, setSupportChatOpen] = useState(false)
   const setBlocked = useSetBlocked()
+  const { data: freeze } = useAccountFreeze(userId, canBlockUsers)
+  const unfreeze = useUnfreeze()
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(userId)
   const { data: earnedAchievements } = useEarnedAchievements(userId)
   const { data: reportDeletionCount } = useReportDeletionCount(userId)
@@ -256,6 +269,19 @@ export function UserProfileScreen({
             </button>
           )}
         </div>
+        {/* Frozen by the anti-abuse checks (02.11): what tripped, until when,
+            and «Разморозить» for a false alarm; «Заблокировать» is above. */}
+        {canBlockUsers && freeze && (
+          <div className="card" style={{ marginTop: 10, padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ flex: 1, fontSize: 13.5, lineHeight: 1.4 }}>
+              <b>Заморожен до {new Date(freeze.frozenUntil).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</b>
+              <div style={{ color: 'var(--ink-soft)', marginTop: 2 }}>{FREEZE_REASON[freeze.reason ?? ''] ?? 'Подозрительная активность'}</div>
+            </div>
+            <button className="btn-secondary" style={{ width: 'auto', padding: '0 14px' }} disabled={unfreeze.isPending} onClick={() => unfreeze.mutate(userId)}>
+              Разморозить
+            </button>
+          </div>
+        )}
 
         {canInvite && (
           <button

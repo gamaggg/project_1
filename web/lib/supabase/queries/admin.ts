@@ -33,6 +33,35 @@ export function useSetBlocked() {
   })
 }
 
+// The anti-abuse freeze on a player (admin_get_freeze — super admin or an
+// admin who may block): when it ends and which check tripped. null — not frozen.
+export type AccountFreeze = { frozenUntil: string; reason: string | null }
+export function useAccountFreeze(userId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ['account-freeze', userId],
+    enabled: enabled && !!userId,
+    queryFn: async (): Promise<AccountFreeze | null> => {
+      const { data, error } = await createClient().rpc('admin_get_freeze', { p_user_id: userId! })
+      if (error) throw error
+      const d = data as { frozen_until?: string; reason?: string | null } | null
+      return d?.frozen_until ? { frozenUntil: d.frozen_until, reason: d.reason ?? null } : null
+    },
+  })
+}
+
+export function useUnfreeze() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await createClient().rpc('admin_unfreeze', { p_user_id: userId })
+      if (error) throw error
+    },
+    onSuccess: (_data, userId) => {
+      queryClient.invalidateQueries({ queryKey: ['account-freeze', userId] })
+    },
+  })
+}
+
 // The real, unmasked permission set for one admin (profiles_with_stats masks
 // these to null for anyone but the row's own owner) — only a super admin can
 // call get_admin_permissions, for any target user. Pre-fills

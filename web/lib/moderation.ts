@@ -6,7 +6,7 @@ import { currentLocale, labels, tn } from '@/lib/i18n/runtime'
 
 export const COMMENT_MAX_LENGTH = 300
 
-const REASON_TEXT: Record<string, string | undefined> = labels('modReason', ['empty', 'too_long', 'profanity', 'link', 'phone', 'caps', 'repeat', 'reserved', 'duplicate', 'rate_hour', 'rate_day', 'rate_catch', 'blocked', 'no_catch', 'no_parent'] as const)
+const REASON_TEXT: Record<string, string | undefined> = labels('modReason', ['empty', 'too_long', 'profanity', 'link', 'phone', 'caps', 'repeat', 'reserved', 'duplicate', 'rate_hour', 'rate_day', 'rate_catch', 'blocked', 'frozen', 'no_catch', 'no_parent'] as const)
 
 export function moderationMessage(reason: string, extra?: { retryAfter?: number | null; mutedUntil?: string | null }): string {
   if (reason === 'rate_fast') return tn('modReason.rate_fast', { sec: extra?.retryAfter ?? 8 })

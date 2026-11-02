@@ -66,6 +66,10 @@ export const FAQ_EN: FaqSection[] = [
         a: ['Up to three of your biggest catches: the longest first; if fewer than three have a length, the heaviest of those with only a weight fill the rest. Catches without a length or weight are not shown. Other players see this block in your profile too; a tap opens the photo of the catch.'],
       },
       {
+        q: 'Are there limits on catches and photos?',
+        a: ['Yes, but a regular angler never gets near them: up to 60 catches a day (and no more often than once every 2.5 minutes), up to 40 photos an hour and 120 a day, up to 10 reports an hour. If the activity looks like a program rather than a person, the account goes under review for a day: you can still look at everything, but not catch, upload photos, comment or report. If it\'s a mistake, write to support.'],
+      },
+      {
         q: 'Why is my catch not saved?',
         a: [
           [

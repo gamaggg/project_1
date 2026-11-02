@@ -1148,6 +1148,10 @@ export function FishZoneApp() {
         setShieldBlock({ territoryId: catchTerritoryId, until: new Date(Number(shieldedMatch[1]) * 1000).toISOString(), photoUrl, form })
       } else if (message === 'account blocked') {
         showToast(tn('shell.blocked'))
+      } else if (message === 'FROZEN') {
+        showToast(tn('shell.frozen'))
+      } else if (message.startsWith('RATE_LIMIT')) {
+        showToast(tn('shell.catchLimit'))
       } else {
         reportClientError('confirm_catch', err)
         showToast(tn('shell.catchSaveFailed'))

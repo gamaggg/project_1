@@ -3325,6 +3325,24 @@ button.clan-chip:focus-visible{outline:2px solid rgb(var(--hero-text-rgb,255,255
 @media (prefers-reduced-motion: reduce){.clan-member-row, .clan-list-row, .clan-tab-body, .clan-toast{animation:none;}}
 
 /* Profile: clan card under the Challenges/Shop row (see ProfileScreen.tsx) */
+/* ---------- Admin tools: one card and a sheet of tiles (AdminPanel.tsx) ---------- */
+.profile-admin-card{display:flex; align-items:center; gap:14px; width:100%; margin-top:24px; border:none; border-radius:20px; padding:14px 16px; background:linear-gradient(160deg,#22252B,#17181B); color:#fff; font:inherit; text-align:left; cursor:pointer; box-shadow:var(--shadow);}
+.profile-admin-shield{flex:0 0 auto; width:42px; height:42px; border-radius:13px; background:rgba(255,255,255,.1); display:flex; align-items:center; justify-content:center;}
+.profile-admin-title{font-size:15px; font-weight:800;}
+.profile-admin-sub{font-size:12.5px; font-weight:600; color:rgba(255,255,255,.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.profile-admin-badge{flex:0 0 auto; min-width:22px; height:22px; padding:0 6px; border-radius:11px; background:var(--accent); color:#fff; font-size:12px; font-weight:800; line-height:22px; text-align:center;}
+.admin-sheet-scroll{overflow-y:auto; padding:10px 16px 18px;}
+.admin-sheet-title{font-size:18px; font-weight:800; margin:4px 2px 2px;}
+.admin-sheet-group{font-size:12px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.04em; margin:16px 2px 8px;}
+.admin-sheet-grid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px;}
+.admin-tile{display:flex; flex-direction:column; align-items:center; gap:7px; padding:14px 6px 12px; border:none; border-radius:16px; background:rgba(23,24,27,.045); color:var(--ink); font:inherit; font-size:12.5px; font-weight:700; line-height:1.25; text-align:center; cursor:pointer;}
+/* The count sits on the icon's corner, half over it. */
+.admin-tile-icon{position:relative; width:44px; height:44px; border-radius:13px; display:flex; align-items:center; justify-content:center;}
+.admin-tile-badge{position:absolute; top:-7px; right:-9px; min-width:20px; height:20px; padding:0 5px; border-radius:10px; background:var(--accent); color:#fff; font-size:11px; font-weight:800; line-height:20px; text-align:center; box-shadow:0 0 0 2px var(--surface);}
+.admin-tone-mod .admin-tile-icon{background:rgba(224,72,62,.12); color:#D33A30;}
+.admin-tone-data .admin-tile-icon{background:rgba(29,111,201,.12); color:#1D6FC9;}
+.admin-tone-manage .admin-tile-icon{background:rgba(227,154,18,.15); color:#B9760A;}
+.admin-tile-label{display:block;}
 .profile-clan-card{position:relative; display:flex; align-items:center; gap:14px; width:100%; margin-top:10px; border:none; border-radius:20px; padding:14px 16px; color:#fff; font:inherit; text-align:left; cursor:pointer; overflow:hidden; box-shadow:var(--shadow);}
 .profile-clan-card-empty{background:radial-gradient(120% 90% at 100% 0%, rgba(29,111,201,.45), rgba(29,111,201,0) 55%), linear-gradient(160deg,#16222E,#0C1218);}
 .profile-clan-text{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}

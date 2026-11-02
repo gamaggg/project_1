@@ -46,6 +46,7 @@ import { resolveAvatarFrame } from '@/lib/data/shopItems'
 import { AvatarFrameRing } from '@/components/app-shell/AvatarFrameRing'
 import { StyledName } from '@/components/app-shell/StyledName'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { AdminPanel, ADMIN_ICONS } from '@/components/app-shell/AdminPanel'
 import { insideTelegram } from '@/lib/openExternal'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { CITIES, type CityId } from '@/lib/data/city'
@@ -834,91 +835,30 @@ export function ProfileScreen({
 
       <ProfileTrophies catches={topCatches} onOpenPhoto={onOpenPhoto} />
 
-      {canModerateReports && (
-        <div className="btn-wrap" style={{ marginTop: 24 }}>
-          <button className="btn-secondary" onClick={onOpenReports}>
-            Жалобы на фото
-          </button>
-          {reports.length > 0 && <span className="btn-badge">{reports.length}</span>}
-        </div>
-      )}
-      {/* An admin given the panoramas permission; the super admin has the
-          same button in its own block below. */}
-      {canReviewPanoramas && !isSuperAdmin && (
-        <div style={{ marginTop: canModerateReports ? 12 : 24 }}>
-          <button className="btn-secondary" onClick={onOpenAdminGeo}>
-            Панорамы «Где это?»
-          </button>
-        </div>
-      )}
-      {/* An admin given the statistics switch; the super admin has the same button below. */}
-      {canViewStats && !isSuperAdmin && (
-        <div style={{ marginTop: canModerateReports || canReviewPanoramas ? 12 : 24 }}>
-          <button className="btn-secondary" onClick={onOpenAdminStats}>
-            Статистика
-          </button>
-        </div>
-      )}
-      {/* An admin given the limits switch; the super admin has the same button below. */}
-      {canViewLimits && !isSuperAdmin && (
-        <div style={{ marginTop: canModerateReports || canReviewPanoramas || canViewStats ? 12 : 24 }}>
-          <button className="btn-secondary" onClick={onOpenAdminLimits}>
-            Лимиты сервисов
-          </button>
-        </div>
-      )}
-      {isSuperAdmin && (
-        <>
-          <div style={{ marginTop: 12 }}>
-            <button className="btn-secondary" onClick={onOpenAdminAccess}>
-              Доступы
-            </button>
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <button className="btn-secondary" onClick={onOpenAdminStats}>
-              Статистика
-            </button>
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <button className="btn-secondary" onClick={onOpenAdminLimits}>
-              Лимиты сервисов
-            </button>
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <button className="btn-secondary" onClick={onOpenAdminGeo}>
-              Панорамы «Где это?»
-            </button>
-          </div>
-          <div className="btn-wrap" style={{ marginTop: 12 }}>
-            <button className="btn-secondary" onClick={onOpenAdminLog}>
-              Последние действия
-            </button>
-            {adminLogUnreadCount > 0 && <span className="btn-badge">{adminLogUnreadCount}</span>}
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <button className="btn-secondary" onClick={onPostAnnouncement}>
-              Написать пост
-            </button>
-          </div>
-          {user && (
-            <div style={{ marginTop: 12 }}>
-              <button className="btn-secondary" onClick={() => onEditPublicId(user.id)}>
-                Изменить ID
-              </button>
-            </div>
-          )}
-          {user && (
-            <div style={{ marginTop: 12 }}>
-              <button className="btn-secondary shop-price-btn" onClick={() => onGrantCoins(user.id)}>
-                Монеты: <CoinIcon size={16} /> {profile?.coins ?? 0}
-              </button>
-              <button className="btn-secondary" style={{ marginTop: 8 }} onClick={() => onGrantSpins(user.id)}>
-                Прокруты слотов
-              </button>
-            </div>
-          )}
-        </>
-      )}
+      {/* Every admin tool behind one «Управление» card (AdminPanel). The
+          super admin sees all of them; an admin, the ones given to them. */}
+      <AdminPanel
+          items={[
+            ...(canModerateReports ? [{ id: 'reports', label: 'Жалобы на фото', icon: ADMIN_ICONS.reports, tone: 'mod' as const, badge: reports.length, onClick: onOpenReports }] : []),
+            ...(canReviewPanoramas || isSuperAdmin ? [{ id: 'geo', label: 'Панорамы «Где это?»', icon: ADMIN_ICONS.panoramas, tone: 'mod' as const, onClick: onOpenAdminGeo }] : []),
+            ...(canViewStats || isSuperAdmin ? [{ id: 'stats', label: 'Статистика', icon: ADMIN_ICONS.stats, tone: 'data' as const, onClick: onOpenAdminStats }] : []),
+            ...(canViewLimits || isSuperAdmin ? [{ id: 'limits', label: 'Лимиты сервисов', icon: ADMIN_ICONS.limits, tone: 'data' as const, onClick: onOpenAdminLimits }] : []),
+            ...(isSuperAdmin
+              ? [
+                  { id: 'log', label: 'Последние действия', icon: ADMIN_ICONS.log, tone: 'data' as const, badge: adminLogUnreadCount, onClick: onOpenAdminLog },
+                  { id: 'access', label: 'Доступы', icon: ADMIN_ICONS.access, tone: 'manage' as const, onClick: onOpenAdminAccess },
+                  { id: 'post', label: 'Написать пост', icon: ADMIN_ICONS.post, tone: 'manage' as const, onClick: onPostAnnouncement },
+                ]
+              : []),
+            ...(isSuperAdmin && user
+              ? [
+                  { id: 'id', label: 'Изменить ID', icon: ADMIN_ICONS.publicId, tone: 'manage' as const, onClick: () => onEditPublicId(user.id) },
+                  { id: 'coins', label: `Монеты ${profile?.coins ?? 0}`, icon: ADMIN_ICONS.coins, tone: 'manage' as const, onClick: () => onGrantCoins(user.id) },
+                  { id: 'spins', label: 'Прокруты слотов', icon: ADMIN_ICONS.spins, tone: 'manage' as const, onClick: () => onGrantSpins(user.id) },
+                ]
+              : []),
+          ]}
+        />
 
       <button className="profile-invite-card tap-scale" style={{ marginTop: 24 }} onClick={onInviteFriends}>
         <span className="profile-invite-coins" aria-hidden>
