@@ -19,8 +19,20 @@ const GROUPS: { tone: AdminTone; title: string }[] = [
   { tone: 'manage', title: 'Управление' },
 ]
 
-export function AdminPanel({ items }: { items: AdminItem[] }) {
+// active: the profile is on screen with no admin window over it. A tile
+// closes the sheet and opens its screen or window; once the profile is
+// active again (back from the screen, the window closed) the sheet comes
+// back, so «Назад» returns to «Управление», not to the bare profile.
+export function AdminPanel({ items, active }: { items: AdminItem[]; active: boolean }) {
   const [open, setOpen] = useState(false)
+  const [returnToSheet, setReturnToSheet] = useState(false)
+  // Adjusted while rendering, not in an effect: the tile's own click sets
+  // returnToSheet together with the screen or window it opens (one batch),
+  // so this only fires once the profile is active again.
+  if (active && returnToSheet) {
+    setReturnToSheet(false)
+    setOpen(true)
+  }
   if (items.length === 0) return null
   const total = items.reduce((n, i) => n + (i.badge ?? 0), 0)
   const single = items.length === 1 ? items[0] : null
@@ -66,6 +78,7 @@ export function AdminPanel({ items }: { items: AdminItem[] }) {
                             className={`admin-tile admin-tone-${i.tone} tap-scale`}
                             onClick={() => {
                               setOpen(false)
+                              setReturnToSheet(true)
                               i.onClick()
                             }}
                           >

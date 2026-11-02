@@ -1961,6 +1961,7 @@ export function FishZoneApp() {
             onOpenClan={openClan}
             onOpenGeo={openGeo}
             onOpenAdminGeo={() => push({ screen: 'screen-admin-geo' })}
+            adminPanelActive={currentScreen === 'screen-profile' && !postingAnnouncement && editingPublicIdUserId === null && grantingCoinsUserId === null && grantingSpinsUserId === null}
           />
         </Screen>
         <Screen id="screen-user-profile" current={currentScreen} onBack={pop}>

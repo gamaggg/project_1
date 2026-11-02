@@ -433,6 +433,7 @@ export function ProfileScreen({
   onOpenClan,
   onOpenGeo,
   onOpenAdminGeo,
+  adminPanelActive,
 }: {
   myTerritories: Territory[]
   allTerritories: Territory[]
@@ -471,6 +472,8 @@ export function ProfileScreen({
   onOpenClan: (id: number) => void
   onOpenGeo: () => void
   onOpenAdminGeo: () => void
+  // The profile is on screen and no admin window is over it (AdminPanel reopens its sheet then).
+  adminPanelActive: boolean
 }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
@@ -803,6 +806,7 @@ export function ProfileScreen({
       {/* Every admin tool behind one «Управление» card (AdminPanel). The
           super admin sees all of them; an admin, the ones given to them. */}
       <AdminPanel
+        active={adminPanelActive}
           items={[
             ...(canModerateReports ? [{ id: 'reports', label: 'Жалобы на фото', icon: ADMIN_ICONS.reports, tone: 'mod' as const, badge: reports.length, onClick: onOpenReports }] : []),
             ...(canReviewPanoramas || isSuperAdmin ? [{ id: 'geo', label: 'Панорамы «Где это?»', icon: ADMIN_ICONS.panoramas, tone: 'mod' as const, onClick: onOpenAdminGeo }] : []),
