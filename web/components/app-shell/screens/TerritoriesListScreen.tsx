@@ -2,16 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Territory, TerritoryStatus } from '@/lib/data/types'
-import { KIND_LABEL } from '@/lib/data/species'
-import { formatWhen, pluralSectors } from '@/lib/format'
+import { pluralSectors } from '@/lib/format'
 import { useCanViewAllUsers } from '@/lib/supabase/queries'
-import { resolveTerritoryColor } from '@/lib/data/territoryColors'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { WeeklyLeaderboard } from '@/components/app-shell/screens/WeeklyLeaderboard'
 import { PlayersDirectory } from '@/components/app-shell/screens/PlayersDirectory'
 import { ClanRating } from '@/components/app-shell/screens/ClanRating'
 import { compareSectors, SECTOR_SORT_LABEL, type SectorSort } from '@/lib/data/sectorOrder'
 import { SortMenu } from '@/components/app-shell/SortMenu'
+import { ProfileSectorRow } from '@/components/app-shell/ProfileSectors'
 import { tn } from '@/lib/i18n'
 
 type Filter = 'all' | TerritoryStatus
@@ -29,7 +28,6 @@ const heldByMe = (t: Territory) => t.status === 'mine' || t.coHolders.some((h) =
 
 export function TerritoriesListScreen({
   territories,
-  myTerritoryColor,
   city,
   initialFilter,
   initialMode,
@@ -41,6 +39,7 @@ export function TerritoriesListScreen({
   heldElsewhere,
 }: {
   territories: Territory[]
+  // Not drawn any more (the rows are ProfileSectorRow, no colour mark); kept so callers need no change.
   myTerritoryColor: string
   city: CityId
   initialFilter?: Filter
@@ -163,38 +162,11 @@ export function TerritoriesListScreen({
           </div>
           <div className="card" style={{ overflow: 'hidden' }}>
             {list.length ? (
-              list.slice(0, visibleCount).map((t, i) => {
-                // a sector shared with clan-mates is the viewer's too
-                const share = t.status !== 'mine' && t.coHolders.some((h) => h.isMe)
-                return (
-                <button
-                  key={t.id}
-                  className="terr-list-item"
-                  style={{ borderBottom: i < list.length - 1 ? '1px solid var(--line)' : 'none' }}
-                  onClick={() => onOpenTerritory(t.id)}
-                >
-                  <div
-                    className="hex-aspect hex-shape"
-                    style={{
-                      width: 12,
-                      background: share ? myTerritoryColor : resolveTerritoryColor(t.status, myTerritoryColor, t.ownerColor),
-                      flex: '0 0 auto',
-                      alignSelf: 'flex-start',
-                      marginTop: 4,
-                    }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, fontSize: 14.5 }}>{tn('terr.sector', { id: t.id })}</div>
-                    <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
-                      {tn('terr.row', { kind: KIND_LABEL[t.kind], count: t.catchCount, when: t.lastCatchAt ? formatWhen(t.lastCatchAt) : '—' })}
-                    </div>
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A9AE" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 6l6 6-6 6" />
-                  </svg>
-                </button>
-                )
-              })
+              // Same row as the sectors on the profile (ProfileSectorRow): water tag, catches and
+              // when the last one was, marks for shared / shield / hot.
+              list.slice(0, visibleCount).map((t, i) => (
+                <ProfileSectorRow key={t.id} t={t} last={i === Math.min(list.length, visibleCount) - 1} onOpen={onOpenTerritory} />
+              ))
             ) : (
               <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>{tn('terr.empty')}</div>
             )}
