@@ -221,7 +221,7 @@ body{
 /* The bottom blur behind the facts, inside each page (the shade above it is only a gradient): the photo blurred,
    showing through the same band the shade covers (52% of the height, solid in its lower 42%). */
 .catch-photo-soft{position:absolute; inset:0; pointer-events:none; -webkit-mask-image:linear-gradient(to top, #000 0%, #000 21.8%, transparent 52%); mask-image:linear-gradient(to top, #000 0%, #000 21.8%, transparent 52%);}
-.catch-photo-soft img{display:block; filter:blur(14px);}
+.catch-photo-soft img{display:block; filter:blur(14px); animation:catch-ambient-in .3s var(--ease-out) both;}
 /* 56% of the height, but never lower than the reactions column (up to four buttons, ~250px above the menu) lets it be. */
 .catch-arrow{position:absolute; top:min(56%, calc(100% - var(--nav-h, 82px) - 304px)); width:44px; height:64px; margin-top:-32px; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:.7; filter:drop-shadow(0 1px 3px rgba(0,0,0,.6)); z-index:2;}
 .catch-arrow:active{opacity:1;}

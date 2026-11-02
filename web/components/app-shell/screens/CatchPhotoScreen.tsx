@@ -32,6 +32,9 @@ const PHOTO_ZOOM = 1.12
 // The photo, almost whole (a touch enlarged, see PHOTO_ZOOM). Where its proportions leave empty space (above and below a wide frame, at the sides
 // of a narrow one) a blurred copy of the same picture fills it, and the sharp photo's edges fade into that copy,
 // so there is no black void and no hard seam. A photo that fills the screen in some direction is not faded there.
+// Only the photo on the screen gets the two blurred copies: each is a full-screen filter buffer, and the two
+// neighbours' ones (six in all) were enough to make iOS drop the page in Telegram (01.11). A neighbour slides in
+// on black, and its blur fades in as it lands.
 function CatchPhotoLayer({ src, alt, current, tour, onZoom }: { src: string; alt: string; current: boolean; tour: boolean; onZoom: () => void }) {
   const boxRef = useRef<HTMLDivElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
@@ -76,13 +79,11 @@ function CatchPhotoLayer({ src, alt, current, tour, onZoom }: { src: string; alt
 
   return (
     <div ref={boxRef} className="catch-photo-layer" style={{ position: 'absolute', inset: 0, cursor: 'zoom-in' }} onClick={onZoom}>
-      <img className="catch-reel-ambient" src={src} alt="" aria-hidden decoding="async" />
+      {current && <img className="catch-reel-ambient" src={src} alt="" aria-hidden decoding="async" />}
       <img ref={imgRef} data-catch-photo={current || undefined} data-tour={tour ? 'photo-zoom' : undefined} src={src} alt={alt} decoding="async" style={{ display: 'block', opacity: nat ? 1 : 0, transition: 'opacity .2s ease-out', ...style }} onLoad={(e) => setNat({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })} />
       {/* The soft blur under the facts at the bottom: a blurred copy of the photo that slides with it. A backdrop blur
           over sliding photos is redrawn every frame, which is what made paging stutter on phones. */}
-      <div className="catch-photo-soft" aria-hidden>
-        {nat && <img src={src} alt="" decoding="async" style={style} />}
-      </div>
+      {current && <div className="catch-photo-soft" aria-hidden>{nat && <img src={src} alt="" decoding="async" style={style} />}</div>}
     </div>
   )
 }
