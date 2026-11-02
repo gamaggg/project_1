@@ -1841,8 +1841,7 @@ export function FishZoneApp() {
             <MyCatchesScreen userId={catchesUserId} territoryId={catchesTerritoryId} onBack={pop} onOpenPhoto={(id) => openCatchPhoto(id, null, catchesTerritoryId ? null : catchesUserId)} onOpenUser={openUserProfile} onOpenTerritory={openTerritory} onToast={showToast} />
           )}
         </Screen>
-        {/* Let go right after the fade-out (.3s): the photos and their blurred copies are the heaviest pictures in the app. */}
-        <Screen id="screen-catch-photo" current={currentScreen} onBack={pop} releaseAfterMs={400}>
+        <Screen id="screen-catch-photo" current={currentScreen} onBack={pop}>
           {viewingCatchId !== null && (
             <CatchPhotoScreen
               key={catchOpenSeq}
@@ -2418,9 +2417,6 @@ export function FishZoneApp() {
 // (30.10: up to 11 screens, 13 canvases and 351 pictures in a report). The
 // delay lets the fade-out finish, a quick return find the screen as it
 // was, and work started there (a slot spin, a request) settle first.
-// `releaseAfterMs` shortens that for a screen no quick return can reach (the
-// catch photo: every opening builds it anew), so its pictures go as soon as
-// the fade-out ends.
 const UNMOUNT_AFTER_MS = 10_000
 const KeptScreens = createContext<ReadonlySet<ScreenId>>(new Set())
 
@@ -2429,14 +2425,12 @@ function Screen({
   current,
   onBack,
   eager,
-  releaseAfterMs = UNMOUNT_AFTER_MS,
   children,
 }: {
   id: ScreenId
   current: ScreenId
   onBack?: () => void
   eager?: boolean
-  releaseAfterMs?: number
   children: React.ReactNode
 }) {
   useTelegramBackButton(current === id ? onBack : undefined)
@@ -2449,9 +2443,9 @@ function Screen({
   const kept = eager || isCurrent || keptScreens.has(id)
   useEffect(() => {
     if (kept || !visited) return
-    const timer = window.setTimeout(() => setVisited(false), releaseAfterMs)
+    const timer = window.setTimeout(() => setVisited(false), UNMOUNT_AFTER_MS)
     return () => window.clearTimeout(timer)
-  }, [kept, visited, releaseAfterMs])
+  }, [kept, visited])
   return (
     <div className={`screen${isCurrent ? ' active' : ''}`} id={id}>
       {(eager || visited) && children}
