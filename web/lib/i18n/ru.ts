@@ -957,6 +957,8 @@ export const ru = {
     shielded: 'Под щитом',
     hotSector: 'Горячий сектор: ×2 монеты за улов',
     sectorShared: 'Общий с кланом',
+    legendSector: 'Легенда сектора',
+    legendMark: 'Легенда',
     lastToday: 'сегодня',
     lastYesterday: 'вчера',
     lastDaysAgo: { one: '{count} день назад', few: '{count} дня назад', many: '{count} дней назад', other: '{count} дней назад' },

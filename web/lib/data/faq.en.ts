@@ -132,7 +132,7 @@ export const FAQ_EN: FaqSection[] = [
       },
       {
         q: 'Who is a sector legend?',
-        a: ['The angler who caught the most in the sector over the last 90 days — at least 10 catches. Their avatar is in a laurel wreath on the sector screen. The bar under it shows your catches here against theirs (and while there is no legend yet — against 10).'],
+        a: ['The angler who caught the most in the sector over the last 90 days — at least 10 catches. Their avatar is in a laurel wreath on the sector screen. The bar under it shows your catches here against theirs (and while there is no legend yet — against 10). If you are the legend, the sector carries a gold «Legend» tag in your sector list (Sectors tab → Mine, and your profile).'],
       },
       {
         q: 'What is a sector trophy?',

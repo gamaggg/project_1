@@ -952,6 +952,8 @@ export const en: Dict = {
     shielded: 'Under a shield',
     hotSector: 'Hot sector: ×2 coins per catch',
     sectorShared: 'Shared with clan',
+    legendSector: 'Sector legend',
+    legendMark: 'Legend',
     lastToday: 'today',
     lastYesterday: 'yesterday',
     lastDaysAgo: { one: '{count} day ago', other: '{count} days ago' },

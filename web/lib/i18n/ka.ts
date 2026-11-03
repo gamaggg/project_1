@@ -954,6 +954,8 @@ export const ka: Dict = {
     shielded: 'ფარით',
     hotSector: 'ცხელი სექტორი: ×2 მონეტა დაჭერაზე',
     sectorShared: 'საერთო კლანთან',
+    legendSector: 'სექტორის ლეგენდა',
+    legendMark: 'ლეგენდა',
     lastToday: 'დღეს',
     lastYesterday: 'გუშინ',
     lastDaysAgo: { one: '{count} დღის წინ', other: '{count} დღის წინ' },

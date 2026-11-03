@@ -3,6 +3,7 @@
 import { HexLoader } from '@/components/app-shell/HexLoader'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useClanRace } from '@/lib/supabase/queries'
+import { PullIndicator, pullShift, usePullToRefresh } from '@/components/app-shell/PullToRefresh'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { ChallengeCountdown } from '@/components/app-shell/ChallengeCountdown'
@@ -30,7 +31,8 @@ export function ClanRaceScreen({
   onOpenUser: (id: string) => void
   onOpenClans: () => void
 }) {
-  const { data: race, isLoading } = useClanRace(city, true)
+  const { data: race, isLoading, refetch } = useClanRace(city, true)
+  const { ref: ptrRef, pull, dragging, refreshing } = usePullToRefresh(() => refetch())
   const mine = race?.clans.find((c) => c.id === race.myClanId) ?? null
   const todayPct = race ? Math.min(1, race.myToday / Math.max(1, race.dailyCap)) : 0
   const maxRower = Math.max(1, ...(race?.myRowers.map((r) => r.meters) ?? []))
@@ -42,7 +44,8 @@ export function ClanRaceScreen({
         <div style={{ fontWeight: 800, fontSize: 15 }}>{tn('race.title')}</div>
         <div style={{ width: 36 }} />
       </div>
-      <div className="screen-inner race-screen">
+      <div className="screen-inner race-screen" ref={ptrRef} style={pullShift(pull, dragging)}>
+        <PullIndicator pull={pull} refreshing={refreshing} />
         {isLoading || !race ? (
           <div className="clan-soon">{isLoading ? <HexLoader size={0.55} /> : tn('common.noData')}</div>
         ) : (

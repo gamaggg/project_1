@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { Territory, TerritoryStatus } from '@/lib/data/types'
 import { pluralSectors } from '@/lib/format'
 import { useCanViewAllUsers } from '@/lib/supabase/queries'
@@ -13,6 +14,8 @@ import { SortMenu } from '@/components/app-shell/SortMenu'
 import { SwipeSectorRow } from '@/components/app-shell/ProfileSectors'
 import { RouteModal } from '@/components/app-shell/RouteModal'
 import { tn } from '@/lib/i18n'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { PullIndicator, pullShift, usePullToRefresh } from '@/components/app-shell/PullToRefresh'
 
 type Filter = 'all' | TerritoryStatus
 export type Mode = 'territories' | 'rating' | 'clans'
@@ -84,6 +87,16 @@ export function TerritoriesListScreen({
     return filter === 'mine' && heldElsewhere?.length ? [...sorted(filtered), ...sorted(heldElsewhere)] : sorted(filtered)
   }, [territories, filter, sort, heldElsewhere])
   const canViewAllUsers = useCanViewAllUsers()
+  const { user } = useAuth()
+  // Pull down from the top: refetches what the open tab shows. Sectors come live
+  // (useRealtimeSync), but the rating, the players and the clans only reload on
+  // their own after a couple of minutes.
+  const queryClient = useQueryClient()
+  const { ref: ptrRef, pull, dragging, refreshing } = usePullToRefresh(() => {
+    const keys =
+      mode === 'clans' ? [['clans']] : mode === 'rating' ? (ratingView === 'week' ? [['weekly-leaderboard'], ['clan-badges']] : [['all-players']]) : [['territories']]
+    return Promise.all(keys.map((queryKey) => queryClient.refetchQueries({ queryKey, type: 'active' })))
+  })
 
   // Rendered in pages rather than all at once: this screen stays mounted for
   // the whole session (see the note above), so the full ~660-sector list was
@@ -118,7 +131,8 @@ export function TerritoriesListScreen({
   }, [])
 
   return (
-    <div className="screen-inner">
+    <div className="screen-inner" ref={ptrRef} style={pullShift(pull, dragging)}>
+      <PullIndicator pull={pull} refreshing={refreshing} />
       <div className="page-title">{tn('terr.title')}</div>
       <div className="page-sub">{CITIES[city].boundaryLabel} · {territories.length} {pluralSectors(territories.length)}</div>
 
@@ -182,6 +196,7 @@ export function TerritoriesListScreen({
                   onOpen={onOpenTerritory}
                   onRoute={setRouteTo}
                   onShowOnMap={cityForSectorId(t.id) === city ? onShowOnMap : undefined}
+                  legendUserId={user?.id}
                   style={i < 14 ? { animationDelay: `${i * 28}ms` } : { animation: 'none' }}
                 />
               ))

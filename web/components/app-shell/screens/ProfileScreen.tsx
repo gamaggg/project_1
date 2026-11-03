@@ -799,7 +799,7 @@ export function ProfileScreen({
       <div className="card" style={{ overflow: 'hidden' }}>
         {visibleTerritories.length ? (
           visibleTerritories.map((t, i) => (
-            <ProfileSectorRow key={t.id} t={t} last={i === visibleTerritories.length - 1} onOpen={onOpenTerritory} />
+            <ProfileSectorRow key={t.id} t={t} last={i === visibleTerritories.length - 1} onOpen={onOpenTerritory} legendUserId={user?.id} />
           ))
         ) : (
           <div style={{ padding: '22px 14px', textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>{tn('profile.noTerritories')}</div>

@@ -6,18 +6,22 @@ import type { Territory } from '@/lib/data/types'
 import { pluralCatches } from '@/lib/format'
 import { currentLocale, tn } from '@/lib/i18n'
 import { useNow } from '@/lib/useNow'
+import { LaurelIcon } from '@/components/app-shell/SectorInsights'
 import { hapticSelect } from '@/lib/telegram/haptics'
 
 // «Мои сектора» / someone else's sectors on the profile: one row
 // per sector (no hexagon: the owner found it clutter, 02.11.2026) — the id with
 // the water as a tag, how many catches and when the last one was, and the marks
 // when the sector has them: shared with clan-mates (how many hold it), under a
-// shield (how long it still holds), hot this week (×2).
+// shield (how long it still holds), hot this week (×2), and the viewer being
+// the sector's legend (legendUserId = whose sectors these are; left out on
+// someone else's profile).
 
-export function ProfileSectorRow({ t, last, onOpen }: { t: Territory; last: boolean; onOpen: (id: string) => void }) {
+export function ProfileSectorRow({ t, last, onOpen, legendUserId }: { t: Territory; last: boolean; onOpen: (id: string) => void; legendUserId?: string }) {
   const now = useNow(30_000)
   const shieldLeft = t.shieldUntil ? new Date(t.shieldUntil).getTime() - now : 0
   const hot = !!t.hotUntil && new Date(t.hotUntil).getTime() > now
+  const isLegend = !!legendUserId && t.legendId === legendUserId
   const parts = [`${t.catchCount} ${pluralCatches(t.catchCount)}`]
   if (t.lastCatchAt) parts.push(lastCatchLabel(t.lastCatchAt, now))
   return (
@@ -29,6 +33,12 @@ export function ProfileSectorRow({ t, last, onOpen }: { t: Territory; last: bool
         </b>
         <span>{parts.join(' · ')}</span>
       </span>
+      {isLegend && (
+        <span className="sector-mark sector-mark-legend" title={tn('profile.legendSector')}>
+          <LaurelIcon size={13} color="currentColor" />
+          {tn('profile.legendMark')}
+        </span>
+      )}
       {t.coHolders.length > 0 && (
         <span className="sector-mark sector-mark-shared" title={tn('profile.sectorShared')}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -75,6 +85,7 @@ export function SwipeSectorRow({
   onRoute,
   onShowOnMap,
   style,
+  legendUserId,
 }: {
   t: Territory
   last: boolean
@@ -84,6 +95,7 @@ export function SwipeSectorRow({
   onRoute: (t: Territory) => void
   onShowOnMap?: (id: string) => void
   style?: React.CSSProperties
+  legendUserId?: string
 }) {
   const width = SWIPE_ACTION_W * (onShowOnMap ? 2 : 1)
   const [drag, setDrag] = useState<number | null>(null)
@@ -156,7 +168,7 @@ export function SwipeSectorRow({
           }
         }}
       >
-        <ProfileSectorRow t={t} last onOpen={onOpen} />
+        <ProfileSectorRow t={t} last onOpen={onOpen} legendUserId={legendUserId} />
       </div>
     </div>
   )
