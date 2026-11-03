@@ -1,5 +1,5 @@
 // The «how many coins for which fish» rows (species.coin_value, as of
-// species_elets, 01.11) — shared by the Russian FAQ and its
+// species_morskoy_nalim, 03.11) — shared by the Russian FAQ and its
 // translations, which swap the fish names for the reader's language.
 // Kept free of imports so faq.ts and the translated files can all load it.
 export const BATUMI_ROWS: [number, string][] = [
@@ -7,7 +7,7 @@ export const BATUMI_ROWS: [number, string][] = [
   [10, 'елец, зеленушка, морской бычок, окунь, скорпена'],
   [15, 'смарида'],
   [20, 'карась, кефаль, морской карась'],
-  [25, 'голавль, луфарь, морской дракон, сарган'],
+  [25, 'голавль, луфарь, морской дракон, морской налим, сарган'],
   [50, 'амур, звездочёт, каменный окунь, карп, корейский окунь, мармир, толстолобик, усач, черноморская сельдь, щука'],
   [75, 'зубарь, пеламида, судак'],
   [100, 'горбыль, радужная форель, речная форель, сазан, сибас'],

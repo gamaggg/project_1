@@ -1420,6 +1420,7 @@ export const ka: Dict = {
     zelenushka: 'ზელენუშკა',
     zubar: 'დენტექსი',
     kalkan: 'კალკანი',
+    morskoy_nalim: 'ზღვის ნალიმი',
     kamenny_okun: 'ქვის ქორჭილა',
     katran: 'კატრანი',
     kefal: 'ქეფალი',

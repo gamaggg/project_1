@@ -1423,6 +1423,7 @@ export const ru = {
     zelenushka: 'Зеленушка',
     zubar: 'Зубарь',
     kalkan: 'Калкан',
+    morskoy_nalim: 'Морской налим',
     kamenny_okun: 'Каменный окунь',
     katran: 'Катран',
     kefal: 'Кефаль',
