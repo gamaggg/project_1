@@ -2420,6 +2420,7 @@ export const en: Dict = {
     weeklyName: 'Week podium',
     locked: 'Not earned yet',
     howTitle: 'How to earn it',
+    duelistTop: 'Last week’s top 3 · {city}',
     times: { one: 'Earned {count} time', other: 'Earned {count} times' },
     how_weekly_rank: 'Take 1st, 2nd or 3rd place in your city’s weekly rating. Each place is a medal of its own.',
     how_guardian: 'Hold one sector for 4 weeks in a row without losing it.',

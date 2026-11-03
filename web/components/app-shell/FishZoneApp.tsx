@@ -2280,7 +2280,7 @@ export function FishZoneApp() {
       {unlockedAchievement && !showingTrophyScene && (
         <AchievementUnlockedModal achievement={unlockedAchievement} onClose={dismissUnlockedAchievement} onShowToast={showToast} />
       )}
-      {openAward && <AwardDetailModal group={openAward} onClose={() => setOpenAward(null)} />}
+      {openAward && <AwardDetailModal group={openAward} city={city} onClose={() => setOpenAward(null)} />}
       {/* Deferred behind the achievement modal above so the two celebrations
           never stack — this one waits its turn and appears once that clears. */}
       {showWeekTop && weekTopLeader && !unlockedAchievement && !showingTrophyScene && (

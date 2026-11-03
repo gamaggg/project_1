@@ -4,6 +4,9 @@ import { useMemo } from 'react'
 import { AWARD_ICONS, AWARD_COLOR, awardMedalStyle } from '@/components/app-shell/awardIcons'
 import { medalName, type AwardGroup } from '@/components/app-shell/AwardsRing'
 import { seededRandom, seedFrom } from '@/lib/seededRandom'
+import { useWeeklyLeaderboard } from '@/lib/supabase/queries'
+import { thumbUrl } from '@/lib/supabase/imageUrl'
+import { CITIES, type CityId } from '@/lib/data/city'
 import { tn } from '@/lib/i18n/runtime'
 
 const CONFETTI_EXTRA = '#FC5200'
@@ -14,7 +17,28 @@ const CONFETTI_EXTRA = '#FC5200'
 // One medal of a kind: its own card, as before. Several (1st, 2nd and 3rd
 // place of the week): the kind's name and a line for each. None (a locked
 // medal on the owner's profile): grey, no confetti, and how to earn it.
-export function AwardDetailModal({ group, onClose }: { group: AwardGroup; onClose: () => void }) {
+// The locked «Дуэлянт»: who to take a sector from — last week's top 3 of the
+// city the player is in (the same rating as «Итоги недели»). Nothing is drawn
+// while it loads or when nobody caught anything last week.
+function DuelistTop({ city }: { city: CityId }) {
+  const cityInfo = CITIES[city]
+  const { data: entries = [] } = useWeeklyLeaderboard(false, -1, cityInfo.idPrefix, cityInfo.timezone, 3)
+  if (entries.length === 0) return null
+  return (
+    <div className="award-top3">
+      <div className="award-top3-title">{tn('medals.duelistTop', { city: cityInfo.name })}</div>
+      {entries.slice(0, 3).map((e) => (
+        <div key={e.userId} className="award-top3-row">
+          <span className={`award-top3-rank rank-${e.rank}`}>{e.rank}</span>
+          <span className="avatar award-top3-avatar">{e.avatarUrl ? <img src={thumbUrl(e.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : e.displayName.slice(0, 2).toUpperCase()}</span>
+          <span className="award-top3-name">{e.displayName}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function AwardDetailModal({ group, city, onClose }: { group: AwardGroup; city: CityId; onClose: () => void }) {
   const { kind, awards } = group
   const award = awards.length === 1 ? awards[0] : null
   const locked = awards.length === 0
@@ -66,6 +90,7 @@ export function AwardDetailModal({ group, onClose }: { group: AwardGroup; onClos
             <div className="award-detail-subtitle">{tn('medals.locked')}</div>
             <div className="award-detail-how">{tn('medals.howTitle')}</div>
             <div className="award-detail-desc">{tn(`medals.how_${kind}`)}</div>
+            {kind === 'duelist' && <DuelistTop city={city} />}
           </>
         ) : (
           <>

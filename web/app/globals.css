@@ -510,7 +510,8 @@ html.has-lightbox:root .bottomnav::after{
 .shield-modal-catch div{display:flex; flex:1; flex-direction:column; min-width:0;}
 .shield-modal-catch b{overflow:hidden; font-size:14px; font-weight:800; white-space:nowrap; text-overflow:ellipsis;}
 .shield-modal-catch span{font-size:12px; color:var(--ink-faint);}
-.shield-modal-close{display:block; width:100%; margin-top:6px; padding:12px; border:none; background:none; font:inherit; font-size:14px; font-weight:700; color:var(--ink-soft); cursor:pointer;}
+.shield-modal-close{display:block; width:100%; margin-top:8px; padding:13px 18px; border:1.5px solid #E0DDD4; border-radius:15px; background:#ECEAE4; font:inherit; font-size:15px; font-weight:700; color:var(--ink); cursor:pointer;}
+.shield-modal-close:active{background:#E2DFD7;}
 .shield-modal-close:disabled{opacity:.5;}
 @media (prefers-reduced-motion: reduce){.shield-modal-ring-left, .shield-modal-badge{animation:none;}}
 .modal-icon{
@@ -2023,10 +2024,13 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
   animation:unlockBadgeIn .6s .1s cubic-bezier(.34,1.56,.64,1) both;
 }
 @keyframes unlockBadgeIn{from{opacity:0; transform:scale(.4) rotate(-14deg);} to{opacity:1; transform:scale(1) rotate(0);}}
+/* «Закрыть» in every modal is a button, not a grey line of text (04.11):
+   a filled button with bold ink text, so it stands out on the white card. */
 .unlock-modal-close{
-  background:none; border:none; color:var(--ink-soft); font-weight:700; font-size:13.5px;
-  font-family:inherit; padding:14px 6px 6px; cursor:pointer; width:100%;
+  background:#ECEAE4; color:var(--ink); border:1.5px solid #E0DDD4; border-radius:15px;
+  font-weight:700; font-size:15px; font-family:inherit; padding:13px 18px; margin-top:14px; cursor:pointer; width:100%;
 }
+.unlock-modal-close:active{background:#E2DFD7;}
 
 /* ---------- All-challenges-done card (see ChallengeCompletionModal's
    allDone branch) — the single-challenge nudge stays on the plain
@@ -2172,6 +2176,14 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .award-detail-subtitle{position:relative; z-index:2; font-size:12px; font-weight:700; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:12px;}
 .award-detail-desc{position:relative; z-index:2; font-size:13px; color:var(--ink-soft); line-height:1.5; margin-bottom:6px;}
 .award-detail-how{position:relative; z-index:2; font-size:12.5px; font-weight:800; color:var(--ink); margin-bottom:4px;}
+.award-top3{position:relative; z-index:2; margin:10px 0 4px; display:flex; flex-direction:column; gap:6px; text-align:left;}
+.award-top3-title{font-size:11.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-faint); text-align:center; margin-bottom:2px;}
+.award-top3-row{display:flex; align-items:center; gap:10px; padding:6px 10px 6px 8px; border-radius:13px; background:#F7F6F2;}
+.award-top3-rank{flex:0 0 auto; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#fff; background:#F0A93E;}
+.award-top3-rank.rank-2{background:#B8C0CC;}
+.award-top3-rank.rank-3{background:#B06B36;}
+.award-top3-avatar{flex:0 0 auto; width:32px; height:32px; font-size:11.5px;}
+.award-top3-name{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:700; color:var(--ink);}
 .award-detail-list{position:relative; z-index:2; display:flex; flex-direction:column; gap:6px; margin-bottom:8px;}
 .award-detail-row{font-size:13px; color:var(--ink-soft); line-height:1.4;}
 .award-detail-row b{color:var(--ink); font-weight:800;}
@@ -3778,7 +3790,8 @@ button.race-lane{cursor:pointer;}
 .battle-cer-headline{margin-top:14px; font-size:17px; font-weight:800; line-height:1.3; text-wrap:balance; animation:battle-cer-fade .4s var(--ease-out) 1.3s both;}
 .battle-cer-sub{margin-top:4px; font-size:13px; color:rgba(255,255,255,.7); animation:battle-cer-fade .4s var(--ease-out) 1.4s both;}
 @keyframes battle-cer-fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
-.battle-cer-close{display:block; width:100%; margin-top:8px; border:none; background:none; font:inherit; font-size:14px; font-weight:700; color:rgba(255,255,255,.7); padding:8px; cursor:pointer;}
+.battle-cer-close{display:block; width:100%; margin-top:12px; border:1.5px solid rgba(255,255,255,.26); border-radius:15px; background:rgba(255,255,255,.14); font:inherit; font-size:15px; font-weight:700; color:#fff; padding:13px 18px; cursor:pointer;}
+.battle-cer-close:active{background:rgba(255,255,255,.24);}
 .battle-cer-confetti{position:absolute; inset:0; pointer-events:none; z-index:2;}
 .battle-cer-confetti-piece{position:absolute; top:26%; left:50%; width:7px; height:9px; border-radius:2px; background:var(--c); opacity:0; animation:battle-cer-burst 1s cubic-bezier(.2,.7,.3,1) forwards;}
 @keyframes battle-cer-burst{0%{opacity:0; transform:translate(-50%,0) scale(.4) rotate(0deg);} 15%{opacity:1;} 100%{opacity:0; transform:translate(calc(-50% + var(--tx)), var(--ty)) scale(1) rotate(var(--rot));}}
