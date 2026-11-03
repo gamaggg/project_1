@@ -23,6 +23,12 @@ const BATCH_SIZE = 30
 // blip, a transient 5xx from Telegram) is retried a couple of times and then
 // left alone rather than re-attempted every minute forever.
 const MAX_ATTEMPTS = 3
+// A row is claimed before it is sent: pushed this far ahead so the next minute's
+// run (this one may still be waiting on Telegram) leaves it alone. It is also
+// the pause before a retry after a failed send.
+const CLAIM_MS = 3 * 60_000
+// Longest wait for Telegram's answer to one message.
+const SEND_TIMEOUT_MS = 15_000
 
 // Goes once, under the first message to someone whose notifications were
 // switched on for them — they'd pressed /start in the bot but never chose
@@ -420,6 +426,19 @@ async function handleGET(req: Request) {
   const noticed = new Set<string>()
 
   for (const row of due) {
+    // Claim the row first. The query above is not a lock: while one run waits on a
+    // slow Telegram, the next minute's run read the same unsent row and sent it
+    // again (nine copies of one message on 03.11.2026). The update only goes
+    // through for a row still unsent and due, so of two runs one gets it.
+    const { data: claimed } = await admin
+      .from('telegram_outbox')
+      .update({ deliver_after: new Date(Date.now() + CLAIM_MS).toISOString() })
+      .eq('id', row.id)
+      .is('sent_at', null)
+      .lte('deliver_after', new Date().toISOString())
+      .select('id')
+    if (!claimed?.length) continue
+
     const notification = first(row.notifications as NotificationRef | NotificationRef[])
     if (!notification) {
       await admin.from('telegram_outbox').update({ sent_at: new Date().toISOString(), last_error: 'notification missing' }).eq('id', row.id)
@@ -447,6 +466,7 @@ async function handleGET(req: Request) {
       fetch(`${TELEGRAM_API}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
         body: JSON.stringify({
           chat_id: row.chat_id,
           text,
@@ -455,9 +475,25 @@ async function handleGET(req: Request) {
           },
         }),
       })
-    let res = await send(message.extraButtons ?? [])
-    // A tg://user link can be refused (the person's privacy settings); the alert itself must still arrive.
-    if (res.status === 400 && message.extraButtons?.length) res = await send([])
+    // No answer in time, or a 504: Telegram may well have taken the message
+    // (the answer is what was lost), so it is not sent again — a second copy
+    // is worse than a missed notification. Recorded and left.
+    const unsure = async (why: string) => {
+      await admin.from('telegram_outbox').update({ sent_at: new Date().toISOString(), last_error: `not retried, may have been delivered: ${why}`.slice(0, 500) }).eq('id', row.id)
+    }
+    let res: Response
+    try {
+      res = await send(message.extraButtons ?? [])
+      // A tg://user link can be refused (the person's privacy settings); the alert itself must still arrive.
+      if (res.status === 400 && message.extraButtons?.length) res = await send([])
+    } catch (e) {
+      await unsure(e instanceof Error ? e.message : 'send failed')
+      continue
+    }
+    if (res.status === 504) {
+      await unsure('504 Gateway Timeout')
+      continue
+    }
 
     if (res.ok) {
       await admin.from('telegram_outbox').update({ sent_at: new Date().toISOString() }).eq('id', row.id)
