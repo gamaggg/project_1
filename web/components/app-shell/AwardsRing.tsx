@@ -20,6 +20,8 @@ import { tn } from '@/lib/i18n/runtime'
 // the 5px frame ring) and a medal (40px, ±3px drift) reach.
 const AVATAR_REACH = 59
 const BADGE_REACH = 23
+// How far a medal drifts from its spot, each way (BADGE_REACH counts it).
+const DRIFT_PX = 3
 
 // One medal per kind (since 02.11): the 1st, 2nd and 3rd place of the week
 // are one trophy with a count on it, repeats of the same medal are one. With
@@ -65,17 +67,16 @@ export function AwardsRing({ awards: allAwards, showLocked = false, radius = 96,
         const angle = (i / medals.length) * Math.PI * 2 - Math.PI / 2
         const cx = Math.cos(angle) * radius
         const cy = Math.sin(angle) * radius
-        // Deterministic-but-varied per-badge drift (seeded off the medal's
-        // place in the ring) so several badges sharing the same @keyframes
-        // don't all move in lockstep — no Math.random() here, this re-renders
-        // on every parent update and random values would make the drift jitter.
+        // Every medal drifts the same way: the same distance (DRIFT_PX each
+        // side of its spot), the same speed and the same beat (see
+        // .award-ring-slot), only the direction differs. The direction comes
+        // from the medal's place in the ring (a golden-angle step, so
+        // neighbours never go the same way) and nothing random, so it does
+        // not jitter when the parent re-renders.
         const seed = (group.awards[0]?.id ?? 0) + i * 13
-        // ±3px: enough to feel alive, small enough that the gap to the
-        // avatar stays even all round (±5 read as lopsided top vs bottom).
-        const dx1 = ((seed * 37) % 7) - 3
-        const dy1 = ((seed * 53) % 7) - 3
-        const dx2 = ((seed * 71) % 7) - 3
-        const dy2 = ((seed * 89) % 7) - 3
+        const drift = i * 2.399963 // radians, 137.5°
+        const dx = Math.cos(drift) * DRIFT_PX
+        const dy = Math.sin(drift) * DRIFT_PX
         const isLocked = group.awards.length === 0
         return (
           <div
@@ -85,12 +86,10 @@ export function AwardsRing({ awards: allAwards, showLocked = false, radius = 96,
               {
                 left: `calc(50% + ${cx}px)`,
                 top: `calc(50% + ${cy}px)`,
-                '--dx1': `${dx1}px`,
-                '--dy1': `${dy1}px`,
-                '--dx2': `${dx2}px`,
-                '--dy2': `${dy2}px`,
-                animationDuration: `${3 + (seed % 3)}s`,
-                animationDelay: `${-(seed % 4)}s`,
+                '--dx1': `${-dx.toFixed(2)}px`,
+                '--dy1': `${-dy.toFixed(2)}px`,
+                '--dx2': `${dx.toFixed(2)}px`,
+                '--dy2': `${dy.toFixed(2)}px`,
               } as React.CSSProperties
             }
           >

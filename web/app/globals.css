@@ -2099,7 +2099,7 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
    and Telegram both honour — every medal sat 20px right and 20px down. */
 .award-ring-slot{
   position:absolute; width:40px; height:40px; margin:-20px 0 0 -20px; z-index:2;
-  animation-name:award-drift; animation-timing-function:ease-in-out; animation-iteration-count:infinite; animation-direction:alternate;
+  animation-name:award-drift; animation-duration:4s; animation-timing-function:ease-in-out; animation-iteration-count:infinite; animation-direction:alternate;
 }
 .award-ring-badge{
   width:100%; height:100%; border-radius:50%; cursor:pointer;
