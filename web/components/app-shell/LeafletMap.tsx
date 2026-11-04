@@ -203,9 +203,14 @@ const FALLBACK_ZOOM = 14.3
 // events, so `_glMap` stays undefined and every pinch or zoom read
 // «reading 'jumpTo'» / «reading '_actualCanvas'» of undefined. The handlers
 // that touch the GL map do nothing while there is none.
+// The exception itself used to go on up through Leaflet's «load» event and
+// cut the rest of the map's setup short — no sectors, no labels, an empty
+// grey map (the player reloaded every ten minutes). `_initGL` now catches it:
+// the layer stays without a GL map and the sectors are drawn on plain ground.
 type BridgeProto = {
   _map: L.Map | null
   _glMap: { _actualCanvas: HTMLElement; once: (ev: string, fn: () => void) => void; jumpTo: (o: { center: L.LatLng; zoom: number }) => void } | null
+  _initGL: () => void
   _zoomEnd: () => void
   _transitionEnd: (e?: unknown) => void
   _update: (e?: unknown) => void
@@ -217,6 +222,15 @@ function guardMapboxBridge(Lf: typeof L) {
   const proto = (Lf as unknown as { MapboxGL?: { prototype: BridgeProto } }).MapboxGL?.prototype
   if (!proto || proto.__rangeGuarded) return
   proto.__rangeGuarded = true
+  const initGL = proto._initGL
+  proto._initGL = function (this: BridgeProto) {
+    try {
+      initGL.call(this)
+    } catch (err) {
+      this._glMap = null
+      console.warn('GL map did not start, the map goes on without its background', err)
+    }
+  }
   const zoomEnd = proto._zoomEnd
   proto._zoomEnd = function (this: BridgeProto) {
     if (!this._map || !this._glMap) return
@@ -921,20 +935,24 @@ export const LeafletMap = forwardRef<
         // onAdd (which is what actually constructs the mapboxgl.Map) until
         // the Leaflet map is "ready" — i.e. until setView above runs — so
         // this has to read the gl layer only now, not right after addTo().
-        const mapboxMap = (glLayer as unknown as { getMapboxMap: () => import('mapbox-gl').Map }).getMapboxMap()
-        mapboxMap.once('load', () => applyCurrentLightPreset(mapboxMap))
-        // The map screen stays mounted for the whole app session, so a long
-        // visit can cross a preset boundary (e.g. open at 17:50, still open
-        // at 18:05) — recheck periodically and whenever the app comes back
-        // to the foreground, rather than only ever applying the preset once.
-        const lightPresetInterval = setInterval(() => applyCurrentLightPreset(mapboxMap), 15 * 60 * 1000)
-        const onVisibilityChange = () => {
-          if (document.visibilityState === 'visible') applyCurrentLightPreset(mapboxMap)
-        }
-        document.addEventListener('visibilitychange', onVisibilityChange)
-        cleanupLightPresetRef.current = () => {
-          clearInterval(lightPresetInterval)
-          document.removeEventListener('visibilitychange', onVisibilityChange)
+        // Undefined on a phone where WebGL cannot start (see guardMapboxBridge):
+        // the map then goes on without its background, sectors on plain ground.
+        const mapboxMap = (glLayer as unknown as { getMapboxMap: () => import('mapbox-gl').Map | undefined }).getMapboxMap()
+        if (mapboxMap) {
+          mapboxMap.once('load', () => applyCurrentLightPreset(mapboxMap))
+          // The map screen stays mounted for the whole app session, so a long
+          // visit can cross a preset boundary (e.g. open at 17:50, still open
+          // at 18:05) — recheck periodically and whenever the app comes back
+          // to the foreground, rather than only ever applying the preset once.
+          const lightPresetInterval = setInterval(() => applyCurrentLightPreset(mapboxMap), 15 * 60 * 1000)
+          const onVisibilityChange = () => {
+            if (document.visibilityState === 'visible') applyCurrentLightPreset(mapboxMap)
+          }
+          document.addEventListener('visibilitychange', onVisibilityChange)
+          cleanupLightPresetRef.current = () => {
+            clearInterval(lightPresetInterval)
+            document.removeEventListener('visibilitychange', onVisibilityChange)
+          }
         }
 
         // Silently confirm (never prompts — see DECISIONS.md "геолокация
