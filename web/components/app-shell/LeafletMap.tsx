@@ -198,11 +198,19 @@ const FALLBACK_ZOOM = 14.3
 // map — when the map is torn down in between (signing in as someone else
 // remounts it) that read null: «Cannot read properties of null (reading
 // 'getZoom')», reported as an app error. Same bodies, plus the check.
+// Same for a phone where WebGL cannot start (04.11): `new mapboxgl.Map` throws
+// in the layer's onAdd, after Leaflet has already hooked the layer's zoom
+// events, so `_glMap` stays undefined and every pinch or zoom read
+// «reading 'jumpTo'» / «reading '_actualCanvas'» of undefined. The handlers
+// that touch the GL map do nothing while there is none.
 type BridgeProto = {
   _map: L.Map | null
   _glMap: { _actualCanvas: HTMLElement; once: (ev: string, fn: () => void) => void; jumpTo: (o: { center: L.LatLng; zoom: number }) => void } | null
   _zoomEnd: () => void
   _transitionEnd: (e?: unknown) => void
+  _update: (e?: unknown) => void
+  _pinchZoom: (e?: unknown) => void
+  _animateZoom: (e?: unknown) => void
   __rangeGuarded?: boolean
 }
 function guardMapboxBridge(Lf: typeof L) {
@@ -213,6 +221,13 @@ function guardMapboxBridge(Lf: typeof L) {
   proto._zoomEnd = function (this: BridgeProto) {
     if (!this._map || !this._glMap) return
     zoomEnd.call(this)
+  }
+  for (const name of ['_update', '_pinchZoom', '_animateZoom'] as const) {
+    const original = proto[name]
+    proto[name] = function (this: BridgeProto, e?: unknown) {
+      if (!this._map || !this._glMap) return
+      original.call(this, e)
+    }
   }
   proto._transitionEnd = function (this: BridgeProto) {
     Lf.Util.requestAnimFrame(() => {
