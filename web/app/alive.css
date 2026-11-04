@@ -243,8 +243,9 @@ button.fish-cal-cell:not(:disabled):active{transform:scale(.8);}
 .swipe-act:active{filter:brightness(.88);}
 .swipe-row-front{position:relative; z-index:1; background:var(--surface); touch-action:pan-y;}
 .swipe-row-front.settle{transition:transform .32s cubic-bezier(.22,1,.36,1);}
-/* The first row shows once that it moves, when the tab first comes up. */
-.sector-list > .swipe-row:first-child .swipe-row-front.settle:not([style*="translate"]){animation:swipe-hint 1.1s .9s cubic-bezier(.4,0,.3,1) 1 backwards;}
+/* The first row shows once that it moves — only while the list has .swipe-hint-on,
+   which TerritoriesListScreen sets for a person who has not seen it yet. */
+.sector-list.swipe-hint-on > .swipe-row:first-child .swipe-row-front.settle:not([style*="translate"]){animation:swipe-hint 1.1s .9s cubic-bezier(.4,0,.3,1) 1 backwards;}
 @keyframes swipe-hint{0%,100%{transform:none;} 35%,55%{transform:translateX(-46px);}}
 
 @media (prefers-reduced-motion: reduce){

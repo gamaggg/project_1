@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Territory, TerritoryStatus } from '@/lib/data/types'
 import { pluralSectors } from '@/lib/format'
@@ -15,6 +15,7 @@ import { SwipeSectorRow } from '@/components/app-shell/ProfileSectors'
 import { RouteModal } from '@/components/app-shell/RouteModal'
 import { tn } from '@/lib/i18n'
 import { useAuth } from '@/components/providers/AuthProvider'
+import { useUiState } from '@/lib/uiState'
 import { PullIndicator, pullShift, usePullToRefresh } from '@/components/app-shell/PullToRefresh'
 
 type Filter = 'all' | TerritoryStatus
@@ -29,6 +30,20 @@ const TERRITORY_PAGE = 40
 // clan-mate's (Territory.coHolders) — in both cities, this one's first: the
 // same list and count as the profile (heldTerritories, lib/data/achievements.ts).
 const heldByMe = (t: Territory) => t.status === 'mine' || t.coHolders.some((h) => h.isMe)
+
+// The nudge that hints a row swipes (the first row slides left a little) is
+// shown once per person: the flag is kept on the account (lib/uiState.ts) and
+// on this device (guests, a failed read).
+const SWIPE_HINT_KEY = 'swipe_hint_sectors'
+const noopSubscribe = () => () => {}
+const SWIPE_HINT_LOCAL = 'range:swipe-hint-sectors'
+const swipeHintSeenHere = () => {
+  try {
+    return localStorage.getItem(SWIPE_HINT_LOCAL) !== null
+  } catch {
+    return false
+  }
+}
 
 export function TerritoriesListScreen({
   territories,
@@ -88,6 +103,14 @@ export function TerritoriesListScreen({
   }, [territories, filter, sort, heldElsewhere])
   const canViewAllUsers = useCanViewAllUsers()
   const { user } = useAuth()
+  // Decided once, when the account's flags are in. The animation marks the
+  // hint seen as it starts and takes the class off as it ends, so coming back
+  // to this tab (the screen stays mounted) or re-sorting never plays it again.
+  const ui = useUiState()
+  const [swipeHint, setSwipeHint] = useState<boolean | null>(null)
+  // Not while the page hydrates: the class would differ from the server's HTML and React would keep the server's.
+  const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false)
+  if (swipeHint === null && ui.ready && hydrated) setSwipeHint(!(ui.state?.[SWIPE_HINT_KEY] === true || swipeHintSeenHere()))
   // Pull down from the top: refetches what the open tab shows. Sectors come live
   // (useRealtimeSync), but the rating, the players and the clans only reload on
   // their own after a couple of minutes.
@@ -182,7 +205,21 @@ export function TerritoriesListScreen({
             <SortMenu value={sort} options={SECTOR_SORT_LABEL} onChange={setSort} label={tn('terr.sortLabel')} />
           </div>
           {/* Keyed by the filter and order, so a new pick deals the rows in again. */}
-          <div key={`${filter}|${sort}`} className="card sector-list" style={{ overflow: 'hidden' }}>
+          <div
+            key={`${filter}|${sort}`}
+            className={`card sector-list${swipeHint ? ' swipe-hint-on' : ''}`}
+            style={{ overflow: 'hidden' }}
+            onAnimationStart={(e) => {
+              if (e.animationName !== 'swipe-hint') return
+              ui.set(SWIPE_HINT_KEY, true)
+              try {
+                localStorage.setItem(SWIPE_HINT_LOCAL, '1')
+              } catch {}
+            }}
+            onAnimationEnd={(e) => {
+              if (e.animationName === 'swipe-hint') setSwipeHint(false)
+            }}
+          >
             {list.length ? (
               // Same row as the sectors on the profile (ProfileSectorRow): water tag, catches and
               // when the last one was, marks for shared / shield / hot — here swipeable for route / map.

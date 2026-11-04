@@ -247,7 +247,7 @@ export function AlivePreview() {
         </Section>
 
         <Section title="6. Сектора: смахни строку влево" about="Сзади «Маршрут» (окно выбора карт) и «На карте». Нажатие на открытую строку закрывает её. Первая строка при появлении сама сдвигается, подсказывая жест." onReplay={() => replay('list')}>
-          <div key={k('list')} className="card sector-list" style={{ overflow: 'hidden' }}>
+          <div key={k('list')} className="card sector-list swipe-hint-on" style={{ overflow: 'hidden' }}>
             {sectors.map((t, i) => (
               <SwipeSectorRow
                 key={t.id}
