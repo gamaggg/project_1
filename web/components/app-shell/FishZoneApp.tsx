@@ -5,7 +5,6 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import {
   useTerritories,
   useConfirmCatch,
-  useAddDiaryCatch,
   useFirstSteps,
   useMyCatches,
   useSpecies,
@@ -35,7 +34,7 @@ import {
 import { geoRefused, getCurrentCoords, nearestTerritory, queryGeolocationPermission } from '@/lib/geolocation'
 import { showGeoHelp } from '@/lib/geoHelp'
 import { GeoHelpModal } from '@/components/app-shell/GeoHelpModal'
-import { copyCatchPhotoToDiary, uploadCatchPhoto, uploadDiaryPhoto } from '@/lib/supabase/storage'
+import { uploadCatchPhoto } from '@/lib/supabase/storage'
 import { ensureSession } from '@/lib/supabase/session'
 import { useAdminActionsReadState } from '@/lib/activityRead'
 import { useAchievementUnlock } from '@/lib/achievementUnlock'
@@ -226,7 +225,6 @@ export function FishZoneApp() {
   const canViewLimits = useCanViewLimits()
   const { data: allTerritoryIds = [] } = useAllTerritoryIds()
   const confirmCatchMutation = useConfirmCatch()
-  const addDiaryCatch = useAddDiaryCatch()
   const findUserByPublicId = useFindUserByPublicId()
   const mapHandleRef = useRef<MapScreenHandle>(null)
   const { data: unreadCount = 0 } = useUnreadNotificationCount()
@@ -1166,43 +1164,36 @@ export function FishZoneApp() {
       }
     }
   }
-  // «Добавить в дневник» from the shield modal: the same photo and fish as a
-  // diary catch (no sector change), dated by the photo, on the sector's own
-  // local day.
+  // «Добавить в дневник» from the shield modal (04.11): the same photo and fish
+  // go in as a late catch — confirm_catch with the moment of the photo — so it
+  // counts in the stats, challenges and awards like any catch and shows in the
+  // diary, and the sector stays with its holder. A catch added by hand from the
+  // gallery in the diary still does not count.
   async function addShieldedCatchToDiary() {
-    if (!shieldBlock) return
-    const when = capturedAt ? new Date(capturedAt) : new Date()
-    const t = territories.find((x) => x.id === shieldBlock.territoryId)
-    const day = new Intl.DateTimeFormat('en-CA', { timeZone: CITIES[cityForSectorId(shieldBlock.territoryId)].timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(when)
-    if (!user) return
+    if (!shieldBlock || !user || confirmCatchMutation.isPending) return
+    // The server takes a moment from 24 hours back to 2 minutes ahead: the photo's own time, else now.
+    const photoMs = capturedAt ? new Date(capturedAt).getTime() : NaN
+    const caughtAt = new Date(Number.isFinite(photoMs) && Date.now() - photoMs < 23 * 3_600_000 ? Math.min(photoMs, Date.now()) : Date.now()).toISOString()
     try {
-      // The diary keeps its photos under <uid>/diary/ — copy the catch's
-      // photo there; if that fails and the shot is still in memory, upload it.
-      let diaryPhotoUrl: string
-      try {
-        diaryPhotoUrl = await copyCatchPhotoToDiary(user.id, shieldBlock.photoUrl)
-      } catch (copyErr) {
-        if (!capturedPhoto) throw copyErr
-        diaryPhotoUrl = await uploadDiaryPhoto(user.id, capturedPhoto)
-      }
-      await addDiaryCatch.mutateAsync({
-        day,
-        caughtAt: when.toISOString(),
-        species: shieldBlock.form.species,
-        lengthCm: shieldBlock.form.lengthCm,
-        weightKg: shieldBlock.form.weightKg,
-        photoUrl: diaryPhotoUrl,
-        territoryId: shieldBlock.territoryId,
-        lat: t?.lat ?? null,
-        lng: t?.lng ?? null,
-      })
+      await confirmCatchMutation.mutateAsync({ ...shieldBlock.form, territoryId: shieldBlock.territoryId, photoUrl: shieldBlock.photoUrl, caughtAt })
       track('catch_to_diary_shielded', { territory: shieldBlock.territoryId }, city)
       setShieldBlock(null)
       showToast(tn('shell.savedToDiary'))
       finishCatchFlow()
     } catch (err) {
-      reportClientError('diary_from_shield', err)
-      showToast(tn('shell.diarySaveFailed'))
+      const message = typeof err === 'object' && err !== null && 'message' in err ? String((err as { message: unknown }).message) : ''
+      const cooldown = /COOLDOWN:(\d+)/.exec(message)
+      if (cooldown && Number(cooldown[1]) > 0) {
+        setShieldBlock(null)
+        setCooldownSeconds(Number(cooldown[1]))
+      } else if (message === 'FROZEN') {
+        showToast(tn('shell.frozen'))
+      } else if (message.startsWith('RATE_LIMIT')) {
+        showToast(tn('shell.catchLimit'))
+      } else {
+        reportClientError('diary_from_shield', err)
+        showToast(tn('shell.diarySaveFailed'))
+      }
     }
   }
   function finishCatchFlow() {
@@ -2093,7 +2084,7 @@ export function FishZoneApp() {
           catchPhotoUrl={shieldBlock.photoUrl}
           speciesName={speciesList.find((sp) => sp.key === shieldBlock.form.species)?.name ?? shieldBlock.form.species}
           catchMeta={formatCatchMeta(shieldBlock.form.lengthCm, shieldBlock.form.weightKg)}
-          saving={addDiaryCatch.isPending}
+          saving={confirmCatchMutation.isPending}
           onAddToDiary={() => void addShieldedCatchToDiary()}
           onClose={() => setShieldBlock(null)}
         />

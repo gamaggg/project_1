@@ -76,7 +76,7 @@ export const FAQ_EN: FaqSection[] = [
             'You have to wait 2.5 minutes between catches.',
             'Allow the app to use your location and camera.',
             'Check that you are in one of the sectors on the map: a catch counts for the sector you stand in, and far from them it counts nowhere.',
-            'The sector is under someone else’s shield: while the shield stands, a catch cannot count there — the app shows how long it has left and offers to save the catch to the diary.',
+            'The sector is under someone else’s shield: while the shield stands, the sector cannot be taken — the app shows how long it has left and offers to add the catch to the diary: it counts like any other (stats, challenges, awards, coins for the species), only the sector stays with its holder.',
           ],
         ],
       },
@@ -111,7 +111,7 @@ export const FAQ_EN: FaqSection[] = [
       {
         q: 'What is a shield?',
         a: [
-          'A shield covers a sector for 24 hours: while it stands, other anglers cannot log a catch here, but your clanmates can.',
+          'A shield covers a sector for 24 hours: while it stands, someone else’s catch neither takes the sector nor wears its defense down (the catch itself counts if it is added to the diary from the shield window), and your clanmates fish as usual.',
           'Shields are not sold — you can only win them in the slots (5% chance per spin). A won shield goes into your reserve, which holds up to 3 shields; if the reserve is full, a shield that drops turns into 70 coins.',
           'Put a shield on with the «Put a shield on» button on your sector’s screen; if you are a co-holder of a clanmate’s sector you can too, with a shield from your reserve. How long the shield has left is shown right there, next to «Taken». A hot sector cannot be shielded until the end of the week.',
           'How many shields you have in reserve is shown at the top of the map — a teal shield badge (if double coins are on, there is one shared «×2 · shield» button). Tap it — a window with the reserve and a hint on where to place one.',

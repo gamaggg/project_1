@@ -297,6 +297,8 @@ export function useConfirmCatch() {
       weightKg: number | null
       method: string | null
       bait: string | null
+      // Set for a catch that must not touch the sector (under a shield, 04.11): the server saves it as a late one.
+      caughtAt?: string
     }) => {
       const supabase = createClient()
       const { data, error } = await supabase
@@ -308,6 +310,7 @@ export function useConfirmCatch() {
           p_weight_kg: args.weightKg ?? undefined,
           p_method: args.method ?? undefined,
           p_bait: args.bait ?? undefined,
+          ...(args.caughtAt ? { p_caught_at: args.caughtAt } : {}),
         })
         .single()
       if (error) throw error

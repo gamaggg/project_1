@@ -2087,7 +2087,7 @@ export const ru = {
     twiceFor: 'Вдвое больше монет за',
     underShield: '{id} под щитом',
     holds: 'держит',
-    untilShieldEnd: 'до конца щита — пока он стоит, чужой улов здесь не засчитать',
+    untilShieldEnd: 'до конца щита — сектор не захватить, но улов засчитается',
     yourCatch: 'Твой улов',
     addToDiary: 'Добавить в дневник',
     myBoosts: 'Твои бонусы',

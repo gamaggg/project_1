@@ -2082,7 +2082,7 @@ export const en: Dict = {
     twiceFor: 'Twice the coins for',
     underShield: '{id} is under a shield',
     holds: 'held by',
-    untilShieldEnd: 'until the shield ends — while it stands, an outsider’s catch here does not count',
+    untilShieldEnd: 'until the shield ends — the sector can’t be taken, but your catch still counts',
     yourCatch: 'Your catch',
     addToDiary: 'Add to the diary',
     myBoosts: 'Your boosts',
