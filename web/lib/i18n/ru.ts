@@ -1,3 +1,4 @@
+import { clan2Ru } from '@/lib/i18n/clan2.ru'
 // Source dictionary. en.ts and ka.ts must mirror every key here (enforced by
 // the Dict type in core.ts). Plural entries: { one, few, many, other } —
 // «1 улов / 2 улова / 5 уловов».
@@ -2740,4 +2741,5 @@ export const ru = {
     back: 'Другая страна',
     cities: { one: '{count} город', few: '{count} города', many: '{count} городов', other: '{count} города' },
   },
+  clan2: clan2Ru,
 }

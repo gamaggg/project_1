@@ -1,0 +1,138 @@
+/* The clan update («Общак»): styles of components/clan2 and the /clan-preview
+   shell. Same tokens as the rest of the app (globals.css :root); every class
+   here starts with c2- so nothing collides with the existing screens. */
+
+/* ───────────── shared ───────────── */
+.c2-stack{display:flex; flex-direction:column; gap:12px;}
+.c2-card{padding:16px; border-radius:20px;}
+.c2-card-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;}
+.c2-card-head h3{margin:0; font-size:15.5px; font-weight:800; letter-spacing:-.01em;}
+.c2-hint{margin:0 0 10px; font-size:12.5px; line-height:1.45; color:var(--ink-soft);}
+.c2-hint.faint, .c2-muted.faint{color:var(--ink-faint);}
+.c2-muted{color:var(--ink-soft); font-size:13px; margin:0;}
+.c2-muted.small{font-size:12px;}
+.c2-ok{color:var(--green); font-weight:700; font-size:13px;}
+.c2-row-btns{display:flex; gap:8px; margin-top:12px;}
+.c2-row-btns > *{flex:1; width:auto;}
+.c2-chip{display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:999px; background:#F0EEEA; color:var(--ink); font-size:12px; font-weight:800;}
+.c2-chip.good{background:var(--green-soft); color:#1B7A37;}
+.c2-chip.warn{background:#FFF1D6; color:#9A5B00;}
+.c2-chip.bad{background:#FFE3E0; color:#B3261E;}
+.c2-chip.accent{background:var(--accent-soft); color:#C23F00;}
+.c2-coins{display:inline-flex; align-items:center; gap:4px; font-weight:800; font-variant-numeric:tabular-nums; white-space:nowrap;}
+.c2-avatar{flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; color:#fff; font-weight:800; letter-spacing:.02em;}
+.c2-name{display:inline-flex; align-items:center; gap:6px; font-weight:700; font-size:14px;}
+.c2-you{font-style:normal; font-size:10.5px; font-weight:800; padding:2px 6px; border-radius:6px; background:var(--accent-soft); color:#C23F00;}
+.c2-input{width:100%; box-sizing:border-box; padding:13px 14px; border-radius:14px; border:1.5px solid var(--line); font:inherit; font-size:16px; font-weight:700; margin:8px 0;}
+.c2-input:focus{outline:2px solid var(--accent); outline-offset:1px;}
+.c2-presets{display:flex; gap:8px; flex-wrap:wrap; margin:8px 0;}
+
+.c2-bar{height:10px; border-radius:999px; background:#EFEDE8; overflow:hidden;}
+.c2-bar > i{display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,#FFA25C,var(--accent)); transition:width .6s var(--ease-out);}
+.c2-bar.tone-good > i{background:linear-gradient(90deg,#6FD58B,var(--green));}
+.c2-bar.tone-warn > i{background:linear-gradient(90deg,#FFD27A,#F0A93E);}
+.c2-bar.tone-bad > i{background:linear-gradient(90deg,#FF8F85,#D33);}
+
+.c2-seg{display:flex; background:#F0EEEA; border-radius:13px; padding:3px; gap:2px;}
+.c2-seg button{flex:1; border:none; background:none; font:inherit; font-size:13px; font-weight:800; color:var(--ink-soft); padding:9px 0; border-radius:10px; cursor:pointer; transition:background .2s var(--ease), color .2s var(--ease), box-shadow .2s var(--ease);}
+.c2-seg button.on{background:#fff; color:var(--ink); box-shadow:0 1px 3px rgba(23,24,27,.14);}
+.c2-seg button:disabled{cursor:default; opacity:.8;}
+
+/* bottom sheet inside the phone frame (the frame is a containing block for fixed) */
+.c2-sheet-overlay{position:fixed; inset:0; z-index:60; background:rgba(23,24,27,.42); display:flex; align-items:flex-end; animation:c2-fade .2s var(--ease-out) both;}
+.c2-sheet{width:100%; max-height:86%; overflow-y:auto; background:var(--surface); border-radius:24px 24px 0 0; padding:10px 18px calc(22px + env(safe-area-inset-bottom)); box-shadow:var(--shadow-lg); animation:c2-rise .28s var(--ease-out) both;}
+.c2-sheet-handle{width:40px; height:4px; border-radius:2px; background:#D9D7D1; margin:0 auto 12px;}
+.c2-sheet-title{font-size:17px; font-weight:800; margin-bottom:10px;}
+.c2-sheet-body{display:flex; flex-direction:column; gap:8px;}
+@keyframes c2-fade{from{opacity:0}to{opacity:1}}
+@keyframes c2-rise{from{transform:translateY(24px); opacity:0}to{transform:none; opacity:1}}
+
+.c2-toast{position:fixed; left:50%; bottom:96px; transform:translateX(-50%); z-index:80; max-width:86%; padding:11px 16px; border-radius:14px; background:rgba(23,24,27,.92); color:#fff; font-size:13.5px; font-weight:700; text-align:center; box-shadow:var(--shadow-lg); animation:c2-toast .3s var(--ease-out) both;}
+@keyframes c2-toast{from{opacity:0; transform:translate(-50%,10px)}to{opacity:1; transform:translate(-50%,0)}}
+
+@media (prefers-reduced-motion: reduce){
+  .c2-bar > i, .c2-sheet, .c2-sheet-overlay, .c2-toast{animation:none; transition:none;}
+}
+
+/* ───────────── the treasury ───────────── */
+.c2-balance{padding:18px 18px 8px; display:flex; flex-direction:column; gap:8px;}
+.c2-balance-label{font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint);}
+.c2-balance-num{display:flex; align-items:center; gap:10px; font-size:40px; font-weight:800; letter-spacing:-.03em; line-height:1; font-variant-numeric:tabular-nums;}
+.c2-balance-cap{font-size:12px; color:var(--ink-soft); font-weight:700;}
+.c2-balance-actions{padding:6px 18px 18px;}
+.c2-flow{display:flex; align-items:flex-end; gap:5px; height:34px; margin:2px 0 4px;}
+.c2-flow > i{flex:1; border-radius:4px 4px 2px 2px; background:#E7E5E0;}
+.c2-flow > i.now{background:var(--accent);}
+
+.c2-goal-row{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; font-size:14.5px;}
+.c2-goal-foot{display:flex; justify-content:space-between; margin-top:7px;}
+
+.c2-sources, .c2-contrib, .c2-journal, .c2-pick{list-style:none; margin:0; padding:0;}
+.c2-sources{display:flex; flex-direction:column; gap:11px;}
+.c2-sources-top{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:13.5px; font-weight:700; margin-bottom:5px;}
+.c2-sources-spent{display:flex; align-items:center; justify-content:space-between; margin-top:14px; padding-top:12px; border-top:1px solid var(--line); font-size:13px; font-weight:700; color:var(--ink-soft);}
+
+.c2-contrib{display:flex; flex-direction:column; gap:12px;}
+.c2-contrib > li{display:flex; align-items:center; gap:10px;}
+.c2-contrib-main{flex:1; min-width:0;}
+.c2-contrib-top{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:5px;}
+.c2-patron{display:inline-flex; align-items:center; gap:4px; flex:0 0 auto; padding:4px 8px; border-radius:999px; background:#FFF1D6; color:#9A5B00; font-size:10.5px; font-weight:800;}
+
+.c2-journal{display:flex; flex-direction:column; margin-bottom:10px;}
+.c2-journal > li{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); font-size:13.5px; font-weight:600;}
+.c2-journal > li:last-child{border-bottom:none;}
+.c2-journal-main{flex:1; min-width:0;}
+.c2-journal-dot{flex:0 0 auto; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; background:var(--green-soft); color:#1B7A37;}
+.c2-journal > li.out .c2-journal-dot{background:var(--accent-soft); color:#C23F00;}
+
+.c2-pick{display:flex; flex-direction:column; gap:8px;}
+.c2-pick button{width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); font:inherit; font-size:14.5px; font-weight:700; cursor:pointer; text-align:left;}
+.c2-pick button.on{border-color:var(--accent); background:var(--accent-soft);}
+
+/* ───────────── the clan screen ───────────── */
+.c2-pad{padding:12px 16px 24px;}
+.c2-clan .clan-hero{margin:0 12px; border-radius:0 0 26px 26px; padding-top:12px;}
+.c2-hero-meta{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:6px; font-size:12.5px; font-weight:700; color:rgba(var(--hero-text-rgb,255,255,255),.88);}
+.c2-hero-xp{width:70%; margin:10px auto 0; text-align:center;}
+.c2-hero-xp small{display:block; margin-top:5px; font-size:11px; font-weight:700; color:rgba(var(--hero-text-rgb,255,255,255),.78);}
+.c2-subtabs{display:flex; gap:6px; overflow-x:auto; padding:12px 16px 4px; scrollbar-width:none; position:sticky; top:0; z-index:5; background:linear-gradient(var(--bg) 82%, rgba(255,255,255,0));}
+.c2-subtabs::-webkit-scrollbar{display:none;}
+.c2-subtabs button{flex:0 0 auto; border:1.5px solid var(--line); background:var(--surface); font:inherit; font-size:13px; font-weight:800; color:var(--ink-soft); padding:8px 14px; border-radius:999px; cursor:pointer; transition:background .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease);}
+.c2-subtabs button.on{background:var(--ink); color:#fff; border-color:var(--ink);}
+.c2-solo{margin:8px 0; padding:22px 18px; border-radius:22px; background:linear-gradient(160deg,#EAF3FA,#F7F0E6); border:1.5px solid var(--line);}
+.c2-solo-title{font-size:20px; font-weight:800; letter-spacing:-.02em; margin-bottom:8px;}
+.c2-solo p{margin:0 0 10px; color:var(--ink-soft); font-size:14px; line-height:1.45;}
+.c2-solo ul{margin:0 0 16px; padding-left:18px; display:flex; flex-direction:column; gap:7px; font-size:13.5px; font-weight:600; line-height:1.4;}
+
+/* ───────────── the preview shell ───────────── */
+.c2-stage{min-height:100vh; box-sizing:border-box; display:flex; align-items:flex-start; justify-content:center; gap:28px; padding:28px 20px; background:radial-gradient(1200px 600px at 20% -10%, #E6EEF6 0%, #F4F1EA 55%, #EFEBE3 100%);}
+.c2-panel{width:310px; flex:0 0 auto; background:rgba(255,255,255,.85); backdrop-filter:blur(10px); border:1px solid var(--line); border-radius:22px; padding:18px; box-shadow:var(--shadow); position:sticky; top:28px; max-height:calc(100vh - 56px); overflow-y:auto;}
+.c2-panel h1{margin:0 0 6px; font-size:17px; font-weight:800; letter-spacing:-.01em;}
+.c2-panel h2{margin:16px 0 8px; font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint);}
+.c2-clock{text-transform:none; letter-spacing:0; color:var(--ink-soft);}
+.c2-panel .btn-secondary{padding:10px 12px; font-size:13px; border-radius:12px;}
+.c2-panel-row{display:flex; gap:6px;}
+.c2-panel-row > *{flex:1;}
+.c2-panel-col{display:flex; flex-direction:column; gap:6px;}
+.c2-seg-wrap{flex-wrap:wrap;}
+.c2-seg-wrap button{flex:1 1 45%;}
+.c2-phone-wrap{flex:0 0 auto;}
+.c2-phone{position:relative; width:390px; height:820px; box-sizing:border-box; border:10px solid #17181B; border-radius:46px; background:var(--bg); overflow:hidden; transform:translateZ(0); display:flex; flex-direction:column; box-shadow:0 30px 70px rgba(23,24,27,.28), 0 0 0 2px #3A3D44;}
+.c2-status{flex:0 0 auto; display:flex; justify-content:space-between; align-items:center; padding:10px 26px 6px; font-size:12.5px; font-weight:800; color:var(--ink); background:var(--bg);}
+.c2-status span:last-child{font-size:11px; letter-spacing:.14em; color:var(--ink-faint);}
+.c2-phone-body{flex:1; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:none; padding-bottom:84px;}
+.c2-phone-body::-webkit-scrollbar{display:none;}
+.c2-tabbar{position:absolute; left:14px; right:14px; bottom:14px; z-index:40; display:flex; gap:4px; padding:6px; border-radius:26px; background:rgba(255,255,255,.92); backdrop-filter:blur(14px); border:1px solid var(--line); box-shadow:0 10px 28px rgba(23,24,27,.16);}
+.c2-tabbar button{position:relative; flex:1; border:none; background:none; font:inherit; font-size:13px; font-weight:800; color:var(--ink-soft); padding:12px 0; border-radius:20px; cursor:pointer; transition:background .2s var(--ease), color .2s var(--ease);}
+.c2-tabbar button.on{background:var(--ink); color:#fff;}
+.c2-badge{position:absolute; top:4px; right:14px; min-width:16px; height:16px; padding:0 4px; border-radius:8px; background:var(--accent); color:#fff; font-style:normal; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center;}
+
+@media (max-width: 860px){
+  .c2-stage{flex-direction:column-reverse; align-items:center; padding:12px;}
+  .c2-panel{position:static; width:100%; max-width:430px; max-height:none;}
+}
+@media (max-width: 460px){
+  .c2-stage{padding:0; gap:0;}
+  .c2-phone{width:100vw; height:100dvh; border:none; border-radius:0; box-shadow:none;}
+  .c2-panel{border-radius:0; border-left:none; border-right:none;}
+}

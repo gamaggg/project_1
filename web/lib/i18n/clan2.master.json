@@ -1,0 +1,899 @@
+{
+ "tab": {
+  "map": {
+   "ru": "Карта",
+   "en": "Map",
+   "ka": "რუკა"
+  },
+  "clan": {
+   "ru": "Клан",
+   "en": "Clan",
+   "ka": "კლანი"
+  },
+  "profile": {
+   "ru": "Профиль",
+   "en": "Profile",
+   "ka": "პროფილი"
+  },
+  "admin": {
+   "ru": "Админ",
+   "en": "Admin",
+   "ka": "ადმინი"
+  }
+ },
+ "sub": {
+  "treasury": {
+   "ru": "Общак",
+   "en": "Treasury",
+   "ka": "საერთო ფონდი"
+  },
+  "exit": {
+   "ru": "Выход",
+   "en": "Outing",
+   "ka": "გასვლა"
+  },
+  "week": {
+   "ru": "Неделя",
+   "en": "Week",
+   "ka": "კვირა"
+  },
+  "hq": {
+   "ru": "Штаб",
+   "en": "HQ",
+   "ka": "შტაბი"
+  },
+  "glory": {
+   "ru": "Слава",
+   "en": "Glory",
+   "ka": "დიდება"
+  },
+  "members": {
+   "ru": "Участники",
+   "en": "Members",
+   "ka": "წევრები"
+  }
+ },
+ "demo": {
+  "title": {
+   "ru": "Демо кланового обновления",
+   "en": "Clan update demo",
+   "ka": "კლანის განახლების დემო"
+  },
+  "note": {
+   "ru": "Данные выдуманы и хранятся в этом браузере. Нажимай всё, что хочется.",
+   "en": "The data is made up and kept in this browser. Tap anything you like.",
+   "ka": "მონაცემები გამოგონილია და ინახება ამ ბრაუზერში. დააჭირე რასაც გინდა."
+  },
+  "role": {
+   "ru": "Роль",
+   "en": "Role",
+   "ka": "როლი"
+  },
+  "roleLeader": {
+   "ru": "Глава клана",
+   "en": "Clan leader",
+   "ka": "კლანის ლიდერი"
+  },
+  "roleMember": {
+   "ru": "Участник",
+   "en": "Member",
+   "ka": "წევრი"
+  },
+  "roleSolo": {
+   "ru": "Без клана",
+   "en": "No clan",
+   "ka": "კლანის გარეშე"
+  },
+  "roleAdmin": {
+   "ru": "Админ",
+   "en": "Admin",
+   "ka": "ადმინი"
+  },
+  "time": {
+   "ru": "Время",
+   "en": "Time",
+   "ka": "დრო"
+  },
+  "t30": {
+   "ru": "+30 мин",
+   "en": "+30 min",
+   "ka": "+30 წთ"
+  },
+  "t2h": {
+   "ru": "+2 часа",
+   "en": "+2 h",
+   "ka": "+2 სთ"
+  },
+  "t1d": {
+   "ru": "+1 день",
+   "en": "+1 day",
+   "ka": "+1 დღე"
+  },
+  "events": {
+   "ru": "События",
+   "en": "Events",
+   "ka": "მოვლენები"
+  },
+  "evCatch": {
+   "ru": "Улов случайного игрока",
+   "en": "A random player's catch",
+   "ka": "შემთხვევითი მოთამაშის დაჭერა"
+  },
+  "evCatchMe": {
+   "ru": "Мой улов",
+   "en": "My catch",
+   "ka": "ჩემი დაჭერა"
+  },
+  "evAttackSector": {
+   "ru": "Атака на сектор клана",
+   "en": "Attack on a clan sector",
+   "ka": "კლანის სექტორზე თავდასხმა"
+  },
+  "evAttackHq": {
+   "ru": "Атака на штаб",
+   "en": "Attack on the HQ",
+   "ka": "შტაბზე თავდასხმა"
+  },
+  "evDefendHq": {
+   "ru": "Защитить штаб",
+   "en": "Defend the HQ",
+   "ka": "შტაბის დაცვა"
+  },
+  "evSettle": {
+   "ru": "Итоги недели",
+   "en": "End of the week",
+   "ka": "კვირის შედეგები"
+  },
+  "evLeaderAway": {
+   "ru": "Глава пропал на 14 дней",
+   "en": "The leader is gone for 14 days",
+   "ka": "ლიდერი 14 დღით გაქრა"
+  },
+  "evRecruit": {
+   "ru": "Новичок сделал улов",
+   "en": "A recruit made a catch",
+   "ka": "ახალბედამ დაიჭირა"
+  },
+  "evHot": {
+   "ru": "Сделать сектор горячим",
+   "en": "Make a sector hot",
+   "ka": "სექტორის ცხელად ქცევა"
+  },
+  "reset": {
+   "ru": "Сбросить демо",
+   "en": "Reset the demo",
+   "ka": "დემოს განულება"
+  },
+  "tourAgain": {
+   "ru": "Показать тур заново",
+   "en": "Show the tour again",
+   "ka": "ტურის ხელახლა ჩვენება"
+  },
+  "caught": {
+   "ru": "{member} поймал: {species}, {cm} см",
+   "en": "{member} caught: {species}, {cm} cm",
+   "ka": "{member}-მა დაიჭირა: {species}, {cm} სმ"
+  },
+  "taxed": {
+   "ru": "в общак {n}",
+   "en": "{n} to the treasury",
+   "ka": "ფონდში {n}"
+  },
+  "bountyDone": {
+   "ru": "Заказ выполнен: +{n}",
+   "en": "Bounty done: +{n}",
+   "ka": "შეკვეთა შესრულდა: +{n}"
+  },
+  "recordSet": {
+   "ru": "Новый рекорд клана!",
+   "en": "A new clan record!",
+   "ka": "კლანის ახალი რეკორდი!"
+  },
+  "hotDone": {
+   "ru": "Сектор стал горячим",
+   "en": "The sector is hot now",
+   "ka": "სექტორი ცხელი გახდა"
+  },
+  "attackDone": {
+   "ru": "На сектор напали",
+   "en": "A sector was attacked",
+   "ka": "სექტორზე თავს დაესხნენ"
+  },
+  "settled": {
+   "ru": "Итоги недели подведены",
+   "en": "The week is settled",
+   "ka": "კვირა შეჯამდა"
+  },
+  "timeShift": {
+   "ru": "Время сдвинуто",
+   "en": "Time moved on",
+   "ka": "დრო გადაიწია"
+  },
+  "resetDone": {
+   "ru": "Демо сброшено",
+   "en": "The demo was reset",
+   "ka": "დემო განულდა"
+  },
+  "leaderGone": {
+   "ru": "Руководство перешло соруководителю",
+   "en": "The co-leader took over",
+   "ka": "ხელმძღვანელობა თანალიდერმა გადაიბარა"
+  }
+ },
+ "err": {
+  "notMember": {
+   "ru": "Ты не в этом клане",
+   "en": "You are not in this clan",
+   "ka": "შენ ამ კლანში არ ხარ"
+  },
+  "notManager": {
+   "ru": "Это может только глава или соруководитель",
+   "en": "Only the leader or a co-leader can do this",
+   "ka": "ამას მხოლოდ ლიდერი ან თანალიდერი შეძლებს"
+  },
+  "notLeader": {
+   "ru": "Это может только глава",
+   "en": "Only the leader can do this",
+   "ka": "ამას მხოლოდ ლიდერი შეძლებს"
+  },
+  "notAdmin": {
+   "ru": "Только для админа",
+   "en": "Admins only",
+   "ka": "მხოლოდ ადმინისთვის"
+  },
+  "minDeposit": {
+   "ru": "Минимальный взнос 10 монет",
+   "en": "The minimum deposit is 10 coins",
+   "ka": "მინიმალური შენატანი 10 მონეტაა"
+  },
+  "wallet": {
+   "ru": "Не хватает монет на кошельке",
+   "en": "Not enough coins in your wallet",
+   "ka": "საფულეში მონეტები არ გყოფნის"
+  },
+  "full": {
+   "ru": "Общак полон",
+   "en": "The treasury is full",
+   "ka": "ფონდი სავსეა"
+  },
+  "badRate": {
+   "ru": "Такая ставка недопустима",
+   "en": "That rate is not allowed",
+   "ka": "ასეთი განაკვეთი დაუშვებელია"
+  },
+  "noGoal": {
+   "ru": "Цель не выбрана",
+   "en": "No goal is chosen",
+   "ka": "მიზანი არჩეული არ არის"
+  },
+  "notEnough": {
+   "ru": "В общаке не хватает монет",
+   "en": "Not enough coins in the treasury",
+   "ka": "ფონდში მონეტები არ ყოფნის"
+  },
+  "notOwned": {
+   "ru": "Этого у клана ещё нет",
+   "en": "The clan does not have this yet",
+   "ka": "კლანს ეს ჯერ არ აქვს"
+  },
+  "maxLevel": {
+   "ru": "Уже высший уровень",
+   "en": "Already at the top level",
+   "ka": "უკვე უმაღლესი დონეა"
+  },
+  "questOpen": {
+   "ru": "Задание ещё не выполнено",
+   "en": "The quest is not done yet",
+   "ka": "დავალება ჯერ არ არის შესრულებული"
+  },
+  "buffCooldown": {
+   "ru": "Баф ещё отдыхает",
+   "en": "The buff is still cooling down",
+   "ka": "ბაფი ჯერ ისვენებს"
+  },
+  "buffBusy": {
+   "ru": "Выход уже назначен",
+   "en": "An outing is already set",
+   "ka": "გასვლა უკვე დანიშნულია"
+  },
+  "buffNone": {
+   "ru": "Сейчас нет назначенного выхода",
+   "en": "No outing is set right now",
+   "ka": "ახლა დანიშნული გასვლა არ არის"
+  },
+  "hqNotMine": {
+   "ru": "Штаб ставится только на сектор клана",
+   "en": "The HQ goes on a clan sector only",
+   "ka": "შტაბი მხოლოდ კლანის სექტორზე იდება"
+  },
+  "hqTaken": {
+   "ru": "На этом секторе уже стоит штаб",
+   "en": "There is already an HQ on this sector",
+   "ka": "ამ სექტორზე შტაბი უკვე დგას"
+  },
+  "hqCooldown": {
+   "ru": "Штаб можно переносить раз в 3 дня",
+   "en": "The HQ can be moved once in 3 days",
+   "ka": "შტაბის გადატანა 3 დღეში ერთხელ შეიძლება"
+  },
+  "hqNone": {
+   "ru": "У клана нет штаба",
+   "en": "The clan has no HQ",
+   "ka": "კლანს შტაბი არ აქვს"
+  },
+  "hqSiege": {
+   "ru": "Штаб уже в осаде",
+   "en": "The HQ is already under siege",
+   "ka": "შტაბი უკვე ალყაშია"
+  },
+  "bountyMax": {
+   "ru": "Не больше 3 заказов сразу",
+   "en": "At most 3 bounties at a time",
+   "ka": "ერთდროულად მაქსიმუმ 3 შეკვეთა"
+  },
+  "bountyReward": {
+   "ru": "Награда от 20 до 300 монет",
+   "en": "The reward is 20 to 300 coins",
+   "ka": "ჯილდო 20-დან 300 მონეტამდეა"
+  },
+  "bountyShare": {
+   "ru": "Заказ не больше четверти общака",
+   "en": "A bounty is at most a quarter of the treasury",
+   "ka": "შეკვეთა ფონდის მეოთხედზე მეტი ვერ იქნება"
+  },
+  "nudgeOnce": {
+   "ru": "Сегодня уже звали",
+   "en": "Already called today",
+   "ka": "დღეს უკვე დაუძახეს"
+  },
+  "recruitNone": {
+   "ru": "Нет новичков для отметки",
+   "en": "No recruits to mark",
+   "ka": "აღსანიშნავი ახალბედა არ არის"
+  },
+  "disabled": {
+   "ru": "Клановая экономика выключена админом",
+   "en": "The clan economy is switched off by an admin",
+   "ka": "კლანის ეკონომიკა ადმინმა გამორთო"
+  },
+  "badEntry": {
+   "ru": "Эту запись нельзя отменить",
+   "en": "This entry cannot be reversed",
+   "ka": "ამ ჩანაწერის გაუქმება შეუძლებელია"
+  }
+ },
+ "ok": {
+  "deposited": {
+   "ru": "Внесено {n} монет",
+   "en": "{n} coins deposited",
+   "ka": "შეტანილია {n} მონეტა"
+  },
+  "taxSet": {
+   "ru": "Ставка сохранена",
+   "en": "The rate is saved",
+   "ka": "განაკვეთი შენახულია"
+  },
+  "goalSet": {
+   "ru": "Цель выбрана",
+   "en": "The goal is set",
+   "ka": "მიზანი არჩეულია"
+  },
+  "bought": {
+   "ru": "Куплено",
+   "en": "Bought",
+   "ka": "ნაყიდია"
+  },
+  "upgraded": {
+   "ru": "Постройка улучшена",
+   "en": "The building is upgraded",
+   "ka": "ნაგებობა გაუმჯობესდა"
+  },
+  "buffPlanned": {
+   "ru": "Выход назначен",
+   "en": "The outing is set",
+   "ka": "გასვლა დანიშნულია"
+  },
+  "rsvpOn": {
+   "ru": "Ты идёшь",
+   "en": "You are in",
+   "ka": "შენ მიდიხარ"
+  },
+  "rsvpOff": {
+   "ru": "Ты не идёшь",
+   "en": "You are out",
+   "ka": "შენ აღარ მიდიხარ"
+  },
+  "hqPlaced": {
+   "ru": "Штаб установлен",
+   "en": "The HQ is set",
+   "ka": "შტაბი დაყენებულია"
+  },
+  "hqMoved": {
+   "ru": "Штаб перенесён",
+   "en": "The HQ is moved",
+   "ka": "შტაბი გადატანილია"
+  },
+  "siegeBroken": {
+   "ru": "Осада снята, тебе +20 монет",
+   "en": "The siege is broken, +20 coins for you",
+   "ka": "ალყა მოხსნილია, შენ +20 მონეტა"
+  },
+  "defence": {
+   "ru": "Защита штаба +1",
+   "en": "HQ defence +1",
+   "ka": "შტაბის დაცვა +1"
+  },
+  "bountyCreated": {
+   "ru": "Заказ объявлен",
+   "en": "The bounty is posted",
+   "ka": "შეკვეთა გამოცხადებულია"
+  },
+  "nudged": {
+   "ru": "{name} получил зов на воду",
+   "en": "{name} got a call to the water",
+   "ka": "{name}-მა წყალზე გამოძახება მიიღო"
+  },
+  "leaderMoved": {
+   "ru": "Руководство передано",
+   "en": "Leadership handed over",
+   "ka": "ხელმძღვანელობა გადაცემულია"
+  },
+  "questClaimed": {
+   "ru": "Награда за задание ушла в общак",
+   "en": "The quest reward went to the treasury",
+   "ka": "დავალების ჯილდო ფონდში გადავიდა"
+  },
+  "recruitCaught": {
+   "ru": "Новичок сделал первый улов",
+   "en": "The recruit made a first catch",
+   "ka": "ახალბედამ პირველი დაჭერა გააკეთა"
+  },
+  "recruitPaid": {
+   "ru": "За новичка в общак +{n}",
+   "en": "+{n} to the treasury for the recruit",
+   "ka": "ახალბედისთვის ფონდში +{n}"
+  },
+  "skinEquipped": {
+   "ru": "Скин применён",
+   "en": "The skin is on",
+   "ka": "სკინი გააქტიურდა"
+  },
+  "joined": {
+   "ru": "Ты в клане «Морские волки»",
+   "en": "You joined the clan",
+   "ka": "შენ კლანში შეხვედი"
+  },
+  "settingsSaved": {
+   "ru": "Настройки сохранены",
+   "en": "Settings saved",
+   "ka": "პარამეტრები შენახულია"
+  },
+  "reversed": {
+   "ru": "Запись отменена",
+   "en": "The entry was reversed",
+   "ka": "ჩანაწერი გაუქმდა"
+  }
+ },
+ "time": {
+  "now": {
+   "ru": "только что",
+   "en": "just now",
+   "ka": "ახლახან"
+  },
+  "minAgo": {
+   "ru": "{n} мин назад",
+   "en": "{n} min ago",
+   "ka": "{n} წთ წინ"
+  },
+  "hourAgo": {
+   "ru": "{n} ч назад",
+   "en": "{n} h ago",
+   "ka": "{n} სთ წინ"
+  },
+  "dayAgo": {
+   "ru": "{n} дн. назад",
+   "en": "{n} d ago",
+   "ka": "{n} დღის წინ"
+  },
+  "h": {
+   "ru": "ч",
+   "en": "h",
+   "ka": "სთ"
+  },
+  "m": {
+   "ru": "мин",
+   "en": "min",
+   "ka": "წთ"
+  },
+  "d": {
+   "ru": "дн.",
+   "en": "d",
+   "ka": "დღ."
+  },
+  "never": {
+   "ru": "не ловил на этой неделе",
+   "en": "no catch this week",
+   "ka": "ამ კვირას არ დაუჭერია"
+  }
+ },
+ "treasury": {
+  "balance": {
+   "ru": "В общаке",
+   "en": "In the treasury",
+   "ka": "ფონდში"
+  },
+  "capOf": {
+   "ru": "из {cap}",
+   "en": "of {cap}",
+   "ka": "{cap}-დან"
+  },
+  "capNote": {
+   "ru": "Потолок общака растёт с уровнем клана и «Складом»: копить без конца нельзя.",
+   "en": "The treasury's ceiling grows with the clan level and the Storehouse: it cannot be hoarded for ever.",
+   "ka": "ფონდის ზღვარი კლანის დონესა და «საწყობთან» ერთად იზრდება: უსასრულოდ დაგროვება არ შეიძლება."
+  },
+  "rentToday": {
+   "ru": "Рента секторов: +{n} в сутки",
+   "en": "Sector rent: +{n} a day",
+   "ka": "სექტორების რენტა: +{n} დღეში"
+  },
+  "rentNote": {
+   "ru": "Каждый сектор клана приносит 8 монет в сутки прямо в общак. Общий сектор приносит в полтора раза больше, штаб вдвое.",
+   "en": "Every clan sector pays 8 coins a day straight into the treasury. A shared sector pays half as much again, the HQ twice.",
+   "ka": "კლანის თითოეული სექტორი დღეში 8 მონეტას პირდაპირ ფონდში აგდებს. საერთო სექტორი ნახევრით მეტს, შტაბი ორჯერ მეტს."
+  },
+  "sourcesTitle": {
+   "ru": "Откуда деньги за неделю",
+   "en": "Where the money came from this week",
+   "ka": "საიდან მოვიდა ფული ამ კვირას"
+  },
+  "spentTitle": {
+   "ru": "Потрачено за неделю",
+   "en": "Spent this week",
+   "ka": "დახარჯულია ამ კვირას"
+  },
+  "srcRent": {
+   "ru": "Рента секторов",
+   "en": "Sector rent",
+   "ka": "სექტორების რენტა"
+  },
+  "srcTax": {
+   "ru": "Отчисление с уловов",
+   "en": "Catch tax",
+   "ka": "დაჭერებიდან გამოქვითვა"
+  },
+  "srcDeposit": {
+   "ru": "Взносы участников",
+   "en": "Member deposits",
+   "ka": "წევრების შენატანი"
+  },
+  "srcShares": {
+   "ru": "Награды клана (сундук, битва)",
+   "en": "Clan rewards (chest, battle)",
+   "ka": "კლანის ჯილდოები (სკივრი, ბრძოლა)"
+  },
+  "srcOther": {
+   "ru": "Прочее: задания, новички, возвраты",
+   "en": "Other: quests, recruits, refunds",
+   "ka": "სხვა: დავალებები, ახალბედები, დაბრუნებები"
+  },
+  "taxTitle": {
+   "ru": "Отчисление с улова",
+   "en": "Catch tax",
+   "ka": "დაჭერიდან გამოქვითვა"
+  },
+  "taxHint": {
+   "ru": "Часть монет за каждую пойманную рыбу уходит в общак. Ставку ставит глава, игрок видит её при каждом улове.",
+   "en": "A share of the coins for each fish goes to the treasury. The leader sets the rate, and every player sees it on each catch.",
+   "ka": "თითოეული თევზის მონეტების ნაწილი ფონდში გადადის. განაკვეთს ლიდერი ადგენს, მოთამაშე მას ყოველ დაჭერაზე ხედავს."
+  },
+  "taxOff": {
+   "ru": "Выкл",
+   "en": "Off",
+   "ka": "გამორთ."
+  },
+  "taxPct": {
+   "ru": "{n} %",
+   "en": "{n} %",
+   "ka": "{n} %"
+  },
+  "taxExample": {
+   "ru": "Рыба за 100 монет: в общак {n}",
+   "en": "A fish worth 100 coins: {n} to the treasury",
+   "ka": "100 მონეტიანი თევზი: ფონდში {n}"
+  },
+  "deposit": {
+   "ru": "Внести монеты",
+   "en": "Deposit coins",
+   "ka": "მონეტების შეტანა"
+  },
+  "depositTitle": {
+   "ru": "Взнос в общак",
+   "en": "Deposit to the treasury",
+   "ka": "შენატანი ფონდში"
+  },
+  "depositWallet": {
+   "ru": "На кошельке {n} монет",
+   "en": "{n} coins in your wallet",
+   "ka": "საფულეში {n} მონეტაა"
+  },
+  "depositNote": {
+   "ru": "Взнос не возвращается, даже если выйти из клана.",
+   "en": "A deposit is not returned, even if you leave the clan.",
+   "ka": "შენატანი არ ბრუნდება, კლანიდან გასვლის შემთხვევაშიც."
+  },
+  "depositGo": {
+   "ru": "Внести {n}",
+   "en": "Deposit {n}",
+   "ka": "შეტანა {n}"
+  },
+  "goalTitle": {
+   "ru": "Цель общака",
+   "en": "The treasury's goal",
+   "ka": "ფონდის მიზანი"
+  },
+  "goalNone": {
+   "ru": "Цель не выбрана",
+   "en": "No goal chosen",
+   "ka": "მიზანი არჩეული არ არის"
+  },
+  "goalPick": {
+   "ru": "Выбрать цель",
+   "en": "Choose a goal",
+   "ka": "მიზნის არჩევა"
+  },
+  "goalChange": {
+   "ru": "Сменить цель",
+   "en": "Change the goal",
+   "ka": "მიზნის შეცვლა"
+  },
+  "goalBuy": {
+   "ru": "Купить",
+   "en": "Buy",
+   "ka": "ყიდვა"
+  },
+  "goalLeft": {
+   "ru": "Не хватает {n}",
+   "en": "{n} short",
+   "ka": "აკლია {n}"
+  },
+  "goalReady": {
+   "ru": "Монет хватает",
+   "en": "Enough coins",
+   "ka": "მონეტები საკმარისია"
+  },
+  "goalExplain": {
+   "ru": "Общак копит на цель: полоска показывает, сколько уже набрано.",
+   "en": "The treasury saves for the goal: the bar shows how much is there.",
+   "ka": "ფონდი მიზნისთვის გროვდება: ზოლი აჩვენებს რამდენია უკვე."
+  },
+  "contribTitle": {
+   "ru": "Вклад за неделю",
+   "en": "Contributions this week",
+   "ka": "ამ კვირის შენატანები"
+  },
+  "contribNote": {
+   "ru": "Взносы и отчисления с уловов, без ренты.",
+   "en": "Deposits and catch tax, without the rent.",
+   "ka": "შენატანები და დაჭერიდან გამოქვითვა, რენტის გარეშე."
+  },
+  "patron": {
+   "ru": "Меценат недели",
+   "en": "Patron of the week",
+   "ka": "კვირის მეცენატი"
+  },
+  "journalTitle": {
+   "ru": "Журнал",
+   "en": "Journal",
+   "ka": "ჟურნალი"
+  },
+  "journalMore": {
+   "ru": "Показать больше",
+   "en": "Show more",
+   "ka": "მეტის ჩვენება"
+  },
+  "journalLess": {
+   "ru": "Свернуть",
+   "en": "Show less",
+   "ka": "აკეცვა"
+  },
+  "journalEmpty": {
+   "ru": "Пока пусто",
+   "en": "Nothing yet",
+   "ka": "ჯერ ცარიელია"
+  },
+  "lost": {
+   "ru": "не поместилось: {n}",
+   "en": "did not fit: {n}",
+   "ka": "არ დაეტია: {n}"
+  },
+  "reversed": {
+   "ru": "отменено",
+   "en": "reversed",
+   "ka": "გაუქმებულია"
+  },
+  "you": {
+   "ru": "ты",
+   "en": "you",
+   "ka": "შენ"
+  },
+  "weekFlow": {
+   "ru": "Приход за 7 дней",
+   "en": "Income over 7 days",
+   "ka": "შემოსავალი 7 დღეში"
+  }
+ },
+ "goal": {
+  "skin_clan_tide": {
+   "ru": "Скин «Прилив»",
+   "en": "Skin «Tide»",
+   "ka": "სკინი «მოქცევა»"
+  },
+  "skin_clan_aurora": {
+   "ru": "Скин «Сияние»",
+   "en": "Skin «Aurora»",
+   "ka": "სკინი «ციალი»"
+  },
+  "skin_clan_flotilla": {
+   "ru": "Скин «Флотилия»",
+   "en": "Skin «Flotilla»",
+   "ka": "სკინი «ფლოტილია»"
+  },
+  "skin_clan_lanterns": {
+   "ru": "Скин «Огни»",
+   "en": "Skin «Lanterns»",
+   "ka": "სკინი «ფარნები»"
+  },
+  "boat_gold": {
+   "ru": "Золотая лодка в битве кланов",
+   "en": "A golden boat in the clan battle",
+   "ka": "ოქროს ნავი კლანების ბრძოლაში"
+  },
+  "banner_storm": {
+   "ru": "Знамя «Шторм»",
+   "en": "The «Storm» banner",
+   "ka": "დროშა «ქარიშხალი»"
+  }
+ },
+ "journal": {
+  "rent": {
+   "ru": "Рента секторов",
+   "en": "Sector rent",
+   "ka": "სექტორების რენტა"
+  },
+  "hot_rent": {
+   "ru": "Рента с горячего сектора",
+   "en": "Rent from a hot sector",
+   "ka": "ცხელი სექტორის რენტა"
+  },
+  "tax": {
+   "ru": "Отчисление с улова: {species}",
+   "en": "Catch tax: {species}",
+   "ka": "დაჭერიდან გამოქვითვა: {species}"
+  },
+  "deposit": {
+   "ru": "Взнос",
+   "en": "Deposit",
+   "ka": "შენატანი"
+  },
+  "chest_share": {
+   "ru": "Доля сундука недели",
+   "en": "Share of the weekly chest",
+   "ka": "კვირის სკივრის წილი"
+  },
+  "race_share": {
+   "ru": "Доля битвы кланов",
+   "en": "Share of the clan battle",
+   "ka": "კლანების ბრძოლის წილი"
+  },
+  "recruit": {
+   "ru": "Новичок {name}: награда клану",
+   "en": "Recruit {name}: reward for the clan",
+   "ka": "ახალბედა {name}: ჯილდო კლანს"
+  },
+  "refund": {
+   "ru": "Возврат",
+   "en": "Refund",
+   "ka": "დაბრუნება"
+  },
+  "quest": {
+   "ru": "Награда за задание недели",
+   "en": "Reward for the weekly quest",
+   "ka": "კვირის დავალების ჯილდო"
+  },
+  "tournament": {
+   "ru": "Приз турнира",
+   "en": "Tournament prize",
+   "ka": "ტურნირის პრიზი"
+  },
+  "spend_buff": {
+   "ru": "Баф «Выход»",
+   "en": "Buff «Outing»",
+   "ka": "ბაფი «გასვლა»"
+  },
+  "spend_goal": {
+   "ru": "Покупка",
+   "en": "Purchase",
+   "ka": "შეძენა"
+  },
+  "spend_project": {
+   "ru": "Постройка",
+   "en": "Building",
+   "ka": "ნაგებობა"
+  },
+  "spend_bounty": {
+   "ru": "Заказ",
+   "en": "Bounty",
+   "ka": "შეკვეთა"
+  },
+  "spend_hq": {
+   "ru": "Штаб",
+   "en": "HQ",
+   "ka": "შტაბი"
+  },
+  "spend_skin": {
+   "ru": "Скин клана",
+   "en": "Clan skin",
+   "ka": "კლანის სკინი"
+  }
+ },
+ "solo": {
+  "title": {
+   "ru": "Ты пока без клана",
+   "en": "You have no clan yet",
+   "ka": "შენ ჯერ კლანში არ ხარ"
+  },
+  "text": {
+   "ru": "Клан — это общая копилка и общие выходы на воду. Вот что ты получишь:",
+   "en": "A clan is a shared treasury and shared outings. Here is what you get:",
+   "ka": "კლანი საერთო ფონდია და საერთო გასვლები წყალზე. აი რას მიიღებ:"
+  },
+  "p1": {
+   "ru": "Общак: рента с секторов клана идёт всем, а не тебе одному",
+   "en": "Treasury: the rent of the clan's sectors goes to everyone, not to you alone",
+   "ka": "საერთო ფონდი: კლანის სექტორების რენტა ყველას ხმარდება, არა მარტო შენ"
+  },
+  "p2": {
+   "ru": "Выход: клан выходит ловить вместе, награда за уловы ×2 на 2 часа",
+   "en": "Outing: the clan goes fishing together, catch rewards ×2 for 2 hours",
+   "ka": "გასვლა: კლანი ერთად თევზაობს, დაჭერის ჯილდო ×2 ორი საათით"
+  },
+  "p3": {
+   "ru": "Штаб на карте и тревога, если на ваш сектор напали",
+   "en": "A headquarters on the map and an alarm when your sector is attacked",
+   "ka": "შტაბი რუკაზე და განგაში, თუ თქვენს სექტორზე თავს დაესხნენ"
+  },
+  "p4": {
+   "ru": "Задания недели, заказы и турнир между кланами",
+   "en": "Weekly quests, bounties and a tournament between clans",
+   "ka": "კვირის დავალებები, შეკვეთები და ტურნირი კლანებს შორის"
+  },
+  "join": {
+   "ru": "Вступить в «Морские волки» (демо)",
+   "en": "Join «Sea Wolves» (demo)",
+   "ka": "«ზღვის მგლებში» შესვლა (დემო)"
+  }
+ },
+ "clan": {
+  "level": {
+   "ru": "Уровень {n}",
+   "en": "Level {n}",
+   "ka": "დონე {n}"
+  },
+  "members": {
+   "ru": "{n} из {max}",
+   "en": "{n} of {max}",
+   "ka": "{n} {max}-დან"
+  },
+  "xp": {
+   "ru": "Опыт клана",
+   "en": "Clan XP",
+   "ka": "კლანის გამოცდილება"
+  },
+  "xpLeft": {
+   "ru": "до следующего уровня {n}",
+   "en": "{n} to the next level",
+   "ka": "შემდეგ დონემდე {n}"
+  }
+ }
+}

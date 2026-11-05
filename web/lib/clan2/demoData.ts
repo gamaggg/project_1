@@ -135,7 +135,7 @@ export function initialDemoState(now: number = Date.now()): DemoState {
       crest: { shape: 'shield', symbol: 'anchor', primary: '#1D5C80', secondary: '#F0A93E' },
       background: 'waves',
       level: 5,
-      xp: 1180,
+      xp: 850,
       trophies: 640,
     },
     members: DEMO_MEMBERS.map((m) => ({ ...m })),

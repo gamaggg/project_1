@@ -1,3 +1,4 @@
+import { clan2Ka } from '@/lib/i18n/clan2.ka'
 import type { Dict } from '@/lib/i18n/core'
 
 // Georgian: a noun after a number stays in the singular («10 მონეტა»), so
@@ -2737,4 +2738,5 @@ export const ka: Dict = {
     back: 'სხვა ქვეყანა',
     cities: { one: '{count} ქალაქი', other: '{count} ქალაქი' },
   },
+  clan2: clan2Ka,
 }

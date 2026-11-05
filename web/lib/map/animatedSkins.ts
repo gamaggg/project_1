@@ -6,6 +6,8 @@
 // — the same look as the static skins, just moving.
 // `seed` (0–1) is this sector's own number, so neighbours don't play the same
 // picture: the skin uses it for direction, speed, phase and what it shows.
+import { CLAN_ANIMATED_SKINS } from '@/lib/map/clanSkins'
+
 export type AnimatedSkinDraw = (ctx: CanvasRenderingContext2D, w: number, h: number, t: number, color: string, seed?: number) => void
 
 const TAU = Math.PI * 2
@@ -845,6 +847,8 @@ const aquarium: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
 }
 
 export const ANIMATED_SKINS: Record<string, AnimatedSkinDraw> = {
+  // The clan skins (lib/map/clanSkins.ts).
+  ...CLAN_ANIMATED_SKINS,
   skin_lightning: lightning,
   skin_lighthouse: lighthouse,
   skin_aquarium: aquarium,

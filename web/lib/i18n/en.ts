@@ -1,3 +1,4 @@
+import { clan2En } from '@/lib/i18n/clan2.en'
 import type { Dict } from '@/lib/i18n/core'
 
 export const en: Dict = {
@@ -2735,4 +2736,5 @@ export const en: Dict = {
     back: 'Another country',
     cities: { one: '{count} city', other: '{count} cities' },
   },
+  clan2: clan2En,
 }

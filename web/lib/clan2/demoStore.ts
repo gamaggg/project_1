@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from 'react'
 import { initialDemoState } from '@/lib/clan2/demoData'
+import { clanLevel } from '@/lib/data/clanLevels'
 import {
   BOUNTY_DAILY_CAP,
   BOUNTY_MAX_ACTIVE,
@@ -599,6 +600,7 @@ export function simulateCatch(opts: { memberId?: string; species?: string } = {}
       else d.hall.push(entry)
     }
     d.clan.xp += 2
+    d.clan.level = clanLevel(d.clan.xp)
     summary = { member: member.name, species: sp.key, cm, coins, tax: taken, hot: sector.hot, buff: buffOn, bounty, record }
   })
   return res.ok ? { ok: true, summary } : res
