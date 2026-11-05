@@ -3,6 +3,7 @@
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { C2Avatar, C2Card, speciesName, useC2 } from '@/components/clan2/C2Common'
 import { useDemoState } from '@/lib/clan2/demoStore'
+import { formatCatchMeta } from '@/lib/format'
 import { leagueFor } from '@/lib/data/clanLevels'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
 
@@ -19,7 +20,7 @@ export function GloryTab() {
   const hq = s.hq.sectorId
 
   const share = () => {
-    const text = `${s.clan.name} · ${tn('clan2.clan.level', { n: s.clan.level })}\n${top.map((r) => `${speciesName(r.species)}: ${r.cm} · ${r.kg}`).join('\n')}`
+    const text = `${s.clan.name} · ${tn('clan2.clan.level', { n: s.clan.level })}\n${top.map((r) => `${speciesName(r.species)}: ${formatCatchMeta(r.cm, r.kg)}`).join('\n')}`
     void navigator.clipboard?.writeText(text).catch(() => undefined)
     say(tn('clan2.glory.shareDone'))
   }
@@ -38,15 +39,13 @@ export function GloryTab() {
               </div>
               <div className="c2-hall-main">
                 <strong>{speciesName(r.species)}</strong>
-                <div className="c2-hall-size">
-                  {r.cm} · {r.kg}
-                </div>
+                <div className="c2-hall-size">{formatCatchMeta(r.cm, r.kg)}</div>
                 <div className="c2-muted small c2-hall-by">
                   <C2Avatar member={{ name: r.member, hue: r.hue }} size={18} />
                   {tn('clan2.glory.by', { name: r.member, date: date(r.at) })}
                 </div>
               </div>
-              {i === 0 && <span className="c2-chip warn">{tn('clan2.demo.recordSet')}</span>}
+              {i === 0 && <span className="c2-chip warn">{tn('clan2.glory.top')}</span>}
             </li>
           ))}
         </ul>

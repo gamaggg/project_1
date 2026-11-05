@@ -31,7 +31,8 @@ import {
 } from '@/lib/clan2/demoStore'
 import { HOURS } from '@/lib/clan2/rules'
 import type { Persona } from '@/lib/clan2/types'
-import { tn } from '@/lib/i18n/runtime'
+import { currentLanguage, setCurrentLanguage, tn } from '@/lib/i18n/runtime'
+import type { Lang } from '@/lib/i18n/core'
 import { speciesName } from '@/components/clan2/C2Common'
 
 // The shell of the demo: a control panel on the left (who you are, the clock,
@@ -55,6 +56,8 @@ export function ClanPreview() {
 function Shell() {
   const s = useDemoState()
   const [tab, setTab] = useState<Tab>('clan')
+  // The language of the demo: a change remounts the whole shell under the new one.
+  const [lang, setLang] = useState<Lang>(() => currentLanguage())
   // Asked of the map by other screens (show a sector, set the HQ): a new object each time.
   const [mapFocus, setMapFocus] = useState<MapFocus | undefined>(undefined)
   const [sub, setSub] = useState<SubTab>('treasury')
@@ -90,8 +93,16 @@ function Shell() {
   else body = <AdminTab />
 
   return (
-    <div className="c2-stage">
-      <DemoPanel clock={clock} onTour={() => setTour(s.persona === 'admin' ? 'admin' : 'player')} />
+    <div className="c2-stage" key={lang}>
+      <DemoPanel
+        clock={clock}
+        lang={lang}
+        onLang={(l) => {
+          setCurrentLanguage(l)
+          setLang(l)
+        }}
+        onTour={() => setTour(s.persona === 'admin' ? 'admin' : 'player')}
+      />
       <div className="c2-phone-wrap">
         <div className="c2-phone">
           <div className="c2-status" aria-hidden>
@@ -132,7 +143,7 @@ function Shell() {
 const PERSONAS: Persona[] = ['leader', 'member', 'solo', 'admin']
 const PERSONA_KEY = { leader: 'roleLeader', member: 'roleMember', solo: 'roleSolo', admin: 'roleAdmin' } as const
 
-function DemoPanel({ clock, onTour }: { clock: string; onTour: () => void }) {
+function DemoPanel({ clock, lang, onLang, onTour }: { clock: string; lang: Lang; onLang: (l: Lang) => void; onTour: () => void }) {
   const s = useDemoState()
   const { act, say } = useC2()
 
@@ -158,6 +169,15 @@ function DemoPanel({ clock, onTour }: { clock: string; onTour: () => void }) {
     <aside className="c2-panel">
       <h1>{tn('clan2.demo.title')}</h1>
       <p className="c2-muted small">{tn('clan2.demo.note')}</p>
+
+      <h2>{tn('clan2.demo.lang')}</h2>
+      <div className="c2-seg">
+        {(['ru', 'en', 'ka'] as const).map((l) => (
+          <button key={l} className={lang === l ? 'on' : undefined} onClick={() => onLang(l)}>
+            {l.toUpperCase()}
+          </button>
+        ))}
+      </div>
 
       <h2>{tn('clan2.demo.role')}</h2>
       <div className="c2-seg c2-seg-wrap">

@@ -49,6 +49,7 @@ export const clan2En = {
     resetDone: "The demo was reset",
     leaderGone: "The co-leader took over",
     evRsvp: "The others tapped «I'm in»",
+    lang: "Language",
   },
   err: {
     notMember: "You are not in this clan",
@@ -383,6 +384,7 @@ export const clan2En = {
     cardHq: "HQ: {id}",
     cardNoHq: "No HQ",
     cardLeague: "League: {name}",
+    top: "The heaviest",
   },
   members: {
     title: "Members",

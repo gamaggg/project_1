@@ -49,6 +49,7 @@ export const clan2Ru = {
     resetDone: "Демо сброшено",
     leaderGone: "Руководство перешло соруководителю",
     evRsvp: "Остальные нажали «иду»",
+    lang: "Язык",
   },
   err: {
     notMember: "Ты не в этом клане",
@@ -383,6 +384,7 @@ export const clan2Ru = {
     cardHq: "Штаб: {id}",
     cardNoHq: "Штаба нет",
     cardLeague: "Лига: {name}",
+    top: "Самая тяжёлая",
   },
   members: {
     title: "Участники",

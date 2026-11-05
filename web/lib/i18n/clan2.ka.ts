@@ -49,6 +49,7 @@ export const clan2Ka = {
     resetDone: "დემო განულდა",
     leaderGone: "ხელმძღვანელობა თანალიდერმა გადაიბარა",
     evRsvp: "დანარჩენებმა «მივდივარ» დააჭირეს",
+    lang: "ენა",
   },
   err: {
     notMember: "შენ ამ კლანში არ ხარ",
@@ -383,6 +384,7 @@ export const clan2Ka = {
     cardHq: "შტაბი: {id}",
     cardNoHq: "შტაბი არ არის",
     cardLeague: "ლიგა: {name}",
+    top: "ყველაზე მძიმე",
   },
   members: {
     title: "წევრები",

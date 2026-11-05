@@ -116,8 +116,10 @@ export const GOAL_CATALOG: GoalItem[] = [
 // The weekly quest of the whole clan: the target grows with the clan's active members (the
 // Duolingo «family quest» idea — more people, more to do, so everyone has to take part).
 export function questTarget(kind: QuestKind, activeMembers: number): number {
-  const per: Record<QuestKind, number> = { catches: 12, species: 2, capture: 3, rare: 2 }
-  const floor: Record<QuestKind, number> = { catches: 30, species: 6, capture: 8, rare: 5 }
+  // Calibrated on the database (06.11): an active player makes about 8 catches and 2 captures a week;
+  // the targets are set near 60 % of that, so a clan that plays together reaches them.
+  const per: Record<QuestKind, number> = { catches: 5, species: 1, capture: 1, rare: 0.6 }
+  const floor: Record<QuestKind, number> = { catches: 20, species: 5, capture: 4, rare: 3 }
   return Math.max(floor[kind], Math.round(per[kind] * Math.max(1, activeMembers)))
 }
 
