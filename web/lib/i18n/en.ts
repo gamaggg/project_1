@@ -9,6 +9,7 @@ export const en: Dict = {
     cancel: 'Cancel',
     loading: 'Loading…',
     close: 'Close',
+    toTop: 'Back to top',
     done: 'Done',
     save: 'Save',
     back: 'Back',
@@ -848,6 +849,13 @@ export const en: Dict = {
     holders: 'With sectors',
     new: 'New in the last 2 weeks',
   },
+  playersCatches: {
+    all: 'Any',
+    none: 'No catches',
+    some: 'With catches',
+    ten: '10 or more',
+    fifty: '50 or more',
+  },
   players: {
     search: 'Find a player',
     orderLabel: 'Player order',
@@ -857,6 +865,7 @@ export const en: Dict = {
     filterLabel: 'Player filter',
     who: 'Who',
     city: 'City',
+    catches: 'Catches',
     allCities: 'All cities',
   },
   clanRating: {

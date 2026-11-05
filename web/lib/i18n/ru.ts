@@ -10,6 +10,7 @@ export const ru = {
     cancel: 'Отмена',
     loading: 'Загрузка…',
     close: 'Закрыть',
+    toTop: 'Наверх',
     done: 'Готово',
     save: 'Сохранить',
     back: 'Назад',
@@ -851,6 +852,13 @@ export const ru = {
     holders: 'С секторами',
     new: 'Новые за 2 недели',
   },
+  playersCatches: {
+    all: 'Любые',
+    none: 'Без уловов',
+    some: 'Есть уловы',
+    ten: '10 и больше',
+    fifty: '50 и больше',
+  },
   players: {
     search: 'Найти игрока',
     orderLabel: 'Порядок игроков',
@@ -860,6 +868,7 @@ export const ru = {
     filterLabel: 'Фильтр игроков',
     who: 'Кто',
     city: 'Город',
+    catches: 'Уловы',
     allCities: 'Все города',
   },
   clanRating: {

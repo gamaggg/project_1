@@ -11,6 +11,7 @@ export const ka: Dict = {
     cancel: 'გაუქმება',
     loading: 'იტვირთება…',
     close: 'დახურვა',
+    toTop: 'ზევით',
     done: 'მზადაა',
     save: 'შენახვა',
     back: 'უკან',
@@ -850,6 +851,13 @@ export const ka: Dict = {
     holders: 'სექტორებით',
     new: 'ახალი ბოლო 2 კვირაში',
   },
+  playersCatches: {
+    all: 'ნებისმიერი',
+    none: 'დაჭერების გარეშე',
+    some: 'დაჭერებით',
+    ten: '10 ან მეტი',
+    fifty: '50 ან მეტი',
+  },
   players: {
     search: 'მოძებნე მოთამაშე',
     orderLabel: 'მოთამაშეების რიგი',
@@ -859,6 +867,7 @@ export const ka: Dict = {
     filterLabel: 'მოთამაშეების ფილტრი',
     who: 'ვინ',
     city: 'ქალაქი',
+    catches: 'დაჭერები',
     allCities: 'ყველა ქალაქი',
   },
   clanRating: {

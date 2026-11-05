@@ -284,7 +284,7 @@ export const FAQ_EN: FaqSection[] = [
       {
         q: 'Where can I see all the players?',
         a: [
-          'The «Territories» tab → «Rating» → «All players»: everyone who plays, from all cities (you can keep only Batumi or Moscow & MO). The order is «By rating» (first those with more sectors, then catches — all time) or «By name»; search by name is at the top, and to its right a filter: players without a clan (whom you can invite), in a clan, with sectors, new in two weeks, by city. Tap a player and their profile opens.',
+          'The «Territories» tab → «Rating» → «All players»: everyone who plays, from all cities (you can keep only Batumi or Moscow & MO). The order is «By rating» (first those with more sectors, then catches — all time) or «By name»; search by name is at the top, and to its right a filter: players without a clan (whom you can invite), in a clan, with sectors, new in two weeks, by catches (none, any, 10 or more, 50 or more), by city. Tap a player and their profile opens.',
         ],
       },
       {

@@ -16,9 +16,19 @@ type CityFilter = 'all' | CityId
 // Who to show: everyone, only those outside a clan (to invite them), only
 // clan members, only players who hold sectors, only the newly joined.
 type Who = 'all' | 'solo' | 'clan' | 'holders' | 'new'
+// By catches (all time): any, none yet, at least one, at least 10, at least 50.
+type Fished = 'all' | 'none' | 'some' | 'ten' | 'fifty'
 
 const ORDER_LABEL = labels('playersOrder', ['rating', 'name'] as const)
 const WHO_LABEL = labels('playersWho', ['all', 'solo', 'clan', 'holders', 'new'] as const)
+const FISHED_LABEL = labels('playersCatches', ['all', 'none', 'some', 'ten', 'fifty'] as const)
+const FISHED_MIN: Record<Fished, (n: number) => boolean> = {
+  all: () => true,
+  none: (n) => n === 0,
+  some: (n) => n > 0,
+  ten: (n) => n >= 10,
+  fifty: (n) => n >= 50,
+}
 const NEW_DAYS = 14
 
 const BY_RATING = (a: CityPlayer, b: CityPlayer) =>
@@ -36,6 +46,7 @@ export function PlayersDirectory({ onOpenUser }: { onOpenUser: (id: string) => v
   const { data: players = [], isLoading } = useAllPlayers(true)
   const [cityFilter, setCityFilter] = useState<CityFilter>('all')
   const [who, setWho] = useState<Who>('all')
+  const [fished, setFished] = useState<Fished>('all')
   // «New» is counted from when the list was opened.
   const [openedAt] = useState(() => Date.now())
   const [order, setOrder] = useState<Order>('rating')
@@ -51,9 +62,9 @@ export function PlayersDirectory({ onOpenUser }: { onOpenUser: (id: string) => v
       (who === 'clan' && p.clanCrest != null) ||
       (who === 'holders' && p.territoriesCount > 0) ||
       (who === 'new' && new Date(p.createdAt).getTime() >= since)
-    const sorted = players.filter((p) => (cityFilter === 'all' || p.city === cityFilter) && matchesWho(p)).sort(order === 'rating' ? BY_RATING : BY_NAME)
+    const sorted = players.filter((p) => (cityFilter === 'all' || p.city === cityFilter) && matchesWho(p) && FISHED_MIN[fished](p.catchesCount)).sort(order === 'rating' ? BY_RATING : BY_NAME)
     return query ? sorted.filter((p) => p.displayName.toLowerCase().replace(/ё/g, 'е').includes(query)) : sorted
-  }, [players, cityFilter, who, order, query, openedAt])
+  }, [players, cityFilter, who, fished, order, query, openedAt])
   // Place numbers only mean something in the rating order, over the whole list.
   const numbered = order === 'rating' && !query
 
@@ -74,6 +85,11 @@ export function PlayersDirectory({ onOpenUser }: { onOpenUser: (id: string) => v
         <PlayersFilter
           who={who}
           city={cityFilter}
+          fished={fished}
+          onFished={(x) => {
+            setFished(x)
+            setShown(PAGE)
+          }}
           onWho={(w) => {
             setWho(w)
             setShown(PAGE)
@@ -146,7 +162,21 @@ export function PlayersDirectory({ onOpenUser }: { onOpenUser: (id: string) => v
 
 // The funnel button at the end of the search box: who to show and from which
 // city, in one small card. A dot on the button while anything is narrowed.
-function PlayersFilter({ who, city, onWho, onCity }: { who: Who; city: CityFilter; onWho: (w: Who) => void; onCity: (c: CityFilter) => void }) {
+function PlayersFilter({
+  who,
+  city,
+  fished,
+  onWho,
+  onCity,
+  onFished,
+}: {
+  who: Who
+  city: CityFilter
+  fished: Fished
+  onWho: (w: Who) => void
+  onCity: (c: CityFilter) => void
+  onFished: (x: Fished) => void
+}) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -164,7 +194,7 @@ function PlayersFilter({ who, city, onWho, onCity }: { who: Who; city: CityFilte
       document.removeEventListener('keydown', onKey)
     }
   }, [open])
-  const active = who !== 'all' || city !== 'all'
+  const active = who !== 'all' || city !== 'all' || fished !== 'all'
   return (
     <div className="sort-menu players-filter" ref={rootRef}>
       <button type="button" className={`players-filter-btn tap-scale${active ? ' on' : ''}`} aria-haspopup="listbox" aria-expanded={open} aria-label={tn('players.filterLabel')} onClick={() => setOpen((o) => !o)}>
@@ -189,6 +219,22 @@ function PlayersFilter({ who, city, onWho, onCity }: { who: Who; city: CityFilte
               }}
             >
               {WHO_LABEL[key]}
+            </button>
+          ))}
+          <div className="players-filter-title">{tn('players.catches')}</div>
+          {(Object.keys(FISHED_LABEL) as Fished[]).map((key) => (
+            <button
+              key={key}
+              type="button"
+              role="option"
+              aria-selected={key === fished}
+              className={`sort-menu-opt${key === fished ? ' on' : ''}`}
+              onClick={() => {
+                onFished(key)
+                setOpen(false)
+              }}
+            >
+              {FISHED_LABEL[key]}
             </button>
           ))}
           <div className="players-filter-title">{tn('players.city')}</div>

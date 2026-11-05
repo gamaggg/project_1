@@ -9,6 +9,7 @@ import { formatCatchMeta, formatWhen } from '@/lib/format'
 import { CatcherLabel } from '@/components/app-shell/screens/TerritoryScreen'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { DiaryView } from '@/components/app-shell/Diary'
+import { ScrollToTop } from '@/components/app-shell/ScrollToTop'
 import { useT } from '@/lib/i18n'
 import { tn } from '@/lib/i18n/runtime'
 
@@ -105,6 +106,7 @@ export function MyCatchesScreen({
             )}
           </div>
         )}
+        <ScrollToTop />
       </div>
     </>
   )
