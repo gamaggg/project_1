@@ -2,6 +2,11 @@
 
 import { useState, type ReactNode } from 'react'
 import { ClanHero } from '@/components/app-shell/ClanHero'
+import { ExitTab } from '@/components/clan2/ExitTab'
+import { GloryTab } from '@/components/clan2/GloryTab'
+import { HqTab, type MapFocus } from '@/components/clan2/HqTab'
+import { MembersTab } from '@/components/clan2/MembersTab'
+import { WeekTab } from '@/components/clan2/WeekTab'
 import { TreasuryTab } from '@/components/clan2/TreasuryTab'
 import { C2Bar, useC2 } from '@/components/clan2/C2Common'
 import { inClan, joinDemoClan, useDemoState } from '@/lib/clan2/demoStore'
@@ -15,7 +20,7 @@ import { tn } from '@/lib/i18n/runtime'
 export type SubTab = 'treasury' | 'exit' | 'week' | 'hq' | 'glory' | 'members'
 const SUBS: SubTab[] = ['treasury', 'exit', 'week', 'hq', 'glory', 'members']
 
-export function ClanScreen2({ sections }: { sections?: Partial<Record<SubTab, ReactNode>> }) {
+export function ClanScreen2({ sections, onOpenSector, onGoMap }: { sections?: Partial<Record<SubTab, ReactNode>>; onOpenSector?: (id: string) => void; onGoMap?: (focus?: MapFocus) => void }) {
   const s = useDemoState()
   const { act } = useC2()
   const [sub, setSub] = useState<SubTab>('treasury')
@@ -46,11 +51,11 @@ export function ClanScreen2({ sections }: { sections?: Partial<Record<SubTab, Re
   const league = leagueFor(s.clan.trophies)
   const body: Record<SubTab, ReactNode> = {
     treasury: <TreasuryTab />,
-    exit: null,
-    week: null,
-    hq: null,
-    glory: null,
-    members: null,
+    exit: <ExitTab onOpenSector={onOpenSector} />,
+    week: <WeekTab />,
+    hq: <HqTab onGoMap={onGoMap} />,
+    glory: <GloryTab />,
+    members: <MembersTab />,
     ...sections,
   }
 

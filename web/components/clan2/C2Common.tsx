@@ -96,8 +96,8 @@ export function C2Card({ title, hint, right, children, style, tour }: { title?: 
 
 // ───────────── toast ─────────────
 
-type Ctx = { say: (msg: string) => void; act: (res: Result, ok?: string) => boolean }
-const ToastContext = createContext<Ctx>({ say: () => {}, act: () => false })
+type Ctx = { say: (msg: string) => void; act: (res: Result, ok?: string) => boolean; toast: { text: string; id: number } | null }
+const ToastContext = createContext<Ctx>({ say: () => {}, act: () => false, toast: null })
 export const useC2 = () => useContext(ToastContext)
 
 export function C2ToastProvider({ children }: { children: ReactNode }) {
@@ -122,14 +122,18 @@ export function C2ToastProvider({ children }: { children: ReactNode }) {
     [say]
   )
   return (
-    <ToastContext.Provider value={{ say, act }}>
-      {children}
-      {msg && (
-        <div className="c2-toast" key={msg.id} role="status">
-          {msg.text}
-        </div>
-      )}
-    </ToastContext.Provider>
+    <ToastContext.Provider value={{ say, act, toast: msg }}>{children}</ToastContext.Provider>
+  )
+}
+
+// Where the toast shows: put it inside the screen it belongs to (the phone of the demo).
+export function C2Toast() {
+  const { toast } = useC2()
+  if (!toast) return null
+  return (
+    <div className="c2-toast" key={toast.id} role="status">
+      {toast.text}
+    </div>
   )
 }
 

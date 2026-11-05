@@ -2,14 +2,17 @@
 
 import '../clan2.css'
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { C2ToastProvider, useC2, useDemoNow } from '@/components/clan2/C2Common'
+import { C2Toast, C2ToastProvider, useC2, useDemoNow } from '@/components/clan2/C2Common'
 import { ClanScreen2 } from '@/components/clan2/ClanScreen2'
+import type { MapFocus } from '@/components/clan2/HqTab'
+import { MapTab } from '@/components/clan2/MapTab'
 import {
   advanceTime,
   attackHq,
   attackSector,
   defendHq,
   leaderAway,
+  othersRsvp,
   recruitCatch,
   resetDemo,
   setPersona,
@@ -45,6 +48,8 @@ export function ClanPreview() {
 function Shell() {
   const s = useDemoState()
   const [tab, setTab] = useState<Tab>('clan')
+  // Asked of the map by other screens (show a sector, set the HQ): a new object each time.
+  const [mapFocus, setMapFocus] = useState<MapFocus | undefined>(undefined)
   const now = useDemoNow()
 
   useEffect(() => {
@@ -58,7 +63,12 @@ function Shell() {
   const clock = new Date(now).toLocaleString('ru-RU', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
 
   let body: ReactNode
-  if (current === 'clan') body = <ClanScreen2 />
+  const goMap = (focus?: MapFocus) => {
+    setMapFocus(focus ? { ...focus } : undefined)
+    setTab('map')
+  }
+  if (current === 'clan') body = <ClanScreen2 onOpenSector={(id) => goMap({ sectorId: id })} onGoMap={goMap} />
+  else if (current === 'map') body = <MapTab focus={mapFocus} onOpenHq={() => setTab('clan')} />
   else body = <div className="c2-pad c2-muted">…</div>
 
   return (
@@ -70,9 +80,10 @@ function Shell() {
             <span>{new Date(now).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</span>
             <span>RANGE</span>
           </div>
-          <div className="c2-phone-body" key={current}>
+          <div className={`c2-phone-body${current === 'map' ? ' map' : ''}`} key={current}>
             {body}
           </div>
+          <C2Toast />
           <nav className="c2-tabbar" aria-label="RANGE">
             {tabs.map((t) => (
               <button key={t} className={current === t ? 'on' : undefined} onClick={() => setTab(t)} data-tour={`tab-${t}`}>
@@ -160,6 +171,9 @@ function DemoPanel({ clock }: { clock: string }) {
         </button>
         <button className="btn-secondary" onClick={() => (settleWeek(), say(tn('clan2.demo.settled')))}>
           {tn('clan2.demo.evSettle')}
+        </button>
+        <button className="btn-secondary" onClick={() => act(othersRsvp(3))}>
+          {tn('clan2.demo.evRsvp')}
         </button>
         <button className="btn-secondary" onClick={() => act(recruitCatch())}>
           {tn('clan2.demo.evRecruit')}
