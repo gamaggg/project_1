@@ -6,12 +6,19 @@ import { C2Toast, C2ToastProvider, useC2, useDemoNow } from '@/components/clan2/
 import { ClanScreen2 } from '@/components/clan2/ClanScreen2'
 import type { MapFocus } from '@/components/clan2/HqTab'
 import { MapTab } from '@/components/clan2/MapTab'
+import { ProfileTab } from '@/components/clan2/ProfileTab'
+import { C2Tour } from '@/components/clan2/C2Tour'
+import type { SubTab } from '@/components/clan2/ClanScreen2'
+import { ADMIN_TOUR, PLAYER_TOUR, type TourAudience, type TourStep } from '@/lib/clan2/tours'
+import { AdminTab } from '@/components/clan2/AdminTab'
 import {
   advanceTime,
   attackHq,
   attackSector,
   defendHq,
+  inClan,
   leaderAway,
+  markTourSeen,
   othersRsvp,
   recruitCatch,
   resetDemo,
@@ -50,12 +57,22 @@ function Shell() {
   const [tab, setTab] = useState<Tab>('clan')
   // Asked of the map by other screens (show a sector, set the HQ): a new object each time.
   const [mapFocus, setMapFocus] = useState<MapFocus | undefined>(undefined)
+  const [sub, setSub] = useState<SubTab>('treasury')
+  const [tour, setTour] = useState<TourAudience | null>(null)
   const now = useDemoNow()
 
   useEffect(() => {
     const id = window.setInterval(tick, 1000)
     return () => window.clearInterval(id)
   }, [])
+
+  // The «Что нового» tour opens by itself the first time a player (or the admin) looks at the screen.
+  const wantTour: TourAudience | null = s.persona === 'admin' && !s.toursSeen.admin ? 'admin' : inClan(s) && !s.toursSeen.player && s.persona !== 'admin' ? 'player' : null
+  useEffect(() => {
+    if (!wantTour || tour) return
+    const id = window.setTimeout(() => setTour(wantTour), 900)
+    return () => window.clearTimeout(id)
+  }, [wantTour, tour])
 
   const current: Tab = tab === 'admin' && s.persona !== 'admin' ? 'clan' : tab
   const tabs: Tab[] = s.persona === 'admin' ? ['map', 'clan', 'profile', 'admin'] : ['map', 'clan', 'profile']
@@ -67,13 +84,14 @@ function Shell() {
     setMapFocus(focus ? { ...focus } : undefined)
     setTab('map')
   }
-  if (current === 'clan') body = <ClanScreen2 onOpenSector={(id) => goMap({ sectorId: id })} onGoMap={goMap} />
+  if (current === 'clan') body = <ClanScreen2 onOpenSector={(id) => goMap({ sectorId: id })} onGoMap={goMap} sub={sub} onSub={setSub} />
   else if (current === 'map') body = <MapTab focus={mapFocus} onOpenHq={() => setTab('clan')} />
-  else body = <div className="c2-pad c2-muted">…</div>
+  else if (current === 'profile') body = <ProfileTab />
+  else body = <AdminTab />
 
   return (
     <div className="c2-stage">
-      <DemoPanel clock={clock} />
+      <DemoPanel clock={clock} onTour={() => setTour(s.persona === 'admin' ? 'admin' : 'player')} />
       <div className="c2-phone-wrap">
         <div className="c2-phone">
           <div className="c2-status" aria-hidden>
@@ -84,6 +102,19 @@ function Shell() {
             {body}
           </div>
           <C2Toast />
+          {tour && (
+            <C2Tour
+              steps={tour === 'admin' ? ADMIN_TOUR : PLAYER_TOUR}
+              onStep={(st: TourStep) => {
+                setTab(st.tab)
+                if (st.sub) setSub(st.sub)
+              }}
+              onClose={() => {
+                markTourSeen(tour)
+                setTour(null)
+              }}
+            />
+          )}
           <nav className="c2-tabbar" aria-label="RANGE">
             {tabs.map((t) => (
               <button key={t} className={current === t ? 'on' : undefined} onClick={() => setTab(t)} data-tour={`tab-${t}`}>
@@ -101,7 +132,7 @@ function Shell() {
 const PERSONAS: Persona[] = ['leader', 'member', 'solo', 'admin']
 const PERSONA_KEY = { leader: 'roleLeader', member: 'roleMember', solo: 'roleSolo', admin: 'roleAdmin' } as const
 
-function DemoPanel({ clock }: { clock: string }) {
+function DemoPanel({ clock, onTour }: { clock: string; onTour: () => void }) {
   const s = useDemoState()
   const { act, say } = useC2()
 
@@ -187,6 +218,9 @@ function DemoPanel({ clock }: { clock: string }) {
       </div>
 
       <div className="c2-panel-row" style={{ marginTop: 14 }}>
+        <button className="btn-secondary" onClick={onTour}>
+          {tn('clan2.demo.tourAgain')}
+        </button>
         <button
           className="btn-secondary"
           onClick={() => {

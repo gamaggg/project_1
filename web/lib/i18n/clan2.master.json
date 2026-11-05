@@ -1950,5 +1950,341 @@
    "en": "Tap a sector. The «Clans» layer shows HQs and skins.",
    "ka": "დააჭირე სექტორს. «კლანები» ფენა შტაბებს და სკინებს აჩვენებს."
   }
+ },
+ "profile": {
+  "wallet": {
+   "ru": "На кошельке",
+   "en": "In your wallet",
+   "ka": "შენს საფულეში"
+  },
+  "changedTitle": {
+   "ru": "Что изменилось",
+   "en": "What has changed",
+   "ka": "რა შეიცვალა"
+  },
+  "c1t": {
+   "ru": "Личная Казна убрана",
+   "en": "The personal Kazna is gone",
+   "ka": "პირადი ხაზინა მოხსნილია"
+  },
+  "c1d": {
+   "ru": "Рента с секторов теперь идёт в общак клана и работает на всех.",
+   "en": "The rent of the sectors now goes to the clan's treasury and works for everyone.",
+   "ka": "სექტორების რენტა ახლა კლანის ფონდში მიდის და ყველას ემსახურება."
+  },
+  "c2t": {
+   "ru": "«Двойные монеты» за 60 убраны",
+   "en": "«Double coins» for 60 are gone",
+   "ka": "«ორმაგი მონეტები» 60-ად მოხსნილია"
+  },
+  "c2d": {
+   "ru": "Вместо них клановый «Выход»: клан выходит вместе, на 2 часа ×2 монеты за улов.",
+   "en": "In their place the clan's «Outing»: the clan goes out together, ×2 coins per catch for 2 hours.",
+   "ka": "მათ ნაცვლად კლანის «გასვლა»: კლანი ერთად გადის, 2 საათით ×2 მონეტა დაჭერაზე."
+  },
+  "c3t": {
+   "ru": "Ежедневная награда осталась",
+   "en": "The daily reward stays",
+   "ka": "ყოველდღიური ჯილდო რჩება"
+  },
+  "c3d": {
+   "ru": "Заходи каждый день: от 10 до 100 монет за 10 дней подряд.",
+   "en": "Come every day: from 10 to 100 coins over 10 days in a row.",
+   "ka": "შემოდი ყოველდღე: 10-დან 100 მონეტამდე 10 დღე ზედიზედ."
+  },
+  "c4t": {
+   "ru": "Новое: штаб, тревога, задания",
+   "en": "New: the HQ, alerts, quests",
+   "ka": "ახალი: შტაბი, განგაში, დავალებები"
+  },
+  "c4d": {
+   "ru": "Штаб на карте с гербом, тревога клана при атаке, задания недели, заказы и турнир.",
+   "en": "A headquarters with a crest on the map, a clan alarm on attack, weekly quests, bounties and a tournament.",
+   "ka": "შტაბი გერბით რუკაზე, კლანის განგაში თავდასხმისას, კვირის დავალებები, შეკვეთები და ტურნირი."
+  },
+  "myPart": {
+   "ru": "Мой вклад в общак",
+   "en": "My part in the treasury",
+   "ka": "ჩემი წილი ფონდში"
+  },
+  "myPartWeek": {
+   "ru": "за эту неделю",
+   "en": "this week",
+   "ka": "ამ კვირას"
+  },
+  "myRank": {
+   "ru": "Место среди участников: {n}",
+   "en": "Place among the members: {n}",
+   "ka": "ადგილი წევრებს შორის: {n}"
+  },
+  "patronOn": {
+   "ru": "Ты меценат недели",
+   "en": "You are the patron of the week",
+   "ka": "შენ კვირის მეცენატი ხარ"
+  },
+  "patronOff": {
+   "ru": "Меценат недели: тот, кто внёс больше всех. Медаль «Меценат» достаётся ему.",
+   "en": "The patron of the week is whoever put in the most. The «Patron» medal goes to them.",
+   "ka": "კვირის მეცენატი ის არის, ვინც ყველაზე მეტი შეიტანა. მედალი «მეცენატი» მას ერგება."
+  },
+  "shopTitle": {
+   "ru": "Магазин: баффы",
+   "en": "Shop: buffs",
+   "ka": "მაღაზია: ბაფები"
+  },
+  "shopOld": {
+   "ru": "Двойные монеты · 60",
+   "en": "Double coins · 60",
+   "ka": "ორმაგი მონეტები · 60"
+  },
+  "shopGone": {
+   "ru": "убрано",
+   "en": "removed",
+   "ka": "მოხსნილია"
+  },
+  "shopNew": {
+   "ru": "Теперь: «Выход» клана (вкладка «Клан» → «Выход»), его оплачивает общак.",
+   "en": "Now: the clan's «Outing» (tab Clan → Outing), paid for by the treasury.",
+   "ka": "ახლა: კლანის «გასვლა» (ჩანართი კლანი → გასვლა), მას ფონდი იხდის."
+  },
+  "dailyTitle": {
+   "ru": "Награда дня",
+   "en": "Daily reward",
+   "ka": "დღის ჯილდო"
+  },
+  "dailyText": {
+   "ru": "Серия: 3 дня из 10. Сегодня +30 монет.",
+   "en": "Streak: 3 days of 10. Today +30 coins.",
+   "ka": "სერია: 3 დღე 10-დან. დღეს +30 მონეტა."
+  },
+  "noClan": {
+   "ru": "Ты без клана: общак и «Выход» начнутся, когда вступишь.",
+   "en": "You have no clan: the treasury and the Outing begin once you join.",
+   "ka": "შენ კლანის გარეშე ხარ: ფონდი და «გასვლა» შესვლისას დაიწყება."
+  }
+ },
+ "admin": {
+  "title": {
+   "ru": "Клановая экономика",
+   "en": "Clan economy",
+   "ka": "კლანის ეკონომიკა"
+  },
+  "switchTitle": {
+   "ru": "Выключатель",
+   "en": "Master switch",
+   "ka": "მთავარი ამომრთველი"
+  },
+  "switchHint": {
+   "ru": "Выключает общак, ренту, баф и заказы для всех. Деньги и записи остаются на местах.",
+   "en": "Switches off the treasury, the rent, the buff and bounties for everyone. The money and records stay where they are.",
+   "ka": "ფონდს, რენტას, ბაფს და შეკვეთებს ყველასთვის თიშავს. ფული და ჩანაწერები ადგილზე რჩება."
+  },
+  "switchOn": {
+   "ru": "Включено",
+   "en": "On",
+   "ka": "ჩართულია"
+  },
+  "switchOff": {
+   "ru": "Выключено",
+   "en": "Off",
+   "ka": "გამორთულია"
+  },
+  "settingsTitle": {
+   "ru": "Числа экономики",
+   "en": "Economy numbers",
+   "ka": "ეკონომიკის რიცხვები"
+  },
+  "settingsHint": {
+   "ru": "Меняются сразу для всех кланов. Каждая правка пишется в журнал админа.",
+   "en": "Changes apply at once to every clan. Every edit is written to the admin log.",
+   "ka": "იცვლება ყველა კლანისთვის მაშინვე. ყოველი ცვლილება ადმინის ჟურნალში იწერება."
+  },
+  "rent": {
+   "ru": "Рента с сектора в сутки",
+   "en": "Rent per sector a day",
+   "ka": "რენტა სექტორზე დღეში"
+  },
+  "shared": {
+   "ru": "Множитель общего сектора",
+   "en": "Shared sector factor",
+   "ka": "საერთო სექტორის მამრავლი"
+  },
+  "buffPrice": {
+   "ru": "Цена бафа «Выход»",
+   "en": "Price of the buff «Outing»",
+   "ka": "ბაფის «გასვლა» ფასი"
+  },
+  "buffCooldown": {
+   "ru": "Отдых бафа, часов",
+   "en": "Buff cooldown, hours",
+   "ka": "ბაფის შესვენება, საათი"
+  },
+  "buffMin": {
+   "ru": "Минимум «иду»",
+   "en": "Minimum «I'm in»",
+   "ka": "მინიმუმ «მივდივარ»"
+  },
+  "taxMax": {
+   "ru": "Потолок отчисления, %",
+   "en": "Tax ceiling, %",
+   "ka": "გამოქვითვის ზღვარი, %"
+  },
+  "chestShare": {
+   "ru": "Доля сундука и битвы в общак, %",
+   "en": "Share of chest and battle to the treasury, %",
+   "ka": "სკივრისა და ბრძოლის წილი ფონდში, %"
+  },
+  "recruit": {
+   "ru": "Награда за новичка",
+   "en": "Reward for a recruit",
+   "ka": "ჯილდო ახალბედისთვის"
+  },
+  "hqPlace": {
+   "ru": "Штаб: поставить",
+   "en": "HQ: set up",
+   "ka": "შტაბი: დაყენება"
+  },
+  "hqMove": {
+   "ru": "Штаб: перенести",
+   "en": "HQ: move",
+   "ka": "შტაბი: გადატანა"
+  },
+  "econTitle": {
+   "ru": "Что это значит для монет",
+   "en": "What this means for the coins",
+   "ka": "რას ნიშნავს ეს მონეტებისთვის"
+  },
+  "econNow": {
+   "ru": "Личная Казна выдавала 323 монеты в сутки (4519 за 14 дней, 19 игроков).",
+   "en": "The personal Kazna paid 323 coins a day (4519 in 14 days, 19 players).",
+   "ka": "პირადი ხაზინა დღეში 323 მონეტას იძლეოდა (14 დღეში 4519, 19 მოთამაშე)."
+  },
+  "econNew": {
+   "ru": "Клановая рента по базе на 06.11: {n} монет в сутки по всем кланам.",
+   "en": "Clan rent by the database on 06.11: {n} coins a day across all clans.",
+   "ka": "კლანის რენტა ბაზით 06.11-ზე: {n} მონეტა დღეში ყველა კლანზე."
+  },
+  "econNote": {
+   "ru": "Рента идёт в общак, а общак нельзя вывести на кошелёк: монеты уходят в постройки, скины и баф. Кошельки игроков получают на 8 % меньше, чем раньше, зато клановые траты растут. Если общаки копятся без трат, поставьте ставку ниже.",
+   "en": "The rent goes to the treasury, and the treasury cannot be cashed out to a wallet: coins go to buildings, skins and the buff. Players' wallets get 8 % less than before, while clan spending grows. If the treasuries pile up unspent, set a lower rate.",
+   "ka": "რენტა ფონდში მიდის, ფონდიდან კი საფულეში გამოტანა არ შეიძლება: მონეტები ნაგებობებზე, სკინებსა და ბაფზე იხარჯება. მოთამაშეთა საფულეები 8%-ით ნაკლებს იღებს, ხოლო კლანის ხარჯი იზრდება. თუ ფონდები ხარჯის გარეშე გროვდება, დააყენეთ დაბალი განაკვეთი."
+  },
+  "clansTitle": {
+   "ru": "Кланы (база на 06.11)",
+   "en": "Clans (database on 06.11)",
+   "ka": "კლანები (ბაზა 06.11-ზე)"
+  },
+  "clansCols": {
+   "ru": "участн. · секторов · рента в сутки",
+   "en": "members · sectors · rent a day",
+   "ka": "წევრი · სექტორი · რენტა დღეში"
+  },
+  "journalTitle": {
+   "ru": "Журнал общака",
+   "en": "Treasury journal",
+   "ka": "ფონდის ჟურნალი"
+  },
+  "reverse": {
+   "ru": "Отменить",
+   "en": "Reverse",
+   "ka": "გაუქმება"
+  },
+  "onlyAdmin": {
+   "ru": "Этот раздел виден только админу.",
+   "en": "This section is for admins only.",
+   "ka": "ეს განყოფილება მხოლოდ ადმინისთვისაა."
+  }
+ },
+ "tour": {
+  "next": {
+   "ru": "Дальше",
+   "en": "Next",
+   "ka": "შემდეგი"
+  },
+  "skip": {
+   "ru": "Пропустить",
+   "en": "Skip",
+   "ka": "გამოტოვება"
+  },
+  "done": {
+   "ru": "Готово",
+   "en": "Done",
+   "ka": "მზადაა"
+  },
+  "of": {
+   "ru": "{a} из {b}",
+   "en": "{a} of {b}",
+   "ka": "{a} {b}-დან"
+  },
+  "introTitle": {
+   "ru": "Клановое обновление",
+   "en": "The clan update",
+   "ka": "კლანის განახლება"
+  },
+  "introText": {
+   "ru": "Теперь у клана есть общак, общие выходы, штаб на карте и задания. Покажем главное за минуту.",
+   "en": "A clan now has a treasury, shared outings, a headquarters on the map and quests. A minute to show the main things.",
+   "ka": "ახლა კლანს აქვს ფონდი, საერთო გასვლები, შტაბი რუკაზე და დავალებები. ერთ წუთში მთავარს გაჩვენებთ."
+  },
+  "introStart": {
+   "ru": "Показать",
+   "en": "Show me",
+   "ka": "ჩვენება"
+  },
+  "p1": {
+   "ru": "Общак — общая копилка клана. Здесь сколько монет, до какого потолка и куда идёт рента.",
+   "en": "The treasury is the clan's shared pot: how many coins, up to what ceiling and where the rent goes.",
+   "ka": "ფონდი კლანის საერთო ფულადი ყულაბაა: რამდენი მონეტაა, რა ზღვრამდე და სად მიდის რენტა."
+  },
+  "p2": {
+   "ru": "Откуда деньги: рента секторов, отчисление с уловов, взносы и доля наград клана.",
+   "en": "Where the money comes from: sector rent, the catch tax, deposits and a share of the clan's rewards.",
+   "ka": "საიდან მოდის ფული: სექტორების რენტა, დაჭერიდან გამოქვითვა, შენატანები და კლანის ჯილდოების წილი."
+  },
+  "p3": {
+   "ru": "Отчисление с улова: глава ставит долю монет за рыбу, которая уходит в общак.",
+   "en": "The catch tax: the leader sets the share of a fish's coins that goes to the treasury.",
+   "ka": "დაჭერიდან გამოქვითვა: ლიდერი ადგენს თევზის მონეტების წილს, რომელიც ფონდში მიდის."
+  },
+  "p4": {
+   "ru": "Выход: клан зовёт всех на воду, на 2 часа ×2 монеты за улов тем, кто нажал «иду».",
+   "en": "The Outing: the clan calls everyone to the water, ×2 coins per catch for 2 hours for those who tapped «I'm in».",
+   "ka": "გასვლა: კლანი ყველას წყალზე იძახებს, 2 საათით ×2 მონეტა დაჭერაზე მათთვის, ვინც «მივდივარ» დააჭირა."
+  },
+  "p5": {
+   "ru": "Слой «Кланы» на карте: штаб клана с гербом и анимированные скины секторов.",
+   "en": "The «Clans» layer on the map: the clan's headquarters with its crest and animated sector skins.",
+   "ka": "«კლანები» ფენა რუკაზე: კლანის შტაბი გერბით და სექტორების ანიმაციური სკინები."
+  },
+  "p6": {
+   "ru": "Колокол: тревога клана. Сюда приходит всё важное, например осада штаба.",
+   "en": "The bell: the clan alarm. Everything important lands here, such as a siege of the HQ.",
+   "ka": "ზარი: კლანის განგაში. აქ მოდის ყველაფერი მნიშვნელოვანი, მაგალითად შტაბის ალყა."
+  },
+  "p7": {
+   "ru": "Задание недели одно на весь клан: чем больше активных, тем выше цель.",
+   "en": "The weekly quest is one for the whole clan: the more active members, the higher the target.",
+   "ka": "კვირის დავალება ერთია მთელი კლანისთვის: რაც მეტი აქტიურია, მით მაღალია მიზანი."
+  },
+  "a1": {
+   "ru": "Выключатель клановой экономики: одним нажатием выключает всё новое для всех.",
+   "en": "The master switch of the clan economy: one tap switches off everything new for everyone.",
+   "ka": "კლანის ეკონომიკის ამომრთველი: ერთი დაჭერით ყველაფერს ახალს ყველასთვის თიშავს."
+  },
+  "a2": {
+   "ru": "Числа экономики: рента, цена бафа, отчисления, цены штаба. Меняются сразу.",
+   "en": "The economy numbers: rent, the buff's price, the tax, the HQ prices. They change at once.",
+   "ka": "ეკონომიკის რიცხვები: რენტა, ბაფის ფასი, გამოქვითვა, შტაბის ფასები. იცვლება მაშინვე."
+  },
+  "a3": {
+   "ru": "Что это значит для монет: сколько выдавала Казна и сколько даёт рента.",
+   "en": "What this means for coins: what the Kazna paid and what the rent gives.",
+   "ka": "რას ნიშნავს მონეტებისთვის: რას იძლეოდა ხაზინა და რას იძლევა რენტა."
+  },
+  "a4": {
+   "ru": "Журнал общака: любую запись можно отменить, она вернёт монеты.",
+   "en": "The treasury journal: any entry can be reversed, and it returns the coins.",
+   "ka": "ფონდის ჟურნალი: ნებისმიერი ჩანაწერის გაუქმება შეიძლება, ის მონეტებს დააბრუნებს."
+  }
  }
 }

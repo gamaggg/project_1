@@ -20,10 +20,12 @@ import { tn } from '@/lib/i18n/runtime'
 export type SubTab = 'treasury' | 'exit' | 'week' | 'hq' | 'glory' | 'members'
 const SUBS: SubTab[] = ['treasury', 'exit', 'week', 'hq', 'glory', 'members']
 
-export function ClanScreen2({ sections, onOpenSector, onGoMap }: { sections?: Partial<Record<SubTab, ReactNode>>; onOpenSector?: (id: string) => void; onGoMap?: (focus?: MapFocus) => void }) {
+export function ClanScreen2({ sections, onOpenSector, onGoMap, sub: subProp, onSub }: { sections?: Partial<Record<SubTab, ReactNode>>; onOpenSector?: (id: string) => void; onGoMap?: (focus?: MapFocus) => void; sub?: SubTab; onSub?: (sub: SubTab) => void }) {
   const s = useDemoState()
   const { act } = useC2()
-  const [sub, setSub] = useState<SubTab>('treasury')
+  const [subOwn, setSubOwn] = useState<SubTab>('treasury')
+  const sub = subProp ?? subOwn
+  const setSub = (next: SubTab) => (onSub ? onSub(next) : setSubOwn(next))
 
   if (!inClan(s)) {
     return (
