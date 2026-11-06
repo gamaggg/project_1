@@ -431,9 +431,17 @@
 .c2-rent-rows{list-style:none; margin:0; padding:0; display:grid; gap:2px; max-height:42vh; overflow:auto;}
 .c2-rent-rows li{display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:10px; font-size:13.5px;}
 .c2-rent-rows li b{min-width:58px;}
-.c2-rent-rows li span{flex:1; color:var(--ink-soft);}
+.c2-rent-rows li > span:not(.c2-coins){flex:1; color:var(--ink-soft);}
 .c2-rent-rows li.hq{background:#17181B; color:#fff;}
-.c2-rent-rows li.hq span{color:rgba(255,255,255,.75);}
+.c2-rent-rows li.hq > span{color:rgba(255,255,255,.75);}
 .c2-rent-rows li.shared{background:#EAF4FF;}
 .c2-rent-rows li.plain:nth-child(odd){background:#F8F7F4;}
 .c2-goal-row{align-items:center;}
+/* On a wide screen the app is a phone-width column in the middle: the layer on top follows it. */
+.c2-sheet-overlay{justify-content:center;}
+.c2-sheet{max-width:430px;}
+.c2-live-fabs{left:max(10px, calc(50vw - 215px + 8px));}
+.c2-live-stack{left:50%; right:auto; width:min(406px, calc(100vw - 24px)); transform:translateX(-50%);}
+.c2-panel.c2-panel-live{position:static; width:100%; max-height:none; background:none; border:none; box-shadow:none; padding:0; backdrop-filter:none; overflow:visible;}
+/* On a wide screen the buttons stand in the margin beside the app column, not over its content. */
+@media (min-width: 560px){.c2-live-fabs{left:calc(50vw - 215px - 54px); top:42%;}}

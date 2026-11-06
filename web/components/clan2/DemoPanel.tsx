@@ -59,9 +59,13 @@ export function DemoPanel({ clock, lang, onLang, onTour, live, onResetLive, onOf
   }
 
   return (
-    <aside className="c2-panel">
-      <h1>{tn('clan2.demo.title')}</h1>
-      <p className="c2-muted small">{tn('clan2.demo.note')}</p>
+    <aside className={`c2-panel${live ? ' c2-panel-live' : ''}`}>
+      {!live && (
+        <>
+          <h1>{tn('clan2.demo.title')}</h1>
+          <p className="c2-muted small">{tn('clan2.demo.note')}</p>
+        </>
+      )}
 
       {live ? (
         <>
