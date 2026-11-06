@@ -640,7 +640,8 @@ export function ClanScreen({
               })}
             </div>
 
-            {clan.events.length > 0 && (
+            {/* The journal is for the clan's own members only. */}
+            {isMember && clan.events.length > 0 && (
               <div className="clan-card">
                 <div className="clan-card-title">{tn('clan.journal')}</div>
                 {clan.events.slice(0, eventsShown).map((e, i) => (

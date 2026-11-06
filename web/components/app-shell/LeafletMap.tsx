@@ -586,6 +586,11 @@ export const LeafletMap = forwardRef<
           const tier = z < labelZoom ? 0 : z < labelZoom + 1 ? 1 : 2
           for (const m of c2.markers) {
             const t = territories.find((x) => x.id === m.id)
+            if (m.kind === 'hq' && t && m.color) {
+              // The HQ sector's outline, in the manner of a hot sector's: a soft wide stroke and a thin bright one.
+              L.polygon(t.corners, { color: m.color, weight: 9, opacity: 0.3, fill: false, interactive: false }).addTo(markersLayer)
+              L.polygon(t.corners, { color: m.color, weight: 3, opacity: 1, fill: false, interactive: false }).addTo(markersLayer)
+            }
             const hexPx = t && map ? map.latLngToContainerPoint(t.corners[0]).distanceTo(map.latLngToContainerPoint(t.corners[3])) * 0.866 : 0
             const bannerH = fitBannerH(hexPx)
             const box = m.box(tier, bannerH)
