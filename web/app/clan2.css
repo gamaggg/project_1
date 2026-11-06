@@ -450,3 +450,85 @@
 .clan-tabs.c2-scroll .clan-tab.on{background:linear-gradient(180deg,#FFFFFF 0%,#F6F1EA 100%); box-shadow:0 0 0 1px rgba(120,82,50,.09), 0 1px 0 #fff inset, 0 4px 10px rgba(80,45,15,.13);}
 .clan-tabs.c2-scroll{-webkit-mask-image:linear-gradient(90deg,#000 90%,transparent); mask-image:linear-gradient(90deg,#000 90%,transparent);}
 .c2-ruins-abs{position:absolute; z-index:4; width:46px; height:40px; margin:-34px 0 0 -23px; pointer-events:none;}
+
+/* ───────── the base as one sector (hex-aspect hex-shape) with the HQ and six plots ───────── */
+.c2-base-hex{position:relative; width:100%; filter:drop-shadow(0 10px 18px rgba(40,60,30,.28));}
+.c2-base-hex .c2-base-svg{position:absolute; inset:0; width:100%; height:100%; border-radius:0; box-shadow:none;}
+.c2-plot-name{font:800 9px system-ui,sans-serif; fill:rgba(50,40,15,.78); pointer-events:none; letter-spacing:.02em;}
+.c2-plot.sel .c2-plot-name{fill:#B33A00;}
+.c2-ghost{opacity:.34; filter:grayscale(.85); transition:opacity .2s;}
+.c2-plot:hover .c2-ghost{opacity:.55;}
+.c2-ghost.locked{opacity:.2; filter:grayscale(1) blur(.4px);}
+.c2-badge-plus{fill:#FC5200; stroke:#fff; stroke-width:1.6;}
+.c2-badge-lock{fill:#6B7280; stroke:#fff; stroke-width:1.6;}
+.c2-badge-text{font:800 10px system-ui,sans-serif; fill:#fff;}
+.c2-bob{animation:c2-bob 3.4s ease-in-out infinite;}
+@keyframes c2-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(1.6px)}}
+.c2-hammer{transform-box:fill-box; transform-origin:50% 100%; animation:c2-hammer .7s ease-in-out infinite;}
+@keyframes c2-hammer{0%,100%{transform:rotate(-24deg)}50%{transform:rotate(18deg)}}
+.c2-scaffold{pointer-events:none;}
+.c2-build-banner{display:flex; flex-direction:column; gap:6px; padding:12px 14px; border-radius:16px; background:#FFF4E8; color:#8A3A00; font-size:13px;}
+.c2-build-banner b{font-size:14px; color:#17181B;}
+.c2-build-banner.inline{padding:10px 12px; background:#F6F5F2; color:var(--ink-soft);}
+.c2-needs{list-style:none; margin:2px 0 0; padding:0; display:grid; gap:5px; font-size:13px;}
+.c2-needs li{display:flex; align-items:center; gap:6px; padding-left:22px; position:relative; color:var(--ink-soft);}
+.c2-needs li::before{content:""; position:absolute; left:2px; top:50%; width:14px; height:14px; margin-top:-7px; border-radius:50%; background:#E6E4DF;}
+.c2-needs li.ok{color:var(--ink);}
+.c2-needs li.ok::before{background:var(--green) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/10px no-repeat;}
+.c2-needs li.no::before{background:#E5B4AE;}
+.c2-needs li.no{color:#8A2A22;}
+
+/* ───────── the headquarters marker: crest in a gold ring, grows with the zoom ───────── */
+.c2-hqm{position:relative; width:var(--w); height:var(--w); pointer-events:auto; cursor:pointer;}
+.c2-hqm-halo{position:absolute; inset:-30%; border-radius:50%; background:radial-gradient(circle, rgba(240,181,62,.5), rgba(240,181,62,0) 68%); animation:c2-halo 3.2s ease-in-out infinite;}
+.c2-hqm-ring{position:absolute; inset:0; border-radius:50%; background:radial-gradient(circle at 34% 28%, #FFF3C8, #F0B53E 58%, #B57A10); box-shadow:0 0 0 2px #fff, 0 3px 9px rgba(23,24,27,.4);}
+.c2-hqm-crest{position:absolute; inset:15%; display:flex; align-items:center; justify-content:center;}
+.c2-hqm-crest svg{width:100%; height:100%; display:block;}
+.c2-hqm-crown{position:absolute; left:50%; top:-44%; width:58%; transform:translateX(-50%); filter:drop-shadow(0 2px 2px rgba(23,24,27,.35));}
+.c2-hqm-crown svg{display:block; width:100%; height:auto;}
+.c2-hqm-tag{position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:4px; padding:2px 7px; border-radius:999px; background:#17181B; color:#F0B53E; font:800 9px system-ui,sans-serif; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap;}
+.c2-hqm.tier0 .c2-hqm-halo{display:none;}
+.c2-hqm.tier0 .c2-hqm-ring{box-shadow:0 0 0 1.5px #fff, 0 2px 5px rgba(23,24,27,.4);}
+.c2-hqm.siege .c2-hqm-ring{background:radial-gradient(circle at 34% 28%, #FFD2CC, #D33 60%, #8A1D18); animation:c2-siege-ring 1s ease-in-out infinite;}
+.c2-hqm.siege .c2-hqm-halo{background:radial-gradient(circle, rgba(211,51,51,.55), rgba(211,51,51,0) 68%); animation-duration:1s;}
+@keyframes c2-halo{0%,100%{transform:scale(.9); opacity:.65}50%{transform:scale(1.08); opacity:1}}
+@keyframes c2-siege-ring{0%,100%{box-shadow:0 0 0 2px #fff, 0 0 0 5px rgba(211,51,51,.5)}50%{box-shadow:0 0 0 2px #fff, 0 0 0 10px rgba(211,51,51,0)}}
+.c2-hqm-abs{position:absolute; z-index:4; padding:0; border:none; background:none; transform:translate(-50%,-50%); -webkit-tap-highlight-color:transparent;}
+.c2-hqm-abs.enemy .c2-hqm-ring{background:radial-gradient(circle at 34% 28%, #FFE3E0, #C0443A 60%, #7A1F18);}
+.c2-hqm-abs.enemy .c2-hqm-halo{background:radial-gradient(circle, rgba(192,68,58,.5), rgba(192,68,58,0) 68%);}
+.c2-hqm-abs.enemy .c2-hqm-crown path{fill:#C0443A;}
+.c2-ruins-abs{position:absolute; z-index:4; transform:translate(-50%,-50%); width:auto; height:auto; margin:0; pointer-events:none;}
+@media (prefers-reduced-motion: reduce){.c2-hqm-halo,.c2-hqm.siege .c2-hqm-ring{animation:none;}}
+
+/* ───────── the chest, the steps and the next-step card ───────── */
+.c2-chest{display:block; width:100%; max-width:240px; margin:0 auto 6px; padding:0; border:none; background:none; cursor:pointer; -webkit-tap-highlight-color:transparent;}
+.c2-chest svg{display:block; width:100%; height:auto; overflow:visible;}
+.c2-chest .c2-chest-lid{transition:transform .6s cubic-bezier(.3,1.3,.4,1);}
+.c2-chest.open .c2-chest-lid{transform:rotate(-26deg) translate(-6px,-6px);}
+.c2-chest:active{transform:scale(.98);}
+.c2-spark-star{transform-box:fill-box; transform-origin:center; animation:c2-twinkle 2.4s ease-in-out infinite;}
+@keyframes c2-twinkle{0%,100%{opacity:.2; transform:scale(.6)}50%{opacity:1; transform:scale(1.15)}}
+.c2-steps-row{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:10px;}
+.c2-steps-row button{display:flex; flex-direction:column; align-items:center; gap:2px; padding:10px 4px 8px; border-radius:14px; border:1.5px solid var(--line); background:#fff; font:inherit; cursor:pointer; transition:border-color .2s, background .2s, transform .15s var(--ease-out);}
+.c2-steps-row button:active{transform:scale(.96);}
+.c2-steps-row button.on{border-color:var(--accent); background:var(--accent-soft);}
+.c2-steps-row small{font-size:10.5px; font-weight:800; color:var(--ink-faint);}
+.c2-steps-row b{font-size:12px; font-weight:800;}
+.c2-step-ico{display:flex; color:var(--ink-soft);}
+.c2-steps-row button.on .c2-step-ico{color:var(--accent);}
+.c2-step-text{margin:0; font-size:13.5px; line-height:1.5; color:var(--ink); animation:c2-card-in .3s var(--ease-out);}
+.c2-next{display:flex; flex-direction:column; gap:4px; padding:16px; border-radius:20px; background:linear-gradient(135deg,#FFF1E8,#FFE3CF); box-shadow:0 0 0 1.5px rgba(252,82,0,.25);}
+.c2-next small{font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#B33A00;}
+.c2-next b{font-size:17px; letter-spacing:-.01em;}
+.c2-next p{margin:0 0 8px; font-size:13.5px; line-height:1.45; color:#6B3A1A;}
+.c2-intro{display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center;}
+.c2-intro-ico{display:flex; align-items:center; justify-content:center; width:72px; height:72px; border-radius:50%; background:var(--accent-soft); color:var(--accent);}
+.c2-intro-ico svg{width:36px; height:36px;}
+.c2-intro small{font-size:11px; font-weight:800; color:var(--ink-faint);}
+.c2-intro b{font-size:19px;}
+.c2-intro p{margin:0; min-height:84px; font-size:14px; line-height:1.5; color:var(--ink-soft); animation:c2-card-in .3s var(--ease-out);}
+.c2-intro-dots{display:flex; gap:6px; margin:4px 0 10px;}
+.c2-intro-dots i{width:7px; height:7px; border-radius:50%; background:#E1DED8;}
+.c2-intro-dots i.on{background:var(--accent); width:18px; border-radius:4px;}
+.c2-intro .c2-row-btns{width:100%;}
+@media (prefers-reduced-motion: reduce){.c2-spark-star,.c2-chest .c2-chest-lid{animation:none; transition:none;}}

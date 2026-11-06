@@ -179,11 +179,6 @@
    "en": "{n} to the treasury",
    "ka": "ფონდში {n}"
   },
-  "bountyDone": {
-   "ru": "Заказ выполнен: +{n}",
-   "en": "Bounty done: +{n}",
-   "ka": "შეკვეთა შესრულდა: +{n}"
-  },
   "recordSet": {
    "ru": "Новый рекорд клана!",
    "en": "A new clan record!",
@@ -371,21 +366,6 @@
    "en": "The HQ is already under siege",
    "ka": "შტაბი უკვე ალყაშია"
   },
-  "bountyMax": {
-   "ru": "Не больше 3 заказов сразу",
-   "en": "At most 3 bounties at a time",
-   "ka": "ერთდროულად მაქსიმუმ 3 შეკვეთა"
-  },
-  "bountyReward": {
-   "ru": "Награда от 20 до 300 монет",
-   "en": "The reward is 20 to 300 coins",
-   "ka": "ჯილდო 20-დან 300 მონეტამდეა"
-  },
-  "bountyShare": {
-   "ru": "Заказ не больше четверти общака",
-   "en": "A bounty is at most a quarter of the treasury",
-   "ka": "შეკვეთა ფონდის მეოთხედზე მეტი ვერ იქნება"
-  },
   "nudgeOnce": {
    "ru": "Сегодня уже звали",
    "en": "Already called today",
@@ -415,6 +395,21 @@
    "ru": "Сначала нужен штаб: без него постройки не строятся",
    "en": "An HQ is needed first: nothing is built without it",
    "ka": "ჯერ შტაბია საჭირო: მის გარეშე არაფერი შენდება"
+  },
+  "levelLow": {
+   "ru": "Нужен уровень клана повыше",
+   "en": "The clan's level is too low for this",
+   "ka": "კლანის დონე ამისთვის ძალიან დაბალია"
+  },
+  "buildBusy": {
+   "ru": "Уже идёт стройка: дождись её конца",
+   "en": "A building is already being built: wait for it",
+   "ka": "მშენებლობა უკვე მიმდინარეობს: დაელოდე დასრულებას"
+  },
+  "buildNone": {
+   "ru": "Сейчас ничего не строится",
+   "en": "Nothing is being built right now",
+   "ka": "ახლა არაფერი შენდება"
   }
  },
  "ok": {
@@ -478,11 +473,6 @@
    "en": "HQ defence +1",
    "ka": "შტაბის დაცვა +1"
   },
-  "bountyCreated": {
-   "ru": "Заказ объявлен",
-   "en": "The bounty is posted",
-   "ka": "შეკვეთა გამოცხადებულია"
-  },
   "nudged": {
    "ru": "{name} получил зов на воду",
    "en": "{name} got a call to the water",
@@ -527,6 +517,11 @@
    "ru": "Запись отменена",
    "en": "The entry was reversed",
    "ka": "ჩანაწერი გაუქმდა"
+  },
+  "sped": {
+   "ru": "Стройка завершена досрочно",
+   "en": "The build is finished ahead of time",
+   "ka": "მშენებლობა ვადაზე ადრე დასრულდა"
   }
  },
  "time": {
@@ -893,6 +888,11 @@
    "ru": "Знамя «Шторм»",
    "en": "The «Storm» banner",
    "ka": "დროშა «ქარიშხალი»"
+  },
+  "locked": {
+   "ru": "Откроется с уровня клана {n}",
+   "en": "Opens at clan level {n}",
+   "ka": "იხსნება კლანის {n} დონეზე"
   }
  },
  "journal": {
@@ -1014,9 +1014,9 @@
    "ka": "შტაბი რუკაზე და განგაში, თუ თქვენს სექტორზე თავს დაესხნენ"
   },
   "p4": {
-   "ru": "Задания недели, заказы и турнир между кланами",
-   "en": "Weekly quests, bounties and a tournament between clans",
-   "ka": "კვირის დავალებები, შეკვეთები და ტურნირი კლანებს შორის"
+   "ru": "Задание недели для всего клана и награда за новичков",
+   "en": "A weekly task for the whole clan and a reward for newcomers",
+   "ka": "კვირის დავალება მთელი კლანისთვის და ჯილდო ახალბედებისთვის"
   },
   "join": {
    "ru": "Вступить в «Морские волки» (демо)",
@@ -1195,14 +1195,14 @@
  },
  "alerts": {
   "title": {
-   "ru": "Тревога клана",
-   "en": "Clan alerts",
-   "ka": "კლანის განგაში"
+   "ru": "События клана",
+   "en": "Clan events",
+   "ka": "კლანის მოვლენები"
   },
   "empty": {
-   "ru": "Тихо: ничего не случилось",
-   "en": "All quiet: nothing has happened",
-   "ka": "მშვიდადაა: არაფერი მომხდარა"
+   "ru": "Пока ничего не происходило",
+   "en": "Nothing has happened yet",
+   "ka": "ჯერ არაფერი მომხდარა"
   },
   "markRead": {
    "ru": "Отметить прочитанным",
@@ -1242,9 +1242,9 @@
    "ka": "{name}-მა შტაბის ალყა მოხსნა"
   },
   "hqFallen": {
-   "ru": "Штаб пал: сектор {id} захвачен. Поставьте новый штаб",
-   "en": "The HQ has fallen: sector {id} is taken. Set up a new HQ",
-   "ka": "შტაბი დაეცა: სექტორი {id} აღებულია. დააყენეთ ახალი შტაბი"
+   "ru": "Штаб пал: сектор {id} захвачен, из общака унесли {n} монет. Постройки спят, новый штаб можно поставить через сутки",
+   "en": "The HQ has fallen: sector {id} is taken, {n} coins were carried off the treasury. The buildings sleep, a new HQ can be set in a day",
+   "ka": "შტაბი დაეცა: სექტორი {id} აიღეს, ფონდიდან {n} მონეტა წაიღეს. ნაგებობები სძინავს, ახალი შტაბი დღის შემდეგ შეიძლება"
   },
   "buffPlanned": {
    "ru": "{name} назначил выход",
@@ -1285,11 +1285,6 @@
    "ru": "Задание недели выполнено: награда в общаке",
    "en": "The weekly quest is done: the reward is in the treasury",
    "ka": "კვირის დავალება შესრულდა: ჯილდო ფონდშია"
-  },
-  "bounty": {
-   "ru": "{name} выполнил заказ: +{n}",
-   "en": "{name} finished a bounty: +{n}",
-   "ka": "{name}-მა შეკვეთა შეასრულა: +{n}"
   },
   "project": {
    "ru": "Постройка «{name}» улучшена до уровня {n}",
@@ -1368,140 +1363,15 @@
    "en": "Ends in {t}",
    "ka": "დასრულდება {t}-ში"
   },
-  "bountyTitle": {
-   "ru": "Заказы",
-   "en": "Bounties",
-   "ka": "შეკვეთები"
-  },
-  "bountyHint": {
-   "ru": "Глава объявляет награду из общака за вид рыбы или размер. Её получит первый, у кого выйдет.",
-   "en": "The leader posts a reward from the treasury for a species or a size. The first to manage it gets it.",
-   "ka": "ლიდერი ფონდიდან ჯილდოს აცხადებს სახეობაზე ან ზომაზე. პირველი, ვისაც გამოუვა, მიიღებს."
-  },
-  "bountySpecies": {
-   "ru": "Поймать: {species}",
-   "en": "Catch: {species}",
-   "ka": "დაიჭირე: {species}"
-  },
-  "bountySize": {
-   "ru": "Рыба от {n} см",
-   "en": "A fish of {n} cm or more",
-   "ka": "თევზი {n} სმ-დან"
-  },
-  "bountyClaimed": {
-   "ru": "выполнил {name}",
-   "en": "done by {name}",
-   "ka": "შეასრულა {name}-მა"
-  },
-  "bountyLeft": {
-   "ru": "осталось {t}",
-   "en": "{t} left",
-   "ka": "დარჩა {t}"
-  },
-  "bountyNew": {
-   "ru": "Объявить заказ",
-   "en": "Post a bounty",
-   "ka": "შეკვეთის გამოცხადება"
-  },
-  "bountyKind": {
-   "ru": "Что нужно",
-   "en": "What for",
-   "ka": "რა არის საჭირო"
-  },
-  "bountyKindSpecies": {
-   "ru": "Вид рыбы",
-   "en": "A species",
-   "ka": "სახეობა"
-  },
-  "bountyKindSize": {
-   "ru": "Размер",
-   "en": "A size",
-   "ka": "ზომა"
-  },
-  "bountyPick": {
-   "ru": "Какая рыба",
-   "en": "Which fish",
-   "ka": "რომელი თევზი"
-  },
-  "bountyMinCm": {
-   "ru": "От скольких сантиметров",
-   "en": "From how many cm",
-   "ka": "რამდენი სმ-დან"
-  },
-  "bountyRewardLabel": {
-   "ru": "Награда, монет",
-   "en": "Reward, coins",
-   "ka": "ჯილდო, მონეტა"
-  },
-  "bountyRules": {
-   "ru": "Не больше 3 заказов сразу, награда 20–300 монет и не больше четверти общака. Если никто не справится за 3 дня, монеты вернутся.",
-   "en": "At most 3 bounties at a time, a reward of 20–300 coins and no more than a quarter of the treasury. If nobody manages in 3 days, the coins come back.",
-   "ka": "ერთდროულად მაქსიმუმ 3 შეკვეთა, ჯილდო 20–300 მონეტა და ფონდის მეოთხედზე მეტი არა. თუ 3 დღეში ვერავინ შეძლებს, მონეტები დაბრუნდება."
-  },
-  "bountyPost": {
-   "ru": "Объявить за {n}",
-   "en": "Post it for {n}",
-   "ka": "გამოცხადება {n}-ად"
-  },
-  "bountyNone": {
-   "ru": "Заказов нет",
-   "en": "No bounties",
-   "ka": "შეკვეთები არ არის"
-  },
-  "tourTitle": {
-   "ru": "Турнир недели",
-   "en": "Tournament of the week",
-   "ka": "კვირის ტურნირი"
-  },
-  "tourHint": {
-   "ru": "Рыба недели: каждый её улов даёт очко клану. Победитель получает награду в общак.",
-   "en": "The fish of the week: each catch scores a point for the clan. The winner gets a reward for the treasury.",
-   "ka": "კვირის თევზი: მისი თითოეული დაჭერა კლანს ქულას აძლევს. გამარჯვებული ჯილდოს ფონდში იღებს."
-  },
-  "tourFish": {
-   "ru": "Рыба недели: {species}",
-   "en": "Fish of the week: {species}",
-   "ka": "კვირის თევზი: {species}"
-  },
-  "tourPoints": {
-   "ru": "{n} оч.",
-   "en": "{n} pts",
-   "ka": "{n} ქ."
-  },
-  "seasonTitle": {
-   "ru": "Сезон {n}",
-   "en": "Season {n}",
-   "ka": "სეზონი {n}"
-  },
-  "seasonWeek": {
-   "ru": "Неделя {a} из 4",
-   "en": "Week {a} of 4",
-   "ka": "კვირა {a} 4-დან"
-  },
-  "seasonLeft": {
-   "ru": "До конца сезона {t}",
-   "en": "{t} until the season ends",
-   "ka": "სეზონის ბოლომდე {t}"
-  },
-  "seasonTrophies": {
-   "ru": "Трофеев: {n}",
-   "en": "Trophies: {n}",
-   "ka": "ტროფეები: {n}"
-  },
-  "seasonHint": {
-   "ru": "Сезон длится четыре недели. В конце лучшие кланы получают рамку и вариант герба.",
-   "en": "A season lasts four weeks. At the end the best clans get a frame and a crest variant.",
-   "ka": "სეზონი ოთხი კვირა გრძელდება. ბოლოს საუკეთესო კლანები ჩარჩოს და გერბის ვარიანტს იღებენ."
-  },
   "recruitTitle": {
    "ru": "Новички",
    "en": "Recruits",
    "ka": "ახალბედები"
   },
   "recruitHint": {
-   "ru": "Позови друга по ссылке клана. Когда он вступит и поймает первую рыбу за 7 дней, клан получит +100 в общак.",
-   "en": "Invite a friend by the clan link. When they join and catch a first fish within 7 days, the clan gets +100 in the treasury.",
-   "ka": "მოიწვიე მეგობარი კლანის ბმულით. როცა ის შემოვა და 7 დღეში პირველ თევზს დაიჭერს, კლანი +100-ს მიიღებს ფონდში."
+   "ru": "Позови друга в клан. Когда он сделает первый улов, в общак придёт {n} монет.",
+   "en": "Invite a friend to the clan. When they make their first catch, {n} coins go to the treasury.",
+   "ka": "მოიწვიე მეგობარი კლანში. როცა ის პირველ დაჭერას გააკეთებს, ფონდში {n} მონეტა შევა."
   },
   "recruitInvited": {
    "ru": "Приглашён",
@@ -1527,6 +1397,16 @@
    "ru": "осталось {n} дн.",
    "en": "{n} d left",
    "ka": "დარჩა {n} დღე"
+  },
+  "claimLeader": {
+   "ru": "Награду забирает глава или заместитель",
+   "en": "The leader or the co-leader collects the reward",
+   "ka": "ჯილდოს იღებს ლიდერი ან მოადგილე"
+  },
+  "recruitNone": {
+   "ru": "Новичков пока нет: позови друга по ссылке-приглашению.",
+   "en": "No newcomers yet: invite a friend with the invitation link.",
+   "ka": "ახალბედები ჯერ არ არიან: მოიწვიე მეგობარი მოსაწვევი ბმულით."
   }
  },
  "hq": {
@@ -1778,19 +1658,19 @@
   },
   "board": {
    "name": {
-    "ru": "Доска заказов",
-    "en": "Bounty board",
-    "ka": "შეკვეთების დაფა"
+    "ru": "Доска заданий",
+    "en": "Task board",
+    "ka": "დავალებების დაფა"
    },
    "desc": {
-    "ru": "На доске клан вешает заказы и недельные задания.",
-    "en": "The clan posts bounties and the weekly task on the board.",
-    "ka": "დაფაზე კლანი აქვეყნებს შეკვეთებს და კვირის დავალებას."
+    "ru": "На доске висит задание недели: за него клану платят больше.",
+    "en": "The weekly task hangs on the board: the clan is paid more for it.",
+    "ka": "დაფაზე კვირის დავალება კიდია: მისთვის კლანს მეტს უხდიან."
    },
    "eff": {
-    "ru": "Заказов сразу: +{n}, награда за задание недели: +{p}%",
-    "en": "Bounties at once: +{n}, weekly task reward: +{p}%",
-    "ka": "შეკვეთები ერთდროულად: +{n}, კვირის დავალების ჯილდო: +{p}%"
+    "ru": "Награда за задание недели: +{p}%",
+    "en": "Weekly task reward: +{p}%",
+    "ka": "კვირის დავალების ჯილდო: +{p}%"
    }
   },
   "storage": {
@@ -1830,6 +1710,23 @@
     "ru": "Защита штаба тает по 1 в {n} дн. (у остальных по 1 в день)",
     "en": "HQ defence wears down 1 per {n} days (1 per day for the rest)",
     "ka": "შტაბის დაცვა ილევა 1-ით {n} დღეში (დანარჩენებისთვის დღეში 1)"
+   }
+  },
+  "market": {
+   "name": {
+    "ru": "Рынок",
+    "en": "Market",
+    "ka": "ბაზარი"
+   },
+   "desc": {
+    "ru": "Улов клана продаётся выгоднее: рента со всех секторов выше.",
+    "en": "The clan's catch sells better: the rent of every sector is higher.",
+    "ka": "კლანის დაჭერა უკეთ იყიდება: ყველა სექტორის რენტა მაღალია."
+   },
+   "eff": {
+    "ru": "Рента секторов: +{p}%",
+    "en": "Sector rent: +{p}%",
+    "ka": "სექტორების რენტა: +{p}%"
    }
   }
  },
@@ -1962,51 +1859,6 @@
    "ru": "Глава и старейшины могут раз в сутки позвать участника на воду: придёт пуш в Telegram.",
    "en": "The leader and elders can call a member to the water once a day: a Telegram push goes out.",
    "ka": "ლიდერს და უხუცესებს დღეში ერთხელ შეუძლიათ წევრს წყალზე დაუძახონ: Telegram-ში push მივა."
-  },
-  "leadTitle": {
-   "ru": "Передача руководства",
-   "en": "Handing over leadership",
-   "ka": "ხელმძღვანელობის გადაცემა"
-  },
-  "leadHint": {
-   "ru": "Если глава не заходит 14 дней, руководство само переходит к соруководителю.",
-   "en": "If the leader does not log in for 14 days, leadership passes to the co-leader by itself.",
-   "ka": "თუ ლიდერი 14 დღე არ შემოდის, ხელმძღვანელობა თავისით თანალიდერს გადაეცემა."
-  },
-  "transfer": {
-   "ru": "Передать: {name}",
-   "en": "Hand over to {name}",
-   "ka": "გადაცემა: {name}"
-  },
-  "transferAsk": {
-   "ru": "Передать руководство: {name}? Ты станешь соруководителем.",
-   "en": "Hand leadership to {name}? You become a co-leader.",
-   "ka": "გადავცეთ ხელმძღვანელობა: {name}? შენ თანალიდერი გახდები."
-  },
-  "confirm": {
-   "ru": "Передать",
-   "en": "Hand over",
-   "ka": "გადაცემა"
-  },
-  "cancel": {
-   "ru": "Отмена",
-   "en": "Cancel",
-   "ka": "გაუქმება"
-  },
-  "disbandTitle": {
-   "ru": "Роспуск клана",
-   "en": "Disbanding the clan",
-   "ka": "კლანის დაშლა"
-  },
-  "disbandHint": {
-   "ru": "При роспуске общак сгорает: монеты не переходят игрокам. Так сделано, чтобы нельзя было вывести монеты через роспуск.",
-   "en": "On disbanding, the treasury burns: the coins do not pass to players. This is so nobody can cash out through disbanding.",
-   "ka": "დაშლისას ფონდი იწვის: მონეტები მოთამაშეებს არ გადაეცემა. ასეა, რომ დაშლით მონეტების გამოტანა ვერავინ შეძლოს."
-  },
-  "disbandBtn": {
-   "ru": "Как распускается клан",
-   "en": "How a clan is disbanded",
-   "ka": "როგორ იშლება კლანი"
   }
  },
  "map": {
@@ -2383,6 +2235,11 @@
    "ru": "Этот раздел виден только админу.",
    "en": "This section is for admins only.",
    "ka": "ეს განყოფილება მხოლოდ ადმინისთვისაა."
+  },
+  "speedup": {
+   "ru": "Ускорение стройки, % от цены постройки",
+   "en": "Build speed-up, % of the building's price",
+   "ka": "მშენებლობის დაჩქარება, % ნაგებობის ფასიდან"
   }
  },
  "tour": {
@@ -2557,6 +2414,51 @@
    "ru": "Спит: штаба нет",
    "en": "Asleep: no HQ",
    "ka": "სძინავს: შტაბი არ არის"
+  },
+  "building": {
+   "ru": "Идёт стройка",
+   "en": "Under construction",
+   "ka": "მშენებლობა მიმდინარეობს"
+  },
+  "buildLeft": {
+   "ru": "Готово через {t}",
+   "en": "Ready in {t}",
+   "ka": "მზად იქნება {t}-ში"
+  },
+  "levelLow": {
+   "ru": "Нужен уровень клана {n}",
+   "en": "Clan level {n} needed",
+   "ka": "საჭიროა კლანის {n} დონე"
+  },
+  "busy": {
+   "ru": "Сейчас строится другая постройка",
+   "en": "Another building is under construction",
+   "ka": "ახლა სხვა ნაგებობა შენდება"
+  },
+  "time": {
+   "ru": "Стройка идёт {t}. Одновременно строится одна постройка.",
+   "en": "The build takes {t}. One building is built at a time.",
+   "ka": "მშენებლობა გრძელდება {t}. ერთდროულად ერთი ნაგებობა შენდება."
+  },
+  "buildBtn": {
+   "ru": "Строить за {n}",
+   "en": "Build for {n}",
+   "ka": "აშენება {n}-ად"
+  },
+  "upgradeBtn": {
+   "ru": "Улучшить за {n}",
+   "en": "Upgrade for {n}",
+   "ka": "გაუმჯობესება {n}-ად"
+  },
+  "speedup": {
+   "ru": "Ускорить за {n}",
+   "en": "Speed up for {n}",
+   "ka": "დაჩქარება {n}-ად"
+  },
+  "needLevel": {
+   "ru": "Уровень клана {n} (сейчас {have})",
+   "en": "Clan level {n} (now {have})",
+   "ka": "კლანის დონე {n} (ახლა {have})"
   }
  },
  "live": {
@@ -2579,6 +2481,168 @@
    "ru": "Перенос",
    "en": "Move",
    "ka": "გადატანა"
+  }
+ },
+ "guide": {
+  "howTitle": {
+   "ru": "Как это работает",
+   "en": "How it works",
+   "ka": "როგორ მუშაობს"
+  },
+  "chestAria": {
+   "ru": "Внести монеты в общак",
+   "en": "Put coins into the treasury",
+   "ka": "მონეტების შეტანა ფონდში"
+  },
+  "s_rent": {
+   "ru": "Рента",
+   "en": "Rent",
+   "ka": "რენტა"
+  },
+  "s_save": {
+   "ru": "Общак",
+   "en": "Treasury",
+   "ka": "ფონდი"
+  },
+  "s_build": {
+   "ru": "Стройка",
+   "en": "Building",
+   "ka": "მშენებლობა"
+  },
+  "s_defend": {
+   "ru": "Штаб",
+   "en": "HQ",
+   "ka": "შტაბი"
+  },
+  "t_rent": {
+   "ru": "Каждый захваченный сектор клана сам приносит монеты в общак: 1 монета каждые 3 часа. Чем больше секторов держит клан, тем больше капает.",
+   "en": "Every captured clan sector brings coins into the treasury by itself: 1 coin every 3 hours. The more sectors the clan holds, the more comes in.",
+   "ka": "კლანის ყოველი დაკავებული სექტორი თავისით ამატებს მონეტებს ფონდში: 1 მონეტა ყოველ 3 საათში. რაც მეტ სექტორს ფლობს კლანი, მით მეტი შემოდის."
+  },
+  "t_save": {
+   "ru": "Монеты общака общие. Ещё в него идут взносы участников и небольшой налог с уловов (ставку ставит глава). Копить можно до потолка, он растёт с уровнем клана.",
+   "en": "The treasury's coins are shared. Members' deposits and a small tax on catches (the leader sets the rate) go in too. It saves up to a cap that grows with the clan's level.",
+   "ka": "ფონდის მონეტები საერთოა. მასში ასევე შედის წევრების შენატანი და დაჭერებზე მცირე გადასახადი (განაკვეთს ლიდერი ადგენს). დაგროვება შეიძლება ლიმიტამდე, რომელიც კლანის დონესთან ერთად იზრდება."
+  },
+  "t_build": {
+   "ru": "На монеты общака клан строит постройки на базе (они дают настоящие плюшки), покупает анимированные скины секторов и назначает общий «Выход» на воду. Стройка идёт по времени, как в игре про клановую деревню.",
+   "en": "The clan spends the treasury on buildings of its base (they give real perks), on animated sector skins, and on a shared «Outing» on the water. A build takes time, as in a clan-village game.",
+   "ka": "კლანი ფონდის მონეტებს ხარჯავს ბაზის ნაგებობებზე (ისინი რეალურ სარგებელს იძლევა), სექტორების ანიმირებულ სკინებზე და წყალზე საერთო «გასვლაზე». მშენებლობას დრო სჭირდება."
+  },
+  "t_defend": {
+   "ru": "Штаб стоит на одном из секторов клана. Пока он стоит, постройки работают. Если соперники сломят защиту сектора и клан не успеет ответить, штаб падает, а из общака уносят часть монет.",
+   "en": "The HQ stands on one of the clan's sectors. While it stands, the buildings work. If rivals break the sector's defence and the clan does not answer in time, the HQ falls and part of the treasury is carried off.",
+   "ka": "შტაბი კლანის ერთ-ერთ სექტორზე დგას. სანამ დგას, ნაგებობები მუშაობს. თუ მოწინააღმდეგეები სექტორის დაცვას გატეხავენ და კლანი დროზე ვერ უპასუხებს, შტაბი ეცემა, ფონდიდან კი ნაწილს წაიღებენ."
+  },
+  "nextKicker": {
+   "ru": "Что делать дальше",
+   "en": "What to do next",
+   "ka": "რა გავაკეთოთ შემდეგ"
+  },
+  "next_hq": {
+   "ru": "Поставь штаб",
+   "en": "Set the HQ",
+   "ka": "დააყენე შტაბი"
+  },
+  "nextText_hq": {
+   "ru": "Штаб — сердце клана: на нём держатся постройки и двойная рента. Он стоит на одном из захваченных секторов клана.",
+   "en": "The HQ is the clan's heart: the buildings and the double rent rest on it. It stands on one of the clan's captured sectors.",
+   "ka": "შტაბი კლანის გულია: მასზეა დამოკიდებული ნაგებობები და ორმაგი რენტა. ის კლანის ერთ-ერთ დაკავებულ სექტორზე დგას."
+  },
+  "nextBtn_hq": {
+   "ru": "Выбрать сектор",
+   "en": "Choose a sector",
+   "ka": "სექტორის არჩევა"
+  },
+  "next_build": {
+   "ru": "Построй первую постройку",
+   "en": "Build the first building",
+   "ka": "ააშენე პირველი ნაგებობა"
+  },
+  "nextText_build": {
+   "ru": "Постройки дают клану плюшки: места, защиту, монеты. Начни с любой, стройка займёт несколько часов.",
+   "en": "Buildings give the clan perks: places, defence, coins. Start with any; a build takes a few hours.",
+   "ka": "ნაგებობები კლანს სარგებელს აძლევს: ადგილებს, დაცვას, მონეტებს. დაიწყე ნებისმიერით, მშენებლობა რამდენიმე საათს გასტანს."
+  },
+  "nextBtn_build": {
+   "ru": "К базе клана",
+   "en": "To the clan base",
+   "ka": "კლანის ბაზაზე"
+  },
+  "next_goal": {
+   "ru": "Выбери цель накопления",
+   "en": "Pick what to save for",
+   "ka": "აირჩიე დაგროვების მიზანი"
+  },
+  "nextText_goal": {
+   "ru": "Цель — то, на что клан копит: скин секторов или знамя. Полоска покажет, сколько ещё осталось. Нажми «Выбрать цель» ниже.",
+   "en": "A goal is what the clan saves for: a sector skin or a banner. The bar shows how much is left. Tap «Pick a goal» below.",
+   "ka": "მიზანი არის ის, რისთვისაც კლანი აგროვებს: სექტორის სკინი ან დროშა. ზოლი აჩვენებს, რამდენია დარჩენილი. ქვემოთ დააჭირე «მიზნის არჩევას»."
+  },
+  "nextBtn_goal": {
+   "ru": "Выбрать цель",
+   "en": "Pick a goal",
+   "ka": "მიზნის არჩევა"
+  },
+  "next_quest": {
+   "ru": "Забери награду недели",
+   "en": "Collect the week's reward",
+   "ka": "აიღე კვირის ჯილდო"
+  },
+  "nextText_quest": {
+   "ru": "Клан выполнил задание недели: награда ждёт. Забирает её глава или заместитель.",
+   "en": "The clan has done the weekly task: the reward waits. The leader or the co-leader collects it.",
+   "ka": "კლანმა კვირის დავალება შეასრულა: ჯილდო ელოდება. მას ლიდერი ან მოადგილე იღებს."
+  },
+  "nextBtn_quest": {
+   "ru": "К заданию",
+   "en": "To the task",
+   "ka": "დავალებაზე"
+  },
+  "next_buff": {
+   "ru": "Назначь «Выход»",
+   "en": "Plan an «Outing»",
+   "ka": "დანიშნე «გასვლა»"
+  },
+  "nextText_buff": {
+   "ru": "Позови клан на воду: два часа уловы приносят больше монет, а метры сундука и битвы растут быстрее.",
+   "en": "Call the clan to the water: for two hours catches bring more coins, and the chest and battle meters grow faster.",
+   "ka": "მოუწოდე კლანს წყალზე: ორი საათის განმავლობაში დაჭერები მეტ მონეტას იძლევა, სკივრისა და ბრძოლის მეტრები უფრო სწრაფად იზრდება."
+  },
+  "nextBtn_buff": {
+   "ru": "К выходу",
+   "en": "To the outing",
+   "ka": "გასვლაზე"
+  },
+  "next_keep": {
+   "ru": "Всё идёт хорошо",
+   "en": "All is going well",
+   "ka": "ყველაფერი კარგად მიდის"
+  },
+  "nextText_keep": {
+   "ru": "Копите монеты, ловите рыбу и держите штаб. Нажимай на любую карточку: везде есть пояснение, что это и как работает.",
+   "en": "Save coins, catch fish and hold the HQ. Tap any card: each has a note on what it is and how it works.",
+   "ka": "აგროვეთ მონეტები, დაიჭირეთ თევზი და შეინარჩუნეთ შტაბი. დააჭირე ნებისმიერ ბარათს: ყველგან არის ახსნა, რა არის და როგორ მუშაობს."
+  },
+  "introTitle": {
+   "ru": "Клановое обновление",
+   "en": "The clan update",
+   "ka": "კლანის განახლება"
+  },
+  "skip": {
+   "ru": "Пропустить",
+   "en": "Skip",
+   "ka": "გამოტოვება"
+  },
+  "next": {
+   "ru": "Дальше",
+   "en": "Next",
+   "ka": "შემდეგი"
+  },
+  "done": {
+   "ru": "Понятно",
+   "en": "Got it",
+   "ka": "გასაგებია"
   }
  }
 }

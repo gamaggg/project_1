@@ -52,7 +52,14 @@ export function ClanScreen2({ sections, onOpenSector, onGoMap, sub: subProp, onS
   const to = CLAN_LEVEL_XP[level] ?? null
   const league = leagueFor(s.clan.trophies)
   const body: Record<SubTab, ReactNode> = {
-    treasury: <TreasuryTab />,
+    treasury: (
+      <TreasuryTab
+        onGo={(to) => {
+          if (to === 'map') onGoMap?.({ place: true })
+          else setSub(to === 'hq' ? 'hq' : to === 'week' ? 'week' : to === 'exit' ? 'exit' : 'treasury')
+        }}
+      />
+    ),
     exit: <ExitTab onOpenSector={onOpenSector} />,
     week: <WeekTab />,
     hq: <HqTab onGoMap={onGoMap} />,

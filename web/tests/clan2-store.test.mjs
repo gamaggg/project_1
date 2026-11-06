@@ -1,7 +1,7 @@
 import { test, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import * as S from '@/lib/clan2/demoStore.ts'
-import { DAY, HOURS, DEFENSE_MAX, HQ_LOOT_MAX, HQ_RUINS_HOURS, PROJECTS, PROJECT_EFFECTS, SIEGE_MINUTES, treasuryCap } from '@/lib/clan2/rules.ts'
+import { BUILD_CLAN_LEVEL, BUILD_HOURS, CLAN_SKINS, DAY, HOURS, DEFENSE_MAX, HQ_LOOT_MAX, HQ_RUINS_HOURS, PROJECTS, PROJECT_EFFECTS, SIEGE_MINUTES, dailyRent, speedupCost, treasuryCap } from '@/lib/clan2/rules.ts'
 import { buildLiveState, syncLiveState, liveSectors } from '@/lib/clan2/live/seed.ts'
 
 // The mechanics of the clan update, on the demo store (the same one the real app's live mode runs on).
@@ -74,23 +74,22 @@ test('tax: only a manager sets it, the rate is capped, and a catch pays it into 
   ok(r)
   assert.equal(r.summary.tax, Math.floor((r.summary.coins * 10) / 100))
   assert.equal(st().treasury.balance, before + r.summary.tax)
-  assert.equal(st().wallet, w + r.summary.coins - r.summary.tax + r.summary.bounty)
+  assert.equal(st().wallet, w + r.summary.coins - r.summary.tax)
 })
 
 test('goal: needs enough coins, spends them, owns and wears the skin on every clan sector', () => {
-  ok(S.setGoal('skin_clan_lanterns'))
-  const cost = 1800
+  ok(S.setGoal('skin_clan_tide'))
+  const cost = 5000
   assert.ok(st().treasury.balance < cost)
   no(S.buyGoal(), 'notEnough')
-  S.advanceTime(10 * DAY)
-  // top the treasury up through catches' tax-free path: rent for 10 days is credited by advanceTime
+  S.advanceTime(60 * DAY)
   assert.ok(st().treasury.balance >= cost, `balance ${st().treasury.balance}`)
   const b = st().treasury.balance
   ok(S.buyGoal())
   assert.equal(st().treasury.balance, b - cost)
-  assert.ok(st().owned.includes('clan_lanterns'))
-  assert.equal(st().equippedSkin, 'clan_lanterns')
-  assert.ok(st().sectors.filter((x) => x.owner === 'mine').every((x) => x.skin === 'clan_lanterns'))
+  assert.ok(st().owned.includes('clan_tide'))
+  assert.equal(st().equippedSkin, 'clan_tide')
+  assert.ok(st().sectors.filter((x) => x.owner === 'mine').every((x) => x.skin === 'clan_tide'))
   assert.equal(st().treasury.goalId, null)
 })
 
@@ -101,38 +100,94 @@ test('a skin can be worn only once owned, and taken off', () => {
   assert.ok(st().sectors.every((x) => x.skin === null))
 })
 
-test('buildings: cost, levels, max level, effects (and they sleep without an HQ)', () => {
+test('buildings: paid at once, built over time, one at a time, effects only when ready', () => {
+  S.advanceTime(150 * DAY)
   const s0 = st()
   assert.equal(S.levelOf(s0, 'dock'), 1)
   assert.equal(S.extraSlotsOf(s0), PROJECT_EFFECTS.dock.slots[1])
-  S.advanceTime(40 * DAY)
   const before = st().treasury.balance
   ok(S.upgradeProject('beacon'))
-  assert.equal(st().projects.beacon, 1)
   assert.equal(st().treasury.balance, before - PROJECTS.beacon.costs[0])
+  assert.ok(st().build)
+  assert.equal(st().projects.beacon, 0, 'not ready yet')
+  assert.equal(S.siegeMinutesOf(st()), SIEGE_MINUTES, 'no effect until it is ready')
+  no(S.upgradeProject('storage'), 'buildBusy')
+  S.advanceTime(BUILD_HOURS.beacon[0] * HOURS + 1000)
+  assert.equal(st().build, null)
+  assert.equal(st().projects.beacon, 1)
   assert.equal(S.siegeMinutesOf(st()), SIEGE_MINUTES + PROJECT_EFFECTS.beacon.siegeMinutes[1])
-  ok(S.upgradeProject('beacon'))
-  ok(S.upgradeProject('beacon'))
-  no(S.upgradeProject('beacon'), 'maxLevel')
-  assert.equal(S.siegeMinutesOf(st()), SIEGE_MINUTES + 30)
-  // storage raises the cap
-  const cap0 = S.capOf(st())
+  assert.ok(st().alerts.some((a) => a.kind === 'project_done'))
+})
+
+test('buildings: a level opens only with the clan level', () => {
+  S.advanceTime(150 * DAY)
+  // the demo clan is level 5: level 3 needs 6
+  assert.equal(st().clan.level, 5)
   ok(S.upgradeProject('storage'))
-  assert.equal(S.capOf(st()), cap0 + PROJECT_EFFECTS.storage.cap[1])
-  // not enough money
-  const s = st()
-  s.treasury.balance // eslint-disable-line no-unused-expressions
+  S.advanceTime(BUILD_HOURS.storage[0] * HOURS + 1000)
+  ok(S.upgradeProject('storage'))
+  S.advanceTime(BUILD_HOURS.storage[1] * HOURS + 1000)
+  assert.equal(st().projects.storage, 2)
+  assert.ok(BUILD_CLAN_LEVEL[2] > st().clan.level)
+  no(S.upgradeProject('storage'), 'levelLow')
+})
+
+test('buildings: the longest build is about five days, and the whole base costs what the pacing note says', () => {
+  const longest = Math.max(...Object.values(BUILD_HOURS).map((h) => h[2]))
+  assert.ok(longest >= 96 && longest <= 120, `longest ${longest} h`)
+  for (const id of Object.keys(BUILD_HOURS)) {
+    assert.ok(BUILD_HOURS[id][0] < BUILD_HOURS[id][1] && BUILD_HOURS[id][1] < BUILD_HOURS[id][2])
+    assert.ok(PROJECTS[id].costs[0] < PROJECTS[id].costs[1] && PROJECTS[id].costs[1] < PROJECTS[id].costs[2])
+  }
+  const total = Object.values(PROJECTS).reduce((n, p) => n + p.costs.reduce((a, b) => a + b, 0), 0)
+  assert.equal(total, 35_000)
+})
+
+test('speed-up: costs a share of the building price by the time left, finishes the build, needs money and a manager', () => {
+  S.advanceTime(150 * DAY)
+  no(S.speedUpBuild(), 'buildNone')
+  ok(S.upgradeProject('fort'))
+  const b = st().build
+  const full = speedupCost(st().settings, PROJECTS.fort.costs[0], b.startedAt, b.endsAt, b.startedAt)
+  assert.equal(full, Math.ceil((PROJECTS.fort.costs[0] * 35) / 100))
+  // half of the time gone: half of the price
+  S.advanceTime((BUILD_HOURS.fort[0] * HOURS) / 2)
+  const half = S.speedupPrice(st())
+  assert.ok(Math.abs(half - full / 2) <= 1, `half ${half} full ${full}`)
+  S.setPersona('member')
+  no(S.speedUpBuild(), 'notManager')
+  S.setPersona('leader')
+  const money = st().treasury.balance
+  ok(S.speedUpBuild())
+  assert.equal(st().treasury.balance, money - half)
+  assert.equal(st().build, null)
+  assert.equal(st().projects.fort, 1)
+  // a build is never free to skip
+  assert.ok(speedupCost(st().settings, 100, 0, 1000, 999) >= 20)
 })
 
 test('buildings need the money and a manager', () => {
   S.setPersona('member')
   no(S.upgradeProject('fort'), 'notManager')
   S.setPersona('leader')
+  S.resetDemo()
   const bal = st().treasury.balance
-  assert.ok(bal < PROJECTS.fort.costs[0] + 5000)
-  // the leader has 1240 in the start world; the fort costs 700: ok, then 1500: not enough
-  ok(S.upgradeProject('fort'))
-  no(S.upgradeProject('fort'), 'notEnough')
+  assert.ok(bal < PROJECTS.dock.costs[1], 'the start treasury is below the dock level 2')
+  no(S.upgradeProject('dock'), 'notEnough')
+})
+
+test('market: rent is higher by its percent', () => {
+  const s = st()
+  const base = dailyRent(s.settings, 5, 2, true, 0)
+  assert.equal(dailyRent(s.settings, 5, 2, true, 3), Math.round(base * 1.15))
+})
+
+test('clan skins: price and the level that opens them; the treasury cap at that level is above the price', () => {
+  for (const k of CLAN_SKINS) assert.ok(treasuryCap(k.minLevel, 0) >= k.price, `${k.id} price ${k.price} cap ${treasuryCap(k.minLevel, 0)}`)
+  S.resetDemo()
+  // the demo clan is level 5: the lanterns (level 9) are locked
+  no(S.setGoal('skin_clan_lanterns'), 'levelLow')
+  ok(S.setGoal('skin_clan_aurora'))
 })
 
 test('treasury cap by clan level', () => {
@@ -154,7 +209,7 @@ test('HQ: only on a captured clan sector, one per sector, cost, cooldown, defenc
   no(S.placeHq(s.hq.sectorId), 'hqTaken')
   // moving too soon
   no(S.placeHq(other.id), 'hqCooldown')
-  S.advanceTime(4 * DAY)
+  S.advanceTime(20 * DAY)
   const b = st().treasury.balance
   ok(S.placeHq(other.id))
   assert.equal(st().treasury.balance, b - st().settings.hqMoveCost)
@@ -216,7 +271,7 @@ test('a fallen HQ: loot, the sector lost, ruins, sleeping buildings, no new HQ f
   // a new HQ: not for 24 hours
   const another = s.sectors.find((x) => x.owner === 'mine')
   no(S.placeHq(another.id), 'hqRuins')
-  S.advanceTime(HQ_RUINS_HOURS * HOURS + 1000)
+  S.advanceTime(HQ_RUINS_HOURS * HOURS + 5 * DAY)
   ok(S.placeHq(another.id))
   assert.equal(st().hq.ruins, null)
   assert.equal(S.buildingsOn(st()), true)
@@ -229,10 +284,15 @@ test('the HQ defence wears down by itself, slower with the fort', () => {
   assert.equal(st().sectors.find((x) => x.id === id).defense, Math.max(0, d0 - 1))
   // with the fort at level 3 (decays every 5 days) the next 4 days cost nothing
   S.resetDemo()
-  S.advanceTime(100 * DAY)
-  ok(S.upgradeProject('fort'))
-  ok(S.upgradeProject('fort'))
-  ok(S.upgradeProject('fort'))
+  // the third level needs clan level 6: play it up (a catch is 2 xp)
+  for (let i = 0; i < 80; i++) S.simulateCatch({ memberId: st().myId })
+  assert.ok(st().clan.level >= 6, `clan level ${st().clan.level}`)
+  S.advanceTime(400 * DAY)
+  for (let k = 0; k < 3; k++) {
+    ok(S.upgradeProject('fort'), `fort level ${k + 1}`)
+    S.advanceTime(BUILD_HOURS.fort[k] * HOURS + 1000)
+  }
+  assert.equal(st().projects.fort, 3)
   S.defendHq()
   S.defendHq()
   S.defendHq()
@@ -309,32 +369,6 @@ test('weekly task: claim only when done, the board adds to the reward', () => {
   assert.equal(st().quest.claimed, true)
   assert.ok(st().treasury.balance > b)
   no(S.claimQuest(), 'questOpen')
-})
-
-test('bounties: limits by the board, share of the treasury, refunded when they run out, paid on a matching catch', () => {
-  S.setPersona('member')
-  no(S.createBounty({ kind: 'species', species: 'katran', reward: 50 }), 'notManager')
-  S.setPersona('leader')
-  // two exist already; the third slot is free, the fourth is not (board level 1 gives +1)
-  no(S.createBounty({ kind: 'size', minCm: 10, reward: 5 }), 'bountyReward')
-  ok(S.createBounty({ kind: 'species', species: 'sibas', reward: 50 }))
-  const active = () => st().bounties.filter((b) => !b.claimedBy).length
-  assert.ok(active() <= S.bountySlotsOf(st()))
-  while (active() < S.bountySlotsOf(st())) ok(S.createBounty({ kind: 'size', minCm: 99, reward: 30 }))
-  no(S.createBounty({ kind: 'size', minCm: 99, reward: 30 }), 'bountyMax')
-  // run out: refunded
-  const b = st().treasury.balance
-  S.advanceTime(10 * DAY)
-  assert.ok(st().treasury.balance > b)
-  assert.equal(active(), 0)
-})
-
-test('bounty paid on a matching catch goes to the catcher', () => {
-  ok(S.createBounty({ kind: 'species', species: 'katran', reward: 90 }))
-  const w = st().wallet
-  const r = S.simulateCatch({ memberId: st().myId, species: 'katran' })
-  assert.ok(r.summary.bounty >= 90 || r.summary.bounty > 0)
-  assert.ok(st().wallet >= w + r.summary.coins - r.summary.tax + 90)
 })
 
 test('call to the water once a day per member; only a manager calls', () => {
@@ -478,7 +512,7 @@ test('live: the state is built from the real clan, read only', () => {
   assert.deepEqual(s.sectors.map((x) => x.id), ['B1', 'B2', 'B3'])
   assert.equal(s.sectors.find((x) => x.id === 'B2').shared, 2)
   assert.equal(s.hq.sectorId, null)
-  assert.equal(s.treasury.balance, 800)
+  assert.equal(s.treasury.balance, 3000)
   assert.ok(s.sectors.every((x) => x.defense <= DEFENSE_MAX))
 })
 
@@ -494,7 +528,7 @@ test('live: bind, then place the HQ on a real sector; a sector the game takes aw
   assert.equal(st().live.clanId, 34)
   ok(S.placeHq('B1'))
   assert.equal(st().hq.sectorId, 'B1')
-  assert.equal(st().treasury.balance, 800 - st().settings.hqPlaceCost)
+  assert.equal(st().treasury.balance, 3000 - st().settings.hqPlaceCost)
   no(S.placeHq('B4'), 'hqNotMine')
   no(S.placeHq('B5'), 'hqNotMine')
   // the real game takes B1 from the clan: the HQ falls by itself

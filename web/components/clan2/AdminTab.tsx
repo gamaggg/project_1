@@ -24,8 +24,8 @@ const REAL_CLANS = [
   { name: 'Кобулети', members: 1, sectors: 4 },
 ]
 
-type NumKey = 'rentPerSectorDay' | 'sharedRentFactor' | 'buffPrice' | 'buffCooldownHours' | 'buffMinRsvp' | 'taxMax' | 'chestShare' | 'recruitReward' | 'hqPlaceCost' | 'hqMoveCost'
-type LabelKey = 'rent' | 'shared' | 'buffPrice' | 'buffCooldown' | 'buffMin' | 'taxMax' | 'chestShare' | 'recruit' | 'hqPlace' | 'hqMove'
+type NumKey = 'rentPerSectorDay' | 'sharedRentFactor' | 'buffPrice' | 'buffCooldownHours' | 'buffMinRsvp' | 'taxMax' | 'chestShare' | 'recruitReward' | 'hqPlaceCost' | 'hqMoveCost' | 'speedupShare'
+type LabelKey = 'rent' | 'shared' | 'buffPrice' | 'buffCooldown' | 'buffMin' | 'taxMax' | 'chestShare' | 'recruit' | 'hqPlace' | 'hqMove' | 'speedup'
 const FIELDS: { key: NumKey; label: LabelKey; min: number; max: number; step: number }[] = [
   { key: 'rentPerSectorDay', label: 'rent', min: 1, max: 16, step: 1 },
   { key: 'sharedRentFactor', label: 'shared', min: 1, max: 2, step: 0.25 },
@@ -35,8 +35,9 @@ const FIELDS: { key: NumKey; label: LabelKey; min: number; max: number; step: nu
   { key: 'taxMax', label: 'taxMax', min: 0, max: 15, step: 5 },
   { key: 'chestShare', label: 'chestShare', min: 0, max: 50, step: 5 },
   { key: 'recruitReward', label: 'recruit', min: 50, max: 300, step: 50 },
-  { key: 'hqPlaceCost', label: 'hqPlace', min: 100, max: 1000, step: 50 },
-  { key: 'hqMoveCost', label: 'hqMove', min: 100, max: 1500, step: 50 },
+  { key: 'hqPlaceCost', label: 'hqPlace', min: 500, max: 4000, step: 250 },
+  { key: 'hqMoveCost', label: 'hqMove', min: 500, max: 5000, step: 250 },
+  { key: 'speedupShare', label: 'speedup', min: 0, max: 100, step: 5 },
 ]
 
 export function AdminTab({ bare }: { bare?: boolean } = {}) {

@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { C2Avatar, C2Bar, C2Card, C2Coins, C2Count, C2Sheet, fmtAgo, speciesName, useC2, useDemoNow } from '@/components/clan2/C2Common'
+import { HowItWorks, NextStep, TreasureChest, type Go } from '@/components/clan2/Guide'
 import { SkinSwatch } from '@/components/clan2/SkinSwatch'
 import { buyGoal, canManage, capOf, deposit, goalOf, rentPerDay, sectorCounts, setGoal, setTaxRate, useDemoState } from '@/lib/clan2/demoStore'
 import { DAY, GOAL_CATALOG, TAX_RATES, fmt, isSpend, taxOf } from '@/lib/clan2/rules'
@@ -23,7 +24,7 @@ const SOURCE_GROUPS: { id: 'srcRent' | 'srcTax' | 'srcDeposit' | 'srcShares' | '
 
 const PRESETS = [50, 100, 250, 500]
 
-export function TreasuryTab() {
+export function TreasuryTab({ onGo }: { onGo?: (to: Go) => void } = {}) {
   const s = useDemoState()
   const now = useDemoNow()
   const { act, say } = useC2()
@@ -62,10 +63,11 @@ export function TreasuryTab() {
     <div className="c2-stack">
       <C2Card tour="treasury-balance" style={{ padding: 0 }}>
         <div className="c2-balance">
+          <TreasureChest ratio={s.treasury.balance / cap} onClick={() => setDepositOpen(true)} />
           <div className="c2-balance-label">{tn('clan2.treasury.balance')}</div>
           <div className="c2-balance-num">
             <C2Count value={s.treasury.balance} />
-            <CoinIcon size={28} animated="bounce" />
+            <CoinIcon size={28} />
           </div>
           <C2Bar value={s.treasury.balance / cap} tone={s.treasury.balance / cap > 0.9 ? 'warn' : 'accent'} label={tn('clan2.treasury.balance')} />
           <div className="c2-balance-cap">{tn('clan2.treasury.capOf', { cap: fmt(cap) })}</div>
@@ -89,6 +91,10 @@ export function TreasuryTab() {
           </button>
         </div>
       </C2Card>
+
+      <NextStep onGo={onGo} />
+
+      <HowItWorks />
 
       <C2Card title={tn('clan2.treasury.goalTitle')} hint={tn('clan2.treasury.goalExplain')} tour="treasury-goal">
         {goal ? (
@@ -156,7 +162,7 @@ export function TreasuryTab() {
             </button>
           ))}
         </div>
-        <p className="c2-muted small">{tn('clan2.treasury.taxExample', { n: taxOf(100, s.treasury.taxRate) })}</p>
+        {s.treasury.taxRate > 0 && <p className="c2-muted small">{tn('clan2.treasury.taxExample', { n: taxOf(100, s.treasury.taxRate) })}</p>}
       </C2Card>
 
       <C2Card title={tn('clan2.treasury.contribTitle')} hint={tn('clan2.treasury.contribNote')} tour="treasury-contrib">

@@ -49,7 +49,6 @@ export function DemoPanel({ clock, lang, onLang, onTour, live, onResetLive, onOf
     const x = res.summary
     const parts = [tn('clan2.demo.caught', { member: x.member, species: speciesName(x.species), cm: x.cm })]
     if (x.tax > 0) parts.push(tn('clan2.demo.taxed', { n: x.tax }))
-    if (x.bounty > 0) parts.push(tn('clan2.demo.bountyDone', { n: x.bounty }))
     if (x.record) parts.push(tn('clan2.demo.recordSet'))
     say(parts.join(' · '))
   }

@@ -16,7 +16,7 @@ export type LiveInput = {
   territories: Territory[]
 }
 
-export const liveKey = (userId: string, clanId: number) => `range:clan2-live:v1:${userId}:${clanId}`
+export const liveKey = (userId: string, clanId: number) => `range:clan2-live:v2:${userId}:${clanId}`
 
 const hueOf = (id: string) => {
   let h = 0
@@ -62,19 +62,7 @@ export function buildLiveState(input: LiveInput, now: number = Date.now()): Demo
   const members = liveMembers(clan, null, userId)
   const active = members.filter((m) => m.lastCatchMin !== null).length
   const weekCatches = clan.members.reduce((n, m) => n + m.weekCatches, 0)
-  const seed: TreasuryEntry = { id: 1, at: now, kind: 'seed', amount: 800, actor: null, note: 'demo' }
-  // The other clans of the city, for the tournament table: by how many sectors they hold.
-  const byClan = new Map<number, { name: string; n: number }>()
-  for (const t of territories) {
-    if (!t.ownerClanId || t.status === 'free') continue
-    const e = byClan.get(t.ownerClanId) ?? { name: t.ownerClanName ?? '', n: 0 }
-    e.n++
-    byClan.set(t.ownerClanId, e)
-  }
-  const standings = [...byClan.entries()]
-    .map(([id, e]) => ({ clan: e.name, score: e.n * 4, mine: id === clan.id }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5)
+  const seed: TreasuryEntry = { id: 1, at: now, kind: 'seed', amount: 3000, actor: null, note: 'demo' }
   return {
     live: { clanId: clan.id, userId, realRole, viewAs: null, isSuperAdmin },
     clockOffsetMs: 0,
@@ -91,25 +79,23 @@ export function buildLiveState(input: LiveInput, now: number = Date.now()): Demo
       trophies: clan.trophies,
     },
     members,
-    treasury: { balance: 800, taxRate: 0, entries: [seed], goalId: null },
+    treasury: { balance: 3000, taxRate: 0, entries: [seed], goalId: null },
     buff: { phase: 'idle', startsAt: null, endsAt: null, cooldownUntil: null, rsvp: [], startedBy: null, lastBonus: 0 },
     hq: { sectorId: null, placedAt: null, lastMoveAt: null, siege: null, defenseAt: null, ruins: null },
     alerts: [],
     quest: { kind: 'catches', target: questTarget('catches', active), progress: Math.min(weekCatches, questTarget('catches', active)), reward: questReward('catches', 0), endsAt: now + 3 * DAY, claimed: false },
-    projects: { dock: 0, beacon: 0, fort: 0, board: 0, storage: 0 },
+    projects: { dock: 0, beacon: 0, fort: 0, board: 0, storage: 0, market: 0 },
+    build: null,
     owned: [],
     equippedSkin: null,
-    bounties: [],
-    tournament: { species: 'stavrida', endsAt: now + 3 * DAY, standings },
     hall: [],
-    season: { n: 1, startedAt: now - 2 * DAY, endsAt: now + 26 * DAY, trophies: clan.trophies },
     recruit: [
       { name: 'Leo', state: 'joined', daysLeft: 5 },
       { name: 'Mariam', state: 'invited', daysLeft: 6 },
     ],
     sectors: liveSectors(clan.id, territories, now),
     settings: { ...DEFAULT_SETTINGS },
-    toursSeen: { player: true, admin: true },
+    toursSeen: { player: false, admin: true },
     questSeen: [],
     lastRentAt: now - 6 * HOURS,
     nudgedAt: {},

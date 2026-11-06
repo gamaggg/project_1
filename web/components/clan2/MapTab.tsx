@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { AlertsCard } from '@/components/clan2/ExitTab'
-import { Hq3D } from '@/components/clan2/Hq3D'
-import { ruinsMarkerHtml } from '@/lib/clan2/live/hqMarker'
+import { hqMarkerHtml, ruinsMarkerHtml } from '@/lib/clan2/live/hqMarker'
 import { MapCanvas, type MapLayer } from '@/components/clan2/MapCanvas'
 import { C2Sheet, fmtLeft, useC2, useDemoNow } from '@/components/clan2/C2Common'
 import type { MapFocus } from '@/components/clan2/HqTab'
@@ -77,13 +76,23 @@ export function MapTab({ focus, onOpenHq }: { focus?: MapFocus; onOpenHq?: () =>
               .map((x) => {
                 const c = hexCenter(layout, x.q, x.r)
                 const mine = x.hq === 'mine'
-                return <Hq3D key={x.id} crest={mine ? s.clan.crest : ENEMY_CREST} x={c.x} y={c.y + layout.s * 0.55} enemy={!mine} siege={mine && !!siege} label={mine ? tn('clan2.map.hqHere') : tn('clan2.map.hqEnemy')} onClick={() => pick(x.id)} />
+                return (
+                  <button
+                    key={x.id}
+                    type="button"
+                    className={`c2-hqm-abs${mine ? '' : ' enemy'}`}
+                    style={{ left: c.x, top: c.y }}
+                    onClick={() => pick(x.id)}
+                    aria-label={mine ? tn('clan2.map.hqHere') : tn('clan2.map.hqEnemy')}
+                    dangerouslySetInnerHTML={{ __html: hqMarkerHtml(mine ? s.clan.crest : ENEMY_CREST, { siege: mine && !!siege, label: mine ? tn('clan2.map.hqHere') : tn('clan2.map.hqEnemy'), tag: mine ? tn('clan2.base.hq') : tn('clan2.map.hqEnemy'), tier: 2 }) }}
+                  />
+                )
               })}
           {clans && s.hq.ruins && now < s.hq.ruins.until && (() => {
             const r = s.sectors.find((x) => x.id === s.hq.ruins!.sectorId)
             if (!r) return null
             const c = hexCenter(layout, r.q, r.r)
-            return <span className="c2-ruins-abs" style={{ left: c.x, top: c.y + layout.s * 0.55 }} dangerouslySetInnerHTML={{ __html: ruinsMarkerHtml(tn('clan2.base.ruins')) }} />
+            return <span className="c2-ruins-abs" style={{ left: c.x, top: c.y }} dangerouslySetInnerHTML={{ __html: ruinsMarkerHtml(tn('clan2.base.ruins')) }} />
           })()}
         </>
       )}

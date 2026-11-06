@@ -15,7 +15,7 @@ export function alertText(a: ClanAlert): string {
     case 'hq_saved':
       return tn('clan2.alert.hqSaved', { name: a.text })
     case 'hq_fallen':
-      return tn('clan2.alert.hqFallen', { id: a.text })
+      return tn('clan2.alert.hqFallen', { id: head, n: tail || '0' })
     case 'buff':
       if (head === 'planned') return tn('clan2.alert.buffPlanned', { name: tail })
       if (head === 'started') return tn('clan2.alert.buffStarted')
@@ -27,10 +27,6 @@ export function alertText(a: ClanAlert): string {
       return tn('clan2.alert.nudge', { name: a.text })
     case 'quest_done':
       return tn('clan2.alert.questDone')
-    case 'bounty': {
-      const [name, n] = a.text.split(':')
-      return tn('clan2.alert.bounty', { name, n })
-    }
     case 'project_done':
       if (a.text.startsWith('skin_') || a.text.startsWith('boat_') || a.text.startsWith('banner_')) return tn('clan2.alert.bought', { name: tnd(`clan2.goal.${a.text}`) })
       return tn('clan2.alert.project', { name: tnd(`clan2.project.${head}.name`), n: tail || '1' })

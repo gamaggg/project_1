@@ -36,7 +36,6 @@ export type TreasuryKind =
   | 'spend_buff'
   | 'spend_goal'
   | 'spend_project'
-  | 'spend_bounty'
   | 'spend_hq'
   | 'spend_skin'
 
@@ -55,6 +54,8 @@ export type GoalItem = {
   id: string
   kind: 'clan_skin' | 'boat' | 'banner' | 'project'
   cost: number
+  // The clan level that opens it.
+  minLevel: number
 }
 
 export type BuffPhase = 'idle' | 'planned' | 'active' | 'cooldown'
@@ -80,37 +81,16 @@ export type HqState = {
   ruins: { sectorId: string; by: string; loot: number; fellAt: number; until: number } | null
 }
 
-export type AlertKind = 'sector_attack' | 'hq_siege' | 'hq_saved' | 'hq_fallen' | 'buff' | 'nudge' | 'quest_done' | 'bounty' | 'project_done' | 'recruit'
+export type AlertKind = 'sector_attack' | 'hq_siege' | 'hq_saved' | 'hq_fallen' | 'buff' | 'nudge' | 'quest_done' | 'project_done' | 'recruit'
 export type ClanAlert = { id: number; at: number; kind: AlertKind; text: string; sectorId?: string; read: boolean }
 
 export type QuestKind = 'catches' | 'species' | 'capture' | 'rare'
 export type WeeklyQuest = { kind: QuestKind; target: number; progress: number; reward: number; endsAt: number; claimed: boolean }
 
-export type ProjectId = 'dock' | 'beacon' | 'fort' | 'board' | 'storage'
+export type ProjectId = 'dock' | 'beacon' | 'fort' | 'board' | 'storage' | 'market'
 export type ProjectLevel = 0 | 1 | 2 | 3
 
-export type BountyKind = 'species' | 'size' | 'sector'
-export type Bounty = {
-  id: number
-  kind: BountyKind
-  species?: string
-  minCm?: number
-  sectorId?: string
-  reward: number
-  createdBy: string
-  claimedBy: string | null
-  expiresAt: number
-}
-
-export type TournamentState = {
-  species: string
-  endsAt: number
-  standings: { clan: string; score: number; mine?: boolean }[]
-}
-
 export type HallRecord = { species: string; member: string; cm: number; kg: number; at: number; hue: number }
-
-export type SeasonState = { n: number; startedAt: number; endsAt: number; trophies: number }
 
 export type RecruitEntry = { name: string; state: 'invited' | 'joined' | 'caught' | 'paid'; daysLeft: number }
 
@@ -143,6 +123,7 @@ export type EconomySettings = {
   recruitReward: number
   hqPlaceCost: number
   hqMoveCost: number
+  speedupShare: number
 }
 
 export type ClanInfo = {
@@ -181,13 +162,12 @@ export type DemoState = {
   alerts: ClanAlert[]
   quest: WeeklyQuest
   projects: Record<ProjectId, ProjectLevel>
+  // The building under construction (one at a time): what, to which level, when it is ready.
+  build: { id: ProjectId; toLevel: 1 | 2 | 3; startedAt: number; endsAt: number } | null
   // What the clan has bought: clan skins (clan_*), the golden boat, the banner.
   owned: string[]
   equippedSkin: string | null
-  bounties: Bounty[]
-  tournament: TournamentState
   hall: HallRecord[]
-  season: SeasonState
   recruit: RecruitEntry[]
   sectors: MapSector[]
   settings: EconomySettings

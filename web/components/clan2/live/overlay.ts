@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { useDemoNow } from '@/components/clan2/C2Common'
 import { useClan2Enabled } from '@/lib/clan2/live/flag'
-import { hqMarkerHtml, ruinsMarkerHtml } from '@/lib/clan2/live/hqMarker'
+import { HQ_SIZE, RUINS_SIZE, hqMarkerHtml, ruinsMarkerHtml, type MarkerTier } from '@/lib/clan2/live/hqMarker'
 import { setLiveUi, useLiveUi } from '@/lib/clan2/live/ui'
 import { useDemoState } from '@/lib/clan2/demoStore'
 import type { Territory } from '@/lib/data/types'
@@ -12,7 +12,8 @@ import { tn } from '@/lib/i18n/runtime'
 // What the real map needs from the clan update: the animated skin of the clan on its sectors (clan layer),
 // the headquarters (or its ruins) standing on a sector, and the «place the HQ» mode.
 
-export type Clan2Marker = { id: string; lat: number; lng: number; html: string; size: [number, number]; anchor: [number, number]; kind: 'hq' | 'ruins' }
+// The marker is drawn for a zoom tier (far / middle / near): html and the box are asked for it by the map.
+export type Clan2Marker = { id: string; lat: number; lng: number; kind: 'hq' | 'ruins'; html: (tier: MarkerTier) => string; box: (tier: MarkerTier) => [number, number] }
 export type Clan2MapProps = {
   clanId: number
   skinByClan: Record<number, string>
@@ -45,9 +46,17 @@ export function useClan2Map(territories: Territory[]): Clan2MapProps | null {
     const byId = new Map(territories.map((t) => [t.id, t]))
     const markers: Clan2Marker[] = []
     const hqT = hqId ? byId.get(hqId) : undefined
-    if (hqT) markers.push({ id: hqT.id, lat: hqT.lat, lng: hqT.lng, kind: 'hq', html: hqMarkerHtml(s.clan.crest, { siege, label: tn('clan2.map.hqHere') }), size: [64, 84], anchor: [32, 76] })
+    if (hqT)
+      markers.push({
+        id: hqT.id,
+        lat: hqT.lat,
+        lng: hqT.lng,
+        kind: 'hq',
+        html: (tier) => hqMarkerHtml(s.clan.crest, { siege, label: tn('clan2.map.hqHere'), tag: tn('clan2.base.hq'), tier }),
+        box: (tier) => [HQ_SIZE[tier], HQ_SIZE[tier]],
+      })
     const ruinT = ruinsActive && ruinsId ? byId.get(ruinsId) : undefined
-    if (ruinT) markers.push({ id: ruinT.id, lat: ruinT.lat, lng: ruinT.lng, kind: 'ruins', html: ruinsMarkerHtml(tn('clan2.base.ruins')), size: [46, 40], anchor: [23, 30] })
+    if (ruinT) markers.push({ id: ruinT.id, lat: ruinT.lat, lng: ruinT.lng, kind: 'ruins', html: (tier) => ruinsMarkerHtml(tn('clan2.base.ruins'), tier), box: (tier) => RUINS_SIZE[tier] })
     const placeable = ui.placing ? mineIds.filter((id) => id !== hqId) : []
     return {
       clanId: live.clanId,

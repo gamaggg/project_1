@@ -576,9 +576,12 @@ export const LeafletMap = forwardRef<
           }
         }
         if (clanLayerRef.current) {
+          const z = map?.getZoom() ?? 15
+          const tier = z < 13 ? 0 : z < 15 ? 1 : 2
           for (const m of c2.markers) {
+            const box = m.box(tier)
             const marker = L.marker([m.lat, m.lng], {
-              icon: L.divIcon({ className: 'c2-hq-wrap', html: m.html, iconSize: m.size, iconAnchor: m.anchor }),
+              icon: L.divIcon({ className: 'c2-hq-wrap', html: m.html(tier), iconSize: box, iconAnchor: [box[0] / 2, box[1] / 2] }),
               zIndexOffset: 1200,
               keyboard: false,
             }).addTo(markersLayer)

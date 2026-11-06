@@ -48,223 +48,290 @@ const wrap = (x: number) => ((x % 1) + 1) % 1
 
 // «Прилив»: long swells rolling across the sector in rows, each with a pale
 // foam line on its crest and a glint that runs along it.
-const tide: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
-  const dir = seed > 0.5 ? 1 : -1
-  const rows = 5
-  ctx.lineCap = 'round'
-  ctx.lineJoin = 'round'
-  for (let k = 0; k < rows; k++) {
-    const base = h * (0.14 + (k / (rows - 1)) * 0.74)
-    const amp = h * (0.028 + 0.012 * Math.sin(k * 1.7))
-    const freq = TAU / (w * (0.62 - k * 0.05))
-    const speed = (0.55 + k * 0.13) * dir
-    const phase = seed * TAU + k * 1.3
-    const y = (x: number) => base + Math.sin(x * freq + t * speed + phase) * amp + Math.sin(x * freq * 2.3 - t * speed * 0.7) * amp * 0.35
-    // The water under the crest.
-    ctx.beginPath()
-    ctx.moveTo(0, y(0))
-    for (let x = 4; x <= w; x += 4) ctx.lineTo(x, y(x))
-    ctx.lineTo(w, y(w) + h * 0.16)
-    ctx.lineTo(0, y(0) + h * 0.16)
-    ctx.closePath()
-    ctx.fillStyle = withAlpha(color, 0.1 + k * 0.018)
-    ctx.fill()
-    // The crest.
-    ctx.beginPath()
-    ctx.moveTo(0, y(0))
-    for (let x = 4; x <= w; x += 4) ctx.lineTo(x, y(x))
-    ctx.strokeStyle = withAlpha(color, 0.62)
-    ctx.lineWidth = Math.max(1.2, w * 0.011)
-    ctx.stroke()
-    // The foam: a short bright stretch of the crest that slides along it.
-    const head = wrap(t * 0.07 * dir + k * 0.31 + seed) * w * 1.4 - w * 0.2
-    ctx.beginPath()
-    let started = false
-    for (let x = head - w * 0.14; x <= head + w * 0.14; x += 4) {
-      if (x < 0 || x > w) continue
-      if (started) ctx.lineTo(x, y(x) - 1)
-      else ctx.moveTo(x, y(x) - 1)
-      started = true
-    }
-    ctx.strokeStyle = 'rgba(255,255,255,.8)'
-    ctx.lineWidth = Math.max(1.4, w * 0.014)
-    ctx.stroke()
-  }
-  ctx.globalAlpha = 1
-}
-
-// «Сияние»: three curtains of northern light hanging over the sector,
-// swaying and breathing, with a few stars blinking in the dark between them.
-const aurora: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
-  const r = rand(seed + 0.17)
-  ctx.fillStyle = '#04122B'
-  ctx.globalAlpha = 0.16
+// A vertical wash over the whole sector: top colour to bottom colour.
+function wash(ctx: CanvasRenderingContext2D, w: number, h: number, top: string, bottom: string) {
+  const g = ctx.createLinearGradient(0, 0, 0, h)
+  g.addColorStop(0, top)
+  g.addColorStop(1, bottom)
+  ctx.fillStyle = g
   ctx.fillRect(0, 0, w, h)
-  const tints = ['#5CFFC8', '#8AB6FF', '#C98BFF']
-  for (let k = 0; k < 3; k++) {
-    const cx = w * (0.2 + 0.3 * k) + Math.sin(t * 0.3 + k * 2 + seed * 6) * w * 0.07
-    const width = w * (0.2 + 0.05 * Math.sin(t * 0.5 + k))
-    const breathe = 0.5 + 0.5 * Math.sin(t * 0.7 + k * 1.9 + seed * 9)
-    const sway = (y: number) => Math.sin(y * 0.014 + t * (0.8 + k * 0.25) + k) * w * 0.06
-    const tint = tints[(k + Math.floor(seed * 3)) % 3]
-    const grad = ctx.createLinearGradient(0, 0, 0, h)
-    grad.addColorStop(0, withAlpha(tint, 0))
-    grad.addColorStop(0.25, withAlpha(tint, 0.5 * breathe + 0.15))
-    grad.addColorStop(0.6, withAlpha(color, 0.3 * breathe + 0.1))
-    grad.addColorStop(1, withAlpha(color, 0))
-    ctx.fillStyle = grad
-    ctx.globalAlpha = 1
-    ctx.beginPath()
-    for (let y = 0; y <= h; y += 6) ctx.lineTo(cx - width / 2 + sway(y), y)
-    for (let y = h; y >= 0; y -= 6) ctx.lineTo(cx + width / 2 + sway(y) * 1.2, y)
-    ctx.closePath()
-    ctx.fill()
-    // The bright folded edge of the curtain.
-    ctx.beginPath()
-    for (let y = 0; y <= h; y += 6) ctx.lineTo(cx - width / 2 + sway(y), y)
-    ctx.strokeStyle = withAlpha('#FFFFFF', 0.28 * breathe + 0.06)
-    ctx.lineWidth = Math.max(1, w * 0.008)
-    ctx.stroke()
-  }
-  for (let i = 0; i < 9; i++) {
-    const x = r() * w
-    const y = r() * h * 0.7
-    const blink = 0.5 + 0.5 * Math.sin(t * (1.2 + r()) + r() * TAU)
-    ctx.globalAlpha = 0.15 + 0.6 * blink
-    ctx.fillStyle = '#FFFFFF'
-    ctx.beginPath()
-    ctx.arc(x, y, Math.max(0.8, w * 0.007) * (0.6 + blink * 0.6), 0, TAU)
-    ctx.fill()
-  }
-  ctx.globalAlpha = 1
 }
 
-// «Флотилия»: small sailing boats cross the sector at their own speeds,
-// bobbing on the swell with a V of wake behind each.
-const flotilla: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
-  const dir = seed > 0.5 ? 1 : -1
-  const boats = [
-    { y: 0.3, speed: 0.045, size: 0.13, off: 0 },
-    { y: 0.56, speed: 0.032, size: 0.17, off: 0.45 },
-    { y: 0.8, speed: 0.058, size: 0.1, off: 0.8 },
-  ]
-  // A little swell under everything.
-  ctx.strokeStyle = withAlpha(color, 0.22)
-  ctx.lineWidth = Math.max(1, w * 0.007)
-  ctx.lineCap = 'round'
-  for (let k = 0; k < 6; k++) {
-    const y0 = h * (0.12 + k * 0.16)
+// The inner rim light every skin ends with: a soft bright edge, so the sector reads as a lit jewel.
+function rim(ctx: CanvasRenderingContext2D, w: number, h: number, color: string, k = 0.5) {
+  const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(w, h) * 0.62)
+  g.addColorStop(0, 'rgba(255,255,255,0)')
+  g.addColorStop(1, withAlpha(color, k))
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, w, h)
+}
+
+// «Прилив»: deep water in three layers of swell moving at their own speeds, foam on the crests, caustics shimmering
+// and a slow bright sweep of light across the sector.
+const tide: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
+  const r = rand(seed + 0.1)
+  wash(ctx, w, h, withAlpha('#8FD3F0', 0.55), withAlpha(color, 0.78))
+  ctx.save()
+  // Three layers of swell, the far ones paler and slower.
+  for (let layer = 0; layer < 3; layer++) {
+    const speed = 0.35 + layer * 0.3
+    const amp = h * (0.035 + layer * 0.018)
+    const base = h * (0.28 + layer * 0.24)
     ctx.beginPath()
-    for (let x = 0; x <= w; x += 5) {
-      const y = y0 + Math.sin(x * 0.045 + t * 0.9 + k * 1.4 + seed * 5) * h * 0.012
+    ctx.moveTo(0, h)
+    for (let x = 0; x <= w + 4; x += 4) {
+      const y = base + Math.sin(x * (0.045 - layer * 0.008) + t * speed * 2 + seed * 9 + layer) * amp + Math.sin(x * 0.11 - t * speed) * amp * 0.4
+      ctx.lineTo(x, y)
+    }
+    ctx.lineTo(w, h)
+    ctx.closePath()
+    ctx.fillStyle = withAlpha(layer === 0 ? '#BFE9FA' : layer === 1 ? '#5FB6DE' : color, layer === 2 ? 0.55 : 0.32)
+    ctx.fill()
+    // The foam line on the crest.
+    ctx.beginPath()
+    for (let x = 0; x <= w + 4; x += 4) {
+      const y = base + Math.sin(x * (0.045 - layer * 0.008) + t * speed * 2 + seed * 9 + layer) * amp + Math.sin(x * 0.11 - t * speed) * amp * 0.4
+      if (x === 0) ctx.moveTo(x, y)
+      else ctx.lineTo(x, y)
+    }
+    ctx.strokeStyle = `rgba(255,255,255,${0.75 - layer * 0.15})`
+    ctx.lineWidth = 1.5 - layer * 0.25
+    ctx.stroke()
+  }
+  // Caustics: small bright diamonds drifting and flickering.
+  ctx.globalCompositeOperation = 'lighter'
+  for (let i = 0; i < 16; i++) {
+    const x = wrap(r() + t * 0.012 * (1 + (i % 3))) * w
+    const y = (0.25 + r() * 0.7) * h
+    const a = 0.1 + 0.2 * Math.max(0, Math.sin(t * 1.6 + i * 2.1))
+    ctx.fillStyle = `rgba(255,255,255,${a})`
+    ctx.beginPath()
+    ctx.moveTo(x, y - 2.4)
+    ctx.lineTo(x + 3, y)
+    ctx.lineTo(x, y + 2.4)
+    ctx.lineTo(x - 3, y)
+    ctx.closePath()
+    ctx.fill()
+  }
+  // A sweep of light every few seconds.
+  const sweep = wrap(t / 6 + seed)
+  const sx = (sweep * 1.6 - 0.3) * w
+  const g = ctx.createLinearGradient(sx - w * 0.18, 0, sx + w * 0.18, 0)
+  g.addColorStop(0, 'rgba(255,255,255,0)')
+  g.addColorStop(0.5, 'rgba(255,255,255,0.28)')
+  g.addColorStop(1, 'rgba(255,255,255,0)')
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, w, h)
+  ctx.restore()
+  rim(ctx, w, h, '#0E4F7A', 0.35)
+}
+
+// «Сияние»: a night sky with stars that twinkle and four curtains of northern lights, green into violet, swaying and pulsing.
+const aurora: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
+  const r = rand(seed + 0.3)
+  wash(ctx, w, h, '#0B1A33', '#16335A')
+  ctx.save()
+  // Stars.
+  for (let i = 0; i < 26; i++) {
+    const x = r() * w
+    const y = r() * h * 0.8
+    const a = 0.25 + 0.75 * Math.max(0, Math.sin(t * (0.8 + r() * 1.6) + i * 3.3))
+    ctx.fillStyle = `rgba(255,255,255,${a})`
+    ctx.fillRect(x, y, 1.3, 1.3)
+  }
+  ctx.globalCompositeOperation = 'lighter'
+  const hues = ['#3CF2A4', '#27D6C8', '#6B8CFF', '#B77CFF']
+  for (let k = 0; k < 4; k++) {
+    const cx = ((k + 0.5) / 4) * w + Math.sin(t * 0.45 + k * 1.7 + seed * 6) * w * 0.08
+    const pulse = 0.55 + 0.45 * Math.sin(t * 0.9 + k * 2.2)
+    const top = h * (0.08 + 0.05 * Math.sin(t * 0.6 + k))
+    const bottom = h * (0.78 + 0.06 * Math.sin(t * 0.5 + k * 2))
+    const g = ctx.createLinearGradient(0, top, 0, bottom)
+    g.addColorStop(0, withAlpha(hues[k], 0))
+    g.addColorStop(0.35, withAlpha(hues[k], 0.5 * pulse))
+    g.addColorStop(1, withAlpha(hues[(k + 1) % 4], 0))
+    ctx.fillStyle = g
+    ctx.beginPath()
+    ctx.moveTo(cx - w * 0.14, bottom)
+    for (let y = bottom; y >= top; y -= 6) {
+      const sway = Math.sin(y * 0.05 + t * 1.1 + k * 1.3) * w * 0.06
+      ctx.lineTo(cx - w * 0.1 + sway, y)
+    }
+    for (let y = top; y <= bottom; y += 6) {
+      const sway = Math.sin(y * 0.05 + t * 1.1 + k * 1.3 + 0.9) * w * 0.06
+      ctx.lineTo(cx + w * 0.1 + sway, y)
+    }
+    ctx.closePath()
+    ctx.fill()
+    // Bright rays inside the curtain.
+    ctx.strokeStyle = withAlpha('#FFFFFF', 0.12 * pulse)
+    ctx.lineWidth = 1
+    for (let j = -2; j <= 2; j++) {
+      ctx.beginPath()
+      ctx.moveTo(cx + j * 5, bottom)
+      ctx.lineTo(cx + j * 5 + Math.sin(t + j + k) * 6, top + 6)
+      ctx.stroke()
+    }
+  }
+  // A faint reflection at the bottom, in the clan's colour.
+  const rg = ctx.createLinearGradient(0, h * 0.7, 0, h)
+  rg.addColorStop(0, withAlpha(color, 0))
+  rg.addColorStop(1, withAlpha(color, 0.35))
+  ctx.fillStyle = rg
+  ctx.fillRect(0, h * 0.7, w, h * 0.3)
+  ctx.restore()
+  rim(ctx, w, h, '#7CF5D2', 0.28)
+}
+
+// «Флотилия»: a bright sea, three boats with sails bobbing on the swell and leaving wakes, gulls crossing, glints of sun.
+const flotilla: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
+  const r = rand(seed + 0.6)
+  wash(ctx, w, h, '#BFE8F7', withAlpha(color, 0.7))
+  ctx.save()
+  // The sea's lines.
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)'
+  ctx.lineWidth = 1.2
+  for (let k = 0; k < 6; k++) {
+    const y0 = h * (0.2 + k * 0.14)
+    ctx.beginPath()
+    for (let x = 0; x <= w; x += 4) {
+      const y = y0 + Math.sin(x * 0.07 + t * 0.9 + k * 1.4 + seed * 7) * 2.2
       if (x === 0) ctx.moveTo(x, y)
       else ctx.lineTo(x, y)
     }
     ctx.stroke()
   }
-  for (const b of boats) {
-    const p = wrap(t * b.speed * dir + b.off + seed)
-    const x = (dir > 0 ? p : 1 - p) * (w * 1.3) - w * 0.15
-    const bob = Math.sin(t * 1.6 + b.off * 9 + seed * 7)
-    const y = h * b.y + bob * h * 0.012
-    const s = w * b.size
-    // The wake.
-    ctx.strokeStyle = 'rgba(255,255,255,.45)'
-    ctx.lineWidth = Math.max(1, s * 0.07)
-    for (const sign of [-1, 1]) {
-      ctx.beginPath()
-      ctx.moveTo(x - dir * s * 0.45, y + s * 0.34)
-      ctx.lineTo(x - dir * s * (1.5 + 0.2 * Math.sin(t * 2 + b.off)), y + s * 0.34 + sign * s * 0.32)
-      ctx.stroke()
-    }
+  // Boats.
+  for (let b = 0; b < 3; b++) {
+    const dir = b % 2 ? -1 : 1
+    const speed = 0.018 + b * 0.007
+    const px = wrap(r() + t * speed * dir) * (w + 40) - 20
+    const py = h * (0.32 + b * 0.22) + Math.sin(t * 1.3 + b * 2) * 1.8
+    const sz = Math.min(w, h) * (0.15 - b * 0.012)
     ctx.save()
-    ctx.translate(x, y)
-    ctx.scale(dir, 1)
-    ctx.rotate(bob * 0.05)
-    // Hull.
-    ctx.fillStyle = withAlpha(color, 0.95)
+    ctx.translate(px, py)
+    ctx.rotate(Math.sin(t * 1.3 + b * 2 + 1) * 0.06)
+    if (dir < 0) ctx.scale(-1, 1)
+    // The wake behind.
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)'
+    ctx.lineWidth = 1.2
     ctx.beginPath()
-    ctx.moveTo(-s * 0.5, s * 0.2)
-    ctx.lineTo(s * 0.5, s * 0.2)
-    ctx.lineTo(s * 0.34, s * 0.4)
-    ctx.lineTo(-s * 0.38, s * 0.4)
-    ctx.closePath()
-    ctx.fill()
-    // Mast and the two sails.
-    ctx.strokeStyle = withAlpha(color, 0.95)
-    ctx.lineWidth = Math.max(1, s * 0.05)
-    ctx.beginPath()
-    ctx.moveTo(0, s * 0.2)
-    ctx.lineTo(0, -s * 0.52)
+    ctx.moveTo(-sz * 0.4, sz * 0.18)
+    ctx.lineTo(-sz * 1.7, sz * 0.5)
+    ctx.moveTo(-sz * 0.4, sz * 0.2)
+    ctx.lineTo(-sz * 1.7, -sz * 0.06)
     ctx.stroke()
-    ctx.fillStyle = 'rgba(255,255,255,.92)'
+    // Hull, mast, two sails.
+    ctx.fillStyle = '#FFFFFF'
     ctx.beginPath()
-    ctx.moveTo(s * 0.04, -s * 0.5)
-    ctx.lineTo(s * 0.04, s * 0.14)
-    ctx.lineTo(s * 0.46, s * 0.14)
+    ctx.moveTo(-sz * 0.55, 0)
+    ctx.lineTo(sz * 0.6, 0)
+    ctx.lineTo(sz * 0.4, sz * 0.26)
+    ctx.lineTo(-sz * 0.38, sz * 0.26)
     ctx.closePath()
     ctx.fill()
-    ctx.fillStyle = 'rgba(255,255,255,.7)'
+    ctx.fillStyle = withAlpha('#17304A', 0.85)
+    ctx.fillRect(-sz * 0.5, sz * 0.02, sz * 1.05, sz * 0.05)
+    ctx.strokeStyle = '#6B4A22'
+    ctx.lineWidth = 1.3
     ctx.beginPath()
-    ctx.moveTo(-s * 0.04, -s * 0.34)
-    ctx.lineTo(-s * 0.04, s * 0.14)
-    ctx.lineTo(-s * 0.36, s * 0.14)
+    ctx.moveTo(0, 0)
+    ctx.lineTo(0, -sz * 1.15)
+    ctx.stroke()
+    ctx.fillStyle = b === 1 ? '#FFE08A' : '#FFFFFF'
+    ctx.beginPath()
+    ctx.moveTo(sz * 0.05, -sz * 1.1)
+    ctx.quadraticCurveTo(sz * 0.62, -sz * 0.6, sz * 0.5, -sz * 0.08)
+    ctx.lineTo(sz * 0.05, -sz * 0.08)
+    ctx.closePath()
+    ctx.fill()
+    ctx.fillStyle = withAlpha(color, 0.9)
+    ctx.beginPath()
+    ctx.moveTo(-sz * 0.05, -sz * 0.9)
+    ctx.lineTo(-sz * 0.45, -sz * 0.1)
+    ctx.lineTo(-sz * 0.05, -sz * 0.1)
     ctx.closePath()
     ctx.fill()
     ctx.restore()
   }
-  ctx.globalAlpha = 1
+  // Gulls.
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)'
+  ctx.lineWidth = 1.2
+  for (let g = 0; g < 2; g++) {
+    const gx = wrap(r() + t * 0.03 + g * 0.5) * (w + 30) - 15
+    const gy = h * (0.12 + g * 0.1) + Math.sin(t * 0.8 + g) * 3
+    const flap = Math.sin(t * 7 + g * 3) * 2.5
+    ctx.beginPath()
+    ctx.moveTo(gx - 5, gy + flap)
+    ctx.quadraticCurveTo(gx - 2, gy - 2, gx, gy)
+    ctx.quadraticCurveTo(gx + 2, gy - 2, gx + 5, gy + flap)
+    ctx.stroke()
+  }
+  // Glints.
+  ctx.globalCompositeOperation = 'lighter'
+  for (let i = 0; i < 10; i++) {
+    const x = r() * w
+    const y = (0.3 + r() * 0.65) * h
+    const a = Math.max(0, Math.sin(t * 2.2 + i * 1.9))
+    ctx.fillStyle = `rgba(255,255,255,${a * 0.6})`
+    ctx.fillRect(x - 1.5, y, 3, 0.9)
+  }
+  ctx.restore()
+  rim(ctx, w, h, '#0F5E8C', 0.3)
 }
 
-// «Огни»: warm lanterns rising from the water, swaying as they climb, each
-// flickering on its own beat, with a few sparks drifting up beside them.
+// «Огни»: a dusk sky with lanterns rising, swaying and flickering, each in its own halo, and embers drifting up.
 const lanterns: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
-  const warm = glow('#FFB347')
-  const hot = glow('#FFE9A8')
-  const base = glow(color)
-  const r = rand(seed + 0.31)
-  const n = 7
-  for (let i = 0; i < n; i++) {
-    const x0 = (0.1 + 0.8 * r()) * w
-    const speed = 0.05 + r() * 0.05
-    const off = r()
-    const size = w * (0.09 + r() * 0.07)
-    const p = wrap(t * speed + off)
-    const y = h * (1.1 - p * 1.25)
-    const x = x0 + Math.sin(t * 0.9 + i * 2.3 + seed * 8) * w * 0.05 + Math.sin(p * 6 + i) * w * 0.03
-    const flick = 0.75 + 0.25 * Math.sin(t * (4 + r() * 3) + i * 5)
-    const fade = Math.min(1, p * 5) * Math.min(1, (1 - p) * 4)
-    ctx.globalAlpha = 0.55 * fade
-    ctx.drawImage(base, x - size * 1.6, y - size * 1.6, size * 3.2, size * 3.2)
-    ctx.globalAlpha = 0.85 * flick * fade
-    ctx.drawImage(warm, x - size * 1.2, y - size * 1.2, size * 2.4, size * 2.4)
-    ctx.globalAlpha = 0.95 * flick * fade
-    ctx.drawImage(hot, x - size * 0.5, y - size * 0.5, size, size)
-    // The paper body.
-    ctx.globalAlpha = 0.9 * fade
-    ctx.fillStyle = '#FFB347'
+  const r = rand(seed + 0.9)
+  wash(ctx, w, h, '#2A1B4D', '#C2552B')
+  ctx.save()
+  // A low glow on the horizon.
+  const hg = ctx.createRadialGradient(w / 2, h * 1.02, 0, w / 2, h * 1.02, h * 0.9)
+  hg.addColorStop(0, 'rgba(255,190,90,0.7)')
+  hg.addColorStop(1, 'rgba(255,190,90,0)')
+  ctx.fillStyle = hg
+  ctx.fillRect(0, 0, w, h)
+  ctx.globalCompositeOperation = 'lighter'
+  const g0 = glow('#FFB347')
+  const g1 = glow('#FF6A3D')
+  for (let i = 0; i < 9; i++) {
+    const depth = 0.55 + r() * 0.45
+    const cycle = 11 + i * 1.7
+    const k = wrap(t / cycle + r())
+    const x = (0.1 + r() * 0.8) * w + Math.sin(t * 0.8 + i * 2.3) * 5 * depth
+    const y = h * (1.12 - k * 1.3)
+    const flick = 0.82 + 0.18 * Math.sin(t * 9 + i * 4.1)
+    const size = (6 + depth * 8) * (0.8 + 0.2 * Math.sin(i))
+    const fade = Math.min(1, k * 6) * Math.min(1, (1 - k) * 5)
+    ctx.globalAlpha = fade * flick
+    ctx.drawImage(g0, x - size * 2.2, y - size * 2.2, size * 4.4, size * 4.4)
+    ctx.drawImage(g1, x - size * 1.3, y - size * 1.3, size * 2.6, size * 2.6)
+    ctx.globalAlpha = fade
+    ctx.fillStyle = '#FFF1B8'
     ctx.beginPath()
-    ctx.moveTo(x - size * 0.2, y - size * 0.26)
-    ctx.lineTo(x + size * 0.2, y - size * 0.26)
-    ctx.lineTo(x + size * 0.15, y + size * 0.24)
-    ctx.lineTo(x - size * 0.15, y + size * 0.24)
-    ctx.closePath()
+    ctx.ellipse(x, y, size * 0.34, size * 0.48, 0, 0, TAU)
     ctx.fill()
-    ctx.fillStyle = 'rgba(255,255,255,.55)'
-    ctx.fillRect(x - size * 0.2, y - size * 0.3, size * 0.4, size * 0.06)
-  }
-  // Sparks.
-  ctx.fillStyle = '#FFE9A8'
-  for (let i = 0; i < 12; i++) {
-    const p = wrap(t * (0.08 + r() * 0.06) + r())
-    const x = r() * w + Math.sin(t + i) * w * 0.02
-    const y = h * (1 - p)
-    ctx.globalAlpha = 0.8 * Math.sin(p * Math.PI)
-    ctx.beginPath()
-    ctx.arc(x, y, Math.max(0.7, w * 0.005), 0, TAU)
-    ctx.fill()
+    ctx.fillStyle = '#FF9A3C'
+    ctx.fillRect(x - size * 0.34, y + size * 0.4, size * 0.68, size * 0.12)
   }
   ctx.globalAlpha = 1
+  // Embers.
+  for (let i = 0; i < 18; i++) {
+    const k = wrap(t * (0.05 + (i % 4) * 0.015) + r())
+    const x = r() * w + Math.sin(t * 1.4 + i) * 3
+    const y = h * (1 - k)
+    ctx.fillStyle = `rgba(255,${160 + (i % 3) * 30},90,${(1 - k) * 0.8})`
+    ctx.fillRect(x, y, 1.3, 1.3)
+  }
+  // The clan's colour in the water below.
+  const wg = ctx.createLinearGradient(0, h * 0.78, 0, h)
+  wg.addColorStop(0, withAlpha(color, 0))
+  wg.addColorStop(1, withAlpha(color, 0.4))
+  ctx.globalCompositeOperation = 'source-over'
+  ctx.fillStyle = wg
+  ctx.fillRect(0, h * 0.78, w, h * 0.22)
+  ctx.restore()
+  rim(ctx, w, h, '#FFB86A', 0.3)
 }
 
 export const CLAN_ANIMATED_SKINS: Record<string, AnimatedSkinDraw> = {

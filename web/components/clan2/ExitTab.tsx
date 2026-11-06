@@ -139,7 +139,7 @@ function Going({ list }: { list: { id: string; name: string; hue: number }[] }) 
 }
 
 const DANGER: AlertKind[] = ['sector_attack', 'hq_siege', 'hq_fallen']
-const GOOD: AlertKind[] = ['hq_saved', 'quest_done', 'bounty', 'project_done', 'recruit']
+const GOOD: AlertKind[] = ['hq_saved', 'quest_done', 'project_done', 'recruit']
 
 function AlertIcon({ kind }: { kind: AlertKind }) {
   const tone = DANGER.includes(kind) ? 'danger' : GOOD.includes(kind) ? 'good' : 'info'

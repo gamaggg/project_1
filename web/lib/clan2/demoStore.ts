@@ -4,9 +4,9 @@ import { useSyncExternalStore } from 'react'
 import { initialDemoState } from '@/lib/clan2/demoData'
 import { clanLevel } from '@/lib/data/clanLevels'
 import {
-  BOUNTY_DAILY_CAP,
-  BOUNTY_MAX_ACTIVE,
-  BOUNTY_MAX_SHARE,
+  BUILD_CLAN_LEVEL,
+  BUILD_HOURS,
+  speedupCost,
   BUFF_HOURS,
   BUFF_METER_FACTOR,
   CLAN_SKINS,
@@ -31,7 +31,7 @@ import {
   taxOf,
   treasuryCap,
 } from '@/lib/clan2/rules'
-import type { Bounty, ClanAlert, ClanRole, DemoMember, DemoState, EconomySettings, MapSector, Persona, ProjectId, ProjectLevel, TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
+import type { ClanAlert, ClanRole, DemoMember, DemoState, EconomySettings, MapSector, Persona, ProjectId, ProjectLevel, TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
 
 // The demo's whole world: one state object, changed only by the actions
 // below, kept in localStorage so a reload (or a day later) finds it as it
@@ -43,7 +43,7 @@ export type Result = { ok: true; info?: string } | { ok: false; reason: string }
 const OK: Result = { ok: true }
 const no = (reason: string): Result => ({ ok: false, reason })
 
-const KEY = 'range:clan2-demo:v4'
+const KEY = 'range:clan2-demo:v5'
 // Where the state is kept: the demo's own key, or — bound to a real clan — a key of that player and clan.
 let storageKey = KEY
 
@@ -141,7 +141,6 @@ export const buildingsOn = (s: DemoState) => !!s.hq.sectorId
 export const levelOf = (s: DemoState, id: ProjectId): ProjectLevel => (buildingsOn(s) ? s.projects[id] : 0)
 export const capOf = (s: DemoState) => treasuryCap(s.clan.level, levelOf(s, 'storage'))
 export const siegeMinutesOf = (s: DemoState) => SIEGE_MINUTES + PROJECT_EFFECTS.beacon.siegeMinutes[levelOf(s, 'beacon')]
-export const bountySlotsOf = (s: DemoState) => BOUNTY_MAX_ACTIVE + PROJECT_EFFECTS.board.bountySlots[levelOf(s, 'board')]
 export const extraSlotsOf = (s: DemoState) => PROJECT_EFFECTS.dock.slots[levelOf(s, 'dock')]
 export const goalOf = (s: DemoState) => GOAL_CATALOG.find((g) => g.id === s.treasury.goalId) ?? null
 
@@ -157,7 +156,7 @@ export function rentPerDay(s: DemoState): number {
   const c = sectorCounts(s)
   // The HQ sector pays like a plain one, and the HQ doubles it (dailyRent adds the second share).
   const hot = s.sectors.filter((x) => x.owner === 'mine' && x.hot).length
-  return dailyRent(s.settings, c.plain + (c.hq ? 1 : 0), c.shared, c.hq) + Math.round(hot * s.settings.rentPerSectorDay * 2)
+  return dailyRent(s.settings, c.plain + (c.hq ? 1 : 0), c.shared, c.hq, levelOf(s, 'market')) + Math.round(hot * s.settings.rentPerSectorDay * 2)
 }
 
 function push(d: DemoState, kind: TreasuryKind, amount: number, actor: string | null, note: string, at?: number) {
@@ -265,23 +264,22 @@ function runTime(d: DemoState) {
   }
   // The headquarters under siege: not broken in time, it falls.
   if (d.hq.siege && now >= d.hq.siege.endsAt && d.hq.sectorId) fallHq(d, d.hq.siege.by, d.hq.siege.endsAt)
-  // Bounties that ran out give the reward back to the treasury.
-  for (const bn of d.bounties) {
-    if (!bn.claimedBy && now >= bn.expiresAt && bn.reward > 0) {
-      income(d, 'refund', bn.reward, null, 'bounty', bn.expiresAt)
-      bn.reward = 0
-    }
+  // A building under construction is ready.
+  if (d.build && now >= d.build.endsAt) {
+    const done = d.build
+    d.projects[done.id] = done.toLevel
+    alert(d, 'project_done', `${done.id}:${done.toLevel}`, undefined, done.endsAt)
+    d.build = null
   }
-  d.bounties = d.bounties.filter((bn) => bn.reward > 0 || bn.claimedBy)
 }
 
 // Called by the screens once a second; commits only if something happened.
 export function tick() {
   load()
   const draft = structuredClone(state) as DemoState
-  const before = JSON.stringify({ r: draft.lastRentAt, b: draft.buff, h: draft.hq, n: draft.bounties.length, d: draft.sectors.map((x) => x.defense) })
+  const before = JSON.stringify({ r: draft.lastRentAt, b: draft.buff, h: draft.hq, n: draft.build, d: draft.sectors.map((x) => x.defense) })
   runTime(draft)
-  const after = JSON.stringify({ r: draft.lastRentAt, b: draft.buff, h: draft.hq, n: draft.bounties.length, d: draft.sectors.map((x) => x.defense) })
+  const after = JSON.stringify({ r: draft.lastRentAt, b: draft.buff, h: draft.hq, n: draft.build, d: draft.sectors.map((x) => x.defense) })
   if (before !== after) commit(draft)
 }
 
@@ -372,6 +370,8 @@ export function setTaxRate(rate: number): Result {
 export function setGoal(id: string | null): Result {
   return mutate((d) => {
     if (!canManage(d)) return no('notManager')
+    const wanted = GOAL_CATALOG.find((g) => g.id === id)
+    if (wanted && d.clan.level < wanted.minLevel) return no('levelLow')
     d.treasury.goalId = id
   })
 }
@@ -381,6 +381,7 @@ export function buyGoal(): Result {
     if (!canManage(d)) return no('notManager')
     const goal = goalOf(d)
     if (!goal) return no('noGoal')
+    if (d.clan.level < goal.minLevel) return no('levelLow')
     if (d.treasury.balance < goal.cost) return no('notEnough')
     if (!spend(d, goal.kind === 'clan_skin' ? 'spend_skin' : 'spend_goal', goal.cost, d.myId, goal.id)) return no('notEnough')
     // skin_clan_tide → clan_tide; the boat and the banner keep their ids.
@@ -404,16 +405,39 @@ export function equipSkin(id: string | null): Result {
   })
 }
 
+// Starts building the next level: paid at once, ready after BUILD_HOURS, one building at a time, and only
+// while an HQ stands and the clan is of the level that opens it.
 export function upgradeProject(id: ProjectId): Result {
   return mutate((d) => {
     if (!canManage(d)) return no('notManager')
     if (!buildingsOn(d)) return no('noHqBuild')
+    if (d.build) return no('buildBusy')
     const level = d.projects[id]
     if (level >= 3) return no('maxLevel')
+    if (d.clan.level < BUILD_CLAN_LEVEL[level as 0 | 1 | 2]) return no('levelLow')
     const cost = PROJECTS[id].costs[level as 0 | 1 | 2]
     if (!spend(d, 'spend_project', cost, d.myId, `${id}:${level + 1}`)) return no('notEnough')
-    d.projects[id] = (level + 1) as 1 | 2 | 3
-    alert(d, 'project_done', `${id}:${level + 1}`)
+    const now = nowOf(d)
+    d.build = { id, toLevel: (level + 1) as 1 | 2 | 3, startedAt: now, endsAt: now + BUILD_HOURS[id][level as 0 | 1 | 2] * HOURS }
+  })
+}
+
+// Pays to finish the building at once: the price is by the hours left.
+export const speedupPrice = (d: DemoState): number => {
+  if (!d.build) return 0
+  const cost = PROJECTS[d.build.id].costs[d.build.toLevel - 1]
+  return speedupCost(d.settings, cost, d.build.startedAt, d.build.endsAt, nowOf(d))
+}
+
+export function speedUpBuild(): Result {
+  return mutate((d) => {
+    if (!canManage(d)) return no('notManager')
+    if (!d.build) return no('buildNone')
+    const cost = speedupPrice(d)
+    if (!spend(d, 'spend_project', cost, d.myId, `speedup:${d.build.id}:${d.build.toLevel}`)) return no('notEnough')
+    d.build.endsAt = nowOf(d)
+    runTime(d)
+    return { ok: true, info: 'sped' }
   })
 }
 
@@ -546,26 +570,6 @@ export function toggleHot(sectorId: string): Result {
 
 // ───────────── bounties, nudges, members ─────────────
 
-export function createBounty(input: { kind: Bounty['kind']; species?: string; minCm?: number; reward: number }): Result {
-  return mutate((d) => {
-    if (!canManage(d)) return no('notManager')
-    if (d.bounties.filter((b) => !b.claimedBy).length >= bountySlotsOf(d)) return no('bountyMax')
-    if (input.reward < 20 || input.reward > BOUNTY_DAILY_CAP) return no('bountyReward')
-    if (input.reward > Math.floor(d.treasury.balance * BOUNTY_MAX_SHARE)) return no('bountyShare')
-    if (!spend(d, 'spend_bounty', input.reward, d.myId, `${input.kind}`)) return no('notEnough')
-    d.bounties.push({
-      id: ++d.seq,
-      kind: input.kind,
-      species: input.species,
-      minCm: input.minCm,
-      reward: input.reward,
-      createdBy: d.myId,
-      claimedBy: null,
-      expiresAt: nowOf(d) + 3 * DAY,
-    })
-  })
-}
-
 export function nudge(memberId: string): Result {
   return mutate((d) => {
     const me = meOf(d)
@@ -630,7 +634,7 @@ const SPECIES = [
   { key: 'katran', coins: 150, cm: [60, 95], w: 4 },
 ]
 
-export type CatchSummary = { member: string; species: string; cm: number; coins: number; tax: number; hot: boolean; buff: boolean; bounty: number; record: boolean }
+export type CatchSummary = { member: string; species: string; cm: number; coins: number; tax: number; hot: boolean; buff: boolean; record: boolean }
 
 export function simulateCatch(opts: { memberId?: string; species?: string } = {}): Result & { summary?: CatchSummary } {
   let summary: CatchSummary | undefined
@@ -664,24 +668,6 @@ export function simulateCatch(opts: { memberId?: string; species?: string } = {}
         q.progress += 1
       } else if (q.kind === 'rare' && sp.coins >= 50) q.progress += 1
     }
-    // The tournament: the species of the week counts for the clan.
-    if (sp.key === d.tournament.species) {
-      const mine = d.tournament.standings.find((x) => x.mine)
-      if (mine) mine.score += 1
-    }
-    // A bounty somebody posted.
-    let bounty = 0
-    for (const b of d.bounties) {
-      if (b.claimedBy || b.reward <= 0) continue
-      const hit = (b.kind === 'species' && b.species === sp.key) || (b.kind === 'size' && (b.minCm ?? 0) <= cm)
-      if (hit) {
-        b.claimedBy = member.id
-        bounty = b.reward
-        if (member.id === d.myId) d.wallet += b.reward
-        alert(d, 'bounty', `${member.name}:${b.reward}`)
-        break
-      }
-    }
     // The hall of fame: a bigger fish of the species.
     const rec = d.hall.find((h) => h.species === sp.key)
     const kg = Math.round(Math.pow(cm / 20, 3) * 0.12 * 10) / 10
@@ -694,7 +680,7 @@ export function simulateCatch(opts: { memberId?: string; species?: string } = {}
     }
     d.clan.xp += 2
     d.clan.level = clanLevel(d.clan.xp)
-    summary = { member: member.name, species: sp.key, cm, coins, tax: taken, hot: sector.hot, buff: buffOn, bounty, record }
+    summary = { member: member.name, species: sp.key, cm, coins, tax: taken, hot: sector.hot, buff: buffOn, record }
   })
   return res.ok ? { ok: true, summary } : res
 }
