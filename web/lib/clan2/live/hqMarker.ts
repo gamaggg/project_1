@@ -7,20 +7,26 @@ import { crestSvgMarkup, resolveCrest } from '@/lib/data/clanCrests'
 export type MarkerTier = 0 | 1 | 2
 
 export const hqTier = (zoom: number): MarkerTier => (zoom < 13 ? 0 : zoom < 15 ? 1 : 2)
-// The banner itself (a bit bigger than the 30 px crests of the other clan sectors); the «ШТАБ» label under it is
-// part of the marker from the middle zoom on. HQ_BOX is the whole marker, the anchor is its centre — the same as a
-// crest with its label on a plain sector, so the HQ sits in the middle of its hexagon.
-const BANNER: Record<MarkerTier, [number, number]> = { 0: [22, 22], 1: [44, 65], 2: [52, 77] }
+// Far (the other sectors show no crests or labels): a round badge like the hot sector's. Closer: the banner with the
+// «ШТАБ» label under it, as one group centred on the sector (the anchor is its centre — the same as a crest with its
+// label on a plain sector). The banner is fitted to the sector on screen so the group stays inside its hexagon.
+const BADGE = 22
 const LABEL_H = 20 // the label's 17 px and the 3 px gap, the same as under a crest on a plain sector
-export const HQ_BOX: Record<MarkerTier, [number, number]> = {
-  0: BANNER[0],
-  1: [BANNER[1][0], BANNER[1][1] + LABEL_H],
-  2: [BANNER[2][0], BANNER[2][1] + LABEL_H],
+export const BANNER_H_MIN = 44
+export const BANNER_H_MAX = 77
+const bannerW = (h: number) => Math.round((h * 84) / 124)
+// hexPx: the height of the sector's hexagon on the screen (0 — unknown, the largest banner).
+export function fitBannerH(hexPx: number): number {
+  if (!hexPx) return BANNER_H_MAX
+  return Math.round(Math.min(BANNER_H_MAX, Math.max(BANNER_H_MIN, hexPx * 0.78 - LABEL_H)))
+}
+export function hqBox(tier: MarkerTier, bannerH: number = BANNER_H_MAX): [number, number] {
+  return tier === 0 ? [BADGE, BADGE] : [bannerW(bannerH), bannerH + LABEL_H]
 }
 export const RUINS_SIZE: Record<MarkerTier, [number, number]> = { 0: [24, 21], 1: [36, 31], 2: [48, 42] }
 
 // The banner, drawn in an 84 x 124 box (x from 18): about a third wider than the 30 px crest beside it.
-function standardSvg(crest: unknown, w: number, h: number): string {
+export function hqBannerSvg(crest: unknown, w: number, h: number): string {
   const c = resolveCrest(crest)
   return `<svg class="c2-hqm-svg" viewBox="18 0 84 124" width="${w}" height="${h}" overflow="visible" aria-hidden="true">
 <ellipse cx="60" cy="118" rx="34" ry="6" fill="rgba(23,24,27,.28)"/>
@@ -36,16 +42,17 @@ function standardSvg(crest: unknown, w: number, h: number): string {
 </svg>`
 }
 
-export function hqMarkerHtml(crest: unknown, opts: { siege: boolean; label: string; tag: string; tier: MarkerTier }): string {
+export function hqMarkerHtml(crest: unknown, opts: { siege: boolean; label: string; tag: string; tier: MarkerTier; bannerH?: number }): string {
   // Far away: a round badge in the manner of the hot sector's flame — the clan's colour, a white ring, a small banner.
   if (opts.tier === 0) {
     const c = resolveCrest(crest)
     return `<div class="c2-hqm-b tier0${opts.siege ? ' siege' : ''}" style="width:22px;height:22px" aria-label="${opts.label.replace(/"/g, '&quot;')}">${opts.siege ? '<span class="c2-hqm-alarm"></span>' : ''}<span class="c2-hqm-dot" style="background:${c.primary};box-shadow:0 0 0 2px #fff, 0 3px 10px ${c.primary}8C"><svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5v11" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><path d="M3.6 2.2h7.2l-1.7 2.9 1.7 2.9H3.6z" fill="#fff"/></svg></span></div>`
   }
-  const [w, h] = BANNER[opts.tier]
-  const [bw, bh] = HQ_BOX[opts.tier]
+  const h = opts.bannerH ?? BANNER_H_MAX
+  const w = bannerW(h)
+  const [bw, bh] = hqBox(opts.tier, h)
   const tag = `<span class="leaflet-territory-label c2-hqm-label">${opts.tag.replace(/</g, '&lt;')}</span>`
-  return `<div class="c2-hqm-b tier${opts.tier}${opts.siege ? ' siege' : ''}" style="width:${bw}px;height:${bh}px" aria-label="${opts.label.replace(/"/g, '&quot;')}">${opts.siege ? '<span class="c2-hqm-alarm"></span>' : ''}${standardSvg(crest, w, h)}${tag}</div>`
+  return `<div class="c2-hqm-b tier${opts.tier}${opts.siege ? ' siege' : ''}" style="width:${bw}px;height:${bh}px" aria-label="${opts.label.replace(/"/g, '&quot;')}">${opts.siege ? '<span class="c2-hqm-alarm"></span>' : ''}${hqBannerSvg(crest, w, h)}${tag}</div>`
 }
 
 export function ruinsMarkerHtml(label: string, tier: MarkerTier = 2): string {

@@ -24,6 +24,7 @@ import { applyCurrentLightPreset } from '@/lib/mapbox/lightPreset'
 import { mapLoad } from '@/lib/mapbox/lightMode'
 import { tn } from '@/lib/i18n/runtime'
 import type { Clan2MapProps } from '@/components/clan2/live/overlay'
+import { fitBannerH } from '@/lib/clan2/live/hqMarker'
 
 // Trial swap from OpenFreeMap — a custom Mapbox Standard style, hand-tuned to
 // RANGE's brand colors (deep-water blue that's deliberately distinct from the
@@ -579,11 +580,17 @@ export const LeafletMap = forwardRef<
         }
         if (clanLayerRef.current) {
           const z = map?.getZoom() ?? 15
-          const tier = z < 13 ? 0 : z < 15 ? 1 : 2
+          // Far — while the other sectors show no crests (below the label zoom): a round badge. Closer, the banner
+          // is fitted to the hexagon on the screen.
+          const labelZoom = withShift(LABEL_MIN_ZOOM, zoomShiftRef.current)
+          const tier = z < labelZoom ? 0 : z < labelZoom + 1 ? 1 : 2
           for (const m of c2.markers) {
-            const box = m.box(tier)
+            const t = territories.find((x) => x.id === m.id)
+            const hexPx = t && map ? map.latLngToContainerPoint(t.corners[0]).distanceTo(map.latLngToContainerPoint(t.corners[3])) * 0.866 : 0
+            const bannerH = fitBannerH(hexPx)
+            const box = m.box(tier, bannerH)
             const marker = L.marker([m.lat, m.lng], {
-              icon: L.divIcon({ className: 'c2-hq-wrap', html: m.html(tier), iconSize: box, iconAnchor: [box[0] / 2, box[1] / 2] }),
+              icon: L.divIcon({ className: 'c2-hq-wrap', html: m.html(tier, bannerH), iconSize: box, iconAnchor: [box[0] / 2, box[1] / 2] }),
               zIndexOffset: 1200,
               keyboard: false,
             }).addTo(markersLayer)

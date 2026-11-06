@@ -459,6 +459,8 @@ export const clan2En = {
     placeHere: "Set the HQ for {n}",
     moveHere: "Move the HQ for {n}",
     hint: "Tap a sector. The «Clans» layer shows HQs and skins.",
+    hqCardRent: "The rent here is doubled: {n} coins a day",
+    hqCardOpen: "Open the HQ",
   },
   profile: {
     wallet: "In your wallet",

@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { useDemoNow } from '@/components/clan2/C2Common'
 import { useClan2Enabled } from '@/lib/clan2/live/flag'
-import { HQ_BOX, RUINS_SIZE, hqMarkerHtml, ruinsMarkerHtml, type MarkerTier } from '@/lib/clan2/live/hqMarker'
+import { RUINS_SIZE, hqBox, hqMarkerHtml, ruinsMarkerHtml, type MarkerTier } from '@/lib/clan2/live/hqMarker'
 import { setLiveUi, useLiveUi } from '@/lib/clan2/live/ui'
 import { useDemoState } from '@/lib/clan2/demoStore'
 import type { Territory } from '@/lib/data/types'
@@ -13,7 +13,7 @@ import { tn } from '@/lib/i18n/runtime'
 // the headquarters (or its ruins) standing on a sector, and the «place the HQ» mode.
 
 // The marker is drawn for a zoom tier (far / middle / near): html and the box are asked for it by the map.
-export type Clan2Marker = { id: string; lat: number; lng: number; kind: 'hq' | 'ruins'; html: (tier: MarkerTier) => string; box: (tier: MarkerTier) => [number, number] }
+export type Clan2Marker = { id: string; lat: number; lng: number; kind: 'hq' | 'ruins'; html: (tier: MarkerTier, bannerH?: number) => string; box: (tier: MarkerTier, bannerH?: number) => [number, number] }
 export type Clan2MapProps = {
   clanId: number
   skinByClan: Record<number, string>
@@ -52,8 +52,8 @@ export function useClan2Map(territories: Territory[]): Clan2MapProps | null {
         lat: hqT.lat,
         lng: hqT.lng,
         kind: 'hq',
-        html: (tier) => hqMarkerHtml(s.clan.crest, { siege, label: tn('clan2.map.hqHere'), tag: tn('clan2.base.hq'), tier }),
-        box: (tier) => HQ_BOX[tier],
+        html: (tier, bannerH) => hqMarkerHtml(s.clan.crest, { siege, label: tn('clan2.map.hqHere'), tag: tn('clan2.base.hq'), tier, bannerH }),
+        box: (tier, bannerH) => hqBox(tier, bannerH),
       })
     const ruinT = ruinsActive && ruinsId ? byId.get(ruinsId) : undefined
     if (ruinT) markers.push({ id: ruinT.id, lat: ruinT.lat, lng: ruinT.lng, kind: 'ruins', html: (tier) => ruinsMarkerHtml(tn('clan2.base.ruins'), tier), box: (tier) => RUINS_SIZE[tier] })

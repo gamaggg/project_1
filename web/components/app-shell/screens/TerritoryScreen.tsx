@@ -27,6 +27,8 @@ import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { CountUp } from '@/components/app-shell/CoinCountUp'
 import { useDoubleCoinsUntil } from '@/components/app-shell/DoubleCoinsChip'
 import { tn, currentLocale } from '@/lib/i18n'
+import { Clan2SectorHqCardLazy, Clan2SectorHqRibbonLazy } from '@/components/clan2/live/lazy'
+import { useClan2Enabled } from '@/lib/clan2/live/flag'
 
 export function statusBadge(status: Territory['status'], myTerritoryColor: string, myShare = false) {
   // myShare: a clan-mate's sector the viewer holds a part of.
@@ -280,6 +282,7 @@ export function TerritoryScreen({
   onShowOnMap?: (id: string) => void
 }) {
   const canAddCatchManually = useCanAddCatchManually()
+  const clan2On = useClan2Enabled()
   const { t: tr, lang } = useI18n()
   const now = useNow()
   const hot = !!territory.hotUntil && new Date(territory.hotUntil).getTime() > now
@@ -316,6 +319,7 @@ export function TerritoryScreen({
             </span>
           </button>
         )}
+        {clan2On && <Clan2SectorHqRibbonLazy id={territory.id} />}
         <div className="sector-hero-map-icons">
           <BackButton onClick={onBack} registerNative={false} />
           <div className="icon-btn tap-scale" onClick={onShare}>
@@ -347,6 +351,7 @@ export function TerritoryScreen({
             {KIND_LABEL[territory.kind]}
           </div>
           <SectorCoords lat={territory.lat} lng={territory.lng} onToast={onToast} />
+          {clan2On && <Clan2SectorHqCardLazy id={territory.id} onOpenClan={onOpenClan} />}
           {hot && (
             <div className="sector-hot">
               <div className="sector-hot-head">

@@ -562,3 +562,18 @@
 .c2-rent-id small{font-size:11.5px; color:var(--ink-soft);}
 .c2-rent-bar{display:block; height:6px; border-radius:999px; background:#EFEDE8; overflow:hidden;}
 .c2-rent-bar i{display:block; height:100%; border-radius:999px;}
+
+/* ───────── the real sector screen of the headquarters sector ───────── */
+.c2-hq-ribbon{position:absolute; top:14px; left:50%; transform:translateX(-50%); z-index:10; display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; color:#fff; font-size:12.5px; box-shadow:0 0 0 2px #fff, 0 4px 14px rgba(23,24,27,.25); pointer-events:none;}
+.c2-hq-ribbon b{font-weight:800; letter-spacing:.2px;}
+.c2-hq-card{margin-top:12px; padding:12px; border-radius:18px; background:color-mix(in srgb, var(--hq) 9%, #fff); box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--hq) 45%, #fff);}
+.c2-hq-card.siege{background:#FDECEA; box-shadow:inset 0 0 0 1.5px #E58B84;}
+.c2-hq-card-top{display:flex; align-items:center; gap:10px;}
+.c2-hq-card-banner{flex:0 0 auto; display:block; line-height:0;}
+.c2-hq-card-text{display:flex; flex-direction:column; min-width:0; flex:1;}
+.c2-hq-card-text b{font-size:15px; font-weight:800;}
+.c2-hq-card-name{font-size:13px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.c2-hq-card-state{flex:0 0 auto; max-width:42%; text-align:right; font-size:12.5px; font-weight:700; color:var(--ink);}
+.c2-hq-card.siege .c2-hq-card-state{color:#B3261E;}
+.c2-hq-card-rent{margin:10px 0 0; font-size:12.5px; color:var(--ink-soft);}
+.c2-hq-card-open{width:100%; margin-top:10px; padding:10px; border:none; border-radius:12px; background:var(--hq); color:#fff; font:inherit; font-weight:800; font-size:14px; cursor:pointer;}
