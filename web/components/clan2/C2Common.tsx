@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { useNow } from '@/lib/useNow'
 import { useDemoState, type Result } from '@/lib/clan2/demoStore'
@@ -53,6 +53,46 @@ export function C2Coins({ n, sign, className }: { n: number; sign?: boolean; cla
     <span className={`c2-coins${className ? ` ${className}` : ''}`}>
       <span>{text}</span>
       <CoinIcon size={16} />
+    </span>
+  )
+}
+
+// A number that runs from the old value to the new one, bumps, and shows the change («+50») floating up.
+export function C2Count({ value }: { value: number }) {
+  const [shown, setShown] = useState(value)
+  const [delta, setDelta] = useState<{ n: number; id: number } | null>(null)
+  const from = useRef(value)
+  useEffect(() => {
+    const start = from.current
+    if (start === value) return
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    setDelta({ n: value - start, id: Date.now() })
+    const t0 = performance.now()
+    let raf = 0
+    const step = (now: number) => {
+      const k = calm ? 1 : Math.min(1, (now - t0) / 700)
+      const eased = 1 - Math.pow(1 - k, 3)
+      setShown(Math.round(start + (value - start) * eased))
+      if (k < 1) raf = requestAnimationFrame(step)
+      else from.current = value
+    }
+    raf = requestAnimationFrame(step)
+    const off = window.setTimeout(() => setDelta(null), 1500)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.clearTimeout(off)
+      from.current = value
+    }
+  }, [value])
+  return (
+    <span className={`c2-count${delta ? ' bump' : ''}`} key={delta ? delta.id : 'still'}>
+      {fmt(shown)}
+      {delta && delta.n !== 0 && (
+        <i className={`c2-delta ${delta.n > 0 ? 'up' : 'down'}`} aria-hidden>
+          {delta.n > 0 ? '+' : '−'}
+          {fmt(Math.abs(delta.n))}
+        </i>
+      )}
     </span>
   )
 }

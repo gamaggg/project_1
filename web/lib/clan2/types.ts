@@ -30,6 +30,7 @@ export type TreasuryKind =
   | 'recruit'
   | 'refund'
   | 'looted'
+  | 'seed'
   | 'quest'
   | 'tournament'
   | 'spend_buff'
@@ -154,7 +155,18 @@ export type ClanInfo = {
   trophies: number
 }
 
+// Set when the state is built from the player's real clan (see lib/clan2/live/seed.ts): who, which clan,
+// and what role the demo shows (null — the real one).
+export type LiveMeta = {
+  clanId: number
+  userId: string
+  realRole: ClanRole
+  viewAs: ClanRole | null
+  isSuperAdmin: boolean
+}
+
 export type DemoState = {
+  live?: LiveMeta
   // Added to Date.now() — the «ускорить время» button of the demo panel.
   clockOffsetMs: number
   persona: Persona

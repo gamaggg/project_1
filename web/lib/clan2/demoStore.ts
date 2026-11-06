@@ -30,7 +30,7 @@ import {
   taxOf,
   treasuryCap,
 } from '@/lib/clan2/rules'
-import type { Bounty, ClanAlert, DemoMember, DemoState, EconomySettings, MapSector, Persona, ProjectId, ProjectLevel, TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
+import type { Bounty, ClanAlert, ClanRole, DemoMember, DemoState, EconomySettings, MapSector, Persona, ProjectId, ProjectLevel, TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
 
 // The demo's whole world: one state object, changed only by the actions
 // below, kept in localStorage so a reload (or a day later) finds it as it
@@ -43,6 +43,8 @@ const OK: Result = { ok: true }
 const no = (reason: string): Result => ({ ok: false, reason })
 
 const KEY = 'range:clan2-demo:v4'
+// Where the state is kept: the demo's own key, or — bound to a real clan — a key of that player and clan.
+let storageKey = KEY
 
 let state: DemoState = initialDemoState()
 let loaded = false
@@ -52,7 +54,7 @@ function load() {
   if (loaded) return
   loaded = true
   try {
-    const raw = window.localStorage.getItem(KEY)
+    const raw = window.localStorage.getItem(storageKey)
     if (raw) state = JSON.parse(raw) as DemoState
   } catch {
     // A broken save is just the starting world.
@@ -62,9 +64,44 @@ function load() {
 function commit(next: DemoState) {
   state = next
   try {
-    window.localStorage.setItem(KEY, JSON.stringify(next))
+    window.localStorage.setItem(storageKey, JSON.stringify(next))
   } catch {}
   listeners.forEach((l) => l())
+}
+
+// The state of /clan-preview (fictional clan).
+export function bindDemo() {
+  if (storageKey === KEY && loaded) return
+  storageKey = KEY
+  loaded = false
+  state = initialDemoState()
+  load()
+  listeners.forEach((l) => l())
+}
+
+// The state of the real clan: read back from this browser if it is there, otherwise built by `make`.
+// `sync` then brings the parts that are real (sectors, members) up to date, on every call.
+export function bindLive(key: string, make: () => DemoState, sync: (d: DemoState) => void) {
+  if (storageKey !== key || !loaded) {
+    storageKey = key
+    loaded = true
+    try {
+      const raw = window.localStorage.getItem(key)
+      state = raw ? (JSON.parse(raw) as DemoState) : make()
+    } catch {
+      state = make()
+    }
+    if (!state.live) state = make()
+    listeners.forEach((l) => l())
+  }
+  const draft = structuredClone(state) as DemoState
+  const before = JSON.stringify(draft)
+  sync(draft)
+  if (JSON.stringify(draft) !== before) commit(draft)
+}
+
+export function resetLive(make: () => DemoState) {
+  commit(make())
 }
 
 function subscribe(l: () => void) {
@@ -151,6 +188,34 @@ function alert(d: DemoState, kind: ClanAlert['kind'], text: string, sectorId?: s
 
 const memberName = (d: DemoState, id: string | null) => d.members.find((m) => m.id === id)?.name ?? ''
 
+// The headquarters falls: the attackers carry off part of the treasury, the sector is theirs, the clan has ruins and no HQ for a day.
+export function fallHq(d: DemoState, by: string, fellAt: number) {
+  const sectorId = d.hq.sectorId
+  if (!sectorId) return
+  const lost = d.sectors.find((x) => x.id === sectorId)
+  const loot = Math.min(HQ_LOOT_MAX, Math.floor(d.treasury.balance * HQ_LOOT_SHARE))
+  if (loot > 0) {
+    d.treasury.balance -= loot
+    push(d, 'looted', -loot, null, by, fellAt)
+  }
+  if (lost) {
+    lost.owner = 'enemy'
+    lost.hq = null
+    lost.skin = null
+    lost.shield = false
+    lost.defense = 1
+  }
+  alert(d, 'hq_fallen', `${sectorId}:${loot}`, sectorId, fellAt)
+  d.hq = {
+    sectorId: null,
+    placedAt: null,
+    lastMoveAt: d.hq.lastMoveAt,
+    siege: null,
+    defenseAt: null,
+    ruins: { sectorId, by, loot, fellAt, until: fellAt + HQ_RUINS_HOURS * HOURS },
+  }
+}
+
 // ───────────── time ─────────────
 
 function runTime(d: DemoState) {
@@ -198,33 +263,7 @@ function runTime(d: DemoState) {
     if (hqSector && hqSector.defense === 0) d.hq.defenseAt = now
   }
   // The headquarters under siege: not broken in time, it falls.
-  if (d.hq.siege && now >= d.hq.siege.endsAt && d.hq.sectorId) {
-    const lost = d.sectors.find((x) => x.id === d.hq.sectorId)
-    const fellAt = d.hq.siege.endsAt
-    const by = d.hq.siege.by
-    // What the attackers carry off: a fifth of the treasury, up to a thousand.
-    const loot = Math.min(HQ_LOOT_MAX, Math.floor(d.treasury.balance * HQ_LOOT_SHARE))
-    if (loot > 0) {
-      d.treasury.balance -= loot
-      push(d, 'looted', -loot, null, by, fellAt)
-    }
-    if (lost) {
-      lost.owner = 'enemy'
-      lost.hq = null
-      lost.skin = null
-      lost.shield = false
-      lost.defense = 1
-    }
-    alert(d, 'hq_fallen', `${d.hq.sectorId}:${loot}`, d.hq.sectorId, fellAt)
-    d.hq = {
-      sectorId: null,
-      placedAt: null,
-      lastMoveAt: d.hq.lastMoveAt,
-      siege: null,
-      defenseAt: null,
-      ruins: { sectorId: d.hq.sectorId, by, loot, fellAt, until: fellAt + HQ_RUINS_HOURS * HOURS },
-    }
-  }
+  if (d.hq.siege && now >= d.hq.siege.endsAt && d.hq.sectorId) fallHq(d, d.hq.siege.by, d.hq.siege.endsAt)
   // Bounties that ran out give the reward back to the treasury.
   for (const bn of d.bounties) {
     if (!bn.claimedBy && now >= bn.expiresAt && bn.reward > 0) {
@@ -264,6 +303,23 @@ export function setPersona(p: Persona): Result {
   return mutate((d) => {
     d.persona = p
     d.myId = p === 'member' ? 'm5' : p === 'solo' ? 'none' : 'm1'
+  })
+}
+
+// Live mode: look at the screens as the leader, as a plain member, or as the admin — or as the player really is.
+export function setViewAs(role: ClanRole | 'admin' | null): Result {
+  return mutate((d) => {
+    if (!d.live) return no('notLive')
+    const me = d.members.find((m) => m.id === d.myId)
+    if (role === 'admin') {
+      if (!d.live.isSuperAdmin) return no('notAdmin')
+      d.persona = 'admin'
+      return
+    }
+    d.live.viewAs = role
+    const r = role ?? d.live.realRole
+    if (me) me.role = r
+    d.persona = r === 'leader' || r === 'co_leader' ? 'leader' : 'member'
   })
 }
 

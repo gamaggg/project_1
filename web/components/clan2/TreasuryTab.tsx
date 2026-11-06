@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from 'react'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
-import { C2Avatar, C2Bar, C2Card, C2Coins, C2Sheet, fmtAgo, speciesName, useC2, useDemoNow } from '@/components/clan2/C2Common'
-import { buyGoal, canManage, capOf, deposit, goalOf, rentPerDay, setGoal, setTaxRate, useDemoState } from '@/lib/clan2/demoStore'
+import { C2Avatar, C2Bar, C2Card, C2Coins, C2Count, C2Sheet, fmtAgo, speciesName, useC2, useDemoNow } from '@/components/clan2/C2Common'
+import { SkinSwatch } from '@/components/clan2/SkinSwatch'
+import { buyGoal, canManage, capOf, deposit, goalOf, rentPerDay, sectorCounts, setGoal, setTaxRate, useDemoState } from '@/lib/clan2/demoStore'
 import { DAY, GOAL_CATALOG, TAX_RATES, fmt, isSpend, taxOf } from '@/lib/clan2/rules'
 import type { TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
 import { tn, tnd } from '@/lib/i18n/runtime'
@@ -30,6 +31,8 @@ export function TreasuryTab() {
   const [goalOpen, setGoalOpen] = useState(false)
   const [amount, setAmount] = useState(100)
   const [more, setMore] = useState(false)
+  const [rentOpen, setRentOpen] = useState(false)
+  const [info, setInfo] = useState<'srcTax' | 'srcDeposit' | 'srcShares' | 'srcOther' | null>(null)
 
   const manage = canManage(s)
   const cap = capOf(s)
@@ -61,7 +64,7 @@ export function TreasuryTab() {
         <div className="c2-balance">
           <div className="c2-balance-label">{tn('clan2.treasury.balance')}</div>
           <div className="c2-balance-num">
-            <span>{fmt(s.treasury.balance)}</span>
+            <C2Count value={s.treasury.balance} />
             <CoinIcon size={28} animated="bounce" />
           </div>
           <C2Bar value={s.treasury.balance / cap} tone={s.treasury.balance / cap > 0.9 ? 'warn' : 'accent'} label={tn('clan2.treasury.balance')} />
@@ -71,7 +74,12 @@ export function TreasuryTab() {
               <i key={i} style={{ height: `${Math.max(6, (v / maxFlow) * 100)}%` }} className={i === 6 ? 'now' : undefined} />
             ))}
           </div>
-          <div className="c2-chip good">{tn('clan2.treasury.rentToday', { n: fmt(rent) })}</div>
+          <button type="button" className="c2-chip good c2-chip-btn" onClick={() => setRentOpen(true)} aria-label={tn('clan2.treasury.tapForMore')}>
+            {tn('clan2.treasury.rentToday', { n: fmt(rent) })}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="m9 6 6 6-6 6" />
+            </svg>
+          </button>
           <p className="c2-hint">{tn('clan2.treasury.rentNote')}</p>
           <p className="c2-hint faint">{tn('clan2.treasury.capNote')}</p>
         </div>
@@ -86,6 +94,7 @@ export function TreasuryTab() {
         {goal ? (
           <>
             <div className="c2-goal-row">
+              {goal.kind === 'clan_skin' && <SkinSwatch id={goal.id.replace(/^skin_/, '')} color={s.clan.crest.primary} size={64} seed={0.3} />}
               <strong>{tnd(`clan2.goal.${goal.id}`)}</strong>
               <C2Coins n={goal.cost} />
             </div>
@@ -116,11 +125,13 @@ export function TreasuryTab() {
         <ul className="c2-sources">
           {sources.map((x) => (
             <li key={x.id}>
-              <div className="c2-sources-top">
-                <span>{tn(`clan2.treasury.${x.id}`)}</span>
-                <C2Coins n={x.sum} sign />
-              </div>
-              <C2Bar value={x.sum / maxSource} tone="good" />
+              <button type="button" className="c2-source-btn" onClick={() => (x.id === 'srcRent' ? setRentOpen(true) : setInfo(x.id))} aria-label={`${tn(`clan2.treasury.${x.id}`)}. ${tn('clan2.treasury.tapForMore')}`}>
+                <div className="c2-sources-top">
+                  <span>{tn(`clan2.treasury.${x.id}`)}</span>
+                  <C2Coins n={x.sum} sign />
+                </div>
+                <C2Bar value={x.sum / maxSource} tone="good" />
+              </button>
             </li>
           ))}
         </ul>
@@ -232,6 +243,17 @@ export function TreasuryTab() {
           ))}
         </ul>
       </C2Sheet>
+
+      <C2Sheet open={rentOpen} onClose={() => setRentOpen(false)} title={tn('clan2.treasury.rentSheetTitle')}>
+        <RentDetail />
+      </C2Sheet>
+      <C2Sheet open={!!info} onClose={() => setInfo(null)} title={info ? tn(`clan2.treasury.${info}`) : ''}>
+        {info && (
+          <p className="c2-muted" style={{ fontSize: 14, lineHeight: 1.5 }}>
+            {tn(`clan2.treasury.info${info.slice(3)}` as 'clan2.treasury.infoTax')}
+          </p>
+        )}
+      </C2Sheet>
     </div>
   )
 }
@@ -258,5 +280,52 @@ function JournalRow({ e, now }: { e: TreasuryEntry; now: number }) {
       </div>
       <C2Coins n={e.amount} sign />
     </li>
+  )
+}
+
+// What each sector of the clan brings in, and why the sum is what it is.
+function RentDetail() {
+  const s = useDemoState()
+  const per = s.settings.rentPerSectorDay
+  const rows = s.sectors
+    .filter((x) => x.owner === 'mine')
+    .map((x) => {
+      const hq = x.hq === 'mine'
+      const kind = hq ? 'hq' : x.shared > 1 ? 'shared' : 'plain'
+      const base = per * (kind === 'shared' ? s.settings.sharedRentFactor : 1) * (hq ? 2 : 1)
+      const hot = x.hot ? per * 2 : 0
+      return { id: x.id, kind, shared: x.shared, hot: x.hot, day: Math.round(base + hot) }
+    })
+    .sort((a, b) => b.day - a.day)
+  const c = sectorCounts(s)
+  return (
+    <div className="c2-stack">
+      <ul className="c2-rules" style={{ listStyle: 'none', paddingLeft: 0 }}>
+        <li>{tn('clan2.treasury.rentRule1')}</li>
+        <li>{tn('clan2.treasury.rentRule2')}</li>
+        <li>{tn('clan2.treasury.rentRule3')}</li>
+        <li>{tn('clan2.treasury.rentRule4')}</li>
+      </ul>
+      {rows.length === 0 ? (
+        <p className="c2-muted">{tn('clan2.treasury.rentNoSectors')}</p>
+      ) : (
+        <ul className="c2-rent-rows">
+          {rows.map((r) => (
+            <li key={r.id} className={r.kind}>
+              <b>{r.id}</b>
+              <span>
+                {r.kind === 'hq' ? tn('clan2.treasury.rentKindHq') : r.kind === 'shared' ? tn('clan2.treasury.rentKindShared', { n: r.shared }) : tn('clan2.treasury.rentKindPlain')}
+                {r.hot ? ` · ${tn('clan2.treasury.rentKindHot')}` : ''}
+              </span>
+              <C2Coins n={r.day} />
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="c2-sources-spent">
+        <span>{tn('clan2.treasury.rentTotal')} ({c.total})</span>
+        <C2Coins n={rentPerDay(s)} />
+      </div>
+    </div>
   )
 }

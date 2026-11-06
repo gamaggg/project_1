@@ -1,7 +1,12 @@
 'use client'
 
 import { SkeletonBlock, SkeletonRows } from '@/components/app-shell/Skeleton'
+import dynamic from 'next/dynamic'
 import { useEffect, useRef, useState } from 'react'
+import type { Clan2Section } from '@/components/clan2/live/Clan2Panel'
+import { useDemoState } from '@/lib/clan2/demoStore'
+import { useClan2Enabled } from '@/lib/clan2/live/flag'
+import { getLiveUi, setLiveUi, subscribeLiveUi, useLiveUi } from '@/lib/clan2/live/ui'
 import { createPortal } from 'react-dom'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { observeScreenActive } from '@/lib/observeScreenActive'
@@ -37,7 +42,11 @@ import type { ClanDetail, ClanEvent, ClanMember } from '@/lib/data/types'
 import { tn, currentLocale } from '@/lib/i18n'
 import { labels } from '@/lib/i18n/runtime'
 
-type Tab = 'members' | 'chest' | 'race'
+type Tab = 'members' | 'chest' | 'race' | Clan2Section
+
+// The clan update's sections (Общак, Выход, …) — only when it is switched on for this browser (lib/clan2/live/flag.ts).
+const Clan2Panel = dynamic(() => import('@/components/clan2/live/Clan2Panel').then((m) => m.Clan2Panel), { ssr: false })
+const CLAN2_TABS = ['treasury', 'exit', 'week', 'hq', 'glory'] as const
 
 function RoleIcon({ role }: { role: ClanRole }) {
   if (role === 'member') return null
@@ -202,7 +211,29 @@ export function ClanScreen({
   const canInvite = !!clan?.myRole && CLAN_ROLE_RANK[clan.myRole] >= 2
   const { data: shareInviteCode } = useClanInviteCode(clan?.id ?? null, canInvite)
 
-  const [tab, setTab] = useState<Tab>('members')
+  const [tabPicked, setTabPicked] = useState<Tab | null>(null)
+  const clan2On = useClan2Enabled()
+  const demo = useDemoState()
+  const liveUi = useLiveUi()
+  const c2 = clan2On && isMember && !!clan && demo.live?.clanId === clan.id
+  const c2Admin = c2 && demo.persona === 'admin'
+  // With the clan update on, the screen opens on its first section («Штаб» on the map asks for its own).
+  const tab: Tab = tabPicked ?? (c2 ? ((liveUi.clanTab as Tab | null) ?? 'treasury') : 'members')
+  function setTab(next: Tab) {
+    setTabPicked(next)
+    if (liveUi.clanTab) setLiveUi({ clanTab: null })
+  }
+  // A request from the map's HQ card while this screen is already open.
+  useEffect(() => {
+    if (!c2) return
+    return subscribeLiveUi(() => {
+      const wanted = getLiveUi().clanTab
+      if (wanted) {
+        setTabPicked(wanted as Tab)
+        setLiveUi({ clanTab: null })
+      }
+    })
+  }, [c2])
   const [menuFor, setMenuFor] = useState<string | null>(null)
   // The clan journal shows the latest lines; «Показать ещё» adds ten more at a time.
   const [eventsShown, setEventsShown] = useState(5)
@@ -489,7 +520,18 @@ export function ClanScreen({
         {error && <div className="clan-error">{error}</div>}
         {isMember && !clan.disbanded && <ClanChatCard clanId={clan.id} onOpen={() => onOpenChat(clan.id)} />}
 
-        <div ref={tabsRef} className="clan-tabs" style={{ marginTop: 16 }}>
+        <div ref={tabsRef} className={`clan-tabs${c2 ? ' c2-scroll' : ''}`} style={{ marginTop: 16 }}>
+          {c2 &&
+            CLAN2_TABS.map((id) => (
+              <button key={id} className={`clan-tab${tab === id ? ' on' : ''}`} onClick={() => setTab(id)}>
+                {tn(`clan2.sub.${id}`)}
+              </button>
+            ))}
+          {c2Admin && (
+            <button className={`clan-tab${tab === 'admin' ? ' on' : ''}`} onClick={() => setTab('admin')}>
+              {tn('clan2.tab.admin')}
+            </button>
+          )}
           <button className={`clan-tab${tab === 'members' ? ' on' : ''}`} onClick={() => setTab('members')}>
             {tn('guest.members')}
           </button>
@@ -620,6 +662,7 @@ export function ClanScreen({
           </div>
         )}
 
+        {c2 && ((CLAN2_TABS as readonly string[]).includes(tab) || (tab === 'admin' && c2Admin)) && <Clan2Panel key={tab} section={tab as Clan2Section} />}
         {tab === 'race' && <ClanRacePreview key="race" city={clan.city} clanId={clan.id} onOpenRace={onOpenRace} />}
         {tab === 'chest' && <ClanChestPanel key="chest" clanId={clan.id} isMember={isMember} />}
 

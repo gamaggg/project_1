@@ -7,19 +7,23 @@ import { SHIELD_PATH, ShieldReserveContent, ShieldsChip } from '@/components/app
 import { useSlotState } from '@/lib/supabase/queries'
 import { hapticTap } from '@/lib/telegram/haptics'
 import { tn } from '@/lib/i18n/runtime'
+import { useClan2Enabled } from '@/lib/clan2/live/flag'
 
 // «×2» and the shields in the reserve, in the map's top panel. A player with
 // both gets one button of two equal halves — two pills pushed the «Игроки /
 // Кланы» switch off the bar — and one sheet with both, as two tabs.
 export function HudBoosts() {
-  const buff = useDoubleCoins()
+  // The clan update has no personal «Двойные монеты» (the clan buff replaces them).
+  const clan2On = useClan2Enabled()
+  const rawBuff = useDoubleCoins()
+  const buff = clan2On ? null : rawBuff
   const { data: slots } = useSlotState()
   const shields = slots?.freeShields ?? 0
   const [open, setOpen] = useState(false)
   if (!buff || shields === 0) {
     return (
       <>
-        <DoubleCoinsChip />
+        {!clan2On && <DoubleCoinsChip />}
         <ShieldsChip />
       </>
     )

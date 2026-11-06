@@ -228,6 +228,41 @@
    "ru": "Язык",
    "en": "Language",
    "ka": "ენა"
+  },
+  "liveNote": {
+   "ru": "Клан, сектора и участники настоящие, их приложение только читает. Всё новое (общак, штаб, постройки) живёт только в этом браузере, в базу ничего не пишется.",
+   "en": "The clan, sectors and members are real and only read. Everything new (treasury, HQ, buildings) lives in this browser only; nothing is written to the database.",
+   "ka": "კლანი, სექტორები და წევრები რეალურია და მხოლოდ იკითხება. ყველაფერი ახალი (ფონდი, შტაბი, ნაგებობები) ინახება მხოლოდ ამ ბრაუზერში, ბაზაში არაფერი იწერება."
+  },
+  "viewAs": {
+   "ru": "Смотреть как",
+   "en": "View as",
+   "ka": "ნახე როგორც"
+  },
+  "asIs": {
+   "ru": "Как есть",
+   "en": "As is",
+   "ka": "როგორც არის"
+  },
+  "resetLive": {
+   "ru": "Начать клановое с нуля",
+   "en": "Start the clan part over",
+   "ka": "კლანის ნაწილის თავიდან დაწყება"
+  },
+  "off": {
+   "ru": "Выключить клановое демо",
+   "en": "Turn the clan demo off",
+   "ka": "კლანის დემოს გამორთვა"
+  },
+  "tools": {
+   "ru": "Клан-демо",
+   "en": "Clan demo",
+   "ka": "კლან-დემო"
+  },
+  "toolsTitle": {
+   "ru": "Клановое обновление: проверка",
+   "en": "Clan update: test bench",
+   "ka": "კლანის განახლება: შემოწმება"
   }
  },
  "err": {
@@ -741,6 +776,91 @@
    "ru": "Приход за 7 дней",
    "en": "Income over 7 days",
    "ka": "შემოსავალი 7 დღეში"
+  },
+  "rentSheetTitle": {
+   "ru": "Рента секторов",
+   "en": "Sector rent",
+   "ka": "სექტორების რენტა"
+  },
+  "rentRule1": {
+   "ru": "Обычный сектор: 1 монета каждые 3 часа, это 8 в сутки.",
+   "en": "A plain sector: 1 coin every 3 hours, that is 8 a day.",
+   "ka": "ჩვეულებრივი სექტორი: 1 მონეტა ყოველ 3 საათში, დღეში 8."
+  },
+  "rentRule2": {
+   "ru": "Общий сектор (его делят соклановцы): ×1,5, это 12 в сутки.",
+   "en": "A shared sector (clan-mates hold it together): ×1.5, that is 12 a day.",
+   "ka": "საერთო სექტორი (კლანელები ერთად ფლობენ): ×1,5, დღეში 12."
+  },
+  "rentRule3": {
+   "ru": "Сектор со штабом: ×2, это 2 монеты за 3 часа, 16 в сутки.",
+   "en": "The HQ sector: ×2, that is 2 coins per 3 hours, 16 a day.",
+   "ka": "შტაბის სექტორი: ×2, 2 მონეტა 3 საათში, დღეში 16."
+  },
+  "rentRule4": {
+   "ru": "Горячий сектор добавляет ещё 16 в сутки.",
+   "en": "A hot sector adds another 16 a day.",
+   "ka": "ცხელი სექტორი კიდევ 16-ს ამატებს დღეში."
+  },
+  "rentKindPlain": {
+   "ru": "обычный",
+   "en": "plain",
+   "ka": "ჩვეულებრივი"
+  },
+  "rentKindShared": {
+   "ru": "общий ×{n}",
+   "en": "shared ×{n}",
+   "ka": "საერთო ×{n}"
+  },
+  "rentKindHq": {
+   "ru": "штаб",
+   "en": "HQ",
+   "ka": "შტაბი"
+  },
+  "rentKindHot": {
+   "ru": "горячий",
+   "en": "hot",
+   "ka": "ცხელი"
+  },
+  "rentPerDay": {
+   "ru": "{n} в сутки",
+   "en": "{n} a day",
+   "ka": "{n} დღეში"
+  },
+  "rentTotal": {
+   "ru": "Всего в сутки",
+   "en": "Total a day",
+   "ka": "სულ დღეში"
+  },
+  "rentNoSectors": {
+   "ru": "У клана пока нет секторов: рента с них не идёт.",
+   "en": "The clan holds no sectors yet: no rent comes in.",
+   "ka": "კლანს ჯერ სექტორები არ აქვს: რენტა არ მოდის."
+  },
+  "infoTax": {
+   "ru": "Часть монет за каждую пойманную участником рыбу уходит в общак. Ставку выбирает глава: 0, 5 или 10 %.",
+   "en": "A share of the coins for every fish a member catches goes into the treasury. The leader picks the rate: 0, 5 or 10 %.",
+   "ka": "წევრის მიერ დაჭერილი თევზის მონეტების ნაწილი ფონდში მიდის. განაკვეთს ლიდერი ირჩევს: 0, 5 ან 10 %."
+  },
+  "infoDeposit": {
+   "ru": "Любой участник может добровольно внести свои монеты. Кто вносит больше всех за неделю, становится «Меценатом недели».",
+   "en": "Any member can put in coins of their own. Whoever gives the most in a week becomes the week's Patron.",
+   "ka": "ნებისმიერ წევრს შეუძლია საკუთარი მონეტები შეიტანოს. ვინც კვირაში ყველაზე მეტს შეიტანს, ხდება კვირის მეცენატი."
+  },
+  "infoShares": {
+   "ru": "Четверть монет из сундука недели и из битвы кланов идёт в общак.",
+   "en": "A quarter of the coins from the week's chest and the clan battle goes into the treasury.",
+   "ka": "კვირის სკივრისა და კლანების ბრძოლის მონეტების მეოთხედი ფონდში მიდის."
+  },
+  "infoOther": {
+   "ru": "Задание недели, награда за новичка, турнир и возвраты по заказам.",
+   "en": "The weekly task, the recruit reward, the tournament and refunded bounties.",
+   "ka": "კვირის დავალება, ახალბედის ჯილდო, ტურნირი და შეკვეთების დაბრუნებული თანხა."
+  },
+  "tapForMore": {
+   "ru": "Нажми, чтобы узнать подробнее",
+   "en": "Tap for details",
+   "ka": "დააჭირე დეტალებისთვის"
   }
  },
  "goal": {
@@ -855,6 +975,16 @@
    "ru": "Скин клана",
    "en": "Clan skin",
    "ka": "კლანის სკინი"
+  },
+  "seed": {
+   "ru": "Стартовые монеты демо",
+   "en": "Demo starting coins",
+   "ka": "დემოს საწყისი მონეტები"
+  },
+  "looted": {
+   "ru": "Штаб пал: унесли из общака",
+   "en": "The HQ fell: carried off the treasury",
+   "ka": "შტაბი დაეცა: ფონდიდან წაიღეს"
   }
  },
  "solo": {
@@ -2427,6 +2557,28 @@
    "ru": "Спит: штаба нет",
    "en": "Asleep: no HQ",
    "ka": "სძინავს: შტაბი არ არის"
+  }
+ },
+ "live": {
+  "placeText": {
+   "ru": "Поставить штаб на сектор {id}? Здесь он будет стоять, пока его не перенесут или не возьмут в осаду.",
+   "en": "Set the HQ on sector {id}? It stands here until it is moved or taken in a siege.",
+   "ka": "დავაყენოთ შტაბი სექტორზე {id}? ის აქ დადგება, სანამ არ გადაიტანენ ან ალყით არ აიღებენ."
+  },
+  "moveText": {
+   "ru": "Перенести штаб на сектор {id}? Перенос стоит дороже и возможен раз в 3 дня.",
+   "en": "Move the HQ to sector {id}? Moving costs more and is possible once in 3 days.",
+   "ka": "გადავიტანოთ შტაბი სექტორზე {id}? გადატანა უფრო ძვირია და შესაძლებელია 3 დღეში ერთხელ."
+  },
+  "placeCost": {
+   "ru": "Постановка",
+   "en": "Setting up",
+   "ka": "დაყენება"
+  },
+  "moveCost": {
+   "ru": "Перенос",
+   "en": "Move",
+   "ka": "გადატანა"
   }
  }
 }

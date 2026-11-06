@@ -1,6 +1,9 @@
 'use client'
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { Clan2LiveLazy as Clan2Live } from '@/components/clan2/live/lazy'
+import { useClan2Enabled } from '@/lib/clan2/live/flag'
+import { onMapRequest } from '@/lib/clan2/live/ui'
 import { useAuth } from '@/components/providers/AuthProvider'
 import {
   useTerritories,
@@ -269,6 +272,17 @@ export function FishZoneApp() {
   const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories, territoriesReady, city)
   const { show: showWeekTop, entry: weekTopEntry, leader: weekTopLeader, dismiss: dismissWeekTop } = useWeekTopModal(city)
   const clanCeremony = useClanBattleCeremony(city, myProfile?.clanId ?? null)
+  // The clan update (switched on per browser, never in production): the player's real clan, read, and a layer on top of the app.
+  const clan2On = useClan2Enabled()
+  const { data: myClanDetail } = useClan(clan2On ? (myProfile?.clanId ?? null) : null)
+  useEffect(() => {
+    if (!clan2On) return
+    return onMapRequest((r) => {
+      navClick('screen-map')
+      if (r.sectorId) requestAnimationFrame(() => mapHandleRef.current?.showTerritory(r.sectorId!))
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clan2On])
   const hotTour = useHotSectorsTour(territories, city)
   // «Пока тебя не было»: picked once, when the city's sectors are in, and kept
   // until the replay closes (the sectors change under it as it plays).
@@ -2285,6 +2299,9 @@ export function FishZoneApp() {
           }}
           onClose={dismissWeekTop}
         />
+      )}
+      {clan2On && (
+        <Clan2Live territories={cityTerritories} profile={myProfile} clan={myClanDetail} visible={currentScreen === 'screen-map' || currentScreen === 'screen-clan'} onOpenClan={openClan} />
       )}
       {/* The clan battle's results wait their turn behind the personal week
           recap and the achievement modal — one celebration at a time. */}

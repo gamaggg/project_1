@@ -23,6 +23,7 @@ import { hapticSuccess, hapticTap, hapticWarning } from '@/lib/telegram/haptics'
 import { applyCurrentLightPreset } from '@/lib/mapbox/lightPreset'
 import { mapLoad } from '@/lib/mapbox/lightMode'
 import { tn } from '@/lib/i18n/runtime'
+import type { Clan2MapProps } from '@/components/clan2/live/overlay'
 
 // Trial swap from OpenFreeMap — a custom Mapbox Standard style, hand-tuned to
 // RANGE's brand colors (deep-water blue that's deliberately distinct from the
@@ -284,6 +285,8 @@ export const LeafletMap = forwardRef<
     // rest of the map shaded so those two stand out — drawn on the map, so
     // it moves with it. Takes the place of the tap highlight while it's set.
     geo?: GeoMarks | null
+    // The clan update (lib/clan2/live): the clan's animated skin on its sectors, the headquarters, the «place the HQ» mode.
+    clan2?: Clan2MapProps | null
   }
 >(function LeafletMap(
   {
@@ -301,9 +304,12 @@ export const LeafletMap = forwardRef<
     highlightedId,
     clanLayer = false,
     geo = null,
+    clan2 = null,
   },
   ref
 ) {
+    const clan2Ref = useRef(clan2)
+    clan2Ref.current = clan2
     const clanLayerRef = useRef(clanLayer)
     clanLayerRef.current = clanLayer
     // «Где это?» on the map: sectors by number only (territoryMarkerHtml).
@@ -551,6 +557,39 @@ export const LeafletMap = forwardRef<
           onSelectRef.current(t.id)
         })
       })
+      // The clan update: the clan's own animated skin over its sectors on the «Кланы» layer, the sectors
+      // the HQ may go on while it is being placed, and the headquarters (or its ruins) standing on a sector.
+      const c2 = clan2Ref.current
+      if (c2) {
+        if (clanLayerRef.current) {
+          for (const t of territories) {
+            const skinId = t.ownerClanId ? c2.skinByClan[t.ownerClanId] : undefined
+            if (!skinId || t.status === 'free') continue
+            animatedSkins.push({ skinId, color: t.ownerClanCrest ? resolveCrest(t.ownerClanCrest).primary : SOLO_OWNER_COLOR, tile: t.corners, clip: t.corners })
+          }
+        }
+        if (c2.placing) {
+          const ok = new Set(c2.placeable)
+          for (const t of territories) {
+            if (!ok.has(t.id)) continue
+            L.polygon(t.corners, { color: '#F0A93E', weight: 3.5, dashArray: '8 6', fill: true, fillColor: '#F0A93E', fillOpacity: 0.22, interactive: false, className: 'c2-placeable' }).addTo(markersLayer)
+          }
+        }
+        if (clanLayerRef.current) {
+          for (const m of c2.markers) {
+            const marker = L.marker([m.lat, m.lng], {
+              icon: L.divIcon({ className: 'c2-hq-wrap', html: m.html, iconSize: m.size, iconAnchor: m.anchor }),
+              zIndexOffset: 1200,
+              keyboard: false,
+            }).addTo(markersLayer)
+            marker.on('click', (e) => {
+              L.DomEvent.stopPropagation(e)
+              hapticTap()
+              c2.onMarker(m.id)
+            })
+          }
+        }
+      }
       // The week's hot sectors (at most two per city): a brand-orange outline
       // over everything, with a soft wider stroke under it for the glow. The
       // flame itself is in the sector's id label (see idLabelHtml); zoomed out
@@ -1096,7 +1135,7 @@ export const LeafletMap = forwardRef<
       if (!mapRef.current) return
       draw(territories)
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [territories, myTerritoryColor, selectedIds, pendingAddDrafts, skinAssetsVersion, zoomTick, clanLayer, plain])
+    }, [territories, myTerritoryColor, selectedIds, pendingAddDrafts, skinAssetsVersion, zoomTick, clanLayer, plain, clan2?.signature])
 
     const geoKey = geo ? `${geo.picked}|${geo.answer}|${geo.dim}|${geo.spot?.join(',')}` : null
     // Kept separate from the effect above — retargeting the highlight on

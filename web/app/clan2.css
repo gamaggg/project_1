@@ -390,3 +390,50 @@
 .c2-ruins-card strong{color:#B3261E; font-size:15px;}
 .c2-fall{margin:6px 0 0; padding-left:18px; display:grid; gap:4px; font-size:13.5px;}
 @media (prefers-reduced-motion: reduce){.c2-wave,.c2-glow,.c2-beam,.c2-flag,.c2-hqtower,.c2-smoke,.c2-zzz,.c2-bld.built,.c2-dust,.c2-spark,.c2-plot.sel .c2-plot-pad{animation:none;}}
+
+/* ───────── the clan update inside the real app ───────── */
+.clan-tabs.c2-scroll{overflow-x:auto; scrollbar-width:none; gap:2px;}
+.clan-tabs.c2-scroll::-webkit-scrollbar{display:none;}
+.clan-tabs.c2-scroll .clan-tab{flex:0 0 auto; padding:8px 14px; white-space:nowrap;}
+.c2-live-panel{padding-bottom:24px;}
+.c2-live-fabs{position:fixed; left:10px; top:46%; z-index:55; display:flex; flex-direction:column; gap:8px;}
+.c2-live-fab{position:relative; width:42px; height:42px; border-radius:50%; border:none; background:rgba(255,255,255,.96); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 10px rgba(23,24,27,.22); transition:transform .15s var(--ease-out);}
+.c2-live-fab:active{transform:scale(.92);}
+.c2-live-fab .c2-badge{position:absolute; top:-3px; right:-3px;}
+.c2-live-stack{position:fixed; left:12px; right:12px; bottom:calc(96px + env(safe-area-inset-bottom)); z-index:56; display:flex; flex-direction:column; gap:8px; pointer-events:none;}
+.c2-live-banner{pointer-events:auto; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 14px; border-radius:16px; background:rgba(23,24,27,.94); color:#fff; font-size:13.5px; font-weight:700; box-shadow:var(--shadow-lg);}
+.c2-live-banner button{flex:0 0 auto; border:none; border-radius:10px; padding:8px 12px; background:#fff; color:var(--ink); font:inherit; font-size:12.5px; font-weight:800; cursor:pointer;}
+.c2-live-banner.danger{background:#B3261E; animation:c2-pulse-bg 1.4s ease-in-out infinite;}
+@keyframes c2-pulse-bg{0%,100%{box-shadow:0 0 0 0 rgba(179,38,30,.5)}50%{box-shadow:0 0 0 8px rgba(179,38,30,0)}}
+.c2-live-note{margin:8px 0 0; padding:10px 12px; border-radius:12px; background:#FFF6DD; color:#7A5300; font-size:12.5px; line-height:1.4;}
+/* The headquarters as a marker of the real map (Leaflet places it; the stand-up crest is the same CSS 3D). */
+.c2-hq3d.c2-hq3d-map{position:relative; left:auto; top:auto; margin:0; pointer-events:auto; cursor:pointer;}
+.c2-ruins-marker{pointer-events:auto; cursor:pointer;}
+.c2-ruins-marker .c2-smoke{animation:c2-smoke 3s ease-out infinite;}
+.c2-sector-row{margin-top:8px;}
+.c2-sector-row button{width:100%; display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; border:none; background:#FFF1E8; color:#B33A00; font:inherit; font-size:13px; cursor:pointer;}
+.c2-sector-row button.place{justify-content:center; font-weight:800; background:#FFF1E8;}
+.c2-sector-row.hq button{background:#17181B; color:#fff;}
+.c2-sector-row.hq button b{font-weight:800;}
+.c2-sector-row.hq.siege button{background:#B3261E;}
+.c2-count{position:relative; display:inline-block;}
+.c2-count.bump{animation:c2-bump .5s var(--ease-out);}
+@keyframes c2-bump{0%{transform:scale(1)}35%{transform:scale(1.1)}100%{transform:scale(1)}}
+.c2-delta{position:absolute; left:100%; top:-4px; margin-left:8px; font-style:normal; font-size:14px; font-weight:800; white-space:nowrap; animation:c2-delta 1.4s ease-out both;}
+.c2-delta.up{color:var(--green);}
+.c2-delta.down{color:#B3261E;}
+@keyframes c2-delta{0%{opacity:0; transform:translateY(8px)}15%{opacity:1}100%{opacity:0; transform:translateY(-18px)}}
+.c2-chip-btn{border:none; cursor:pointer; font:inherit; font-size:12px; font-weight:800; transition:transform .15s var(--ease-out);}
+.c2-chip-btn:active{transform:scale(.96);}
+.c2-source-btn{display:block; width:100%; padding:6px 8px; margin:-6px -8px; border:none; border-radius:12px; background:none; font:inherit; text-align:left; cursor:pointer; transition:background .15s;}
+.c2-source-btn:hover{background:#F6F5F2;}
+.c2-source-btn:active{background:#EFEDE8;}
+.c2-rent-rows{list-style:none; margin:0; padding:0; display:grid; gap:2px; max-height:42vh; overflow:auto;}
+.c2-rent-rows li{display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:10px; font-size:13.5px;}
+.c2-rent-rows li b{min-width:58px;}
+.c2-rent-rows li span{flex:1; color:var(--ink-soft);}
+.c2-rent-rows li.hq{background:#17181B; color:#fff;}
+.c2-rent-rows li.hq span{color:rgba(255,255,255,.75);}
+.c2-rent-rows li.shared{background:#EAF4FF;}
+.c2-rent-rows li.plain:nth-child(odd){background:#F8F7F4;}
+.c2-goal-row{align-items:center;}

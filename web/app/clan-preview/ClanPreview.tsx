@@ -2,7 +2,7 @@
 
 import '../clan2.css'
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { C2Toast, C2ToastProvider, useC2, useDemoNow } from '@/components/clan2/C2Common'
+import { C2Toast, C2ToastProvider, useDemoNow } from '@/components/clan2/C2Common'
 import { ClanScreen2 } from '@/components/clan2/ClanScreen2'
 import type { MapFocus } from '@/components/clan2/HqTab'
 import { MapTab } from '@/components/clan2/MapTab'
@@ -11,29 +11,10 @@ import { C2Tour } from '@/components/clan2/C2Tour'
 import type { SubTab } from '@/components/clan2/ClanScreen2'
 import { ADMIN_TOUR, PLAYER_TOUR, type TourAudience, type TourStep } from '@/lib/clan2/tours'
 import { AdminTab } from '@/components/clan2/AdminTab'
-import {
-  advanceTime,
-  attackHq,
-  attackSector,
-  defendHq,
-  inClan,
-  leaderAway,
-  markTourSeen,
-  othersRsvp,
-  recruitCatch,
-  resetDemo,
-  setPersona,
-  settleWeek,
-  simulateCatch,
-  tick,
-  toggleHot,
-  useDemoState,
-} from '@/lib/clan2/demoStore'
-import { HOURS } from '@/lib/clan2/rules'
-import type { Persona } from '@/lib/clan2/types'
+import { bindDemo, inClan, markTourSeen, tick, useDemoState } from '@/lib/clan2/demoStore'
 import { currentLanguage, setCurrentLanguage, tn } from '@/lib/i18n/runtime'
 import type { Lang } from '@/lib/i18n/core'
-import { speciesName } from '@/components/clan2/C2Common'
+import { DemoPanel } from '@/components/clan2/DemoPanel'
 
 // The shell of the demo: a control panel on the left (who you are, the clock,
 // things that happen), a phone with the app on the right. On a phone-sized
@@ -46,6 +27,8 @@ export function ClanPreview() {
   // Rendered on the client only: the demo's world is read from localStorage.
   const ready = useSyncExternalStore(noop, () => true, () => false)
   if (!ready) return null
+  // The state of this page is the fictional clan's (the real app may have bound the store to a real one).
+  bindDemo()
   return (
     <C2ToastProvider>
       <Shell />
@@ -137,120 +120,5 @@ function Shell() {
         </div>
       </div>
     </div>
-  )
-}
-
-const PERSONAS: Persona[] = ['leader', 'member', 'solo', 'admin']
-const PERSONA_KEY = { leader: 'roleLeader', member: 'roleMember', solo: 'roleSolo', admin: 'roleAdmin' } as const
-
-function DemoPanel({ clock, lang, onLang, onTour }: { clock: string; lang: Lang; onLang: (l: Lang) => void; onTour: () => void }) {
-  const s = useDemoState()
-  const { act, say } = useC2()
-
-  const catchBy = (own: boolean) => {
-    const res = simulateCatch(own ? { memberId: s.myId } : {})
-    if (!res.ok || !res.summary) {
-      act(res)
-      return
-    }
-    const x = res.summary
-    const parts = [tn('clan2.demo.caught', { member: x.member, species: speciesName(x.species), cm: x.cm })]
-    if (x.tax > 0) parts.push(tn('clan2.demo.taxed', { n: x.tax }))
-    if (x.bounty > 0) parts.push(tn('clan2.demo.bountyDone', { n: x.bounty }))
-    if (x.record) parts.push(tn('clan2.demo.recordSet'))
-    say(parts.join(' · '))
-  }
-  const shift = (ms: number) => {
-    advanceTime(ms)
-    say(tn('clan2.demo.timeShift'))
-  }
-
-  return (
-    <aside className="c2-panel">
-      <h1>{tn('clan2.demo.title')}</h1>
-      <p className="c2-muted small">{tn('clan2.demo.note')}</p>
-
-      <h2>{tn('clan2.demo.lang')}</h2>
-      <div className="c2-seg">
-        {(['ru', 'en', 'ka'] as const).map((l) => (
-          <button key={l} className={lang === l ? 'on' : undefined} onClick={() => onLang(l)}>
-            {l.toUpperCase()}
-          </button>
-        ))}
-      </div>
-
-      <h2>{tn('clan2.demo.role')}</h2>
-      <div className="c2-seg c2-seg-wrap">
-        {PERSONAS.map((p) => (
-          <button key={p} className={s.persona === p ? 'on' : undefined} onClick={() => setPersona(p)}>
-            {tn(`clan2.demo.${PERSONA_KEY[p]}`)}
-          </button>
-        ))}
-      </div>
-
-      <h2>
-        {tn('clan2.demo.time')} · <span className="c2-clock">{clock}</span>
-      </h2>
-      <div className="c2-panel-row">
-        <button className="btn-secondary" onClick={() => shift(30 * 60_000)}>
-          {tn('clan2.demo.t30')}
-        </button>
-        <button className="btn-secondary" onClick={() => shift(2 * HOURS)}>
-          {tn('clan2.demo.t2h')}
-        </button>
-        <button className="btn-secondary" onClick={() => shift(24 * HOURS)}>
-          {tn('clan2.demo.t1d')}
-        </button>
-      </div>
-
-      <h2>{tn('clan2.demo.events')}</h2>
-      <div className="c2-panel-col">
-        <button className="btn-secondary" onClick={() => catchBy(false)}>
-          {tn('clan2.demo.evCatch')}
-        </button>
-        <button className="btn-secondary" onClick={() => catchBy(true)} disabled={s.persona === 'solo'}>
-          {tn('clan2.demo.evCatchMe')}
-        </button>
-        <button className="btn-secondary" onClick={() => (attackSector(), say(tn('clan2.demo.attackDone')))}>
-          {tn('clan2.demo.evAttackSector')}
-        </button>
-        <button className="btn-secondary" onClick={() => act(attackHq())}>
-          {tn('clan2.demo.evAttackHq')}
-        </button>
-        <button className="btn-secondary" onClick={() => act(defendHq())}>
-          {tn('clan2.demo.evDefendHq')}
-        </button>
-        <button className="btn-secondary" onClick={() => (settleWeek(), say(tn('clan2.demo.settled')))}>
-          {tn('clan2.demo.evSettle')}
-        </button>
-        <button className="btn-secondary" onClick={() => act(othersRsvp(3))}>
-          {tn('clan2.demo.evRsvp')}
-        </button>
-        <button className="btn-secondary" onClick={() => act(recruitCatch())}>
-          {tn('clan2.demo.evRecruit')}
-        </button>
-        <button className="btn-secondary" onClick={() => (toggleHot(s.sectors.find((x) => x.owner === 'mine' && x.hq !== 'mine')?.id ?? ''), say(tn('clan2.demo.hotDone')))}>
-          {tn('clan2.demo.evHot')}
-        </button>
-        <button className="btn-secondary" onClick={() => (leaderAway(), say(tn('clan2.demo.leaderGone')))}>
-          {tn('clan2.demo.evLeaderAway')}
-        </button>
-      </div>
-
-      <div className="c2-panel-row" style={{ marginTop: 14 }}>
-        <button className="btn-secondary" onClick={onTour}>
-          {tn('clan2.demo.tourAgain')}
-        </button>
-        <button
-          className="btn-secondary"
-          onClick={() => {
-            resetDemo()
-            say(tn('clan2.demo.resetDone'))
-          }}
-        >
-          {tn('clan2.demo.reset')}
-        </button>
-      </div>
-    </aside>
   )
 }

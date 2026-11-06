@@ -30,6 +30,9 @@ import { useI18n } from '@/lib/i18n'
 import { formatWeekdayTime } from '@/lib/i18n/format'
 import { useNow } from '@/lib/useNow'
 import { tn } from '@/lib/i18n'
+import { useClan2Map } from '@/components/clan2/live/overlay'
+import { Clan2SectorRow } from '@/components/clan2/live/SectorRow'
+import { useClan2Enabled } from '@/lib/clan2/live/flag'
 
 function statusBadge(status: Territory['status'], myTerritoryColor: string, myShare = false) {
   // myShare: a clan-mate's sector the viewer holds a part of.
@@ -139,6 +142,9 @@ export const MapScreen = forwardRef<
   const { t: tr, lang } = useI18n()
   // Казна only asks the server once there's something to earn from.
   const holdsSector = territories.some((s) => s.status === 'mine' || s.coHolders.some((h) => h.isMe))
+  // The clan update (only when switched on in this browser): the clan layer gets the HQ and skins, the personal Казна is gone.
+  const clan2On = useClan2Enabled()
+  const clan2 = useClan2Map(territories)
   const now = useNow()
   const { data: firstSteps } = useFirstSteps()
   const firstStepsShown = !!firstSteps && firstSteps.eligible && !firstSteps.claimed
@@ -151,6 +157,10 @@ export const MapScreen = forwardRef<
       return false
     }
   })
+  // Placing the HQ (or the first look with the clan update on) shows the clan layer: the headquarters stands on it.
+  useEffect(() => {
+    if (clan2?.placing) setClanLayer(true)
+  }, [clan2?.placing])
   function setLayer(on: boolean) {
     setClanLayer(on)
     try {
@@ -337,6 +347,12 @@ export const MapScreen = forwardRef<
       geo.onPick?.(id)
       return
     }
+    // Placing the clan headquarters: only a captured sector of the clan will do.
+    if (clan2?.placing) {
+      if (clan2.placeable.includes(id)) clan2.onPick(id)
+      else onToast?.(tn('clan2.err.hqNotMine'))
+      return
+    }
     if (selectedIds && selectedIds.size > 0) {
       // Active bulk-selection (super admin, long-press to start) — a plain
       // tap toggles the selection like before, no preview involved.
@@ -413,6 +429,7 @@ export const MapScreen = forwardRef<
           zoomShift={CITIES[city].zoomShift}
           highlightedId={highlightedSectorId}
           clanLayer={clanLayer}
+          clan2={clan2}
           geo={geo ? { picked: geo.picked, answer: geo.answer, spot: geo.spot, dim: geo.dim } : null}
         />
         {/* Map chrome, top: ONE panel on a single edge instead of pieces
@@ -423,7 +440,7 @@ export const MapScreen = forwardRef<
           <div className="map-hud-bar">
             {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, next/image's optimizer is overkill here */}
             <img src="/brand/logo_2.svg" alt="RANGE" className="map-hud-logo" />
-            <TreasuryChip enabled={holdsSector} onToast={(msg) => onToast?.(msg)} />
+            <TreasuryChip enabled={holdsSector && !clan2On} onToast={(msg) => onToast?.(msg)} />
             <HudBoosts />
             <div className="map-layer-switch" role="radiogroup" aria-label={tn('map.layerLabel')} ref={layerSwitchRef}>
               <span className="map-layer-thumb" ref={layerThumbRef} aria-hidden />
@@ -630,6 +647,7 @@ export const MapScreen = forwardRef<
                     </span>
                   )}
                 </div>
+                {clan2 && t.ownerClanId === clan2.clanId && <Clan2SectorRow id={t.id} />}
                 <button className="btn-primary" style={{ marginTop: 'auto' }} onClick={() => onOpenTerritory(t.id)}>
                   {tn('map.details')}
                 </button>

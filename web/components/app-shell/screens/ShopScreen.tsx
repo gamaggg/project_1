@@ -1,5 +1,6 @@
 'use client'
 
+import { useClan2Enabled } from '@/lib/clan2/live/flag'
 import { useState } from 'react'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
@@ -329,12 +330,14 @@ function BuffsSection({
   onRefundBuff?: (activeBuffId: number, name: string, price: number) => void
 }) {
   const { data: buffs = [] } = useBuffs()
+  // The clan update drops the personal «Двойные монеты» (lib/clan2/live/flag.ts).
+  const clan2On = useClan2Enabled()
   const { data: activeBuffs = [] } = useMyActiveBuffs()
   const { data: weekState } = useChallengeWeekState(city)
   const activateBuff = useActivateBuff()
   const buyExtraChallenge = useBuyExtraChallenge(city)
 
-  const shownBuffs = buffs.filter((b) => b.id !== 'shield' && b.id !== 'challenge_swap' && b.id !== 'extra_challenge')
+  const shownBuffs = buffs.filter((b) => b.id !== 'shield' && b.id !== 'challenge_swap' && b.id !== 'extra_challenge' && !(clan2On && b.id === 'double_coins'))
 
   return (
     <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 10 }}>
