@@ -1848,11 +1848,6 @@
    "en": "Clan hall of fame",
    "ka": "კლანის დიდების დარბაზი"
   },
-  "hint": {
-   "ru": "Самая крупная рыба каждого вида среди участников. Новый рекорд сам заменяет старый.",
-   "en": "The biggest fish of each species among the members. A new record replaces the old one by itself.",
-   "ka": "თითოეული სახეობის ყველაზე დიდი თევზი წევრებს შორის. ახალი რეკორდი თავად ანაცვლებს ძველს."
-  },
   "by": {
    "ru": "{name}, {date}",
    "en": "{name}, {date}",
@@ -1902,6 +1897,11 @@
    "ru": "Трофей",
    "en": "Trophy",
    "ka": "ტროფეი"
+  },
+  "hint": {
+   "ru": "Десять самых крупных рыб клана в его городе, по одной самой крупной каждого вида. Новый рекорд сам заменяет старый.",
+   "en": "The clan's ten biggest fish in its city, the biggest of each species. A new record replaces the old one by itself.",
+   "ka": "კლანის ათი ყველაზე დიდი თევზი მის ქალაქში, თითო ყველაზე დიდი თითოეული სახეობიდან. ახალი რეკორდი თავად ანაცვლებს ძველს."
   }
  },
  "members": {

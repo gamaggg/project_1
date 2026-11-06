@@ -409,7 +409,6 @@ export const clan2En = {
   },
   glory: {
     title: "Clan hall of fame",
-    hint: "The biggest fish of each species among the members. A new record replaces the old one by itself.",
     by: "{name}, {date}",
     shareTitle: "Clan card",
     shareHint: "A picture for a Telegram story: the crest, the level, the HQ and the records.",
@@ -420,6 +419,7 @@ export const clan2En = {
     cardNoHq: "No HQ",
     cardLeague: "League: {name}",
     top: "Trophy",
+    hint: "The clan's ten biggest fish in its city, the biggest of each species. A new record replaces the old one by itself.",
   },
   members: {
     title: "Members",

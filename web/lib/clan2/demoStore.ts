@@ -779,15 +779,11 @@ export function applyReal(r: RealClan, hueOf: (id: string) => number): Result {
     for (const m of d.members) {
       if (m.id in r.lastCatchMin) m.lastCatchMin = r.lastCatchMin[m.id]
     }
-    // The records: the real ones, and a bigger fish of the test bench stays if it is bigger.
-    const now = nowOf(d)
-    const merged = new Map(d.hall.map((h) => [h.species, h]))
-    for (const h of r.hall) {
-      const cur = merged.get(h.species)
-      if (!cur || h.cm >= cur.cm) merged.set(h.species, { species: h.species, member: h.member, cm: h.cm, kg: h.kg, at: h.at, hue: hueOf(h.userId), photo: h.photo })
-    }
-    d.hall = [...merged.values()].sort((a, b) => b.cm - a.cm)
-    void now
+    // The records: the real ones only (the clan's city, read fresh each time), so a record that no longer counts —
+    // another city's, or one saved by an older build — does not linger in the saved state.
+    d.hall = r.hall
+      .map((h) => ({ species: h.species, member: h.member, cm: h.cm, kg: h.kg, at: h.at, hue: hueOf(h.userId), photo: h.photo }))
+      .sort((a, b) => b.cm - a.cm)
   })
 }
 

@@ -2,6 +2,7 @@ import type { RealClan } from '@/lib/clan2/demoStore'
 import { RARE_COINS, weekStartOf } from '@/lib/clan2/rules'
 import type { ClanDetail } from '@/lib/data/types'
 import { createClient } from '@/lib/supabase/client'
+import { CITIES } from '@/lib/data/city'
 
 // What the clan's real catches say, read-only: this week's tallies for the weekly task, the records for the hall of
 // fame (the biggest fish of every species among the members' catches, ever), and who fished lately.
@@ -16,7 +17,8 @@ export async function fetchRealClan(clan: ClanDetail, now: number): Promise<Real
   const since = new Date(weekStartOf(now)).toISOString()
   const [recent, top, species] = await Promise.all([
     supabase.from('catches').select('user_id,species,length_cm,weight_kg,caught_at,territory_id').in('user_id', ids).gte('caught_at', since).limit(2000),
-    supabase.from('catches').select('user_id,species,length_cm,weight_kg,caught_at,territory_id,photo_url').in('user_id', ids).not('length_cm', 'is', null).order('length_cm', { ascending: false }).limit(600),
+    // The hall of fame counts only the clan's own city: catches on sectors of that city (sector ids start with its letter).
+    supabase.from('catches').select('user_id,species,length_cm,weight_kg,caught_at,territory_id,photo_url').in('user_id', ids).like('territory_id', `${CITIES[clan.city].idPrefix}%`).not('length_cm', 'is', null).order('length_cm', { ascending: false }).limit(600),
     supabase.from('species').select('key,coin_value'),
   ])
   if (recent.error || top.error) return null
