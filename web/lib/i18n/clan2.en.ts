@@ -140,7 +140,6 @@ export const clan2En = {
     taxHint: "A share of the coins for each fish goes to the treasury. The leader sets the rate, and every player sees it on each catch.",
     taxOff: "Off",
     taxPct: "{n} %",
-    taxExample: "A fish worth 100 coins: {n} to the treasury",
     deposit: "Deposit coins",
     depositTitle: "Deposit to the treasury",
     depositWallet: "{n} coins in your wallet",

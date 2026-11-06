@@ -647,11 +647,6 @@
    "en": "{n} %",
    "ka": "{n} %"
   },
-  "taxExample": {
-   "ru": "Рыба за 100 монет: в общак {n}",
-   "en": "A fish worth 100 coins: {n} to the treasury",
-   "ka": "100 მონეტიანი თევზი: ფონდში {n}"
-  },
   "deposit": {
    "ru": "Внести монеты",
    "en": "Deposit coins",

@@ -7,7 +7,7 @@ import { HowItWorks, NextStep, TreasureChest, type Go } from '@/components/clan2
 import { SkinSwatch } from '@/components/clan2/SkinSwatch'
 import { buyGoal, canManage, capOf, deposit, goalOf, rentPerDay, setGoal, setTaxRate, useDemoState } from '@/lib/clan2/demoStore'
 import { requestMap, setLiveUi } from '@/lib/clan2/live/ui'
-import { DAY, GOAL_CATALOG, TAX_RATES, fmt, isSpend, taxOf } from '@/lib/clan2/rules'
+import { DAY, GOAL_CATALOG, TAX_RATES, fmt, isSpend } from '@/lib/clan2/rules'
 import type { TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
 import { tn, tnd } from '@/lib/i18n/runtime'
 
@@ -164,7 +164,6 @@ export function TreasuryTab({ onGo }: { onGo?: (to: Go) => void } = {}) {
             </button>
           ))}
         </div>
-        {s.treasury.taxRate > 0 && <p className="c2-muted small">{tn('clan2.treasury.taxExample', { n: taxOf(100, s.treasury.taxRate) })}</p>}
       </C2Card>
 
       <C2Card title={tn('clan2.treasury.contribTitle')} hint={tn('clan2.treasury.contribNote')} tour="treasury-contrib">
