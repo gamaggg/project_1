@@ -419,7 +419,7 @@ export const clan2Ru = {
     cardHq: "Штаб: {id}",
     cardNoHq: "Штаба нет",
     cardLeague: "Лига: {name}",
-    top: "Самая тяжёлая",
+    top: "Трофей",
   },
   members: {
     title: "Участники",

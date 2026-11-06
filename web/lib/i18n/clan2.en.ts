@@ -419,7 +419,7 @@ export const clan2En = {
     cardHq: "HQ: {id}",
     cardNoHq: "No HQ",
     cardLeague: "League: {name}",
-    top: "The heaviest",
+    top: "Trophy",
   },
   members: {
     title: "Members",

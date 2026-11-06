@@ -419,7 +419,7 @@ export const clan2Ka = {
     cardHq: "შტაბი: {id}",
     cardNoHq: "შტაბი არ არის",
     cardLeague: "ლიგა: {name}",
-    top: "ყველაზე მძიმე",
+    top: "ტროფეი",
   },
   members: {
     title: "წევრები",
