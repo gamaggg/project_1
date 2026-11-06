@@ -325,7 +325,7 @@ export const clan2En = {
     q_sectors: "Catch fish in {n} different sectors",
   },
   hq: {
-    title: "Headquarters",
+    title: "HQ",
     none: "The clan has no headquarters",
     noneHint: "The HQ goes on a captured clan sector: the crest in volume on the map, double rent from the sector, and the buildings get their power. Costs {n} from the treasury.",
     where: "Sector {id}",
@@ -461,6 +461,7 @@ export const clan2En = {
     hint: "Tap a sector. The «Clans» layer shows HQs and skins.",
     hqCardRent: "The rent here is doubled: {n} coins a day",
     hqCardOpen: "Open the HQ",
+    hqRibbon: "HQ of the clan «{name}»",
   },
   profile: {
     wallet: "In your wallet",

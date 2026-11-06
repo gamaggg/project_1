@@ -18,7 +18,7 @@ export function Clan2SectorRow({ id }: { id: string }) {
     return (
       <div className={`c2-sector-row hq${s.hq.siege ? ' siege' : ''}`}>
         <button type="button" onClick={() => setLiveUi({ hqSheet: true })}>
-          <b>{tn('clan2.map.hqHere')}</b>
+          <b>{tn('clan2.map.hqCardOpen')}</b>
           <span>{s.hq.siege ? tn('clan2.hq.siegeLeft', { t: fmtLeft(s.hq.siege.endsAt - now) }) : tn('clan2.hq.defense', { n: Math.min(DEFENSE_MAX, sector.defense) })}</span>
         </button>
       </div>

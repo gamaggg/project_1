@@ -4,7 +4,7 @@ import { fmtLeft, useDemoNow } from '@/components/clan2/C2Common'
 import { useDemoState } from '@/lib/clan2/demoStore'
 import { resolveCrest } from '@/lib/data/clanCrests'
 import { hqBannerSvg } from '@/lib/clan2/live/hqMarker'
-import { setLiveUi } from '@/lib/clan2/live/ui'
+import { setLiveUi, useLiveUi } from '@/lib/clan2/live/ui'
 import { DEFENSE_MAX } from '@/lib/clan2/rules'
 import { tn } from '@/lib/i18n/runtime'
 
@@ -19,14 +19,15 @@ function useHq(id: string) {
 
 export function Clan2SectorHqRibbon({ id }: { id: string }) {
   const hq = useHq(id)
+  const { mapClanLayer } = useLiveUi()
   if (!hq) return null
   return (
-    <div className="c2-hq-ribbon" style={{ background: hq.color }}>
+    <div className={`c2-hq-ribbon${mapClanLayer ? ' clan' : ''}`} style={{ background: mapClanLayer ? hq.color : '#17181B' }}>
       <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true">
         <path d="M3 1.5v11" stroke="#fff" strokeWidth="1.7" strokeLinecap="round" />
         <path d="M3.6 2.2h7.2l-1.7 2.9 1.7 2.9H3.6z" fill="#fff" />
       </svg>
-      <b>{tn('clan2.map.hqHere')}</b>
+      <b>{tn('clan2.map.hqRibbon', { name: hq.s.clan.name })}</b>
     </div>
   )
 }
@@ -34,7 +35,9 @@ export function Clan2SectorHqRibbon({ id }: { id: string }) {
 export function Clan2SectorHqCard({ id, onOpenClan }: { id: string; onOpenClan: (clanId: number) => void }) {
   const hq = useHq(id)
   const now = useDemoNow()
-  if (!hq) return null
+  const { mapClanLayer } = useLiveUi()
+  // Opened from the «Игроки» layer the sector stays an ordinary one (with the tag over the map).
+  if (!hq || !mapClanLayer) return null
   const { s, sector, color } = hq
   const siege = s.hq.siege
   return (
@@ -42,7 +45,7 @@ export function Clan2SectorHqCard({ id, onOpenClan }: { id: string; onOpenClan: 
       <div className="c2-hq-card-top">
         <span className="c2-hq-card-banner" dangerouslySetInnerHTML={{ __html: hqBannerSvg(s.clan.crest, 34, 50) }} />
         <div className="c2-hq-card-text">
-          <b>{tn('clan2.map.hqHere')}</b>
+          <b>{tn('clan2.base.hq')}</b>
           <span className="c2-hq-card-name">{s.clan.name}</span>
         </div>
         <span className="c2-hq-card-state">{siege ? tn('clan2.hq.siegeLeft', { t: fmtLeft(siege.endsAt - now) }) : tn('clan2.hq.defense', { n: Math.min(DEFENSE_MAX, sector.defense) })}</span>

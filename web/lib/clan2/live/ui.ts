@@ -5,8 +5,8 @@ import { useSyncExternalStore } from 'react'
 // Small UI state shared between the real screens and the clan update layer:
 // «place the headquarters» mode on the map, and requests to open the map.
 
-export type LiveUi = { placing: boolean; toolsOpen: boolean; alertsOpen: boolean; hqSheet: boolean; confirmPlace: string | null; clanTab: string | null }
-let ui: LiveUi = { placing: false, toolsOpen: false, alertsOpen: false, hqSheet: false, confirmPlace: null, clanTab: null }
+export type LiveUi = { placing: boolean; toolsOpen: boolean; alertsOpen: boolean; hqSheet: boolean; confirmPlace: string | null; clanTab: string | null; mapClanLayer: boolean }
+let ui: LiveUi = { placing: false, toolsOpen: false, alertsOpen: false, hqSheet: false, confirmPlace: null, clanTab: null, mapClanLayer: false }
 const listeners = new Set<() => void>()
 
 export const getLiveUi = () => ui

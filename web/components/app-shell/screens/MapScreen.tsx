@@ -33,6 +33,7 @@ import { tn } from '@/lib/i18n'
 import { useClan2Map } from '@/components/clan2/live/overlay'
 import { Clan2SectorRow } from '@/components/clan2/live/SectorRow'
 import { useClan2Enabled } from '@/lib/clan2/live/flag'
+import { setLiveUi } from '@/lib/clan2/live/ui'
 
 function statusBadge(status: Territory['status'], myTerritoryColor: string, myShare = false) {
   // myShare: a clan-mate's sector the viewer holds a part of.
@@ -338,6 +339,10 @@ export const MapScreen = forwardRef<
   // so it can't double as "which sector is the map border highlighting"
   // for longer than that pulse lasts.
   const [highlightedSectorId, setHighlightedSectorId] = useState<string | null>(null)
+  // The sector screen of the headquarters looks different when it is opened from the «Кланы» layer.
+  useEffect(() => {
+    if (clan2On) setLiveUi({ mapClanLayer: clanLayer })
+  }, [clan2On, clanLayer])
   // A plain tap on a sector used to jump straight into its full screen — too
   // heavy for "just checking if there's fish there". It puts that sector on
   // the card at the bottom instead (id, holder, catches), and the card's own
@@ -429,7 +434,7 @@ export const MapScreen = forwardRef<
           zoomShift={CITIES[city].zoomShift}
           highlightedId={highlightedSectorId}
           clanLayer={clanLayer}
-          clan2={clan2}
+          clan2={clan2 ? { ...clan2, onMarker: handlePolygonSelect } : null}
           geo={geo ? { picked: geo.picked, answer: geo.answer, spot: geo.spot, dim: geo.dim } : null}
         />
         {/* Map chrome, top: ONE panel on a single edge instead of pieces

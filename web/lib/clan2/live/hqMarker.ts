@@ -63,10 +63,10 @@ export function ruinsMarkerHtml(label: string, tier: MarkerTier = 2): string {
 <path d="M22 9 q-5 -8 1 -14" fill="none" stroke="rgba(60,60,60,.5)" stroke-width="3.4" stroke-linecap="round" class="c2-smoke"/></svg></div>`
 }
 
-// The outline of the HQ sector on the map: the clan's own colour, lighter (the way a hot sector has its orange one).
+// The outline of the HQ sector on the map: the clan's own colour, darker (the way a hot sector has its orange one).
 export function hqOutlineColor(crest: unknown): string {
   const hex = resolveCrest(crest).primary.replace('#', '')
   const n = parseInt(hex.length === 3 ? hex.replace(/./g, '$&$&') : hex, 16)
-  const mix = (c: number) => Math.round(c + (255 - c) * 0.5)
+  const mix = (c: number) => Math.round(c * 0.55)
   return `rgb(${mix((n >> 16) & 255)}, ${mix((n >> 8) & 255)}, ${mix(n & 255)})`
 }
