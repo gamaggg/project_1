@@ -532,3 +532,9 @@
 .c2-intro-dots i.on{background:var(--accent); width:18px; border-radius:4px;}
 .c2-intro .c2-row-btns{width:100%;}
 @media (prefers-reduced-motion: reduce){.c2-spark-star,.c2-chest .c2-chest-lid{animation:none; transition:none;}}
+/* On a narrow window the app fills it, and so do the sheets and the bars over it (the 430 px column is for a wide screen). */
+@media (max-width: 600px){
+  .c2-sheet{max-width:none;}
+  .c2-live-stack{left:12px; right:12px; width:auto; transform:none;}
+  .c2-live-fabs{left:10px;}
+}
