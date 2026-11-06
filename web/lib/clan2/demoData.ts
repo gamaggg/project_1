@@ -152,6 +152,8 @@ export function initialDemoState(now: number = Date.now()): DemoState {
     owned: ['clan_tide'],
     equippedSkin: 'clan_tide',
     hall: HALL.map((h) => ({ ...h, at: now + h.at })),
+    // The sandbox's own latest catches of the clan (members of DEMO_MEMBERS).
+    recentCatches: DEMO_MEMBERS.slice(1, 5).map((m, i) => ({ species: ['stavrida', 'barabulya', 'lufar', 'skorpena'][i], member: m.name, userId: m.id, hue: m.hue, cm: [18, 15, 31, 22][i], at: now - [12, 40, 130, 600][i] * 60_000, sectorId: null })),
     recruit: [
       { name: 'Лео', state: 'caught', daysLeft: 0 },
       { name: 'Мариам', state: 'joined', daysLeft: 5 },

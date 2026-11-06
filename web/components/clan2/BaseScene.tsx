@@ -45,7 +45,7 @@ const PILL_DX: Partial<Record<ProjectId, number>> = { fort: 14, board: -22 }
 // The HQ's ground point (the foot of its plinth, on the front of the plaza) and the demo's place (a sea-side sector of
 // Batumi) when the clan is not bound to a real one.
 const HQ_AT = { x: 200, y: 200 }
-const DEMO_GEO: HqGeo = { id: 'B1031', lat: 41.653959, lng: 41.628128, widthDeg: 0.008332 }
+export const DEMO_GEO: HqGeo = { id: 'B1031', lat: 41.653959, lng: 41.628128, widthDeg: 0.008332 }
 
 // What a building gives at a level, as a phrase (level 0: nothing yet).
 export function effectText(id: ProjectId, level: ProjectLevel): string {

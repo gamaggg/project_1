@@ -42,11 +42,17 @@ import type { ClanDetail, ClanEvent, ClanMember } from '@/lib/data/types'
 import { tn, currentLocale } from '@/lib/i18n'
 import { labels } from '@/lib/i18n/runtime'
 
-type Tab = 'members' | 'chest' | 'race' | Clan2Section
+type Tab = 'members' | 'chest' | 'race' | 'people' | Clan2Section
+// «Люди» with the clan update on: the members, the hall of fame, the battle and the chest under one tab.
+type PeopleSub = 'members' | 'glory' | 'race' | 'chest'
 
 // The clan update's sections (Общак, Выход, …) — only when it is switched on for this browser (lib/clan2/live/flag.ts).
 const Clan2Panel = dynamic(() => import('@/components/clan2/live/Clan2Panel').then((m) => m.Clan2Panel), { ssr: false })
-const CLAN2_TABS = ['treasury', 'exit', 'week', 'hq', 'glory'] as const
+// With the clan update on the screen has four tabs: the hub «Клан», «Общак», «База» (the HQ and its base) and «Люди».
+const CLAN2_TABS = ['hub', 'treasury', 'hq', 'people'] as const
+const CLAN2_TAB_LABEL: Record<(typeof CLAN2_TABS)[number], string> = { hub: 'clan2.sub.hub', treasury: 'clan2.sub.treasury', hq: 'clan2.sub.base', people: 'clan2.sub.people' }
+// Older requests for a section that now lives elsewhere (the outing and the week are on the hub, the hall in «Люди»).
+const CLAN2_TAB_OF: Record<string, Tab> = { exit: 'hub', week: 'hub', glory: 'people', members: 'people' }
 
 function RoleIcon({ role }: { role: ClanRole }) {
   if (role === 'member') return null
@@ -218,7 +224,9 @@ export function ClanScreen({
   const c2 = clan2On && isMember && !!clan && demo.live?.clanId === clan.id
   const c2Admin = c2 && demo.persona === 'admin'
   // With the clan update on, the screen opens on its first section («Штаб» on the map asks for its own).
-  const tab: Tab = tabPicked ?? (c2 ? ((liveUi.clanTab as Tab | null) ?? 'treasury') : 'members')
+  const asked = liveUi.clanTab ? (CLAN2_TAB_OF[liveUi.clanTab] ?? (liveUi.clanTab as Tab)) : null
+  const tab: Tab = tabPicked ?? (c2 ? (asked ?? 'hub') : 'members')
+  const [peopleSub, setPeopleSub] = useState<PeopleSub>('members')
   function setTab(next: Tab) {
     setTabPicked(next)
     if (liveUi.clanTab) setLiveUi({ clanTab: null })
@@ -229,7 +237,8 @@ export function ClanScreen({
     return subscribeLiveUi(() => {
       const wanted = getLiveUi().clanTab
       if (wanted) {
-        setTabPicked(wanted as Tab)
+        setTabPicked(CLAN2_TAB_OF[wanted] ?? (wanted as Tab))
+        if (wanted === 'glory') setPeopleSub('glory')
         setLiveUi({ clanTab: null })
       }
     })
@@ -524,7 +533,7 @@ export function ClanScreen({
           {c2 &&
             CLAN2_TABS.map((id) => (
               <button key={id} className={`clan-tab${tab === id ? ' on' : ''}`} onClick={() => setTab(id)}>
-                {tn(`clan2.sub.${id}`)}
+                {tn(CLAN2_TAB_LABEL[id] as Parameters<typeof tn>[0])}
               </button>
             ))}
           {c2Admin && (
@@ -532,18 +541,32 @@ export function ClanScreen({
               {tn('clan2.tab.admin')}
             </button>
           )}
-          <button className={`clan-tab${tab === 'members' ? ' on' : ''}`} onClick={() => setTab('members')}>
-            {tn('guest.members')}
-          </button>
-          <button className={`clan-tab${tab === 'race' ? ' on' : ''}`} onClick={() => setTab('race')}>
-            {tn('clan.tabRace')}
-          </button>
-          <button className={`clan-tab${tab === 'chest' ? ' on' : ''}`} onClick={() => setTab('chest')}>
-            {tn('clan.tabChest')}
-          </button>
+          {!c2 && (
+            <>
+              <button className={`clan-tab${tab === 'members' ? ' on' : ''}`} onClick={() => setTab('members')}>
+                {tn('guest.members')}
+              </button>
+              <button className={`clan-tab${tab === 'race' ? ' on' : ''}`} onClick={() => setTab('race')}>
+                {tn('clan.tabRace')}
+              </button>
+              <button className={`clan-tab${tab === 'chest' ? ' on' : ''}`} onClick={() => setTab('chest')}>
+                {tn('clan.tabChest')}
+              </button>
+            </>
+          )}
         </div>
 
-        {tab === 'members' && (
+        {c2 && tab === 'people' && (
+          <div className="c2-seg c2-people-seg" role="tablist">
+            {(['members', 'glory', 'race', 'chest'] as const).map((p) => (
+              <button key={p} role="tab" aria-selected={peopleSub === p} className={peopleSub === p ? 'on' : undefined} onClick={() => setPeopleSub(p)}>
+                {p === 'members' ? tn('guest.members') : p === 'glory' ? tn('clan2.sub.glory') : p === 'race' ? tn('clan2.sub.race') : tn('clan.tabChest')}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {(tab === 'members' || (tab === 'people' && peopleSub === 'members')) && (
           <div className="clan-tab-body" key="members">
             {clan.announcement && (
               <div className="clan-announcement">
@@ -663,9 +686,10 @@ export function ClanScreen({
           </div>
         )}
 
-        {c2 && ((CLAN2_TABS as readonly string[]).includes(tab) || (tab === 'admin' && c2Admin)) && <Clan2Panel key={tab} section={tab as Clan2Section} />}
-        {tab === 'race' && <ClanRacePreview key="race" city={clan.city} clanId={clan.id} onOpenRace={onOpenRace} />}
-        {tab === 'chest' && <ClanChestPanel key="chest" clanId={clan.id} isMember={isMember} />}
+        {c2 && (tab === 'hub' || tab === 'treasury' || tab === 'hq' || (tab === 'admin' && c2Admin)) && <Clan2Panel key={tab} section={tab as Clan2Section} />}
+        {c2 && tab === 'people' && peopleSub === 'glory' && <Clan2Panel key="glory" section="glory" />}
+        {(tab === 'race' || (tab === 'people' && peopleSub === 'race')) && <ClanRacePreview key="race" city={clan.city} clanId={clan.id} onOpenRace={onOpenRace} />}
+        {(tab === 'chest' || (tab === 'people' && peopleSub === 'chest')) && <ClanChestPanel key="chest" clanId={clan.id} isMember={isMember} />}
 
         {isSuperAdmin && !clan.disbanded && (
           <div className="clan-card clan-admin">

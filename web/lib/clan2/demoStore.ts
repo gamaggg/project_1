@@ -715,6 +715,8 @@ export function simulateCatch(opts: { memberId?: string; species?: string } = {}
       if (rec) Object.assign(rec, entry)
       else d.hall.push(entry)
     }
+    // The hub's feed of the clan's catches.
+    d.recentCatches = [{ species: sp.key, member: member.name, userId: member.id, hue: member.hue, cm, at: nowOf(d), sectorId: sector.id }, ...(d.recentCatches ?? [])].slice(0, 8)
     d.clan.xp += 2
     d.clan.level = clanLevel(d.clan.xp)
     summary = { member: member.name, species: sp.key, cm, coins, tax: taken, hot: sector.hot, buff: buffOn, record }
@@ -767,6 +769,7 @@ export type RealClan = {
   sectors: number
   lastCatchMin: Record<string, number | null>
   hall: { species: string; member: string; userId: string; cm: number | null; kg: number | null; at: number; photo: string | null }[]
+  recent: { species: string; member: string; userId: string; cm: number | null; at: number; sectorId: string | null; photo: string | null }[]
 }
 
 export function applyReal(r: RealClan, hueOf: (id: string) => number): Result {
@@ -781,6 +784,7 @@ export function applyReal(r: RealClan, hueOf: (id: string) => number): Result {
     }
     // The records: the real ones only (the clan's city, read fresh each time), so a record that no longer counts —
     // another city's, or one saved by an older build — does not linger in the saved state.
+    d.recentCatches = r.recent.map((c) => ({ ...c, hue: hueOf(c.userId) }))
     d.hall = r.hall
       .map((h) => ({ species: h.species, member: h.member, cm: h.cm, kg: h.kg, at: h.at, hue: hueOf(h.userId), photo: h.photo }))
       .sort((a, b) => (b.cm ?? -1) - (a.cm ?? -1))
