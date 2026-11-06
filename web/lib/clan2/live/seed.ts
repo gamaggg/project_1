@@ -16,7 +16,7 @@ export type LiveInput = {
   territories: Territory[]
 }
 
-export const liveKey = (userId: string, clanId: number) => `range:clan2-live:v3:${userId}:${clanId}`
+export const liveKey = (userId: string, clanId: number) => `range:clan2-live:v4:${userId}:${clanId}`
 
 export const hueOf = (id: string) => {
   let h = 0
@@ -88,10 +88,7 @@ export function buildLiveState(input: LiveInput, now: number = Date.now()): Demo
     owned: [],
     equippedSkin: null,
     hall: [],
-    recruit: [
-      { name: 'Leo', state: 'joined', daysLeft: 5 },
-      { name: 'Mariam', state: 'invited', daysLeft: 6 },
-    ],
+    recruit: [],
     sectors: liveSectors(clan.id, territories, now),
     settings: { ...DEFAULT_SETTINGS },
     toursSeen: { player: false, admin: true },

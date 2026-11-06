@@ -630,7 +630,12 @@ export function leaderAway(): Result {
 
 export function recruitCatch(): Result {
   return mutate((d) => {
-    const r = d.recruit.find((x) => x.state === 'caught') ?? d.recruit.find((x) => x.state === 'joined')
+    let r = d.recruit.find((x) => x.state === 'caught') ?? d.recruit.find((x) => x.state === 'joined')
+    // Live mode has no made-up newcomers: the test bench invites one on demand.
+    if (!r && d.live) {
+      r = { name: 'Новичок', state: 'joined', daysLeft: 5 }
+      d.recruit.push(r)
+    }
     if (!r) return no('recruitNone')
     if (r.state === 'joined') {
       r.state = 'caught'
