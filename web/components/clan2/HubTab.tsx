@@ -23,15 +23,70 @@ import { previewStaticUrl } from '@/lib/mapbox/rasterTiles'
 
 type Go = 'treasury' | 'hq' | 'people'
 
-// Where the boats sit on the water band: x and y in % of the band, in the order the members are shown.
-// Kept clear of the pier in the middle of the shore.
+// Where the boats sit on the water: x and y (the top of the avatar) in % of the band, in the order the members are
+// shown. Two rows on the sea below the horizon; the second row keeps clear of the pier on the left.
 const BOATS: [number, number][] = [
-  [5, 30],
-  [58, 28],
-  [22, 64],
-  [68, 64],
-  [33, 32],
+  [5, 36],
+  [38, 36],
+  [71, 36],
+  [46, 67],
+  [77, 67],
 ]
+
+// The scene behind the boats: sky, the horizon, the sea, a sandy shore and a wooden pier on posts (side view).
+function WaterScene() {
+  return (
+    <svg className="c2-water-scene" viewBox="0 0 400 196" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="c2w-sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#EEF5FB" />
+          <stop offset="1" stopColor="#DCEAF5" />
+        </linearGradient>
+        <linearGradient id="c2w-sea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#B9D8EE" />
+          <stop offset="1" stopColor="#86B9DD" />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="68" fill="url(#c2w-sky)" />
+      <rect y="66" width="400" height="130" fill="url(#c2w-sea)" />
+      <path d="M0 66.5 H400" stroke="#fff" strokeOpacity=".85" strokeWidth="1.6" />
+      <path d="M0 70 H400" stroke="#fff" strokeOpacity=".3" strokeWidth="3" />
+      <g stroke="#fff" strokeOpacity=".55" strokeWidth="1.4" strokeLinecap="round" fill="none">
+        <path d="M168 96 q 7 -3 14 0" />
+        <path d="M262 112 q 8 -3 16 0" />
+        <path d="M206 150 q 7 -3 14 0" />
+        <path d="M330 168 q 8 -3 16 0" />
+        <path d="M120 120 q 6 -3 12 0" />
+      </g>
+      <path d="M0 150 C 34 144 64 150 92 166 L 118 196 H 0 Z" fill="#E7DABB" />
+      <path d="M0 150 C 34 144 64 150 92 166 L 118 196" fill="none" stroke="#D2C097" strokeWidth="2" />
+      <g>
+        {[30, 66, 102, 138].map((x) => (
+          <g key={x}>
+            <rect x={x - 2.5} y="152" width="5" height="26" rx="1.5" fill="#6F4A24" />
+            <ellipse cx={x} cy="178" rx="8" ry="2" fill="#fff" opacity={x > 80 ? 0.6 : 0} />
+          </g>
+        ))}
+        <rect x="14" y="145" width="132" height="8" rx="2" fill="#A06E3B" />
+        <rect x="14" y="145" width="132" height="2.5" rx="1.2" fill="#C99A5F" />
+        {[30, 48, 66, 84, 102, 120].map((x) => (
+          <rect key={x} x={x} y="145" width="1" height="8" fill="#6F4A24" opacity=".45" />
+        ))}
+      </g>
+    </svg>
+  )
+}
+
+// A small hull under a member's avatar, sitting on the water.
+function Hull() {
+  return (
+    <svg className="c2-boat-hull" viewBox="0 0 40 12" aria-hidden="true">
+      <ellipse cx="20" cy="10.5" rx="18" ry="1.6" fill="#fff" opacity=".6" />
+      <path d="M2 2 H38 L32 9.5 H8 Z" fill="#fff" stroke="#163C58" strokeOpacity=".35" strokeWidth="1.2" strokeLinejoin="round" />
+      <path d="M5 4.5 H35" stroke="#FC5200" strokeWidth="1.4" />
+    </svg>
+  )
+}
 
 // «12 мин», «3 ч», «2 дн.»: the boats' labels are short.
 function shortAgo(min: number): string {
@@ -122,9 +177,7 @@ export function HubTab({ onGo, onOpenSector }: { onGo: (to: Go) => void; onOpenS
 
       {/* On the water today: the clan's living part, at the top. */}
       <section className="c2-water" aria-label={tn('clan2.hub.water')}>
-        <span className="c2-water-wave" style={{ left: '8%', top: '58%', width: 52 }} />
-        <span className="c2-water-wave" style={{ left: '64%', top: '36%', width: 40 }} />
-        <span className="c2-water-wave" style={{ left: '34%', top: '86%', width: 36 }} />
+        <WaterScene />
         <div className="c2-water-head">
           <b>{tn('clan2.hub.water')}</b>
           <span>{tn('clan2.hub.waterCount', { a: fishers.length, b: s.members.length })}</span>
@@ -137,17 +190,13 @@ export function HubTab({ onGo, onOpenSector }: { onGo: (to: Go) => void; onOpenS
             return (
               <div key={m.id} className="c2-boat" style={{ left: `${BOATS[i][0]}%`, top: `${BOATS[i][1]}%`, animationDelay: `${i * -1.3}s` }}>
                 <C2Avatar member={m} size={30} />
-                <span>
-                  {last ? `${speciesName(last.species)} · ` : ''}
-                  {shortAgo(ago)}
-                </span>
+                <Hull />
+                <span title={last ? speciesName(last.species) : undefined}>{shortAgo(ago)}</span>
               </div>
             )
           })
         )}
         {fishers.length > BOATS.length && <span className="c2-water-more">+{fishers.length - BOATS.length}</span>}
-        <span className="c2-water-shore" aria-hidden="true" />
-        <span className="c2-water-pier" aria-hidden="true" />
       </section>
 
       {/* The outing: the one big action of the screen. */}
@@ -191,7 +240,7 @@ export function HubTab({ onGo, onOpenSector }: { onGo: (to: Go) => void; onOpenS
             )}
           </>
         )}
-        <button type="button" className="c2-link c2-hub-more" onClick={() => setSheet('exit')}>
+        <button type="button" className="c2-hub-more" onClick={() => setSheet('exit')}>
           {tn('clan2.hub.more')}
         </button>
       </section>
@@ -210,7 +259,7 @@ export function HubTab({ onGo, onOpenSector }: { onGo: (to: Go) => void; onOpenS
           <b>
             {Math.round(Math.min(q.progress, q.target) * 10) / 10}/{q.target}
           </b>
-          <span className="c2-hub-bar" aria-hidden="true">
+          <span className={`c2-hub-bar ${qDone || q.claimed ? 'good' : 'ink'}`} aria-hidden="true">
             <span style={{ width: `${Math.min(100, (q.progress / q.target) * 100)}%` }} />
           </span>
           <i>{q.claimed ? tn('clan2.hub.tWeekClaimed') : qDone ? tn('clan2.hub.tWeekDone') : tn('clan2.hub.tWeekLeft', { n: Math.ceil((q.target - q.progress) * 10) / 10 })}</i>

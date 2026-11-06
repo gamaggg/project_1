@@ -675,17 +675,16 @@
 .c2-hub-alert-go{flex:none; border:0; background:rgba(255,255,255,.75); color:inherit; font:inherit; font-weight:800; font-size:12.5px; padding:7px 11px; border-radius:999px; cursor:pointer;}
 .c2-hub-alert-go:focus-visible{outline:2px solid currentColor; outline-offset:2px;}
 
-.c2-water{position:relative; height:172px; border-radius:22px; overflow:hidden; background:linear-gradient(180deg,#E6F1F9 0%,#CFE3F2 52%,#A4C9E5 100%); box-shadow:inset 0 0 0 1px rgba(23,24,27,.05);}
+.c2-water{position:relative; height:196px; border-radius:22px; overflow:hidden; background:#B9D8EE; box-shadow:inset 0 0 0 1px rgba(23,24,27,.05);}
+.c2-water-scene{position:absolute; inset:0; width:100%; height:100%; display:block;}
 .c2-water-head{position:absolute; left:14px; right:14px; top:11px; display:flex; justify-content:space-between; align-items:baseline; z-index:2;}
-.c2-water-head b{font-size:11.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:#24506F;}
+.c2-water-head b{font-size:15px; font-weight:800; color:#163C58;}
 .c2-water-head span{font-family:var(--font-display),'Oswald',sans-serif; font-weight:700; font-size:21px; color:#163C58; font-variant-numeric:tabular-nums;}
 .c2-water-empty{position:absolute; left:16px; right:16px; top:44%; margin:0; text-align:center; font-weight:700; font-size:13.5px; color:#24506F; z-index:2;}
-.c2-water-wave{position:absolute; height:2px; border-radius:2px; background:rgba(255,255,255,.75);}
-.c2-water-shore{position:absolute; left:0; right:0; bottom:0; height:30px; background:#EADFC6; border-radius:60% 40% 0 0 / 30px 26px 0 0;}
-.c2-water-pier{position:absolute; left:43%; bottom:12px; width:15%; height:58px; border-radius:4px 4px 0 0; background:repeating-linear-gradient(90deg,#A06E3B 0 6px,#8A5C2E 6px 7px); box-shadow:0 3px 0 #6F4A24;}
-.c2-boat{position:absolute; z-index:1; display:flex; flex-direction:column; align-items:center; gap:3px; animation:c2-boat-bob 4.6s ease-in-out infinite;}
+.c2-boat{position:absolute; z-index:1; display:flex; flex-direction:column; align-items:center; gap:0; animation:c2-boat-bob 4.6s ease-in-out infinite;}
+.c2-boat-hull{display:block; width:40px; height:12px; margin-top:-3px;}
 .c2-boat .c2-avatar{box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(22,60,88,.25);}
-.c2-boat > span:last-child{max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10.5px; font-weight:800; color:#163C58; background:rgba(255,255,255,.9); padding:1px 7px; border-radius:999px;}
+.c2-boat > span:last-child{margin-top:3px; white-space:nowrap; font-size:10.5px; font-weight:800; color:#163C58; background:rgba(255,255,255,.9); padding:1px 7px; border-radius:999px;}
 @keyframes c2-boat-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 
 .c2-hub-block{display:flex; flex-direction:column; gap:8px; padding:14px; border-radius:20px; background:#fff; box-shadow:0 0 0 1px rgba(23,24,27,.06), 0 6px 18px -14px rgba(23,24,27,.3); border:0; font:inherit; color:inherit; text-align:left;}
@@ -694,13 +693,13 @@
 .c2-hub-bt span{font-size:12px; font-weight:800; color:#B33A00; white-space:nowrap;}
 .c2-hub-sub{margin:0; font-size:13px; color:var(--ink-soft,#5B6475);}
 .c2-hub-exit .btn-primary, .c2-hub-exit .btn-secondary{margin-top:2px;}
-.c2-hub-more{align-self:center; font-size:12.5px;}
+.c2-hub-more{align-self:center; border:0; background:none; padding:4px 8px; font:inherit; font-size:13px; font-weight:800; color:var(--ink,#17181B); text-decoration:underline; text-decoration-color:rgba(23,24,27,.25); text-underline-offset:3px; cursor:pointer;}
 
 .c2-hub-tiles{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px;}
 .c2-hub-tile{display:flex; flex-direction:column; gap:4px; min-width:0; padding:11px 10px; border-radius:18px; border:0; background:#fff; box-shadow:0 0 0 1px rgba(23,24,27,.06), 0 6px 18px -14px rgba(23,24,27,.3); font:inherit; color:inherit; text-align:left; cursor:pointer; transition:transform .15s var(--ease-out,ease-out);}
 .c2-hub-tile:active{transform:scale(.97);}
 .c2-hub-tile:focus-visible, .c2-hub-base:focus-visible{outline:2px solid var(--ink,#17181B); outline-offset:2px;}
-.c2-hub-tile small{font-size:10.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft,#5B6475);}
+.c2-hub-tile small{font-size:12.5px; font-weight:700; color:var(--ink-soft,#5B6475);}
 .c2-hub-tile b{font-family:var(--font-display),'Oswald',sans-serif; font-weight:700; font-size:21px; line-height:1.05; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .c2-hub-tile b .c2-coins{font:inherit; gap:4px;}
 .c2-hub-tile i{font-style:normal; font-size:11.5px; line-height:1.25; color:var(--ink-soft,#5B6475);}
@@ -730,4 +729,6 @@
 .c2-hub-base-hex img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
 .c2-hub-bar.good > span{background:#1F9D55;}
 .c2-hub-bar.warn > span{background:#E8A21A;}
-.c2-water-more{position:absolute; right:14px; bottom:38px; z-index:2; font-size:12px; font-weight:800; color:#163C58; background:rgba(255,255,255,.9); padding:3px 9px; border-radius:999px;}
+.c2-water-more{position:absolute; right:14px; top:40px; z-index:2; font-size:12px; font-weight:800; color:#163C58; background:rgba(255,255,255,.9); padding:3px 9px; border-radius:999px;}
+
+.c2-hub-bar.ink > span{background:var(--ink,#17181B);}
