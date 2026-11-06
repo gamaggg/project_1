@@ -571,7 +571,6 @@
 .c2-plot-svg{position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none;}
 .c2-plot-pad{fill:rgba(255,255,255,.86); stroke:rgba(23,24,27,.16); stroke-width:1.4; filter:drop-shadow(0 3px 4px rgba(23,24,27,.18)); transition:fill .2s, stroke .2s;}
 .c2-plot:hover .c2-plot-pad{fill:#fff;}
-.c2-plot.ready .c2-plot-pad{stroke:#FC5200; stroke-opacity:.7;}
 .c2-plot.sel .c2-plot-pad{fill:#FFF1E8; stroke:#FC5200; stroke-width:2.2; stroke-dasharray:5 4; stroke-opacity:1; animation:c2-pad-spin 6s linear infinite;}
 .c2-plot:focus-visible .c2-plot-pad{stroke:#17181B; stroke-width:2.4;}
 .c2-plot-lift{transform-box:fill-box; transform-origin:50% 100%; transition:transform .28s cubic-bezier(.23,1,.32,1);}
@@ -589,8 +588,9 @@
 .c2-plot-bar{position:absolute; left:18%; right:18%; top:97%; height:5px; border-radius:3px; background:rgba(23,24,27,.22); overflow:hidden; pointer-events:none;}
 .c2-plot-bar i{display:block; height:100%; border-radius:3px; background:#FC5200; transition:width 1s linear;}
 .c2-plot-badge{position:absolute; left:68%; top:50%; min-width:22px; height:22px; padding:0 5px; border-radius:11px; background:#FC5200; color:#fff; font:800 13px/22px system-ui,-apple-system,sans-serif; text-align:center; box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(252,82,0,.45); pointer-events:none;}
-.c2-plot-badge.lock{background:#6B7280; box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(23,24,27,.25); font-size:11.5px;}
-.c2-plot-badge.go{animation:c2-badge-hop 1.15s ease-in-out infinite;}
+.c2-plot-badge.off{background:#A3A9B4; box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(23,24,27,.2);}
+.c2-plot-badge.lv{background:#17181B; box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(23,24,27,.28); font-size:12px;}
+.c2-plot-badge.max{background:#F0B53E; color:#5A3A00; box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(176,122,16,.4); font-size:12px;}
 @keyframes c2-badge-hop{0%,100%{transform:translateY(0)}45%{transform:translateY(-5px)}}
 .c2-zzz-html{position:absolute; left:68%; top:4%; font:800 10px system-ui,sans-serif; color:#5B6475; animation:c2-zzz 2.4s ease-in-out infinite; pointer-events:none;}
 .c2-base-hq{position:absolute; width:14.5%; aspect-ratio:84/124; transform:translate(-50%,-92%); padding:0; border:0; background:none; cursor:pointer; z-index:3; -webkit-tap-highlight-color:transparent; outline:none;}
@@ -628,6 +628,6 @@
 .c2-ladder li.done .c2-ladder-text b{color:#0E6B47;}
 .c2-ladder li.next .c2-ladder-text b{color:#B33A00;}
 .c2-ladder-cost{font-size:12.5px;}
-@media (prefers-reduced-motion: reduce){.c2-plot.sel .c2-plot-pad,.c2-plot-lift.pop,.c2-plot-badge.go,.c2-base-hq .c2-base-hq-art,.c2-bld-herolift,.c2-ladder li.next .c2-ladder-dot,.c2-zzz-html{animation:none;}}
+@media (prefers-reduced-motion: reduce){.c2-plot.sel .c2-plot-pad,.c2-plot-lift.pop,.c2-base-hq .c2-base-hq-art,.c2-bld-herolift,.c2-ladder li.next .c2-ladder-dot,.c2-zzz-html{animation:none;}}
 
 .c2-base-hex{aspect-ratio:470/400; border-radius:24px; overflow:hidden; filter:none; box-shadow:0 0 0 1px rgba(23,24,27,.08), 0 10px 22px -12px rgba(23,24,27,.3);}

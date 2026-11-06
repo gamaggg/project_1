@@ -31,15 +31,16 @@ const MAP_ZOOM_OUT = 1.7
 const HEX = '100,0 300,0 400,173.2 300,346.4 100,346.4 0,173.2'
 // The plots: where each building's ground point stands. Clockwise from the top left; the tall lighthouse has the top.
 const SPOTS: Record<ProjectId, { x: number; y: number }> = {
-  beacon: { x: 134, y: 126 },
-  market: { x: 268, y: 126 },
-  board: { x: 298, y: 214 },
-  storage: { x: 266, y: 286 },
-  dock: { x: 134, y: 286 },
-  fort: { x: 102, y: 214 },
+  beacon: { x: 122, y: 104 },
+  market: { x: 278, y: 104 },
+  board: { x: 324, y: 188 },
+  storage: { x: 260, y: 274 },
+  dock: { x: 140, y: 274 },
+  fort: { x: 76, y: 188 },
 }
+// Every plot stands in the part of the hexagon that looks at one of its corners, the HQ in the middle.
 // The HQ's ground point and the demo's place (a sea-side sector of Batumi) when the clan is not bound to a real one.
-const HQ_AT = { x: 200, y: 214 }
+const HQ_AT = { x: 200, y: 188 }
 const DEMO_GEO: HqGeo = { id: 'B1031', lat: 41.653959, lng: 41.628128, widthDeg: 0.008332 }
 
 // What a building gives at a level, as a phrase (level 0: nothing yet).
@@ -160,7 +161,7 @@ export function BaseScene() {
             {PROJECT_IDS.map((id) => (
               <path key={`d${id}`} d={`M ${HQ_AT.x} ${HQ_AT.y - 10} L ${SPOTS[id].x} ${SPOTS[id].y}`} stroke={outline} strokeWidth={1.4} strokeDasharray="1 6" strokeLinecap="round" opacity={0.55} />
             ))}
-            <ellipse cx={HQ_AT.x} cy={HQ_AT.y - 6} rx={52} ry={34} fill="url(#c2b-plaza)" stroke={outline} strokeOpacity={0.4} strokeWidth={1.6} />
+            <ellipse cx={HQ_AT.x} cy={HQ_AT.y - 6} rx={50} ry={30} fill="url(#c2b-plaza)" stroke={outline} strokeOpacity={0.4} strokeWidth={1.6} />
 
           </g>
           {/* The sector's outline, as on the game map: the clan's colour, darker. */}
@@ -212,8 +213,9 @@ export function BaseScene() {
               onClick={() => choose(id)}
             >
               <svg className="c2-plot-svg" viewBox={ART_VB} overflow="visible" aria-hidden="true">
-                <ellipse cx={0} cy={5} rx={44} ry={13} className="c2-plot-pad" />
+                <ellipse cx={0} cy={5} rx={38} ry={11} className="c2-plot-pad" />
                 <g key={pop?.id === id ? pop.n : 0} className={`c2-plot-lift${pop?.id === id ? ' pop' : ''}`}>
+                  <g transform="scale(.82)">
                   {lv === 0 ? (
                     <g className={`c2-ghost${locked ? ' locked' : ''}`}>
                       <Art level={1} p={crest.primary} s={crest.secondary} />
@@ -232,6 +234,7 @@ export function BaseScene() {
                       </g>
                     </g>
                   )}
+                  </g>
                 </g>
                 {built?.id === id && (
                   <g className="c2-fx" key={built.n}>
@@ -242,19 +245,13 @@ export function BaseScene() {
                   </g>
                 )}
               </svg>
-              {/* What it says at a glance: build here, upgrade now, locked until this clan level, under construction. */}
-              {(lv === 0 || ready) && !under && (
-                <span className={`c2-plot-badge${locked ? ' lock' : ' plus'}${ready ? ' go' : ''}`}>{locked ? gate : lv === 0 ? '+' : '▲'}</span>
+              {/* What it says at a glance: «+» build / upgrade (orange: possible now, grey: not yet), otherwise its level. */}
+              {!under && (
+                <span className={`c2-plot-badge ${lv === 0 || ready ? (ready ? 'plus' : 'off') : lv === 3 ? 'max' : 'lv'}`}>{lv === 0 || ready ? '+' : lv}</span>
               )}
-              {!under && lv > 0 && locked && <span className="c2-plot-badge lock">{gate}</span>}
               {!on && lv > 0 && <span className="c2-zzz-html">z z</span>}
               <span className="c2-base-pill">
                 <span>{tnd(`clan2.project.${id}.name`)}</span>
-                <span className="c2-pill-pips" aria-hidden="true">
-                  {[1, 2, 3].map((n) => (
-                    <i key={n} className={lv >= n ? 'on' : undefined} />
-                  ))}
-                </span>
               </span>
               {under && (
                 <span className="c2-plot-bar" aria-hidden="true">
