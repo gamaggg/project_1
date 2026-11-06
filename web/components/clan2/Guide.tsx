@@ -15,56 +15,111 @@ export type Go = 'map' | 'hq' | 'week' | 'exit' | 'treasury'
 export function TreasureChest({ ratio, onClick }: { ratio: number; onClick?: () => void }) {
   const rows = ratio <= 0 ? 0 : Math.max(1, Math.round(ratio * 6))
   const open = rows > 0
-  const coin = (x: number, y: number, k: string) => (
+  const coin = (x: number, y: number, k: string, shine = false) => (
     <g key={k}>
-      <ellipse cx={x} cy={y + 2.4} rx={9} ry={4.2} fill="#B57A10" />
-      <ellipse cx={x} cy={y} rx={9} ry={4.2} fill="url(#c2c-gold)" stroke="#8A5A06" strokeWidth={0.8} />
-      <path d={`M ${x - 3} ${y - 0.4} l 3 -1.6 l 3 1.6`} stroke="#B57A10" strokeWidth={1} fill="none" strokeLinecap="round" />
+      <ellipse cx={x} cy={y + 3} rx={10} ry={4.6} fill="#9A6408" />
+      <ellipse cx={x} cy={y} rx={10} ry={4.6} fill="url(#c2c-gold)" stroke="#8A5A06" strokeWidth={0.9} />
+      <ellipse cx={x} cy={y} rx={6.4} ry={2.8} fill="none" stroke="#C98F1E" strokeWidth={0.9} />
+      <path d={`M ${x - 4} ${y - 1.6} q 3 -2.2 6 -0.4`} stroke="#FFF7D6" strokeWidth={1.2} fill="none" strokeLinecap="round" opacity={0.9} />
+      {shine && <ellipse className="c2-coin-shine" cx={x} cy={y} rx={10} ry={4.6} fill="url(#c2c-sheen)" />}
     </g>
   )
+  const rivets = (x0: number, x1: number, y: number, n: number) =>
+    Array.from({ length: n }).map((_, i) => <circle key={`${x0}-${i}`} cx={n > 1 ? x0 + ((x1 - x0) / (n - 1)) * i : x0} cy={y} r={1.5} fill="#EEF1F7" stroke="#7B8598" strokeWidth={0.6} />)
   return (
     <button type="button" className={`c2-chest${open ? ' open' : ''}`} onClick={onClick} aria-label={tn('clan2.guide.chestAria')}>
-      <svg viewBox="0 0 220 150" aria-hidden>
+      <svg viewBox="0 0 240 170" aria-hidden>
         <defs>
           <linearGradient id="c2c-gold" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#FFE9A0" />
-            <stop offset="1" stopColor="#F0B53E" />
+            <stop offset="0" stopColor="#FFF0B0" />
+            <stop offset="0.55" stopColor="#F5C24A" />
+            <stop offset="1" stopColor="#D79A1E" />
+          </linearGradient>
+          <linearGradient id="c2c-sheen" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor="#fff" stopOpacity="0" />
+            <stop offset="0.5" stopColor="#fff" stopOpacity="0.85" />
+            <stop offset="1" stopColor="#fff" stopOpacity="0" />
           </linearGradient>
           <linearGradient id="c2c-wood" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#B27A40" />
-            <stop offset="1" stopColor="#7C5028" />
+            <stop offset="0" stopColor="#C58A4C" />
+            <stop offset="0.5" stopColor="#A06A33" />
+            <stop offset="1" stopColor="#6E4521" />
           </linearGradient>
+          <linearGradient id="c2c-lid" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#D9A062" />
+            <stop offset="1" stopColor="#8D5A2B" />
+          </linearGradient>
+          <linearGradient id="c2c-metal" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor="#AEB7C8" />
+            <stop offset="0.45" stopColor="#F2F5FA" />
+            <stop offset="1" stopColor="#8993A8" />
+          </linearGradient>
+          <radialGradient id="c2c-glow" cx="0.5" cy="0.62" r="0.55">
+            <stop offset="0" stopColor="#FFE9A0" stopOpacity="0.95" />
+            <stop offset="1" stopColor="#FFE9A0" stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id="c2c-inside" cx="0.5" cy="0.4" r="0.6">
+            <stop offset="0" stopColor="#7A4B20" />
+            <stop offset="1" stopColor="#2F1C0A" />
+          </radialGradient>
         </defs>
-        <ellipse cx={110} cy={134} rx={84} ry={9} fill="rgba(40,30,10,.25)" />
-        {/* The heap of coins behind the front wall. */}
+        {/* The glow of the gold behind the chest, breathing slowly, and a few slow rays. */}
+        {open && (
+          <g className="c2-chest-aura">
+            <ellipse cx={120} cy={92} rx={118} ry={78} fill="url(#c2c-glow)" />
+            <g className="c2-chest-rays" style={{ transformOrigin: '120px 92px' }}>
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <path key={i} d="M 120 92 L 112 6 L 128 6 z" fill="#FFE9A0" opacity={0.2} transform={`rotate(${i * 60 - 150} 120 92)`} />
+              ))}
+            </g>
+          </g>
+        )}
+        <ellipse cx={120} cy={150} rx={94} ry={10} fill="rgba(40,30,10,.26)" />
+        {/* The inside of the chest and the heap of coins. */}
+        <path d="M 38 90 q 82 -10 164 0 l -6 18 h -152 z" fill="url(#c2c-inside)" />
         {Array.from({ length: rows }).map((_, r) => {
-          const n = Math.max(1, 5 - Math.floor(r * 0.8))
-          return Array.from({ length: n }).map((__, i) => coin(110 + (i - (n - 1) / 2) * 15 + (r % 2 ? 4 : -3), 78 - r * 8.5, `${r}-${i}`))
+          const n = Math.max(1, 6 - Math.floor(r * 0.9))
+          return Array.from({ length: n }).map((__, i) => coin(120 + (i - (n - 1) / 2) * 16 + (r % 2 ? 5 : -4), 96 - r * 9, `${r}-${i}`, r === rows - 1 && i === 0))
         })}
-        {/* The body of the chest. */}
-        <rect x={28} y={78} width={164} height={52} rx={7} fill="url(#c2c-wood)" stroke="#5B3A18" strokeWidth={2} />
-        {[34, 70, 110, 150, 186].map((x) => (
-          <rect key={x} x={x - 1} y={80} width={2.2} height={48} fill="#5B3A18" opacity={0.25} />
+        {/* The body. */}
+        <rect x={30} y={92} width={180} height={56} rx={9} fill="url(#c2c-wood)" stroke="#4D2F13" strokeWidth={2.2} />
+        {[48, 78, 108, 138, 168, 198].map((x) => (
+          <path key={x} d={`M ${x} 94 v 52`} stroke="#4D2F13" strokeWidth={1.2} opacity={0.28} />
         ))}
-        <rect x={52} y={78} width={13} height={52} fill="#D8DEE8" stroke="#8993A5" strokeWidth={1.4} />
-        <rect x={155} y={78} width={13} height={52} fill="#D8DEE8" stroke="#8993A5" strokeWidth={1.4} />
-        <rect x={98} y={88} width={24} height={26} rx={5} fill="url(#c2c-gold)" stroke="#8A5A06" strokeWidth={1.6} />
-        <circle cx={110} cy={99} r={3.4} fill="#8A5A06" />
-        <rect x={108.6} y={99} width={2.8} height={8} rx={1.2} fill="#8A5A06" />
+        <rect x={32} y={94} width={176} height={7} rx={3} fill="#fff" opacity={0.16} />
+        <rect x={32} y={140} width={176} height={6} rx={3} fill="#000" opacity={0.18} />
+        {[56, 168].map((x) => (
+          <g key={x}>
+            <rect x={x} y={92} width={16} height={56} fill="url(#c2c-metal)" stroke="#6C778C" strokeWidth={1.4} />
+            {rivets(x + 8, x + 8, 100, 1)}
+            {rivets(x + 8, x + 8, 140, 1)}
+          </g>
+        ))}
+        <rect x={104} y={101} width={32} height={34} rx={7} fill="url(#c2c-gold)" stroke="#8A5A06" strokeWidth={1.8} />
+        <rect x={107} y={104} width={26} height={9} rx={4} fill="#fff" opacity={0.35} />
+        <circle cx={120} cy={116} r={4.4} fill="#7A4E08" />
+        <path d="M 117.8 116 h 4.4 l 1.4 11 h -7.2 z" fill="#7A4E08" />
         {/* The lid: shut, or lifted on its hinge. */}
-        <g className="c2-chest-lid" style={{ transformOrigin: '110px 80px' }}>
-          <path d="M 28 78 q 0 -34 82 -34 q 82 0 82 34 z" fill="url(#c2c-wood)" stroke="#5B3A18" strokeWidth={2} />
-          <path d="M 52 78 q 0 -30 58 -33 l 0 33 z" fill="rgba(255,255,255,.08)" />
-          <rect x={52} y={50} width={13} height={28} fill="#D8DEE8" stroke="#8993A5" strokeWidth={1.4} />
-          <rect x={155} y={50} width={13} height={28} fill="#D8DEE8" stroke="#8993A5" strokeWidth={1.4} />
+        <g className="c2-chest-lid" style={{ transformOrigin: '120px 94px' }}>
+          <path d="M 30 94 q 0 -40 90 -40 q 90 0 90 40 z" fill="url(#c2c-lid)" stroke="#4D2F13" strokeWidth={2.2} />
+          <path d="M 44 90 q 4 -26 62 -30" stroke="#fff" strokeWidth={3} strokeLinecap="round" fill="none" opacity={0.22} />
+          {[56, 168].map((x) => (
+            <g key={x}>
+              <path d={`M ${x} 94 q -1 -26 8 -37 h 8 q 1 12 0 37 z`} fill="url(#c2c-metal)" stroke="#6C778C" strokeWidth={1.4} />
+              {rivets(x + 8, x + 8, 66, 1)}
+              {rivets(x + 8, x + 8, 86, 1)}
+            </g>
+          ))}
+          <rect x={30} y={90} width={180} height={6} rx={3} fill="#4D2F13" opacity={0.4} />
         </g>
         {open &&
           [
-            [60, 40],
-            [168, 36],
-            [118, 22],
-          ].map(([x, y], i) => (
-            <path key={i} className="c2-spark-star" style={{ animationDelay: `${i * 0.7}s` }} d={`M ${x} ${y - 6} l 1.8 4.2 l 4.2 1.8 l -4.2 1.8 l -1.8 4.2 l -1.8 -4.2 l -4.2 -1.8 l 4.2 -1.8 z`} fill="#FFF1B8" />
+            [52, 52, 1],
+            [196, 46, 0.8],
+            [128, 24, 1.1],
+            [88, 36, 0.7],
+          ].map(([x, y, k], i) => (
+            <path key={i} className="c2-spark-star" style={{ animationDelay: `${i * 0.6}s`, transformOrigin: `${x}px ${y}px` }} d={`M ${x} ${y - 7 * k} l ${2 * k} ${5 * k} l ${5 * k} ${2 * k} l -${5 * k} ${2 * k} l -${2 * k} ${5 * k} l -${2 * k} -${5 * k} l -${5 * k} -${2 * k} l ${5 * k} -${2 * k} z`} fill="#FFF3C0" />
           ))}
       </svg>
     </button>

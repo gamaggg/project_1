@@ -537,3 +537,12 @@
   .c2-live-stack{left:12px; right:12px; width:auto; transform:none;}
   .c2-live-fabs{left:10px;}
 }
+
+.c2-chest-aura{animation:c2-aura 4.2s ease-in-out infinite;}
+@keyframes c2-aura{0%,100%{opacity:.6}50%{opacity:1}}
+.c2-chest-rays{animation:c2-rays 40s linear infinite;}
+@keyframes c2-rays{to{transform:rotate(360deg)}}
+.c2-coin-shine{animation:c2-shine 3.6s ease-in-out infinite; mix-blend-mode:screen;}
+@keyframes c2-shine{0%,60%,100%{opacity:0}75%{opacity:.9}}
+.c2-chest:hover .c2-chest-lid{transform:rotate(-20deg) translate(-4px,-6px);}
+@media (prefers-reduced-motion: reduce){.c2-chest-aura,.c2-chest-rays,.c2-coin-shine{animation:none;}}
