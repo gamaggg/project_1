@@ -94,7 +94,7 @@ export const clan2Ru = {
     taxSet: "Ставка сохранена",
     goalSet: "Цель выбрана",
     bought: "Куплено",
-    upgraded: "Постройка улучшена",
+    upgraded: "Стройка началась",
     buffPlanned: "Выход назначен",
     rsvpOn: "Ты идёшь",
     rsvpOff: "Ты не идёшь",

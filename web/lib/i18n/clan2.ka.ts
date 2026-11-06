@@ -94,7 +94,7 @@ export const clan2Ka = {
     taxSet: "განაკვეთი შენახულია",
     goalSet: "მიზანი არჩეულია",
     bought: "ნაყიდია",
-    upgraded: "ნაგებობა გაუმჯობესდა",
+    upgraded: "მშენებლობა დაიწყო",
     buffPlanned: "გასვლა დანიშნულია",
     rsvpOn: "შენ მიდიხარ",
     rsvpOff: "შენ აღარ მიდიხარ",

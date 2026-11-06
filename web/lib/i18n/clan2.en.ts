@@ -94,7 +94,7 @@ export const clan2En = {
     taxSet: "The rate is saved",
     goalSet: "The goal is set",
     bought: "Bought",
-    upgraded: "The building is upgraded",
+    upgraded: "The build has started",
     buffPlanned: "The outing is set",
     rsvpOn: "You are in",
     rsvpOff: "You are out",

@@ -434,9 +434,9 @@
    "ka": "ნაყიდია"
   },
   "upgraded": {
-   "ru": "Постройка улучшена",
-   "en": "The building is upgraded",
-   "ka": "ნაგებობა გაუმჯობესდა"
+   "ru": "Стройка началась",
+   "en": "The build has started",
+   "ka": "მშენებლობა დაიწყო"
   },
   "buffPlanned": {
    "ru": "Выход назначен",
