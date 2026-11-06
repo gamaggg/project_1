@@ -60,9 +60,18 @@ export function HubTab({ onGo, onOpenSector }: { onGo: (to: Go) => void; onOpenS
   const midnight = new Date(now)
   midnight.setHours(0, 0, 0, 0)
   const todayMin = (now - midnight.getTime()) / 60_000
-  const fishers = s.members.filter((m) => m.lastCatchMin !== null && m.lastCatchMin <= todayMin).sort((a, b) => (a.lastCatchMin ?? 0) - (b.lastCatchMin ?? 0))
   const recent = s.recentCatches ?? []
   const lastOf = (id: string, name: string): RecentCatch | undefined => recent.find((c) => (c.userId ? c.userId === id : c.member === name))
+  // Live: from the real catches (the same as the feed below). The sandbox: from its own members' clock.
+  const minutesAgo = (m: (typeof s.members)[number]): number | null => {
+    if (!s.live) return m.lastCatchMin
+    const c = lastOf(m.id, m.name)
+    return c ? (now - c.at) / 60_000 : null
+  }
+  const fishers = s.members
+    .map((m) => ({ m, ago: minutesAgo(m) }))
+    .filter((x): x is { m: (typeof s.members)[number]; ago: number } => x.ago !== null && x.ago <= todayMin)
+    .sort((a, b) => a.ago - b.ago)
 
   const b = s.buff
   const imIn = b.rsvp.includes(s.myId)
@@ -123,14 +132,14 @@ export function HubTab({ onGo, onOpenSector }: { onGo: (to: Go) => void; onOpenS
         {fishers.length === 0 ? (
           <p className="c2-water-empty">{tn('clan2.hub.waterEmpty')}</p>
         ) : (
-          fishers.slice(0, BOATS.length).map((m, i) => {
+          fishers.slice(0, BOATS.length).map(({ m, ago }, i) => {
             const last = lastOf(m.id, m.name)
             return (
               <div key={m.id} className="c2-boat" style={{ left: `${BOATS[i][0]}%`, top: `${BOATS[i][1]}%`, animationDelay: `${i * -1.3}s` }}>
                 <C2Avatar member={m} size={30} />
                 <span>
                   {last ? `${speciesName(last.species)} · ` : ''}
-                  {shortAgo(m.lastCatchMin ?? 0)}
+                  {shortAgo(ago)}
                 </span>
               </div>
             )
