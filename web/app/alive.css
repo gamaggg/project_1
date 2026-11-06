@@ -283,7 +283,7 @@ button.fish-cal-cell:not(:disabled):active{transform:scale(.8);}
 /* ---- «Мои уловы»: the «Уловы / Дневник» switch slides like the diary's periods ---- */
 .diary-tabs{position:relative; --i:0;}
 .diary-tabs::before{
-  content:''; position:absolute; top:4px; bottom:4px; left:4px; width:calc((100% - 12px) / 2); border-radius:10px;
+  content:''; position:absolute; top:4px; bottom:4px; left:4px; width:calc((100% - 12px) / 2); border-radius:999px;
   background:var(--surface); box-shadow:var(--shadow-sm);
   transform:translateX(calc(var(--i) * (100% + 4px))); transition:transform .32s cubic-bezier(.22,1,.36,1);
 }
