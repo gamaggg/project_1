@@ -148,7 +148,9 @@ function isHotNow(t: Territory): boolean {
 // `plain`: «Где это?» — only the sector's number: whose it is (faces,
 // initials, crests) and what's hot have nothing to do with where a
 // panorama was taken.
-function territoryMarkerHtml(t: Territory, clanLayer: boolean, plain = false): string {
+function territoryMarkerHtml(t: Territory, clanLayer: boolean, plain = false, hq = false): string {
+  // The clan's headquarters stands on this sector: its own marker (banner and «ШТАБ») replaces both crest and number.
+  if (hq) return '<div class="leaflet-territory-marker"></div>'
   const label = idLabelHtml(t, plain)
   if (plain || t.status === 'free' || !t.ownerId) return `<div class="leaflet-territory-marker">${label}</div>`
   // Clan layer: the owner's clan crest takes the avatar's place.
@@ -698,7 +700,7 @@ export const LeafletMap = forwardRef<
         const marker = L.marker([t.lat, t.lng], {
           icon: L.divIcon({
             className: 'leaflet-territory-marker-wrap',
-            html: territoryMarkerHtml(t, clanLayerRef.current, plainRef.current),
+            html: territoryMarkerHtml(t, clanLayerRef.current, plainRef.current, !!clan2Ref.current?.markers.some((m) => m.kind === 'hq' && m.id === t.id)),
             iconSize: isOccupied ? [40, 40] : [40, 18],
           }),
           interactive: false,

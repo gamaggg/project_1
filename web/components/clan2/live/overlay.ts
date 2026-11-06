@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { useDemoNow } from '@/components/clan2/C2Common'
 import { useClan2Enabled } from '@/lib/clan2/live/flag'
-import { HQ_SIZE, RUINS_SIZE, hqMarkerHtml, ruinsMarkerHtml, type MarkerTier } from '@/lib/clan2/live/hqMarker'
+import { HQ_BOX, RUINS_SIZE, hqMarkerHtml, ruinsMarkerHtml, type MarkerTier } from '@/lib/clan2/live/hqMarker'
 import { setLiveUi, useLiveUi } from '@/lib/clan2/live/ui'
 import { useDemoState } from '@/lib/clan2/demoStore'
 import type { Territory } from '@/lib/data/types'
@@ -53,7 +53,7 @@ export function useClan2Map(territories: Territory[]): Clan2MapProps | null {
         lng: hqT.lng,
         kind: 'hq',
         html: (tier) => hqMarkerHtml(s.clan.crest, { siege, label: tn('clan2.map.hqHere'), tag: tn('clan2.base.hq'), tier }),
-        box: (tier) => [HQ_SIZE[tier], HQ_SIZE[tier]],
+        box: (tier) => HQ_BOX[tier],
       })
     const ruinT = ruinsActive && ruinsId ? byId.get(ruinsId) : undefined
     if (ruinT) markers.push({ id: ruinT.id, lat: ruinT.lat, lng: ruinT.lng, kind: 'ruins', html: (tier) => ruinsMarkerHtml(tn('clan2.base.ruins'), tier), box: (tier) => RUINS_SIZE[tier] })
