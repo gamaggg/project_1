@@ -139,7 +139,7 @@ export function initialDemoState(now: number = Date.now()): DemoState {
       trophies: 640,
     },
     members: DEMO_MEMBERS.map((m) => ({ ...m })),
-    treasury: { balance: 1240, taxRate: 5, entries: history(now), goalId: 'skin_clan_lanterns' },
+    treasury: { balance: 1240, taxRate: 5, entries: history(now), goalId: 'skin_clan_aurora' },
     buff: { phase: 'idle', startsAt: null, endsAt: null, cooldownUntil: null, rsvp: [], startedBy: null, lastBonus: 0 },
     hq: { sectorId: HQ_SECTOR_ID, placedAt: now - 2.5 * DAY, lastMoveAt: null, siege: null, defenseAt: now - 0.5 * DAY, ruins: null },
     alerts: [

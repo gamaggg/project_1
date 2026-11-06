@@ -175,12 +175,14 @@ export function BaseScene() {
               >
                 <ellipse cx={0} cy={4} rx={isSel ? 44 : 40} ry={isSel ? 12 : 10} className="c2-plot-pad" />
                 {lv === 0 ? (
-                  <g className={`c2-ghost${locked ? ' locked' : ''}`}>
+                  <g className={`c2-ghost${locked ? ' locked' : ''}`} transform="scale(1.3)">
                     <Art level={1} p={crest.primary} s={crest.secondary} />
                   </g>
                 ) : (
                   <g key={`${id}-${lv}`} className={`c2-bld${built?.id === id ? ' built' : ''}${on ? '' : ' sleeping'}`}>
-                    <Art level={lv} p={crest.primary} s={crest.secondary} />
+                    <g transform="scale(1.3)">
+                      <Art level={lv} p={crest.primary} s={crest.secondary} />
+                    </g>
                   </g>
                 )}
                 {under && (
@@ -284,10 +286,7 @@ export function BaseScene() {
         </div>
         {next ? (
           building ? (
-            <div className="c2-build-banner inline">
-              <span>{tn('clan2.base.buildLeft', { t: fmtLeft(building.endsAt - now) })}</span>
-              <C2Bar value={(now - building.startedAt) / (building.endsAt - building.startedAt)} />
-            </div>
+            <p className="c2-hint">{tn('clan2.base.buildLeft', { t: fmtLeft(building.endsAt - now) })}</p>
           ) : (
             <>
               <ul className="c2-needs">

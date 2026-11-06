@@ -279,6 +279,74 @@ export const FAQ_EN: FaqSection[] = [
     ],
   },
   {
+    title: 'The treasury and the clan base',
+    items: [
+      {
+        q: "What is the clan's treasury and where do its coins come from?",
+        a: [
+          'The treasury is the clan\'s shared pot. It replaces the personal Treasury: the coins for sectors now build up for the whole clan, not for one player.',
+          [
+            'Rent: every captured clan sector brings 1 coin every 3 hours (8 a day). A shared sector that clan-mates hold together brings one and a half times more, the HQ sector double (2 coins per 3 hours).',
+            'The catch tax: 0, 5 or 10 % of the coins for a fish. The leader or the co-leader picks the rate; it is part of your reward, not taken on top.',
+            'Deposits: any member can put in coins of their own. Whoever gives the most in a week is the week\'s Patron.',
+            'A quarter of the coins from the week\'s chest and the clan battle, the weekly task reward and 100 coins for every newcomer who makes a first catch.',
+          ],
+          'It saves up to a cap: 3 000 coins for a clan of level 1–2, 5 000 for 3–4, 8 000 for 5–6, 12 000 for 7–8, 20 000 for 9–10; the Storehouse adds more. What does not fit is lost. The leader and the co-leader spend it: on buildings, sector skins, the HQ and the «Outing».',
+        ],
+      },
+      {
+        q: 'What is the clan HQ and what happens if it falls?',
+        a: [
+          'The HQ is the clan sector with its crest on it. The leader or the co-leader sets it only on a captured clan sector (1 000 coins from the treasury, moving it costs 2 000 and is allowed once in 3 days). A sector never has two HQs. While the HQ stands, the buildings work and the HQ sector pays double.',
+          [
+            'The HQ sector\'s defence is the same three shields. Every clan catch there adds one, an outsider\'s catch takes one off.',
+            'With no shields left, the next outsider\'s catch does not take the sector but starts a siege: the clan has 30 minutes (the Beacon adds up to 30). A catch by any member on the HQ sector lifts the siege and brings them 20 coins.',
+            'If it is not lifted in time the HQ falls: the attackers carry off 20 % of the treasury (at most 1 500 coins), the HQ sector goes to them, the buildings fall asleep and a new HQ can only be set after 24 hours.',
+          ],
+          'The whole clan is told when the HQ is attacked: an alert in the app and a push in Telegram.',
+        ],
+      },
+      {
+        q: 'How does the clan base work: buildings, build time, speed-up?',
+        a: [
+          'The base is the clan\'s sector with the HQ in the middle and six plots round it. Each plot takes one building of three levels; it gives the clan a real perk while the HQ stands.',
+          [
+            'Dock: +2/+4/+6 places in the clan (900…4 500 coins).',
+            'Beacon: 10/20/30 more minutes to lift a siege.',
+            'Fort: the HQ sector\'s defence wears down 1 per 2/3/5 days instead of every day.',
+            'Task board: the weekly task reward +15/30/50 %.',
+            'Storehouse: the treasury cap +1 000/2 500/5 000.',
+            'Market: the rent of every sector +5/10/15 %.',
+          ],
+          'Levels cost from 400 to 4 800 coins and the whole base 35 000: a clan that plays together builds it in about three months. The first level opens at clan level 2, the second at 4, the third at 6. A build takes time: from 12 hours (first level) to 4–5 days (the third level of the heavy buildings), and one building is built at a time. A build can be finished at once for treasury coins: the price is up to 35 % of the building\'s price, in proportion to the time left.',
+        ],
+      },
+      {
+        q: 'What is the clan «Outing»?',
+        a: [
+          'A clan buff in place of the personal «Double coins». The leader or the co-leader plans an «Outing» for 300 treasury coins to start in 5–180 minutes. Those who tap «I\'m in» get one more fish price per catch for 2 hours (×2), and their chest and clan battle meters grow one and a half times faster.',
+          'At least three members must tap «I\'m in»: otherwise the «Outing» is cancelled and the coins go back to the treasury. After an «Outing» the clan rests for 12 hours. A hot sector and an «Outing» together are ×3, not ×4.',
+        ],
+      },
+      {
+        q: 'What are the clan sector skins?',
+        a: [
+          'Animated skins of the clan\'s sectors, seen by everybody on the «Clans» layer. They are bought from the treasury and the whole clan wears one: «Tide» 5 000 coins (from clan level 3), «Aurora» 8 000 (from 5), «Flotilla» 11 000 (from 7), «Lanterns» 15 000 (from 9). The clan saves up for a skin as a goal with a bar.',
+        ],
+      },
+      {
+        q: 'What if the leader is gone? How is leadership handed over and how is a clan disbanded?',
+        a: [
+          [
+            'Only the leader can hand leadership over: on the clan screen from a member\'s menu; you become the co-leader.',
+            'If the leader does not come in for 14 days, leadership passes to the co-leader by itself.',
+            'If the clan is disbanded, the treasury burns: the coins do not go to the players. This is so that coins cannot be taken out through a disbandment.',
+          ],
+        ],
+      },
+    ],
+  },
+  {
     title: 'More',
     items: [
       {

@@ -21,8 +21,9 @@ create table public.clan_economy (
   tax_max int not null default 10 check (tax_max in (0, 5, 10)),
   chest_share int not null default 25 check (chest_share between 0 and 100),
   recruit_reward int not null default 100 check (recruit_reward between 0 and 1000),
-  hq_place_cost int not null default 400 check (hq_place_cost between 0 and 5000),
-  hq_move_cost int not null default 600 check (hq_move_cost between 0 and 5000),
+  hq_place_cost int not null default 1000 check (hq_place_cost between 0 and 5000),
+  hq_move_cost int not null default 2000 check (hq_move_cost between 0 and 5000),
+  speedup_share int not null default 35 check (speedup_share between 0 and 100),
   updated_at timestamptz not null default now(),
   updated_by uuid references public.profiles(id) on delete set null
 );
@@ -203,6 +204,7 @@ begin
     recruit_reward = coalesce((p->>'recruit_reward')::int, recruit_reward),
     hq_place_cost = coalesce((p->>'hq_place_cost')::int, hq_place_cost),
     hq_move_cost = coalesce((p->>'hq_move_cost')::int, hq_move_cost),
+    speedup_share = coalesce((p->>'speedup_share')::int, speedup_share),
     updated_at = now(), updated_by = auth.uid()
   where id = 1;
 end $$;
