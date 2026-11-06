@@ -39,7 +39,7 @@
 .c2-seg button:disabled{cursor:default; opacity:.8;}
 
 /* bottom sheet inside the phone frame (the frame is a containing block for fixed) */
-.c2-sheet-overlay{position:fixed; inset:0; z-index:60; background:rgba(23,24,27,.42); display:flex; align-items:flex-end; animation:c2-fade .2s var(--ease-out) both;}
+.c2-sheet-overlay{position:fixed; inset:0; z-index:950; background:rgba(23,24,27,.42); display:flex; align-items:flex-end; animation:c2-fade .2s var(--ease-out) both;}
 .c2-sheet{width:100%; max-height:86%; overflow-y:auto; background:var(--surface); border-radius:24px 24px 0 0; padding:10px 18px calc(22px + env(safe-area-inset-bottom)); box-shadow:var(--shadow-lg); animation:c2-rise .28s var(--ease-out) both;}
 .c2-sheet-handle{width:40px; height:4px; border-radius:2px; background:#D9D7D1; margin:0 auto 12px;}
 .c2-sheet-title{font-size:17px; font-weight:800; margin-bottom:10px;}
@@ -47,7 +47,7 @@
 @keyframes c2-fade{from{opacity:0}to{opacity:1}}
 @keyframes c2-rise{from{transform:translateY(24px); opacity:0}to{transform:none; opacity:1}}
 
-.c2-toast{position:fixed; left:50%; bottom:96px; transform:translateX(-50%); z-index:80; max-width:86%; padding:11px 16px; border-radius:14px; background:rgba(23,24,27,.92); color:#fff; font-size:13.5px; font-weight:700; text-align:center; box-shadow:var(--shadow-lg); animation:c2-toast .3s var(--ease-out) both;}
+.c2-toast{position:fixed; left:50%; bottom:96px; transform:translateX(-50%); z-index:980; max-width:86%; padding:11px 16px; border-radius:14px; background:rgba(23,24,27,.92); color:#fff; font-size:13.5px; font-weight:700; text-align:center; box-shadow:var(--shadow-lg); animation:c2-toast .3s var(--ease-out) both;}
 @keyframes c2-toast{from{opacity:0; transform:translate(-50%,10px)}to{opacity:1; transform:translate(-50%,0)}}
 
 @media (prefers-reduced-motion: reduce){
@@ -445,3 +445,8 @@
 .c2-panel.c2-panel-live{position:static; width:100%; max-height:none; background:none; border:none; box-shadow:none; padding:0; backdrop-filter:none; overflow:visible;}
 /* On a wide screen the buttons stand in the margin beside the app column, not over its content. */
 @media (min-width: 560px){.c2-live-fabs{left:calc(50vw - 215px - 54px); top:42%;}}
+/* With the clan update's sections the strip has up to nine tabs and scrolls: the sliding thumb (made for three or four tabs) gives way to each tab's own pill. */
+.clan-tabs.c2-scroll::before{display:none;}
+.clan-tabs.c2-scroll .clan-tab.on{background:linear-gradient(180deg,#FFFFFF 0%,#F6F1EA 100%); box-shadow:0 0 0 1px rgba(120,82,50,.09), 0 1px 0 #fff inset, 0 4px 10px rgba(80,45,15,.13);}
+.clan-tabs.c2-scroll{-webkit-mask-image:linear-gradient(90deg,#000 90%,transparent); mask-image:linear-gradient(90deg,#000 90%,transparent);}
+.c2-ruins-abs{position:absolute; z-index:4; width:46px; height:40px; margin:-34px 0 0 -23px; pointer-events:none;}

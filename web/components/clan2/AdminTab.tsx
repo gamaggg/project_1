@@ -39,7 +39,7 @@ const FIELDS: { key: NumKey; label: LabelKey; min: number; max: number; step: nu
   { key: 'hqMoveCost', label: 'hqMove', min: 100, max: 1500, step: 50 },
 ]
 
-export function AdminTab() {
+export function AdminTab({ bare }: { bare?: boolean } = {}) {
   const s = useDemoState()
   const now = useDemoNow()
   const { act, say } = useC2()
@@ -52,7 +52,7 @@ export function AdminTab() {
   const entries = [...s.treasury.entries].reverse().slice(0, shown)
 
   return (
-    <div className="c2-pad c2-stack">
+    <div className={`${bare ? '' : 'c2-pad '}c2-stack`}>
       <C2Card title={tn('clan2.admin.title')}>
         <div className="c2-switch-row" data-tour="admin-switch">
           <div>

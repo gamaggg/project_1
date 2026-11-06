@@ -103,7 +103,10 @@ export function buildLiveState(input: LiveInput, now: number = Date.now()): Demo
     tournament: { species: 'stavrida', endsAt: now + 3 * DAY, standings },
     hall: [],
     season: { n: 1, startedAt: now - 2 * DAY, endsAt: now + 26 * DAY, trophies: clan.trophies },
-    recruit: [],
+    recruit: [
+      { name: 'Leo', state: 'joined', daysLeft: 5 },
+      { name: 'Mariam', state: 'invited', daysLeft: 6 },
+    ],
     sectors: liveSectors(clan.id, territories, now),
     settings: { ...DEFAULT_SETTINGS },
     toursSeen: { player: true, admin: true },

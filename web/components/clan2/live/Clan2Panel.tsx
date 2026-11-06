@@ -2,7 +2,7 @@
 
 import '@/app/clan2.css'
 import { AdminTab } from '@/components/clan2/AdminTab'
-import { C2Toast, C2ToastProvider } from '@/components/clan2/C2Common'
+import { C2PortalProvider, C2Toast, C2ToastProvider } from '@/components/clan2/C2Common'
 import { ExitTab } from '@/components/clan2/ExitTab'
 import { GloryTab } from '@/components/clan2/GloryTab'
 import { HqTab } from '@/components/clan2/HqTab'
@@ -17,6 +17,7 @@ export const CLAN2_SECTIONS: Clan2Section[] = ['treasury', 'exit', 'week', 'hq',
 
 export function Clan2Panel({ section }: { section: Clan2Section }) {
   return (
+    <C2PortalProvider value="body">
     <C2ToastProvider>
       <div className="c2-live-panel c2-stack">
         {section === 'treasury' && <TreasuryTab />}
@@ -29,9 +30,10 @@ export function Clan2Panel({ section }: { section: Clan2Section }) {
         {section === 'week' && <WeekTab />}
         {section === 'hq' && <HqTab onGoMap={(focus) => requestMap(focus ?? {})} />}
         {section === 'glory' && <GloryTab />}
-        {section === 'admin' && <AdminTab />}
+        {section === 'admin' && <AdminTab bare />}
       </div>
       <C2Toast />
     </C2ToastProvider>
+    </C2PortalProvider>
   )
 }

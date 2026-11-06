@@ -3,7 +3,7 @@
 import '@/app/clan2.css'
 import { useEffect, useMemo } from 'react'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
-import { C2Bar, C2Coins, C2Sheet, C2Toast, C2ToastProvider, fmtLeft, useC2, useDemoNow } from '@/components/clan2/C2Common'
+import { C2Bar, C2Coins, C2PortalProvider, C2Sheet, C2Toast, C2ToastProvider, fmtLeft, useC2, useDemoNow } from '@/components/clan2/C2Common'
 import { DemoPanel } from '@/components/clan2/DemoPanel'
 import { AlertsCard } from '@/components/clan2/ExitTab'
 import { bindLive, defendHq, markAlertsRead, placeHq, resetLive, tick, useDemoState } from '@/lib/clan2/demoStore'
@@ -54,10 +54,12 @@ export function Clan2Live({
 
   if (!input) return null
   return (
-    <C2ToastProvider>
-      <LiveLayer input={input} visible={visible} onOpenClan={onOpenClan} />
-      <C2Toast />
-    </C2ToastProvider>
+    <C2PortalProvider value="body">
+      <C2ToastProvider>
+        <LiveLayer input={input} visible={visible} onOpenClan={onOpenClan} />
+        <C2Toast />
+      </C2ToastProvider>
+    </C2PortalProvider>
   )
 }
 

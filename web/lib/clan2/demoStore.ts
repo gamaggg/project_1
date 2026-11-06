@@ -22,6 +22,7 @@ import {
   PROJECT_EFFECTS,
   SIEGE_BREAK_REWARD,
   SIEGE_MINUTES,
+  TAX_RATES,
   coinMultiplier,
   dailyRent,
   intake,
@@ -363,7 +364,7 @@ export function deposit(amount: number): Result {
 export function setTaxRate(rate: number): Result {
   return mutate((d) => {
     if (!canManage(d)) return no('notManager')
-    if (rate < 0 || rate > d.settings.taxMax) return no('badRate')
+    if (!TAX_RATES.includes(rate as 0 | 5 | 10) || rate > d.settings.taxMax) return no('badRate')
     d.treasury.taxRate = rate
   })
 }
@@ -636,7 +637,9 @@ export function simulateCatch(opts: { memberId?: string; species?: string } = {}
   const res = mutate((d) => {
     if (!d.settings.enabled) return no('disabled')
     const members = d.members.filter((m) => m.role !== undefined)
-    const member = members.find((m) => m.id === (opts.memberId ?? '')) ?? (d.persona === 'solo' ? members[1] : members.find((m) => m.id === d.myId)) ?? members[0]
+    // «Улов случайного игрока»: somebody else of the clan, not the one looking.
+    const others = members.filter((m) => m.id !== d.myId)
+    const member = members.find((m) => m.id === (opts.memberId ?? '')) ?? others[Math.floor(Math.random() * others.length)] ?? members[0]
     const total = SPECIES.reduce((n, s) => n + s.w, 0)
     let pick = Math.random() * total
     const sp = SPECIES.find((s) => opts.species === s.key) ?? SPECIES.find((s) => (pick -= s.w) < 0) ?? SPECIES[0]

@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { useNow } from '@/lib/useNow'
 import { useDemoState, type Result } from '@/lib/clan2/demoStore'
@@ -106,9 +107,18 @@ export function C2Bar({ value, tone = 'accent', label }: { value: number; tone?:
   )
 }
 
+// Where sheets and the toast are drawn. In the demo's phone frame they stay in place (the frame holds them); inside the
+// real app they go to the body, over the bottom bar — a sheet inside a screen cannot rise above it.
+const PortalContext = createContext<'inline' | 'body'>('inline')
+export const C2PortalProvider = PortalContext.Provider
+
+function useHost(node: ReactNode): ReactNode {
+  const mode = useContext(PortalContext)
+  return mode === 'body' && typeof document !== 'undefined' ? createPortal(node, document.body) : node
+}
+
 export function C2Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) {
-  if (!open) return null
-  return (
+  const node = open ? (
     <div className="c2-sheet-overlay" onClick={onClose}>
       <div className="c2-sheet" role="dialog" aria-label={title} onClick={(e) => e.stopPropagation()}>
         <div className="c2-sheet-handle" />
@@ -116,7 +126,8 @@ export function C2Sheet({ open, onClose, title, children }: { open: boolean; onC
         <div className="c2-sheet-body">{children}</div>
       </div>
     </div>
-  )
+  ) : null
+  return <>{useHost(node)}</>
 }
 
 export function C2Card({ title, hint, right, children, style, tour }: { title?: string; hint?: string; right?: ReactNode; children: ReactNode; style?: CSSProperties; tour?: string }) {
@@ -169,12 +180,12 @@ export function C2ToastProvider({ children }: { children: ReactNode }) {
 // Where the toast shows: put it inside the screen it belongs to (the phone of the demo).
 export function C2Toast() {
   const { toast } = useC2()
-  if (!toast) return null
-  return (
+  const node = toast ? (
     <div className="c2-toast" key={toast.id} role="status">
       {toast.text}
     </div>
-  )
+  ) : null
+  return <>{useHost(node)}</>
 }
 
 export const weekAgo = (now: number) => now - 7 * DAY
