@@ -344,7 +344,7 @@
 .c2-plot:hover .c2-bld:not(.sleeping){transform:translateY(-1.5px);}
 .c2-bld.sleeping{filter:grayscale(.95) brightness(.95); opacity:.62;}
 .c2-bld.built{animation:c2-build .9s cubic-bezier(.25,1,.5,1) both;}
-@keyframes c2-build{0%{transform:scale(.35,.1);opacity:0}45%{transform:scale(1.14,.86);opacity:1}70%{transform:scale(.96,1.07)}100%{transform:scale(1,1)}}
+@keyframes c2-build{0%{transform:scale(.6,.25);opacity:0}100%{transform:scale(1,1);opacity:1}}
 .c2-dust{fill:none; stroke:rgba(255,255,255,.95); stroke-width:3; transform-box:fill-box; transform-origin:center; animation:c2-dust .9s ease-out both;}
 @keyframes c2-dust{from{transform:scale(.6);opacity:1}to{transform:scale(4.4,2.4);opacity:0}}
 .c2-spark{fill:#FFC93C; transform-box:fill-box; transform-origin:center; animation:c2-spark .9s ease-out both;}

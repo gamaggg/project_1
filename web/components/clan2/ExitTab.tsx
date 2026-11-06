@@ -13,7 +13,7 @@ import { tn } from '@/lib/i18n/runtime'
 // outing is cancelled and the coins go back. Under it, the clan's alerts.
 
 const STARTS = [
-  { minutes: 0, key: 'now' },
+  { minutes: 10, key: 'now' },
   { minutes: 30, key: 'in30' },
   { minutes: 60, key: 'in1h' },
   { minutes: 180, key: 'in3h' },

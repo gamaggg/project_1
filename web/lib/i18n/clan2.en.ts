@@ -233,7 +233,7 @@ export const clan2En = {
     price: "Price: {n} from the treasury",
     need: "Needs «I'm in» from {n} members",
     startIn: "When to start",
-    now: "Now",
+    now: "In 10 min",
     in30: "In 30 min",
     in1h: "In an hour",
     in3h: "In 3 hours",
