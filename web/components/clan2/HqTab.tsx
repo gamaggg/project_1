@@ -1,11 +1,11 @@
 'use client'
 
 import { C2Bar, C2Card, C2Coins, fmtLeft, useC2, useDemoNow } from '@/components/clan2/C2Common'
-import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { SkinSwatch } from '@/components/clan2/SkinSwatch'
 import { BaseScene } from '@/components/clan2/BaseScene'
 import { canManage, equipSkin, setGoal, siegeMinutesOf, useDemoState } from '@/lib/clan2/demoStore'
 import { CLAN_SKINS, DAY, DEFENSE_MAX, HQ_LOOT_MAX, HQ_LOOT_SHARE, HQ_MOVE_COOLDOWN_DAYS } from '@/lib/clan2/rules'
+import { hqBannerSvg } from '@/lib/clan2/live/hqMarker'
 import { tn, tnd } from '@/lib/i18n/runtime'
 
 // «Штаб»: the headquarters of the clan, how to defend it, the buildings the
@@ -31,9 +31,8 @@ export function HqTab({ onGoMap }: { onGoMap?: (focus?: MapFocus) => void }) {
         {sector ? (
           <>
             <div className="c2-hq-head">
-              <div className="c2-hq-crest">
-                <ClanCrest crest={s.clan.crest} size={56} />
-              </div>
+              {/* The same banner as on the map and on the base, so the HQ looks one way everywhere. */}
+              <div className="c2-hq-crest banner" aria-hidden="true" dangerouslySetInnerHTML={{ __html: hqBannerSvg(s.clan.crest, 44, 65) }} />
               <div>
                 <strong>{tn('clan2.hq.where', { id: sector.id })}</strong>
                 <div className="c2-muted small">{tn('clan2.hq.defense', { n: sector.defense })}</div>
@@ -64,7 +63,7 @@ export function HqTab({ onGoMap }: { onGoMap?: (focus?: MapFocus) => void }) {
               )}
             </div>
             <p className="c2-muted small" style={{ marginTop: 8 }}>
-              {coolLeft > 0 ? `${tn('clan2.hq.moveCost', { n: s.settings.hqMoveCost })} · ${fmtLeft(coolLeft)}` : tn('clan2.hq.moveCost', { n: s.settings.hqMoveCost })}
+              {coolLeft > 0 ? `${tn('clan2.hq.moveCost', { n: s.settings.hqMoveCost })}. ${tn('clan2.hq.moveCooldown', { t: fmtLeft(coolLeft) })}` : tn('clan2.hq.moveCost', { n: s.settings.hqMoveCost })}
             </p>
           </>
         ) : (

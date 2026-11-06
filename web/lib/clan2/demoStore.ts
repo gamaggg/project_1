@@ -766,7 +766,7 @@ export type RealClan = {
   days: number
   sectors: number
   lastCatchMin: Record<string, number | null>
-  hall: { species: string; member: string; userId: string; cm: number; kg: number; at: number }[]
+  hall: { species: string; member: string; userId: string; cm: number; kg: number; at: number; photo: string | null }[]
 }
 
 export function applyReal(r: RealClan, hueOf: (id: string) => number): Result {
@@ -784,7 +784,7 @@ export function applyReal(r: RealClan, hueOf: (id: string) => number): Result {
     const merged = new Map(d.hall.map((h) => [h.species, h]))
     for (const h of r.hall) {
       const cur = merged.get(h.species)
-      if (!cur || h.cm >= cur.cm) merged.set(h.species, { species: h.species, member: h.member, cm: h.cm, kg: h.kg, at: h.at, hue: hueOf(h.userId) })
+      if (!cur || h.cm >= cur.cm) merged.set(h.species, { species: h.species, member: h.member, cm: h.cm, kg: h.kg, at: h.at, hue: hueOf(h.userId), photo: h.photo })
     }
     d.hall = [...merged.values()].sort((a, b) => b.cm - a.cm)
     void now

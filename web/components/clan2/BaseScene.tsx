@@ -22,27 +22,29 @@ import { tn, tnd } from '@/lib/i18n/runtime'
 const W = 400
 const H = 346.4
 // The picture is wider than the sector: the real map shows round it too (dimmed), the sector stays a hexagon in the middle.
-const VW = 470
+const VW = 440
 const VH = 400
 const OX = (VW - W) / 2
 const OY = (VH - H) / 2
 // The map is drawn a little wider than the sector itself, so the coast and the streets round it can be seen.
 const MAP_ZOOM_OUT = 1.7
 const HEX = '100,0 300,0 400,173.2 300,346.4 100,346.4 0,173.2'
-// The plots: where each building's ground point stands. Clockwise from the top left; the tall lighthouse has the top.
-const SPOTS: Record<ProjectId, { x: number; y: number }> = {
-  beacon: { x: 124, y: 90 },
-  market: { x: 276, y: 90 },
-  board: { x: 328, y: 186 },
-  storage: { x: 278, y: 280 },
-  dock: { x: 122, y: 280 },
-  fort: { x: 64, y: 186 },
-}
-// How big each building is drawn on its plot (the lighthouse is the tallest and stands under the flat top edge).
-const SCALE: Record<ProjectId, number> = { beacon: 0.68, market: 0.8, board: 0.8, storage: 0.8, dock: 0.8, fort: 0.8 }
-// Every plot stands in the part of the hexagon that looks at one of its corners, the HQ in the middle.
-// The HQ's ground point and the demo's place (a sea-side sector of Batumi) when the clan is not bound to a real one.
-const HQ_AT = { x: 200, y: 188 }
+// The sector's middle: the HQ's plaza, where every path starts.
+const MID = { x: 200, y: 173.2 }
+// The six buildings stand in the six corners of the sector (the owner's scheme): lighthouse top left, market top right,
+// board right, storage bottom right, dock bottom left, fort left — each ground point 74% of the way from the middle to
+// its corner. A tall building in a top corner may rise over the top edge, the way a house stands up off its tile.
+const CORNER: Record<ProjectId, [number, number]> = { beacon: [100, 0], market: [300, 0], board: [400, 173.2], storage: [300, 346.4], dock: [100, 346.4], fort: [0, 173.2] }
+const SPOTS = Object.fromEntries(
+  (Object.keys(CORNER) as ProjectId[]).map((id) => [id, { x: MID.x + (CORNER[id][0] - MID.x) * 0.74, y: MID.y + (CORNER[id][1] - MID.y) * 0.74 }])
+) as Record<ProjectId, { x: number; y: number }>
+// How big each building is drawn on its plot (the lighthouse is the tallest).
+const SCALE: Record<ProjectId, number> = { beacon: 0.7, market: 0.82, board: 0.82, storage: 0.82, dock: 0.82, fort: 0.82 }
+// The name pills of the side plots lean towards the middle, so a long name stays inside the sector (in % of the plot).
+const PILL_DX: Partial<Record<ProjectId, number>> = { fort: 14, board: -22 }
+// The HQ's ground point (the foot of its plinth, on the front of the plaza) and the demo's place (a sea-side sector of
+// Batumi) when the clan is not bound to a real one.
+const HQ_AT = { x: 200, y: 200 }
 const DEMO_GEO: HqGeo = { id: 'B1031', lat: 41.653959, lng: 41.628128, widthDeg: 0.008332 }
 
 // What a building gives at a level, as a phrase (level 0: nothing yet).
@@ -158,14 +160,16 @@ export function BaseScene() {
             <rect width={W} height={H} fill={clanColor} opacity={0.08} />
             {/* The paths from the HQ to every plot, and the plaza round it. */}
             {PROJECT_IDS.map((id) => (
-              <path key={id} d={`M ${HQ_AT.x} ${HQ_AT.y - 10} L ${SPOTS[id].x} ${SPOTS[id].y}`} stroke="#fff" strokeWidth={7} strokeLinecap="round" opacity={0.85} />
+              <path key={id} d={`M ${MID.x} ${MID.y} L ${SPOTS[id].x} ${SPOTS[id].y}`} stroke="#fff" strokeWidth={7} strokeLinecap="round" opacity={0.85} />
             ))}
             {PROJECT_IDS.map((id) => (
-              <path key={`d${id}`} d={`M ${HQ_AT.x} ${HQ_AT.y - 10} L ${SPOTS[id].x} ${SPOTS[id].y}`} stroke={outline} strokeWidth={1.4} strokeDasharray="1 6" strokeLinecap="round" opacity={0.55} />
+              <path key={`d${id}`} d={`M ${MID.x} ${MID.y} L ${SPOTS[id].x} ${SPOTS[id].y}`} stroke={outline} strokeWidth={1.4} strokeDasharray="1 6" strokeLinecap="round" opacity={0.55} />
             ))}
-            <ellipse cx={HQ_AT.x} cy={HQ_AT.y - 6} rx={50} ry={30} fill="url(#c2b-plaza)" stroke={outline} strokeOpacity={0.4} strokeWidth={1.6} />
+            <ellipse cx={MID.x} cy={MID.y + 8} rx={58} ry={36} fill="url(#c2b-plaza)" stroke={outline} strokeOpacity={0.4} strokeWidth={1.6} />
 
           </g>
+          {/* A light bevel just inside the edge, so the sector reads as a tile. */}
+          <polygon points={HEX} transform="translate(10 8.66) scale(.95)" fill="none" stroke="#fff" strokeOpacity={0.5} strokeWidth={2} strokeLinejoin="round" />
           {/* The sector's outline, as on the game map: the clan's colour, darker. */}
           <polygon points={HEX} fill="none" stroke={outline} strokeOpacity={0.35} strokeWidth={9} strokeLinejoin="round" />
           <polygon points={HEX} fill="none" stroke={outline} strokeWidth={3} strokeLinejoin="round" />
@@ -252,7 +256,7 @@ export function BaseScene() {
                 <span className={`c2-plot-badge ${lv === 0 || ready ? (ready ? 'plus' : 'off') : lv === 3 ? 'max' : 'lv'}`}>{lv === 0 || ready ? '+' : lv}</span>
               )}
               {!on && lv > 0 && <span className="c2-zzz-html">z z</span>}
-              <span className="c2-base-pill">
+              <span className="c2-base-pill" style={PILL_DX[id] ? { ['--pill-dx' as string]: `${PILL_DX[id]}%` } : undefined}>
                 <span>{tnd(`clan2.project.${id}.name`)}</span>
               </span>
               {under && (

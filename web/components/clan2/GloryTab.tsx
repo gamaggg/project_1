@@ -6,6 +6,7 @@ import { useDemoState } from '@/lib/clan2/demoStore'
 import { formatCatchMeta } from '@/lib/format'
 import { leagueFor } from '@/lib/data/clanLevels'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
+import { thumbUrl } from '@/lib/supabase/imageUrl'
 
 // «Слава»: the clan's records — the biggest fish of each species among its
 // members — and the clan card for a Telegram story built from them.
@@ -31,21 +32,28 @@ export function GloryTab() {
         <ul className="c2-hall">
           {records.map((r, i) => (
             <li key={r.species}>
-              <div className="c2-hall-photo" style={{ background: `linear-gradient(150deg, hsl(${r.hue} 55% 62%), hsl(${(r.hue + 40) % 360} 55% 38%))` }}>
-                <svg viewBox="0 0 64 40" width="44" height="28" aria-hidden>
-                  <path d="M4 20c9-12 26-14 40-4l10-8v24l-10-8C30 34 13 32 4 20z" fill="rgba(255,255,255,.9)" />
-                  <circle cx="14" cy="18" r="2" fill="rgba(0,0,0,.45)" />
-                </svg>
+              <div className={`c2-hall-photo${r.photo ? ' has' : ''}`} style={{ background: `linear-gradient(150deg, hsl(${r.hue} 55% 62%), hsl(${(r.hue + 40) % 360} 55% 38%))` }}>
+                {r.photo ? (
+                  <img src={thumbUrl(r.photo, 240)} alt={speciesName(r.species)} loading="lazy" decoding="async" />
+                ) : (
+                  <svg viewBox="0 0 64 40" width="44" height="28" aria-hidden>
+                    <path d="M4 20c9-12 26-14 40-4l10-8v24l-10-8C30 34 13 32 4 20z" fill="rgba(255,255,255,.9)" />
+                    <circle cx="14" cy="18" r="2" fill="rgba(0,0,0,.45)" />
+                  </svg>
+                )}
+                {i === 0 && <span className="c2-hall-crown" aria-label={tn('clan2.glory.top')}>1</span>}
               </div>
               <div className="c2-hall-main">
                 <strong>{speciesName(r.species)}</strong>
-                <div className="c2-hall-size">{formatCatchMeta(r.cm, r.kg)}</div>
+                <div className="c2-hall-size">
+                  {formatCatchMeta(r.cm, r.kg)}
+                  {i === 0 && <span className="c2-chip warn">{tn('clan2.glory.top')}</span>}
+                </div>
                 <div className="c2-muted small c2-hall-by">
                   <C2Avatar member={{ name: r.member, hue: r.hue }} size={18} />
-                  {tn('clan2.glory.by', { name: r.member, date: date(r.at) })}
+                  <span>{tn('clan2.glory.by', { name: r.member, date: date(r.at) })}</span>
                 </div>
               </div>
-              {i === 0 && <span className="c2-chip warn">{tn('clan2.glory.top')}</span>}
             </li>
           ))}
         </ul>

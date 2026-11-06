@@ -102,7 +102,8 @@ export type WeeklyQuest = {
 export type ProjectId = 'dock' | 'beacon' | 'fort' | 'board' | 'storage' | 'market'
 export type ProjectLevel = 0 | 1 | 2 | 3
 
-export type HallRecord = { species: string; member: string; cm: number; kg: number; at: number; hue: number }
+// photo: the catch's own photo (live mode, from catches.photo_url), shown in the hall of fame instead of a drawing.
+export type HallRecord = { species: string; member: string; cm: number; kg: number; at: number; hue: number; photo?: string | null }
 
 export type RecruitEntry = { name: string; state: 'invited' | 'joined' | 'caught' | 'paid'; daysLeft: number }
 

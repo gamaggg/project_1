@@ -72,6 +72,7 @@ export function TreasuryTab({ onGo }: { onGo?: (to: Go) => void } = {}) {
           </div>
           <C2Bar value={s.treasury.balance / cap} tone={s.treasury.balance / cap > 0.9 ? 'warn' : 'accent'} label={tn('clan2.treasury.balance')} />
           <div className="c2-balance-cap">{tn('clan2.treasury.capOf', { cap: fmt(cap) })}</div>
+          <div className="c2-flow-label">{tn('clan2.treasury.weekFlow')}</div>
           <div className="c2-flow" aria-label={tn('clan2.treasury.weekFlow')}>
             {flow.map((v, i) => (
               <i key={i} style={{ height: `${Math.max(6, (v / maxFlow) * 100)}%` }} className={i === 6 ? 'now' : undefined} />
@@ -176,19 +177,19 @@ export function TreasuryTab({ onGo }: { onGo?: (to: Go) => void } = {}) {
                   <span className="c2-name">
                     {m.name}
                     {m.id === s.myId && <em className="c2-you">{tn('clan2.treasury.you')}</em>}
+                    {i === 0 && (
+                      <span className="c2-patron" title={tn('clan2.treasury.patron')}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                          <path d="M4 18 3 8l5 4 4-7 4 7 5-4-1 10z" />
+                        </svg>
+                        {tn('clan2.treasury.patron')}
+                      </span>
+                    )}
                   </span>
                   <C2Coins n={m.weekDeposit} />
                 </div>
                 <C2Bar value={m.weekDeposit / maxContribution} tone={i === 0 ? 'warn' : 'accent'} />
               </div>
-              {i === 0 && (
-                <span className="c2-patron" title={tn('clan2.treasury.patron')}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                    <path d="M4 18 3 8l5 4 4-7 4 7 5-4-1 10z" />
-                  </svg>
-                  {tn('clan2.treasury.patron')}
-                </span>
-              )}
             </li>
           ))}
         </ul>
@@ -381,7 +382,7 @@ function RentDetail() {
       ) : (
         <>
           <div className="c2-rent-filter">
-            {(['all', 'hq', 'shared', 'hot', 'plain'] as const).map((f) => (
+            {(['all', 'hq', 'shared', 'hot', 'plain'] as const).filter((f) => f === 'all' || rows.some((r) => r.kind === f)).map((f) => (
               <button key={f} type="button" className={`filter-chip${filter === f ? ' active' : ''}`} onClick={() => setFilter(f)}>
                 {tn(`clan2.treasury.rentFilter_${f}`)}
                 <small>{f === 'all' ? rows.length : rows.filter((r) => r.kind === f).length}</small>

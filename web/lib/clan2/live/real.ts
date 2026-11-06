@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 // fame (the biggest fish of every species among the members' catches, ever), and who fished lately.
 // Two reads of `catches` for the clan's members and one of the species table; nothing is written.
 
-type Row = { user_id: string; species: string; length_cm: number | null; weight_kg: number | null; caught_at: string; territory_id: string }
+type Row = { user_id: string; species: string; length_cm: number | null; weight_kg: number | null; caught_at: string; territory_id: string; photo_url?: string | null }
 
 export async function fetchRealClan(clan: ClanDetail, now: number): Promise<RealClan | null> {
   const ids = clan.members.map((m) => m.userId)
@@ -16,7 +16,7 @@ export async function fetchRealClan(clan: ClanDetail, now: number): Promise<Real
   const since = new Date(weekStartOf(now)).toISOString()
   const [recent, top, species] = await Promise.all([
     supabase.from('catches').select('user_id,species,length_cm,weight_kg,caught_at,territory_id').in('user_id', ids).gte('caught_at', since).limit(2000),
-    supabase.from('catches').select('user_id,species,length_cm,weight_kg,caught_at,territory_id').in('user_id', ids).not('length_cm', 'is', null).order('length_cm', { ascending: false }).limit(600),
+    supabase.from('catches').select('user_id,species,length_cm,weight_kg,caught_at,territory_id,photo_url').in('user_id', ids).not('length_cm', 'is', null).order('length_cm', { ascending: false }).limit(600),
     supabase.from('species').select('key,coin_value'),
   ])
   if (recent.error || top.error) return null
@@ -54,7 +54,7 @@ export async function fetchRealClan(clan: ClanDetail, now: number): Promise<Real
   for (const c of (top.data ?? []) as Row[]) {
     if (!c.length_cm || best.has(c.species)) continue
     const kg = c.weight_kg ?? Math.round(Math.pow(c.length_cm / 20, 3) * 0.12 * 10) / 10
-    best.set(c.species, { species: c.species, member: name.get(c.user_id) ?? '', userId: c.user_id, cm: c.length_cm, kg, at: new Date(c.caught_at).getTime() })
+    best.set(c.species, { species: c.species, member: name.get(c.user_id) ?? '', userId: c.user_id, cm: c.length_cm, kg, at: new Date(c.caught_at).getTime(), photo: c.photo_url ?? null })
   }
   return {
     catches: week.length,

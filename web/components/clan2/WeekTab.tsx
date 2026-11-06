@@ -1,6 +1,6 @@
 'use client'
 
-import { C2Bar, C2Card, fmtLeft, useC2, useDemoNow } from '@/components/clan2/C2Common'
+import { C2Bar, C2Card, C2Coins, fmtLeft, useC2, useDemoNow } from '@/components/clan2/C2Common'
 import { canManage, claimQuest, useDemoState } from '@/lib/clan2/demoStore'
 import { fmt } from '@/lib/clan2/rules'
 import type { QuestKind } from '@/lib/clan2/types'
@@ -41,23 +41,30 @@ export function WeekTab() {
   return (
     <div className="c2-stack">
       <C2Card title={tn('clan2.week.questTitle')} hint={tn('clan2.week.questHint')} tour="week-quest">
-        <div className="c2-goal-row">
-          <strong>{questLabel(q.kind, q.target, q.param)}</strong>
+        <div className="c2-quest">
+          <div className="c2-quest-head">
+            <strong>{questLabel(q.kind, q.target, q.param)}</strong>
+            <span className="c2-quest-prize" title={tn('clan2.week.reward', { n: fmt(q.reward) })}>
+              +<C2Coins n={q.reward} />
+            </span>
+          </div>
+          <div className="c2-quest-count">
+            <b>{Math.round(Math.min(q.progress, q.target) * 10) / 10}</b>
+            <span>/ {q.target}</span>
+          </div>
+          <C2Bar value={q.progress / q.target} tone={done ? 'good' : 'accent'} label={questLabel(q.kind, q.target, q.param)} />
+          <div className="c2-goal-foot">
+            <span className="c2-muted">{tn('clan2.week.endsIn', { t: fmtLeft(q.endsAt - now) })}</span>
+          </div>
         </div>
-        <C2Bar value={q.progress / q.target} tone={done ? 'good' : 'accent'} label={questLabel(q.kind, q.target, q.param)} />
-        <div className="c2-goal-foot">
-          <span className="c2-muted">{tn('clan2.week.progress', { a: Math.round(Math.min(q.progress, q.target) * 10) / 10, b: q.target })}</span>
-          <span className="c2-muted">{tn('clan2.week.endsIn', { t: fmtLeft(q.endsAt - now) })}</span>
-        </div>
-        <p className="c2-hint" style={{ marginTop: 10 }}>
-          {tn('clan2.week.reward', { n: fmt(q.reward) })}
-        </p>
         {q.claimed ? (
           <span className="c2-ok">{tn('clan2.week.claimed')}</span>
-        ) : (
-          <button className="btn-primary" disabled={!done || !manage} onClick={() => act(claimQuest(), 'questClaimed')}>
+        ) : done ? (
+          <button className="btn-primary" disabled={!manage} onClick={() => act(claimQuest(), 'questClaimed')}>
             {manage ? tn('clan2.week.claim') : tn('clan2.week.claimLeader')}
           </button>
+        ) : (
+          <p className="c2-quest-left">{tn('clan2.week.left', { n: Math.ceil((q.target - q.progress) * 10) / 10 })}</p>
         )}
       </C2Card>
 

@@ -323,6 +323,7 @@ export const clan2En = {
     q_members: "Get {n} different members to catch a fish",
     q_days: "Fish as a clan on {n} different days of the week",
     q_sectors: "Catch fish in {n} different sectors",
+    left: "{n} more and the reward can be claimed",
   },
   hq: {
     title: "HQ",
@@ -367,6 +368,7 @@ export const clan2En = {
     ruinsBy: "{by} carried off {n} coins from the treasury.",
     ruinsWait: "A new HQ can be set in {t}.",
     ruinsBuildings: "The buildings sleep until a new HQ.",
+    moveCooldown: "The HQ can be moved again in {t}",
   },
   project: {
     dock: {
