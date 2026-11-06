@@ -21,6 +21,14 @@ import { tn, tnd } from '@/lib/i18n/runtime'
 
 const W = 400
 const H = 346.4
+// The picture is wider than the sector: the real map shows round it too (dimmed), the sector stays a hexagon in the middle.
+const VW = 470
+const VH = 400
+const OX = (VW - W) / 2
+const OY = (VH - H) / 2
+// The map is drawn a little wider than the sector itself, so the coast and the streets round it can be seen.
+const MAP_ZOOM_OUT = 1.7
+const HEX = '100,0 300,0 400,173.2 300,346.4 100,346.4 0,173.2'
 // The plots: where each building's ground point stands. Clockwise from the top left; the tall lighthouse has the top.
 const SPOTS: Record<ProjectId, { x: number; y: number }> = {
   beacon: { x: 134, y: 126 },
@@ -56,7 +64,8 @@ export function effectText(id: ProjectId, level: ProjectLevel): string {
 // The art box of one plot: the ground line is at y = 0, 28% of the box lies under it (plate, pills).
 const ART_VB = '-56 -108 112 150'
 
-const pct = (v: number, of: number) => `${(v / of) * 100}%`
+const px = (x: number) => `${((OX + x) / VW) * 100}%`
+const py = (y: number) => `${((OY + y) / VH) * 100}%`
 
 export function BaseScene() {
   const s = useDemoState()
@@ -73,7 +82,7 @@ export function BaseScene() {
   const crest = s.clan.crest
   const ruins = s.hq.ruins && now < s.hq.ruins.until ? s.hq.ruins : null
   const geo = s.live ? hqGeo : DEMO_GEO
-  const mapUrl = geo && mapOk ? previewStaticUrl(geo.lat, geo.lng, geo.widthDeg, 400, 347) : null
+  const mapUrl = geo && mapOk ? previewStaticUrl(geo.lat, geo.lng, geo.widthDeg, VW, VH, W / MAP_ZOOM_OUT) : null
   const outline = hqOutlineColor(crest)
   const clanColor = resolveCrest(crest).primary
 
@@ -120,14 +129,14 @@ export function BaseScene() {
 
   return (
     <div className="c2-base">
-      <div className="c2-base-hex hex-aspect hex-shape" data-tour="base-scene" style={{ ['--clan' as string]: clanColor, ['--clan-dark' as string]: outline }}>
-        <svg className="c2-base-svg" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+      <div className="c2-base-hex" data-tour="base-scene" style={{ ['--clan' as string]: clanColor, ['--clan-dark' as string]: outline }}>
+        <svg className="c2-base-svg" viewBox={`0 0 ${VW} ${VH}`} aria-hidden="true">
           <defs>
             <clipPath id="c2b-clip">
-              <polygon points="100,0 300,0 400,173.2 300,346.4 100,346.4 0,173.2" />
+              <polygon points={HEX} />
             </clipPath>
             <radialGradient id="c2b-veil" cx="0.5" cy="0.55" r="0.6">
-              <stop offset="0" stopColor="#fff" stopOpacity="0.3" />
+              <stop offset="0" stopColor="#fff" stopOpacity="0.22" />
               <stop offset="1" stopColor="#fff" stopOpacity="0.05" />
             </radialGradient>
             <radialGradient id="c2b-plaza" cx="0.5" cy="0.5" r="0.5">
@@ -135,12 +144,15 @@ export function BaseScene() {
               <stop offset="1" stopColor="#F4EEDD" stopOpacity="0.9" />
             </radialGradient>
           </defs>
+            <rect width={VW} height={VH} fill="#E9ECEF" />
+            {mapUrl && <image href={mapUrl} x={0} y={0} width={VW} height={VH} preserveAspectRatio="none" onError={() => setMapOk(false)} />}
+            {!mapUrl && [0, 1, 2, 3].map((i) => <path key={i} className="c2-wave" style={{ animationDelay: `${i * -1.3}s` }} d={`M ${60 + i * 110} ${60 + (i % 2) * 20} q 12 -7 24 0 t 24 0`} fill="none" stroke="rgba(120,150,180,.5)" strokeWidth={1.6} strokeLinecap="round" />)}
+          {/* Outside the sector the map is veiled, so the sector is the bright part. */}
+          <path d={`M0 0H${VW}V${VH}H0Z M${HEX.split(' ').map((q) => { const [x, y] = q.split(',').map(Number); return `${x + OX},${y + OY}` }).join(' L')}Z`} fill="#fff" fillOpacity={0.4} fillRule="evenodd" />
+          <g transform={`translate(${OX} ${OY})`}>
           <g clipPath="url(#c2b-clip)">
-            <rect width={W} height={H} fill="#E9ECEF" />
-            {mapUrl && <image href={mapUrl} x={0} y={-0.3} width={W} height={347} preserveAspectRatio="none" onError={() => setMapOk(false)} />}
-            {!mapUrl && [0, 1, 2, 3].map((i) => <path key={i} className="c2-wave" style={{ animationDelay: `${i * -1.3}s` }} d={`M ${40 + i * 84} ${40 + (i % 2) * 14} q 12 -7 24 0 t 24 0`} fill="none" stroke="rgba(120,150,180,.5)" strokeWidth={1.6} strokeLinecap="round" />)}
             <rect width={W} height={H} fill="url(#c2b-veil)" />
-            <rect width={W} height={H} fill={clanColor} opacity={0.13} />
+            <rect width={W} height={H} fill={clanColor} opacity={0.08} />
             {/* The paths from the HQ to every plot, and the plaza round it. */}
             {PROJECT_IDS.map((id) => (
               <path key={id} d={`M ${HQ_AT.x} ${HQ_AT.y - 10} L ${SPOTS[id].x} ${SPOTS[id].y}`} stroke="#fff" strokeWidth={7} strokeLinecap="round" opacity={0.85} />
@@ -149,17 +161,19 @@ export function BaseScene() {
               <path key={`d${id}`} d={`M ${HQ_AT.x} ${HQ_AT.y - 10} L ${SPOTS[id].x} ${SPOTS[id].y}`} stroke={outline} strokeWidth={1.4} strokeDasharray="1 6" strokeLinecap="round" opacity={0.55} />
             ))}
             <ellipse cx={HQ_AT.x} cy={HQ_AT.y - 6} rx={52} ry={34} fill="url(#c2b-plaza)" stroke={outline} strokeOpacity={0.4} strokeWidth={1.6} />
+
           </g>
           {/* The sector's outline, as on the game map: the clan's colour, darker. */}
-          <polygon points="100,0 300,0 400,173.2 300,346.4 100,346.4 0,173.2" fill="none" stroke={outline} strokeOpacity={0.35} strokeWidth={9} strokeLinejoin="round" />
-          <polygon points="100,0 300,0 400,173.2 300,346.4 100,346.4 0,173.2" fill="none" stroke={outline} strokeWidth={3} strokeLinejoin="round" />
+          <polygon points={HEX} fill="none" stroke={outline} strokeOpacity={0.35} strokeWidth={9} strokeLinejoin="round" />
+          <polygon points={HEX} fill="none" stroke={outline} strokeWidth={3} strokeLinejoin="round" />
+          </g>
         </svg>
 
         {/* The HQ: the banner of the game map, on the plaza. */}
         <button
           type="button"
           className={`c2-base-hq${on ? '' : ' down'}`}
-          style={{ left: pct(HQ_AT.x, W), top: pct(HQ_AT.y, H) }}
+          style={{ left: px(HQ_AT.x), top: py(HQ_AT.y) }}
           aria-label={ruins ? tn('clan2.base.ruins') : tn('clan2.base.hq')}
           onClick={() => setPop({ id: 'hq', n: Date.now() })}
         >
@@ -192,7 +206,7 @@ export function BaseScene() {
               key={id}
               type="button"
               className={`c2-plot${isSel ? ' sel' : ''}${on ? '' : ' asleep'}${ready ? ' ready' : ''}${lv === 0 ? ' empty' : ''}`}
-              style={{ left: pct(pos.x, W), top: pct(pos.y, H), zIndex: Math.round(pos.y) }}
+              style={{ left: px(pos.x), top: py(pos.y), zIndex: Math.round(pos.y) }}
               aria-label={`${tnd(`clan2.project.${id}.name`)} ${lv}/3`}
               aria-pressed={isSel}
               onClick={() => choose(id)}
