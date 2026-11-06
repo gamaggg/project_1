@@ -439,12 +439,12 @@
 .c2-goal-row{align-items:center;}
 /* On a wide screen the app is a phone-width column in the middle: the layer on top follows it. */
 .c2-sheet-overlay{justify-content:center;}
-.c2-sheet{max-width:430px;}
-.c2-live-fabs{left:max(10px, calc(50vw - 215px + 8px));}
-.c2-live-stack{left:50%; right:auto; width:min(406px, calc(100vw - 24px)); transform:translateX(-50%);}
+.c2-sheet{max-width:480px;}
+.c2-live-fabs{left:max(10px, calc(50vw - 240px + 8px));}
+.c2-live-stack{left:50%; right:auto; width:min(456px, calc(100vw - 24px)); transform:translateX(-50%);}
 .c2-panel.c2-panel-live{position:static; width:100%; max-height:none; background:none; border:none; box-shadow:none; padding:0; backdrop-filter:none; overflow:visible;}
 /* On a wide screen the buttons stand in the margin beside the app column, not over its content. */
-@media (min-width: 560px){.c2-live-fabs{left:calc(50vw - 215px - 54px); top:42%;}}
+@media (min-width: 580px){.c2-live-fabs{left:calc(50vw - 240px - 54px); top:42%;}}
 /* With the clan update's sections the strip has up to nine tabs and scrolls: the sliding thumb (made for three or four tabs) gives way to each tab's own pill. */
 .clan-tabs.c2-scroll::before{display:none;}
 .clan-tabs.c2-scroll .clan-tab.on{background:linear-gradient(180deg,#FFFFFF 0%,#F6F1EA 100%); box-shadow:0 0 0 1px rgba(120,82,50,.09), 0 1px 0 #fff inset, 0 4px 10px rgba(80,45,15,.13);}
@@ -534,7 +534,6 @@
 @media (prefers-reduced-motion: reduce){.c2-spark-star,.c2-chest .c2-chest-lid{animation:none; transition:none;}}
 /* On a narrow window the app fills it, and so do the sheets and the bars over it (the 430 px column is for a wide screen). */
 @media (max-width: 600px){
-  .c2-sheet{max-width:none;}
   .c2-live-stack{left:12px; right:12px; width:auto; transform:none;}
   .c2-live-fabs{left:10px;}
 }
