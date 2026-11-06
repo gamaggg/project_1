@@ -10,6 +10,7 @@ export const DAY = 24 * HOURS
 
 // The personal Kazna paid 1 coin per 3 hours per sector (8 a day). The clan
 // rent keeps that rate, but goes to the clan's treasury and has no 30-a-day cap.
+// So one sector = 1 coin every 3 hours; the sector with the headquarters pays 2 every 3 hours (16 a day).
 export const DEFAULT_SETTINGS: EconomySettings = {
   enabled: true,
   rentPerSectorDay: 8,
@@ -37,6 +38,13 @@ export const HQ_RENT_FACTOR = 2
 export const HQ_MOVE_COOLDOWN_DAYS = 3
 // An outsider's catch on an HQ sector with no defence left starts a siege, not a capture: the clan has this long to break it.
 export const SIEGE_MINUTES = 30
+// The defence of a sector is 0–3 shields everywhere in the game (SectorDefense.tsx).
+export const DEFENSE_MAX = 3
+// A fallen HQ: the attackers carry off this share of the treasury (at most HQ_LOOT_MAX), the clan's buildings sleep
+// until a new HQ stands, and a new one cannot be built for HQ_RUINS_HOURS.
+export const HQ_LOOT_SHARE = 0.2
+export const HQ_LOOT_MAX = 1000
+export const HQ_RUINS_HOURS = 24
 export const SIEGE_BREAK_REWARD = 20
 export const BOUNTY_MAX_ACTIVE = 3
 // One bounty is at most this share of the treasury, and no member gets more than the cap a day from bounties.
@@ -48,10 +56,8 @@ export const SEASON_WEEKS = 4
 // it cannot be hoarded for ever, which keeps the money moving. «Склад» adds to it.
 export function treasuryCap(level: number, storage: ProjectLevel): number {
   const base = level >= 9 ? 20_000 : level >= 7 ? 12_000 : level >= 5 ? 8_000 : level >= 3 ? 5_000 : 3_000
-  return base + STORAGE_BONUS[storage]
+  return base + PROJECT_EFFECTS.storage.cap[storage]
 }
-
-const STORAGE_BONUS: Record<ProjectLevel, number> = { 0: 0, 1: 1_000, 2: 2_500, 3: 5_000 }
 
 // What the sectors of the clan earn in a day: a sector shared by clan-mates pays more, the HQ sector doubles.
 export function dailyRent(settings: EconomySettings, plainSectors: number, sharedSectors: number, hqSector: boolean): number {
@@ -86,14 +92,29 @@ export function intake(balance: number, cap: number, amount: number): { added: n
 export const SPEND_KINDS: TreasuryKind[] = ['spend_buff', 'spend_goal', 'spend_project', 'spend_bounty', 'spend_hq', 'spend_skin']
 export const isSpend = (kind: TreasuryKind) => SPEND_KINDS.includes(kind)
 
-// Clan buildings. Cosmetics and conveniences only — nothing here makes a clan stronger in the game itself.
+// Clan buildings. They stand only while the clan's headquarters stands: with the HQ fallen they sleep.
+// Every level changes something real in the game (the numbers below), not just the look.
 export const PROJECTS: Record<ProjectId, { costs: [number, number, number] }> = {
   dock: { costs: [400, 900, 1800] },
   beacon: { costs: [500, 1200, 2400] },
+  fort: { costs: [700, 1500, 3000] },
   board: { costs: [300, 700, 1400] },
   storage: { costs: [600, 1400, 2800] },
 }
-export const PROJECT_IDS: ProjectId[] = ['dock', 'beacon', 'board', 'storage']
+// Index = the building's level (0 = not built).
+export const PROJECT_EFFECTS = {
+  // «Причал»: more places in the clan (clans.extra_slots on the server).
+  dock: { slots: [0, 2, 4, 6] },
+  // «Маяк»: more minutes to break a siege of the HQ.
+  beacon: { siegeMinutes: [0, 10, 20, 30] },
+  // «Крепость»: the defence of the HQ sector wears down 1 per this many days without clan catches (1 for everybody else).
+  fort: { decayDays: [1, 2, 3, 5] },
+  // «Доска заказов»: more bounties at once, and a bigger reward for the weekly task.
+  board: { bountySlots: [0, 1, 2, 3], questPct: [0, 10, 20, 30] },
+  // «Склад»: the treasury holds more.
+  storage: { cap: [0, 1_000, 2_500, 5_000] },
+} as const
+export const PROJECT_IDS: ProjectId[] = ['dock', 'beacon', 'fort', 'board', 'storage']
 
 // The clan skins of the sector: animated, painted by lib/map/clanSkins.ts. One clan wears one at a time.
 export const CLAN_SKINS = [
@@ -123,8 +144,9 @@ export function questTarget(kind: QuestKind, activeMembers: number): number {
   return Math.max(floor[kind], Math.round(per[kind] * Math.max(1, activeMembers)))
 }
 
-export function questReward(kind: QuestKind): number {
-  return { catches: 150, species: 200, capture: 180, rare: 220 }[kind]
+export function questReward(kind: QuestKind, board: ProjectLevel = 0): number {
+  const base = { catches: 150, species: 200, capture: 180, rare: 220 }[kind]
+  return Math.round(base * (1 + PROJECT_EFFECTS.board.questPct[board] / 100))
 }
 
 export const fmt = (n: number) => Math.round(n).toLocaleString('ru-RU').replace(/ | /g, ' ')

@@ -3,9 +3,9 @@
 import { C2Bar, C2Card, C2Coins, fmtLeft, useC2, useDemoNow } from '@/components/clan2/C2Common'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { SkinSwatch } from '@/components/clan2/SkinSwatch'
-import { buyOffer, canManage, equipSkin, setGoal, upgradeProject, useDemoState } from '@/lib/clan2/demoStore'
-import { CLAN_SKINS, DAY, HQ_MOVE_COOLDOWN_DAYS, PROJECTS, PROJECT_IDS } from '@/lib/clan2/rules'
-import type { ProjectId } from '@/lib/clan2/types'
+import { BaseScene } from '@/components/clan2/BaseScene'
+import { canManage, equipSkin, setGoal, siegeMinutesOf, useDemoState } from '@/lib/clan2/demoStore'
+import { CLAN_SKINS, DAY, DEFENSE_MAX, HQ_LOOT_MAX, HQ_LOOT_SHARE, HQ_MOVE_COOLDOWN_DAYS } from '@/lib/clan2/rules'
 import { tn, tnd } from '@/lib/i18n/runtime'
 
 // «Штаб»: the headquarters of the clan, how to defend it, the buildings the
@@ -22,6 +22,8 @@ export function HqTab({ onGoMap }: { onGoMap?: (focus?: MapFocus) => void }) {
   const sector = s.sectors.find((x) => x.id === hq.sectorId)
   const coolLeft = hq.sectorId ? Math.max(0, (hq.lastMoveAt ?? hq.placedAt ?? 0) + HQ_MOVE_COOLDOWN_DAYS * DAY - now) : 0
   const color = s.clan.crest.primary
+  const ruinsOn = !!hq.ruins && now < hq.ruins.until
+  const siegeMin = siegeMinutesOf(s)
 
   return (
     <div className="c2-stack">
@@ -37,7 +39,7 @@ export function HqTab({ onGoMap }: { onGoMap?: (focus?: MapFocus) => void }) {
                 <div className="c2-muted small">{tn('clan2.hq.defense', { n: sector.defense })}</div>
               </div>
             </div>
-            <C2Bar value={sector.defense / 4} tone={sector.defense === 0 ? 'bad' : sector.defense <= 1 ? 'warn' : 'good'} label={tn('clan2.hq.defense', { n: sector.defense })} />
+            <C2Bar value={sector.defense / DEFENSE_MAX} tone={sector.defense === 0 ? 'bad' : sector.defense <= 1 ? 'warn' : 'good'} label={tn('clan2.hq.defense', { n: sector.defense })} />
             {hq.siege && (
               <div className="c2-siege">
                 <strong>{tn('clan2.hq.siege')}</strong>
@@ -67,10 +69,21 @@ export function HqTab({ onGoMap }: { onGoMap?: (focus?: MapFocus) => void }) {
           </>
         ) : (
           <>
-            <p className="c2-muted">{tn('clan2.hq.none')}</p>
-            <p className="c2-hint">{tn('clan2.hq.noneHint', { n: s.settings.hqPlaceCost })}</p>
+            {ruinsOn ? (
+              <div className="c2-ruins-card">
+                <strong>{tn('clan2.hq.ruinsTitle', { id: hq.ruins!.sectorId })}</strong>
+                <span>{tn('clan2.hq.ruinsBy', { by: hq.ruins!.by, n: hq.ruins!.loot })}</span>
+                <span>{tn('clan2.hq.ruinsWait', { t: fmtLeft(hq.ruins!.until - now) })}</span>
+                <small>{tn('clan2.hq.ruinsBuildings')}</small>
+              </div>
+            ) : (
+              <>
+                <p className="c2-muted">{tn('clan2.hq.none')}</p>
+                <p className="c2-hint">{tn('clan2.hq.noneHint', { n: s.settings.hqPlaceCost })}</p>
+              </>
+            )}
             {manage && (
-              <button className="btn-primary" onClick={() => onGoMap?.({ place: true })}>
+              <button className="btn-primary" disabled={ruinsOn} onClick={() => onGoMap?.({ place: true })}>
                 {tn('clan2.hq.place')}
               </button>
             )}
@@ -82,40 +95,19 @@ export function HqTab({ onGoMap }: { onGoMap?: (focus?: MapFocus) => void }) {
         <ol className="c2-rules">
           <li>{tn('clan2.hq.rule1')}</li>
           <li>{tn('clan2.hq.rule2')}</li>
-          <li>{tn('clan2.hq.rule3')}</li>
-          <li>{tn('clan2.hq.rule4')}</li>
+          <li>{tn('clan2.hq.rule3', { m: siegeMin })}</li>
         </ol>
+        <div className="c2-label">{tn('clan2.hq.fallTitle')}</div>
+        <ul className="c2-fall">
+          <li>{tn('clan2.hq.fall1', { p: Math.round(HQ_LOOT_SHARE * 100), n: HQ_LOOT_MAX })}</li>
+          <li>{tn('clan2.hq.fall2')}</li>
+          <li>{tn('clan2.hq.fall3')}</li>
+          <li>{tn('clan2.hq.fall4')}</li>
+        </ul>
       </C2Card>
 
-      <C2Card title={tn('clan2.hq.buildingsTitle')} hint={tn('clan2.hq.buildingsHint')} tour="hq-buildings">
-        <ul className="c2-projects">
-          {PROJECT_IDS.map((id: ProjectId) => {
-            const level = s.projects[id]
-            const cost = level < 3 ? PROJECTS[id].costs[level as 0 | 1 | 2] : 0
-            return (
-              <li key={id}>
-                <div className="c2-project-top">
-                  <strong>{tnd(`clan2.project.${id}.name`)}</strong>
-                  <span className="c2-pips" aria-label={tn('clan2.hq.level', { a: level })}>
-                    {[1, 2, 3].map((n) => (
-                      <i key={n} className={level >= n ? 'on' : undefined} />
-                    ))}
-                  </span>
-                </div>
-                <p className="c2-muted small">{tnd(`clan2.project.${id}.desc`)}</p>
-                {level < 3 ? (
-                  manage && (
-                    <button className="btn-secondary" onClick={() => act(upgradeProject(id), 'upgraded')} disabled={s.treasury.balance < cost}>
-                      {tn('clan2.hq.upgrade', { n: cost })}
-                    </button>
-                  )
-                ) : (
-                  <span className="c2-ok">{tn('clan2.hq.maxed')}</span>
-                )}
-              </li>
-            )
-          })}
-        </ul>
+      <C2Card title={tn('clan2.base.title')} hint={tn('clan2.base.hint')} tour="hq-buildings">
+        <BaseScene />
       </C2Card>
 
       <C2Card title={tn('clan2.hq.skinsTitle')} hint={tn('clan2.hq.skinsHint')} tour="hq-skins">
@@ -156,25 +148,6 @@ export function HqTab({ onGoMap }: { onGoMap?: (focus?: MapFocus) => void }) {
         )}
       </C2Card>
 
-      <C2Card title={tn('clan2.hq.partnersTitle')} hint={tn('clan2.hq.partnersHint')} tour="hq-partners">
-        <ul className="c2-offers">
-          {s.offers.map((o) => (
-            <li key={o.id}>
-              <div>
-                <strong>{o.shop}</strong>
-                <div className="c2-muted small">{tnd(`clan2.offer.${o.titleKey}`)}</div>
-              </div>
-              {o.owned ? (
-                <span className="c2-ok">{tn('clan2.hq.offerOwned')}</span>
-              ) : (
-                <button className="btn-secondary" disabled={!manage || s.treasury.balance < o.cost} onClick={() => act(buyOffer(o.id), 'bought')}>
-                  {tn('clan2.hq.offerBuy', { n: o.cost })}
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      </C2Card>
     </div>
   )
 }

@@ -325,3 +325,68 @@
 .c2-tour-btns{display:flex; align-items:center; gap:14px;}
 .c2-tour-next{border:none; border-radius:12px; background:var(--accent); color:#fff; font:inherit; font-size:13.5px; font-weight:800; padding:9px 16px; cursor:pointer;}
 @media (prefers-reduced-motion: reduce){.c2-tour-intro, .c2-tour-card{animation:none;} .c2-tour-crest{animation:none;} .c2-tour-spot{transition:none;}}
+
+/* ───────── «База клана»: the scene with the HQ and the five buildings ───────── */
+.c2-base{display:flex; flex-direction:column; gap:12px;}
+.c2-base-svg{width:100%; height:auto; display:block; border-radius:22px; box-shadow:inset 0 0 0 1px rgba(23,24,27,.06);}
+.c2-wave{animation:c2-wave 5.5s ease-in-out infinite;}
+@keyframes c2-wave{0%,100%{transform:translateX(-5px);opacity:.55}50%{transform:translateX(7px);opacity:1}}
+.c2-scene-label{font:800 8.5px system-ui,sans-serif; fill:rgba(60,45,20,.7); letter-spacing:.04em; text-transform:uppercase; pointer-events:none;}
+.c2-plot{cursor:pointer; outline:none; -webkit-tap-highlight-color:transparent;}
+.c2-plot-pad{fill:rgba(120,90,40,.16); transition:rx .25s, ry .25s, fill .25s;}
+.c2-plot:hover .c2-plot-pad{fill:rgba(240,169,62,.3);}
+.c2-plot.sel .c2-plot-pad{fill:rgba(252,82,0,.26); stroke:#FC5200; stroke-width:1.6; stroke-dasharray:4 3; animation:c2-pad-spin 6s linear infinite;}
+@keyframes c2-pad-spin{to{stroke-dashoffset:-28}}
+.c2-plot:focus-visible .c2-plot-pad{stroke:#17181B; stroke-width:2;}
+.c2-plot-empty{transition:transform .2s;}
+.c2-plot:hover .c2-plot-empty{transform:translateY(-2px);}
+.c2-bld{transform-box:fill-box; transform-origin:50% 100%; transition:filter .4s, opacity .4s;}
+.c2-plot:hover .c2-bld:not(.sleeping){transform:translateY(-1.5px);}
+.c2-bld.sleeping{filter:grayscale(.95) brightness(.95); opacity:.62;}
+.c2-bld.built{animation:c2-build .9s cubic-bezier(.2,1.2,.3,1) both;}
+@keyframes c2-build{0%{transform:scale(.35,.1);opacity:0}45%{transform:scale(1.14,.86);opacity:1}70%{transform:scale(.96,1.07)}100%{transform:scale(1,1)}}
+.c2-dust{fill:none; stroke:rgba(255,255,255,.95); stroke-width:3; transform-box:fill-box; transform-origin:center; animation:c2-dust .9s ease-out both;}
+@keyframes c2-dust{from{transform:scale(.6);opacity:1}to{transform:scale(4.4,2.4);opacity:0}}
+.c2-spark{fill:#FFC93C; transform-box:fill-box; transform-origin:center; animation:c2-spark .9s ease-out both;}
+@keyframes c2-spark{from{transform:rotate(var(--a)) translateX(2px) scale(1);opacity:1}to{transform:rotate(var(--a)) translateX(30px) scale(.2);opacity:0}}
+.c2-glow{animation:c2-glow 2.2s ease-in-out infinite;}
+@keyframes c2-glow{0%,100%{opacity:.75}50%{opacity:1; filter:drop-shadow(0 0 4px #FFE08A)}}
+.c2-beam{animation:c2-beam 5s linear infinite;}
+@keyframes c2-beam{to{transform:rotate(360deg)}}
+.c2-flag{transform-box:fill-box; transform-origin:0 50%; animation:c2-flag 2.4s ease-in-out infinite;}
+@keyframes c2-flag{0%,100%{transform:skewY(0)}50%{transform:skewY(7deg) scaleX(.94)}}
+.c2-hqtower{animation:c2-hq-bob 4.5s ease-in-out infinite;}
+@keyframes c2-hq-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}
+.c2-smoke{animation:c2-smoke 3s ease-out infinite;}
+@keyframes c2-smoke{from{opacity:.7; transform:translateY(0)}to{opacity:0; transform:translateY(-12px)}}
+.c2-zzz{font:800 9px system-ui,sans-serif; fill:#5B6475; animation:c2-zzz 2.4s ease-in-out infinite;}
+@keyframes c2-zzz{0%,100%{opacity:.4; transform:translateY(0)}50%{opacity:1; transform:translateY(-4px)}}
+.c2-pips-svg circle{fill:rgba(23,24,27,.18); stroke:#fff; stroke-width:1;}
+.c2-pips-svg circle.on{fill:#FC5200;}
+.c2-base-sleep{display:flex; flex-direction:column; gap:2px; padding:10px 12px; border-radius:14px; background:#F2F3F6; color:var(--ink-soft,#5B6475); font-size:13px;}
+.c2-base-sleep b{color:var(--ink,#17181B);}
+.c2-base-sleep.fell{background:#FDECEA; color:#8A2A22;}
+.c2-base-sleep.fell b{color:#B3261E;}
+.c2-bld-card{display:flex; flex-direction:column; gap:8px; padding:14px; border-radius:18px; background:#fff; box-shadow:0 0 0 1px rgba(23,24,27,.07), 0 8px 22px -14px rgba(23,24,27,.25); animation:c2-card-in .32s cubic-bezier(.23,1,.32,1);}
+@keyframes c2-card-in{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
+.c2-bld-head{display:flex; align-items:center; justify-content:space-between;}
+.c2-bld-head strong{font-size:16px;}
+.c2-effect-rows{display:grid; gap:6px;}
+.c2-effect{display:flex; flex-direction:column; gap:1px; padding:8px 10px; border-radius:12px;}
+.c2-effect small{font-size:11px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; opacity:.7;}
+.c2-effect b{font-size:13.5px;}
+.c2-effect.now{background:#E8F6EE; color:#0E6B47;}
+.c2-effect.now.none{background:#F2F3F6; color:#5B6475;}
+.c2-effect.next{background:#FFF1E8; color:#B33A00;}
+.c2-bld-cost{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink-soft,#5B6475);}
+.c2-perk-list{list-style:none; margin:0; padding:0; display:grid; gap:4px;}
+.c2-perk-list li button{width:100%; display:flex; justify-content:space-between; gap:10px; align-items:baseline; text-align:left; padding:8px 10px; border-radius:10px; border:none; background:transparent; cursor:pointer; font:inherit; transition:background .15s;}
+.c2-perk-list li button:hover{background:#F4F5F8;}
+.c2-perk-list li.sel button{background:#FFF1E8;}
+.c2-perk-name{font-weight:800; font-size:13.5px;}
+.c2-perk-eff{font-size:12.5px; color:var(--ink-soft,#5B6475); text-align:right;}
+.c2-perk-list li.off .c2-perk-eff{opacity:.55;}
+.c2-ruins-card{display:flex; flex-direction:column; gap:3px; padding:12px; border-radius:14px; background:#FDECEA; color:#8A2A22; font-size:13.5px;}
+.c2-ruins-card strong{color:#B3261E; font-size:15px;}
+.c2-fall{margin:6px 0 0; padding-left:18px; display:grid; gap:4px; font-size:13.5px;}
+@media (prefers-reduced-motion: reduce){.c2-wave,.c2-glow,.c2-beam,.c2-flag,.c2-hqtower,.c2-smoke,.c2-zzz,.c2-bld.built,.c2-dust,.c2-spark,.c2-plot.sel .c2-plot-pad{animation:none;}}

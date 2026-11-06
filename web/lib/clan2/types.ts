@@ -29,6 +29,7 @@ export type TreasuryKind =
   | 'race_share'
   | 'recruit'
   | 'refund'
+  | 'looted'
   | 'quest'
   | 'tournament'
   | 'spend_buff'
@@ -72,6 +73,10 @@ export type HqState = {
   placedAt: number | null
   lastMoveAt: number | null
   siege: { by: string; startedAt: number; endsAt: number } | null
+  // When the defence of the HQ sector last changed (it wears down 1 per «Крепость»-days without clan catches).
+  defenseAt: number | null
+  // After a fall: the ruins of the old HQ, what the attackers carried off and until when a new one cannot be built.
+  ruins: { sectorId: string; by: string; loot: number; fellAt: number; until: number } | null
 }
 
 export type AlertKind = 'sector_attack' | 'hq_siege' | 'hq_saved' | 'hq_fallen' | 'buff' | 'nudge' | 'quest_done' | 'bounty' | 'project_done' | 'recruit'
@@ -80,7 +85,7 @@ export type ClanAlert = { id: number; at: number; kind: AlertKind; text: string;
 export type QuestKind = 'catches' | 'species' | 'capture' | 'rare'
 export type WeeklyQuest = { kind: QuestKind; target: number; progress: number; reward: number; endsAt: number; claimed: boolean }
 
-export type ProjectId = 'dock' | 'beacon' | 'board' | 'storage'
+export type ProjectId = 'dock' | 'beacon' | 'fort' | 'board' | 'storage'
 export type ProjectLevel = 0 | 1 | 2 | 3
 
 export type BountyKind = 'species' | 'size' | 'sector'
@@ -107,8 +112,6 @@ export type HallRecord = { species: string; member: string; cm: number; kg: numb
 export type SeasonState = { n: number; startedAt: number; endsAt: number; trophies: number }
 
 export type RecruitEntry = { name: string; state: 'invited' | 'joined' | 'caught' | 'paid'; daysLeft: number }
-
-export type PartnerOffer = { id: string; shop: string; titleKey: string; cost: number; owned: boolean }
 
 export type SectorOwner = 'mine' | 'ally' | 'enemy' | 'free'
 export type MapSector = {
@@ -174,7 +177,6 @@ export type DemoState = {
   hall: HallRecord[]
   season: SeasonState
   recruit: RecruitEntry[]
-  offers: PartnerOffer[]
   sectors: MapSector[]
   settings: EconomySettings
   // Which «Что нового» tour each audience has seen.

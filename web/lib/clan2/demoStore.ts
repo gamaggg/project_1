@@ -11,20 +11,26 @@ import {
   BUFF_METER_FACTOR,
   CLAN_SKINS,
   DAY,
+  DEFENSE_MAX,
   GOAL_CATALOG,
   HOURS,
+  HQ_LOOT_MAX,
+  HQ_LOOT_SHARE,
   HQ_MOVE_COOLDOWN_DAYS,
+  HQ_RUINS_HOURS,
   PROJECTS,
+  PROJECT_EFFECTS,
   SIEGE_BREAK_REWARD,
   SIEGE_MINUTES,
   coinMultiplier,
   dailyRent,
   intake,
+  questReward,
   questTarget,
   taxOf,
   treasuryCap,
 } from '@/lib/clan2/rules'
-import type { Bounty, ClanAlert, DemoMember, DemoState, EconomySettings, MapSector, Persona, ProjectId, TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
+import type { Bounty, ClanAlert, DemoMember, DemoState, EconomySettings, MapSector, Persona, ProjectId, ProjectLevel, TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
 
 // The demo's whole world: one state object, changed only by the actions
 // below, kept in localStorage so a reload (or a day later) finds it as it
@@ -36,7 +42,7 @@ export type Result = { ok: true; info?: string } | { ok: false; reason: string }
 const OK: Result = { ok: true }
 const no = (reason: string): Result => ({ ok: false, reason })
 
-const KEY = 'range:clan2-demo:v3'
+const KEY = 'range:clan2-demo:v4'
 
 let state: DemoState = initialDemoState()
 let loaded = false
@@ -92,7 +98,13 @@ export const canManage = (s: DemoState) => {
 export const isLeader = (s: DemoState) => meOf(s)?.role === 'leader'
 export const inClan = (s: DemoState) => s.persona !== 'solo'
 export const activeMembers = (s: DemoState) => s.members.filter((m) => m.lastCatchMin !== null && m.lastCatchMin < 7 * 24 * 60).length
-export const capOf = (s: DemoState) => treasuryCap(s.clan.level, s.projects.storage)
+// The buildings work only while the headquarters stands.
+export const buildingsOn = (s: DemoState) => !!s.hq.sectorId
+export const levelOf = (s: DemoState, id: ProjectId): ProjectLevel => (buildingsOn(s) ? s.projects[id] : 0)
+export const capOf = (s: DemoState) => treasuryCap(s.clan.level, levelOf(s, 'storage'))
+export const siegeMinutesOf = (s: DemoState) => SIEGE_MINUTES + PROJECT_EFFECTS.beacon.siegeMinutes[levelOf(s, 'beacon')]
+export const bountySlotsOf = (s: DemoState) => BOUNTY_MAX_ACTIVE + PROJECT_EFFECTS.board.bountySlots[levelOf(s, 'board')]
+export const extraSlotsOf = (s: DemoState) => PROJECT_EFFECTS.dock.slots[levelOf(s, 'dock')]
 export const goalOf = (s: DemoState) => GOAL_CATALOG.find((g) => g.id === s.treasury.goalId) ?? null
 
 export function sectorCounts(s: DemoState) {
@@ -175,9 +187,27 @@ function runTime(d: DemoState) {
     b.startsAt = b.endsAt = b.cooldownUntil = null
     b.rsvp = []
   }
-  // The headquarters under siege.
+  // The defence of the HQ sector wears down on its own, slower with «Крепость».
+  if (d.hq.sectorId && d.hq.defenseAt !== null) {
+    const hqSector = d.sectors.find((x) => x.id === d.hq.sectorId)
+    const every = PROJECT_EFFECTS.fort.decayDays[levelOf(d, 'fort')] * DAY
+    while (hqSector && hqSector.defense > 0 && now - d.hq.defenseAt >= every) {
+      d.hq.defenseAt += every
+      hqSector.defense -= 1
+    }
+    if (hqSector && hqSector.defense === 0) d.hq.defenseAt = now
+  }
+  // The headquarters under siege: not broken in time, it falls.
   if (d.hq.siege && now >= d.hq.siege.endsAt && d.hq.sectorId) {
     const lost = d.sectors.find((x) => x.id === d.hq.sectorId)
+    const fellAt = d.hq.siege.endsAt
+    const by = d.hq.siege.by
+    // What the attackers carry off: a fifth of the treasury, up to a thousand.
+    const loot = Math.min(HQ_LOOT_MAX, Math.floor(d.treasury.balance * HQ_LOOT_SHARE))
+    if (loot > 0) {
+      d.treasury.balance -= loot
+      push(d, 'looted', -loot, null, by, fellAt)
+    }
     if (lost) {
       lost.owner = 'enemy'
       lost.hq = null
@@ -185,8 +215,15 @@ function runTime(d: DemoState) {
       lost.shield = false
       lost.defense = 1
     }
-    alert(d, 'hq_fallen', d.hq.sectorId, d.hq.sectorId, d.hq.siege.endsAt)
-    d.hq = { sectorId: null, placedAt: null, lastMoveAt: d.hq.lastMoveAt, siege: null }
+    alert(d, 'hq_fallen', `${d.hq.sectorId}:${loot}`, d.hq.sectorId, fellAt)
+    d.hq = {
+      sectorId: null,
+      placedAt: null,
+      lastMoveAt: d.hq.lastMoveAt,
+      siege: null,
+      defenseAt: null,
+      ruins: { sectorId: d.hq.sectorId, by, loot, fellAt, until: fellAt + HQ_RUINS_HOURS * HOURS },
+    }
   }
   // Bounties that ran out give the reward back to the treasury.
   for (const bn of d.bounties) {
@@ -202,9 +239,9 @@ function runTime(d: DemoState) {
 export function tick() {
   load()
   const draft = structuredClone(state) as DemoState
-  const before = JSON.stringify({ r: draft.lastRentAt, b: draft.buff, h: draft.hq, n: draft.bounties.length })
+  const before = JSON.stringify({ r: draft.lastRentAt, b: draft.buff, h: draft.hq, n: draft.bounties.length, d: draft.sectors.map((x) => x.defense) })
   runTime(draft)
-  const after = JSON.stringify({ r: draft.lastRentAt, b: draft.buff, h: draft.hq, n: draft.bounties.length })
+  const after = JSON.stringify({ r: draft.lastRentAt, b: draft.buff, h: draft.hq, n: draft.bounties.length, d: draft.sectors.map((x) => x.defense) })
   if (before !== after) commit(draft)
 }
 
@@ -313,6 +350,7 @@ export function equipSkin(id: string | null): Result {
 export function upgradeProject(id: ProjectId): Result {
   return mutate((d) => {
     if (!canManage(d)) return no('notManager')
+    if (!buildingsOn(d)) return no('noHqBuild')
     const level = d.projects[id]
     if (level >= 3) return no('maxLevel')
     const cost = PROJECTS[id].costs[level as 0 | 1 | 2]
@@ -322,21 +360,12 @@ export function upgradeProject(id: ProjectId): Result {
   })
 }
 
-export function buyOffer(id: string): Result {
-  return mutate((d) => {
-    if (!isLeader(d)) return no('notLeader')
-    const o = d.offers.find((x) => x.id === id)
-    if (!o || o.owned) return no('notEnough')
-    if (!spend(d, 'spend_goal', o.cost, d.myId, `offer:${o.id}`)) return no('notEnough')
-    o.owned = true
-  })
-}
-
 export function claimQuest(): Result {
   return mutate((d) => {
     const q = d.quest
     if (q.claimed || q.progress < q.target) return no('questOpen')
     q.claimed = true
+    q.reward = questReward(q.kind, levelOf(d, 'board'))
     income(d, 'quest', q.reward, null, q.kind)
     alert(d, 'quest_done', q.kind)
   })
@@ -387,6 +416,7 @@ export function placeHq(sectorId: string): Result {
     const target = d.sectors.find((x) => x.id === sectorId)
     if (!target || target.owner !== 'mine') return no('hqNotMine')
     if (target.hq) return no('hqTaken')
+    if (d.hq.ruins && nowOf(d) < d.hq.ruins.until) return no('hqRuins')
     const moving = !!d.hq.sectorId
     if (moving) {
       const since = nowOf(d) - (d.hq.lastMoveAt ?? d.hq.placedAt ?? 0)
@@ -397,7 +427,9 @@ export function placeHq(sectorId: string): Result {
     const old = d.sectors.find((x) => x.id === d.hq.sectorId)
     if (old) old.hq = null
     target.hq = 'mine'
-    d.hq = { sectorId, placedAt: nowOf(d), lastMoveAt: moving ? nowOf(d) : d.hq.lastMoveAt, siege: null }
+    d.hq = { sectorId, placedAt: nowOf(d), lastMoveAt: moving ? nowOf(d) : d.hq.lastMoveAt, siege: null, defenseAt: nowOf(d), ruins: null }
+    // A fresh HQ stands with some defence, even on a thinly held sector.
+    target.defense = Math.max(target.defense, 1)
   })
 }
 
@@ -412,7 +444,7 @@ export function attackHq(): Result {
       alert(d, 'sector_attack', `hq:${sector.defense}`, sector.id)
     } else {
       const now = nowOf(d)
-      d.hq.siege = { by: 'Fish-hook', startedAt: now, endsAt: now + SIEGE_MINUTES * 60_000 }
+      d.hq.siege = { by: 'Fish-hook', startedAt: now, endsAt: now + siegeMinutesOf(d) * 60_000 }
       alert(d, 'hq_siege', 'Fish-hook', sector.id)
     }
   })
@@ -427,11 +459,13 @@ export function defendHq(): Result {
     if (d.hq.siege) {
       d.hq.siege = null
       sector.defense = 1
+      d.hq.defenseAt = nowOf(d)
       alert(d, 'hq_saved', me.name, sector.id)
       if (d.persona !== 'solo') d.wallet += SIEGE_BREAK_REWARD
       return { ok: true, info: 'siegeBroken' }
     }
-    sector.defense = Math.min(4, sector.defense + 1)
+    sector.defense = Math.min(DEFENSE_MAX, sector.defense + 1)
+    d.hq.defenseAt = nowOf(d)
     return { ok: true, info: 'defence' }
   })
 }
@@ -458,7 +492,7 @@ export function toggleHot(sectorId: string): Result {
 export function createBounty(input: { kind: Bounty['kind']; species?: string; minCm?: number; reward: number }): Result {
   return mutate((d) => {
     if (!canManage(d)) return no('notManager')
-    if (d.bounties.filter((b) => !b.claimedBy).length >= BOUNTY_MAX_ACTIVE) return no('bountyMax')
+    if (d.bounties.filter((b) => !b.claimedBy).length >= bountySlotsOf(d)) return no('bountyMax')
     if (input.reward < 20 || input.reward > BOUNTY_DAILY_CAP) return no('bountyReward')
     if (input.reward > Math.floor(d.treasury.balance * BOUNTY_MAX_SHARE)) return no('bountyShare')
     if (!spend(d, 'spend_bounty', input.reward, d.myId, `${input.kind}`)) return no('notEnough')
@@ -615,7 +649,7 @@ export function settleWeek(): Result {
     income(d, 'chest_share', share(chest * 9), null, 'chest')
     income(d, 'race_share', share(race * 9), null, 'race')
     const target = questTarget(d.quest.kind, activeMembers(d))
-    d.quest = { ...d.quest, progress: 0, claimed: false, target, endsAt: nowOf(d) + 7 * DAY }
+    d.quest = { ...d.quest, progress: 0, claimed: false, target, reward: questReward(d.quest.kind, levelOf(d, 'board')), endsAt: nowOf(d) + 7 * DAY }
     d.questSeen = []
   })
 }

@@ -141,13 +141,13 @@ export function initialDemoState(now: number = Date.now()): DemoState {
     members: DEMO_MEMBERS.map((m) => ({ ...m })),
     treasury: { balance: 1240, taxRate: 5, entries: history(now), goalId: 'skin_clan_lanterns' },
     buff: { phase: 'idle', startsAt: null, endsAt: null, cooldownUntil: null, rsvp: [], startedBy: null, lastBonus: 0 },
-    hq: { sectorId: HQ_SECTOR_ID, placedAt: now - 2.5 * DAY, lastMoveAt: null, siege: null },
+    hq: { sectorId: HQ_SECTOR_ID, placedAt: now - 2.5 * DAY, lastMoveAt: null, siege: null, defenseAt: now - 0.5 * DAY, ruins: null },
     alerts: [
       { id: 1, at: now - 3 * HOURS, kind: 'sector_attack', text: sectorIdAt(-2, 0), sectorId: sectorIdAt(-2, 0), read: true },
       { id: 2, at: now - 26 * HOURS, kind: 'project_done', text: 'dock', read: true },
     ],
-    quest: { kind: 'catches', target: questTarget('catches', active), progress: 21, reward: questReward('catches'), endsAt: now + 3.2 * DAY, claimed: false },
-    projects: { dock: 1, beacon: 0, board: 1, storage: 0 },
+    quest: { kind: 'catches', target: questTarget('catches', active), progress: 21, reward: questReward('catches', 1), endsAt: now + 3.2 * DAY, claimed: false },
+    projects: { dock: 1, beacon: 0, fort: 0, board: 1, storage: 0 },
     owned: ['clan_tide'],
     equippedSkin: 'clan_tide',
     bounties: [
@@ -170,10 +170,6 @@ export function initialDemoState(now: number = Date.now()): DemoState {
       { name: 'Лео', state: 'caught', daysLeft: 0 },
       { name: 'Мариам', state: 'joined', daysLeft: 5 },
       { name: 'Бека', state: 'invited', daysLeft: 6 },
-    ],
-    offers: [
-      { id: 'o1', shop: 'Рыбалка и Ко', titleKey: 'discount10', cost: 1500, owned: false },
-      { id: 'o2', shop: 'Береговой магазин', titleKey: 'lures', cost: 2200, owned: false },
     ],
     sectors: buildSectors(),
     settings: { ...DEFAULT_SETTINGS },
