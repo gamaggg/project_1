@@ -157,7 +157,8 @@
 .c2-alerts{list-style:none; margin:0; padding:0; display:flex; flex-direction:column;}
 .c2-alerts > li{display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--line); font-size:13.5px; font-weight:600; line-height:1.35;}
 .c2-alerts > li:last-child{border-bottom:none;}
-.c2-alerts > li.unread{background:linear-gradient(90deg,rgba(252,82,0,.06),transparent);}
+/* Unread: an orange dot at the end of the row (a tinted background was cut off by the row's own edges). */
+.c2-alerts > li.unread::after{content:''; flex:0 0 auto; width:8px; height:8px; border-radius:50%; background:var(--accent,#FC5200); box-shadow:0 0 0 3px rgba(252,82,0,.14);}
 .c2-alert-main{flex:1; min-width:0;}
 .c2-alert-ico{flex:0 0 auto; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;}
 .c2-alert-ico.danger{background:#FFE3E0; color:#B3261E;}
