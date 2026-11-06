@@ -29,8 +29,8 @@ const BOATS: [number, number][] = [
   [5, 36],
   [38, 36],
   [71, 36],
-  [46, 67],
-  [77, 67],
+  [54, 69],
+  [82, 69],
 ]
 
 // The scene behind the boats: sky, the horizon, the sea, a sandy shore and a wooden pier on posts (side view).
@@ -52,11 +52,8 @@ function WaterScene() {
       <path d="M0 66.5 H400" stroke="#fff" strokeOpacity=".85" strokeWidth="1.6" />
       <path d="M0 70 H400" stroke="#fff" strokeOpacity=".3" strokeWidth="3" />
       <g stroke="#fff" strokeOpacity=".55" strokeWidth="1.4" strokeLinecap="round" fill="none">
-        <path d="M168 96 q 7 -3 14 0" />
-        <path d="M262 112 q 8 -3 16 0" />
-        <path d="M206 150 q 7 -3 14 0" />
-        <path d="M330 168 q 8 -3 16 0" />
-        <path d="M120 120 q 6 -3 12 0" />
+        <path d="M96 128 q 7 -3 14 0" />
+        <path d="M112 186 q 7 -3 14 0" />
       </g>
       <path d="M0 150 C 34 144 64 150 92 166 L 118 196 H 0 Z" fill="#E7DABB" />
       <path d="M0 150 C 34 144 64 150 92 166 L 118 196" fill="none" stroke="#D2C097" strokeWidth="2" />
