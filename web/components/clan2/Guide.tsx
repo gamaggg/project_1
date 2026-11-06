@@ -98,29 +98,33 @@ export function HowItWorks() {
 
 function StepIcon({ id }: { id: (typeof STEPS)[number] }) {
   const common = { width: 26, height: 26, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' } as const
+  // rent: a sector with a coin on it; save: a stack of coins; build: a house; defend: a shield with a flag.
   if (id === 'rent')
     return (
       <svg {...common}>
         <path d="M7 3h10l5 9-5 9H7L2 12z" />
-        <circle cx="12" cy="12" r="3" />
+        <circle cx="12" cy="12" r="3.4" />
+        <path d="M12 10.6v2.8M10.9 12h2.2" />
       </svg>
     )
   if (id === 'save')
     return (
       <svg {...common}>
-        <rect x="3" y="9" width="18" height="11" rx="2" />
-        <path d="M3 13h18M12 9V6a3 3 0 0 0-6 0M12 15v2" />
+        <ellipse cx="12" cy="6.5" rx="7" ry="3" />
+        <path d="M5 6.5v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" />
+        <path d="M5 11.5v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" />
       </svg>
     )
   if (id === 'build')
     return (
       <svg {...common}>
-        <path d="M14 6 6 14l4 4 8-8zM14 6l3-3 4 4-3 3M4 20l2-2" />
+        <path d="M3 11 12 3l9 8M5 9.5V20h14V9.5M10 20v-5.5h4V20" />
       </svg>
     )
   return (
     <svg {...common}>
-      <path d="M6 21V4M6 5h12l-3 4 3 4H6" />
+      <path d="M12 3l7.5 2.8v5.6c0 4.4-3 7.7-7.5 9.6-4.5-1.9-7.5-5.2-7.5-9.6V5.8z" />
+      <path d="M10 9v6M10 9.2h4.5l-1.2 1.6 1.2 1.6H10" />
     </svg>
   )
 }
