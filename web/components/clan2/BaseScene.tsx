@@ -31,13 +31,15 @@ const MAP_ZOOM_OUT = 1.7
 const HEX = '100,0 300,0 400,173.2 300,346.4 100,346.4 0,173.2'
 // The plots: where each building's ground point stands. Clockwise from the top left; the tall lighthouse has the top.
 const SPOTS: Record<ProjectId, { x: number; y: number }> = {
-  beacon: { x: 122, y: 104 },
-  market: { x: 278, y: 104 },
-  board: { x: 324, y: 188 },
-  storage: { x: 260, y: 274 },
-  dock: { x: 140, y: 274 },
-  fort: { x: 76, y: 188 },
+  beacon: { x: 124, y: 90 },
+  market: { x: 276, y: 90 },
+  board: { x: 328, y: 186 },
+  storage: { x: 278, y: 280 },
+  dock: { x: 122, y: 280 },
+  fort: { x: 64, y: 186 },
 }
+// How big each building is drawn on its plot (the lighthouse is the tallest and stands under the flat top edge).
+const SCALE: Record<ProjectId, number> = { beacon: 0.68, market: 0.8, board: 0.8, storage: 0.8, dock: 0.8, fort: 0.8 }
 // Every plot stands in the part of the hexagon that looks at one of its corners, the HQ in the middle.
 // The HQ's ground point and the demo's place (a sea-side sector of Batumi) when the clan is not bound to a real one.
 const HQ_AT = { x: 200, y: 188 }
@@ -213,9 +215,9 @@ export function BaseScene() {
               onClick={() => choose(id)}
             >
               <svg className="c2-plot-svg" viewBox={ART_VB} overflow="visible" aria-hidden="true">
-                <ellipse cx={0} cy={5} rx={38} ry={11} className="c2-plot-pad" />
+                <ellipse cx={0} cy={5} rx={36} ry={10.5} className="c2-plot-pad" />
                 <g key={pop?.id === id ? pop.n : 0} className={`c2-plot-lift${pop?.id === id ? ' pop' : ''}`}>
-                  <g transform="scale(.82)">
+                  <g transform={`scale(${SCALE[id]})`}>
                   {lv === 0 ? (
                     <g className={`c2-ghost${locked ? ' locked' : ''}`}>
                       <Art level={1} p={crest.primary} s={crest.secondary} />
