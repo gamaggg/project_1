@@ -48,6 +48,14 @@ export function Clan2Live({
     )
   }, [input])
 
+  // Where the HQ sector really is: the base screen puts the real map under its picture.
+  const hqId = useDemoState().hq.sectorId
+  useEffect(() => {
+    const t = hqId ? territories.find((x) => x.id === hqId) : null
+    const c = t?.corners
+    setLiveUi({ hqGeo: t && c && c.length >= 4 ? { id: t.id, lat: t.lat, lng: t.lng, widthDeg: Math.abs(c[0][1] - c[3][1]) } : null })
+  }, [hqId, territories])
+
   useEffect(() => {
     const id = window.setInterval(tick, 1000)
     return () => window.clearInterval(id)

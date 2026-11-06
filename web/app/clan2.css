@@ -331,15 +331,7 @@
 .c2-base-svg{width:100%; height:auto; display:block; border-radius:22px; box-shadow:inset 0 0 0 1px rgba(23,24,27,.06);}
 .c2-wave{animation:c2-wave 5.5s ease-in-out infinite;}
 @keyframes c2-wave{0%,100%{transform:translateX(-5px);opacity:.55}50%{transform:translateX(7px);opacity:1}}
-.c2-scene-label{font:800 8.5px system-ui,sans-serif; fill:rgba(60,45,20,.7); letter-spacing:.04em; text-transform:uppercase; pointer-events:none;}
-.c2-plot{cursor:pointer; outline:none; -webkit-tap-highlight-color:transparent;}
-.c2-plot-pad{fill:rgba(120,90,40,.16); transition:rx .25s, ry .25s, fill .25s;}
-.c2-plot:hover .c2-plot-pad{fill:rgba(240,169,62,.3);}
-.c2-plot.sel .c2-plot-pad{fill:rgba(252,82,0,.26); stroke:#FC5200; stroke-width:1.6; stroke-dasharray:4 3; animation:c2-pad-spin 6s linear infinite;}
 @keyframes c2-pad-spin{to{stroke-dashoffset:-28}}
-.c2-plot:focus-visible .c2-plot-pad{stroke:#17181B; stroke-width:2;}
-.c2-plot-empty{transition:transform .2s;}
-.c2-plot:hover .c2-plot-empty{transform:translateY(-2px);}
 .c2-bld{transform-box:fill-box; transform-origin:50% 100%; transition:filter .4s, opacity .4s;}
 .c2-plot:hover .c2-bld:not(.sleeping){transform:translateY(-1.5px);}
 .c2-bld.sleeping{filter:grayscale(.95) brightness(.95); opacity:.62;}
@@ -355,14 +347,11 @@
 @keyframes c2-beam{to{transform:rotate(360deg)}}
 .c2-flag{transform-box:fill-box; transform-origin:0 50%; animation:c2-flag 2.4s ease-in-out infinite;}
 @keyframes c2-flag{0%,100%{transform:skewY(0)}50%{transform:skewY(7deg) scaleX(.94)}}
-.c2-hqtower{animation:c2-hq-bob 4.5s ease-in-out infinite;}
 @keyframes c2-hq-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}
 .c2-smoke{animation:c2-smoke 3s ease-out infinite;}
 @keyframes c2-smoke{from{opacity:.7; transform:translateY(0)}to{opacity:0; transform:translateY(-12px)}}
 .c2-zzz{font:800 9px system-ui,sans-serif; fill:#5B6475; animation:c2-zzz 2.4s ease-in-out infinite;}
 @keyframes c2-zzz{0%,100%{opacity:.4; transform:translateY(0)}50%{opacity:1; transform:translateY(-4px)}}
-.c2-pips-svg circle{fill:rgba(23,24,27,.18); stroke:#fff; stroke-width:1;}
-.c2-pips-svg circle.on{fill:#FC5200;}
 .c2-base-sleep{display:flex; flex-direction:column; gap:2px; padding:10px 12px; border-radius:14px; background:#F2F3F6; color:var(--ink-soft,#5B6475); font-size:13px;}
 .c2-base-sleep b{color:var(--ink,#17181B);}
 .c2-base-sleep.fell{background:#FDECEA; color:#8A2A22;}
@@ -389,7 +378,7 @@
 .c2-ruins-card{display:flex; flex-direction:column; gap:3px; padding:12px; border-radius:14px; background:#FDECEA; color:#8A2A22; font-size:13.5px;}
 .c2-ruins-card strong{color:#B3261E; font-size:15px;}
 .c2-fall{margin:6px 0 0; padding-left:18px; display:grid; gap:4px; font-size:13.5px;}
-@media (prefers-reduced-motion: reduce){.c2-wave,.c2-glow,.c2-beam,.c2-flag,.c2-hqtower,.c2-smoke,.c2-zzz,.c2-bld.built,.c2-dust,.c2-spark,.c2-plot.sel .c2-plot-pad{animation:none;}}
+@media (prefers-reduced-motion: reduce){.c2-wave,.c2-glow,.c2-beam,.c2-flag,.c2-smoke,.c2-zzz,.c2-bld.built,.c2-dust,.c2-spark,.c2-plot.sel .c2-plot-pad{animation:none;}}
 
 /* ───────── the clan update inside the real app ───────── */
 .clan-tabs.c2-scroll{overflow-x:auto; scrollbar-width:none; gap:2px;}
@@ -446,14 +435,9 @@
 /* ───────── the base as one sector (hex-aspect hex-shape) with the HQ and six plots ───────── */
 .c2-base-hex{position:relative; width:100%; filter:drop-shadow(0 10px 18px rgba(40,60,30,.28));}
 .c2-base-hex .c2-base-svg{position:absolute; inset:0; width:100%; height:100%; border-radius:0; box-shadow:none;}
-.c2-plot-name{font:800 9px system-ui,sans-serif; fill:rgba(50,40,15,.78); pointer-events:none; letter-spacing:.02em;}
-.c2-plot.sel .c2-plot-name{fill:#B33A00;}
 .c2-ghost{opacity:.34; filter:grayscale(.85); transition:opacity .2s;}
 .c2-plot:hover .c2-ghost{opacity:.55;}
 .c2-ghost.locked{opacity:.2; filter:grayscale(1) blur(.4px);}
-.c2-badge-plus{fill:#FC5200; stroke:#fff; stroke-width:1.6;}
-.c2-badge-lock{fill:#6B7280; stroke:#fff; stroke-width:1.6;}
-.c2-badge-text{font:800 10px system-ui,sans-serif; fill:#fff;}
 .c2-bob{animation:c2-bob 3.4s ease-in-out infinite;}
 @keyframes c2-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(1.6px)}}
 .c2-hammer{transform-box:fill-box; transform-origin:50% 100%; animation:c2-hammer .7s ease-in-out infinite;}
@@ -475,7 +459,7 @@
 .c2-hqm-dot{display:flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%;}
 .c2-hqm-label{flex:0 0 auto; text-transform:uppercase; letter-spacing:.5px;}
 .c2-hqm-b svg{display:block; overflow:visible;}
-.c2-hqm-b .c2-hqm-banner{animation:c2-banner 5.5s ease-in-out infinite;}
+.c2-hqm-b .c2-hqm-banner,.c2-base-hq .c2-hqm-banner{animation:c2-banner 5.5s ease-in-out infinite;}
 @keyframes c2-banner{0%,100%{transform:rotate(-1.2deg)}50%{transform:rotate(1.4deg)}}
 .c2-hqm-b.tier0 .c2-hqm-banner{animation:none;}
 .c2-hqm-alarm{position:absolute; left:50%; top:46%; width:150%; aspect-ratio:2/1; transform:translateX(-50%); border-radius:50%; background:radial-gradient(ellipse at center, rgba(211,51,51,.65), rgba(211,51,51,0) 68%); animation:c2-alarm 1s ease-in-out infinite; pointer-events:none;}
@@ -580,3 +564,68 @@
 .c2-hq-ribbon{max-width:calc(100% - 120px); white-space:nowrap;}
 .c2-hq-ribbon b{overflow:hidden; text-overflow:ellipsis;}
 .c2-hq-ribbon.clan{padding:8px 14px; font-size:13.5px;}
+
+/* ───────── the base: real map under it, round plots, the HQ banner, pills and badges ───────── */
+.c2-base-hex{container-type:inline-size; user-select:none; -webkit-user-select:none;}
+.c2-plot{position:absolute; width:25%; aspect-ratio:112/150; transform:translate(-50%,-72%); padding:0; border:0; background:none; cursor:pointer; -webkit-tap-highlight-color:transparent; outline:none; font:inherit;}
+.c2-plot-svg{position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none;}
+.c2-plot-pad{fill:rgba(255,255,255,.86); stroke:rgba(23,24,27,.16); stroke-width:1.4; filter:drop-shadow(0 3px 4px rgba(23,24,27,.18)); transition:fill .2s, stroke .2s;}
+.c2-plot:hover .c2-plot-pad{fill:#fff;}
+.c2-plot.ready .c2-plot-pad{stroke:#FC5200; stroke-opacity:.7;}
+.c2-plot.sel .c2-plot-pad{fill:#FFF1E8; stroke:#FC5200; stroke-width:2.2; stroke-dasharray:5 4; stroke-opacity:1; animation:c2-pad-spin 6s linear infinite;}
+.c2-plot:focus-visible .c2-plot-pad{stroke:#17181B; stroke-width:2.4;}
+.c2-plot-lift{transform-box:fill-box; transform-origin:50% 100%; transition:transform .28s cubic-bezier(.23,1,.32,1);}
+.c2-plot:active .c2-plot-lift{transform:scale(.96);}
+.c2-plot.sel .c2-plot-lift{transform:translateY(-3px) scale(1.05);}
+.c2-plot-lift.pop{animation:c2-plot-pop .55s cubic-bezier(.34,1.56,.64,1);}
+@keyframes c2-plot-pop{0%{transform:scale(1,1)}22%{transform:scale(1.14,.86)}52%{transform:scale(.94,1.1) translateY(-6px)}100%{transform:translateY(-3px) scale(1.05)}}
+.c2-base-pill{position:absolute; left:50%; top:78%; transform:translateX(-50%); display:flex; align-items:center; gap:4px; height:16px; padding:0 7px; border-radius:999px; background:rgba(23,24,27,.84); color:#fff; font:800 clamp(8.5px,2.6cqw,10.5px)/16px system-ui,-apple-system,sans-serif; letter-spacing:.2px; white-space:nowrap; pointer-events:none; transition:background .2s;}
+.c2-plot.sel .c2-base-pill{background:#FC5200;}
+.c2-plot.asleep .c2-base-pill{background:rgba(23,24,27,.55);}
+.c2-pill-pips{display:inline-flex; gap:1.5px;}
+.c2-pill-pips i{display:block; width:4px; height:4px; border-radius:50%; background:rgba(255,255,255,.32);}
+.c2-pill-pips i.on{background:#FFB26B;}
+.c2-plot.sel .c2-pill-pips i.on{background:#fff;}
+.c2-plot-bar{position:absolute; left:18%; right:18%; top:97%; height:5px; border-radius:3px; background:rgba(23,24,27,.22); overflow:hidden; pointer-events:none;}
+.c2-plot-bar i{display:block; height:100%; border-radius:3px; background:#FC5200; transition:width 1s linear;}
+.c2-plot-badge{position:absolute; left:68%; top:50%; min-width:22px; height:22px; padding:0 5px; border-radius:11px; background:#FC5200; color:#fff; font:800 13px/22px system-ui,-apple-system,sans-serif; text-align:center; box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(252,82,0,.45); pointer-events:none;}
+.c2-plot-badge.lock{background:#6B7280; box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(23,24,27,.25); font-size:11.5px;}
+.c2-plot-badge.go{animation:c2-badge-hop 1.15s ease-in-out infinite;}
+@keyframes c2-badge-hop{0%,100%{transform:translateY(0)}45%{transform:translateY(-5px)}}
+.c2-zzz-html{position:absolute; left:68%; top:4%; font:800 10px system-ui,sans-serif; color:#5B6475; animation:c2-zzz 2.4s ease-in-out infinite; pointer-events:none;}
+.c2-base-hq{position:absolute; width:17%; aspect-ratio:84/124; transform:translate(-50%,-92%); padding:0; border:0; background:none; cursor:pointer; z-index:3; -webkit-tap-highlight-color:transparent; outline:none;}
+.c2-base-hq-art{position:absolute; inset:0; display:block; transform-origin:50% 100%;}
+.c2-base-hq-art > span, .c2-base-hq-art > svg{display:block; width:100%; height:100%;}
+.c2-base-hq-art svg{width:100%; height:100%;}
+.c2-base-hq .c2-base-hq-art{animation:c2-plot-pop-hq .55s cubic-bezier(.34,1.56,.64,1);}
+@keyframes c2-plot-pop-hq{0%{transform:scale(1,1)}22%{transform:scale(1.1,.9)}52%{transform:scale(.96,1.07)}100%{transform:none}}
+.c2-base-hq.down .c2-base-hq-art{filter:grayscale(.6);}
+.c2-base-hq .c2-base-pill{top:96%;}
+.c2-base-pill.hq{letter-spacing:.6px; text-transform:uppercase;}
+.c2-base-hq:focus-visible .c2-base-pill{outline:2px solid #17181B;}
+.c2-bld-hero{display:flex; align-items:center; gap:16px;}
+.c2-bld-heroart{flex:none; width:104px; height:auto; aspect-ratio:112/124; border-radius:20px; background:linear-gradient(180deg,#F4F6F8,#E6EAEE); box-shadow:inset 0 0 0 1px rgba(23,24,27,.06);}
+.c2-bld-herolift{transform-box:fill-box; transform-origin:50% 100%; animation:c2-hero-in .5s cubic-bezier(.34,1.56,.64,1);}
+@keyframes c2-hero-in{from{transform:scale(.7); opacity:0}to{transform:none; opacity:1}}
+.c2-bld-title{display:flex; flex-direction:column; gap:5px; min-width:0;}
+.c2-bld-title strong{font-size:19px; letter-spacing:-.01em;}
+.c2-bld-title small{font-size:12.5px; color:var(--ink-soft,#5B6475); font-weight:700;}
+.c2-ladder{list-style:none; margin:2px 0 0; padding:0; display:grid;}
+.c2-ladder li{position:relative; display:grid; grid-template-columns:28px 1fr auto; gap:11px; align-items:center; padding:8px 8px; border-radius:14px;}
+.c2-ladder li:not(:first-child)::before,.c2-ladder li:not(:last-child)::after{content:''; position:absolute; left:21px; width:2px; border-radius:1px; background:#E3E1DC;}
+.c2-ladder li:not(:first-child)::before{top:0; height:calc(50% - 15px);}
+.c2-ladder li:not(:last-child)::after{top:calc(50% + 15px); bottom:0;}
+.c2-ladder li.done::after,.c2-ladder li.done + li::before{background:#2FA84F;}
+.c2-ladder-dot{width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font:800 13px system-ui,sans-serif; background:#E7E5E0; color:#8A8F9A; transition:background .25s, transform .25s;}
+.c2-ladder li.done .c2-ladder-dot{background:#2FA84F; color:#fff;}
+.c2-ladder li.next{background:#FFF1E8;}
+.c2-ladder li.next .c2-ladder-dot{background:#FC5200; color:#fff; box-shadow:0 0 0 4px rgba(252,82,0,.18); animation:c2-dot-beat 1.8s ease-in-out infinite;}
+@keyframes c2-dot-beat{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.c2-ladder li.later{opacity:.62;}
+.c2-ladder-text{display:flex; flex-direction:column; min-width:0;}
+.c2-ladder-text small{font-size:10.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; opacity:.6;}
+.c2-ladder-text b{font-size:13.5px;}
+.c2-ladder li.done .c2-ladder-text b{color:#0E6B47;}
+.c2-ladder li.next .c2-ladder-text b{color:#B33A00;}
+.c2-ladder-cost{font-size:12.5px;}
+@media (prefers-reduced-motion: reduce){.c2-plot.sel .c2-plot-pad,.c2-plot-lift.pop,.c2-plot-badge.go,.c2-base-hq .c2-base-hq-art,.c2-bld-herolift,.c2-ladder li.next .c2-ladder-dot,.c2-zzz-html{animation:none;}}

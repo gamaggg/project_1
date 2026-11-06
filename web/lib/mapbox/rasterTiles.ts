@@ -18,3 +18,11 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 export function previewTileUrl(): string {
   return `https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/256/{z}/{x}/{y}@2x?access_token=${MAPBOX_TOKEN}`
 }
+
+// One picture of the same light map, for the clan base: the sector's hexagon fills `w` x `h` css pixels exactly
+// (the sector's centre in the middle, its corner-to-corner width mapped onto `w`). Static Images API, the classic
+// light style (see above), 512-px world at zoom 0, so 512 * 2^z px round the globe.
+export function previewStaticUrl(lat: number, lng: number, widthDeg: number, w: number, h: number): string {
+  const z = Math.min(20, Math.max(8, Math.log2((w * 360) / (512 * widthDeg))))
+  return `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${lng.toFixed(6)},${lat.toFixed(6)},${z.toFixed(3)}/${w}x${h}@2x?access_token=${MAPBOX_TOKEN}&logo=false&attribution=false`
+}

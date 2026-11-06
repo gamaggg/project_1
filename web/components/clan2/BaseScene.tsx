@@ -1,30 +1,38 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ART } from '@/components/clan2/BaseArt'
 import { C2Bar, C2Coins, fmtLeft, useC2, useDemoNow } from '@/components/clan2/C2Common'
 import { buildingsOn, canManage, speedUpBuild, speedupPrice, upgradeProject, useDemoState } from '@/lib/clan2/demoStore'
 import { BUILD_CLAN_LEVEL, BUILD_HOURS, PROJECTS, PROJECT_EFFECTS, PROJECT_IDS } from '@/lib/clan2/rules'
 import type { ProjectId, ProjectLevel } from '@/lib/clan2/types'
-import { crestSvgMarkup } from '@/lib/data/clanCrests'
+import { useLiveUi, type HqGeo } from '@/lib/clan2/live/ui'
+import { hqBannerSvg, hqOutlineColor } from '@/lib/clan2/live/hqMarker'
+import { resolveCrest } from '@/lib/data/clanCrests'
+import { previewStaticUrl } from '@/lib/mapbox/rasterTiles'
 import { tn, tnd } from '@/lib/i18n/runtime'
 
-// «База клана»: the clan's own sector, seen from above — the headquarters in the middle and six plots round it,
-// one for every building. The sector has the shape of every sector of the game (hex-aspect hex-shape). A building
-// is drawn bigger and richer with each level; one that can be built stands there as a ghost with a «+»; while it is
-// being built the scaffolding stands and a ring counts the time down; with the headquarters down they all sleep.
+// «База клана»: the clan's own sector, seen from above, on the real map of the place where its HQ stands (the same
+// light map as the sector screen, the same all day). The HQ is in the middle — the same banner as on the game map —
+// and six round plots stand round it, one for every building. A building is drawn bigger and richer with each level;
+// one that can be built stands there as a ghost with a «+»; a bouncing arrow says «can be upgraded now»; while it is
+// being built the scaffolding stands and a bar counts the time down; with the HQ down they all sleep.
+// Everything is placed in the units of the 400 x 346.4 sector, as percentages of the box, so it scales with the screen.
 
-const CX = 200
-const CY = 173
-// The plots, clockwise from the top: where each building stands on the 400 x 346 sector.
+const W = 400
+const H = 346.4
+// The plots: where each building's ground point stands. Clockwise from the top left; the tall lighthouse has the top.
 const SPOTS: Record<ProjectId, { x: number; y: number }> = {
-  beacon: { x: 200, y: 92 },
-  market: { x: 303, y: 143 },
-  board: { x: 303, y: 238 },
-  storage: { x: 200, y: 298 },
-  dock: { x: 97, y: 238 },
-  fort: { x: 97, y: 143 },
+  beacon: { x: 134, y: 126 },
+  market: { x: 268, y: 126 },
+  board: { x: 298, y: 214 },
+  storage: { x: 266, y: 286 },
+  dock: { x: 134, y: 286 },
+  fort: { x: 102, y: 214 },
 }
+// The HQ's ground point and the demo's place (a sea-side sector of Batumi) when the clan is not bound to a real one.
+const HQ_AT = { x: 200, y: 214 }
+const DEMO_GEO: HqGeo = { id: 'B1031', lat: 41.653959, lng: 41.628128, widthDeg: 0.008332 }
 
 // What a building gives at a level, as a phrase (level 0: nothing yet).
 export function effectText(id: ProjectId, level: ProjectLevel): string {
@@ -45,29 +53,29 @@ export function effectText(id: ProjectId, level: ProjectLevel): string {
   }
 }
 
-const hexPoints = (k: number) =>
-  [
-    [100, 0],
-    [300, 0],
-    [400, 173.2],
-    [300, 346.4],
-    [100, 346.4],
-    [0, 173.2],
-  ]
-    .map(([x, y]) => `${CX + (x - CX) * k},${CY + (y - CY) * k}`)
-    .join(' ')
+// The art box of one plot: the ground line is at y = 0, 28% of the box lies under it (plate, pills).
+const ART_VB = '-56 -108 112 150'
+
+const pct = (v: number, of: number) => `${(v / of) * 100}%`
 
 export function BaseScene() {
   const s = useDemoState()
   const now = useDemoNow()
   const { act } = useC2()
+  const { hqGeo } = useLiveUi()
   const manage = canManage(s)
   const on = buildingsOn(s)
   const [sel, setSel] = useState<ProjectId>('dock')
   const [built, setBuilt] = useState<{ id: ProjectId; n: number } | null>(null)
+  const [pop, setPop] = useState<{ id: ProjectId | 'hq'; n: number } | null>(null)
+  const [mapOk, setMapOk] = useState(true)
   const prev = useRef(s.projects)
   const crest = s.clan.crest
   const ruins = s.hq.ruins && now < s.hq.ruins.until ? s.hq.ruins : null
+  const geo = s.live ? hqGeo : DEMO_GEO
+  const mapUrl = geo && mapOk ? previewStaticUrl(geo.lat, geo.lng, geo.widthDeg, 400, 347) : null
+  const outline = hqOutlineColor(crest)
+  const clanColor = resolveCrest(crest).primary
 
   // A level that has just arrived is played as a finished build.
   useEffect(() => {
@@ -93,119 +101,124 @@ export function BaseScene() {
   const busy = !!s.build
   const building = s.build?.id === sel ? s.build : null
   const can = !!next && on && levelOk && moneyOk && !busy && manage
+  const SelArt = ART[sel]
+  // The big picture in the card: the building is blown up to fill its frame (a flat dock more than a tall lighthouse).
+  const heroRef = useRef<SVGGElement>(null)
+  const [hero, setHero] = useState({ k: 1, dx: 0 })
+  useLayoutEffect(() => {
+    const b = heroRef.current?.getBBox()
+    if (b && b.width > 0) {
+      const k = Math.max(1, Math.min(2, 84 / b.height, 100 / b.width))
+      setHero({ k, dx: -(b.x + b.width / 2) * k })
+    }
+  }, [sel, level])
+
+  const choose = (id: ProjectId) => {
+    setSel(id)
+    setPop({ id, n: Date.now() })
+  }
 
   return (
     <div className="c2-base">
-      <div className="c2-base-hex hex-aspect hex-shape" data-tour="base-scene">
-        <svg className="c2-base-svg" viewBox="0 0 400 346.4" role="group" aria-label={tn('clan2.base.title')}>
+      <div className="c2-base-hex hex-aspect hex-shape" data-tour="base-scene" style={{ ['--clan' as string]: clanColor, ['--clan-dark' as string]: outline }}>
+        <svg className="c2-base-svg" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
           <defs>
-            <linearGradient id="c2b-sea" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#9ED0EC" />
-              <stop offset="1" stopColor="#5FA6D2" />
-            </linearGradient>
-            <radialGradient id="c2b-grass" cx="0.5" cy="0.45" r="0.75">
-              <stop offset="0" stopColor="#E8F2C6" />
-              <stop offset="0.7" stopColor="#CFE3A0" />
-              <stop offset="1" stopColor="#B7D184" />
+            <clipPath id="c2b-clip">
+              <polygon points="100,0 300,0 400,173.2 300,346.4 100,346.4 0,173.2" />
+            </clipPath>
+            <radialGradient id="c2b-veil" cx="0.5" cy="0.55" r="0.6">
+              <stop offset="0" stopColor="#fff" stopOpacity="0.3" />
+              <stop offset="1" stopColor="#fff" stopOpacity="0.05" />
             </radialGradient>
             <radialGradient id="c2b-plaza" cx="0.5" cy="0.5" r="0.5">
-              <stop offset="0" stopColor="#FFF4D6" />
-              <stop offset="1" stopColor="#E9D3A0" />
+              <stop offset="0" stopColor="#fff" stopOpacity="0.95" />
+              <stop offset="1" stopColor="#F4EEDD" stopOpacity="0.9" />
             </radialGradient>
           </defs>
-          <polygon points={hexPoints(1)} fill="url(#c2b-sea)" />
-          {[0, 1, 2, 3, 4].map((i) => (
-            <path key={i} className="c2-wave" style={{ animationDelay: `${i * -1.3}s` }} d={`M ${20 + i * 70} ${18 + (i % 2) * 8} q 12 -7 24 0 t 24 0`} fill="none" stroke="rgba(255,255,255,.8)" strokeWidth={1.6} strokeLinecap="round" />
-          ))}
-          <polygon points={hexPoints(0.9)} fill="#E7D9AE" />
-          <polygon points={hexPoints(0.86)} fill="url(#c2b-grass)" stroke="#A9BE7A" strokeWidth={1.4} />
-          {/* Paths from the headquarters to every plot, and the plaza round it. */}
-          {PROJECT_IDS.map((id) => (
-            <path key={id} d={`M ${CX} ${CY} L ${SPOTS[id].x} ${SPOTS[id].y - 8}`} stroke="#E4D2A0" strokeWidth={9} strokeLinecap="round" opacity={0.85} />
-          ))}
-          <circle cx={CX} cy={CY} r={46} fill="url(#c2b-plaza)" stroke="#CDB57A" strokeWidth={2} />
-          <circle cx={CX} cy={CY} r={38} fill="none" stroke="#D8C28C" strokeWidth={1} strokeDasharray="3 4" />
+          <g clipPath="url(#c2b-clip)">
+            <rect width={W} height={H} fill="#E9ECEF" />
+            {mapUrl && <image href={mapUrl} x={0} y={-0.3} width={W} height={347} preserveAspectRatio="none" onError={() => setMapOk(false)} />}
+            {!mapUrl && [0, 1, 2, 3].map((i) => <path key={i} className="c2-wave" style={{ animationDelay: `${i * -1.3}s` }} d={`M ${40 + i * 84} ${40 + (i % 2) * 14} q 12 -7 24 0 t 24 0`} fill="none" stroke="rgba(120,150,180,.5)" strokeWidth={1.6} strokeLinecap="round" />)}
+            <rect width={W} height={H} fill="url(#c2b-veil)" />
+            <rect width={W} height={H} fill={clanColor} opacity={0.13} />
+            {/* The paths from the HQ to every plot, and the plaza round it. */}
+            {PROJECT_IDS.map((id) => (
+              <path key={id} d={`M ${HQ_AT.x} ${HQ_AT.y - 10} L ${SPOTS[id].x} ${SPOTS[id].y}`} stroke="#fff" strokeWidth={7} strokeLinecap="round" opacity={0.85} />
+            ))}
+            {PROJECT_IDS.map((id) => (
+              <path key={`d${id}`} d={`M ${HQ_AT.x} ${HQ_AT.y - 10} L ${SPOTS[id].x} ${SPOTS[id].y}`} stroke={outline} strokeWidth={1.4} strokeDasharray="1 6" strokeLinecap="round" opacity={0.55} />
+            ))}
+            <ellipse cx={HQ_AT.x} cy={HQ_AT.y - 6} rx={52} ry={34} fill="url(#c2b-plaza)" stroke={outline} strokeOpacity={0.4} strokeWidth={1.6} />
+          </g>
+          {/* The sector's outline, as on the game map: the clan's colour, darker. */}
+          <polygon points="100,0 300,0 400,173.2 300,346.4 100,346.4 0,173.2" fill="none" stroke={outline} strokeOpacity={0.35} strokeWidth={9} strokeLinejoin="round" />
+          <polygon points="100,0 300,0 400,173.2 300,346.4 100,346.4 0,173.2" fill="none" stroke={outline} strokeWidth={3} strokeLinejoin="round" />
+        </svg>
 
-          {/* The headquarters. */}
-          <g transform={`translate(${CX} ${CY + 22})`}>
-            <ellipse cx={0} cy={3} rx={36} ry={7} fill="rgba(40,30,10,.25)" />
+        {/* The HQ: the banner of the game map, on the plaza. */}
+        <button
+          type="button"
+          className={`c2-base-hq${on ? '' : ' down'}`}
+          style={{ left: pct(HQ_AT.x, W), top: pct(HQ_AT.y, H) }}
+          aria-label={ruins ? tn('clan2.base.ruins') : tn('clan2.base.hq')}
+          onClick={() => setPop({ id: 'hq', n: Date.now() })}
+        >
+          <span className="c2-base-hq-art" key={pop?.id === 'hq' ? pop.n : 0}>
             {ruins ? (
-              <g>
+              <svg viewBox="-34 -48 68 56" aria-hidden="true">
                 <path d="M -30 0 L -26 -20 L -16 -12 L -10 -28 L 0 -14 L 8 -24 L 18 -10 L 28 0 z" fill="#B7AB93" stroke="#7A705E" strokeWidth={1.4} />
                 <path className="c2-smoke" d="M -2 -26 q -7 -12 2 -22 q 9 -9 0 -20" fill="none" stroke="rgba(70,70,70,.5)" strokeWidth={5} strokeLinecap="round" />
-              </g>
+              </svg>
             ) : (
-              <g className={on ? 'c2-hqtower' : undefined}>
-                <rect x={-26} y={-44} width={52} height={44} rx={4} fill={STONE_HQ} stroke="#9BA3B3" strokeWidth={1.4} />
-                <rect x={-26} y={-44} width={52} height={7} rx={3} fill="#fff" opacity={0.65} />
-                {[-26, -12, 2, 16].map((x) => (
-                  <rect key={x} x={x} y={-52} width={10} height={9} rx={1} fill={STONE_HQ} stroke="#9BA3B3" strokeWidth={1} />
-                ))}
-                <path d="M -9 0 v -17 a 9 9 0 0 1 18 0 v 17 z" fill="#3A2A18" />
-                <g transform="translate(-15 -42)" dangerouslySetInnerHTML={{ __html: crestSvgMarkup(crest, 30) }} />
-                <rect x={-1.2} y={-82} width={2.4} height={30} fill="#6F4A24" />
-                <path className="c2-flag" d="M 1.2 -82 l 24 6 l -24 6 z" fill={crest.secondary} stroke="#fff" strokeWidth={1} />
-                <circle cx={0} cy={-84} r={2.6} fill="#F0B53E" />
-              </g>
+              <span dangerouslySetInnerHTML={{ __html: hqBannerSvg(crest, 62, 92) }} />
             )}
-          </g>
-          <text x={CX} y={CY + 56} textAnchor="middle" className="c2-scene-label">
-            {ruins ? tn('clan2.base.ruins') : tn('clan2.base.hq')}
-          </text>
+          </span>
+          <span className="c2-base-pill hq">{ruins ? tn('clan2.base.ruins') : tn('clan2.base.hq')}</span>
+        </button>
 
-          {PROJECT_IDS.map((id) => {
-            const pos = SPOTS[id]
-            const lv = s.projects[id]
-            const Art = ART[id]
-            const isSel = sel === id
-            const under = s.build?.id === id ? s.build : null
-            const gate = lv < 3 ? BUILD_CLAN_LEVEL[lv as 0 | 1 | 2] : 0
-            const locked = !under && lv < 3 && s.clan.level < gate
-            const progress = under ? Math.min(1, Math.max(0, (now - under.startedAt) / (under.endsAt - under.startedAt))) : 0
-            return (
-              <g
-                key={id}
-                className={`c2-plot${isSel ? ' sel' : ''}${on ? '' : ' asleep'}`}
-                transform={`translate(${pos.x} ${pos.y})`}
-                role="button"
-                tabIndex={0}
-                aria-label={`${tnd(`clan2.project.${id}.name`)} ${lv}/3`}
-                onClick={() => setSel(id)}
-                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSel(id)}
-              >
-                <ellipse cx={0} cy={4} rx={isSel ? 44 : 40} ry={isSel ? 12 : 10} className="c2-plot-pad" />
-                {lv === 0 ? (
-                  <g className={`c2-ghost${locked ? ' locked' : ''}`} transform="scale(1.3)">
-                    <Art level={1} p={crest.primary} s={crest.secondary} />
-                  </g>
-                ) : (
-                  <g key={`${id}-${lv}`} className={`c2-bld${built?.id === id ? ' built' : ''}${on ? '' : ' sleeping'}`}>
-                    <g transform="scale(1.3)">
+        {PROJECT_IDS.map((id) => {
+          const pos = SPOTS[id]
+          const lv = s.projects[id]
+          const Art = ART[id]
+          const isSel = sel === id
+          const under = s.build?.id === id ? s.build : null
+          const gate = lv < 3 ? BUILD_CLAN_LEVEL[lv as 0 | 1 | 2] : 0
+          const price = lv < 3 ? PROJECTS[id].costs[lv as 0 | 1 | 2] : 0
+          const locked = !under && lv < 3 && s.clan.level < gate
+          const ready = !under && lv < 3 && on && manage && !busy && !locked && s.treasury.balance >= price
+          const progress = under ? Math.min(1, Math.max(0, (now - under.startedAt) / (under.endsAt - under.startedAt))) : 0
+          return (
+            <button
+              key={id}
+              type="button"
+              className={`c2-plot${isSel ? ' sel' : ''}${on ? '' : ' asleep'}${ready ? ' ready' : ''}${lv === 0 ? ' empty' : ''}`}
+              style={{ left: pct(pos.x, W), top: pct(pos.y, H), zIndex: Math.round(pos.y) }}
+              aria-label={`${tnd(`clan2.project.${id}.name`)} ${lv}/3`}
+              aria-pressed={isSel}
+              onClick={() => choose(id)}
+            >
+              <svg className="c2-plot-svg" viewBox={ART_VB} overflow="visible" aria-hidden="true">
+                <ellipse cx={0} cy={5} rx={44} ry={13} className="c2-plot-pad" />
+                <g key={pop?.id === id ? pop.n : 0} className={`c2-plot-lift${pop?.id === id ? ' pop' : ''}`}>
+                  {lv === 0 ? (
+                    <g className={`c2-ghost${locked ? ' locked' : ''}`}>
+                      <Art level={1} p={crest.primary} s={crest.secondary} />
+                    </g>
+                  ) : (
+                    <g key={`${id}-${lv}`} className={`c2-bld${built?.id === id ? ' built' : ''}${on ? '' : ' sleeping'}`}>
                       <Art level={lv} p={crest.primary} s={crest.secondary} />
                     </g>
-                  </g>
-                )}
-                {under && (
-                  <g className="c2-scaffold">
-                    <path d="M -34 4 L -30 -48 M 34 4 L 30 -48 M -32 -14 H 32 M -31 -32 H 31 M -34 4 L 30 -48 M 34 4 L -30 -48" stroke={SCAFFOLD} strokeWidth={2.2} fill="none" strokeLinecap="round" />
-                    <g className="c2-hammer">
-                      <rect x={-2} y={-66} width={4} height={18} rx={1.6} fill="#7B5127" />
-                      <rect x={-9} y={-70} width={18} height={8} rx={2} fill="#9AA2B1" stroke="#6F7686" strokeWidth={1} />
+                  )}
+                  {under && (
+                    <g className="c2-scaffold">
+                      <path d="M -34 4 L -30 -48 M 34 4 L 30 -48 M -32 -14 H 32 M -31 -32 H 31 M -34 4 L 30 -48 M 34 4 L -30 -48" stroke={SCAFFOLD} strokeWidth={2.2} fill="none" strokeLinecap="round" />
+                      <g className="c2-hammer">
+                        <rect x={-2} y={-66} width={4} height={18} rx={1.6} fill="#7B5127" />
+                        <rect x={-9} y={-70} width={18} height={8} rx={2} fill="#9AA2B1" stroke="#6F7686" strokeWidth={1} />
+                      </g>
                     </g>
-                  </g>
-                )}
-                {lv === 0 && !under && (
-                  <g transform="translate(26 -44)">
-                    <circle r={10} className={locked ? 'c2-badge-lock' : 'c2-badge-plus'} />
-                    {locked ? (
-                      <text y={3.6} textAnchor="middle" className="c2-badge-text">
-                        {gate}
-                      </text>
-                    ) : (
-                      <path d="M -4.2 0 h 8.4 M 0 -4.2 v 8.4" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" />
-                    )}
-                  </g>
-                )}
+                  )}
+                </g>
                 {built?.id === id && (
                   <g className="c2-fx" key={built.n}>
                     <ellipse cx={0} cy={4} rx={12} ry={4} className="c2-dust" />
@@ -214,30 +227,29 @@ export function BaseScene() {
                     ))}
                   </g>
                 )}
-                {!on && lv > 0 && (
-                  <text x={22} y={-48} className="c2-zzz">
-                    z z
-                  </text>
-                )}
-                {under ? (
-                  <g transform="translate(0 20)">
-                    <rect x={-26} y={0} width={52} height={6} rx={3} fill="rgba(23,24,27,.18)" />
-                    <rect x={-26} y={0} width={52 * progress} height={6} rx={3} fill="#FC5200" />
-                  </g>
-                ) : (
-                  <g className="c2-pips-svg" transform="translate(-9 22)">
-                    {[1, 2, 3].map((n) => (
-                      <circle key={n} cx={(n - 1) * 9} cy={0} r={3} className={lv >= n ? 'on' : undefined} />
-                    ))}
-                  </g>
-                )}
-                <text y={40} textAnchor="middle" className="c2-plot-name">
-                  {tnd(`clan2.project.${id}.name`)}
-                </text>
-              </g>
-            )
-          })}
-        </svg>
+              </svg>
+              {/* What it says at a glance: build here, upgrade now, locked until this clan level, under construction. */}
+              {(lv === 0 || ready) && !under && (
+                <span className={`c2-plot-badge${locked ? ' lock' : ' plus'}${ready ? ' go' : ''}`}>{locked ? gate : lv === 0 ? '+' : '▲'}</span>
+              )}
+              {!under && lv > 0 && locked && <span className="c2-plot-badge lock">{gate}</span>}
+              {!on && lv > 0 && <span className="c2-zzz-html">z z</span>}
+              <span className="c2-base-pill">
+                <span>{tnd(`clan2.project.${id}.name`)}</span>
+                <span className="c2-pill-pips" aria-hidden="true">
+                  {[1, 2, 3].map((n) => (
+                    <i key={n} className={lv >= n ? 'on' : undefined} />
+                  ))}
+                </span>
+              </span>
+              {under && (
+                <span className="c2-plot-bar" aria-hidden="true">
+                  <i style={{ width: `${progress * 100}%` }} />
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       {!on && (
@@ -263,27 +275,47 @@ export function BaseScene() {
       )}
 
       <div className="c2-bld-card" key={sel}>
-        <div className="c2-bld-head">
-          <strong>{tnd(`clan2.project.${sel}.name`)}</strong>
-          <span className="c2-pips" aria-label={tn('clan2.hq.level', { a: level })}>
-            {[1, 2, 3].map((n) => (
-              <i key={n} className={level >= n ? 'on' : undefined} />
-            ))}
-          </span>
+        <div className="c2-bld-hero">
+          <svg className="c2-bld-heroart" viewBox="-56 -96 112 124" overflow="visible" aria-hidden="true">
+            <ellipse cx={0} cy={5} rx={52} ry={14} className="c2-plot-pad" />
+            <g className={`c2-bld-herolift${level === 0 ? ' c2-ghost' : on ? '' : ' sleeping'}`}>
+              <g ref={heroRef} style={{ transform: `translateX(${hero.dx}px) scale(${hero.k})`, transformOrigin: '0 0' }}>
+                <SelArt level={(level || 1) as ProjectLevel} p={crest.primary} s={crest.secondary} />
+              </g>
+            </g>
+          </svg>
+          <div className="c2-bld-title">
+            <strong>{tnd(`clan2.project.${sel}.name`)}</strong>
+            <small>{tn('clan2.hq.level', { a: level })}</small>
+            <span className="c2-pips" aria-hidden="true">
+              {[1, 2, 3].map((n) => (
+                <i key={n} className={level >= n ? 'on' : undefined} />
+              ))}
+            </span>
+          </div>
         </div>
         <p className="c2-muted small">{tnd(`clan2.project.${sel}.desc`)}</p>
-        <div className="c2-effect-rows">
-          <div className={`c2-effect now${level === 0 ? ' none' : ''}`}>
-            <small>{tn('clan2.base.now')}</small>
-            <b>{effectText(sel, level)}</b>
-          </div>
-          {next && (
-            <div className="c2-effect next">
-              <small>{tn('clan2.base.next', { n: next })}</small>
-              <b>{effectText(sel, next as ProjectLevel)}</b>
-            </div>
-          )}
-        </div>
+        <ol className="c2-ladder">
+          {([1, 2, 3] as const).map((n) => {
+            const state = level >= n ? 'done' : n === level + 1 ? 'next' : 'later'
+            return (
+              <li key={n} className={state}>
+                <span className="c2-ladder-dot" aria-hidden="true">
+                  {state === 'done' ? '✓' : n}
+                </span>
+                <span className="c2-ladder-text">
+                  <small>{tn('clan2.hq.level', { a: n })}</small>
+                  <b>{effectText(sel, n as ProjectLevel)}</b>
+                </span>
+                {state !== 'done' && (
+                  <span className="c2-ladder-cost">
+                    <C2Coins n={PROJECTS[sel].costs[n - 1]} />
+                  </span>
+                )}
+              </li>
+            )
+          })}
+        </ol>
         {next ? (
           building ? (
             <p className="c2-hint">{tn('clan2.base.buildLeft', { t: fmtLeft(building.endsAt - now) })}</p>
@@ -321,7 +353,7 @@ export function BaseScene() {
           const lv = s.projects[id]
           return (
             <li key={id} className={`${sel === id ? 'sel' : ''}${on && lv > 0 ? '' : ' off'}`}>
-              <button type="button" onClick={() => setSel(id)}>
+              <button type="button" onClick={() => choose(id)}>
                 <span className="c2-perk-name">{tnd(`clan2.project.${id}.name`)}</span>
                 <span className="c2-perk-eff">{on || lv === 0 ? effectText(id, lv) : tn('clan2.base.asleep')}</span>
               </button>
@@ -333,5 +365,4 @@ export function BaseScene() {
   )
 }
 
-const STONE_HQ = '#E3E6EE'
 const SCAFFOLD = '#B98A4A'
