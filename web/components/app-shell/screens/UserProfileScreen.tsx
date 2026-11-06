@@ -177,9 +177,9 @@ export function UserProfileScreen({
   return (
     <>
       <div className="screen-inner">
-      {/* Telegram fullscreen / the iPhone home-screen app: the band under the status bar and Telegram's buttons,
-          in the hero's colour once the sheet covers the hero (useMagneticProfileHero). */}
-      <div className="profile-top-band" aria-hidden="true" style={{ background: resolveHeroBackground(profile?.heroBg).base }} />
+      {/* Telegram fullscreen / the iPhone home-screen app: an empty, see-through band as tall as the status bar and
+          Telegram's buttons — the covered sheet stops under it, the hero shows through (useMagneticProfileHero). */}
+      <div className="profile-top-band" aria-hidden="true" />
       <div
         className="profile-hero"
         ref={heroRef}

@@ -1418,18 +1418,20 @@ html.tg-band {
 }
 html.tg-band :is(#screen-catch-photo, #screen-profile, #screen-user-profile, #screen-territory, #screen-clan) { padding-top: 0; }
 html.tg-band .profile-hero { padding-top: calc(10px + var(--band)); }
-/* The band at the top of the profile (own and another's): the white sheet stops under it when it covers the hero, so
-   Telegram's «Закрыть» / «⋯» never sit on the stats; while covered it shows the hero's colour (useMagneticProfileHero).
-   Sticky over everything, it takes no room in the flow (the margins give its height back). */
-.profile-top-band { display: none; }
-html.tg-band .profile-top-band, html.ios-standalone .profile-top-band {
-  display: block; position: sticky; top: 0; z-index: 3; height: var(--band);
-  margin: -6px -20px calc(6px - var(--band));
-  background-size: 100% var(--hero-h, 520px) !important; background-position: top !important;
-  opacity: 0; pointer-events: none; transition: opacity .16s ease-out;
+/* The profile (own and another's) scrolls as a white sheet over the hero; the «magnet» is the browser's own scroll
+   snapping (09.11.2026, see useMagneticProfileHero): the page rests either at the very top (the band's snap point,
+   hero open) or with the sheet's top right under the band (hero covered); further down the sheet is taller than the
+   screen, so it scrolls freely. --profile-top: how much of the top the status bar and Telegram's «Закрыть» / «⋯»
+   take (0 in a browser); the band before the hero is that tall, empty and see-through, and gives its height back. */
+#screen-profile, #screen-user-profile { scroll-snap-type: y mandatory; }
+.profile-top-band {
+  display: block; position: relative; height: var(--profile-top, 0px);
+  margin: -6px -20px calc(6px - var(--profile-top, 0px));
+  visibility: hidden; pointer-events: none; scroll-snap-align: start;
 }
-html.ios-standalone:not(.tg-band) .profile-top-band { --band: env(safe-area-inset-top); }
-html .profile-top-band.on { opacity: 1; }
+.profile-body { scroll-snap-align: start; scroll-margin-top: var(--profile-top, 0px); }
+html.tg-band { --profile-top: var(--band); }
+html.ios-standalone:not(.tg-band) { --profile-top: env(safe-area-inset-top); }
 html.tg-band .sector-hero-map .territory-thumb-wrap { height: calc(230px + var(--band)); }
 html.tg-band .sector-hero-map-icons { top: calc(10px + var(--band)); }
 html.tg-band #screen-clan .clan-hero { margin-top: 0; margin-left: 0; margin-right: 0; border-radius: 0 0 22px 22px; padding-top: calc(12px + var(--band)); }
