@@ -1417,20 +1417,7 @@ html.tg-band {
   --standalone-top: calc(var(--band) + 6px);
 }
 html.tg-band :is(#screen-catch-photo, #screen-profile, #screen-user-profile, #screen-territory, #screen-clan) { padding-top: 0; }
-html.tg-band .profile-hero { padding-top: calc(10px + var(--band)); }
-/* The band at the top of the profile (own and another's), as tall as the status bar and Telegram's «Закрыть» / «⋯»
-   (--profile-top: 0 in a browser). It takes no room in the flow (the margins give its height back). The covered sheet
-   stops under it, the hero showing through; scrolled further, it fades in with the hero's colours (class «on» from
-   useMagneticProfileHero), so the content slides under it and not under Telegram's buttons. */
-.profile-top-band {
-  display: block; position: sticky; top: 0; z-index: 3; height: var(--profile-top, 0px);
-  margin: -6px -20px calc(6px - var(--profile-top, 0px));
-  background-size: 100% var(--hero-h, 520px) !important; background-position: top !important;
-  opacity: 0; pointer-events: none; transition: opacity .2s ease-out;
-}
-.profile-top-band.on { opacity: 1; }
-html.tg-band { --profile-top: var(--band); }
-html.ios-standalone:not(.tg-band) { --profile-top: env(safe-area-inset-top); }
+html.tg-band .profile-hero { margin-left: -20px; margin-right: -20px; border-radius: 0 0 22px 22px; padding: calc(10px + var(--band)) 20px 22px; }
 html.tg-band .sector-hero-map .territory-thumb-wrap { height: calc(230px + var(--band)); }
 html.tg-band .sector-hero-map-icons { top: calc(10px + var(--band)); }
 html.tg-band #screen-clan .clan-hero { margin-top: 0; margin-left: 0; margin-right: 0; border-radius: 0 0 22px 22px; padding-top: calc(12px + var(--band)); }

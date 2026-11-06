@@ -41,7 +41,6 @@ import { clanErrorMessage } from '@/lib/data/clanLevels'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { BackButton } from '@/components/app-shell/BackButton'
-import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
 import { tn } from '@/lib/i18n'
 import { AdminSupportChatSheet } from '@/components/app-shell/AdminSupportChatSheet'
 
@@ -167,7 +166,6 @@ export function UserProfileScreen({
   const recent = catches.slice(0, 3)
   const initials = (profile?.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()
   const territoriesRef = useRef<HTMLDivElement>(null)
-  const heroRef = useMagneticProfileHero()
 
   function handleShare() {
     if (!profile?.publicId) return
@@ -177,13 +175,8 @@ export function UserProfileScreen({
   return (
     <>
       <div className="screen-inner">
-      {/* Telegram fullscreen / the iPhone home-screen app: the band under the status bar and Telegram's buttons — the
-          covered sheet stops under it with the hero showing; further down it fades in with the hero's colours
-          (useMagneticProfileHero). */}
-      <div className="profile-top-band" aria-hidden="true" style={{ background: resolveHeroBackground(profile?.heroBg).base }} />
       <div
         className="profile-hero"
-        ref={heroRef}
         style={
           {
             background: resolveHeroBackground(profile?.heroBg).base,
