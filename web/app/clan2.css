@@ -473,7 +473,7 @@
 /* ───────── the headquarters marker: the clan's standard on a stone plinth, grows with the zoom ───────── */
 .c2-hqm-b{position:relative; display:flex; flex-direction:column; align-items:center; gap:3px; pointer-events:auto; cursor:pointer;}
 .c2-hqm-dot{display:flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%;}
-.c2-hqm-label{flex:0 0 auto; white-space:nowrap; text-transform:uppercase; background:rgba(23,24,27,.9); color:#fff; font-weight:800; font-size:10.5px; letter-spacing:.6px; padding:2px 7px; border-radius:7px; box-shadow:0 0 0 1.5px #fff, 0 1px 4px rgba(0,0,0,.3);}
+.c2-hqm-label{flex:0 0 auto; text-transform:uppercase; letter-spacing:.5px;}
 .c2-hqm-b svg{display:block; overflow:visible;}
 .c2-hqm-b .c2-hqm-banner{animation:c2-banner 5.5s ease-in-out infinite;}
 @keyframes c2-banner{0%,100%{transform:rotate(-1.2deg)}50%{transform:rotate(1.4deg)}}
