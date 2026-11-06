@@ -17,8 +17,8 @@ export function GloryTab() {
   const s = useDemoState()
   const { say } = useC2()
   const league = leagueFor(s.clan.trophies)
-  // The ten biggest records (the biggest fish of each species), heaviest first.
-  const records = [...s.hall].sort((a, b) => b.kg - a.kg).slice(0, HALL_SIZE)
+  // The ten biggest records (the longest fish of each species), longest first — size is the length, not the weight.
+  const records = [...s.hall].sort((a, b) => b.cm - a.cm || b.kg - a.kg).slice(0, HALL_SIZE)
   const date = (at: number) => new Date(at).toLocaleDateString(currentLocale(), { day: 'numeric', month: 'short' })
   const top = records.slice(0, 3)
   const hq = s.hq.sectorId
