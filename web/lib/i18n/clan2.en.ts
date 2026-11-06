@@ -557,7 +557,7 @@ export const clan2En = {
     s_defend: "HQ",
     t_rent: "Every captured clan sector brings coins into the treasury by itself: 1 coin every 3 hours. The more sectors the clan holds, the more comes in.",
     t_save: "The treasury's coins are shared. Members' deposits and a small tax on catches (the leader sets the rate) go in too. It saves up to a cap that grows with the clan's level.",
-    t_build: "The clan spends the treasury on buildings of its base (they give real perks), on animated sector skins, and on a shared «Outing» on the water. A build takes time, as in a clan-village game.",
+    t_build: "The clan spends the treasury on buildings of its base (they give real perks), on animated sector skins, and on a shared «Outing» on the water. Every build takes time: from a few hours to a few days.",
     t_defend: "The HQ stands on one of the clan's sectors. While it stands, the buildings work. If rivals break the sector's defence and the clan does not answer in time, the HQ falls and part of the treasury is carried off.",
     nextKicker: "What to do next",
     next_hq: "Set the HQ",
