@@ -1,5 +1,5 @@
 import { fallHq } from '@/lib/clan2/demoStore'
-import { DEFAULT_SETTINGS, DAY, HOURS, questReward, questTarget } from '@/lib/clan2/rules'
+import { DEFAULT_SETTINGS, DAY, HOURS, makeQuest, pickQuestKind, weekEndOf, weekKeyOf } from '@/lib/clan2/rules'
 import type { ClanRole, DemoMember, DemoState, MapSector, TreasuryEntry } from '@/lib/clan2/types'
 import { resolveCrest } from '@/lib/data/clanCrests'
 import type { ClanDetail, Territory } from '@/lib/data/types'
@@ -16,9 +16,9 @@ export type LiveInput = {
   territories: Territory[]
 }
 
-export const liveKey = (userId: string, clanId: number) => `range:clan2-live:v2:${userId}:${clanId}`
+export const liveKey = (userId: string, clanId: number) => `range:clan2-live:v3:${userId}:${clanId}`
 
-const hueOf = (id: string) => {
+export const hueOf = (id: string) => {
   let h = 0
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 360
   return h
@@ -61,7 +61,6 @@ export function buildLiveState(input: LiveInput, now: number = Date.now()): Demo
   const realRole: ClanRole = clan.myRole ?? 'member'
   const members = liveMembers(clan, null, userId)
   const active = members.filter((m) => m.lastCatchMin !== null).length
-  const weekCatches = clan.members.reduce((n, m) => n + m.weekCatches, 0)
   const seed: TreasuryEntry = { id: 1, at: now, kind: 'seed', amount: 3000, actor: null, note: 'demo' }
   return {
     live: { clanId: clan.id, userId, realRole, viewAs: null, isSuperAdmin },
@@ -83,7 +82,7 @@ export function buildLiveState(input: LiveInput, now: number = Date.now()): Demo
     buff: { phase: 'idle', startsAt: null, endsAt: null, cooldownUntil: null, rsvp: [], startedBy: null, lastBonus: 0 },
     hq: { sectorId: null, placedAt: null, lastMoveAt: null, siege: null, defenseAt: null, ruins: null },
     alerts: [],
-    quest: { kind: 'catches', target: questTarget('catches', active), progress: Math.min(weekCatches, questTarget('catches', active)), reward: questReward('catches', 0), endsAt: now + 3 * DAY, claimed: false },
+    quest: makeQuest(pickQuestKind(clan.id, weekKeyOf(now)), active, members.length, 0, weekEndOf(now)),
     projects: { dock: 0, beacon: 0, fort: 0, board: 0, storage: 0, market: 0 },
     build: null,
     owned: [],

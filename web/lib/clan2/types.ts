@@ -84,8 +84,20 @@ export type HqState = {
 export type AlertKind = 'sector_attack' | 'hq_siege' | 'hq_saved' | 'hq_fallen' | 'buff' | 'nudge' | 'quest_done' | 'project_done' | 'recruit'
 export type ClanAlert = { id: number; at: number; kind: AlertKind; text: string; sectorId?: string; read: boolean }
 
-export type QuestKind = 'catches' | 'species' | 'capture' | 'rare'
-export type WeeklyQuest = { kind: QuestKind; target: number; progress: number; reward: number; endsAt: number; claimed: boolean }
+export type QuestKind = 'catches' | 'species' | 'rare' | 'big' | 'length' | 'members' | 'days' | 'sectors'
+export type WeeklyQuest = {
+  kind: QuestKind
+  target: number
+  progress: number
+  reward: number
+  endsAt: number
+  claimed: boolean
+  // «big»: the length in cm the fish must pass.
+  param?: number
+  // Live mode: how much of the progress the real catches of the clan give, and how much the test bench added.
+  real?: number
+  sim: number
+}
 
 export type ProjectId = 'dock' | 'beacon' | 'fort' | 'board' | 'storage' | 'market'
 export type ProjectLevel = 0 | 1 | 2 | 3

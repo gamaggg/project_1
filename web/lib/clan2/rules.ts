@@ -1,4 +1,4 @@
-import type { EconomySettings, GoalItem, ProjectId, ProjectLevel, QuestKind, TreasuryKind } from '@/lib/clan2/types'
+import type { EconomySettings, GoalItem, ProjectId, ProjectLevel, QuestKind, TreasuryKind, WeeklyQuest } from '@/lib/clan2/types'
 
 // The numbers of the clan economy. The server (web/supabase-drafts/clan-update-06-11/)
 // holds the same ones in `clan_economy`; the admin screen edits them there.
@@ -164,19 +164,67 @@ export const GOAL_CATALOG: GoalItem[] = [
   { id: 'banner_storm', kind: 'banner', cost: 3_000, minLevel: 3 },
 ]
 
-// The weekly quest of the whole clan: the target grows with the clan's active members (the
-// Duolingo «family quest» idea — more people, more to do, so everyone has to take part).
-export function questTarget(kind: QuestKind, activeMembers: number): number {
-  // Calibrated on the database (06.11): an active player makes about 8 catches and 2 captures a week;
-  // the targets are set near 60 % of that, so a clan that plays together reaches them.
-  const per: Record<QuestKind, number> = { catches: 5, species: 1, capture: 1, rare: 0.6 }
-  const floor: Record<QuestKind, number> = { catches: 20, species: 5, capture: 4, rare: 3 }
-  return Math.max(floor[kind], Math.round(per[kind] * Math.max(1, activeMembers)))
+// The weekly task of the whole clan. It is drawn at random when the week starts (the same for the whole clan, by the
+// clan and the week), cannot be swapped, and is paid into the treasury when the leader collects it. Eight kinds, each
+// counted from the clan's catches of the week; the target grows with the clan's active members so that everybody
+// has to take part (the idea of a family quest).
+export const QUEST_KINDS: QuestKind[] = ['catches', 'species', 'rare', 'big', 'length', 'members', 'days', 'sectors']
+export const BIG_FISH_CM = 60
+// «Rare» is a fish that pays this many coins or more.
+export const RARE_COINS = 50
+
+export function questTarget(kind: QuestKind, activeMembers: number, members: number = activeMembers): number {
+  const a = Math.max(1, activeMembers)
+  // Calibrated on the database (06.11): an active player makes about 8 catches a week; targets sit near 60 % of that.
+  switch (kind) {
+    case 'catches':
+      return Math.max(20, Math.round(5 * a))
+    case 'species':
+      return Math.min(12, Math.max(5, Math.round(a)))
+    case 'rare':
+      return Math.max(3, Math.round(0.6 * a))
+    case 'big':
+      return 1
+    case 'length':
+      return Math.max(8, Math.round(1.6 * a))
+    case 'members':
+      return Math.max(3, Math.ceil(members * 0.6))
+    case 'days':
+      return 4
+    case 'sectors':
+      return Math.max(4, Math.round(a))
+  }
 }
 
 export function questReward(kind: QuestKind, board: ProjectLevel = 0): number {
-  const base = { catches: 150, species: 200, capture: 180, rare: 220 }[kind]
-  return Math.round(base * (1 + PROJECT_EFFECTS.board.questPct[board] / 100))
+  const base: Record<QuestKind, number> = { catches: 150, species: 200, rare: 220, big: 200, length: 150, members: 180, days: 150, sectors: 170 }
+  return Math.round(base[kind] * (1 + PROJECT_EFFECTS.board.questPct[board] / 100))
 }
 
-export const fmt = (n: number) => Math.round(n).toLocaleString('ru-RU').replace(/ | /g, ' ')
+// Monday 00:00 (local time) of the week that `now` is in, and the next Monday.
+export function weekStartOf(now: number): number {
+  const d = new Date(now)
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+  return d.getTime()
+}
+export function weekEndOf(now: number): number {
+  const d = new Date(weekStartOf(now))
+  d.setDate(d.getDate() + 7)
+  return d.getTime()
+}
+
+// The kind of the week: a fixed pseudo-random pick by clan and week, so every member sees the same task.
+export function pickQuestKind(clanId: number, weekKey: number): QuestKind {
+  let h = Math.imul(clanId + 1, 2654435761) ^ Math.imul(weekKey + 7, 40503)
+  h = Math.imul(h ^ (h >>> 15), 2246822519)
+  h ^= h >>> 13
+  return QUEST_KINDS[Math.abs(h) % QUEST_KINDS.length]
+}
+export const weekKeyOf = (now: number) => Math.floor(weekStartOf(now) / (7 * DAY))
+
+export function makeQuest(kind: QuestKind, activeMembers: number, members: number, board: ProjectLevel, endsAt: number): WeeklyQuest {
+  return { kind, target: questTarget(kind, activeMembers, members), progress: 0, reward: questReward(kind, board), endsAt, claimed: false, param: kind === 'big' ? BIG_FISH_CM : undefined, real: 0, sim: 0 }
+}
+
+export const fmt = (n: number) => Math.round(n).toLocaleString('ru-RU').replace(/[\u00a0\u202f]/g, ' ')

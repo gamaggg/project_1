@@ -6,9 +6,10 @@ import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { C2Bar, C2Coins, C2PortalProvider, C2Sheet, C2Toast, C2ToastProvider, fmtLeft, useC2, useDemoNow } from '@/components/clan2/C2Common'
 import { DemoPanel } from '@/components/clan2/DemoPanel'
 import { AlertsCard } from '@/components/clan2/ExitTab'
-import { bindLive, defendHq, markAlertsRead, placeHq, resetLive, tick, useDemoState } from '@/lib/clan2/demoStore'
+import { applyReal, bindLive, defendHq, markAlertsRead, placeHq, resetLive, tick, useDemoState } from '@/lib/clan2/demoStore'
+import { fetchRealClan } from '@/lib/clan2/live/real'
 import { setClan2Enabled } from '@/lib/clan2/live/flag'
-import { buildLiveState, liveKey, syncLiveState, type LiveInput } from '@/lib/clan2/live/seed'
+import { buildLiveState, hueOf, liveKey, syncLiveState, type LiveInput } from '@/lib/clan2/live/seed'
 import { setLiveUi, useLiveUi } from '@/lib/clan2/live/ui'
 import { DEFENSE_MAX } from '@/lib/clan2/rules'
 import type { ClanDetail, Profile, Territory } from '@/lib/data/types'
@@ -51,6 +52,27 @@ export function Clan2Live({
     const id = window.setInterval(tick, 1000)
     return () => window.clearInterval(id)
   }, [])
+
+  // The clan's real catches (read-only): the week's task progress, the hall of fame, who fished lately. Now and every five minutes.
+  const clanForReal = input?.clan
+  useEffect(() => {
+    if (!clanForReal) return
+    let stop = false
+    const load = () =>
+      fetchRealClan(clanForReal, Date.now())
+        .then((r) => {
+          if (!stop && r) applyReal(r, hueOf)
+        })
+        .catch(() => {})
+    // The saved state is bound by the effect above; give it a moment, then read.
+    const first = window.setTimeout(load, 600)
+    const id = window.setInterval(load, 5 * 60_000)
+    return () => {
+      stop = true
+      window.clearTimeout(first)
+      window.clearInterval(id)
+    }
+  }, [clanForReal])
 
   if (!input) return null
   return (

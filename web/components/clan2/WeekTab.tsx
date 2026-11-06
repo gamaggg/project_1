@@ -9,16 +9,24 @@ import { tn } from '@/lib/i18n/runtime'
 // «Неделя»: what the whole clan does together this week — one task for everybody,
 // and the friends invited to the clan.
 
-function questLabel(kind: QuestKind, n: number): string {
+function questLabel(kind: QuestKind, n: number, param?: number): string {
   switch (kind) {
     case 'catches':
       return tn('clan2.week.q_catches', { n })
     case 'species':
       return tn('clan2.week.q_species', { n })
-    case 'capture':
-      return tn('clan2.week.q_capture', { n })
-    default:
+    case 'rare':
       return tn('clan2.week.q_rare', { n })
+    case 'big':
+      return tn('clan2.week.q_big', { n: param ?? 60 })
+    case 'length':
+      return tn('clan2.week.q_length', { n })
+    case 'members':
+      return tn('clan2.week.q_members', { n })
+    case 'days':
+      return tn('clan2.week.q_days', { n })
+    case 'sectors':
+      return tn('clan2.week.q_sectors', { n })
   }
 }
 
@@ -34,11 +42,11 @@ export function WeekTab() {
     <div className="c2-stack">
       <C2Card title={tn('clan2.week.questTitle')} hint={tn('clan2.week.questHint')} tour="week-quest">
         <div className="c2-goal-row">
-          <strong>{questLabel(q.kind, q.target)}</strong>
+          <strong>{questLabel(q.kind, q.target, q.param)}</strong>
         </div>
-        <C2Bar value={q.progress / q.target} tone={done ? 'good' : 'accent'} label={questLabel(q.kind, q.target)} />
+        <C2Bar value={q.progress / q.target} tone={done ? 'good' : 'accent'} label={questLabel(q.kind, q.target, q.param)} />
         <div className="c2-goal-foot">
-          <span className="c2-muted">{tn('clan2.week.progress', { a: Math.min(q.progress, q.target), b: q.target })}</span>
+          <span className="c2-muted">{tn('clan2.week.progress', { a: Math.round(Math.min(q.progress, q.target) * 10) / 10, b: q.target })}</span>
           <span className="c2-muted">{tn('clan2.week.endsIn', { t: fmtLeft(q.endsAt - now) })}</span>
         </div>
         <p className="c2-hint" style={{ marginTop: 10 }}>

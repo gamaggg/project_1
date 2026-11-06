@@ -1,6 +1,7 @@
 import { test, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import * as S from '@/lib/clan2/demoStore.ts'
+import { QUEST_KINDS, makeQuest, pickQuestKind, questTarget, weekEndOf, weekKeyOf, weekStartOf } from '@/lib/clan2/rules.ts'
 import { BUILD_CLAN_LEVEL, BUILD_HOURS, CLAN_SKINS, DAY, HOURS, DEFENSE_MAX, HQ_LOOT_MAX, HQ_RUINS_HOURS, PROJECTS, PROJECT_EFFECTS, SIEGE_MINUTES, dailyRent, speedupCost, treasuryCap } from '@/lib/clan2/rules.ts'
 import { buildLiveState, syncLiveState, liveSectors } from '@/lib/clan2/live/seed.ts'
 
@@ -553,4 +554,52 @@ test('live: view as a member loses the manager rights; the real role comes back'
   assert.equal(S.canManage(st()), true)
   ok(S.setViewAs('admin'))
   assert.equal(st().persona, 'admin')
+})
+
+// ───────────── the weekly task ─────────────
+
+test('weekly task: eight kinds, drawn by clan and week, the same for everybody, all of them come up', () => {
+  assert.equal(QUEST_KINDS.length, 8)
+  const seen = new Set()
+  for (let week = 0; week < 400; week++) {
+    const a = pickQuestKind(34, week)
+    assert.equal(a, pickQuestKind(34, week), 'stable for the same clan and week')
+    seen.add(a)
+  }
+  assert.equal(seen.size, 8, 'every kind comes up')
+  // two clans do not always get the same task in the same week
+  let differ = 0
+  for (let week = 0; week < 50; week++) if (pickQuestKind(34, week) !== pickQuestKind(35, week)) differ++
+  assert.ok(differ > 20)
+})
+
+test('weekly task: targets are sane for a small and a big clan', () => {
+  for (const kind of QUEST_KINDS) {
+    const small = questTarget(kind, 2, 5)
+    const big = questTarget(kind, 20, 30)
+    assert.ok(small >= 1 && big >= small, `${kind} ${small} ${big}`)
+  }
+  assert.equal(questTarget('big', 5, 5), 1)
+  assert.equal(questTarget('days', 5, 5), 4)
+})
+
+test('weekly task: the week runs Monday to Monday', () => {
+  const now = Date.now()
+  const start = weekStartOf(now)
+  const end = weekEndOf(now)
+  assert.ok(start <= now && now < end)
+  assert.equal(new Date(start).getDay(), 1)
+  assert.ok(weekKeyOf(end) === weekKeyOf(start) + 1)
+})
+
+test('weekly task: a catch counts toward whatever the task is; the next week brings another kind', () => {
+  S.resetDemo()
+  const first = st().quest.kind
+  S.settleWeek()
+  assert.notEqual(st().quest.kind, first, 'a different kind next week')
+  assert.equal(st().quest.progress, 0)
+  assert.equal(st().quest.claimed, false)
+  const q = makeQuest('big', 5, 8, 0, Date.now() + DAY)
+  assert.equal(q.param, 60)
+  assert.equal(q.target, 1)
 })

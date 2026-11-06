@@ -146,7 +146,7 @@ export function initialDemoState(now: number = Date.now()): DemoState {
       { id: 1, at: now - 3 * HOURS, kind: 'sector_attack', text: sectorIdAt(-2, 0), sectorId: sectorIdAt(-2, 0), read: true },
       { id: 2, at: now - 26 * HOURS, kind: 'project_done', text: 'dock', read: true },
     ],
-    quest: { kind: 'catches', target: questTarget('catches', active), progress: 21, reward: questReward('catches', 1), endsAt: now + 3.2 * DAY, claimed: false },
+    quest: { kind: 'catches', target: questTarget('catches', active), progress: 21, reward: questReward('catches', 1), endsAt: now + 3.2 * DAY, claimed: false, sim: 0 },
     projects: { dock: 1, beacon: 0, fort: 0, board: 1, storage: 0, market: 0 },
     build: null,
     owned: ['clan_tide'],

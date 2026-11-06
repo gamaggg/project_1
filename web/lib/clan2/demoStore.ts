@@ -26,9 +26,15 @@ import {
   coinMultiplier,
   dailyRent,
   intake,
+  BIG_FISH_CM,
+  RARE_COINS,
+  makeQuest,
+  pickQuestKind,
   questReward,
   questTarget,
   taxOf,
+  weekEndOf,
+  weekKeyOf,
   treasuryCap,
 } from '@/lib/clan2/rules'
 import type { ClanAlert, ClanRole, DemoMember, DemoState, EconomySettings, MapSector, Persona, ProjectId, ProjectLevel, TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
@@ -43,7 +49,7 @@ export type Result = { ok: true; info?: string } | { ok: false; reason: string }
 const OK: Result = { ok: true }
 const no = (reason: string): Result => ({ ok: false, reason })
 
-const KEY = 'range:clan2-demo:v5'
+const KEY = 'range:clan2-demo:v6'
 // Where the state is kept: the demo's own key, or — bound to a real clan — a key of that player and clan.
 let storageKey = KEY
 
@@ -216,6 +222,16 @@ export function fallHq(d: DemoState, by: string, fellAt: number) {
   }
 }
 
+// The task of the next week: a random kind, never the same as this one's.
+function nextQuest(d: DemoState) {
+  const now = nowOf(d)
+  let salt = d.seq
+  let kind = pickQuestKind(d.live?.clanId ?? 7, weekKeyOf(now) + salt)
+  while (kind === d.quest.kind && salt < d.seq + 20) kind = pickQuestKind(d.live?.clanId ?? 7, weekKeyOf(now) + ++salt)
+  d.seq = salt + 1
+  return makeQuest(kind, activeMembers(d), d.members.length, levelOf(d, 'board'), d.live ? weekEndOf(now) : now + 7 * DAY)
+}
+
 // ───────────── time ─────────────
 
 function runTime(d: DemoState) {
@@ -225,6 +241,11 @@ function runTime(d: DemoState) {
     d.lastRentAt += DAY
     const amount = rentPerDay(d)
     if (amount > 0) income(d, 'rent', amount, null, 'rent', d.lastRentAt)
+  }
+  // Live mode: a new week brings a new task (the kind comes from the clan and the week, so every member sees the same one).
+  if (d.live && now >= d.quest.endsAt) {
+    d.quest = makeQuest(pickQuestKind(d.live.clanId, weekKeyOf(now)), activeMembers(d), d.members.length, levelOf(d, 'board'), weekEndOf(now))
+    d.questSeen = []
   }
   // Buff.
   const b = d.buff
@@ -659,14 +680,25 @@ export function simulateCatch(opts: { memberId?: string; species?: string } = {}
     member.weekMeters += Math.round(10 * (buffOn ? BUFF_METER_FACTOR : 1))
     member.lastCatchMin = 0
     if (buffOn) d.buff.lastBonus += sp.coins * (mult - coinMultiplier(sector.hot, false))
-    // The weekly quest.
+    // The weekly task: what this catch adds to it, by the kind of the task.
     const q = d.quest
     if (!q.claimed && q.progress < q.target) {
-      if (q.kind === 'catches') q.progress += 1
-      else if (q.kind === 'species' && !d.questSeen.includes(sp.key)) {
-        d.questSeen.push(sp.key)
-        q.progress += 1
-      } else if (q.kind === 'rare' && sp.coins >= 50) q.progress += 1
+      let inc = 0
+      const once = (key: string) => {
+        if (d.questSeen.includes(key)) return 0
+        d.questSeen.push(key)
+        return 1
+      }
+      if (q.kind === 'catches') inc = 1
+      else if (q.kind === 'species') inc = once('s:' + sp.key)
+      else if (q.kind === 'rare') inc = sp.coins >= RARE_COINS ? 1 : 0
+      else if (q.kind === 'big') inc = cm >= (q.param ?? BIG_FISH_CM) ? 1 : 0
+      else if (q.kind === 'length') inc = cm / 100
+      else if (q.kind === 'members') inc = once('m:' + member.id)
+      else if (q.kind === 'days') inc = once('d:' + Math.floor(nowOf(d) / DAY))
+      else if (q.kind === 'sectors') inc = once('x:' + sector.id)
+      q.sim = (q.sim ?? 0) + inc
+      q.progress = Math.min(q.target, q.progress + inc)
     }
     // The hall of fame: a bigger fish of the species.
     const rec = d.hall.find((h) => h.species === sp.key)
@@ -693,8 +725,7 @@ export function settleWeek(): Result {
     const share = (n: number) => Math.floor((n * d.settings.chestShare) / 100)
     income(d, 'chest_share', share(chest * 9), null, 'chest')
     income(d, 'race_share', share(race * 9), null, 'race')
-    const target = questTarget(d.quest.kind, activeMembers(d))
-    d.quest = { ...d.quest, progress: 0, claimed: false, target, reward: questReward(d.quest.kind, levelOf(d, 'board')), endsAt: nowOf(d) + 7 * DAY }
+    d.quest = nextQuest(d)
     d.questSeen = []
   })
 }
@@ -716,6 +747,42 @@ export function reverseEntry(entryId: number): Result {
     d.treasury.balance = Math.max(0, d.treasury.balance - e.amount)
     push(d, e.amount > 0 ? 'spend_goal' : 'refund', -e.amount, null, `reversed:${e.id}`)
     e.note = `reversed:${e.note}`
+  })
+}
+
+// Live mode: what the clan's real catches say — the task's progress, the records of the hall of fame, who has been fishing lately.
+export type RealClan = {
+  catches: number
+  species: number
+  rare: number
+  maxCm: number
+  lengthM: number
+  members: number
+  days: number
+  sectors: number
+  lastCatchMin: Record<string, number | null>
+  hall: { species: string; member: string; userId: string; cm: number; kg: number; at: number }[]
+}
+
+export function applyReal(r: RealClan, hueOf: (id: string) => number): Result {
+  return mutate((d) => {
+    if (!d.live) return no('notLive')
+    const q = d.quest
+    const real = { catches: r.catches, species: r.species, rare: r.rare, big: r.maxCm >= (q.param ?? BIG_FISH_CM) ? 1 : 0, length: r.lengthM, members: r.members, days: r.days, sectors: r.sectors }[q.kind]
+    q.real = real
+    if (!q.claimed) q.progress = Math.min(q.target, Math.floor(real + (q.sim ?? 0)))
+    for (const m of d.members) {
+      if (m.id in r.lastCatchMin) m.lastCatchMin = r.lastCatchMin[m.id]
+    }
+    // The records: the real ones, and a bigger fish of the test bench stays if it is bigger.
+    const now = nowOf(d)
+    const merged = new Map(d.hall.map((h) => [h.species, h]))
+    for (const h of r.hall) {
+      const cur = merged.get(h.species)
+      if (!cur || h.cm >= cur.cm) merged.set(h.species, { species: h.species, member: h.member, cm: h.cm, kg: h.kg, at: h.at, hue: hueOf(h.userId) })
+    }
+    d.hall = [...merged.values()].sort((a, b) => b.cm - a.cm)
+    void now
   })
 }
 
