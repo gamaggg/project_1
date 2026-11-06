@@ -709,7 +709,7 @@ export function simulateCatch(opts: { memberId?: string; species?: string } = {}
     const rec = d.hall.find((h) => h.species === sp.key)
     const kg = Math.round(Math.pow(cm / 20, 3) * 0.12 * 10) / 10
     let record = false
-    if (!rec || cm > rec.cm) {
+    if (!rec || cm > (rec.cm ?? 0)) {
       record = true
       const entry = { species: sp.key, member: member.name, cm, kg, at: nowOf(d), hue: member.hue }
       if (rec) Object.assign(rec, entry)
@@ -766,7 +766,7 @@ export type RealClan = {
   days: number
   sectors: number
   lastCatchMin: Record<string, number | null>
-  hall: { species: string; member: string; userId: string; cm: number; kg: number; at: number; photo: string | null }[]
+  hall: { species: string; member: string; userId: string; cm: number | null; kg: number | null; at: number; photo: string | null }[]
 }
 
 export function applyReal(r: RealClan, hueOf: (id: string) => number): Result {
@@ -783,7 +783,7 @@ export function applyReal(r: RealClan, hueOf: (id: string) => number): Result {
     // another city's, or one saved by an older build — does not linger in the saved state.
     d.hall = r.hall
       .map((h) => ({ species: h.species, member: h.member, cm: h.cm, kg: h.kg, at: h.at, hue: hueOf(h.userId), photo: h.photo }))
-      .sort((a, b) => b.cm - a.cm)
+      .sort((a, b) => (b.cm ?? -1) - (a.cm ?? -1))
   })
 }
 

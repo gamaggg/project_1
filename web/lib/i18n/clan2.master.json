@@ -1899,9 +1899,9 @@
    "ka": "ტროფეი"
   },
   "hint": {
-   "ru": "Десять самых крупных рыб клана в его городе, по одной самой крупной каждого вида. Новый рекорд сам заменяет старый.",
-   "en": "The clan's ten biggest fish in its city, the biggest of each species. A new record replaces the old one by itself.",
-   "ka": "კლანის ათი ყველაზე დიდი თევზი მის ქალაქში, თითო ყველაზე დიდი თითოეული სახეობიდან. ახალი რეკორდი თავად ანაცვლებს ძველს."
+   "ru": "Самая крупная рыба каждого вида, пойманного кланом в его городе. Новый рекорд сам заменяет старый.",
+   "en": "The biggest fish of every species the clan has caught in its city. A new record replaces the old one by itself.",
+   "ka": "კლანის მიერ მის ქალაქში დაჭერილი თითოეული სახეობის ყველაზე დიდი თევზი. ახალი რეკორდი თავად ანაცვლებს ძველს."
   }
  },
  "members": {

@@ -419,7 +419,7 @@ export const clan2En = {
     cardNoHq: "No HQ",
     cardLeague: "League: {name}",
     top: "Trophy",
-    hint: "The clan's ten biggest fish in its city, the biggest of each species. A new record replaces the old one by itself.",
+    hint: "The biggest fish of every species the clan has caught in its city. A new record replaces the old one by itself.",
   },
   members: {
     title: "Members",

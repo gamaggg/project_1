@@ -18,7 +18,7 @@ export async function fetchRealClan(clan: ClanDetail, now: number): Promise<Real
   const [recent, top, species] = await Promise.all([
     supabase.from('catches').select('user_id,species,length_cm,weight_kg,caught_at,territory_id').in('user_id', ids).gte('caught_at', since).limit(2000),
     // The hall of fame counts only the clan's own city: catches on sectors of that city (sector ids start with its letter).
-    supabase.from('catches').select('user_id,species,length_cm,weight_kg,caught_at,territory_id,photo_url').in('user_id', ids).like('territory_id', `${CITIES[clan.city].idPrefix}%`).not('length_cm', 'is', null).order('length_cm', { ascending: false }).limit(600),
+    supabase.from('catches').select('user_id,species,length_cm,weight_kg,caught_at,territory_id,photo_url').in('user_id', ids).like('territory_id', `${CITIES[clan.city].idPrefix}%`).order('length_cm', { ascending: false, nullsFirst: false }).order('weight_kg', { ascending: false, nullsFirst: false }).order('caught_at', { ascending: true }).limit(3000),
     supabase.from('species').select('key,coin_value'),
   ])
   if (recent.error || top.error) return null
@@ -52,10 +52,12 @@ export async function fetchRealClan(clan: ClanDetail, now: number): Promise<Real
     // No catch this week: «давно» is enough for the screens; the exact day is not read.
     lastCatchMin[id] = t ? Math.max(0, Math.round((now - t) / 60_000)) : 8 * 24 * 60
   }
+  // Every species the clan has caught in its city: its longest fish (then the heaviest; a species caught only without
+  // a size still shows, by its first catch). The first fish to reach a length holds the record over a later one of the same length.
   const best = new Map<string, RealClan['hall'][number]>()
   for (const c of (top.data ?? []) as Row[]) {
-    if (!c.length_cm || best.has(c.species)) continue
-    const kg = c.weight_kg ?? Math.round(Math.pow(c.length_cm / 20, 3) * 0.12 * 10) / 10
+    if (best.has(c.species)) continue
+    const kg = c.weight_kg != null ? Number(c.weight_kg) : null
     best.set(c.species, { species: c.species, member: name.get(c.user_id) ?? '', userId: c.user_id, cm: c.length_cm, kg, at: new Date(c.caught_at).getTime(), photo: c.photo_url ?? null })
   }
   return {
