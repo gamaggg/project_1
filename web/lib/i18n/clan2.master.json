@@ -777,26 +777,6 @@
    "en": "Sector rent",
    "ka": "სექტორების რენტა"
   },
-  "rentRule1": {
-   "ru": "Обычный сектор: 1 монета каждые 3 часа, это 8 в сутки.",
-   "en": "A plain sector: 1 coin every 3 hours, that is 8 a day.",
-   "ka": "ჩვეულებრივი სექტორი: 1 მონეტა ყოველ 3 საათში, დღეში 8."
-  },
-  "rentRule2": {
-   "ru": "Общий сектор (его делят соклановцы): ×1,5, это 12 в сутки.",
-   "en": "A shared sector (clan-mates hold it together): ×1.5, that is 12 a day.",
-   "ka": "საერთო სექტორი (კლანელები ერთად ფლობენ): ×1,5, დღეში 12."
-  },
-  "rentRule3": {
-   "ru": "Сектор со штабом: ×2, это 2 монеты за 3 часа, 16 в сутки.",
-   "en": "The HQ sector: ×2, that is 2 coins per 3 hours, 16 a day.",
-   "ka": "შტაბის სექტორი: ×2, 2 მონეტა 3 საათში, დღეში 16."
-  },
-  "rentRule4": {
-   "ru": "Горячий сектор добавляет ещё 16 в сутки.",
-   "en": "A hot sector adds another 16 a day.",
-   "ka": "ცხელი სექტორი კიდევ 16-ს ამატებს დღეში."
-  },
   "rentKindPlain": {
    "ru": "обычный",
    "en": "plain",
@@ -816,16 +796,6 @@
    "ru": "горячий",
    "en": "hot",
    "ka": "ცხელი"
-  },
-  "rentPerDay": {
-   "ru": "{n} в сутки",
-   "en": "{n} a day",
-   "ka": "{n} დღეში"
-  },
-  "rentTotal": {
-   "ru": "Всего в сутки",
-   "en": "Total a day",
-   "ka": "სულ დღეში"
   },
   "rentNoSectors": {
    "ru": "У клана пока нет секторов: рента с них не идёт.",
@@ -856,6 +826,101 @@
    "ru": "Нажми, чтобы узнать подробнее",
    "en": "Tap for details",
    "ka": "დააჭირე დეტალებისთვის"
+  },
+  "rentDay": {
+   "ru": "День",
+   "en": "Day",
+   "ka": "დღე"
+  },
+  "rentWeek": {
+   "ru": "Неделя",
+   "en": "Week",
+   "ka": "კვირა"
+  },
+  "rentMonth": {
+   "ru": "Месяц",
+   "en": "Month",
+   "ka": "თვე"
+  },
+  "rentHour": {
+   "ru": "≈ {n} монеты в час",
+   "en": "≈ {n} coins an hour",
+   "ka": "≈ {n} მონეტა საათში"
+  },
+  "rentCompose": {
+   "ru": "Из чего складывается рента",
+   "en": "What the rent is made of",
+   "ka": "რისგან შედგება რენტა"
+  },
+  "rentPart_plain": {
+   "ru": "Обычные",
+   "en": "Plain",
+   "ka": "ჩვეულებრივი"
+  },
+  "rentPart_shared": {
+   "ru": "Общие",
+   "en": "Shared",
+   "ka": "საერთო"
+  },
+  "rentPart_hq": {
+   "ru": "Штаб",
+   "en": "HQ",
+   "ka": "შტაბი"
+  },
+  "rentPart_hot": {
+   "ru": "Горячие",
+   "en": "Hot",
+   "ka": "ცხელი"
+  },
+  "rentPart_market": {
+   "ru": "Рынок",
+   "en": "Market",
+   "ka": "ბაზარი"
+  },
+  "rentTilePlain": {
+   "ru": "обычный сектор в сутки",
+   "en": "a plain sector a day",
+   "ka": "ჩვეულებრივი სექტორი დღეში"
+  },
+  "rentTileShared": {
+   "ru": "общий сектор в сутки",
+   "en": "a shared sector a day",
+   "ka": "საერთო სექტორი დღეში"
+  },
+  "rentTileHq": {
+   "ru": "сектор со штабом в сутки",
+   "en": "the HQ sector a day",
+   "ka": "შტაბის სექტორი დღეში"
+  },
+  "rentTileHot": {
+   "ru": "горячий добавляет в сутки",
+   "en": "a hot sector adds a day",
+   "ka": "ცხელი სექტორი ამატებს დღეში"
+  },
+  "rentFilter_all": {
+   "ru": "Все",
+   "en": "All",
+   "ka": "ყველა"
+  },
+  "rentFilter_hq": {
+   "ru": "Штаб",
+   "en": "HQ",
+   "ka": "შტაბი"
+  },
+  "rentFilter_shared": {
+   "ru": "Общие",
+   "en": "Shared",
+   "ka": "საერთო"
+  },
+  "rentFilter_hot": {
+   "ru": "Горячие",
+   "en": "Hot",
+   "ka": "ცხელი"
+  },
+  "rentFilter_plain": {
+   "ru": "Обычные",
+   "en": "Plain",
+   "ka": "ჩვეულებრივი"
   }
  },
  "goal": {

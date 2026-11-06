@@ -5,7 +5,8 @@ import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { C2Avatar, C2Bar, C2Card, C2Coins, C2Count, C2Sheet, fmtAgo, speciesName, useC2, useDemoNow } from '@/components/clan2/C2Common'
 import { HowItWorks, NextStep, TreasureChest, type Go } from '@/components/clan2/Guide'
 import { SkinSwatch } from '@/components/clan2/SkinSwatch'
-import { buyGoal, canManage, capOf, deposit, goalOf, rentPerDay, sectorCounts, setGoal, setTaxRate, useDemoState } from '@/lib/clan2/demoStore'
+import { buyGoal, canManage, capOf, deposit, goalOf, rentPerDay, setGoal, setTaxRate, useDemoState } from '@/lib/clan2/demoStore'
+import { requestMap, setLiveUi } from '@/lib/clan2/live/ui'
 import { DAY, GOAL_CATALOG, TAX_RATES, fmt, isSpend, taxOf } from '@/lib/clan2/rules'
 import type { TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
 import { tn, tnd } from '@/lib/i18n/runtime'
@@ -289,49 +290,135 @@ function JournalRow({ e, now }: { e: TreasuryEntry; now: number }) {
   )
 }
 
-// What each sector of the clan brings in, and why the sum is what it is.
+// The rent of the clan, seen from three sides: how much it is (per day, week or month), what it is made of (one bar
+// with a legend), and every sector with its own share — a tap on a sector shows it on the map (live mode).
+type RentKind = 'plain' | 'shared' | 'hq' | 'hot'
+const RENT_COLOR: Record<RentKind | 'market', string> = { plain: '#9DB8D2', shared: '#4C8DF5', hq: '#17181B', hot: '#FF7A1A', market: '#2FA84F' }
+
 function RentDetail() {
   const s = useDemoState()
+  const [period, setPeriod] = useState<1 | 7 | 30>(1)
+  const [filter, setFilter] = useState<'all' | RentKind>('all')
   const per = s.settings.rentPerSectorDay
   const rows = s.sectors
     .filter((x) => x.owner === 'mine')
     .map((x) => {
       const hq = x.hq === 'mine'
-      const kind = hq ? 'hq' : x.shared > 1 ? 'shared' : 'plain'
-      const base = per * (kind === 'shared' ? s.settings.sharedRentFactor : 1) * (hq ? 2 : 1)
+      const kind: RentKind = hq ? 'hq' : x.hot ? 'hot' : x.shared > 1 ? 'shared' : 'plain'
+      const base = per * (x.shared > 1 && !hq ? s.settings.sharedRentFactor : 1) * (hq ? 2 : 1)
       const hot = x.hot ? per * 2 : 0
-      return { id: x.id, kind, shared: x.shared, hot: x.hot, day: Math.round(base + hot) }
+      return { id: x.id, kind, shared: x.shared, hot: x.hot, base, day: Math.round(base + hot) }
     })
     .sort((a, b) => b.day - a.day)
-  const c = sectorCounts(s)
+  const total = rentPerDay(s)
+  const parts: { kind: RentKind | 'market'; sum: number }[] = (['hq', 'shared', 'hot', 'plain'] as RentKind[]).map((kind) => ({ kind, sum: rows.filter((r) => r.kind === kind).reduce((n, r) => n + r.day, 0) }))
+  const market = Math.max(0, total - parts.reduce((n, x) => n + x.sum, 0))
+  parts.push({ kind: 'market', sum: market })
+  const shown = rows.filter((r) => filter === 'all' || r.kind === filter)
+  const max = Math.max(1, ...rows.map((r) => r.day))
+  const mult = period
+  const live = !!s.live
   return (
-    <div className="c2-stack">
-      <ul className="c2-rules" style={{ listStyle: 'none', paddingLeft: 0 }}>
-        <li>{tn('clan2.treasury.rentRule1')}</li>
-        <li>{tn('clan2.treasury.rentRule2')}</li>
-        <li>{tn('clan2.treasury.rentRule3')}</li>
-        <li>{tn('clan2.treasury.rentRule4')}</li>
+    <div className="c2-stack c2-rent">
+      <div className="c2-rent-hero">
+        <div className="c2-seg" role="tablist" aria-label={tn('clan2.treasury.rentSheetTitle')}>
+          {([1, 7, 30] as const).map((p) => (
+            <button key={p} role="tab" aria-selected={period === p} className={period === p ? 'on' : undefined} onClick={() => setPeriod(p)}>
+              {tn(p === 1 ? 'clan2.treasury.rentDay' : p === 7 ? 'clan2.treasury.rentWeek' : 'clan2.treasury.rentMonth')}
+            </button>
+          ))}
+        </div>
+        <div className="c2-rent-big" key={period}>
+          <C2Count value={total * mult} />
+          <CoinIcon size={28} />
+        </div>
+        <small>{tn('clan2.treasury.rentHour', { n: Math.round((total / 24) * 10) / 10 })}</small>
+      </div>
+
+      <div className="c2-rent-compose" role="img" aria-label={tn('clan2.treasury.rentCompose')}>
+        {parts
+          .filter((x) => x.sum > 0)
+          .map((x) => (
+            <i key={x.kind} style={{ flexGrow: x.sum, background: RENT_COLOR[x.kind] }} />
+          ))}
+      </div>
+      <ul className="c2-rent-legend">
+        {parts
+          .filter((x) => x.sum > 0)
+          .map((x) => (
+            <li key={x.kind}>
+              <button type="button" className={filter === x.kind ? 'on' : undefined} onClick={() => x.kind !== 'market' && setFilter(filter === x.kind ? 'all' : x.kind)} disabled={x.kind === 'market'}>
+                <i style={{ background: RENT_COLOR[x.kind] }} />
+                <span>{tn(`clan2.treasury.rentPart_${x.kind}`)}</span>
+                <b>+{fmt(x.sum * mult)}</b>
+              </button>
+            </li>
+          ))}
       </ul>
+
+      <div className="c2-rent-rules">
+        <div>
+          <b>{per}</b>
+          <small>{tn('clan2.treasury.rentTilePlain')}</small>
+        </div>
+        <div>
+          <b>{Math.round(per * s.settings.sharedRentFactor)}</b>
+          <small>{tn('clan2.treasury.rentTileShared')}</small>
+        </div>
+        <div>
+          <b>{per * 2}</b>
+          <small>{tn('clan2.treasury.rentTileHq')}</small>
+        </div>
+        <div>
+          <b>+{per * 2}</b>
+          <small>{tn('clan2.treasury.rentTileHot')}</small>
+        </div>
+      </div>
+      <p className="c2-hint faint">{tn('clan2.treasury.rentNote')}</p>
+
       {rows.length === 0 ? (
         <p className="c2-muted">{tn('clan2.treasury.rentNoSectors')}</p>
       ) : (
-        <ul className="c2-rent-rows">
-          {rows.map((r) => (
-            <li key={r.id} className={r.kind}>
-              <b>{r.id}</b>
-              <span>
-                {r.kind === 'hq' ? tn('clan2.treasury.rentKindHq') : r.kind === 'shared' ? tn('clan2.treasury.rentKindShared', { n: r.shared }) : tn('clan2.treasury.rentKindPlain')}
-                {r.hot ? ` · ${tn('clan2.treasury.rentKindHot')}` : ''}
-              </span>
-              <C2Coins n={r.day} />
-            </li>
-          ))}
-        </ul>
+        <>
+          <div className="c2-rent-filter">
+            {(['all', 'hq', 'shared', 'hot', 'plain'] as const).map((f) => (
+              <button key={f} type="button" className={`filter-chip${filter === f ? ' active' : ''}`} onClick={() => setFilter(f)}>
+                {tn(`clan2.treasury.rentFilter_${f}`)}
+                <small>{f === 'all' ? rows.length : rows.filter((r) => r.kind === f).length}</small>
+              </button>
+            ))}
+          </div>
+          <ul className="c2-rent-rows">
+            {shown.map((r) => (
+              <li key={r.id}>
+                <button
+                  type="button"
+                  disabled={!live}
+                  onClick={() => {
+                    if (live) {
+                      setLiveUi({ toolsOpen: false })
+                      requestMap({ sectorId: r.id })
+                    }
+                  }}
+                >
+                  <span className="c2-hexdot hex-aspect hex-shape" style={{ background: RENT_COLOR[r.kind] }} aria-hidden />
+                  <span className="c2-rent-id">
+                    <b>{r.id}</b>
+                    <small>
+                      {r.kind === 'hq' ? tn('clan2.treasury.rentKindHq') : r.kind === 'shared' || r.shared > 1 ? tn('clan2.treasury.rentKindShared', { n: r.shared }) : tn('clan2.treasury.rentKindPlain')}
+                      {r.hot ? ` · ${tn('clan2.treasury.rentKindHot')}` : ''}
+                    </small>
+                  </span>
+                  <span className="c2-rent-bar">
+                    <i style={{ width: `${(r.day / max) * 100}%`, background: RENT_COLOR[r.kind] }} />
+                  </span>
+                  <C2Coins n={r.day * mult} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
-      <div className="c2-sources-spent">
-        <span>{tn('clan2.treasury.rentTotal')} ({c.total})</span>
-        <C2Coins n={rentPerDay(s)} />
-      </div>
     </div>
   )
 }
