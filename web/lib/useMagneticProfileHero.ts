@@ -23,6 +23,11 @@ export function useMagneticProfileHero() {
     const scroller = hero.closest('.screen') as HTMLElement | null
     const body = hero.nextElementSibling as HTMLElement | null
     if (!scroller || !body) return
+    // The band at the very top in Telegram fullscreen and the iPhone home-screen app (.profile-top-band, right
+    // before the hero): Telegram's «Закрыть» / «⋯» and the status bar float there. The covered sheet stops
+    // under it instead of running up under those buttons, and the band shows the hero's colour while covered.
+    const prev = hero.previousElementSibling as HTMLElement | null
+    const band = prev?.classList.contains('profile-top-band') ? prev : null
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const SNAP_MS = 180
@@ -71,13 +76,24 @@ export function useMagneticProfileHero() {
       frame = requestAnimationFrame(step)
     }
 
+    // Where the sheet rests when it covers the hero. Read live rather than cached — the hero's height depends on
+    // real profile content (bio present or not), so it can differ per profile.
+    function coveredAt() {
+      // The scroll position at which the sheet's top edge meets the band's bottom (or the top of the screen).
+      const bodyTop = body!.getBoundingClientRect().top - scroller!.getBoundingClientRect().top + scroller!.scrollTop
+      return Math.max(0, Math.round(bodyTop - (band?.offsetHeight ?? 0)))
+    }
+
+    function paintBand() {
+      if (!band || !band.offsetHeight) return
+      band.style.setProperty('--hero-h', `${hero!.offsetHeight}px`)
+      band.classList.toggle('on', scroller!.scrollTop >= coveredAt() - 1)
+    }
+
     function evaluate() {
       debounce = null
       if (snapping || touching) return
-      // Read live rather than caching — hero's height depends on real
-      // profile content (bio present or not), so it can differ per profile.
-      const overlap = -parseFloat(getComputedStyle(body!).marginTop || '0')
-      const threshold = hero!.offsetHeight - overlap
+      const threshold = coveredAt()
       const top = scroller!.scrollTop
       if (top <= 0 || top >= threshold) return
       const target = dir > 0 ? threshold : dir < 0 ? 0 : top < threshold / 2 ? 0 : threshold
@@ -91,6 +107,7 @@ export function useMagneticProfileHero() {
     }
 
     function onScroll() {
+      paintBand()
       // The snap's own frames scroll too; they must not re-arm the timer or change the direction.
       if (snapping) return
       const top = scroller!.scrollTop
@@ -109,13 +126,22 @@ export function useMagneticProfileHero() {
     }
     function onTouchEnd() {
       touching = false
-      // The momentum (if any) keeps scrolling and re-arms the timer; with none, this settles it.
-      schedule()
+      if (debounce) clearTimeout(debounce)
+      debounce = null
+      // The finger moved one way: snap that way at once (09.11.2026), not after the momentum has died out — on an
+      // iPhone that took a second or more. The snap's first frame stops the momentum. A tap that did not move
+      // waits for the page to settle, as before.
+      if (dir !== 0) frame = requestAnimationFrame(() => {
+        frame = 0
+        evaluate()
+      })
+      else schedule()
     }
     function onWheel() {
       stopSnap()
     }
 
+    paintBand()
     scroller.addEventListener('scroll', onScroll, { passive: true })
     scroller.addEventListener('touchstart', onTouchStart, { passive: true })
     scroller.addEventListener('touchend', onTouchEnd, { passive: true })

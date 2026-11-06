@@ -543,6 +543,9 @@ export function ProfileScreen({
 
   return (
     <div className="screen-inner">
+      {/* Telegram fullscreen / the iPhone home-screen app: the band under the status bar and Telegram's buttons,
+          in the hero's colour once the sheet covers the hero (useMagneticProfileHero). */}
+      <div className="profile-top-band" aria-hidden="true" style={{ background: resolveHeroBackground(profile?.heroBg).base }} />
       <div
         className="profile-hero"
         ref={heroRef}

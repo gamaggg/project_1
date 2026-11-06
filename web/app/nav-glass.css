@@ -1418,6 +1418,18 @@ html.tg-band {
 }
 html.tg-band :is(#screen-catch-photo, #screen-profile, #screen-user-profile, #screen-territory, #screen-clan) { padding-top: 0; }
 html.tg-band .profile-hero { padding-top: calc(10px + var(--band)); }
+/* The band at the top of the profile (own and another's): the white sheet stops under it when it covers the hero, so
+   Telegram's «Закрыть» / «⋯» never sit on the stats; while covered it shows the hero's colour (useMagneticProfileHero).
+   Sticky over everything, it takes no room in the flow (the margins give its height back). */
+.profile-top-band { display: none; }
+html.tg-band .profile-top-band, html.ios-standalone .profile-top-band {
+  display: block; position: sticky; top: 0; z-index: 3; height: var(--band);
+  margin: -6px -20px calc(6px - var(--band));
+  background-size: 100% var(--hero-h, 520px) !important; background-position: top !important;
+  opacity: 0; pointer-events: none; transition: opacity .16s ease-out;
+}
+html.ios-standalone:not(.tg-band) .profile-top-band { --band: env(safe-area-inset-top); }
+html .profile-top-band.on { opacity: 1; }
 html.tg-band .sector-hero-map .territory-thumb-wrap { height: calc(230px + var(--band)); }
 html.tg-band .sector-hero-map-icons { top: calc(10px + var(--band)); }
 html.tg-band #screen-clan .clan-hero { margin-top: 0; margin-left: 0; margin-right: 0; border-radius: 0 0 22px 22px; padding-top: calc(12px + var(--band)); }
