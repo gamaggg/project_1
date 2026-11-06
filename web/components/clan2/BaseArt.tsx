@@ -47,13 +47,13 @@ export function Dock({ level, p, s }: Art) {
       <rect x={x0} y={-10} width={len} height={2.4} rx={1.2} fill={WOOD_L} opacity={0.7} />
       {level === 1 && (
         <g className="c2-bob">
-          <path d={`M ${x0 + len - 6} -6 q 16 -6 30 0 l -5 9 h -20 z`} fill={s} stroke={WHITE} strokeWidth={1.2} />
-          <path d={`M ${x0 + len + 2} -2 h 16`} stroke={WHITE} strokeWidth={1} />
+          <path d={`M ${x0 + len - 6} -6 q 16 -6 30 0 l -5 9 h -20 z`} fill={WOOD_L} stroke={WOOD_D} strokeWidth={1.4} strokeLinejoin="round" />
+          <path d={`M ${x0 + len - 4.6} -3.6 q 14.6 -5 27.2 0`} fill="none" stroke={p} strokeWidth={2.6} strokeLinecap="round" />
         </g>
       )}
       {level >= 2 && (
         <g className="c2-bob">
-          <path d={`M ${x0 + len - 10} -4 q 22 -8 42 0 l -6 11 h -30 z`} fill={level === 3 ? GOLD : p} stroke={WHITE} strokeWidth={1.4} />
+          <path d={`M ${x0 + len - 10} -4 q 22 -8 42 0 l -6 11 h -30 z`} fill={level === 3 ? GOLD : p} stroke={WOOD_D} strokeWidth={1.4} strokeLinejoin="round" />
           <rect x={x0 + len + 2} y={-18} width={14} height={11} rx={2} fill={WHITE} stroke={STONE_D} strokeWidth={0.8} />
           <rect x={x0 + len + 5} y={-15} width={8} height={4} rx={1} fill="#9FD0F2" />
           {level === 3 && (
