@@ -1388,11 +1388,6 @@
    "en": "Catch {n} different species",
    "ka": "დაიჭირეთ {n} სხვადასხვა სახეობა"
   },
-  "q_capture": {
-   "ru": "Захватить {n} секторов",
-   "en": "Capture {n} sectors",
-   "ka": "დაიკავეთ {n} სექტორი"
-  },
   "q_rare": {
    "ru": "Поймать {n} редких рыб (от 50 монет за рыбу)",
    "en": "Catch {n} rare fish (50 coins or more each)",

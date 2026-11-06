@@ -301,7 +301,6 @@ export const clan2En = {
     questHint: "The week's task is drawn at random on Monday, one for the whole clan, and cannot be swapped. The real catches of all members count.",
     q_catches: "Catch {n} fish as a clan",
     q_species: "Catch {n} different species",
-    q_capture: "Capture {n} sectors",
     q_rare: "Catch {n} rare fish (50 coins or more each)",
     progress: "{a} of {b}",
     reward: "Reward for the clan: {n} to the treasury",
