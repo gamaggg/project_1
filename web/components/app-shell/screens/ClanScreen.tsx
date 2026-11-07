@@ -4,6 +4,7 @@ import { SkeletonBlock, SkeletonRows } from '@/components/app-shell/Skeleton'
 import dynamic from 'next/dynamic'
 import { useEffect, useRef, useState } from 'react'
 import type { Clan2Section } from '@/components/clan2/live/Clan2Panel'
+import { ClanGroupIcon, type ClanGroupId } from '@/components/clan2/ClanGroupIcon'
 import { useDemoState } from '@/lib/clan2/demoStore'
 import { useClan2Enabled } from '@/lib/clan2/live/flag'
 import { getLiveUi, setLiveUi, subscribeLiveUi, useLiveUi } from '@/lib/clan2/live/ui'
@@ -49,7 +50,7 @@ const Clan2Panel = dynamic(() => import('@/components/clan2/live/Clan2Panel').th
 const CLAN2_TABS = ['treasury', 'exit', 'week', 'hq', 'glory'] as const
 // With the clan update on, the sections pair up under four tabs, each with a two-way switch inside:
 // treasury + HQ, outing + week, members + hall of fame, clan battle + chest.
-const CLAN2_GROUPS: { id: string; label: string; tabs: [Tab, Tab] }[] = [
+const CLAN2_GROUPS: { id: ClanGroupId; label: string; tabs: [Tab, Tab] }[] = [
   { id: 'money', label: 'clan2.sub.treasury', tabs: ['treasury', 'hq'] },
   { id: 'outing', label: 'clan2.sub.exit', tabs: ['exit', 'week'] },
   { id: 'people', label: 'clan2.sub.people', tabs: ['members', 'glory'] },
@@ -546,16 +547,18 @@ export function ClanScreen({
         {error && <div className="clan-error">{error}</div>}
         {isMember && !clan.disbanded && <ClanChatCard clanId={clan.id} onOpen={() => onOpenChat(clan.id)} />}
 
-        <div ref={tabsRef} className={`clan-tabs${c2 ? ' c2-scroll' : ''}`} style={{ marginTop: 16 }}>
+        <div ref={tabsRef} className={`clan-tabs${c2 ? ' c2-groups' : ''}`} style={{ marginTop: 16 }}>
           {c2 &&
             CLAN2_GROUPS.map((g) => (
               <button key={g.id} className={`clan-tab${group?.id === g.id ? ' on' : ''}`} onClick={() => setTab(group?.id === g.id ? tab : (lastPart[g.id] ?? g.tabs[0]))}>
-                {tn(g.label as TKey)}
+                <ClanGroupIcon id={g.id} />
+                <span>{tn(g.label as TKey)}</span>
               </button>
             ))}
           {c2Admin && (
             <button className={`clan-tab${tab === 'admin' ? ' on' : ''}`} onClick={() => setTab('admin')}>
-              {tn('clan2.tab.admin')}
+              <ClanGroupIcon id="admin" />
+              <span>{tn('clan2.tab.admin')}</span>
             </button>
           )}
           {!c2 && (

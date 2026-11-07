@@ -10,8 +10,9 @@ import { tn } from '@/lib/i18n/runtime'
 
 export type Go = 'map' | 'hq' | 'week' | 'exit' | 'treasury'
 
-// The treasure chest: the lid lifts when there is something in it, the heap of coins grows with how full the
-// treasury is (balance / cap), and a few sparks twinkle over it.
+// The treasure chest: when there is something in it the lid is thrown back on its hinge (it stands upright over the
+// back wall, its inner side showing), the heap of coins grows with how full the treasury is (balance / cap), and a
+// few sparks twinkle over it. Shut, the domed lid sits on the body.
 export function TreasureChest({ ratio, onClick }: { ratio: number; onClick?: () => void }) {
   const rows = ratio <= 0 ? 0 : Math.max(1, Math.round(ratio * 6))
   const open = rows > 0
@@ -58,6 +59,10 @@ export function TreasureChest({ ratio, onClick }: { ratio: number; onClick?: () 
             <stop offset="0" stopColor="#FFE9A0" stopOpacity="0.95" />
             <stop offset="1" stopColor="#FFE9A0" stopOpacity="0" />
           </radialGradient>
+          <linearGradient id="c2c-lid-in" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#5E3A18" />
+            <stop offset="1" stopColor="#8A5A2B" />
+          </linearGradient>
           <radialGradient id="c2c-inside" cx="0.5" cy="0.4" r="0.6">
             <stop offset="0" stopColor="#7A4B20" />
             <stop offset="1" stopColor="#2F1C0A" />
@@ -75,6 +80,17 @@ export function TreasureChest({ ratio, onClick }: { ratio: number; onClick?: () 
           </g>
         )}
         <ellipse cx={120} cy={150} rx={94} ry={10} fill="rgba(40,30,10,.26)" />
+        {/* The open lid, thrown back: upright over the back wall, its inner side towards us, behind the coins. */}
+        {open && (
+          <g className="c2-chest-lid-open">
+            <path d="M 34 92 q 0 -52 86 -54 q 86 2 86 54 z" fill="url(#c2c-lid)" stroke="#4D2F13" strokeWidth={2.2} />
+            <path d="M 44 92 q 2 -42 76 -44 q 74 2 76 44 z" fill="url(#c2c-lid-in)" />
+            {[56, 168].map((x) => (
+              <path key={x} d={x < 120 ? `M ${x} 92 q 0 -30 10 -44 h 12 q -8 14 -6 44 z` : `M ${x + 16} 92 q 0 -30 -10 -44 h -12 q 8 14 6 44 z`} fill="url(#c2c-metal)" stroke="#6C778C" strokeWidth={1.2} opacity={0.9} />
+            ))}
+            <path d="M 50 86 q 6 -34 70 -38" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" fill="none" opacity={0.14} />
+          </g>
+        )}
         {/* The inside of the chest and the heap of coins. */}
         <path d="M 38 90 q 82 -10 164 0 l -6 18 h -152 z" fill="url(#c2c-inside)" />
         {Array.from({ length: rows }).map((_, r) => {
@@ -99,8 +115,9 @@ export function TreasureChest({ ratio, onClick }: { ratio: number; onClick?: () 
         <rect x={107} y={104} width={26} height={9} rx={4} fill="#fff" opacity={0.35} />
         <circle cx={120} cy={116} r={4.4} fill="#7A4E08" />
         <path d="M 117.8 116 h 4.4 l 1.4 11 h -7.2 z" fill="#7A4E08" />
-        {/* The lid: shut, or lifted on its hinge. */}
-        <g className="c2-chest-lid" style={{ transformOrigin: '120px 94px' }}>
+        {/* The lid, shut on the body. */}
+        {!open && (
+          <g className="c2-chest-lid" style={{ transformOrigin: '120px 94px' }}>
           <path d="M 30 94 q 0 -40 90 -40 q 90 0 90 40 z" fill="url(#c2c-lid)" stroke="#4D2F13" strokeWidth={2.2} />
           <path d="M 44 90 q 4 -26 62 -30" stroke="#fff" strokeWidth={3} strokeLinecap="round" fill="none" opacity={0.22} />
           {[56, 168].map((x) => (
@@ -111,7 +128,8 @@ export function TreasureChest({ ratio, onClick }: { ratio: number; onClick?: () 
             </g>
           ))}
           <rect x={30} y={90} width={180} height={6} rx={3} fill="#4D2F13" opacity={0.4} />
-        </g>
+          </g>
+        )}
         {open &&
           [
             [52, 52, 1],

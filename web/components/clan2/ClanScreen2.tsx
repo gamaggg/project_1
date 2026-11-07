@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, type ReactNode } from 'react'
+import { ClanGroupIcon, type ClanGroupId } from '@/components/clan2/ClanGroupIcon'
 import { ClanHero } from '@/components/app-shell/ClanHero'
 import { ExitTab } from '@/components/clan2/ExitTab'
 import { GloryTab } from '@/components/clan2/GloryTab'
@@ -20,7 +21,7 @@ import { tn } from '@/lib/i18n/runtime'
 export type SubTab = 'treasury' | 'exit' | 'week' | 'hq' | 'glory' | 'members'
 // The sections pair up under tabs, each with a two-way switch inside (the clan battle and the chest, the live
 // app's fourth pair, need a real clan and are not in the sandbox).
-const GROUPS: { id: string; label: string; subs: [SubTab, SubTab] }[] = [
+const GROUPS: { id: ClanGroupId; label: string; subs: [SubTab, SubTab] }[] = [
   { id: 'money', label: 'clan2.sub.treasury', subs: ['treasury', 'hq'] },
   { id: 'outing', label: 'clan2.sub.exit', subs: ['exit', 'week'] },
   { id: 'people', label: 'clan2.sub.people', subs: ['members', 'glory'] },
@@ -101,10 +102,11 @@ export function ClanScreen2({ sections, onOpenSector, onGoMap, sub: subProp, onS
           </div>
         )}
       </ClanHero>
-      <nav className="c2-subtabs" role="tablist" aria-label={tn('clan2.tab.clan')}>
+      <nav className="c2-subtabs c2-groups-nav" role="tablist" aria-label={tn('clan2.tab.clan')}>
         {GROUPS.map((g) => (
           <button key={g.id} role="tab" aria-selected={group.id === g.id} className={group.id === g.id ? 'on' : undefined} onClick={() => setSub(group.id === g.id ? sub : (lastPart[g.id] ?? g.subs[0]))} data-tour={`sub-${g.subs[0]}`}>
-            {tn(g.label as TKey)}
+            <ClanGroupIcon id={g.id} />
+            <span>{tn(g.label as TKey)}</span>
           </button>
         ))}
       </nav>

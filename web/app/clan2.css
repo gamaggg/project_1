@@ -501,7 +501,8 @@
 .c2-chest{display:block; width:100%; max-width:240px; margin:0 auto 6px; padding:0; border:none; background:none; cursor:pointer; -webkit-tap-highlight-color:transparent;}
 .c2-chest svg{display:block; width:100%; height:auto; overflow:visible;}
 .c2-chest .c2-chest-lid{transition:transform .6s cubic-bezier(.25,1,.5,1);}
-.c2-chest.open .c2-chest-lid{transform:rotate(-14deg) translate(-3px,-4px);}
+.c2-chest-lid-open{transform-origin:120px 92px; animation:c2-lid-open .5s cubic-bezier(.25,1,.5,1) both;}
+@keyframes c2-lid-open{from{transform:scaleY(.35); opacity:.4}to{transform:none; opacity:1}}
 .c2-chest:active{transform:scale(.98);}
 .c2-spark-star{transform-box:fill-box; transform-origin:center; animation:c2-twinkle 2.4s ease-in-out infinite;}
 @keyframes c2-twinkle{0%,100%{opacity:.2; transform:scale(.6)}50%{opacity:1; transform:scale(1.15)}}
@@ -528,7 +529,7 @@
 .c2-intro-dots i{width:7px; height:7px; border-radius:50%; background:#E1DED8;}
 .c2-intro-dots i.on{background:var(--accent); width:18px; border-radius:4px;}
 .c2-intro .c2-row-btns{width:100%;}
-@media (prefers-reduced-motion: reduce){.c2-spark-star,.c2-chest .c2-chest-lid{animation:none; transition:none;}}
+@media (prefers-reduced-motion: reduce){.c2-spark-star,.c2-chest .c2-chest-lid,.c2-chest-lid-open{animation:none; transition:none;}}
 /* On a narrow window the app fills it, and so do the sheets and the bars over it (the 430 px column is for a wide screen). */
 @media (max-width: 600px){
   .c2-live-stack{left:12px; right:12px; width:auto; transform:none;}
@@ -541,7 +542,7 @@
 @keyframes c2-rays{to{transform:rotate(360deg)}}
 .c2-coin-shine{animation:c2-shine 3.6s ease-in-out infinite; mix-blend-mode:screen;}
 @keyframes c2-shine{0%,60%,100%{opacity:0}75%{opacity:.9}}
-.c2-chest:hover .c2-chest-lid{transform:rotate(-20deg) translate(-4px,-6px);}
+.c2-chest:hover .c2-chest-lid{transform:translateY(-3px);}
 @media (prefers-reduced-motion: reduce){.c2-chest-aura,.c2-chest-rays,.c2-coin-shine{animation:none;}}
 
 /* ───────── the rent window ───────── */
@@ -676,9 +677,22 @@
 
 /* ───────────── a tab's two parts (the clan update's four paired tabs) ───────────── */
 /* Text tabs under the grey tab bar, the open part underlined in the accent, so the two rows never look alike. */
-.clan-pair, .c2-pair{display:flex; gap:22px; margin:0 6px 14px; border-bottom:1px solid var(--line, rgba(23,24,27,.08));}
-.clan-pair button, .c2-pair button{position:relative; border:none; background:none; font:inherit; font-size:14.5px; font-weight:800; color:var(--ink-faint, #8A909C); padding:8px 0 11px; cursor:pointer; transition:color .2s var(--ease-out, ease-out);}
+.clan-pair, .c2-pair{display:flex; margin:0 2px 14px; border-bottom:1px solid var(--line, rgba(23,24,27,.08));}
+.clan-pair button, .c2-pair button{position:relative; flex:1; border:none; background:none; font:inherit; font-size:14.5px; font-weight:800; color:var(--ink-faint, #8A909C); padding:8px 0 11px; text-align:center; cursor:pointer; transition:color .2s var(--ease-out, ease-out);}
 .clan-pair button.on, .c2-pair button.on{color:var(--ink, #17181B);}
-.clan-pair button::after, .c2-pair button::after{content:''; position:absolute; left:0; right:0; bottom:-1px; height:3px; border-radius:3px 3px 0 0; background:var(--accent, #FC5200); transform:scaleX(0); transition:transform .22s var(--ease-out, ease-out);}
+.clan-pair button::after, .c2-pair button::after{content:''; position:absolute; left:22%; right:22%; bottom:-1px; height:3px; border-radius:3px 3px 0 0; background:var(--accent, #FC5200); transform:scaleX(0); transition:transform .22s var(--ease-out, ease-out);}
 .clan-pair button.on::after, .c2-pair button.on::after{transform:scaleX(1);}
 
+/* The four paired tabs: equal tiles across the whole width, a line icon over the label; the open one raised white
+   with its icon in the accent. Same in the live app (.clan-tabs.c2-groups) and the sandbox (.c2-groups-nav). */
+.clan-tabs.c2-groups{display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:3px; padding:4px; border-radius:16px;}
+.clan-tabs.c2-groups::before{display:none;}
+.clan-tabs.c2-groups .clan-tab, .c2-groups-nav button{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-width:0; padding:8px 2px 7px; border-radius:12px; font-size:12px; font-weight:800; line-height:1.15; white-space:nowrap;}
+.clan-tabs.c2-groups .clan-tab > span, .c2-groups-nav button > span{max-width:100%; overflow:hidden; text-overflow:ellipsis;}
+.clan-tabs.c2-groups .clan-tab .clan-group-icon, .c2-groups-nav .clan-group-icon{color:var(--ink-faint, #8A909C); transition:color .2s var(--ease-out, ease-out);}
+.clan-tabs.c2-groups .clan-tab.on{background:linear-gradient(180deg,#FFFFFF 0%,#F6F1EA 100%); box-shadow:0 0 0 1px rgba(120,82,50,.09), 0 1px 0 #fff inset, 0 4px 10px rgba(80,45,15,.13);}
+.clan-tabs.c2-groups .clan-tab.on .clan-group-icon, .c2-groups-nav button.on .clan-group-icon{color:var(--accent, #FC5200);}
+.c2-groups-nav{display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:6px;}
+.c2-groups-nav button{flex:none;}
+
+.c2-subtabs.c2-groups-nav button{border-radius:14px;}
