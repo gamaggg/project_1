@@ -13,6 +13,8 @@ export const clan2Ka = {
     hq: "შტაბი",
     glory: "დიდება",
     members: "წევრები",
+    people: "ხალხი",
+    race: "ბრძოლა",
   },
   demo: {
     title: "კლანის განახლების დემო",

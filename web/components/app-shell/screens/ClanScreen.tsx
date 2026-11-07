@@ -47,6 +47,25 @@ type Tab = 'members' | 'chest' | 'race' | Clan2Section
 // The clan update's sections (Общак, Выход, …) — only when it is switched on for this browser (lib/clan2/live/flag.ts).
 const Clan2Panel = dynamic(() => import('@/components/clan2/live/Clan2Panel').then((m) => m.Clan2Panel), { ssr: false })
 const CLAN2_TABS = ['treasury', 'exit', 'week', 'hq', 'glory'] as const
+// With the clan update on, the sections pair up under four tabs, each with a two-way switch inside:
+// treasury + HQ, outing + week, members + hall of fame, clan battle + chest.
+const CLAN2_GROUPS: { id: string; label: string; tabs: [Tab, Tab] }[] = [
+  { id: 'money', label: 'clan2.sub.treasury', tabs: ['treasury', 'hq'] },
+  { id: 'outing', label: 'clan2.sub.exit', tabs: ['exit', 'week'] },
+  { id: 'people', label: 'clan2.sub.people', tabs: ['members', 'glory'] },
+  { id: 'battle', label: 'clan2.sub.race', tabs: ['race', 'chest'] },
+]
+const CLAN2_PART_LABEL: Partial<Record<Tab, string>> = {
+  treasury: 'clan2.sub.treasury',
+  hq: 'clan2.sub.hq',
+  exit: 'clan2.sub.exit',
+  week: 'clan2.sub.week',
+  members: 'guest.members',
+  glory: 'clan2.sub.glory',
+  race: 'clan.tabRace',
+  chest: 'clan.tabChest',
+}
+type TKey = Parameters<typeof tn>[0]
 
 function RoleIcon({ role }: { role: ClanRole }) {
   if (role === 'member') return null
@@ -222,6 +241,13 @@ export function ClanScreen({
   function setTab(next: Tab) {
     setTabPicked(next)
     if (liveUi.clanTab) setLiveUi({ clanTab: null })
+  }
+  // The tab pair the open section belongs to, and the part last opened in each pair.
+  const group = c2 ? CLAN2_GROUPS.find((g) => g.tabs.includes(tab)) : undefined
+  const [lastPart, setLastPart] = useState<Record<string, Tab>>({})
+  function openPart(groupId: string, part: Tab) {
+    setLastPart((was) => ({ ...was, [groupId]: part }))
+    setTab(part)
   }
   // A request from the map's HQ card while this screen is already open.
   useEffect(() => {
@@ -522,9 +548,9 @@ export function ClanScreen({
 
         <div ref={tabsRef} className={`clan-tabs${c2 ? ' c2-scroll' : ''}`} style={{ marginTop: 16 }}>
           {c2 &&
-            CLAN2_TABS.map((id) => (
-              <button key={id} className={`clan-tab${tab === id ? ' on' : ''}`} onClick={() => setTab(id)}>
-                {tn(`clan2.sub.${id}`)}
+            CLAN2_GROUPS.map((g) => (
+              <button key={g.id} className={`clan-tab${group?.id === g.id ? ' on' : ''}`} onClick={() => setTab(group?.id === g.id ? tab : (lastPart[g.id] ?? g.tabs[0]))}>
+                {tn(g.label as TKey)}
               </button>
             ))}
           {c2Admin && (
@@ -532,16 +558,30 @@ export function ClanScreen({
               {tn('clan2.tab.admin')}
             </button>
           )}
-          <button className={`clan-tab${tab === 'members' ? ' on' : ''}`} onClick={() => setTab('members')}>
-            {tn('guest.members')}
-          </button>
-          <button className={`clan-tab${tab === 'race' ? ' on' : ''}`} onClick={() => setTab('race')}>
-            {tn('clan.tabRace')}
-          </button>
-          <button className={`clan-tab${tab === 'chest' ? ' on' : ''}`} onClick={() => setTab('chest')}>
-            {tn('clan.tabChest')}
-          </button>
+          {!c2 && (
+            <>
+              <button className={`clan-tab${tab === 'members' ? ' on' : ''}`} onClick={() => setTab('members')}>
+                {tn('guest.members')}
+              </button>
+              <button className={`clan-tab${tab === 'race' ? ' on' : ''}`} onClick={() => setTab('race')}>
+                {tn('clan.tabRace')}
+              </button>
+              <button className={`clan-tab${tab === 'chest' ? ' on' : ''}`} onClick={() => setTab('chest')}>
+                {tn('clan.tabChest')}
+              </button>
+            </>
+          )}
         </div>
+
+        {group && (
+          <div className="clan-pair" role="tablist">
+            {group.tabs.map((part) => (
+              <button key={part} role="tab" aria-selected={tab === part} className={tab === part ? 'on' : undefined} onClick={() => openPart(group.id, part)}>
+                {tn(CLAN2_PART_LABEL[part] as TKey)}
+              </button>
+            ))}
+          </div>
+        )}
 
         {tab === 'members' && (
           <div className="clan-tab-body" key="members">

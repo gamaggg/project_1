@@ -14,11 +14,26 @@ import { CLAN_LEVEL_XP, clanCapacity, leagueFor } from '@/lib/data/clanLevels'
 import { tn } from '@/lib/i18n/runtime'
 
 // The clan screen of the update: the banner of the clan and, under it, the
-// sections — Общак, Выход, Неделя, Штаб, Слава, Участники. A player with no
+// sections in pairs — Общак + Штаб, Выход + Неделя, Участники + Слава. A player with no
 // clan sees what joining gives instead.
 
 export type SubTab = 'treasury' | 'exit' | 'week' | 'hq' | 'glory' | 'members'
-const SUBS: SubTab[] = ['treasury', 'exit', 'week', 'hq', 'glory', 'members']
+// The sections pair up under tabs, each with a two-way switch inside (the clan battle and the chest, the live
+// app's fourth pair, need a real clan and are not in the sandbox).
+const GROUPS: { id: string; label: string; subs: [SubTab, SubTab] }[] = [
+  { id: 'money', label: 'clan2.sub.treasury', subs: ['treasury', 'hq'] },
+  { id: 'outing', label: 'clan2.sub.exit', subs: ['exit', 'week'] },
+  { id: 'people', label: 'clan2.sub.people', subs: ['members', 'glory'] },
+]
+const PART_LABEL: Record<SubTab, string> = {
+  treasury: 'clan2.sub.treasury',
+  hq: 'clan2.sub.hq',
+  exit: 'clan2.sub.exit',
+  week: 'clan2.sub.week',
+  members: 'guest.members',
+  glory: 'clan2.sub.glory',
+}
+type TKey = Parameters<typeof tn>[0]
 
 export function ClanScreen2({ sections, onOpenSector, onGoMap, sub: subProp, onSub }: { sections?: Partial<Record<SubTab, ReactNode>>; onOpenSector?: (id: string) => void; onGoMap?: (focus?: MapFocus) => void; sub?: SubTab; onSub?: (sub: SubTab) => void }) {
   const s = useDemoState()
@@ -26,6 +41,9 @@ export function ClanScreen2({ sections, onOpenSector, onGoMap, sub: subProp, onS
   const [subOwn, setSubOwn] = useState<SubTab>('treasury')
   const sub = subProp ?? subOwn
   const setSub = (next: SubTab) => (onSub ? onSub(next) : setSubOwn(next))
+  const group = GROUPS.find((g) => g.subs.includes(sub)) ?? GROUPS[0]
+  // The part last opened in each pair, so a tab reopens where the player left it.
+  const [lastPart, setLastPart] = useState<Record<string, SubTab>>({})
 
   if (!inClan(s)) {
     return (
@@ -84,13 +102,31 @@ export function ClanScreen2({ sections, onOpenSector, onGoMap, sub: subProp, onS
         )}
       </ClanHero>
       <nav className="c2-subtabs" role="tablist" aria-label={tn('clan2.tab.clan')}>
-        {SUBS.map((id) => (
-          <button key={id} role="tab" aria-selected={sub === id} className={sub === id ? 'on' : undefined} onClick={() => setSub(id)} data-tour={`sub-${id}`}>
-            {tn(`clan2.sub.${id}`)}
+        {GROUPS.map((g) => (
+          <button key={g.id} role="tab" aria-selected={group.id === g.id} className={group.id === g.id ? 'on' : undefined} onClick={() => setSub(group.id === g.id ? sub : (lastPart[g.id] ?? g.subs[0]))} data-tour={`sub-${g.subs[0]}`}>
+            {tn(g.label as TKey)}
           </button>
         ))}
       </nav>
-      <div className="c2-pad">{body[sub]}</div>
+      <div className="c2-pad">
+        <div className="c2-pair" role="tablist">
+          {group.subs.map((part) => (
+            <button
+              key={part}
+              role="tab"
+              aria-selected={sub === part}
+              className={sub === part ? 'on' : undefined}
+              onClick={() => {
+                setLastPart((was) => ({ ...was, [group.id]: part }))
+                setSub(part)
+              }}
+            >
+              {tn(PART_LABEL[part] as TKey)}
+            </button>
+          ))}
+        </div>
+        {body[sub]}
+      </div>
     </div>
   )
 }

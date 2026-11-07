@@ -673,3 +673,12 @@
 .c2-quest-left{margin:10px 0 0; padding:10px 12px; border-radius:12px; background:#F4F5F8; color:var(--ink-soft,#5B6475); font-size:13px; font-weight:700; text-align:center;}
 .c2-hq-crest.banner{width:44px; height:65px; flex:none; display:block; background:none; box-shadow:none;}
 .c2-hq-crest.banner svg{display:block; width:100%; height:100%;}
+
+/* ───────────── a tab's two parts (the clan update's four paired tabs) ───────────── */
+/* Text tabs under the grey tab bar, the open part underlined in the accent, so the two rows never look alike. */
+.clan-pair, .c2-pair{display:flex; gap:22px; margin:0 6px 14px; border-bottom:1px solid var(--line, rgba(23,24,27,.08));}
+.clan-pair button, .c2-pair button{position:relative; border:none; background:none; font:inherit; font-size:14.5px; font-weight:800; color:var(--ink-faint, #8A909C); padding:8px 0 11px; cursor:pointer; transition:color .2s var(--ease-out, ease-out);}
+.clan-pair button.on, .c2-pair button.on{color:var(--ink, #17181B);}
+.clan-pair button::after, .c2-pair button::after{content:''; position:absolute; left:0; right:0; bottom:-1px; height:3px; border-radius:3px 3px 0 0; background:var(--accent, #FC5200); transform:scaleX(0); transition:transform .22s var(--ease-out, ease-out);}
+.clan-pair button.on::after, .c2-pair button.on::after{transform:scaleX(1);}
+

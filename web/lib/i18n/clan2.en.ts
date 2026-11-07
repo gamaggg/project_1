@@ -13,6 +13,8 @@ export const clan2En = {
     hq: "HQ",
     glory: "Glory",
     members: "Members",
+    people: "People",
+    race: "Battle",
   },
   demo: {
     title: "Clan update demo",

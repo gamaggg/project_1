@@ -13,6 +13,8 @@ export const clan2Ru = {
     hq: "Штаб",
     glory: "Слава",
     members: "Участники",
+    people: "Люди",
+    race: "Битва",
   },
   demo: {
     title: "Демо кланового обновления",
