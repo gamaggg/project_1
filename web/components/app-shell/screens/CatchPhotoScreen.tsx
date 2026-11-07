@@ -399,7 +399,10 @@ export function CatchPhotoScreen({
         </div>
         {feed.length > 1 && index >= 0 && (
           <div className="catch-reel-counter" style={{ top: 'calc(12px + var(--standalone-top, 0px))' }}>
-            {index + 1} / {feed.length}
+            {/* The player's and the sector's catches come newest first, but are numbered as they were caught: the latest
+                one is the highest number («91 / 91»), the very first «1 / 91». «Трофеи» (feedIds) are a ranking by size,
+                so there the biggest is «1». */}
+            {feedIds && feedUserId ? index + 1 : feed.length - index} / {feed.length}
           </div>
         )}
         {/* No circles: just a see-through chevron at each edge (the touch area stays a comfortable size). */}

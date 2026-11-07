@@ -52,7 +52,6 @@ import { insideTelegram } from '@/lib/openExternal'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { CITIES, type CityId } from '@/lib/data/city'
 import type { Territory, ProfileSummary } from '@/lib/data/types'
-import { useMagneticProfileHero } from '@/lib/useMagneticProfileHero'
 import { useCanInstall } from '@/lib/installApp'
 import { InstallAppModal } from '@/components/app-shell/InstallAppModal'
 import { useT, TRANSLATION_READY } from '@/lib/i18n'
@@ -506,7 +505,6 @@ export function ProfileScreen({
   // `!user` never reaches this screen anymore — FishZoneApp's onboarding gate
   // intercepts before ProfileScreen (or any other screen) can mount. See
   // DECISIONS.md.
-  const heroRef = useMagneticProfileHero()
   const t = useT()
   const mySpecies = speciesBreakdown(myCatches)
   const speciesCount = mySpecies.length
@@ -545,7 +543,6 @@ export function ProfileScreen({
     <div className="screen-inner">
       <div
         className="profile-hero"
-        ref={heroRef}
         style={
           {
             background: resolveHeroBackground(profile?.heroBg).base,

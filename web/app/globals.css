@@ -581,8 +581,14 @@ html.has-lightbox:root .bottomnav::after{
    of that one moment, not a separate effect per section (see craft-floor:
    "one authored moment, not scattered effects"). */
 .profile-hero{
-  position:sticky; top:0; z-index:0;
-  margin:-6px -20px 0; padding:10px 20px 60px; overflow:hidden;
+  /* A card with rounded bottom corners at the top of the screen, like the clan's (09.11.2026, owner): it scrolls
+     away with the page — no sticky hero, no sheet sliding over it, no magnet. */
+  position:relative; z-index:0; isolation:isolate;
+  margin:-6px -8px 0; padding:10px 12px 22px; overflow:hidden;
+  --hero-r:26px; border-radius:0 0 var(--hero-r) var(--hero-r);
+  /* The same rounding as a clip too: in Safari (Telegram on the iPhone) overflow:hidden with a border-radius does not
+     cut the animated layers of a live background, and the bottom corners came out crooked. */
+  clip-path:inset(0 round 0 0 var(--hero-r) var(--hero-r));
   /* Base (dark gradient/pattern, no radial) comes from an inline style —
      resolveHeroBackground(profile?.heroBg).base, see heroBackgrounds.ts —
      so each profile can show its own chosen preset. The radial glow itself
@@ -1257,8 +1263,7 @@ html:not([lang="ru"]) .challenges-week-top{padding-top:22px;}
 .profile-hero-meta b{color:rgba(var(--hero-text-rgb,255,255,255),.92); font-weight:700;}
 .profile-hero-badge{margin-top:6px; display:flex; justify-content:center;}
 .profile-body{
-  background:var(--bg); border-radius:24px 24px 0 0; margin:-40px -20px 0; padding:20px 20px 0;
-  position:relative; z-index:1;
+  margin-top:16px; position:relative;
   animation:profileBodyIn .5s var(--ease-out) both;
 }
 @keyframes profileBodyIn{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:none;}}
@@ -1426,7 +1431,7 @@ html:not([lang="ru"]) .challenges-week-top{padding-top:22px;}
 .ios-standalone .screen{padding-top:var(--standalone-top);}
 .ios-standalone .shop-sticky-top, .ios-standalone .clan-editor-top{--sticky-reach:var(--standalone-top);}
 .ios-standalone #screen-catch-photo, .ios-standalone #screen-profile, .ios-standalone #screen-user-profile, .ios-standalone #screen-territory{padding-top:0;}
-.ios-standalone .profile-hero{padding-top:env(safe-area-inset-top);}
+.ios-standalone .profile-hero{padding-top:env(safe-area-inset-top); margin-left:-20px; margin-right:-20px; padding-left:20px; padding-right:20px; --hero-r:22px;}
 .ios-standalone .sector-hero-map .territory-thumb-wrap{height:calc(230px + var(--standalone-top));}
 .ios-standalone .sector-hero-map-icons{top:calc(10px + var(--standalone-top));}
 .ios-standalone #screen-map{--map-top-inset:calc(env(safe-area-inset-top) + 14px);}
