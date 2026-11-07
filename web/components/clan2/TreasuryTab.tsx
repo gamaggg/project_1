@@ -62,16 +62,19 @@ export function TreasuryTab({ onGo }: { onGo?: (to: Go) => void } = {}) {
 
   return (
     <div className="c2-stack">
-      <C2Card tour="treasury-balance" style={{ padding: 0 }}>
+      <C2Card style={{ padding: 0 }}>
         <div className="c2-balance">
           <TreasureChest ratio={s.treasury.balance / cap} onClick={() => setDepositOpen(true)} />
-          <div className="c2-balance-label">{tn('clan2.treasury.balance')}</div>
-          <div className="c2-balance-num">
-            <C2Count value={s.treasury.balance} />
-            <CoinIcon size={28} />
+          {/* The tour's first step lights up just the balance, not the whole card. */}
+          <div className="c2-balance-core" data-tour="treasury-balance">
+            <div className="c2-balance-label">{tn('clan2.treasury.balance')}</div>
+            <div className="c2-balance-num">
+              <C2Count value={s.treasury.balance} />
+              <CoinIcon size={28} />
+            </div>
+            <C2Bar value={s.treasury.balance / cap} tone={s.treasury.balance / cap > 0.9 ? 'warn' : 'accent'} label={tn('clan2.treasury.balance')} />
+            <div className="c2-balance-cap">{tn('clan2.treasury.capOf', { cap: fmt(cap) })}</div>
           </div>
-          <C2Bar value={s.treasury.balance / cap} tone={s.treasury.balance / cap > 0.9 ? 'warn' : 'accent'} label={tn('clan2.treasury.balance')} />
-          <div className="c2-balance-cap">{tn('clan2.treasury.capOf', { cap: fmt(cap) })}</div>
           <div className="c2-flow-label">{tn('clan2.treasury.weekFlow')}</div>
           <div className="c2-flow" aria-label={tn('clan2.treasury.weekFlow')}>
             {flow.map((v, i) => (

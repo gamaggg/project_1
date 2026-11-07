@@ -56,6 +56,7 @@
 
 /* ───────────── the treasury ───────────── */
 .c2-balance{padding:18px 18px 8px; display:flex; flex-direction:column; gap:8px;}
+.c2-balance-core{display:flex; flex-direction:column; gap:8px;}
 .c2-balance-label{font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint);}
 .c2-balance-num{display:flex; align-items:center; gap:10px; font-size:40px; font-weight:800; letter-spacing:-.03em; line-height:1; font-variant-numeric:tabular-nums;}
 .c2-balance-cap{font-size:12px; color:var(--ink-soft); font-weight:700;}
@@ -135,7 +136,16 @@
 }
 @media (max-width: 460px){
   .c2-stage{padding:0; gap:0;}
-  .c2-phone{width:100vw; height:100dvh; border:none; border-radius:0; box-shadow:none;}
+  /* On a real phone the sandbox is the page itself: one scroll (no scroll inside a fake phone), the fake status
+     bar hidden, the tab bar fixed to the screen above Safari's toolbar, room under the demo panel for it. */
+  .c2-stage{padding-bottom:calc(96px + env(safe-area-inset-bottom));}
+  .c2-phone{width:100vw; height:auto; min-height:100dvh; border:none; border-radius:0; box-shadow:none; overflow:visible; transform:none;}
+  .c2-status{display:none;}
+  .c2-phone-body{overflow:visible; padding-bottom:calc(96px + env(safe-area-inset-bottom));}
+  .c2-phone-body.map{height:100dvh; overflow:hidden; padding-bottom:0;}
+  .c2-tabbar{position:fixed; bottom:calc(10px + env(safe-area-inset-bottom));}
+  .c2-phone .c2-tour{position:fixed;}
+  .c2-phone .c2-tour-intro{padding-bottom:calc(30px + env(safe-area-inset-bottom));}
   .c2-panel{border-radius:0; border-left:none; border-right:none;}
 }
 
@@ -317,19 +327,24 @@
 .c2-realclans > li{display:flex; justify-content:space-between; gap:8px;}
 
 /* ───────────── the tour ───────────── */
-.c2-tour{position:absolute; inset:0; z-index:90; pointer-events:none;}
-.c2-tour > *{pointer-events:auto;}
+/* The tour layer takes every touch on its screen: a finger can't drag the page under it (the tour moves the
+   screen itself), only the note's buttons are pressed. */
+.c2-tour{position:absolute; inset:0; z-index:90; pointer-events:auto; touch-action:none; overscroll-behavior:contain;}
 .c2-tour-intro{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:30px 28px; text-align:center; background:linear-gradient(180deg,rgba(11,27,43,.94),rgba(11,27,43,.98)); color:#fff; animation:c2-fade .3s var(--ease-out) both;}
 .c2-tour-intro h2{margin:6px 0 0; font-size:24px; font-weight:800; letter-spacing:-.02em;}
 .c2-tour-intro p{margin:0 0 10px; font-size:14.5px; line-height:1.5; color:rgba(255,255,255,.82);}
 .c2-tour-intro .c2-link{color:rgba(255,255,255,.7);}
 .c2-tour-crest{filter:drop-shadow(0 12px 18px rgba(0,0,0,.45)); animation:c2-hq-turn 6s ease-in-out infinite;}
-.c2-tour-dim{position:absolute; inset:0; background:rgba(12,16,24,.62);}
-.c2-tour-spot{position:absolute; border-radius:18px; border:2px solid #fff; box-shadow:0 0 0 2000px rgba(12,16,24,.62); transition:left .3s var(--ease-out), top .3s var(--ease-out), width .3s var(--ease-out), height .3s var(--ease-out); pointer-events:none;}
-.c2-tour-card{position:absolute; left:16px; right:16px; padding:16px 16px 12px; border-radius:18px; background:#fff; box-shadow:var(--shadow-lg); animation:c2-rise .3s var(--ease-out) both;}
+.c2-tour-dim{position:absolute; inset:0; background:rgba(12,16,24,.62); animation:c2-fade .25s var(--ease-out) both;}
+/* Between steps the hole fills with the same dim (no flash of the screen changing under it), the frame glides to
+   the next element, then the hole opens; while a step is shown the frame follows the page with no lag. */
+.c2-tour-spot{position:absolute; border-radius:18px; border:2px solid #fff; background-color:rgba(12,16,24,0); box-shadow:0 0 0 2000px rgba(12,16,24,.62); transition:background-color .26s var(--ease-out), border-color .26s var(--ease-out); pointer-events:none;}
+.c2-tour-spot.out{background-color:rgba(12,16,24,.62); border-color:rgba(255,255,255,0); transition:background-color .2s var(--ease-out), border-color .2s var(--ease-out), left .38s var(--ease-out), top .38s var(--ease-out), width .38s var(--ease-out), height .38s var(--ease-out);}
+.c2-tour-card{position:absolute; left:16px; right:16px; padding:16px 16px 12px; border-radius:18px; background:#fff; box-shadow:var(--shadow-lg); transition:opacity .24s var(--ease-out), transform .3s var(--ease-out);}
+.c2-tour-card.out{opacity:0; transform:translateY(8px); pointer-events:none; transition:opacity .16s var(--ease-out), transform .16s var(--ease-out);}
+@media (prefers-reduced-motion: reduce){.c2-tour-spot, .c2-tour-spot.out, .c2-tour-card, .c2-tour-card.out{transition:none;} .c2-tour-card.out{transform:none;}}
 .c2-tour-card p{margin:0 0 12px; font-size:14.5px; line-height:1.5; font-weight:600;}
-.c2-tour-foot{display:flex; align-items:center; justify-content:space-between; gap:10px;}
-.c2-tour-btns{display:flex; align-items:center; gap:14px;}
+.c2-tour-foot{display:flex; align-items:center; justify-content:space-between; gap:10px;}.c2-tour-btns{display:flex; align-items:center; gap:14px;}
 .c2-tour-next{border:none; border-radius:12px; background:var(--accent); color:#fff; font:inherit; font-size:13.5px; font-weight:800; padding:9px 16px; cursor:pointer;}
 @media (prefers-reduced-motion: reduce){.c2-tour-intro, .c2-tour-card{animation:none;} .c2-tour-crest{animation:none;} .c2-tour-spot{transition:none;}}
 
