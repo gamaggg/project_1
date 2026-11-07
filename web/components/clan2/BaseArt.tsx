@@ -31,7 +31,7 @@ function Ground({ w }: { w: number }) {
   return <ellipse cx={0} cy={3} rx={w} ry={w * 0.16} fill="rgba(40,30,10,.22)" />
 }
 
-export function Dock({ level, p, s }: Art) {
+export function Dock({ level }: Art) {
   const len = [0, 52, 70, 86][level]
   const x0 = -len / 2
   return (
@@ -45,25 +45,6 @@ export function Dock({ level, p, s }: Art) {
         <rect key={i} x={x0 + 4 + i * 8} y={-10} width={1.2} height={8} fill={WOOD_D} opacity={0.5} />
       ))}
       <rect x={x0} y={-10} width={len} height={2.4} rx={1.2} fill={WOOD_L} opacity={0.7} />
-      {level === 1 && (
-        <g className="c2-bob">
-          <path d={`M ${x0 + len - 6} -6 q 16 -6 30 0 l -5 9 h -20 z`} fill={WOOD_L} stroke={WOOD_D} strokeWidth={1.4} strokeLinejoin="round" />
-          <path d={`M ${x0 + len - 4.6} -3.6 q 14.6 -5 27.2 0`} fill="none" stroke={p} strokeWidth={2.6} strokeLinecap="round" />
-        </g>
-      )}
-      {level >= 2 && (
-        <g className="c2-bob">
-          <path d={`M ${x0 + len - 10} -4 q 22 -8 42 0 l -6 11 h -30 z`} fill={level === 3 ? GOLD : p} stroke={WOOD_D} strokeWidth={1.4} strokeLinejoin="round" />
-          <rect x={x0 + len + 2} y={-18} width={14} height={11} rx={2} fill={WHITE} stroke={STONE_D} strokeWidth={0.8} />
-          <rect x={x0 + len + 5} y={-15} width={8} height={4} rx={1} fill="#9FD0F2" />
-          {level === 3 && (
-            <g>
-              <rect x={x0 + len + 8.6} y={-52} width={1.8} height={36} fill={WOOD_D} />
-              <path className="c2-flag" d={`M ${x0 + len + 10.4} -52 q 20 6 22 26 h -22 z`} fill={p} stroke={WHITE} strokeWidth={1} />
-            </g>
-          )}
-        </g>
-      )}
       {level >= 2 && (
         <g>
           <rect x={x0 + 2} y={-30} width={2.4} height={22} fill={WOOD_D} />

@@ -353,7 +353,6 @@
 .c2-base-svg{width:100%; height:auto; display:block; border-radius:22px; box-shadow:inset 0 0 0 1px rgba(23,24,27,.06);}
 .c2-wave{animation:c2-wave 5.5s ease-in-out infinite;}
 @keyframes c2-wave{0%,100%{transform:translateX(-5px);opacity:.55}50%{transform:translateX(7px);opacity:1}}
-@keyframes c2-pad-spin{to{stroke-dashoffset:-28}}
 .c2-bld{transform-box:fill-box; transform-origin:50% 100%; transition:filter .4s, opacity .4s;}
 .c2-plot:hover .c2-bld:not(.sleeping){transform:translateY(-1.5px);}
 .c2-bld.sleeping{filter:grayscale(.95) brightness(.95); opacity:.62;}
@@ -390,17 +389,12 @@
 .c2-effect.now.none{background:#F2F3F6; color:#5B6475;}
 .c2-effect.next{background:#FFF1E8; color:#B33A00;}
 .c2-bld-cost{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink-soft,#5B6475);}
-.c2-perk-list{list-style:none; margin:0; padding:0; display:grid; gap:4px;}
-.c2-perk-list li button{width:100%; display:flex; justify-content:space-between; gap:10px; align-items:baseline; text-align:left; padding:8px 10px; border-radius:10px; border:none; background:transparent; cursor:pointer; font:inherit; transition:background .15s;}
-.c2-perk-list li button:hover{background:#F4F5F8;}
-.c2-perk-list li.sel button{background:#FFF1E8;}
 .c2-perk-name{font-weight:800; font-size:13.5px;}
 .c2-perk-eff{font-size:12.5px; color:var(--ink-soft,#5B6475); text-align:right;}
-.c2-perk-list li.off .c2-perk-eff{opacity:.55;}
 .c2-ruins-card{display:flex; flex-direction:column; gap:3px; padding:12px; border-radius:14px; background:#FDECEA; color:#8A2A22; font-size:13.5px;}
 .c2-ruins-card strong{color:#B3261E; font-size:15px;}
 .c2-fall{margin:6px 0 0; padding-left:18px; display:grid; gap:4px; font-size:13.5px;}
-@media (prefers-reduced-motion: reduce){.c2-wave,.c2-glow,.c2-beam,.c2-flag,.c2-smoke,.c2-zzz,.c2-bld.built,.c2-dust,.c2-spark,.c2-plot.sel .c2-plot-pad{animation:none;}}
+@media (prefers-reduced-motion: reduce){.c2-wave,.c2-glow,.c2-beam,.c2-flag,.c2-smoke,.c2-zzz,.c2-bld.built,.c2-dust,.c2-spark{animation:none;}}
 
 /* ───────── the clan update inside the real app ───────── */
 .clan-tabs.c2-scroll{overflow-x:auto; scrollbar-width:none; gap:2px;}
@@ -423,7 +417,6 @@
 .c2-ruins-marker .c2-smoke{animation:c2-smoke 3s ease-out infinite;}
 .c2-sector-row{margin-top:8px;}
 .c2-sector-row button{width:100%; display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; border:none; background:#FFF1E8; color:#B33A00; font:inherit; font-size:13px; cursor:pointer;}
-.c2-sector-row button.place{justify-content:center; font-weight:800; background:#FFF1E8;}
 .c2-sector-row.hq button{justify-content:flex-start; gap:10px; padding:8px 12px 8px 10px; background:color-mix(in srgb, var(--hq, #17181B) 82%, #000); color:#fff; box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);}
 .c2-sector-row.hq button b{font-weight:800; font-size:13.5px;}
 .c2-sector-row-flag{flex:none; display:block; width:20px; height:30px;}
@@ -597,10 +590,6 @@
 .c2-base-hex{container-type:inline-size; user-select:none; -webkit-user-select:none;}
 .c2-plot{position:absolute; width:22.7%; aspect-ratio:112/150; transform:translate(-50%,-72%); padding:0; border:0; background:none; cursor:pointer; -webkit-tap-highlight-color:transparent; outline:none; font:inherit;}
 .c2-plot-svg{position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none;}
-.c2-plot-pad{fill:rgba(255,255,255,.86); stroke:rgba(23,24,27,.16); stroke-width:1.4; filter:drop-shadow(0 3px 4px rgba(23,24,27,.18)); transition:fill .2s, stroke .2s;}
-.c2-plot:hover .c2-plot-pad{fill:#fff;}
-.c2-plot.sel .c2-plot-pad{fill:#FFF1E8; stroke:#FC5200; stroke-width:2.2; stroke-dasharray:5 4; stroke-opacity:1; animation:c2-pad-spin 6s linear infinite;}
-.c2-plot:focus-visible .c2-plot-pad{stroke:#17181B; stroke-width:2.4;}
 .c2-plot-lift{transform-box:fill-box; transform-origin:50% 100%; transition:transform .28s cubic-bezier(.23,1,.32,1);}
 .c2-plot:active .c2-plot-lift{transform:scale(.96);}
 .c2-plot.sel .c2-plot-lift{transform:translateY(-3px) scale(1.05);}
@@ -608,6 +597,7 @@
 @keyframes c2-plot-pop{0%{transform:scale(1,1)}22%{transform:scale(1.14,.86)}52%{transform:scale(.94,1.1) translateY(-6px)}100%{transform:translateY(-3px) scale(1.05)}}
 .c2-base-pill{position:absolute; left:calc(50% + var(--pill-dx, 0%)); top:78%; transform:translateX(-50%); display:flex; align-items:center; gap:4px; height:16px; padding:0 7px; border-radius:999px; background:rgba(23,24,27,.84); color:#fff; font:800 clamp(8.5px,2.6cqw,10.5px)/16px system-ui,-apple-system,sans-serif; letter-spacing:.2px; white-space:nowrap; pointer-events:none; transition:background .2s;}
 .c2-plot.sel .c2-base-pill{background:#FC5200;}
+.c2-plot:focus-visible .c2-base-pill{outline:2px solid #17181B; outline-offset:2px;}
 .c2-plot.asleep .c2-base-pill{background:rgba(23,24,27,.55);}
 .c2-pill-pips{display:inline-flex; gap:1.5px;}
 .c2-pill-pips i{display:block; width:4px; height:4px; border-radius:50%; background:rgba(255,255,255,.32);}
@@ -615,7 +605,7 @@
 .c2-plot.sel .c2-pill-pips i.on{background:#fff;}
 .c2-plot-bar{position:absolute; left:18%; right:18%; top:97%; height:5px; border-radius:3px; background:rgba(23,24,27,.22); overflow:hidden; pointer-events:none;}
 .c2-plot-bar i{display:block; height:100%; border-radius:3px; background:#FC5200; transition:width 1s linear;}
-.c2-plot-badge{position:absolute; left:64%; top:44%; min-width:18px; height:18px; padding:0 4px; border-radius:9px; background:#FC5200; color:#fff; font:800 12px/18px system-ui,-apple-system,sans-serif; text-align:center; box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(252,82,0,.45); pointer-events:none;}
+.c2-plot-badge{position:absolute; left:64%; top:44%; min-width:18px; height:18px; padding:0 4px; border-radius:9px; background:#FC5200; color:#fff; font:800 12px/1 system-ui,-apple-system,sans-serif; font-variant-numeric:tabular-nums; display:flex; align-items:center; justify-content:center; box-sizing:border-box; box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(252,82,0,.45); pointer-events:none;}
 .c2-plot-badge.off{background:#A3A9B4; box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(23,24,27,.2);}
 .c2-plot-badge.lv{background:#17181B; box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(23,24,27,.28); font-size:11px;}
 .c2-plot-badge.max{background:#F0B53E; color:#5A3A00; box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(176,122,16,.4); font-size:11px;}
@@ -634,7 +624,7 @@
 .c2-bld-hero{display:flex; align-items:center; gap:16px;}
 .c2-bld-heroart{flex:none; width:104px; height:auto; aspect-ratio:112/124; border-radius:20px; background:linear-gradient(180deg,#F4F6F8,#E6EAEE); box-shadow:inset 0 0 0 1px rgba(23,24,27,.06);}
 .c2-bld-herolift{transform-box:fill-box; transform-origin:50% 100%; animation:c2-hero-in .5s cubic-bezier(.34,1.56,.64,1);}
-@keyframes c2-hero-in{from{transform:scale(.7); opacity:0}to{transform:none; opacity:1}}
+@keyframes c2-hero-in{from{transform:scale(.7); opacity:0}}
 .c2-bld-title{display:flex; flex-direction:column; gap:5px; min-width:0;}
 .c2-bld-title strong{font-size:19px; letter-spacing:-.01em;}
 .c2-bld-title small{font-size:12.5px; color:var(--ink-soft,#5B6475); font-weight:700;}
@@ -656,7 +646,7 @@
 .c2-ladder li.done .c2-ladder-text b{color:#0E6B47;}
 .c2-ladder li.next .c2-ladder-text b{color:#B33A00;}
 .c2-ladder-cost{font-size:12.5px;}
-@media (prefers-reduced-motion: reduce){.c2-plot.sel .c2-plot-pad,.c2-plot-lift.pop,.c2-base-hq .c2-base-hq-art,.c2-bld-herolift,.c2-ladder li.next .c2-ladder-dot,.c2-zzz-html{animation:none;}}
+@media (prefers-reduced-motion: reduce){.c2-plot-lift.pop,.c2-base-hq .c2-base-hq-art,.c2-bld-herolift,.c2-ladder li.next .c2-ladder-dot,.c2-zzz-html{animation:none;}}
 
 .c2-base-hex{aspect-ratio:440/400; border-radius:24px; overflow:hidden; filter:none; box-shadow:0 0 0 1px rgba(23,24,27,.08), 0 10px 22px -12px rgba(23,24,27,.3);}
 

@@ -144,10 +144,6 @@ export function BaseScene() {
               <stop offset="0" stopColor="#fff" stopOpacity="0.22" />
               <stop offset="1" stopColor="#fff" stopOpacity="0.05" />
             </radialGradient>
-            <radialGradient id="c2b-plaza" cx="0.5" cy="0.5" r="0.5">
-              <stop offset="0" stopColor="#fff" stopOpacity="0.95" />
-              <stop offset="1" stopColor="#F4EEDD" stopOpacity="0.9" />
-            </radialGradient>
           </defs>
             <rect width={VW} height={VH} fill="#E9ECEF" />
             {mapUrl && <image href={mapUrl} x={0} y={0} width={VW} height={VH} preserveAspectRatio="none" onError={() => setMapOk(false)} />}
@@ -158,15 +154,13 @@ export function BaseScene() {
           <g clipPath="url(#c2b-clip)">
             <rect width={W} height={H} fill="url(#c2b-veil)" />
             <rect width={W} height={H} fill={clanColor} opacity={0.08} />
-            {/* The paths from the HQ to every plot, and the plaza round it. */}
+            {/* The paths from the HQ to every plot. */}
             {PROJECT_IDS.map((id) => (
               <path key={id} d={`M ${MID.x} ${MID.y} L ${SPOTS[id].x} ${SPOTS[id].y}`} stroke="#fff" strokeWidth={7} strokeLinecap="round" opacity={0.85} />
             ))}
             {PROJECT_IDS.map((id) => (
               <path key={`d${id}`} d={`M ${MID.x} ${MID.y} L ${SPOTS[id].x} ${SPOTS[id].y}`} stroke={outline} strokeWidth={1.4} strokeDasharray="1 6" strokeLinecap="round" opacity={0.55} />
             ))}
-            <ellipse cx={MID.x} cy={MID.y + 8} rx={58} ry={36} fill="url(#c2b-plaza)" stroke={outline} strokeOpacity={0.4} strokeWidth={1.6} />
-
           </g>
           {/* A light bevel just inside the edge, so the sector reads as a tile. */}
           <polygon points={HEX} transform="translate(10 8.66) scale(.95)" fill="none" stroke="#fff" strokeOpacity={0.5} strokeWidth={2} strokeLinejoin="round" />
@@ -176,7 +170,7 @@ export function BaseScene() {
           </g>
         </svg>
 
-        {/* The HQ: the banner of the game map, on the plaza. */}
+        {/* The HQ: the banner of the game map. */}
         <button
           type="button"
           className={`c2-base-hq${on ? '' : ' down'}`}
@@ -219,7 +213,6 @@ export function BaseScene() {
               onClick={() => choose(id)}
             >
               <svg className="c2-plot-svg" viewBox={ART_VB} overflow="visible" aria-hidden="true">
-                <ellipse cx={0} cy={5} rx={36} ry={10.5} className="c2-plot-pad" />
                 <g key={pop?.id === id ? pop.n : 0} className={`c2-plot-lift${pop?.id === id ? ' pop' : ''}`}>
                   <g transform={`scale(${SCALE[id]})`}>
                   {lv === 0 ? (
@@ -253,7 +246,15 @@ export function BaseScene() {
               </svg>
               {/* What it says at a glance: «+» build / upgrade (orange: possible now, grey: not yet), otherwise its level. */}
               {!under && (
-                <span className={`c2-plot-badge ${lv === 0 || ready ? (ready ? 'plus' : 'off') : lv === 3 ? 'max' : 'lv'}`}>{lv === 0 || ready ? '+' : lv}</span>
+                <span className={`c2-plot-badge ${lv === 0 || ready ? (ready ? 'plus' : 'off') : lv === 3 ? 'max' : 'lv'}`}>
+                  {lv === 0 || ready ? (
+                    <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                      <path d="M5 1.5v7M1.5 5h7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  ) : (
+                    lv
+                  )}
+                </span>
               )}
               {!on && lv > 0 && <span className="c2-zzz-html">z z</span>}
               <span className="c2-base-pill" style={PILL_DX[id] ? { ['--pill-dx' as string]: `${PILL_DX[id]}%` } : undefined}>
@@ -294,7 +295,6 @@ export function BaseScene() {
       <div className="c2-bld-card" key={sel}>
         <div className="c2-bld-hero">
           <svg className="c2-bld-heroart" viewBox="-56 -96 112 124" overflow="visible" aria-hidden="true">
-            <ellipse cx={0} cy={5} rx={52} ry={14} className="c2-plot-pad" />
             <g className={`c2-bld-herolift${level === 0 ? ' c2-ghost' : on ? '' : ' sleeping'}`}>
               <g ref={heroRef} style={{ transform: `translateX(${hero.dx}px) scale(${hero.k})`, transformOrigin: '0 0' }}>
                 <SelArt level={(level || 1) as ProjectLevel} p={crest.primary} s={crest.secondary} />
@@ -365,19 +365,6 @@ export function BaseScene() {
         )}
       </div>
 
-      <ul className="c2-perk-list">
-        {PROJECT_IDS.map((id) => {
-          const lv = s.projects[id]
-          return (
-            <li key={id} className={`${sel === id ? 'sel' : ''}${on && lv > 0 ? '' : ' off'}`}>
-              <button type="button" onClick={() => choose(id)}>
-                <span className="c2-perk-name">{tnd(`clan2.project.${id}.name`)}</span>
-                <span className="c2-perk-eff">{on || lv === 0 ? effectText(id, lv) : tn('clan2.base.asleep')}</span>
-              </button>
-            </li>
-          )
-        })}
-      </ul>
     </div>
   )
 }

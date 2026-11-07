@@ -652,7 +652,7 @@ export const MapScreen = forwardRef<
                     </span>
                   )}
                 </div>
-                {clan2 && t.ownerClanId === clan2.clanId && <Clan2SectorRow id={t.id} />}
+                {clan2 && t.ownerClanId === clan2.clanId && <Clan2SectorRow id={t.id} onOpenClan={onOpenClan} />}
                 <button className="btn-primary" style={{ marginTop: 'auto' }} onClick={() => onOpenTerritory(t.id)}>
                   {tn('map.details')}
                 </button>
