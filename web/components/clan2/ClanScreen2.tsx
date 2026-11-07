@@ -5,7 +5,6 @@ import { ClanHero } from '@/components/app-shell/ClanHero'
 import { ExitTab } from '@/components/clan2/ExitTab'
 import { GloryTab } from '@/components/clan2/GloryTab'
 import { HqTab, type MapFocus } from '@/components/clan2/HqTab'
-import { HubTab } from '@/components/clan2/HubTab'
 import { MembersTab } from '@/components/clan2/MembersTab'
 import { WeekTab } from '@/components/clan2/WeekTab'
 import { TreasuryTab } from '@/components/clan2/TreasuryTab'
@@ -15,19 +14,16 @@ import { CLAN_LEVEL_XP, clanCapacity, leagueFor } from '@/lib/data/clanLevels'
 import { tn } from '@/lib/i18n/runtime'
 
 // The clan screen of the update: the banner of the clan and, under it, the
-// tabs — Клан (the hub), Общак, База, Люди. A player with no
+// sections — Общак, Выход, Неделя, Штаб, Слава, Участники. A player with no
 // clan sees what joining gives instead.
 
-// The four tabs of the clan screen: the hub «Клан», «Общак», «База», «Люди». The older sections (outing, week, hall,
-// members) stay addressable for the sandbox's guided tours; on the screen they open from the hub and from «Люди».
-export type SubTab = 'hub' | 'treasury' | 'hq' | 'people' | 'exit' | 'week' | 'glory' | 'members'
-const SUBS: SubTab[] = ['hub', 'treasury', 'hq', 'people']
-const SUB_LABEL: Record<string, string> = { hub: 'clan2.sub.hub', treasury: 'clan2.sub.treasury', hq: 'clan2.sub.base', people: 'clan2.sub.people' }
+export type SubTab = 'treasury' | 'exit' | 'week' | 'hq' | 'glory' | 'members'
+const SUBS: SubTab[] = ['treasury', 'exit', 'week', 'hq', 'glory', 'members']
 
 export function ClanScreen2({ sections, onOpenSector, onGoMap, sub: subProp, onSub }: { sections?: Partial<Record<SubTab, ReactNode>>; onOpenSector?: (id: string) => void; onGoMap?: (focus?: MapFocus) => void; sub?: SubTab; onSub?: (sub: SubTab) => void }) {
   const s = useDemoState()
   const { act } = useC2()
-  const [subOwn, setSubOwn] = useState<SubTab>('hub')
+  const [subOwn, setSubOwn] = useState<SubTab>('treasury')
   const sub = subProp ?? subOwn
   const setSub = (next: SubTab) => (onSub ? onSub(next) : setSubOwn(next))
 
@@ -56,13 +52,6 @@ export function ClanScreen2({ sections, onOpenSector, onGoMap, sub: subProp, onS
   const to = CLAN_LEVEL_XP[level] ?? null
   const league = leagueFor(s.clan.trophies)
   const body: Record<SubTab, ReactNode> = {
-    hub: <HubTab onGo={(to) => setSub(to)} onOpenSector={onOpenSector} />,
-    people: (
-      <div className="c2-stack">
-        <MembersTab />
-        <GloryTab />
-      </div>
-    ),
     treasury: (
       <TreasuryTab
         onGo={(to) => {
@@ -96,8 +85,8 @@ export function ClanScreen2({ sections, onOpenSector, onGoMap, sub: subProp, onS
       </ClanHero>
       <nav className="c2-subtabs" role="tablist" aria-label={tn('clan2.tab.clan')}>
         {SUBS.map((id) => (
-          <button key={id} role="tab" aria-selected={sub === id || (id === 'hub' && (sub === 'exit' || sub === 'week')) || (id === 'people' && (sub === 'glory' || sub === 'members'))} className={sub === id || (id === 'hub' && (sub === 'exit' || sub === 'week')) || (id === 'people' && (sub === 'glory' || sub === 'members')) ? 'on' : undefined} onClick={() => setSub(id)} data-tour={`sub-${id}`}>
-            {tn(SUB_LABEL[id] as Parameters<typeof tn>[0])}
+          <button key={id} role="tab" aria-selected={sub === id} className={sub === id ? 'on' : undefined} onClick={() => setSub(id)} data-tour={`sub-${id}`}>
+            {tn(`clan2.sub.${id}`)}
           </button>
         ))}
       </nav>

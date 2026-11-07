@@ -16,7 +16,7 @@ export async function fetchRealClan(clan: ClanDetail, now: number): Promise<Real
   const supabase = createClient()
   const since = new Date(weekStartOf(now)).toISOString()
   const [recent, top, species] = await Promise.all([
-    supabase.from('catches').select('user_id,species,length_cm,weight_kg,caught_at,territory_id,photo_url').in('user_id', ids).gte('caught_at', since).order('caught_at', { ascending: false }).limit(2000),
+    supabase.from('catches').select('user_id,species,length_cm,weight_kg,caught_at,territory_id').in('user_id', ids).gte('caught_at', since).limit(2000),
     // The hall of fame counts only the clan's own city: catches on sectors of that city (sector ids start with its letter).
     supabase.from('catches').select('user_id,species,length_cm,weight_kg,caught_at,territory_id,photo_url').in('user_id', ids).like('territory_id', `${CITIES[clan.city].idPrefix}%`).order('length_cm', { ascending: false, nullsFirst: false }).order('weight_kg', { ascending: false, nullsFirst: false }).order('caught_at', { ascending: true }).limit(3000),
     supabase.from('species').select('key,coin_value'),
@@ -71,8 +71,5 @@ export async function fetchRealClan(clan: ClanDetail, now: number): Promise<Real
     sectors: seenSectors.size,
     lastCatchMin,
     hall: [...best.values()],
-    // The latest catches of the week, newest first, for the clan hub.
-    // One catch per member (their latest), so one busy angler does not fill the whole feed.
-    recent: week.filter((c, i) => week.findIndex((x) => x.user_id === c.user_id) === i).slice(0, 8).map((c) => ({ species: c.species, member: name.get(c.user_id) ?? '', userId: c.user_id, cm: c.length_cm, at: new Date(c.caught_at).getTime(), sectorId: c.territory_id ?? null, photo: c.photo_url ?? null })),
   }
 }

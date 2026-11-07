@@ -5,7 +5,6 @@ import { AdminTab } from '@/components/clan2/AdminTab'
 import { C2PortalProvider, C2Toast, C2ToastProvider } from '@/components/clan2/C2Common'
 import { ExitTab } from '@/components/clan2/ExitTab'
 import { GloryTab } from '@/components/clan2/GloryTab'
-import { HubTab } from '@/components/clan2/HubTab'
 import { HqTab } from '@/components/clan2/HqTab'
 import { MembersTab } from '@/components/clan2/MembersTab'
 import { TreasuryTab } from '@/components/clan2/TreasuryTab'
@@ -15,8 +14,8 @@ import { markTourSeen, useDemoState } from '@/lib/clan2/demoStore'
 import { requestMap, setLiveUi } from '@/lib/clan2/live/ui'
 
 // One section of the clan update inside the real clan screen (components/app-shell/screens/ClanScreen.tsx).
-export type Clan2Section = 'hub' | 'treasury' | 'exit' | 'week' | 'hq' | 'glory' | 'admin'
-export const CLAN2_SECTIONS: Clan2Section[] = ['hub', 'treasury', 'hq', 'glory']
+export type Clan2Section = 'treasury' | 'exit' | 'week' | 'hq' | 'glory' | 'admin'
+export const CLAN2_SECTIONS: Clan2Section[] = ['treasury', 'exit', 'week', 'hq', 'glory']
 
 export function Clan2Panel({ section }: { section: Clan2Section }) {
   const s = useDemoState()
@@ -24,7 +23,6 @@ export function Clan2Panel({ section }: { section: Clan2Section }) {
     <C2PortalProvider value="body">
     <C2ToastProvider>
       <div className="c2-live-panel c2-stack">
-        {section === 'hub' && <HubTab onGo={(to) => setLiveUi({ clanTab: to })} onOpenSector={(id) => requestMap({ sectorId: id })} />}
         {section === 'treasury' && (
           <TreasuryTab
             onGo={(to) => {
@@ -44,7 +42,7 @@ export function Clan2Panel({ section }: { section: Clan2Section }) {
         {section === 'glory' && <GloryTab />}
         {section === 'admin' && <AdminTab bare />}
       </div>
-      <IntroSheet open={section === 'hub' && !s.toursSeen.player && s.live !== undefined} onClose={() => markTourSeen('player')} />
+      <IntroSheet open={section === 'treasury' && !s.toursSeen.player && s.live !== undefined} onClose={() => markTourSeen('player')} />
       <C2Toast />
     </C2ToastProvider>
     </C2PortalProvider>

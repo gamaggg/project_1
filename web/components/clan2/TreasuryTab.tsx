@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { C2Avatar, C2Bar, C2Card, C2Coins, C2Count, C2Sheet, fmtAgo, speciesName, useC2, useDemoNow } from '@/components/clan2/C2Common'
-import { TreasureChest, type Go } from '@/components/clan2/Guide'
+import { HowItWorks, NextStep, TreasureChest, type Go } from '@/components/clan2/Guide'
 import { SkinSwatch } from '@/components/clan2/SkinSwatch'
 import { buyGoal, canManage, capOf, deposit, goalOf, rentPerDay, setGoal, setTaxRate, useDemoState } from '@/lib/clan2/demoStore'
 import { requestMap, setLiveUi } from '@/lib/clan2/live/ui'
@@ -96,6 +96,10 @@ export function TreasuryTab({ onGo }: { onGo?: (to: Go) => void } = {}) {
           </button>
         </div>
       </C2Card>
+
+      <NextStep onGo={onGo} />
+
+      <HowItWorks />
 
       <C2Card title={tn('clan2.treasury.goalTitle')} hint={tn('clan2.treasury.goalExplain')} tour="treasury-goal">
         {goal ? (

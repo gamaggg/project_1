@@ -105,9 +105,6 @@ export type ProjectLevel = 0 | 1 | 2 | 3
 // photo: the catch's own photo (live mode, from catches.photo_url), shown in the hall of fame instead of a drawing.
 export type HallRecord = { species: string; member: string; cm: number | null; kg: number | null; at: number; hue: number; photo?: string | null }
 
-// One of the clan's latest catches, for the clan hub's feed (live mode: this week's real catches of the members).
-export type RecentCatch = { species: string; member: string; userId?: string; hue: number; cm: number | null; at: number; sectorId: string | null; photo?: string | null }
-
 export type RecruitEntry = { name: string; state: 'invited' | 'joined' | 'caught' | 'paid'; daysLeft: number }
 
 export type SectorOwner = 'mine' | 'ally' | 'enemy' | 'free'
@@ -184,8 +181,6 @@ export type DemoState = {
   owned: string[]
   equippedSkin: string | null
   hall: HallRecord[]
-  // The clan's latest catches, newest first (the hub's «Уловы клана» and «На воде сегодня»).
-  recentCatches?: RecentCatch[]
   recruit: RecruitEntry[]
   sectors: MapSector[]
   settings: EconomySettings

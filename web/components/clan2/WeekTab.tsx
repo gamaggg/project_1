@@ -9,7 +9,7 @@ import { tn } from '@/lib/i18n/runtime'
 // «Неделя»: what the whole clan does together this week — one task for everybody,
 // and the friends invited to the clan.
 
-export function questLabel(kind: QuestKind, n: number, param?: number): string {
+function questLabel(kind: QuestKind, n: number, param?: number): string {
   switch (kind) {
     case 'catches':
       return tn('clan2.week.q_catches', { n })

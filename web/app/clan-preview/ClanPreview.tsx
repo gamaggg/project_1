@@ -43,7 +43,7 @@ function Shell() {
   const [lang, setLang] = useState<Lang>(() => currentLanguage())
   // Asked of the map by other screens (show a sector, set the HQ): a new object each time.
   const [mapFocus, setMapFocus] = useState<MapFocus | undefined>(undefined)
-  const [sub, setSub] = useState<SubTab>('hub')
+  const [sub, setSub] = useState<SubTab>('treasury')
   const [tour, setTour] = useState<TourAudience | null>(null)
   const now = useDemoNow()
 
