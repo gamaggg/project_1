@@ -135,6 +135,9 @@ import type { Achievement } from '@/lib/data/achievements'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import { tn } from '@/lib/i18n'
 import { LanguageSync } from '@/components/app-shell/LanguageSync'
+import { MaintenanceModal } from '@/components/app-shell/MaintenanceModal'
+import { MaintenanceScreen } from '@/components/app-shell/MaintenanceScreen'
+import { useMaintenance } from '@/lib/supabase/queries/maintenance'
 
 export type ScreenId =
   | 'screen-map'
@@ -219,6 +222,10 @@ export function FishZoneApp() {
   // undefined while loading, null when the server doesn't have it yet.
   const { data: firstSteps } = useFirstSteps()
   const isSuperAdmin = useIsSuperAdmin()
+  // «Идут технические работы» (lib/supabase/queries/maintenance.ts): everybody but the super admin sees the
+  // maintenance screen. adminEntry: «Вход для администратора» pressed — the sign-in is let through.
+  const { data: maintenance, refetch: refetchMaintenance, isFetching: maintenanceChecking } = useMaintenance()
+  const [adminEntry, setAdminEntry] = useState(false)
   const canAddCatchFromGallery = useCanAddCatchFromGallery()
   const canReviewPanoramas = useCanReviewPanoramas()
   const canViewStats = useCanViewStats()
@@ -460,6 +467,7 @@ export function FishZoneApp() {
   const [viewingAvatarUrl, setViewingAvatarUrl] = useState<string | null>(null)
   const [viewingSpeciesFor, setViewingSpeciesFor] = useState<SpeciesEntry[] | null>(null)
   const [postingAnnouncement, setPostingAnnouncement] = useState(false)
+  const [maintenanceModal, setMaintenanceModal] = useState(false)
   const { data: editingPublicIdProfile } = useProfile(editingPublicIdUserId)
   const { data: grantingCoinsProfile } = useProfile(grantingCoinsUserId)
   const { data: grantingSpinsProfile } = useProfile(grantingSpinsUserId)
@@ -1605,6 +1613,23 @@ export function FishZoneApp() {
     return <LoadingShell />
   }
 
+  // Maintenance: the super admin passes; a guest who pressed «Вход для администратора» gets the sign-in (and, signed
+  // in as somebody else, is back here); anyone signed in who is not the super admin can sign out to sign in as them.
+  if (maintenance?.enabled && !myProfile?.isSuperAdmin && !(adminEntry && !user)) {
+    return (
+      <MaintenanceScreen
+        message={maintenance.message}
+        checking={maintenanceChecking}
+        onRetry={() => void refetchMaintenance()}
+        adminLabel={user ? tn('maintenance.adminOther') : tn('maintenance.admin')}
+        onAdmin={() => {
+          setAdminEntry(true)
+          if (user) void signOut()
+        }}
+      />
+    )
+  }
+
   if (linkingEmail) {
     return (
       <div className="app-shell">
@@ -1632,7 +1657,7 @@ export function FishZoneApp() {
         <OnboardingFlow
           onCityChosen={changeCity}
           onForgotPassword={() => setRecoveryMode(true)}
-          initialStep={!user && guestAuth ? guestAuth : undefined}
+          initialStep={!user && adminEntry && maintenance?.enabled ? 'signin' : !user && guestAuth ? guestAuth : undefined}
           onBackToShare={!user && guestShare ? () => setGuestAuth(null) : undefined}
           invited={!!launchRef}
         />
@@ -1964,7 +1989,9 @@ export function FishZoneApp() {
             onOpenGeo={openGeo}
             onOpenAdminGeo={() => push({ screen: 'screen-admin-geo' })}
             active={currentScreen === 'screen-profile'}
-            adminPanelActive={currentScreen === 'screen-profile' && !postingAnnouncement && editingPublicIdUserId === null && grantingCoinsUserId === null && grantingSpinsUserId === null}
+            adminPanelActive={currentScreen === 'screen-profile' && !postingAnnouncement && !maintenanceModal && editingPublicIdUserId === null && grantingCoinsUserId === null && grantingSpinsUserId === null}
+            maintenanceOn={!!maintenance?.enabled}
+            onOpenMaintenance={() => setMaintenanceModal(true)}
           />
         </Screen>
         <Screen id="screen-user-profile" current={currentScreen} onBack={pop}>
@@ -2265,6 +2292,13 @@ export function FishZoneApp() {
         />
       )}
       {postingAnnouncement && <PostAnnouncementModal onClose={() => setPostingAnnouncement(false)} />}
+      {maintenanceModal && <MaintenanceModal onClose={() => setMaintenanceModal(false)} />}
+      {/* The super admin goes on using the app under maintenance: a red pill says the players see the maintenance screen. */}
+      {isSuperAdmin && maintenance?.enabled && !maintenanceModal && (
+        <button type="button" className="maintenance-banner" onClick={() => setMaintenanceModal(true)}>
+          Заглушка включена · игроки видят техработы
+        </button>
+      )}
       {/* Held back while the trophy-card success screen is up so it never stacks
           on top of that screen's own celebration — it shows right after
           "Готово"/"Поделиться уловом" moves on, instead. */}

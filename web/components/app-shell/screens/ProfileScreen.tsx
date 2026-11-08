@@ -427,6 +427,8 @@ export function ProfileScreen({
   onEditPublicId,
   onGrantCoins,
   onGrantSpins,
+  maintenanceOn,
+  onOpenMaintenance,
   onOpenShop,
   onOpenChallenges,
   onOpenClans,
@@ -468,6 +470,9 @@ export function ProfileScreen({
   onEditPublicId: (id: string) => void
   onGrantCoins: (id: string) => void
   onGrantSpins: (id: string) => void
+  // «Технические работы» (super admin): whether the maintenance screen is on, and its switch.
+  maintenanceOn: boolean
+  onOpenMaintenance: () => void
   onOpenShop: () => void
   onOpenChallenges: () => void
   onOpenClans: () => void
@@ -819,6 +824,7 @@ export function ProfileScreen({
                   { id: 'log', label: 'Последние действия', icon: ADMIN_ICONS.log, tone: 'data' as const, badge: adminLogUnreadCount, onClick: onOpenAdminLog },
                   { id: 'access', label: 'Доступы', icon: ADMIN_ICONS.access, tone: 'manage' as const, onClick: onOpenAdminAccess },
                   { id: 'post', label: 'Написать пост', icon: ADMIN_ICONS.post, tone: 'manage' as const, onClick: onPostAnnouncement },
+                  { id: 'maintenance', label: maintenanceOn ? 'Техработы: включены' : 'Технические работы', icon: ADMIN_ICONS.maintenance, tone: 'manage' as const, badge: maintenanceOn ? 1 : 0, onClick: onOpenMaintenance },
                 ]
               : []),
             ...(isSuperAdmin && user

@@ -2026,6 +2026,8 @@ export type Database = {
       log_app_events: { Args: { p_device: string; p_session: string; p_events: Json }; Returns: number }
       get_app_stats: { Args: { p_days?: number; p_tz?: string }; Returns: Json }
       get_service_limits: { Args: Record<string, never>; Returns: Json }
+      get_maintenance: { Args: Record<string, never>; Returns: Json }
+      admin_set_maintenance: { Args: { p_enabled: boolean; p_message?: string | null }; Returns: Json }
       get_app_stats_range: { Args: { p_from?: string | null; p_to?: string | null; p_bucket?: string; p_tz?: string }; Returns: Json }
       collect_treasury: { Args: Record<string, never>; Returns: Json }
       spin_slots: { Args: Record<string, never>; Returns: Json }

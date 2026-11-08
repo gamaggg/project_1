@@ -2735,4 +2735,11 @@ export const en: Dict = {
     back: 'Another country',
     cities: { one: '{count} city', other: '{count} cities' },
   },
+  maintenance: {
+    title: 'Maintenance in progress',
+    text: 'We are getting a RANGE update ready. Your catches, sectors and coins are safe — back soon.',
+    retry: 'Check again',
+    admin: 'Admin sign-in',
+    adminOther: 'Sign in as an admin',
+  },
 }

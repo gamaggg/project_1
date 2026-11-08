@@ -1899,6 +1899,25 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
   background:var(--accent);
   align-items:center; justify-content:center; gap:28px;
 }
+.maintenance-shell{
+  background:var(--accent); align-items:center; justify-content:center; gap:26px;
+  padding:calc(24px + var(--tg-safe-area-top, env(safe-area-inset-top, 0px))) 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  box-sizing:border-box; text-align:center;
+}
+.maintenance-shell .maintenance-logo{width:140px; height:auto; filter:brightness(0) invert(1);}
+.maintenance-card{width:100%; max-width:360px; display:flex; flex-direction:column; align-items:center; gap:10px; padding:26px 22px 22px; border-radius:26px; background:#fff; color:var(--ink); box-shadow:0 18px 40px -16px rgba(80,24,0,.45);}
+.maintenance-icon{width:58px; height:58px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#FFF0E6; color:var(--accent); margin-bottom:4px;}
+.maintenance-card h1{margin:0; font-size:21px; font-weight:800; letter-spacing:-.02em; line-height:1.2;}
+.maintenance-card p{margin:0; font-size:14.5px; line-height:1.45; color:var(--ink-soft);}
+.maintenance-card .maintenance-note{width:100%; box-sizing:border-box; padding:10px 12px; border-radius:14px; background:#F6F4F1; color:var(--ink); font-weight:600; white-space:pre-line;}
+.maintenance-retry{width:100%; margin-top:8px; padding:14px; border:0; border-radius:16px; background:var(--ink); color:#fff; font:inherit; font-size:15px; font-weight:800; cursor:pointer;}
+.maintenance-retry:disabled{opacity:.6;}
+.maintenance-modal-label{display:flex; flex-direction:column; gap:6px; width:100%; margin:4px 0 12px; text-align:left; font-size:12.5px; font-weight:700; color:var(--ink-soft);}
+.maintenance-modal-input{width:100%; box-sizing:border-box; resize:none; padding:10px 12px; border:1px solid rgba(23,24,27,.12); border-radius:12px; background:#F4F5F7; color:var(--ink); font:inherit; font-size:14px; font-weight:500; outline:none;}
+.maintenance-modal-input:focus{border-color:var(--accent); background:#fff;}
+.maintenance-modal-error{width:100%; margin:0 0 10px; font-size:13px; font-weight:700; color:#B3261E;}
+.maintenance-banner{position:fixed; left:50%; top:calc(6px + var(--tg-safe-area-top, env(safe-area-inset-top, 0px))); z-index:1200; transform:translateX(-50%); padding:5px 12px; border:0; border-radius:999px; background:#D33; color:#fff; font:inherit; font-size:12px; font-weight:800; box-shadow:0 6px 16px rgba(180,30,30,.35); cursor:pointer; white-space:nowrap;}
+.maintenance-admin{border:0; background:none; padding:8px 12px; color:rgba(255,255,255,.85); font:inherit; font-size:13px; font-weight:700; text-decoration:underline; text-underline-offset:3px; cursor:pointer;}
 .loading-shell-logo{
   width:112px; height:auto;
   /* logo_1.svg is a solid #ff6a1f fill — brightness(0) flattens it to black,
