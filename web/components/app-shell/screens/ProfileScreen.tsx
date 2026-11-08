@@ -1,7 +1,8 @@
 'use client'
 
 import { HexLoader } from '@/components/app-shell/HexLoader'
-import { geoImageUrl } from '@/lib/geo'
+import { geoImageUrl, GEO_PAUSED, GEO_PAUSE_SEEN_KEY } from '@/lib/geo'
+import { useUiState } from '@/lib/uiState'
 import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useShopRewardsCount } from '@/lib/shopRewards'
 import { useState, type CSSProperties } from 'react'
@@ -503,6 +504,15 @@ export function ProfileScreen({
   // review, not from this card. Nor a game played earlier today in the city moved from: the
   // server keeps it the day's until midnight, but it is not this city's.
   const showGeoCard = !!geo?.panorama && geo.city === city
+  // While the game is on pause (GEO_PAUSED) a player's card opens the «we'll
+  // be back» screen and is gone for good once they tapped «Окей, понял» there;
+  // the super admin keeps the game. The card waits for the account's flags so
+  // it doesn't flash for someone who already said «понял».
+  const ui = useUiState()
+  const geoPaused = GEO_PAUSED && !isSuperAdmin
+  const geoPauseSeen = geoPaused && ui.state?.[GEO_PAUSE_SEEN_KEY] === true
+  const geoCardShown = showGeoCard && (!geoPaused || (ui.ready && !geoPauseSeen))
+  const geoCardPending = !geoCardShown && !geoPauseSeen && (geoPending || (geoPaused && showGeoCard && !ui.ready))
   const { data: reports = [] } = useReports()
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(user?.id ?? null)
   const { data: earnedAchievements } = useEarnedAchievements(user?.id ?? null)
@@ -681,7 +691,7 @@ export function ProfileScreen({
 
       {/* The clan and «Где это?» side by side, half each, like «Челленджи» and
           «Магазин» above — the clan alone takes the whole row. */}
-      <div className={`profile-duo${showGeoCard || geoPending ? '' : ' single'}`}>
+      <div className={`profile-duo${geoCardShown || geoCardPending ? '' : ' single'}`}>
       {profile?.clanId ? (
         <button
           data-tour="clan" className="profile-clan-card tap-scale"
@@ -728,14 +738,15 @@ export function ProfileScreen({
 
       {/* «Где это?» — shown once the city has a panorama of the day (or to a
           super admin, who fills the game). */}
-      {geoPending && !showGeoCard && <span className="skel profile-geo-skel" aria-hidden />}
-      {showGeoCard && (
+      {geoCardPending && <span className="skel profile-geo-skel" aria-hidden />}
+      {geoCardShown && (
         <button
-          data-tour="geo"
+          // On pause: no tour about the game and no panorama behind the card.
+          data-tour={geoPaused ? undefined : 'geo'}
           className="profile-geo-card tap-scale"
           // The day's panorama itself behind the card (its small copy, where
           // the view opens), darkened towards the words.
-          style={geo?.panorama ? ({ '--geo-bg': `url(${geoImageUrl(geo.panorama.image, 'small')})`, '--geo-x': `${50 + (geo.panorama.heading / 360) * 100}%` } as React.CSSProperties) : undefined}
+          style={geo?.panorama && !geoPaused ? ({ '--geo-bg': `url(${geoImageUrl(geo.panorama.image, 'small')})`, '--geo-x': `${50 + (geo.panorama.heading / 360) * 100}%` } as React.CSSProperties) : undefined}
           onClick={onOpenGeo}
         >
           <span className="profile-geo-art" aria-hidden>
@@ -746,7 +757,7 @@ export function ProfileScreen({
             <span className="profile-clan-kicker">{tn('profile.dailyGame')}</span>
             <span className="profile-clan-name">{tn('shell.geoTitle')}</span>
           </span>
-          {geo?.panorama && !geo.result && <span className="profile-geo-dot" aria-label={tn('profile.panoramaWaiting')} />}
+          {geo?.panorama && !geo.result && !geoPaused && <span className="profile-geo-dot" aria-label={tn('profile.panoramaWaiting')} />}
           <span className="profile-cta-arrow" style={{ position: 'static' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 5l7 7-7 7" />
@@ -906,7 +917,7 @@ export function ProfileScreen({
 
 // «Где это?»'s mark: a sector as the map draws it — a regular flat-top
 // hexagon — in the brand's orange, with a question mark (the card's own text).
-function GeoHex() {
+export function GeoHex() {
   return (
     <svg className="profile-geo-hex" viewBox="0 0 56 48.5" aria-hidden>
       <defs>

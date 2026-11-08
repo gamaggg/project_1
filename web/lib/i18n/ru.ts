@@ -2261,6 +2261,9 @@ export const ru = {
     clanNameFallback: 'Название клана',
   },
   geoGame: {
+    pausedTitle: 'Игра на паузе',
+    pausedText: 'Мы ищем панорамы получше. Как разберёмся — вернёмся с обновлением.',
+    pausedOk: 'Окей, понял',
     inBatumi: 'Батуми',
     inMoscow: 'Москве',
     inSpb: 'Петербурге',

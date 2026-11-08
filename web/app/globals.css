@@ -5010,6 +5010,13 @@ button.geo-fact{cursor:pointer;}
 .profile-geo-card .profile-clan-name{text-shadow:0 1px 6px rgba(0,0,0,.3);}
 /* On a bright sky the white arrow needs a ground of its own. */
 .profile-geo-card .profile-cta-arrow{background:rgba(8,18,28,.4); backdrop-filter:blur(4px);}
+/* «Где это?» on pause (GeoPausedScreen): the game's mark, two lines, one button. */
+.geo-paused{display:flex; flex-direction:column; align-items:center; gap:12px; max-width:360px; margin:0 auto; padding:48px 8px 24px; text-align:center;}
+.geo-paused-art{width:84px; height:72.75px; margin-bottom:6px;}
+.geo-paused-art .profile-geo-q{font-size:44px;}
+.geo-paused-title{margin:0; font-size:22px; font-weight:800; letter-spacing:-.02em; line-height:1.2; color:var(--ink);}
+.geo-paused-text{margin:0; font-size:15px; line-height:1.45; color:var(--ink-soft);}
+.geo-paused-ok{margin-top:12px;}
 .profile-geo-skel{width:100%; height:100%; min-height:120px; border-radius:20px;}
 /* Clan + «Где это?» in one row, half each (ProfileScreen) — built like the
    «Челленджи | Магазин» row above: icon top-left, the arrow in the corner,

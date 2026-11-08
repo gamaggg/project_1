@@ -74,7 +74,9 @@ import { OnboardingFlow } from '@/components/app-shell/onboarding/OnboardingFlow
 import { useTelegramBackButton } from '@/lib/telegram/useTelegramBackButton'
 import { hapticBuildUp, hapticSuccess, hapticTap } from '@/lib/telegram/haptics'
 import { GeoMapOverlay } from '@/components/app-shell/GeoMapOverlay'
-import { GEO_AREA_MAX_LAT, GEO_NEIGHBOUR_M, type GeoResult } from '@/lib/geo'
+import { GEO_AREA_MAX_LAT, GEO_NEIGHBOUR_M, GEO_PAUSED, GEO_PAUSE_SEEN_KEY, type GeoResult } from '@/lib/geo'
+import { useUiState } from '@/lib/uiState'
+import { GeoPausedScreen } from '@/components/app-shell/screens/GeoPausedScreen'
 import { BottomNav } from '@/components/app-shell/BottomNav'
 import { HexLoader } from '@/components/app-shell/HexLoader'
 import { SpotlightTours } from '@/components/app-shell/SpotlightTours'
@@ -786,6 +788,14 @@ export function FishZoneApp() {
   }
   function openGeo() {
     push({ screen: 'screen-geo' })
+  }
+  // «Где это?» on pause (GEO_PAUSED): a player gets GeoPausedScreen on
+  // screen-geo instead of the game; the super admin still plays it.
+  const geoPausedForMe = GEO_PAUSED && !isSuperAdmin
+  const uiState = useUiState()
+  function okGeoPause() {
+    uiState.set(GEO_PAUSE_SEEN_KEY, true)
+    pop()
   }
   // «Где это?» on the app's own map: the pick, then the reveal (GeoMapOverlay).
   const [geoPlay, setGeoPlay] = useState<
@@ -1799,16 +1809,20 @@ export function FishZoneApp() {
                 <div style={{ width: 36 }} />
               </div>
               <div className="screen-inner geo-inner">
-                <GeoScreen
-                  sectors={territories}
-                  active={currentScreen === 'screen-geo'}
-                  onStartPick={startGeoPick}
-                  onShowOnMap={showGeoOnMap}
-                  onOpenTerritory={openTerritory}
-                  onOpenCatch={openCatchPhoto}
-                  onOpenUser={openUserProfile}
-                  onShare={(text) => void shareGeo(text)}
-                />
+                {geoPausedForMe ? (
+                  <GeoPausedScreen onOk={okGeoPause} />
+                ) : (
+                  <GeoScreen
+                    sectors={territories}
+                    active={currentScreen === 'screen-geo'}
+                    onStartPick={startGeoPick}
+                    onShowOnMap={showGeoOnMap}
+                    onOpenTerritory={openTerritory}
+                    onOpenCatch={openCatchPhoto}
+                    onOpenUser={openUserProfile}
+                    onShare={(text) => void shareGeo(text)}
+                  />
+                )}
               </div>
             </>
           )}

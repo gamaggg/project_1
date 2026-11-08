@@ -216,6 +216,7 @@ export const FAQ_EN: FaqSection[] = [
       {
         q: 'What is «Where is this?»?',
         a: [
+          'The game is on pause right now: we’re looking for better panoramas. There’s no sticker on the map, and the card in your profile opens a pause screen — tap «Okay, got it» and the card goes away. Once we’ve sorted it out, we’ll be back with an update. Below is how the game worked before the pause.',
           'The game of the day: a 360° panorama by the water in your city — an embankment, a beach, a pier, a riverbank. Turn it with your finger, zoom with two fingers, look for clues: buildings, piers, mountains, bridges.',
           'Tap «Pick a sector on the map» — the usual RANGE map opens. Tap the cell by the water where you think the panorama was taken and «It is here!». Right — +30 coins. Wrong — no coins, but the map shows both your cell and the right one, and the spot where the panorama was taken.',
           'Then comes the story of the place: who holds the sector (or that it is free and you can take it first), how much was caught here and by whom, which fish, the record (a fish of 300 g or 20 cm and up), the best time to bite and the three latest catches. If the sector is under a shield, it cannot be taken now, but you can fish there.',
@@ -233,7 +234,7 @@ export const FAQ_EN: FaqSection[] = [
         q: 'What are weekly challenges?',
         a: [
           'Every week — 3 tasks of different difficulty: an easy one, a light one and a medium or hard one. Each pays from 10 to 150 coins. New tasks on Monday.',
-          'The tasks are not only about fish: leave comments, collect likes and followers, write in the clan chat, play «Where is this?», spin the slots, collect the daily reward, claim a sector, catch a fish in a hot sector. Clan tasks only go to players who are in a clan.',
+          'The tasks are not only about fish: leave comments, collect likes and followers, write in the clan chat, spin the slots, collect the daily reward, claim a sector, catch a fish in a hot sector. Clan tasks only go to players who are in a clan.',
           'Tap a task to unfold it: you see how much is left and how many coins are already counted. If the week runs out, you still get part of the coins for the progress.',
         ],
       },

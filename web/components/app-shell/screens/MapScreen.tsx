@@ -24,6 +24,7 @@ import { MapRacePill } from '@/components/app-shell/ClanRace'
 import { TreasuryChip } from '@/components/app-shell/TreasuryChip'
 import { SlotsSticker } from '@/components/app-shell/SlotsSticker'
 import { GeoSticker } from '@/components/app-shell/GeoSticker'
+import { GEO_PAUSED } from '@/lib/geo'
 import { HudBoosts } from '@/components/app-shell/HudBoosts'
 import { HOT_FLAME_SVG } from '@/lib/map/hotFlame'
 import { useI18n } from '@/lib/i18n'
@@ -567,7 +568,8 @@ export const MapScreen = forwardRef<
               {/* Newcomers have «Первые шаги» on this row instead — two
                   stickers and the pill don't fit side by side. */}
               {!selectedIds?.size && !pendingAddDrafts?.length && !firstStepsShown && onOpenSlots && <SlotsSticker city={city} onOpen={onOpenSlots} />}
-              {!selectedIds?.size && !pendingAddDrafts?.length && !firstStepsShown && onOpenGeo && <GeoSticker onOpen={onOpenGeo} />}
+              {/* «Где это?» is on pause (GEO_PAUSED): no sticker for anyone. */}
+              {!GEO_PAUSED && !selectedIds?.size && !pendingAddDrafts?.length && !firstStepsShown && onOpenGeo && <GeoSticker onOpen={onOpenGeo} />}
               <FirstStepsPill onToast={onToast} />
             </div>
           )}

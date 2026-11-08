@@ -2256,6 +2256,9 @@ export const en: Dict = {
     clanNameFallback: 'Clan name',
   },
   geoGame: {
+    pausedTitle: 'The game is on pause',
+    pausedText: 'We’re looking for better panoramas. Once we’ve sorted it out, we’ll be back with an update.',
+    pausedOk: 'Okay, got it',
     inBatumi: 'Batumi',
     inMoscow: 'Moscow',
     inSpb: 'Saint Petersburg',

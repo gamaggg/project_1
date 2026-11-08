@@ -2258,6 +2258,9 @@ export const ka: Dict = {
     clanNameFallback: 'კლანის სახელი',
   },
   geoGame: {
+    pausedTitle: 'თამაში დაპაუზებულია',
+    pausedText: 'უკეთეს პანორამებს ვეძებთ. როგორც კი მოვაგვარებთ, განახლებით დავბრუნდებით.',
+    pausedOk: 'კარგი, გასაგებია',
     inBatumi: 'ბათუმში',
     inMoscow: 'მოსკოვში',
     inSpb: 'სანკტ-პეტერბურგში',

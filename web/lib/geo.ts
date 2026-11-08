@@ -6,6 +6,14 @@ import { tn, currentLanguage } from '@/lib/i18n/runtime'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 
+// 09.11.2026: the game is on pause until we find better panoramas. No
+// sticker on the map; the profile's card opens a «we'll be back» screen
+// instead of the game, and once the player taps «Окей, понял» the card is
+// gone for them (user_ui_state key GEO_PAUSE_SEEN_KEY) and the clan card takes
+// the whole row. The super admin still plays and checks the game as before.
+export const GEO_PAUSED = true
+export const GEO_PAUSE_SEEN_KEY = 'geo_pause_seen'
+
 // The right sector pays this (submit_geo_guess); any other — nothing.
 export const GEO_COINS = 30
 // The day's quest after the answer, whatever it was: a catch in the
