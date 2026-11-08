@@ -114,7 +114,7 @@ export const FAQ_EN: FaqSection[] = [
           'A shield covers a sector for 24 hours: while it stands, someone else’s catch neither takes the sector nor wears its defense down (the catch itself counts if it is added to the diary from the shield window), and your clanmates fish as usual.',
           'Shields are not sold — you can only win them in the slots (5% chance per spin). A won shield goes into your reserve, which holds up to 3 shields; if the reserve is full, a shield that drops turns into 70 coins.',
           'Put a shield on with the «Put a shield on» button on your sector’s screen; if you are a co-holder of a clanmate’s sector you can too, with a shield from your reserve. How long the shield has left is shown right there, next to «Taken». A hot sector cannot be shielded until the end of the week.',
-          'How many shields you have in reserve is shown at the top of the map — a teal shield badge (if double coins are on, there is one shared «×2 · shield» button). Tap it — a window with the reserve and a hint on where to place one.',
+          'How many shields you have in reserve is shown at the top of the map — a teal shield badge. Tap it — a window with the reserve and a hint on where to place one.',
         ],
       },
       {
@@ -125,7 +125,7 @@ export const FAQ_EN: FaqSection[] = [
         q: 'What are hot sectors?',
         a: [
           'Every Friday at 12:00, two hot sectors of the week are picked in each city: the most popular one (most catches in 30 days) and its neighbour — the one that touches it. They burn on the map until the end of Sunday. The same sector is never hot two weeks in a row.',
-          'A catch there brings ×2 coins (×3 with «Double coins»), and the Treasury pays triple. Whoever holds a hot sector at the end of Sunday gets 100 coins and a medal — if anyone caught at least one fish on that sector during the week. An untouched hot sector gives no reward.',
+          'A catch there brings ×2 coins (×3 with a clan «Outing» or «Double coins»), and such a sector pays triple rent into the clan treasury. Whoever holds a hot sector at the end of Sunday gets 100 coins and a medal — if anyone caught at least one fish on that sector during the week. An untouched hot sector gives no reward.',
           'A hot sector cannot be shielded, and the Tide does not trigger when it is claimed — the sector is open to everyone until the end of the week.',
           'When the hot sectors are picked, the app shows them by itself the first time you open the map: the camera flies to each in turn, with a dimmed background and a hint with the rules. Once a week.',
         ],
@@ -158,7 +158,7 @@ export const FAQ_EN: FaqSection[] = [
           [
             'A catch — from 5 to 250 coins: the rarer the fish, the more.',
             'Claiming a sector — +25, once a day for the same sector.',
-            'The Treasury — coins for your sectors every day.',
+            'Sector rent — it goes into the clan treasury: 1 coin every 3 hours from each sector (there is no personal Treasury any more).',
             'The daily reward — for opening the app.',
             'Weekly challenges — from 10 to 150 coins per task.',
             'The slots, the clan chest and the Clan battle.',
@@ -173,19 +173,19 @@ export const FAQ_EN: FaqSection[] = [
           { title: 'Tbilisi', rows: TBILISI_ROWS },
           { title: 'Moscow & MO', rows: MOSCOW_ROWS },
           { title: 'Saint Petersburg', rows: SPB_ROWS },
-          'On a hot sector the coins for a catch double, «Double coins» double too, and together it is ×3, not ×4. If the catch claimed the sector, there is another +25 on top (+50 with «Double coins»).',
+          'On a hot sector the coins for a catch double; a clan «Outing» and «Double coins» are ×2 too, and together with a hot sector it is ×3, not ×4. If the catch claimed the sector, there is another +25 on top (+50 with «Double coins»).',
         ],
       },
       {
         q: 'What is the Treasury?',
         a: [
-          'Coins that build up for your sectors: 1 coin every 3 hours from each sector (8 a day, triple from a hot one). You can collect up to 30 coins a day.',
-          'The coin badge at the top of the map shows how much has built up — tap it to collect. It builds up for no more than the last day, so come in every day.',
+          'There is no personal Treasury any more: it was closed on 9 November 2026. Whatever had built up in it was paid to the players.',
+          'Sectors now bring rent into the clan treasury — 1 coin every 3 hours from each sector, triple from a hot one (more in «What is the clan\'s treasury and where do its coins come from?»). If you are not in a clan, your sectors bring no rent: join a clan or create your own.',
         ],
       },
       {
         q: 'How does the daily reward work?',
-        a: ['Come in every day and collect the reward — the coin badge at the top of the map, by the logo (the Treasury is there too): 10, 15, 20, 25, 30, 35, 40, 50, 60 and 100 coins for 10 days in a row, then it starts over. Miss a day — the streak starts again.'],
+        a: ['Come in every day and collect the reward — the coin badge at the top of the map, by the logo: 10, 15, 20, 25, 30, 35, 40, 50, 60 and 100 coins for 10 days in a row, then it starts over. Miss a day — the streak starts again.'],
       },
       {
         q: 'What do I spend coins on?',
@@ -195,7 +195,7 @@ export const FAQ_EN: FaqSection[] = [
         q: 'What do boosts do?',
         a: [
           [
-            'Double coins — 60 (or «3 hooks» in the slots): for 24 hours ×2 coins for catches, claims, challenges, achievements and clan rewards (the Treasury, the daily reward and the slots are not doubled). While the doubling lasts there is a golden «×2» badge at the top of the map with the time left: tap it — a window with a timer and a list of what is doubled. On a hot sector a catch with it is ×3, not ×4. Coins for a catch have a «×2» mark.',
+            'Double coins are no longer sold (since 9 November 2026 the clan «Outing» takes their place), but they still drop in the slots («3 hooks»): for 24 hours ×2 coins for catches, claims, challenges, achievements and clan rewards (the daily reward and the slots are not doubled). On a hot sector a catch with them is ×3, not ×4.',
             'Tide — 220: the next sector you claim is protected for 48 hours (except a hot one — the Tide does not work there and waits for the next claim).',
             'Echo — 90: your next catch counts as two in challenges. It does not affect sector defence or claiming: someone else’s catch always takes 1 off the defence.',
             'Fourth challenge — 70: one more task for this week.',
@@ -233,7 +233,7 @@ export const FAQ_EN: FaqSection[] = [
         q: 'What are weekly challenges?',
         a: [
           'Every week — 3 tasks of different difficulty: an easy one, a light one and a medium or hard one. Each pays from 10 to 150 coins. New tasks on Monday.',
-          'The tasks are not only about fish: leave comments, collect likes and followers, write in the clan chat, play «Where is this?», spin the slots, collect the Treasury and the daily reward, claim a sector, catch a fish in a hot sector. Clan tasks only go to players who are in a clan.',
+          'The tasks are not only about fish: leave comments, collect likes and followers, write in the clan chat, play «Where is this?», spin the slots, collect the daily reward, claim a sector, catch a fish in a hot sector. Clan tasks only go to players who are in a clan.',
           'Tap a task to unfold it: you see how much is left and how many coins are already counted. If the week runs out, you still get part of the coins for the progress.',
         ],
       },
