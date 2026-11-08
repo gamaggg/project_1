@@ -10,7 +10,8 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 // sticker on the map; the profile's card opens a «we'll be back» screen
 // instead of the game, and once the player taps «Окей, понял» the card is
 // gone for them (user_ui_state key GEO_PAUSE_SEEN_KEY) and the clan card takes
-// the whole row. The super admin still plays and checks the game as before.
+// the whole row. The super admin too (since 09.11, the owner's call): the
+// panoramas are still reviewed in «Управление» → «Панорамы «Где это?»».
 export const GEO_PAUSED = true
 export const GEO_PAUSE_SEEN_KEY = 'geo_pause_seen'
 

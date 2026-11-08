@@ -504,12 +504,12 @@ export function ProfileScreen({
   // review, not from this card. Nor a game played earlier today in the city moved from: the
   // server keeps it the day's until midnight, but it is not this city's.
   const showGeoCard = !!geo?.panorama && geo.city === city
-  // While the game is on pause (GEO_PAUSED) a player's card opens the «we'll
-  // be back» screen and is gone for good once they tapped «Окей, понял» there;
-  // the super admin keeps the game. The card waits for the account's flags so
+  // While the game is on pause (GEO_PAUSED) the card opens the «we'll be
+  // back» screen and is gone for good once «Окей, понял» was tapped there —
+  // for everyone, the super admin too. The card waits for the account's flags so
   // it doesn't flash for someone who already said «понял».
   const ui = useUiState()
-  const geoPaused = GEO_PAUSED && !isSuperAdmin
+  const geoPaused = GEO_PAUSED
   const geoPauseSeen = geoPaused && ui.state?.[GEO_PAUSE_SEEN_KEY] === true
   const geoCardShown = showGeoCard && (!geoPaused || (ui.ready && !geoPauseSeen))
   const geoCardPending = !geoCardShown && !geoPauseSeen && (geoPending || (geoPaused && showGeoCard && !ui.ready))

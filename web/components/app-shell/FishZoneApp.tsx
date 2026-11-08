@@ -789,9 +789,8 @@ export function FishZoneApp() {
   function openGeo() {
     push({ screen: 'screen-geo' })
   }
-  // «Где это?» on pause (GEO_PAUSED): a player gets GeoPausedScreen on
-  // screen-geo instead of the game; the super admin still plays it.
-  const geoPausedForMe = GEO_PAUSED && !isSuperAdmin
+  // «Где это?» on pause (GEO_PAUSED): everyone, the super admin included,
+  // gets GeoPausedScreen on screen-geo instead of the game.
   const uiState = useUiState()
   function okGeoPause() {
     uiState.set(GEO_PAUSE_SEEN_KEY, true)
@@ -1809,7 +1808,7 @@ export function FishZoneApp() {
                 <div style={{ width: 36 }} />
               </div>
               <div className="screen-inner geo-inner">
-                {geoPausedForMe ? (
+                {GEO_PAUSED ? (
                   <GeoPausedScreen onOk={okGeoPause} />
                 ) : (
                   <GeoScreen
