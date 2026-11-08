@@ -1916,7 +1916,8 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .maintenance-modal-input{width:100%; box-sizing:border-box; resize:none; padding:10px 12px; border:1px solid rgba(23,24,27,.12); border-radius:12px; background:#F4F5F7; color:var(--ink); font:inherit; font-size:14px; font-weight:500; outline:none;}
 .maintenance-modal-input:focus{border-color:var(--accent); background:#fff;}
 .maintenance-modal-error{width:100%; margin:0 0 10px; font-size:13px; font-weight:700; color:#B3261E;}
-.maintenance-banner{position:fixed; left:50%; top:calc(6px + var(--tg-safe-area-top, env(safe-area-inset-top, 0px))); z-index:1200; transform:translateX(-50%); padding:5px 12px; border:0; border-radius:999px; background:#D33; color:#fff; font:inherit; font-size:12px; font-weight:800; box-shadow:0 6px 16px rgba(180,30,30,.35); cursor:pointer; white-space:nowrap;}
+/* Below the status bar and Telegram's «Закрыть» / «…» band, like a screen's own top (.screen): it used to count only one of the two and sat under Telegram's buttons. */
+.maintenance-banner{position:fixed; left:50%; top:calc(6px + env(safe-area-inset-top, 0px) + var(--tg-safe-area-top, 0px)); z-index:1200; transform:translateX(-50%); padding:5px 12px; border:0; border-radius:999px; background:#D33; color:#fff; font:inherit; font-size:12px; font-weight:800; box-shadow:0 6px 16px rgba(180,30,30,.35); cursor:pointer; white-space:nowrap;}
 .maintenance-admin{border:0; background:none; padding:8px 12px; color:rgba(255,255,255,.85); font:inherit; font-size:13px; font-weight:700; text-decoration:underline; text-underline-offset:3px; cursor:pointer;}
 .loading-shell-logo{
   width:112px; height:auto;

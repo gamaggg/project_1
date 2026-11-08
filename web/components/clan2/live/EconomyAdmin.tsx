@@ -2,6 +2,7 @@
 
 import '@/app/clan2.css'
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 
@@ -30,9 +31,10 @@ export function EconomyAdmin({ onClose }: { onClose: () => void }) {
       return { econ, clans: (c.data ?? []).map((r) => ({ id: Number(r.id), name: String(r.name), city: String(r.city) })) }
     },
   })
-  return (
+  // Portalled to <body> like every other modal: inside the profile screen the overlay sat at the top of the scrolled page.
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card c2-econ-admin" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-card modal-card-wide c2-econ-admin" onClick={(e) => e.stopPropagation()}>
         <div className="modal-title">Клановая экономика</div>
         {isLoading ? (
           <div className="modal-body">Загружаю…</div>
@@ -45,7 +47,8 @@ export function EconomyAdmin({ onClose }: { onClose: () => void }) {
           Закрыть
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
