@@ -2101,7 +2101,7 @@ export const ru = {
     doubled_challenges: 'Челленджи',
     doubled_achievements: 'Достижения',
     doubled_clan: 'Награды клана',
-    notDoubled: 'Казна, ежедневная награда и слоты — без удвоения',
+    notDoubled: 'Ежедневная награда и слоты — без удвоения',
     onHot: 'На горячем секторе улов — ×3',
     doubleAria: 'Двойные монеты, ещё {rest}',
     doubleTitle: 'Двойные монеты',

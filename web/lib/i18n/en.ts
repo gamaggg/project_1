@@ -2096,7 +2096,7 @@ export const en: Dict = {
     doubled_challenges: 'Challenges',
     doubled_achievements: 'Achievements',
     doubled_clan: 'Clan rewards',
-    notDoubled: 'The treasury, the daily reward and the slots are not doubled',
+    notDoubled: 'The daily reward and the slots are not doubled',
     onHot: 'On a hot sector a catch is ×3',
     doubleAria: 'Double coins, {rest} left',
     doubleTitle: 'Double coins',

@@ -114,7 +114,7 @@ export const FAQ_EN: FaqSection[] = [
           'A shield covers a sector for 24 hours: while it stands, someone else’s catch neither takes the sector nor wears its defense down (the catch itself counts if it is added to the diary from the shield window), and your clanmates fish as usual.',
           'Shields are not sold — you can only win them in the slots (5% chance per spin). A won shield goes into your reserve, which holds up to 3 shields; if the reserve is full, a shield that drops turns into 70 coins.',
           'Put a shield on with the «Put a shield on» button on your sector’s screen; if you are a co-holder of a clanmate’s sector you can too, with a shield from your reserve. How long the shield has left is shown right there, next to «Taken». A hot sector cannot be shielded until the end of the week.',
-          'How many shields you have in reserve is shown at the top of the map — a teal shield badge. Tap it — a window with the reserve and a hint on where to place one.',
+          'How many shields you have in reserve is shown at the top of the map — a teal shield badge (if «Double coins» are on, there is one shared «×2 · shield» button). Tap it — a window with the reserve and a hint on where to place one.',
         ],
       },
       {
@@ -173,7 +173,7 @@ export const FAQ_EN: FaqSection[] = [
           { title: 'Tbilisi', rows: TBILISI_ROWS },
           { title: 'Moscow & MO', rows: MOSCOW_ROWS },
           { title: 'Saint Petersburg', rows: SPB_ROWS },
-          'On a hot sector the coins for a catch double; a clan «Outing» and «Double coins» are ×2 too, and together with a hot sector it is ×3, not ×4. If the catch claimed the sector, there is another +25 on top (+50 with «Double coins»).',
+          'On a hot sector the coins for a catch double; «Double coins» and a clan «Outing» are ×2 too. Any two of the three together are ×3, all three at once ×4. If the catch claimed the sector, there is another +25 on top (+50 with «Double coins»).',
         ],
       },
       {
@@ -195,7 +195,7 @@ export const FAQ_EN: FaqSection[] = [
         q: 'What do boosts do?',
         a: [
           [
-            'Double coins are no longer sold (since 9 November 2026 the clan «Outing» takes their place), but they still drop in the slots («3 hooks»): for 24 hours ×2 coins for catches, claims, challenges, achievements and clan rewards (the daily reward and the slots are not doubled). On a hot sector a catch with them is ×3, not ×4.',
+            'Double coins are no longer sold (since 9 November 2026 the clan «Outing» takes their place), but they still drop in the slots («3 hooks»): for 24 hours ×2 coins for catches, claims, challenges, achievements and clan rewards (the daily reward and the slots are not doubled). While the doubling lasts there is a golden «×2» badge at the top of the map with the time left: tap it — a window with a timer and a list of what is doubled. On a hot sector a catch with them is ×3, not ×4. Coins for a catch have a «×2» mark.',
             'Tide — 220: the next sector you claim is protected for 48 hours (except a hot one — the Tide does not work there and waits for the next claim).',
             'Echo — 90: your next catch counts as two in challenges. It does not affect sector defence or claiming: someone else’s catch always takes 1 off the defence.',
             'Fourth challenge — 70: one more task for this week.',
@@ -326,7 +326,7 @@ export const FAQ_EN: FaqSection[] = [
         q: 'What is the clan «Outing»?',
         a: [
           'A clan buff in place of the personal «Double coins». The leader or the co-leader plans an «Outing» for 300 treasury coins to start in 5–180 minutes. Those who tap «I\'m in» get one more fish price per catch for 2 hours (×2), and their catches and sector captures bring one and a half times more metres in the clan battle (a catch 15 m instead of 10). The chest points do not change.',
-          'At least three members must tap «I\'m in»: otherwise the «Outing» is cancelled and the coins go back to the treasury. After an «Outing» the clan rests for 12 hours. A hot sector and an «Outing» together are ×3, not ×4.',
+          'At least three members must tap «I\'m in»: otherwise the «Outing» is cancelled and the coins go back to the treasury. After an «Outing» the clan rests for 12 hours. An «Outing» adds one more fish price per catch on top of everything else: with a hot sector or with «Double coins» it is ×3, with all three ×4.',
         ],
       },
       {

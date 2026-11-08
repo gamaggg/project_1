@@ -2098,7 +2098,7 @@ export const ka: Dict = {
     doubled_challenges: 'გამოწვევები',
     doubled_achievements: 'მიღწევები',
     doubled_clan: 'კლანის ჯილდოები',
-    notDoubled: 'საგანძური, ყოველდღიური ჯილდო და სლოტები არ ორმაგდება',
+    notDoubled: 'ყოველდღიური ჯილდო და სლოტები არ ორმაგდება',
     onHot: 'ცხელ სექტორზე დაჭერა — ×3',
     doubleAria: 'ორმაგი მონეტები, კიდევ {rest}',
     doubleTitle: 'ორმაგი მონეტები',
