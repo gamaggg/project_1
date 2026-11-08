@@ -19,7 +19,7 @@ export type ServerRead = { ok: true; data: Json; alerts: Json[] } | { ok: false;
 export async function readServerClan(clanId: number, userId: string): Promise<ServerRead> {
   const supabase = createClient()
   // The generated types do not know the functions of the drafts yet.
-  const rpc = supabase.rpc as unknown as (fn: string, args?: Json) => Promise<{ data: unknown; error: { code?: string; message: string } | null }>
+  const rpc = supabase.rpc.bind(supabase) as unknown as (fn: string, args?: Json) => Promise<{ data: unknown; error: { code?: string; message: string } | null }>
   const [state, notes] = await Promise.all([
     rpc('get_clan_state', { p_clan_id: clanId }),
     supabase.from('notifications').select('id,kind,created_at,payload,territory_id').eq('user_id', userId).like('kind', 'clan_%').order('created_at', { ascending: false }).limit(60),
@@ -218,7 +218,7 @@ export function reasonOf(message: string): string {
 
 export async function callServer(fn: string, args: Json): Promise<{ ok: true } | { ok: false; reason: string }> {
   const supabase = createClient()
-  const rpc = supabase.rpc as unknown as (fn: string, args?: Json) => Promise<{ error: { message: string } | null }>
+  const rpc = supabase.rpc.bind(supabase) as unknown as (fn: string, args?: Json) => Promise<{ error: { message: string } | null }>
   const { error } = await rpc(fn, args)
   return error ? { ok: false, reason: reasonOf(error.message) } : { ok: true }
 }

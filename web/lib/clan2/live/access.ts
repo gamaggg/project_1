@@ -17,7 +17,7 @@ export function useClan2Access(profile: { isSuperAdmin?: boolean; clanId?: numbe
     queryFn: async (): Promise<{ enabled: boolean; pilot: number[] } | null> => {
       const supabase = createClient()
       // The table is not in the generated types until the migrations are applied.
-      const from = supabase.from as unknown as (t: string) => { select: (c: string) => { eq: (k: string, v: number) => { maybeSingle: () => Promise<{ data: { enabled: boolean; pilot_clans: number[] | null } | null; error: unknown }> } } }
+      const from = supabase.from.bind(supabase) as unknown as (t: string) => { select: (c: string) => { eq: (k: string, v: number) => { maybeSingle: () => Promise<{ data: { enabled: boolean; pilot_clans: number[] | null } | null; error: unknown }> } } }
       const { data, error } = await from('clan_economy').select('enabled,pilot_clans').eq('id', 1).maybeSingle()
       if (error || !data) return null
       return { enabled: !!data.enabled, pilot: (data.pilot_clans ?? []).map(Number) }
