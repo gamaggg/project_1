@@ -5,7 +5,7 @@
 --   clan_hq.defense_at        when the defence of the HQ sector last changed (the «Крепость» wears it down slower)
 --   clan_hq_ruins             a fallen HQ: who took it, what was carried off, until when a new one cannot be set
 --   clan_hq_place             replaced: refuses while the ruins stand
---   clan_hq_attack            replaced: the siege lasts 30 minutes + «Маяк»
+--   clan_hq_attack            replaced: the siege lasts 90 minutes + «Маяк» (owner, 08.11.2026; was 30)
 --   clan_hq_tick              replaced: a siege that nobody broke -> the HQ falls: loot, the sector goes to the attacker, ruins
 --   _clan_treasury_cap        replaced: «Склад» counts only while an HQ stands
 --   clan_builds, clan_upgrade_project, clan_speedup_build, clan_build_tick   six buildings (dock, beacon, fort, board, storage, market) with build time, clan-level gates and a speed-up — only with an HQ standing, paid from the treasury
@@ -74,7 +74,7 @@ declare v_clan bigint; v_level int; v_cost int; v_ends timestamptz; v_clan_level
 begin
   select clan_id into v_clan from public._my_clan_membership(auth.uid());
   perform public._clan_leader_check(v_clan);
-  if not (select enabled from public.clan_economy where id = 1) then raise exception 'CLAN:treasury_off'; end if;
+  if not public._clan_econ_on(v_clan) then raise exception 'CLAN:treasury_off'; end if;
   if p_id not in ('dock', 'beacon', 'fort', 'board', 'storage', 'market') then raise exception 'CLAN:bad_project'; end if;
   if not exists (select 1 from public.clan_hq h where h.clan_id = v_clan) then raise exception 'CLAN:no_hq_build'; end if;
   if exists (select 1 from public.clan_builds where clan_id = v_clan) then raise exception 'CLAN:build_busy'; end if;
@@ -128,7 +128,7 @@ begin
   select clan_id into v_clan from public._my_clan_membership(auth.uid());
   perform public._clan_leader_check(v_clan);
   select * into v_e from public.clan_economy where id = 1;
-  if not v_e.enabled then raise exception 'CLAN:treasury_off'; end if;
+  if not public._clan_econ_on(v_clan) then raise exception 'CLAN:treasury_off'; end if;
   if exists (select 1 from public.clan_hq_ruins r where r.clan_id = v_clan and r.until > now()) then raise exception 'CLAN:hq_ruins'; end if;
   if not exists (select 1 from public.territories t join public.clan_members cm on cm.user_id = t.owner_id and cm.clan_id = v_clan and cm.left_at is null
                  where t.id = p_territory_id and not t.is_deleted) then raise exception 'CLAN:hq_not_ours'; end if;
@@ -158,7 +158,7 @@ begin
   if v_s.territory_id is not null then return true; end if;
   insert into public.clan_sieges (territory_id, clan_id, attacker_id, ends_at)
   values (p_territory_id, v_hq.clan_id, p_attacker,
-          now() + make_interval(mins => 30 + (case public._clan_project_level(v_hq.clan_id, 'beacon') when 1 then 10 when 2 then 20 when 3 then 30 else 0 end)));
+          now() + make_interval(mins => 90 + (case public._clan_project_level(v_hq.clan_id, 'beacon') when 1 then 10 when 2 then 20 when 3 then 30 else 0 end)));
   perform public._clan_notify(cm.user_id, 'clan_hq_siege', p_attacker, v_hq.clan_id, jsonb_build_object('territory_id', p_territory_id))
     from public.clan_members cm where cm.clan_id = v_hq.clan_id and cm.left_at is null;
   return true;

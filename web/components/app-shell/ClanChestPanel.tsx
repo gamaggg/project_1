@@ -86,15 +86,16 @@ function useCountUp(target: number, ms = 1000) {
   return v
 }
 
-export function ClanChestPanel({ clanId, isMember }: { clanId: number; isMember: boolean }) {
+// treasuryShare: the clan update is on — the share (%) of the chest's rewards that also goes into the clan's treasury.
+export function ClanChestPanel({ clanId, isMember, treasuryShare }: { clanId: number; isMember: boolean; treasuryShare?: number }) {
   const { data: chest, isLoading } = useClanChest(clanId)
   if (isLoading || !chest) return <div className="clan-soon">{isLoading ? <HexLoader size={0.55} /> : tn('common.noData')}</div>
-  return <ChestBody chest={chest} isMember={isMember} />
+  return <ChestBody chest={chest} isMember={isMember} treasuryShare={treasuryShare} />
 }
 
 type Chest = NonNullable<ReturnType<typeof useClanChest>['data']>
 
-function ChestBody({ chest, isMember }: { chest: Chest; isMember: boolean }) {
+function ChestBody({ chest, isMember, treasuryShare }: { chest: Chest; isMember: boolean; treasuryShare?: number }) {
   const { user } = useAuth()
   const [sel, setSel] = useState<number | null>(null)
   const [burst, setBurst] = useState<{ i: number; k: number } | null>(null)
@@ -251,6 +252,7 @@ function ChestBody({ chest, isMember }: { chest: Chest; isMember: boolean }) {
           ) : (
             <div className="clan-empty" style={{ padding: '4px 0 2px' }}>{tn('chest.myNone')}</div>
           )}
+          {treasuryShare !== undefined && treasuryShare > 0 && <ChestTreasury chest={chest} next={next} share={treasuryShare} />}
         </div>
       )}
 
@@ -283,6 +285,29 @@ function ChestBody({ chest, isMember }: { chest: Chest; isMember: boolean }) {
             </div>
           ))
         )}
+      </div>
+    </div>
+  )
+}
+
+// The clan update: what the chest also brings to the clan's treasury — the share of all the rewards paid to the
+// members who fished this week, now and at the next chest. Paid at the end of the week, on top of the rewards.
+function ChestTreasury({ chest, next, share }: { chest: Chest; next: number | null; share: number }) {
+  const players = chest.contributors.filter((c) => c.points > 0).length
+  const cut = (reward: number) => Math.floor((reward * players * share) / 100)
+  const now = chest.tier > 0 ? cut(chest.rewards[chest.tier - 1]) : 0
+  const later = next !== null ? cut(chest.rewards[chest.tier]) : null
+  return (
+    <div className="chest-treasury" data-tour="chest-treasury">
+      <div className="chest-treasury-top">
+        <span>{tn('clan2.chest.title')}</span>
+        <b>
+          +{now}
+          <CoinIcon size={16} />
+        </b>
+      </div>
+      <div className="chest-treasury-text">
+        {later !== null ? tn('clan2.chest.next', { n: later, p: share }) : tn('clan2.chest.all', { p: share })}
       </div>
     </div>
   )

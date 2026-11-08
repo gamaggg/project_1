@@ -1,5 +1,6 @@
 'use client'
 
+import { itemName } from '@/lib/clan2/itemName'
 import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useEffect, useMemo, useState } from 'react'
 import { useActivity, useCityFeed, useMarkNotificationsRead } from '@/lib/supabase/queries'
@@ -522,6 +523,65 @@ export function ActivityScreen({
                 title = tr('activity.ratingOvertaken', { rank: n('rank') })
                 sub = [tr('activity.ratingOvertakenSub', { prev: n('prev_rank') }), a.who ? tr('activity.ratingAhead', { name: a.who }) : null].filter(Boolean).join(' · ')
                 action = onOpenRating
+              } else if (ev.kind.startsWith('clan_') && (ev.kind.startsWith('clan_hq_') || ['clan_buff_planned', 'clan_quest_done', 'clan_project_done', 'clan_item_bought', 'clan_recruit_joined', 'clan_recruit_paid', 'clan_week_digest', 'clan_nudge'].includes(ev.kind))) {
+                // The clan update: its alarms and news (04_clan_notifications.sql). Every one opens the clan.
+                const clan = String(p.clan_name ?? '')
+                const id = String(p.territory_id ?? a.territoryId ?? '')
+                const clanId = n('clan_id')
+                if (clanId) action = () => onOpenClan(clanId)
+                if (ev.kind === 'clan_hq_attacked') {
+                  tone = 'red'
+                  icon = FEED_ICONS.shield
+                  title = tr('activity.clanHqAttacked', { clan })
+                  sub = tr('activity.clanHqAttackedSub', { id, n: n('defense') })
+                } else if (ev.kind === 'clan_hq_siege') {
+                  tone = 'red'
+                  icon = FEED_ICONS.alert
+                  title = tr('activity.clanHqSiege', { clan })
+                  sub = tr('activity.clanHqSiegeSub', { id, m: n('minutes') || 90 })
+                  if (id) action = () => onOpenTerritory(id)
+                } else if (ev.kind === 'clan_hq_saved') {
+                  tone = 'green'
+                  icon = FEED_ICONS.shield
+                  title = tr('activity.clanHqSaved', { name: a.who || tr('activity.someone'), clan })
+                } else if (ev.kind === 'clan_hq_fell') {
+                  tone = 'red'
+                  icon = FEED_ICONS.alert
+                  title = tr('activity.clanHqFell', { clan })
+                  sub = tr('activity.clanHqFellSub', { n: n('loot') })
+                } else if (ev.kind === 'clan_buff_planned') {
+                  icon = FEED_ICONS.flame
+                  title = tr('activity.clanBuff', { clan })
+                  sub = tr('activity.clanBuffSub')
+                } else if (ev.kind === 'clan_quest_done') {
+                  tone = 'green'
+                  icon = FEED_ICONS.medal
+                  title = tr('activity.clanQuestDone', { clan })
+                  sub = tr('activity.clanQuestDoneSub', { n: n('reward') })
+                } else if (ev.kind === 'clan_project_done') {
+                  tone = 'gold'
+                  icon = FEED_ICONS.gift
+                  title = tr('activity.clanProjectDone', { name: String(p.name ?? ''), n: n('level') })
+                } else if (ev.kind === 'clan_item_bought') {
+                  tone = 'gold'
+                  icon = FEED_ICONS.gift
+                  title = tr('activity.clanItemBought', { clan, name: typeof p.item === 'string' ? itemName(p.item) : String(p.name ?? '') })
+                } else if (ev.kind === 'clan_nudge') {
+                  icon = FEED_ICONS.flame
+                  title = tr('clan2.activity.nudge', { name: a.who || tr('activity.someone') })
+                  sub = tr('clan2.activity.nudgeSub', { clan })
+                } else if (ev.kind === 'clan_week_digest') {
+                  icon = FEED_ICONS.medal
+                  title = tr('clan2.tg.weekTitle', { clan })
+                  sub = tr('clan2.activity.weekSub', { income: n('income'), catches: n('catches'), fishers: n('fishers') })
+                } else if (ev.kind === 'clan_recruit_joined') {
+                  icon = FEED_ICONS.medal
+                  title = tr('activity.clanRecruitJoined', { name: a.who || tr('activity.someone'), clan })
+                } else {
+                  tone = 'green'
+                  icon = FEED_ICONS.medal
+                  title = tr('activity.clanRecruitPaid', { name: a.who || tr('activity.someone'), n: n('amount') || 100 })
+                }
               } else if (ev.kind === 'daily_reward_reminder') {
                 tone = 'green'
                 icon = FEED_ICONS.gift

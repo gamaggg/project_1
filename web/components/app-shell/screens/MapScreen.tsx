@@ -32,6 +32,7 @@ import { useNow } from '@/lib/useNow'
 import { tn } from '@/lib/i18n'
 import { useClan2Map } from '@/components/clan2/live/overlay'
 import { Clan2SectorRow } from '@/components/clan2/live/SectorRow'
+import { Clan2SoloHintLazy } from '@/components/clan2/live/lazy'
 import { useClan2Enabled } from '@/lib/clan2/live/flag'
 import { setLiveUi } from '@/lib/clan2/live/ui'
 
@@ -494,6 +495,7 @@ export const MapScreen = forwardRef<
             <ForecastChip city={city} />
           </div>
           {race && !selectedIds?.size && !pendingAddDrafts?.length && <MapRacePill city={race.city} clanId={race.clanId} onOpen={race.onOpen} />}
+          {clan2On && clanLayer && !race && !selectedIds?.size && !pendingAddDrafts?.length && <Clan2SoloHintLazy />}
         </div>
         {selectedIds && selectedIds.size > 0 && (
           <div className="map-selection-bar">

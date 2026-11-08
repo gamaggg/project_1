@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Clan2LiveLazy as Clan2Live } from '@/components/clan2/live/lazy'
 import { useClan2Enabled } from '@/lib/clan2/live/flag'
+import { useClan2Access } from '@/lib/clan2/live/access'
 import { onMapRequest } from '@/lib/clan2/live/ui'
 import { useAuth } from '@/components/providers/AuthProvider'
 import {
@@ -272,7 +273,9 @@ export function FishZoneApp() {
   const { current: unlockedAchievement, dismiss: dismissUnlockedAchievement } = useAchievementUnlock(territories, territoriesReady, city)
   const { show: showWeekTop, entry: weekTopEntry, leader: weekTopLeader, dismiss: dismissWeekTop } = useWeekTopModal(city)
   const clanCeremony = useClanBattleCeremony(city, myProfile?.clanId ?? null)
-  // The clan update (switched on per browser, never in production): the player's real clan, read, and a layer on top of the app.
+  // The clan update: for whom the server lets in (the super admin and the pilot clans during the hidden launch, then
+  // everyone), or a developer's browser; the player's real clan, read, and a layer on top of the app.
+  useClan2Access(myProfile)
   const clan2On = useClan2Enabled()
   const { data: myClanDetail } = useClan(clan2On ? (myProfile?.clanId ?? null) : null)
   useEffect(() => {

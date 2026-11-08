@@ -2,7 +2,7 @@ import { test, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import * as S from '@/lib/clan2/demoStore.ts'
 import { QUEST_KINDS, makeQuest, pickQuestKind, questTarget, weekEndOf, weekKeyOf, weekStartOf } from '@/lib/clan2/rules.ts'
-import { BUILD_CLAN_LEVEL, BUILD_HOURS, CLAN_SKINS, DAY, HOURS, DEFENSE_MAX, HQ_LOOT_MAX, HQ_RUINS_HOURS, PROJECTS, PROJECT_EFFECTS, SIEGE_MINUTES, dailyRent, speedupCost, treasuryCap } from '@/lib/clan2/rules.ts'
+import { BUILD_CLAN_LEVEL, BUILD_HOURS, SHOP_ITEMS, shopItem, DAY, HOURS, DEFENSE_MAX, HQ_LOOT_MAX, HQ_RUINS_HOURS, PROJECTS, PROJECT_EFFECTS, SIEGE_BREAK_REWARD, SIEGE_MINUTES, dailyRent, speedupCost, treasuryCap } from '@/lib/clan2/rules.ts'
 import { buildLiveState, syncLiveState, liveSectors } from '@/lib/clan2/live/seed.ts'
 
 // The mechanics of the clan update, on the demo store (the same one the real app's live mode runs on).
@@ -79,8 +79,8 @@ test('tax: only a manager sets it, the rate is capped, and a catch pays it into 
 })
 
 test('goal: needs enough coins, spends them, owns and wears the skin on every clan sector', () => {
-  ok(S.setGoal('skin_clan_tide'))
-  const cost = 5000
+  ok(S.setGoal('skin_depth'))
+  const cost = shopItem('skin_depth').cost
   assert.ok(st().treasury.balance < cost)
   no(S.buyGoal(), 'notEnough')
   S.advanceTime(60 * DAY)
@@ -88,14 +88,44 @@ test('goal: needs enough coins, spends them, owns and wears the skin on every cl
   const b = st().treasury.balance
   ok(S.buyGoal())
   assert.equal(st().treasury.balance, b - cost)
-  assert.ok(st().owned.includes('clan_tide'))
-  assert.equal(st().equippedSkin, 'clan_tide')
-  assert.ok(st().sectors.filter((x) => x.owner === 'mine').every((x) => x.skin === 'clan_tide'))
+  assert.ok(st().owned.includes('skin_depth'))
+  assert.equal(st().equippedSkin, 'skin_depth')
+  assert.ok(st().sectors.filter((x) => x.owner === 'mine').every((x) => x.skin === 'skin_depth'))
   assert.equal(st().treasury.goalId, null)
+  no(S.buyItem('skin_depth'), 'owned')
+  no(S.setGoal('skin_depth'), 'owned')
+})
+
+test('shop: a frame and a boat are bought, worn and taken off; a member cannot buy; a locked item waits for the level', () => {
+  S.advanceTime(90 * DAY)
+  ok(S.buyItem('frame_bronze'))
+  assert.equal(st().equipped.frame, 'frame_bronze')
+  ok(S.equipItem('frame', null))
+  assert.equal(st().equipped.frame, null)
+  ok(S.equipItem('frame', 'frame_bronze'))
+  no(S.equipItem('boat', 'boat_gold'), 'notOwned')
+  // the demo clan is level 5: the legendary frame (level 8) is locked, but can be the goal
+  no(S.buyItem('frame_legend'), 'levelLow')
+  ok(S.setGoal('frame_legend'))
+  S.setPersona('member')
+  no(S.buyItem('boat_coral'), 'notManager')
+  no(S.setGoal('boat_coral'), 'notManager')
+})
+
+test('the month\'s deposits: a deposit and the catch tax count for the member; a new month starts from nothing', () => {
+  const me = st().myId
+  const before = S.monthDepositOf(st(), me)
+  ok(S.deposit(100))
+  assert.equal(S.monthDepositOf(st(), me), before + 100)
+  ok(S.setTaxRate(10))
+  const r = S.simulateCatch({ memberId: me, species: 'katran' })
+  assert.equal(S.monthDepositOf(st(), me), before + 100 + r.summary.tax)
+  S.advanceTime(32 * DAY)
+  assert.equal(S.monthDepositOf(st(), me), 0)
 })
 
 test('a skin can be worn only once owned, and taken off', () => {
-  no(S.equipSkin('clan_aurora'), 'notOwned')
+  no(S.equipSkin('skin_lightning'), 'notOwned')
   ok(S.equipSkin(null))
   assert.equal(st().equippedSkin, null)
   assert.ok(st().sectors.every((x) => x.skin === null))
@@ -183,12 +213,11 @@ test('market: rent is higher by its percent', () => {
   assert.equal(dailyRent(s.settings, 5, 2, true, 3), Math.round(base * 1.15))
 })
 
-test('clan skins: price and the level that opens them; the treasury cap at that level is above the price', () => {
-  for (const k of CLAN_SKINS) assert.ok(treasuryCap(k.minLevel, 0) >= k.price, `${k.id} price ${k.price} cap ${treasuryCap(k.minLevel, 0)}`)
-  S.resetDemo()
-  // the demo clan is level 5: the lanterns (level 9) are locked
-  no(S.setGoal('skin_clan_lanterns'), 'levelLow')
-  ok(S.setGoal('skin_clan_aurora'))
+test('the clan shop: every item fits under the treasury cap at the level that opens it; the sector skins are the players\' 18', () => {
+  for (const k of SHOP_ITEMS) assert.ok(treasuryCap(k.minLevel, 0) >= k.cost, `${k.id} price ${k.cost} cap ${treasuryCap(k.minLevel, 0)}`)
+  assert.equal(SHOP_ITEMS.filter((k) => k.kind === 'clan_skin').length, 18)
+  assert.equal(shopItem('skin_stripes').cost, 1500)
+  assert.equal(shopItem('skin_lightning').cost, 15000)
 })
 
 test('treasury cap by clan level', () => {
@@ -238,7 +267,7 @@ test('siege: defence runs down, then a siege starts; a clan catch breaks it', ()
   ok(r)
   assert.equal(r.info, 'siegeBroken')
   assert.equal(st().hq.siege, null)
-  assert.equal(st().wallet, w + 20)
+  assert.equal(st().wallet, w + SIEGE_BREAK_REWARD)
   assert.equal(st().sectors.find((x) => x.id === id).defense, 1)
   assert.ok(st().alerts.some((a) => a.kind === 'hq_saved'))
 })
@@ -252,7 +281,7 @@ test('a fallen HQ: loot, the sector lost, ruins, sleeping buildings, no new HQ f
   const id = st().hq.sectorId
   for (let i = 0; i < 4; i++) S.attackHq()
   const balance = st().treasury.balance
-  S.advanceTime(31 * 60_000)
+  S.advanceTime((S.siegeMinutesOf(st()) + 1) * 60_000)
   const s = st()
   assert.equal(s.hq.sectorId, null)
   assert.equal(s.hq.siege, null)
@@ -309,13 +338,13 @@ test('buff: costs the treasury, needs three «иду», refunds when it falls th
   assert.equal(st().buff.phase, 'planned')
   no(S.planBuff(30), 'buffBusy')
   // nobody joins: the price comes back
-  S.advanceTime(31 * 60_000)
+  S.advanceTime((S.siegeMinutesOf(st()) + 1) * 60_000)
   assert.equal(st().buff.phase, 'idle')
   assert.equal(st().treasury.balance, b)
   // with enough people it runs
   ok(S.planBuff(30))
   ok(S.othersRsvp(3))
-  S.advanceTime(31 * 60_000)
+  S.advanceTime((S.siegeMinutesOf(st()) + 1) * 60_000)
   assert.equal(st().buff.phase, 'active')
   const r = S.simulateCatch({ memberId: st().myId, species: 'katran' })
   assert.equal(r.summary.buff, true)
@@ -513,7 +542,9 @@ test('live: the state is built from the real clan, read only', () => {
   assert.deepEqual(s.sectors.map((x) => x.id), ['B1', 'B2', 'B3'])
   assert.equal(s.sectors.find((x) => x.id === 'B2').shared, 2)
   assert.equal(s.hq.sectorId, null)
-  assert.equal(s.treasury.balance, 3000)
+  // The treasury starts empty, with no starting coins.
+  assert.equal(s.treasury.balance, 0)
+  assert.equal(s.treasury.entries.length, 0)
   assert.ok(s.sectors.every((x) => x.defense <= DEFENSE_MAX))
 })
 
@@ -527,9 +558,12 @@ test('live: bind, then place the HQ on a real sector; a sector the game takes aw
   const i = input()
   S.bindLive('test-key-1', () => buildLiveState(i), (d) => syncLiveState(d, i))
   assert.equal(st().live.clanId, 34)
+  // an empty treasury cannot pay for the HQ; a deposit can
+  no(S.placeHq('B1'), 'notEnough')
+  ok(S.deposit(1200))
   ok(S.placeHq('B1'))
   assert.equal(st().hq.sectorId, 'B1')
-  assert.equal(st().treasury.balance, 3000 - st().settings.hqPlaceCost)
+  assert.equal(st().treasury.balance, 1200 - st().settings.hqPlaceCost)
   no(S.placeHq('B4'), 'hqNotMine')
   no(S.placeHq('B5'), 'hqNotMine')
   // the real game takes B1 from the clan: the HQ falls by itself

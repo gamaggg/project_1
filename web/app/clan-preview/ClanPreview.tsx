@@ -101,7 +101,7 @@ function Shell() {
               steps={tour === 'admin' ? ADMIN_TOUR : PLAYER_TOUR}
               onStep={(st: TourStep) => {
                 setTab(st.tab)
-                if (st.sub) setSub(st.sub)
+                if (st.sub) setSub(st.sub as SubTab)
               }}
               onClose={() => {
                 markTourSeen(tour)

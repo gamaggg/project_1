@@ -13,6 +13,8 @@
 create table public.clan_economy (
   id int primary key default 1 check (id = 1),
   enabled boolean not null default false,
+  -- Пробные кланы (скрытый запуск): у них общак работает, даже пока enabled = false для всех.
+  pilot_clans bigint[] not null default '{}',
   rent_per_sector_day int not null default 8 check (rent_per_sector_day between 0 and 100),
   shared_rent_factor numeric not null default 1.5 check (shared_rent_factor between 1 and 5),
   buff_price int not null default 300 check (buff_price between 0 and 5000),
@@ -66,6 +68,12 @@ grant select on public.clan_economy, public.clan_treasury, public.clan_treasury_
 
 -- ───────────── helpers (not callable from the client) ─────────────
 
+-- Работает ли общак у этого клана: включён для всех или клан в пробном списке (скрытый запуск).
+create or replace function public._clan_econ_on(p_clan_id bigint)
+returns boolean language sql stable security definer set search_path = public as $$
+  select coalesce((select e.enabled or p_clan_id = any(e.pilot_clans) from public.clan_economy e where e.id = 1), false);
+$$;
+
 -- The treasury holds only so much, by clan level (same table as lib/clan2/rules.ts: treasuryCap); «Склад» adds to it.
 create or replace function public._clan_treasury_cap(p_clan_id bigint)
 returns int language sql stable security definer set search_path = public as $$
@@ -116,7 +124,7 @@ begin
   select * into v_e from public.clan_economy where id = 1;
   select * into v_t from public.clan_treasury where clan_id = p_clan_id;
   return jsonb_build_object(
-    'enabled', v_e.enabled,
+    'enabled', public._clan_econ_on(p_clan_id),
     'balance', coalesce(v_t.balance, 0),
     'cap', public._clan_treasury_cap(p_clan_id),
     'tax_rate', coalesce(v_t.tax_rate, 0),
@@ -142,11 +150,10 @@ returns jsonb language plpgsql security definer set search_path = public as $$
 declare v_uid uuid := auth.uid(); v_m public.clan_members; v_e public.clan_economy; v_added int; v_bal int;
 begin
   if v_uid is null then raise exception 'not authenticated'; end if;
-  select * into v_e from public.clan_economy where id = 1;
-  if not v_e.enabled then raise exception 'CLAN:treasury_off'; end if;
   if p_amount is null or p_amount < 1 or p_amount > 5000 then raise exception 'CLAN:bad_amount'; end if;
   select * into v_m from public._my_clan_membership(v_uid);
   if v_m.id is null then raise exception 'CLAN:not_member'; end if;
+  if not public._clan_econ_on(v_m.clan_id) then raise exception 'CLAN:treasury_off'; end if;
   perform 1 from public.profiles where id = v_uid for update;
   update public.profiles set coins = coins - p_amount where id = v_uid and coins >= p_amount;
   if not found then raise exception 'not enough coins'; end if;
@@ -194,6 +201,7 @@ begin
   if not exists (select 1 from public.profiles where id = auth.uid() and is_super_admin) then raise exception 'not allowed'; end if;
   update public.clan_economy set
     enabled = coalesce((p->>'enabled')::boolean, enabled),
+    pilot_clans = coalesce(array(select jsonb_array_elements_text(p->'pilot_clans')::bigint), pilot_clans),
     rent_per_sector_day = coalesce((p->>'rent_per_sector_day')::int, rent_per_sector_day),
     shared_rent_factor = coalesce((p->>'shared_rent_factor')::numeric, shared_rent_factor),
     buff_price = coalesce((p->>'buff_price')::int, buff_price),
@@ -219,8 +227,7 @@ returns int language plpgsql security definer set search_path = public as $$
 declare v_e public.clan_economy; r record; v_days int; v_plain int; v_shared int; v_sum int; v_paid int := 0;
 begin
   select * into v_e from public.clan_economy where id = 1;
-  if not v_e.enabled then return 0; end if;
-  for r in select c.id from public.clans c where c.disbanded_at is null loop
+  for r in select c.id from public.clans c where c.disbanded_at is null and public._clan_econ_on(c.id) loop
     insert into public.clan_treasury (clan_id) values (r.id) on conflict do nothing;
     select greatest(0, floor(extract(epoch from (now() - last_rent_at)) / 86400))::int into v_days
       from public.clan_treasury where clan_id = r.id for update;
@@ -251,9 +258,8 @@ returns trigger language plpgsql security definer set search_path = public as $$
 declare v_m public.clan_members; v_rate smallint; v_tax int; v_taken int;
 begin
   if NEW.reason <> 'catch_reward' or NEW.amount <= 0 then return NEW; end if;
-  if not (select enabled from public.clan_economy where id = 1) then return NEW; end if;
   select * into v_m from public._my_clan_membership(NEW.user_id);
-  if v_m.id is null then return NEW; end if;
+  if v_m.id is null or not public._clan_econ_on(v_m.clan_id) then return NEW; end if;
   select tax_rate into v_rate from public.clan_treasury where clan_id = v_m.clan_id;
   if coalesce(v_rate, 0) = 0 then return NEW; end if;
   v_tax := floor(NEW.amount * v_rate / 100.0)::int;
@@ -273,7 +279,7 @@ create trigger clan_tax_on_catch after insert on public.coin_transactions
 -- ───────────── who may call what ─────────────
 
 revoke execute on function public._clan_treasury_cap(bigint), public._clan_treasury_add(bigint, int, text, uuid, text),
-  public._clan_leader_check(bigint), public.clan_rent_tick(), public._clan_tax_on_catch() from public, anon, authenticated;
+  public._clan_leader_check(bigint), public.clan_rent_tick(), public._clan_tax_on_catch(), public._clan_econ_on(bigint) from public, anon, authenticated;
 revoke execute on function public.get_clan_treasury(bigint), public.clan_treasury_donate(int), public.clan_set_tax(int),
   public.clan_set_goal(text), public.admin_set_clan_economy(jsonb) from public, anon;
 grant execute on function public.get_clan_treasury(bigint), public.clan_treasury_donate(int), public.clan_set_tax(int),

@@ -3,12 +3,14 @@ import { isCronRequest } from '@/lib/cronAuth'
 import { SITE_URL } from '@/lib/site'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { pluralSectors, pluralCatches } from '@/lib/format'
-import { setCurrentLanguage, tn } from '@/lib/i18n/runtime'
+import { setCurrentLanguage, tn, tnd } from '@/lib/i18n/runtime'
 import { isLang, type Lang } from '@/lib/i18n/core'
 import { localAwardTitle, localChallengeName } from '@/lib/data/dbText'
 import { localSpeciesNameLoose } from '@/lib/data/species'
 import { withErrorReport } from '@/lib/serverErrors'
 import { asCityId, cityForSectorId, type CityId } from '@/lib/data/city'
+import { clanWeekDigestText, readClanWeekDigest } from '@/lib/telegram/clanDigest'
+import { itemName } from '@/lib/clan2/itemName'
 
 // «in the city» as the notification texts name it (tg.in…).
 const IN_CITY = { batumi: 'tg.inBatumi', moscow: 'tg.inMoscow', spb: 'tg.inSpb', sochi: 'tg.inSochi', tbilisi: 'tg.inTbilisi' } as const satisfies Record<CityId, string>
@@ -199,6 +201,53 @@ function renderMessage(notification: NotificationRef): Message | null {
             ? tn('tg.raceOvertaken', { clan: clanName, place: placeText, ahead: ahead ? tn('tg.raceAhead', { name: ahead }) : '' })
             : tn('tg.raceBoatFinished', { clan: clanName })
       return { text, buttonLabel: tn('tg.btnRace'), url: `${SITE_URL}/?race=1` }
+    }
+    // The clan update (supabase-drafts/clan-update-06-11/04 and 06): the clan's HQ, its outings, its buildings and the
+    // week's summary. The same words as in «Активность» (activity.clan…), the HQ under attack opens its sector.
+    case 'clan_hq_attacked':
+    case 'clan_hq_siege':
+    case 'clan_hq_saved':
+    case 'clan_hq_fell':
+    case 'clan_buff_planned':
+    case 'clan_quest_done':
+    case 'clan_project_done':
+    case 'clan_item_bought':
+    case 'clan_recruit_joined':
+    case 'clan_recruit_paid':
+    case 'clan_nudge': {
+      const p = notification.payload ?? {}
+      const clan = typeof p.clan_name === 'string' ? p.clan_name : ''
+      const clanId = Number(p.clan_id ?? 0)
+      if (!clan || !clanId) return null
+      const n = (k: string) => Number(p[k] ?? 0) || 0
+      const id = String(p.territory_id ?? notification.territory_id ?? '')
+      const who = actor?.display_name ?? tn('activity.someone')
+      const project = typeof p.project === 'string' ? tnd(`clan2.project.${p.project}.name`) : String(p.name ?? '')
+      const lines: Record<string, [string, string?]> = {
+        clan_hq_attacked: [tn('activity.clanHqAttacked', { clan }), tn('activity.clanHqAttackedSub', { id, n: n('defense') })],
+        clan_hq_siege: [tn('activity.clanHqSiege', { clan }), tn('activity.clanHqSiegeSub', { id, m: n('minutes') || 90 })],
+        clan_hq_saved: [tn('activity.clanHqSaved', { name: who, clan })],
+        clan_hq_fell: [tn('activity.clanHqFell', { clan }), tn('activity.clanHqFellSub', { n: n('loot') })],
+        clan_buff_planned: [tn('activity.clanBuff', { clan }), tn('activity.clanBuffSub')],
+        clan_quest_done: [tn('activity.clanQuestDone', { clan }), tn('activity.clanQuestDoneSub', { n: n('reward') })],
+        clan_project_done: [tn('activity.clanProjectDone', { name: project, n: n('level') })],
+        clan_item_bought: [tn('activity.clanItemBought', { clan, name: typeof p.item === 'string' ? itemName(p.item) : String(p.name ?? '') })],
+        clan_recruit_joined: [tn('activity.clanRecruitJoined', { name: who, clan })],
+        clan_recruit_paid: [tn('activity.clanRecruitPaid', { name: who, n: n('amount') || 100 })],
+        clan_nudge: [tn('clan2.activity.nudge', { name: who }), tn('clan2.activity.nudgeSub', { clan })],
+      }
+      const [title, sub] = lines[notification.kind]
+      const toSector = (notification.kind === 'clan_hq_attacked' || notification.kind === 'clan_hq_siege') && id
+      return {
+        text: sub ? `${title}\n${sub}` : title,
+        ...(toSector ? sector(id) : { buttonLabel: tn('tg.btnClan'), url: `${SITE_URL}/?clan=${clanId}` }),
+      }
+    }
+    case 'clan_week_digest': {
+      const d = readClanWeekDigest(notification.payload)
+      const clanId = Number(notification.payload?.clan_id ?? 0)
+      if (!d || !clanId) return null
+      return { text: clanWeekDigestText(d), buttonLabel: tn('tg.btnClan'), url: `${SITE_URL}/?clan=${clanId}` }
     }
     case 'moderation': {
       const coinsRemoved = notification.payload?.coinsRemoved as number | undefined

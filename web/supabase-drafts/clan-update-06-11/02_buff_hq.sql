@@ -70,7 +70,7 @@ begin
   select clan_id into v_clan from public._my_clan_membership(auth.uid());
   perform public._clan_leader_check(v_clan);
   select * into v_e from public.clan_economy where id = 1;
-  if not v_e.enabled then raise exception 'CLAN:treasury_off'; end if;
+  if not public._clan_econ_on(v_clan) then raise exception 'CLAN:treasury_off'; end if;
   if p_start_in_minutes is null or p_start_in_minutes not between 5 and 180 then raise exception 'CLAN:bad_start'; end if;
   if exists (select 1 from public.clan_buffs where clan_id = v_clan and ends_at > now()) then raise exception 'CLAN:buff_busy'; end if;
   select max(ends_at) into v_last from public.clan_buffs where clan_id = v_clan;
@@ -136,7 +136,7 @@ begin
   select clan_id into v_clan from public._my_clan_membership(auth.uid());
   perform public._clan_leader_check(v_clan);
   select * into v_e from public.clan_economy where id = 1;
-  if not v_e.enabled then raise exception 'CLAN:treasury_off'; end if;
+  if not public._clan_econ_on(v_clan) then raise exception 'CLAN:treasury_off'; end if;
   if not exists (select 1 from public.territories t join public.clan_members cm on cm.user_id = t.owner_id and cm.clan_id = v_clan and cm.left_at is null
                  where t.id = p_territory_id and not t.is_deleted) then raise exception 'CLAN:hq_not_ours'; end if;
   if exists (select 1 from public.clan_hq h where h.territory_id = p_territory_id) then raise exception 'CLAN:hq_taken'; end if;
@@ -164,7 +164,7 @@ begin
   if p_defense_left > 0 then return false; end if;      -- the defence still holds: the usual defence rules apply
   select * into v_s from public.clan_sieges where territory_id = p_territory_id;
   if v_s.territory_id is not null then return true; end if;   -- a siege is on, further outsider catches do not take it
-  insert into public.clan_sieges (territory_id, clan_id, attacker_id, ends_at) values (p_territory_id, v_hq.clan_id, p_attacker, now() + interval '30 minutes');
+  insert into public.clan_sieges (territory_id, clan_id, attacker_id, ends_at) values (p_territory_id, v_hq.clan_id, p_attacker, now() + interval '90 minutes');
   perform public._clan_notify(cm.user_id, 'clan_hq_siege', p_attacker, v_hq.clan_id, jsonb_build_object('territory_id', p_territory_id))
     from public.clan_members cm where cm.clan_id = v_hq.clan_id and cm.left_at is null;
   return true;
@@ -179,8 +179,10 @@ begin
   if v_clan is null then return false; end if;
   if not exists (select 1 from public.clan_members cm where cm.clan_id = v_clan and cm.user_id = p_defender and cm.left_at is null) then return false; end if;
   delete from public.clan_sieges where territory_id = p_territory_id;
-  update public.profiles set coins = coins + 20 where id = p_defender;
-  insert into public.coin_transactions (user_id, amount, reason, label) values (p_defender, 20, 'clan_siege_break', 'Осада штаба снята');
+  update public.profiles set coins = coins + 150 where id = p_defender;
+  insert into public.coin_transactions (user_id, amount, reason, label) values (p_defender, 150, 'clan_siege_break', 'Осада штаба снята');
+  -- Всему клану: кто снял осаду (момент «Осада снята» и строка в «Активности»; _clan_notify_many из 04 — функция ищется при вызове).
+  perform public._clan_notify_many(v_clan, 'clan_hq_saved', p_defender, jsonb_build_object('territory_id', p_territory_id), 'all', null);
   return true;
 end $$;
 
@@ -205,8 +207,7 @@ returns int language plpgsql security definer set search_path = public as $$
 declare v_e public.clan_economy; r record; v_days int; v_plain int; v_shared int; v_hq int; v_sum int; v_paid int := 0;
 begin
   select * into v_e from public.clan_economy where id = 1;
-  if not v_e.enabled then return 0; end if;
-  for r in select c.id from public.clans c where c.disbanded_at is null loop
+  for r in select c.id from public.clans c where c.disbanded_at is null and public._clan_econ_on(c.id) loop
     insert into public.clan_treasury (clan_id) values (r.id) on conflict do nothing;
     select greatest(0, floor(extract(epoch from (now() - last_rent_at)) / 86400))::int into v_days
       from public.clan_treasury where clan_id = r.id for update;

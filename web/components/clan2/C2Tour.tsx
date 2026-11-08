@@ -12,7 +12,8 @@ import { tn } from '@/lib/i18n/runtime'
 
 type Box = { x: number; y: number; w: number; h: number; ph: number }
 
-export function C2Tour({ steps, onStep, onClose }: { steps: TourStep[]; onStep: (step: TourStep) => void; onClose: () => void }) {
+// live: the real app (the layer covers the whole screen, the elements are looked for in the whole page).
+export function C2Tour({ steps, onStep, onClose, live = false }: { steps: TourStep[]; onStep: (step: TourStep) => void; onClose: () => void; live?: boolean }) {
   const s = useDemoState()
   const [i, setI] = useState(-1)
   const [box, setBox] = useState<Box | null>(null)
@@ -55,8 +56,14 @@ export function C2Tour({ steps, onStep, onClose }: { steps: TourStep[]; onStep: 
       onStep(step)
       await wait(320)
       if (dead) return
-      const phone = root.current?.closest('.c2-phone')
-      const el = step.target ? phone?.querySelector<HTMLElement>(`[data-tour="${step.target}"]`) : null
+      const phone: Element | null | undefined = live ? document.body : root.current?.closest('.c2-phone')
+      // The tab has just opened: its element may need a few frames to be there.
+      let el: HTMLElement | null = null
+      for (let k = 0; step.target && k < 30 && !el && !dead; k++) {
+        el = phone?.querySelector<HTMLElement>(`[data-tour="${step.target}"]`) ?? null
+        if (!el) await wait(50)
+      }
+      if (dead) return
       if (!phone || !el) {
         setBox(null)
         hadBox.current = false
@@ -68,7 +75,8 @@ export function C2Tour({ steps, onStep, onClose }: { steps: TourStep[]; onStep: 
       // sticky clan tabs when the element is under them, so they never cover its top.
       const tabs = el.closest('.c2-phone-body')?.querySelector<HTMLElement>('.c2-subtabs')
       const underTabs = tabs && tabs.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING ? tabs.offsetHeight : 0
-      el.style.scrollMarginTop = `${underTabs + 16}px`
+      // In the real app the screen's own top (the status bar, Telegram's buttons) is kept clear.
+      el.style.scrollMarginTop = live ? 'calc(var(--sticky-reach, 0px) + 24px)' : `${underTabs + 16}px`
       const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
       el.scrollIntoView({ block: 'start', behavior: calm ? 'auto' : 'smooth' })
       // Settled once the element has kept still for a few frames (or after 900 ms at most).
@@ -95,7 +103,7 @@ export function C2Tour({ steps, onStep, onClose }: { steps: TourStep[]; onStep: 
       // layer itself: the phone's screen on a desktop, the whole screen on a phone (there the sandbox is the page
       // and the layer is fixed to the screen).
       const measure = () => {
-        const p = (root.current ?? phone).getBoundingClientRect()
+        const p = (root.current ?? (phone as Element)).getBoundingClientRect()
         const r = el.getBoundingClientRect()
         setBox({ x: r.left - p.left, y: r.top - p.top, w: r.width, h: r.height, ph: p.height })
       }
@@ -135,7 +143,7 @@ export function C2Tour({ steps, onStep, onClose }: { steps: TourStep[]; onStep: 
   const cardStyle = !box ? { top: 260 } : below ? { top: box.y + fitH + 14 } : { bottom: box.ph - box.y + 14 }
 
   return (
-    <div className="c2-tour" ref={root}>
+    <div className={`c2-tour${live ? ' live' : ''}`} ref={root}>
       {i < 0 ? (
         <div className="c2-tour-intro">
           <div className="c2-tour-crest">

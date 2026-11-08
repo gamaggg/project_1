@@ -12,7 +12,6 @@ import {
   CLAN_SKINS,
   DAY,
   DEFENSE_MAX,
-  GOAL_CATALOG,
   HOURS,
   HQ_LOOT_MAX,
   HQ_LOOT_SHARE,
@@ -31,13 +30,16 @@ import {
   makeQuest,
   pickQuestKind,
   questReward,
-  questTarget,
   taxOf,
   weekEndOf,
   weekKeyOf,
   treasuryCap,
+  monthKeyOf,
+  shopItem,
+  skinIdOf,
 } from '@/lib/clan2/rules'
-import type { ClanAlert, ClanRole, DemoMember, DemoState, EconomySettings, MapSector, Persona, ProjectId, ProjectLevel, TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
+import type { ClanAlert, ClanRole, DemoMember, DemoState, EconomySettings, GoalItem, MapSector, Persona, ProjectId, ProjectLevel, TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
+import { applyServerClan, callServer, readServerClan } from '@/lib/clan2/live/server'
 
 // The demo's whole world: one state object, changed only by the actions
 // below, kept in localStorage so a reload (or a day later) finds it as it
@@ -57,12 +59,23 @@ let state: DemoState = initialDemoState()
 let loaded = false
 const listeners = new Set<() => void>()
 
+// A save from an older build: the fields added since get their starting values, so no screen meets a hole.
+function upgrade(d: DemoState): DemoState {
+  d.equipped ??= { boat: null, frame: null }
+  d.deposits ??= { month: monthKeyOf(Date.now() + (d.clockOffsetMs ?? 0)), byMember: {} }
+  // Items of an older shop (the four clan-only skins, the banners) are no longer sold: they drop out.
+  d.owned = (d.owned ?? []).filter((id) => !!shopItem(id))
+  if (d.equippedSkin && !shopItem(d.equippedSkin)) d.equippedSkin = null
+  if (d.treasury.goalId && !shopItem(d.treasury.goalId)) d.treasury.goalId = null
+  return d
+}
+
 function load() {
   if (loaded) return
   loaded = true
   try {
     const raw = window.localStorage.getItem(storageKey)
-    if (raw) state = JSON.parse(raw) as DemoState
+    if (raw) state = upgrade(JSON.parse(raw) as DemoState)
   } catch {
     // A broken save is just the starting world.
   }
@@ -94,7 +107,7 @@ export function bindLive(key: string, make: () => DemoState, sync: (d: DemoState
     loaded = true
     try {
       const raw = window.localStorage.getItem(key)
-      state = raw ? (JSON.parse(raw) as DemoState) : make()
+      state = raw ? upgrade(JSON.parse(raw) as DemoState) : make()
     } catch {
       state = make()
     }
@@ -124,6 +137,43 @@ export function useDemoState(): DemoState {
 export const getDemoState = () => (load(), state)
 
 // A mutation on a copy: the draft is changed freely, the result replaces the state.
+// ───────────── the server (supabase-drafts/clan-update-06-11) ─────────────
+// Bound to a real clan whose functions answer, the store mirrors the server: every action is the server's function
+// (its refusal comes back as a toast through onServerReply), and the state is read again after it and every 30 s.
+// Until the functions are in the database, nothing here is used and the preview keeps its browser-only world.
+let server: { clanId: number; userId: string } | null = null
+const replyListeners = new Set<(r: Result) => void>()
+export const serverOn = () => !!server
+export function onServerReply(fn: (r: Result) => void): () => void {
+  replyListeners.add(fn)
+  return () => {
+    replyListeners.delete(fn)
+  }
+}
+// Reads the clan from the server; true when it answered (the store now mirrors it).
+export async function refreshFromServer(clanId: number, userId: string): Promise<boolean> {
+  const r = await readServerClan(clanId, userId)
+  if (!r.ok) {
+    if (r.missing) server = null
+    return false
+  }
+  server = { clanId, userId }
+  load()
+  const draft = structuredClone(state) as DemoState
+  applyServerClan(draft, r.data, r.alerts)
+  commit(draft)
+  return true
+}
+function srv(fn: string, args: Record<string, unknown>): Result {
+  const bound = server
+  if (!bound) return no('network')
+  void callServer(fn, args).then(async (res) => {
+    if (!res.ok) replyListeners.forEach((l) => l(no(res.reason)))
+    await refreshFromServer(bound.clanId, bound.userId)
+  })
+  return OK
+}
+
 function mutate(fn: (d: DemoState) => Result | void): Result {
   load()
   const draft = structuredClone(state) as DemoState
@@ -148,7 +198,11 @@ export const levelOf = (s: DemoState, id: ProjectId): ProjectLevel => (buildings
 export const capOf = (s: DemoState) => treasuryCap(s.clan.level, levelOf(s, 'storage'))
 export const siegeMinutesOf = (s: DemoState) => SIEGE_MINUTES + PROJECT_EFFECTS.beacon.siegeMinutes[levelOf(s, 'beacon')]
 export const extraSlotsOf = (s: DemoState) => PROJECT_EFFECTS.dock.slots[levelOf(s, 'dock')]
-export const goalOf = (s: DemoState) => GOAL_CATALOG.find((g) => g.id === s.treasury.goalId) ?? null
+export const goalOf = (s: DemoState) => shopItem(s.treasury.goalId)
+// What a member put into the treasury this month (0 once the month has turned and nothing came in yet).
+export const monthDepositOf = (s: DemoState, memberId: string) => (s.deposits?.month === monthKeyOf(nowOf(s)) ? (s.deposits.byMember[memberId] ?? 0) : 0)
+// Is the item owned (a clan skin also by its old id)?
+export const ownsItem = (s: DemoState, id: string) => s.owned.includes(id)
 
 export function sectorCounts(s: DemoState) {
   const mine = s.sectors.filter((x) => x.owner === 'mine')
@@ -194,6 +248,14 @@ function alert(d: DemoState, kind: ClanAlert['kind'], text: string, sectorId?: s
 
 const memberName = (d: DemoState, id: string | null) => d.members.find((m) => m.id === id)?.name ?? ''
 
+// A member's coins that came into the treasury: counted for the month (the column in the members list).
+function credit(d: DemoState, memberId: string, amount: number) {
+  if (amount <= 0) return
+  const month = monthKeyOf(nowOf(d))
+  if (d.deposits.month !== month) d.deposits = { month, byMember: {} }
+  d.deposits.byMember[memberId] = (d.deposits.byMember[memberId] ?? 0) + amount
+}
+
 // The headquarters falls: the attackers carry off part of the treasury, the sector is theirs, the clan has ruins and no HQ for a day.
 export function fallHq(d: DemoState, by: string, fellAt: number) {
   const sectorId = d.hq.sectorId
@@ -236,6 +298,8 @@ function nextQuest(d: DemoState) {
 
 function runTime(d: DemoState) {
   const now = nowOf(d)
+  // A new month: everybody's «взнос за месяц» starts from nothing.
+  if (d.deposits.month !== monthKeyOf(now)) d.deposits = { month: monthKeyOf(now), byMember: {} }
   // Rent: one entry per whole day.
   while (now - d.lastRentAt >= DAY) {
     d.lastRentAt += DAY
@@ -296,15 +360,18 @@ function runTime(d: DemoState) {
 
 // Called by the screens once a second; commits only if something happened.
 export function tick() {
+  // The server keeps the time itself (rent, sieges, builds): the store only waits for the next read.
+  if (server) return
   load()
   const draft = structuredClone(state) as DemoState
-  const before = JSON.stringify({ r: draft.lastRentAt, b: draft.buff, h: draft.hq, n: draft.build, d: draft.sectors.map((x) => x.defense) })
+  const before = JSON.stringify({ r: draft.lastRentAt, b: draft.buff, h: draft.hq, n: draft.build, d: draft.sectors.map((x) => x.defense), m: draft.deposits.month, q: draft.quest.endsAt })
   runTime(draft)
-  const after = JSON.stringify({ r: draft.lastRentAt, b: draft.buff, h: draft.hq, n: draft.build, d: draft.sectors.map((x) => x.defense) })
+  const after = JSON.stringify({ r: draft.lastRentAt, b: draft.buff, h: draft.hq, n: draft.build, d: draft.sectors.map((x) => x.defense), m: draft.deposits.month, q: draft.quest.endsAt })
   if (before !== after) commit(draft)
 }
 
 export function advanceTime(ms: number): Result {
+  if (server) return no('serverGame')
   return mutate((d) => {
     d.clockOffsetMs += ms
     for (const m of d.members) if (m.lastCatchMin !== null) m.lastCatchMin += Math.round(ms / 60_000)
@@ -366,6 +433,7 @@ export function markTourSeen(audience: 'player' | 'admin', seen = true): Result 
 // ───────────── the treasury ─────────────
 
 export function deposit(amount: number): Result {
+  if (server) return srv('clan_treasury_donate', { p_amount: amount })
   return mutate((d) => {
     const me = d.members.find((m) => m.id === d.myId)
     if (!me) return no('notMember')
@@ -377,10 +445,12 @@ export function deposit(amount: number): Result {
     // What did not fit goes back to the wallet.
     d.wallet += amount - added
     me.weekDeposit += added
+    credit(d, me.id, added)
   })
 }
 
 export function setTaxRate(rate: number): Result {
+  if (server) return srv('clan_set_tax', { p_rate: rate })
   return mutate((d) => {
     if (!canManage(d)) return no('notManager')
     if (!TAX_RATES.includes(rate as 0 | 5 | 10) || rate > d.settings.taxMax) return no('badRate')
@@ -388,47 +458,74 @@ export function setTaxRate(rate: number): Result {
   })
 }
 
+// The treasury's goal: any item of the shop the clan does not own yet (the whole clan sees it on the treasury's card).
 export function setGoal(id: string | null): Result {
+  if (server) return srv('clan_set_goal', { p_goal: id })
   return mutate((d) => {
     if (!canManage(d)) return no('notManager')
-    const wanted = GOAL_CATALOG.find((g) => g.id === id)
-    if (wanted && d.clan.level < wanted.minLevel) return no('levelLow')
-    d.treasury.goalId = id
+    if (id === null) {
+      d.treasury.goalId = null
+      return
+    }
+    const wanted = shopItem(id)
+    if (!wanted) return no('noGoal')
+    if (d.owned.includes(wanted.id)) return no('owned')
+    d.treasury.goalId = wanted.id
+  })
+}
+
+// Puts an owned item on (or takes the kind off with null).
+function wear(d: DemoState, kind: GoalItem['kind'], id: string | null) {
+  if (kind === 'clan_skin') {
+    const skin = id ? skinIdOf(id) : null
+    d.equippedSkin = skin
+    for (const s of d.sectors) if (s.owner === 'mine') s.skin = skin
+  } else d.equipped[kind] = id
+}
+
+// Buys an item of the shop from the treasury: the leader or a co-leader, the clan's level, enough coins. The item is
+// put on at once, and if it was the goal, the goal is done.
+export function buyItem(id: string): Result {
+  if (server) return srv('clan_shop_buy', { p_item: id })
+  return mutate((d) => {
+    if (!canManage(d)) return no('notManager')
+    const item = shopItem(id)
+    if (!item) return no('noGoal')
+    if (d.owned.includes(item.id)) return no('owned')
+    if (d.clan.level < item.minLevel) return no('levelLow')
+    if (d.treasury.balance < item.cost) return no('notEnough')
+    if (!spend(d, item.kind === 'clan_skin' ? 'spend_skin' : 'spend_goal', item.cost, d.myId, item.id)) return no('notEnough')
+    d.owned.push(item.id)
+    wear(d, item.kind, item.id)
+    if (d.treasury.goalId === item.id) d.treasury.goalId = null
+    alert(d, 'project_done', item.id)
   })
 }
 
 export function buyGoal(): Result {
-  return mutate((d) => {
-    if (!canManage(d)) return no('notManager')
-    const goal = goalOf(d)
-    if (!goal) return no('noGoal')
-    if (d.clan.level < goal.minLevel) return no('levelLow')
-    if (d.treasury.balance < goal.cost) return no('notEnough')
-    if (!spend(d, goal.kind === 'clan_skin' ? 'spend_skin' : 'spend_goal', goal.cost, d.myId, goal.id)) return no('notEnough')
-    // skin_clan_tide → clan_tide; the boat and the banner keep their ids.
-    const owned = goal.id.replace(/^skin_/, '')
-    if (!d.owned.includes(owned)) d.owned.push(owned)
-    if (goal.kind === 'clan_skin') {
-      d.equippedSkin = owned
-      for (const s of d.sectors) if (s.owner === 'mine') s.skin = owned
-    }
-    d.treasury.goalId = null
-    alert(d, 'project_done', goal.id)
-  })
+  const goal = goalOf(getDemoState())
+  return goal ? buyItem(goal.id) : no('noGoal')
 }
 
-export function equipSkin(id: string | null): Result {
+// Puts on an item the clan owns, or (null) takes that kind off.
+export function equipItem(kind: GoalItem['kind'], id: string | null): Result {
+  if (server) return srv('clan_shop_equip', { p_kind: kind, p_item: id })
   return mutate((d) => {
     if (!canManage(d)) return no('notManager')
     if (id && !d.owned.includes(id)) return no('notOwned')
-    d.equippedSkin = id
-    for (const s of d.sectors) if (s.owner === 'mine') s.skin = id
+    wear(d, kind, id)
   })
+}
+
+// The old call: a sector skin by its id.
+export function equipSkin(id: string | null): Result {
+  return equipItem('clan_skin', id)
 }
 
 // Starts building the next level: paid at once, ready after BUILD_HOURS, one building at a time, and only
 // while an HQ stands and the clan is of the level that opens it.
 export function upgradeProject(id: ProjectId): Result {
+  if (server) return srv('clan_upgrade_project', { p_id: id })
   return mutate((d) => {
     if (!canManage(d)) return no('notManager')
     if (!buildingsOn(d)) return no('noHqBuild')
@@ -451,6 +548,7 @@ export const speedupPrice = (d: DemoState): number => {
 }
 
 export function speedUpBuild(): Result {
+  if (server) return srv('clan_speedup_build', {})
   return mutate((d) => {
     if (!canManage(d)) return no('notManager')
     if (!d.build) return no('buildNone')
@@ -463,12 +561,16 @@ export function speedUpBuild(): Result {
 }
 
 export function claimQuest(): Result {
+  if (server) return srv('clan_quest_claim', {})
   return mutate((d) => {
     const q = d.quest
     if (q.claimed || q.progress < q.target) return no('questOpen')
+    if (!canManage(d)) return no('notManager')
     q.claimed = true
+    q.claimedBy = d.myId
+    q.claimedAt = nowOf(d)
     q.reward = questReward(q.kind, levelOf(d, 'board'))
-    income(d, 'quest', q.reward, null, q.kind)
+    income(d, 'quest', q.reward, d.myId, `${q.kind}:${q.target}`)
     alert(d, 'quest_done', q.kind)
   })
 }
@@ -476,6 +578,7 @@ export function claimQuest(): Result {
 // ───────────── the buff «Выход» ─────────────
 
 export function planBuff(inMinutes: number): Result {
+  if (server) return srv('clan_buff_launch', { p_start_in_minutes: Math.max(5, inMinutes) })
   return mutate((d) => {
     if (!canManage(d)) return no('notManager')
     if (d.buff.phase !== 'idle') return no(d.buff.phase === 'cooldown' ? 'buffCooldown' : 'buffBusy')
@@ -488,6 +591,7 @@ export function planBuff(inMinutes: number): Result {
 }
 
 export function rsvpBuff(on: boolean): Result {
+  if (server) return state.buffId ? srv('clan_buff_rsvp', { p_buff_id: state.buffId, p_going: on }) : no('buffNone')
   return mutate((d) => {
     if (d.buff.phase !== 'planned' && d.buff.phase !== 'active') return no('buffNone')
     if (!d.members.some((m) => m.id === d.myId)) return no('notMember')
@@ -499,6 +603,7 @@ export function rsvpBuff(on: boolean): Result {
 
 // The demo panel: the others say «иду».
 export function othersRsvp(count: number): Result {
+  if (server) return no('serverGame')
   return mutate((d) => {
     if (d.buff.phase !== 'planned') return no('buffNone')
     for (const m of d.members) {
@@ -513,6 +618,7 @@ export const buffActive = (s: DemoState) => s.buff.phase === 'active'
 // ───────────── the headquarters ─────────────
 
 export function placeHq(sectorId: string): Result {
+  if (server) return srv('clan_hq_place', { p_territory_id: sectorId })
   return mutate((d) => {
     if (!canManage(d)) return no('notManager')
     const target = d.sectors.find((x) => x.id === sectorId)
@@ -537,6 +643,7 @@ export function placeHq(sectorId: string): Result {
 
 // An outsider catches on the headquarters sector. Defence runs down first; with none left the next catch starts a siege.
 export function attackHq(): Result {
+  if (server) return no('serverGame')
   return mutate((d) => {
     const sector = d.sectors.find((x) => x.id === d.hq.sectorId)
     if (!sector) return no('hqNone')
@@ -554,6 +661,7 @@ export function attackHq(): Result {
 
 // A clan-mate catches on the headquarters sector: it breaks a siege, or at least builds defence back up.
 export function defendHq(): Result {
+  if (server) return no('catchToDefend')
   return mutate((d) => {
     const sector = d.sectors.find((x) => x.id === d.hq.sectorId)
     if (!sector) return no('hqNone')
@@ -573,6 +681,7 @@ export function defendHq(): Result {
 }
 
 export function attackSector(): Result {
+  if (server) return no('serverGame')
   return mutate((d) => {
     const mine = d.sectors.filter((x) => x.owner === 'mine' && x.hq !== 'mine')
     const target = mine[Math.floor(Math.random() * mine.length)]
@@ -583,6 +692,7 @@ export function attackSector(): Result {
 }
 
 export function toggleHot(sectorId: string): Result {
+  if (server) return no('serverGame')
   return mutate((d) => {
     const s = d.sectors.find((x) => x.id === sectorId)
     if (s) s.hot = !s.hot
@@ -592,6 +702,7 @@ export function toggleHot(sectorId: string): Result {
 // ───────────── bounties, nudges, members ─────────────
 
 export function nudge(memberId: string): Result {
+  if (server) return srv('clan_nudge', { p_user: memberId })
   return mutate((d) => {
     const me = meOf(d)
     if (!me || me.role === 'member') return no('notManager')
@@ -615,20 +726,22 @@ export function transferLeadership(toId: string): Result {
   })
 }
 
-// Demo: the leader has been away for two weeks; the co-leader takes over by himself.
+// Demo: the leader has been away for 30 days; the co-leader takes over by himself.
 export function leaderAway(): Result {
+  if (server) return no('serverGame')
   return mutate((d) => {
     const leader = d.members.find((m) => m.role === 'leader')
     const co = d.members.find((m) => m.role === 'co_leader')
     if (!leader || !co) return no('notMember')
     leader.role = 'member'
-    leader.lastCatchMin = 15 * 24 * 60
+    leader.lastCatchMin = 31 * 24 * 60
     co.role = 'leader'
     alert(d, 'nudge', `autoleader:${co.name}`)
   })
 }
 
 export function recruitCatch(): Result {
+  if (server) return no('serverGame')
   return mutate((d) => {
     let r = d.recruit.find((x) => x.state === 'caught') ?? d.recruit.find((x) => x.state === 'joined')
     // Live mode has no made-up newcomers: the test bench invites one on demand.
@@ -663,6 +776,7 @@ const SPECIES = [
 export type CatchSummary = { member: string; species: string; cm: number; coins: number; tax: number; hot: boolean; buff: boolean; record: boolean }
 
 export function simulateCatch(opts: { memberId?: string; species?: string } = {}): Result & { summary?: CatchSummary } {
+  if (server) return no('serverGame')
   let summary: CatchSummary | undefined
   const res = mutate((d) => {
     if (!d.settings.enabled) return no('disabled')
@@ -682,6 +796,7 @@ export function simulateCatch(opts: { memberId?: string; species?: string } = {}
     const taken = tax > 0 ? income(d, 'tax', tax, member.id, sp.key) : 0
     if (member.id === d.myId) d.wallet += coins - taken
     member.weekDeposit += taken
+    credit(d, member.id, taken)
     member.weekMeters += Math.round(10 * (buffOn ? BUFF_METER_FACTOR : 1))
     member.lastCatchMin = 0
     if (buffOn) d.buff.lastBonus += sp.coins * (mult - coinMultiplier(sector.hot, false))
@@ -704,6 +819,7 @@ export function simulateCatch(opts: { memberId?: string; species?: string } = {}
       else if (q.kind === 'sectors') inc = once('x:' + sector.id)
       q.sim = (q.sim ?? 0) + inc
       q.progress = Math.min(q.target, q.progress + inc)
+      if (inc > 0 && !(q.helpers ?? []).includes(member.id)) q.helpers = [...(q.helpers ?? []), member.id]
     }
     // The hall of fame: a bigger fish of the species.
     const rec = d.hall.find((h) => h.species === sp.key)
@@ -724,6 +840,7 @@ export function simulateCatch(opts: { memberId?: string; species?: string } = {}
 
 // The weekly settlement: a share of the chest and the battle goes to the treasury.
 export function settleWeek(): Result {
+  if (server) return no('serverGame')
   return mutate((d) => {
     const chest = 96 + Math.round(Math.random() * 60)
     const race = 60 + Math.round(Math.random() * 80)
@@ -737,7 +854,17 @@ export function settleWeek(): Result {
 
 // ───────────── the admin ─────────────
 
+function settingsPatch(p: Partial<EconomySettings>): Record<string, unknown> {
+  const map: Record<keyof EconomySettings, string> = {
+    enabled: 'enabled', rentPerSectorDay: 'rent_per_sector_day', sharedRentFactor: 'shared_rent_factor', buffPrice: 'buff_price',
+    buffCooldownHours: 'buff_cooldown_hours', buffMinRsvp: 'buff_min_rsvp', taxMax: 'tax_max', chestShare: 'chest_share',
+    recruitReward: 'recruit_reward', hqPlaceCost: 'hq_place_cost', hqMoveCost: 'hq_move_cost', speedupShare: 'speedup_share',
+  }
+  return Object.fromEntries(Object.entries(p).map(([k, v]) => [map[k as keyof EconomySettings], v]))
+}
+
 export function updateSettings(patch: Partial<EconomySettings>): Result {
+  if (server) return srv('admin_set_clan_economy', { p: settingsPatch(patch) })
   return mutate((d) => {
     if (d.persona !== 'admin') return no('notAdmin')
     d.settings = { ...d.settings, ...patch }
@@ -745,6 +872,7 @@ export function updateSettings(patch: Partial<EconomySettings>): Result {
 }
 
 export function reverseEntry(entryId: number): Result {
+  if (server) return srv('admin_clan_reverse_entry', { p_entry_id: entryId })
   return mutate((d) => {
     if (d.persona !== 'admin') return no('notAdmin')
     const e = d.treasury.entries.find((x) => x.id === entryId)
@@ -766,6 +894,8 @@ export type RealClan = {
   days: number
   sectors: number
   lastCatchMin: Record<string, number | null>
+  // How many catches each member made this week (the members who worked for the weekly task).
+  byMember: Record<string, number>
   hall: { species: string; member: string; userId: string; cm: number | null; kg: number | null; at: number; photo: string | null }[]
 }
 
@@ -773,9 +903,20 @@ export function applyReal(r: RealClan, hueOf: (id: string) => number): Result {
   return mutate((d) => {
     if (!d.live) return no('notLive')
     const q = d.quest
+    // On the server the task's progress is the server's own (get_clan_state): only the records and the last catches here.
+    if (server) {
+      for (const m of d.members) if (m.id in r.lastCatchMin) m.lastCatchMin = r.lastCatchMin[m.id]
+      d.hall = r.hall
+        .map((h) => ({ species: h.species, member: h.member, cm: h.cm, kg: h.kg, at: h.at, hue: hueOf(h.userId), photo: h.photo }))
+        .sort((a, b) => (b.cm ?? -1) - (a.cm ?? -1))
+      return
+    }
     const real = { catches: r.catches, species: r.species, rare: r.rare, big: r.maxCm >= (q.param ?? BIG_FISH_CM) ? 1 : 0, length: r.lengthM, members: r.members, days: r.days, sectors: r.sectors }[q.kind]
     q.real = real
     if (!q.claimed) q.progress = Math.min(q.target, Math.floor(real + (q.sim ?? 0)))
+    // The members who caught this week, plus any the test bench's catches added.
+    const caught = d.members.filter((m) => (r.byMember?.[m.id] ?? 0) > 0).map((m) => m.id)
+    q.helpers = [...new Set([...(q.helpers ?? []), ...caught])]
     for (const m of d.members) {
       if (m.id in r.lastCatchMin) m.lastCatchMin = r.lastCatchMin[m.id]
     }

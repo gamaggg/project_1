@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { createPortal } from 'react-dom'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { useNow } from '@/lib/useNow'
-import { useDemoState, type Result } from '@/lib/clan2/demoStore'
+import { onServerReply, useDemoState, type Result } from '@/lib/clan2/demoStore'
 import { DAY, HOURS, fmt } from '@/lib/clan2/rules'
 import type { DemoMember } from '@/lib/clan2/types'
 import { tn, tnd } from '@/lib/i18n/runtime'
@@ -130,9 +130,10 @@ export function C2Sheet({ open, onClose, title, children }: { open: boolean; onC
   return <>{useHost(node)}</>
 }
 
-export function C2Card({ title, hint, right, children, style, tour }: { title?: string; hint?: string; right?: ReactNode; children: ReactNode; style?: CSSProperties; tour?: string }) {
+// focus: the name a «go there» button scrolls to (components/clan2/nav.ts).
+export function C2Card({ title, hint, right, children, style, tour, focus }: { title?: string; hint?: string; right?: ReactNode; children: ReactNode; style?: CSSProperties; tour?: string; focus?: string }) {
   return (
-    <section className="c2-card card" style={style} data-tour={tour}>
+    <section className="c2-card card" style={style} data-tour={tour} data-focus={focus}>
       {(title || right) && (
         <header className="c2-card-head">
           {title && <h3>{title}</h3>}
@@ -159,6 +160,10 @@ export function C2ToastProvider({ children }: { children: ReactNode }) {
     if (timer.current) window.clearTimeout(timer.current)
     timer.current = window.setTimeout(() => setMsg(null), 2600)
   }, [])
+  // The server refused an action already shown as sent: its reason, the same words.
+  useEffect(() => onServerReply((r) => {
+    if (!r.ok) say(tnd(`clan2.err.${r.reason}`))
+  }), [say])
   // Shows the reason of a refusal, or the confirmation of what was done.
   const act = useCallback(
     (res: Result, ok?: string) => {

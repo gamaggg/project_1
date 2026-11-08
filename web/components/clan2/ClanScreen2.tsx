@@ -9,26 +9,30 @@ import { HqTab, type MapFocus } from '@/components/clan2/HqTab'
 import { MembersTab } from '@/components/clan2/MembersTab'
 import { WeekTab } from '@/components/clan2/WeekTab'
 import { TreasuryTab } from '@/components/clan2/TreasuryTab'
+import { ShopTab } from '@/components/clan2/ShopTab'
+import { GO_TARGET, useFocusScroll } from '@/components/clan2/nav'
+import { setLiveUi } from '@/lib/clan2/live/ui'
 import { C2Bar, useC2 } from '@/components/clan2/C2Common'
 import { inClan, joinDemoClan, useDemoState } from '@/lib/clan2/demoStore'
 import { CLAN_LEVEL_XP, clanCapacity, leagueFor } from '@/lib/data/clanLevels'
 import { tn } from '@/lib/i18n/runtime'
 
 // The clan screen of the update: the banner of the clan and, under it, the
-// sections in pairs — Общак + Штаб, Выход + Неделя, Участники + Слава. A player with no
+// sections in groups — Общак + Штаб + Магазин, Выход + Неделя, Участники + Слава. A player with no
 // clan sees what joining gives instead.
 
-export type SubTab = 'treasury' | 'exit' | 'week' | 'hq' | 'glory' | 'members'
+export type SubTab = 'treasury' | 'shop' | 'exit' | 'week' | 'hq' | 'glory' | 'members'
 // The sections pair up under tabs, each with a two-way switch inside (the clan battle and the chest, the live
 // app's fourth pair, need a real clan and are not in the sandbox).
-const GROUPS: { id: ClanGroupId; label: string; subs: [SubTab, SubTab] }[] = [
-  { id: 'money', label: 'clan2.sub.treasury', subs: ['treasury', 'hq'] },
+const GROUPS: { id: ClanGroupId; label: string; subs: SubTab[] }[] = [
+  { id: 'money', label: 'clan2.sub.treasury', subs: ['treasury', 'hq', 'shop'] },
   { id: 'outing', label: 'clan2.sub.exit', subs: ['exit', 'week'] },
   { id: 'people', label: 'clan2.sub.people', subs: ['members', 'glory'] },
 ]
 const PART_LABEL: Record<SubTab, string> = {
   treasury: 'clan2.sub.treasury',
   hq: 'clan2.sub.hq',
+  shop: 'clan2.sub.shop',
   exit: 'clan2.sub.exit',
   week: 'clan2.sub.week',
   members: 'guest.members',
@@ -36,7 +40,7 @@ const PART_LABEL: Record<SubTab, string> = {
 }
 type TKey = Parameters<typeof tn>[0]
 
-export function ClanScreen2({ sections, onOpenSector, onGoMap, sub: subProp, onSub }: { sections?: Partial<Record<SubTab, ReactNode>>; onOpenSector?: (id: string) => void; onGoMap?: (focus?: MapFocus) => void; sub?: SubTab; onSub?: (sub: SubTab) => void }) {
+export function ClanScreen2({ sections, onGoMap, sub: subProp, onSub }: { sections?: Partial<Record<SubTab, ReactNode>>; onOpenSector?: (id: string) => void; onGoMap?: (focus?: MapFocus) => void; sub?: SubTab; onSub?: (sub: SubTab) => void }) {
   const s = useDemoState()
   const { act } = useC2()
   const [subOwn, setSubOwn] = useState<SubTab>('treasury')
@@ -45,6 +49,7 @@ export function ClanScreen2({ sections, onOpenSector, onGoMap, sub: subProp, onS
   const group = GROUPS.find((g) => g.subs.includes(sub)) ?? GROUPS[0]
   // The part last opened in each pair, so a tab reopens where the player left it.
   const [lastPart, setLastPart] = useState<Record<string, SubTab>>({})
+  useFocusScroll()
 
   if (!inClan(s)) {
     return (
@@ -74,12 +79,19 @@ export function ClanScreen2({ sections, onOpenSector, onGoMap, sub: subProp, onS
     treasury: (
       <TreasuryTab
         onGo={(to) => {
-          if (to === 'map') onGoMap?.({ place: true })
-          else setSub(to === 'hq' ? 'hq' : to === 'week' ? 'week' : to === 'exit' ? 'exit' : 'treasury')
+          if (to === 'map') return onGoMap?.({ place: true })
+          const t = GO_TARGET[to]
+          setSub(t.tab)
+          setLiveUi({ focus: t.focus, baseSel: t.baseSel ?? null })
         }}
       />
     ),
-    exit: <ExitTab onOpenSector={onOpenSector} />,
+    shop: (
+      <div data-focus="shop-top">
+        <ShopTab />
+      </div>
+    ),
+    exit: <ExitTab />,
     week: <WeekTab />,
     hq: <HqTab onGoMap={onGoMap} />,
     glory: <GloryTab />,
@@ -89,7 +101,7 @@ export function ClanScreen2({ sections, onOpenSector, onGoMap, sub: subProp, onS
 
   return (
     <div className="c2-clan">
-      <ClanHero crest={s.clan.crest} name={s.clan.name} motto={s.clan.motto} background={s.clan.background} compact>
+      <ClanHero crest={s.clan.crest} name={s.clan.name} motto={s.clan.motto} background={s.clan.background} compact frame={s.equipped?.frame}>
         <div className="c2-hero-meta">
           <span>{tn('clan2.clan.level', { n: level })}</span>
           <span>{league.label}</span>

@@ -5,10 +5,12 @@ import { useSyncExternalStore } from 'react'
 // Small UI state shared between the real screens and the clan update layer:
 // «place the headquarters» mode on the map, and requests to open the map.
 
-export type LiveUi = { placing: boolean; toolsOpen: boolean; alertsOpen: boolean; hqSheet: boolean; confirmPlace: string | null; clanTab: string | null; mapClanLayer: boolean; hqGeo: HqGeo | null }
+// focus: the block (data-focus) the clan screen scrolls to once its tab is open; baseSel: the building the base opens on.
+// tour: the clan tour asked for again («Пройти тур»).
+export type LiveUi = { placing: boolean; toolsOpen: boolean; alertsOpen: boolean; hqSheet: boolean; confirmPlace: string | null; clanTab: string | null; mapClanLayer: boolean; hqGeo: HqGeo | null; focus: string | null; baseSel: string | null; tour: boolean }
 // Where the clan's HQ sector really is: its centre and the width of its hexagon in degrees of longitude (the base screen lays the real map under itself).
 export type HqGeo = { id: string; lat: number; lng: number; widthDeg: number }
-let ui: LiveUi = { placing: false, toolsOpen: false, alertsOpen: false, hqSheet: false, confirmPlace: null, clanTab: null, mapClanLayer: false, hqGeo: null }
+let ui: LiveUi = { placing: false, toolsOpen: false, alertsOpen: false, hqSheet: false, confirmPlace: null, clanTab: null, mapClanLayer: false, hqGeo: null, focus: null, baseSel: null, tour: false }
 const listeners = new Set<() => void>()
 
 export const getLiveUi = () => ui

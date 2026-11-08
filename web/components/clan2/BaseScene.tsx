@@ -6,7 +6,7 @@ import { C2Bar, C2Coins, fmtLeft, useC2, useDemoNow } from '@/components/clan2/C
 import { buildingsOn, canManage, speedUpBuild, speedupPrice, upgradeProject, useDemoState } from '@/lib/clan2/demoStore'
 import { BUILD_CLAN_LEVEL, BUILD_HOURS, PROJECTS, PROJECT_EFFECTS, PROJECT_IDS } from '@/lib/clan2/rules'
 import type { ProjectId, ProjectLevel } from '@/lib/clan2/types'
-import { useLiveUi, type HqGeo } from '@/lib/clan2/live/ui'
+import { getLiveUi, requestMap, setLiveUi, subscribeLiveUi, useLiveUi, type HqGeo } from '@/lib/clan2/live/ui'
 import { hqBannerSvg, hqOutlineColor } from '@/lib/clan2/live/hqMarker'
 import { resolveCrest } from '@/lib/data/clanCrests'
 import { previewStaticUrl } from '@/lib/mapbox/rasterTiles'
@@ -19,32 +19,32 @@ import { tn, tnd } from '@/lib/i18n/runtime'
 // being built the scaffolding stands and a bar counts the time down; with the HQ down they all sleep.
 // Everything is placed in the units of the 400 x 346.4 sector, as percentages of the box, so it scales with the screen.
 
-const W = 400
-const H = 346.4
+export const W = 400
+export const H = 346.4
 // The picture is wider than the sector: the real map shows round it too (dimmed), the sector stays a hexagon in the middle.
-const VW = 440
-const VH = 400
-const OX = (VW - W) / 2
-const OY = (VH - H) / 2
+export const VW = 440
+export const VH = 400
+export const OX = (VW - W) / 2
+export const OY = (VH - H) / 2
 // The map is drawn a little wider than the sector itself, so the coast and the streets round it can be seen.
-const MAP_ZOOM_OUT = 1.7
-const HEX = '100,0 300,0 400,173.2 300,346.4 100,346.4 0,173.2'
+export const MAP_ZOOM_OUT = 1.7
+export const HEX = '100,0 300,0 400,173.2 300,346.4 100,346.4 0,173.2'
 // The sector's middle: the HQ's plaza, where every path starts.
-const MID = { x: 200, y: 173.2 }
+export const MID = { x: 200, y: 173.2 }
 // The six buildings stand in the six corners of the sector (the owner's scheme): lighthouse top left, market top right,
 // board right, storage bottom right, dock bottom left, fort left — each ground point 74% of the way from the middle to
 // its corner. A tall building in a top corner may rise over the top edge, the way a house stands up off its tile.
 const CORNER: Record<ProjectId, [number, number]> = { beacon: [100, 0], market: [300, 0], board: [400, 173.2], storage: [300, 346.4], dock: [100, 346.4], fort: [0, 173.2] }
-const SPOTS = Object.fromEntries(
+export const SPOTS = Object.fromEntries(
   (Object.keys(CORNER) as ProjectId[]).map((id) => [id, { x: MID.x + (CORNER[id][0] - MID.x) * 0.74, y: MID.y + (CORNER[id][1] - MID.y) * 0.74 }])
 ) as Record<ProjectId, { x: number; y: number }>
 // How big each building is drawn on its plot (the lighthouse is the tallest).
-const SCALE: Record<ProjectId, number> = { beacon: 0.7, market: 0.82, board: 0.82, storage: 0.82, dock: 0.82, fort: 0.82 }
+export const SCALE: Record<ProjectId, number> = { beacon: 0.7, market: 0.82, board: 0.82, storage: 0.82, dock: 0.82, fort: 0.82 }
 // The name pills of the side plots lean towards the middle, so a long name stays inside the sector (in % of the plot).
-const PILL_DX: Partial<Record<ProjectId, number>> = { fort: 14, board: -22 }
+export const PILL_DX: Partial<Record<ProjectId, number>> = { fort: 14, board: -22 }
 // The HQ's ground point (the foot of its plinth, on the front of the plaza) and the demo's place (a sea-side sector of
 // Batumi) when the clan is not bound to a real one.
-const HQ_AT = { x: 200, y: 200 }
+export const HQ_AT = { x: 200, y: 200 }
 const DEMO_GEO: HqGeo = { id: 'B1031', lat: 41.653959, lng: 41.628128, widthDeg: 0.008332 }
 
 // What a building gives at a level, as a phrase (level 0: nothing yet).
@@ -67,10 +67,10 @@ export function effectText(id: ProjectId, level: ProjectLevel): string {
 }
 
 // The art box of one plot: the ground line is at y = 0, 28% of the box lies under it (plate, pills).
-const ART_VB = '-56 -108 112 150'
+export const ART_VB = '-56 -108 112 150'
 
-const px = (x: number) => `${((OX + x) / VW) * 100}%`
-const py = (y: number) => `${((OY + y) / VH) * 100}%`
+export const px = (x: number) => `${((OX + x) / VW) * 100}%`
+export const py = (y: number) => `${((OY + y) / VH) * 100}%`
 
 export function BaseScene() {
   const s = useDemoState()
@@ -79,7 +79,9 @@ export function BaseScene() {
   const { hqGeo } = useLiveUi()
   const manage = canManage(s)
   const on = buildingsOn(s)
-  const [sel, setSel] = useState<ProjectId>('dock')
+  // A «go to the storehouse» button opens the base on that building (lib/clan2/live/ui.ts baseSel).
+  const [sel, setSel] = useState<ProjectId>(() => (PROJECT_IDS.includes(getLiveUi().baseSel as ProjectId) ? (getLiveUi().baseSel as ProjectId) : 'dock'))
+  const popN = useRef(0)
   const [built, setBuilt] = useState<{ id: ProjectId; n: number } | null>(null)
   const [pop, setPop] = useState<{ id: ProjectId | 'hq'; n: number } | null>(null)
   const [mapOk, setMapOk] = useState(true)
@@ -90,6 +92,18 @@ export function BaseScene() {
   const mapUrl = geo && mapOk ? previewStaticUrl(geo.lat, geo.lng, geo.widthDeg, VW, VH, W / MAP_ZOOM_OUT) : null
   const outline = hqOutlineColor(crest)
   const clanColor = resolveCrest(crest).primary
+
+  // The building asked for: taken now (the base may already be on the screen), and the request forgotten.
+  useEffect(() => {
+    if (getLiveUi().baseSel) setLiveUi({ baseSel: null })
+    return subscribeLiveUi(() => {
+      const want = getLiveUi().baseSel as ProjectId | null
+      if (want && PROJECT_IDS.includes(want)) {
+        setSel(want)
+        setLiveUi({ baseSel: null })
+      }
+    })
+  }, [])
 
   // A level that has just arrived is played as a finished build.
   useEffect(() => {
@@ -118,23 +132,46 @@ export function BaseScene() {
   const SelArt = ART[sel]
   // The big picture in the card: the building is blown up to fill its frame (a flat dock more than a tall lighthouse).
   const heroRef = useRef<SVGGElement>(null)
-  const [hero, setHero] = useState({ k: 1, dx: 0 })
+  const [hero, setHero] = useState({ k: 1, dx: 0, dy: 0 })
   useLayoutEffect(() => {
+    // Measured without the ground shadow, so the building itself sits in the middle (the shadow still shows).
+    const shadows = Array.from(heroRef.current?.querySelectorAll<SVGElement>('.c2-shadow') ?? [])
+    shadows.forEach((el) => (el.style.display = 'none'))
     const b = heroRef.current?.getBBox()
+    shadows.forEach((el) => (el.style.display = ''))
     if (b && b.width > 0) {
       const k = Math.max(1, Math.min(2, 84 / b.height, 100 / b.width))
-      setHero({ k, dx: -(b.x + b.width / 2) * k })
+      // the frame's middle is (0, -34): viewBox -56 -96 112 124
+      setHero({ k, dx: -(b.x + b.width / 2) * k, dy: -34 - (b.y + b.height / 2) * k })
     }
   }, [sel, level])
 
   const choose = (id: ProjectId) => {
     setSel(id)
-    setPop({ id, n: Date.now() })
+    setPop({ id, n: ++popN.current })
   }
 
   return (
     <div className="c2-base">
-      <div className="c2-base-hex" data-tour="base-scene" style={{ ['--clan' as string]: clanColor, ['--clan-dark' as string]: outline }}>
+      <div className={`c2-base-hex${s.hq.siege ? ' siege' : ''}`} data-tour="base-scene" style={{ ['--clan' as string]: clanColor, ['--clan-dark' as string]: outline }}>
+        {s.hq.siege && (
+          <div className="c2-base-siege" role="alert">
+            <span className="c2-base-siege-veil" aria-hidden />
+            <span className="c2-base-siege-smoke" aria-hidden style={{ left: px(HQ_AT.x), top: py(HQ_AT.y) }}>
+              <i />
+              <i />
+              <i />
+            </span>
+            <div className="c2-base-siege-bar">
+              <b>{tn('clan2.base.siegeLeft', { t: fmtLeft(s.hq.siege.endsAt - now) })}</b>
+              {s.hq.sectorId && (
+                <button type="button" onClick={() => requestMap({ sectorId: s.hq.sectorId ?? undefined })}>
+                  {tn('clan2.moment.toMap')}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
         <svg className="c2-base-svg" viewBox={`0 0 ${VW} ${VH}`} aria-hidden="true">
           <defs>
             <clipPath id="c2b-clip">
@@ -145,15 +182,15 @@ export function BaseScene() {
               <stop offset="1" stopColor="#fff" stopOpacity="0.05" />
             </radialGradient>
           </defs>
-            <rect width={VW} height={VH} fill="#E9ECEF" />
+            {/* The real map of the place (the HQ's sector, or one of the clan's while there is no HQ); no drawn waves. */}
+            <rect width={VW} height={VH} fill="#EEF1F4" />
             {mapUrl && <image href={mapUrl} x={0} y={0} width={VW} height={VH} preserveAspectRatio="none" onError={() => setMapOk(false)} />}
-            {!mapUrl && [0, 1, 2, 3].map((i) => <path key={i} className="c2-wave" style={{ animationDelay: `${i * -1.3}s` }} d={`M ${60 + i * 110} ${60 + (i % 2) * 20} q 12 -7 24 0 t 24 0`} fill="none" stroke="rgba(120,150,180,.5)" strokeWidth={1.6} strokeLinecap="round" />)}
           {/* Outside the sector the map is veiled, so the sector is the bright part. */}
           <path d={`M0 0H${VW}V${VH}H0Z M${HEX.split(' ').map((q) => { const [x, y] = q.split(',').map(Number); return `${x + OX},${y + OY}` }).join(' L')}Z`} fill="#fff" fillOpacity={0.4} fillRule="evenodd" />
           <g transform={`translate(${OX} ${OY})`}>
           <g clipPath="url(#c2b-clip)">
-            <rect width={W} height={H} fill="url(#c2b-veil)" />
-            <rect width={W} height={H} fill={clanColor} opacity={0.08} />
+            {/* The sector in the clan's own colour, clean, as on the map's «Кланы» layer. */}
+            <rect width={W} height={H} fill={clanColor} opacity={0.26} />
             {/* The paths from the HQ to every plot. */}
             {PROJECT_IDS.map((id) => (
               <path key={id} d={`M ${MID.x} ${MID.y} L ${SPOTS[id].x} ${SPOTS[id].y}`} stroke="#fff" strokeWidth={7} strokeLinecap="round" opacity={0.85} />
@@ -164,9 +201,9 @@ export function BaseScene() {
           </g>
           {/* A light bevel just inside the edge, so the sector reads as a tile. */}
           <polygon points={HEX} transform="translate(10 8.66) scale(.95)" fill="none" stroke="#fff" strokeOpacity={0.5} strokeWidth={2} strokeLinejoin="round" />
-          {/* The sector's outline, as on the game map: the clan's colour, darker. */}
-          <polygon points={HEX} fill="none" stroke={outline} strokeOpacity={0.35} strokeWidth={9} strokeLinejoin="round" />
-          <polygon points={HEX} fill="none" stroke={outline} strokeWidth={3} strokeLinejoin="round" />
+          {/* The sector's outline, as on the game map: the crest's own colour. */}
+          <polygon points={HEX} fill="none" stroke={clanColor} strokeOpacity={0.3} strokeWidth={9} strokeLinejoin="round" />
+          <polygon points={HEX} fill="none" stroke={clanColor} strokeWidth={3} strokeLinejoin="round" />
           </g>
         </svg>
 
@@ -176,7 +213,7 @@ export function BaseScene() {
           className={`c2-base-hq${on ? '' : ' down'}`}
           style={{ left: px(HQ_AT.x), top: py(HQ_AT.y) }}
           aria-label={ruins ? tn('clan2.base.ruins') : tn('clan2.base.hq')}
-          onClick={() => setPop({ id: 'hq', n: Date.now() })}
+          onClick={() => setPop({ id: 'hq', n: ++popN.current })}
         >
           <span className="c2-base-hq-art" key={pop?.id === 'hq' ? pop.n : 0}>
             {ruins ? (
@@ -262,7 +299,7 @@ export function BaseScene() {
               </span>
               {under && (
                 <span className="c2-plot-bar" aria-hidden="true">
-                  <i style={{ width: `${progress * 100}%` }} />
+                  <i style={{ transform: `scaleX(${progress})` }} />
                 </span>
               )}
             </button>
@@ -296,7 +333,7 @@ export function BaseScene() {
         <div className="c2-bld-hero">
           <svg className="c2-bld-heroart" viewBox="-56 -96 112 124" overflow="visible" aria-hidden="true">
             <g className={`c2-bld-herolift${level === 0 ? ' c2-ghost' : on ? '' : ' sleeping'}`}>
-              <g ref={heroRef} style={{ transform: `translateX(${hero.dx}px) scale(${hero.k})`, transformOrigin: '0 0' }}>
+              <g ref={heroRef} style={{ transform: `translate(${hero.dx}px, ${hero.dy}px) scale(${hero.k})`, transformOrigin: '0 0' }}>
                 <SelArt level={(level || 1) as ProjectLevel} p={crest.primary} s={crest.secondary} />
               </g>
             </g>

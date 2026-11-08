@@ -35,7 +35,9 @@ export async function fetchRealClan(clan: ClanDetail, now: number): Promise<Real
   let maxCm = 0
   let lengthCm = 0
   const last = new Map<string, number>()
+  const byMember: Record<string, number> = {}
   for (const c of week) {
+    byMember[c.user_id] = (byMember[c.user_id] ?? 0) + 1
     seenSpecies.add(c.species)
     seenMembers.add(c.user_id)
     seenDays.add(new Date(c.caught_at).toDateString())
@@ -70,6 +72,7 @@ export async function fetchRealClan(clan: ClanDetail, now: number): Promise<Real
     days: seenDays.size,
     sectors: seenSectors.size,
     lastCatchMin,
+    byMember,
     hall: [...best.values()],
   }
 }

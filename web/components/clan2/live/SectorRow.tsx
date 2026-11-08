@@ -22,7 +22,7 @@ export function Clan2SectorRow({ id, onOpenClan }: { id: string; onOpenClan?: (c
       <button
         type="button"
         onClick={() => {
-          setLiveUi({ clanTab: 'hq' })
+          setLiveUi({ clanTab: 'hq', focus: 'hq-card' })
           onOpenClan?.(clanId)
         }}
       >

@@ -39,7 +39,7 @@ export const BUFF_METER_FACTOR = 1.5
 export const HQ_RENT_FACTOR = 2
 export const HQ_MOVE_COOLDOWN_DAYS = 3
 // An outsider's catch on an HQ sector with no defence left starts a siege, not a capture: the clan has this long to break it.
-export const SIEGE_MINUTES = 30
+export const SIEGE_MINUTES = 90
 // The defence of a sector is 0–3 shields everywhere in the game (SectorDefense.tsx).
 export const DEFENSE_MAX = 3
 // A fallen HQ: the attackers carry off this share of the treasury (at most HQ_LOOT_MAX), the clan's buildings sleep
@@ -47,7 +47,7 @@ export const DEFENSE_MAX = 3
 export const HQ_LOOT_SHARE = 0.2
 export const HQ_LOOT_MAX = 1500
 export const HQ_RUINS_HOURS = 24
-export const SIEGE_BREAK_REWARD = 20
+export const SIEGE_BREAK_REWARD = 150
 
 // The treasury holds only so much, by clan level (the levels of lib/data/clanLevels.ts, 1–10):
 // it cannot be hoarded for ever, which keeps the money moving. «Склад» adds to it.
@@ -154,15 +154,57 @@ export const CLAN_SKINS = [
   { id: 'clan_lanterns', price: 15_000, minLevel: 9 },
 ] as const
 
-// What the treasury can save up for.
-export const GOAL_CATALOG: GoalItem[] = [
-  { id: 'skin_clan_tide', kind: 'clan_skin', cost: 5_000, minLevel: 3 },
-  { id: 'skin_clan_aurora', kind: 'clan_skin', cost: 8_000, minLevel: 5 },
-  { id: 'skin_clan_flotilla', kind: 'clan_skin', cost: 11_000, minLevel: 7 },
-  { id: 'skin_clan_lanterns', kind: 'clan_skin', cost: 15_000, minLevel: 9 },
+// The clan shop: what the treasury buys for the whole clan. Every item opens with the clan's level (its price fits under
+// the treasury's cap at that level, without the «Склад»), and any of them can be set as the treasury's goal.
+//   clan_skin — the players' own sector skins (lib/data/territorySkins.ts), worn by every sector of the clan on the
+//               «Кланы» layer, in the clan's colour; five times the player's price;
+//   boat      — the colours of the clan's boat in the clan battle;
+//   frame     — a frame round the clan's crest on the clan screen.
+export type ShopKind = GoalItem['kind']
+// The players' prices of the skins (shop_items, 07.11.2026); the clan pays CLAN_SKIN_FACTOR times that.
+const PLAYER_SKIN_PRICE: Record<string, number> = {
+  skin_stripes: 300, skin_horizon: 300, skin_diagonal: 350, skin_zigzag: 350, skin_herringbone: 400, skin_rain: 400,
+  skin_wave: 450, skin_scribble: 450, skin_net: 500, skin_grass: 550, skin_scales: 800, skin_depth: 1_000,
+  skin_compass: 1_300, skin_school: 1_600, skin_sonar: 2_200, skin_aquarium: 2_400, skin_lighthouse: 2_600, skin_lightning: 3_000,
+}
+export const CLAN_SKIN_FACTOR = 5
+// The lowest clan level whose treasury cap (without the «Склад») holds the price.
+export function levelForPrice(cost: number): number {
+  for (const level of [1, 3, 5, 7, 9]) if (treasuryCap(level, 0) >= cost) return level
+  return 9
+}
+const clanSkinPrice = (player: number) => Math.max(1_500, Math.round((player * CLAN_SKIN_FACTOR) / 500) * 500)
+export const SHOP_ITEMS: GoalItem[] = [
+  ...Object.entries(PLAYER_SKIN_PRICE).map(([id, p]) => ({ id, kind: 'clan_skin' as const, cost: clanSkinPrice(p), minLevel: levelForPrice(clanSkinPrice(p)) })),
+  { id: 'boat_coral', kind: 'boat', cost: 3_000, minLevel: 2 },
+  { id: 'boat_night', kind: 'boat', cost: 4_500, minLevel: 4 },
   { id: 'boat_gold', kind: 'boat', cost: 6_000, minLevel: 5 },
-  { id: 'banner_storm', kind: 'banner', cost: 3_000, minLevel: 3 },
+  { id: 'boat_dragon', kind: 'boat', cost: 9_000, minLevel: 7 },
+  { id: 'frame_bronze', kind: 'frame', cost: 2_000, minLevel: 2 },
+  { id: 'frame_silver', kind: 'frame', cost: 4_000, minLevel: 4 },
+  { id: 'frame_gold', kind: 'frame', cost: 7_000, minLevel: 6 },
+  { id: 'frame_legend', kind: 'frame', cost: 12_000, minLevel: 8 },
 ]
+// The old name: the treasury's goal is any item of the shop.
+export const GOAL_CATALOG = SHOP_ITEMS
+export const SHOP_KINDS: ShopKind[] = ['clan_skin', 'boat', 'frame']
+export const shopItem = (id: string | null | undefined) => SHOP_ITEMS.find((g) => g.id === id) ?? null
+// A clan skin's item id is the skin's own id (skin_wave): the map paints the clan's sectors with it.
+export const skinIdOf = (itemId: string) => itemId
+
+// What each look is made of.
+export const BOAT_LOOKS: Record<string, { primary: string; secondary: string }> = {
+  boat_coral: { primary: '#FF6B4A', secondary: '#FFF1E0' },
+  boat_night: { primary: '#2A3247', secondary: '#FFC93C' },
+  boat_gold: { primary: '#D99A22', secondary: '#FFF3C0' },
+  boat_dragon: { primary: '#1F7A5C', secondary: '#F0B53E' },
+}
+
+// The month the treasury's «взнос за месяц» counts (it starts again on the 1st, local time).
+export function monthKeyOf(now: number): number {
+  const d = new Date(now)
+  return d.getFullYear() * 12 + d.getMonth()
+}
 
 // The weekly task of the whole clan. It is drawn at random when the week starts (the same for the whole clan, by the
 // clan and the week), cannot be swapped, and is paid into the treasury when the leader collects it. Eight kinds, each

@@ -11,13 +11,17 @@ import { observeScreenActive } from '@/lib/observeScreenActive'
 // the same utility the map's own legend dots use) so what's shown here is
 // exactly what the sector looks like once equipped, not a rectangular
 // approximation of it.
-function hexPath(ctx: CanvasRenderingContext2D, width: number, height: number) {
-  ctx.moveTo(width * 0.25, 0)
-  ctx.lineTo(width * 0.75, 0)
-  ctx.lineTo(width, height * 0.5)
-  ctx.lineTo(width * 0.75, height)
-  ctx.lineTo(width * 0.25, height)
-  ctx.lineTo(0, height * 0.5)
+// `inset` moves every side in by that many px (a flat-topped hexagon: the slanted sides' corners move 1.1547 times as
+// far sideways), so a stroke along it stays inside the picture instead of being cut along the edge.
+function hexPath(ctx: CanvasRenderingContext2D, width: number, height: number, inset = 0) {
+  const dx = inset * 0.57735
+  const side = inset * 1.1547
+  ctx.moveTo(width * 0.25 + dx, inset)
+  ctx.lineTo(width * 0.75 - dx, inset)
+  ctx.lineTo(width - side, height * 0.5)
+  ctx.lineTo(width * 0.75 - dx, height - inset)
+  ctx.lineTo(width * 0.25 + dx, height - inset)
+  ctx.lineTo(side, height * 0.5)
   ctx.closePath()
 }
 
@@ -40,6 +44,12 @@ export function SkinPreview({ skinId, color, width = 120 }: { skinId: string; co
     function paint(t: number) {
       if (!ctx) return
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.clearRect(0, 0, width, height)
+      // Everything is painted inside the hexagon (a hair in from the edge, so the CSS clip never meets painted pixels).
+      ctx.save()
+      ctx.beginPath()
+      hexPath(ctx, width, height, 0.5)
+      ctx.clip()
       ctx.fillStyle = '#FFFFFF'
       ctx.fillRect(0, 0, width, height)
       if (animated) {
@@ -58,15 +68,17 @@ export function SkinPreview({ skinId, color, width = 120 }: { skinId: string; co
         ctx.fillStyle = pattern
         ctx.fillRect(0, 0, width, height)
       }
+      ctx.restore()
       // A real sector on the map always has its own territory-color border
       // (see LeafletMap.tsx's polygon `color`/`weight`) — stroke the same hex
       // outline here, in the same tint, so the card reads as "this is a
       // sector" rather than a flat swatch.
       ctx.strokeStyle = color
       ctx.lineWidth = 2
+      ctx.lineJoin = 'round'
       ctx.globalAlpha = 0.9
       ctx.beginPath()
-      hexPath(ctx, width, height)
+      hexPath(ctx, width, height, 1.5)
       ctx.stroke()
       ctx.globalAlpha = 1
     }

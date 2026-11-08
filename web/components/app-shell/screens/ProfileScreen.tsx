@@ -58,6 +58,7 @@ import { useT, TRANSLATION_READY } from '@/lib/i18n'
 import { LanguagePicker } from '@/components/app-shell/LanguagePicker'
 import { tn } from '@/lib/i18n'
 import { Flag } from '@/components/app-shell/Flag'
+import { EconomyAdminLazy } from '@/components/clan2/live/lazy'
 
 // Telegram notifications, as one row rather than a screen of its own —
 // there's a single setting to make so far. Which control it shows depends on
@@ -481,6 +482,8 @@ export function ProfileScreen({
 }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
+  // «Клановая экономика» (super admin): the clan update's switch and its pilot clans.
+  const [economyOpen, setEconomyOpen] = useState(false)
   const { data: geo, isPending: geoPending } = useGeoToday()
   const { data: clanChat } = useClanChatSummary(profile?.clanId ?? null)
   const shopRewards = useShopRewardsCount()
@@ -807,6 +810,7 @@ export function ProfileScreen({
 
       {/* Every admin tool behind one «Управление» card (AdminPanel). The
           super admin sees all of them; an admin, the ones given to them. */}
+      {economyOpen && <EconomyAdminLazy onClose={() => setEconomyOpen(false)} />}
       <AdminPanel
         active={adminPanelActive}
           items={[
@@ -819,6 +823,7 @@ export function ProfileScreen({
                   { id: 'log', label: 'Последние действия', icon: ADMIN_ICONS.log, tone: 'data' as const, badge: adminLogUnreadCount, onClick: onOpenAdminLog },
                   { id: 'access', label: 'Доступы', icon: ADMIN_ICONS.access, tone: 'manage' as const, onClick: onOpenAdminAccess },
                   { id: 'post', label: 'Написать пост', icon: ADMIN_ICONS.post, tone: 'manage' as const, onClick: onPostAnnouncement },
+                  { id: 'economy', label: 'Клановая экономика', icon: ADMIN_ICONS.coins, tone: 'manage' as const, onClick: () => setEconomyOpen(true) },
                 ]
               : []),
             ...(isSuperAdmin && user

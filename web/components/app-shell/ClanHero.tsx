@@ -2,6 +2,7 @@
 
 import type { CSSProperties, ReactNode } from 'react'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
+import { ClanFrame } from '@/components/clan2/ClanItems'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { isLightClanBackground, resolveClanBackground } from '@/lib/data/clanBackgrounds'
 import { tn } from '@/lib/i18n/runtime'
@@ -19,6 +20,7 @@ export function ClanHero({
   children,
   top,
   hideName,
+  frame,
 }: {
   crest: unknown
   name: string
@@ -29,6 +31,8 @@ export function ClanHero({
   children?: ReactNode
   top?: ReactNode
   hideName?: boolean
+  // The clan update: the frame the clan bought in its shop, round the crest.
+  frame?: string | null
 }) {
   const bg = resolveClanBackground(background)
   return (
@@ -40,7 +44,9 @@ export function ClanHero({
       {top}
       <div className="clan-hero-body">
         <div className="clan-hero-crest">
-          <ClanCrest crest={crest} size={compact ? 84 : 104} shine golden={golden} title={name} />
+          <ClanFrame id={frame} size={compact ? 84 : 104} crest={crest}>
+            <ClanCrest crest={crest} size={compact ? 84 : 104} shine golden={golden} title={name} />
+          </ClanFrame>
         </div>
         {!hideName && <div className="clan-hero-name">{name || tn('nav.clanNameFallback')}</div>}
         {motto ? <div className="clan-hero-motto">«{motto}»</div> : null}

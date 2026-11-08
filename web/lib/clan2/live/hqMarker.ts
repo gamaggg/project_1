@@ -46,19 +46,19 @@ export function hqMarkerHtml(crest: unknown, opts: { siege: boolean; label: stri
   // Far away: a round badge in the manner of the hot sector's flame — the clan's colour, a white ring, a small banner.
   if (opts.tier === 0) {
     const c = resolveCrest(crest)
-    return `<div class="c2-hqm-b tier0${opts.siege ? ' siege' : ''}" style="width:22px;height:22px" aria-label="${opts.label.replace(/"/g, '&quot;')}">${opts.siege ? '<span class="c2-hqm-alarm"></span>' : ''}<span class="c2-hqm-dot" style="background:${c.primary};box-shadow:0 0 0 2px #fff, 0 3px 10px ${c.primary}8C"><svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5v11" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><path d="M3.6 2.2h7.2l-1.7 2.9 1.7 2.9H3.6z" fill="#fff"/></svg></span></div>`
+    return `<div class="c2-hqm-b tier0${opts.siege ? ' siege' : ''}" style="width:22px;height:22px" aria-label="${opts.label.replace(/"/g, '&quot;')}"><span class="c2-hqm-dot" style="background:${c.primary};box-shadow:0 0 0 2px #fff, 0 3px 10px ${c.primary}8C"><svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M3.5 1.5v11" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><path d="M4.1 2.2h7.2l-1.7 2.9 1.7 2.9H4.1z" fill="#fff"/></svg></span></div>`
   }
   const h = opts.bannerH ?? BANNER_H_MAX
   const w = bannerW(h)
   const [bw, bh] = hqBox(opts.tier, h)
   const tag = `<span class="leaflet-territory-label c2-hqm-label">${opts.tag.replace(/</g, '&lt;')}</span>`
-  return `<div class="c2-hqm-b tier${opts.tier}${opts.siege ? ' siege' : ''}" style="width:${bw}px;height:${bh}px" aria-label="${opts.label.replace(/"/g, '&quot;')}">${opts.siege ? '<span class="c2-hqm-alarm"></span>' : ''}${hqBannerSvg(crest, w, h)}${tag}</div>`
+  return `<div class="c2-hqm-b tier${opts.tier}${opts.siege ? ' siege' : ''}" style="width:${bw}px;height:${bh}px" aria-label="${opts.label.replace(/"/g, '&quot;')}">${hqBannerSvg(crest, w, h)}${tag}</div>`
 }
 
 export function ruinsMarkerHtml(label: string, tier: MarkerTier = 2): string {
   const [w, h] = RUINS_SIZE[tier]
   return `<div class="c2-ruins-marker" aria-label="${label.replace(/"/g, '&quot;')}">
-<svg width="${w}" height="${h}" viewBox="0 0 46 40" aria-hidden><ellipse cx="23" cy="34" rx="18" ry="4.5" fill="rgba(23,24,27,.25)"/>
+<svg width="${w}" height="${h}" viewBox="0 0 46 40" style="overflow:visible" aria-hidden><ellipse cx="23" cy="34" rx="18" ry="4.5" fill="rgba(23,24,27,.25)"/>
 <path d="M5 33 L9 15 L16 21 L20 8 L27 19 L33 12 L41 33 z" fill="#A89C86" stroke="#7A705E" stroke-width="1.4"/>
 <path d="M22 9 q-5 -8 1 -14" fill="none" stroke="rgba(60,60,60,.5)" stroke-width="3.4" stroke-linecap="round" class="c2-smoke"/></svg></div>`
 }

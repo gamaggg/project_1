@@ -34,11 +34,14 @@ export function RaceRiver({
   highlightId,
   onOpenClan,
   boatSize = 70,
+  boatSkins,
 }: {
   clans: ClanRaceEntry[]
   highlightId?: number | null
   onOpenClan?: (id: number) => void
   boatSize?: number
+  // The clan update: the boat a clan bought in its shop, by clan id.
+  boatSkins?: Record<number, string | null | undefined>
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(340)
@@ -86,7 +89,7 @@ export function RaceRiver({
                 <span className="race-boat-pos">
                   <span className="race-trail" />
                   <span className="race-boat-bob">
-                    <RaceBoat crest={c.crest} crew={crews[i]} unit={unit} />
+                    <RaceBoat crest={c.crest} crew={crews[i]} unit={unit} skin={boatSkins?.[c.id] ?? null} />
                   </span>
                   {/* Crossed the line: sparks around the boat, which rests and glows. */}
                   {c.finishedAt && (
@@ -161,7 +164,7 @@ export function ClanWarCard({ race, clanId }: { race: ClanRace; clanId: number }
 
 // Clan screen «Битва» tab — the river with this clan's lane lit up, its
 // own line, and the way into the full regatta screen.
-export function ClanRacePreview({ city, clanId, onOpenRace }: { city: CityId; clanId: number; onOpenRace: () => void }) {
+export function ClanRacePreview({ city, clanId, onOpenRace, boatSkins }: { city: CityId; clanId: number; onOpenRace: () => void; boatSkins?: Record<number, string | null | undefined> }) {
   const { data: race, isLoading } = useClanRace(city, true)
   if (isLoading || !race) return <div className="clan-soon">{isLoading ? <HexLoader size={0.55} /> : tn('common.noData')}</div>
 
@@ -180,7 +183,7 @@ export function ClanRacePreview({ city, clanId, onOpenRace }: { city: CityId; cl
           </div>
           <ChallengeCountdown endsAt={race.weekEnd} />
         </div>
-        <RaceRiver clans={lanes} highlightId={clanId} boatSize={62} />
+        <RaceRiver clans={lanes} highlightId={clanId} boatSize={62} boatSkins={boatSkins} />
         <div className="race-card-line">
           <span>
             {mine ? (

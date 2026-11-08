@@ -441,11 +441,14 @@ export const LeafletMap = forwardRef<
         // A holder's equipped skin, tinted with the colour their sector (or
         // their part of a shared one) already renders in — their own colour
         // if it's the viewer, the fixed "other" colour otherwise — so a skin
-        // never clashes with it (see territorySkins.ts). None on the «Кланы»
-        // layer, which paints whole clans in one colour.
+        // never clashes with it (see territorySkins.ts). On the «Кланы» layer
+        // the players' skins are off (whole clans in one colour); a clan that
+        // bought a sector skin for its treasury (the clan update) wears it on
+        // every one of its sectors there, in the clan's colour.
+        const clanSkinId = inClanView && t.status !== 'free' && t.ownerClanId ? (clan2Ref.current?.skinByClan[t.ownerClanId] ?? null) : null
         let tile: { offsetX: number; offsetY: number; width: number; height: number } | null = null
         const skinPattern = (skinId: string | null, tint: string, clip: [number, number][] = t.corners): CanvasPattern | null => {
-          const skin = !inClanView && t.status !== 'free' ? resolveTerritorySkin(skinId) : null
+          const skin = inClanView ? resolveTerritorySkin(clanSkinId) : t.status !== 'free' ? resolveTerritorySkin(skinId) : null
           if (!skin || !map) return null
           // An animated skin is no pattern: the sector keeps its plain tint here and
           // the overlay paints the moving lines (the whole hex, cut to `clip`).
@@ -564,13 +567,6 @@ export const LeafletMap = forwardRef<
       // the HQ may go on while it is being placed, and the headquarters (or its ruins) standing on a sector.
       const c2 = clan2Ref.current
       if (c2) {
-        if (clanLayerRef.current) {
-          for (const t of territories) {
-            const skinId = t.ownerClanId ? c2.skinByClan[t.ownerClanId] : undefined
-            if (!skinId || t.status === 'free') continue
-            animatedSkins.push({ skinId, color: t.ownerClanCrest ? resolveCrest(t.ownerClanCrest).primary : SOLO_OWNER_COLOR, tile: t.corners, clip: t.corners })
-          }
-        }
         if (c2.placing) {
           const ok = new Set(c2.placeable)
           for (const t of territories) {

@@ -1,7 +1,7 @@
 'use client'
 
 import { C2Avatar, C2Card, C2Coins, fmtAgo, useC2 } from '@/components/clan2/C2Common'
-import { meOf, nudge, useDemoState } from '@/lib/clan2/demoStore'
+import { meOf, monthDepositOf, nudge, useDemoState } from '@/lib/clan2/demoStore'
 import type { ClanRole } from '@/lib/clan2/types'
 import { tn } from '@/lib/i18n/runtime'
 
@@ -41,14 +41,15 @@ export function MembersTab() {
                   </div>
                   <div className="c2-muted small">
                     {away ? tn('clan2.members.away') : m.lastCatchMin === null ? tn('clan2.time.never') : fmtAgo(m.lastCatchMin * 60_000)}
-                    {m.weekDeposit > 0 && (
-                      <>
-                        {' · '}
-                        <C2Coins n={m.weekDeposit} />
-                      </>
-                    )}
                   </div>
                 </div>
+                {/* The sandbox's members list carries the month's treasury column too (the live app adds it to its own list). */}
+                {!s.live && (
+                  <span className="c2-member-month">
+                    <C2Coins n={monthDepositOf(s, m.id)} />
+                    <small>{tn('clan2.members.monthShort')}</small>
+                  </span>
+                )}
                 {canNudge && m.id !== s.myId && !m.online && (
                   <button className="c2-link" onClick={() => act(nudge(m.id), undefined) && say(tn('clan2.ok.nudged', { name: m.name }))}>
                     {tn('clan2.members.nudge')}

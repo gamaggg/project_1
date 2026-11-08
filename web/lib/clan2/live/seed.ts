@@ -1,6 +1,6 @@
 import { fallHq } from '@/lib/clan2/demoStore'
-import { DEFAULT_SETTINGS, DAY, HOURS, makeQuest, pickQuestKind, weekEndOf, weekKeyOf } from '@/lib/clan2/rules'
-import type { ClanRole, DemoMember, DemoState, MapSector, TreasuryEntry } from '@/lib/clan2/types'
+import { DEFAULT_SETTINGS, HOURS, makeQuest, monthKeyOf, pickQuestKind, weekEndOf, weekKeyOf } from '@/lib/clan2/rules'
+import type { ClanRole, DemoMember, DemoState, MapSector } from '@/lib/clan2/types'
 import { resolveCrest } from '@/lib/data/clanCrests'
 import type { ClanDetail, Territory } from '@/lib/data/types'
 
@@ -16,7 +16,8 @@ export type LiveInput = {
   territories: Territory[]
 }
 
-export const liveKey = (userId: string, clanId: number) => `range:clan2-live:v4:${userId}:${clanId}`
+// v6 (08.11.2026): the treasury starts empty, the shop, the month's deposits; the tour not yet seen.
+export const liveKey = (userId: string, clanId: number) => `range:clan2-live:v6:${userId}:${clanId}`
 
 export const hueOf = (id: string) => {
   let h = 0
@@ -61,7 +62,6 @@ export function buildLiveState(input: LiveInput, now: number = Date.now()): Demo
   const realRole: ClanRole = clan.myRole ?? 'member'
   const members = liveMembers(clan, null, userId)
   const active = members.filter((m) => m.lastCatchMin !== null).length
-  const seed: TreasuryEntry = { id: 1, at: now, kind: 'seed', amount: 3000, actor: null, note: 'demo' }
   return {
     live: { clanId: clan.id, userId, realRole, viewAs: null, isSuperAdmin },
     clockOffsetMs: 0,
@@ -70,6 +70,7 @@ export function buildLiveState(input: LiveInput, now: number = Date.now()): Demo
     wallet: coins,
     clan: {
       name: clan.name,
+      city: clan.city,
       motto: clan.motto ?? '',
       crest: resolveCrest(clan.crest),
       background: clan.background,
@@ -78,7 +79,8 @@ export function buildLiveState(input: LiveInput, now: number = Date.now()): Demo
       trophies: clan.trophies,
     },
     members,
-    treasury: { balance: 3000, taxRate: 0, entries: [seed], goalId: null },
+    // The treasury starts empty, as it will for every clan when the update ships.
+    treasury: { balance: 0, taxRate: 0, entries: [], goalId: null },
     buff: { phase: 'idle', startsAt: null, endsAt: null, cooldownUntil: null, rsvp: [], startedBy: null, lastBonus: 0 },
     hq: { sectorId: null, placedAt: null, lastMoveAt: null, siege: null, defenseAt: null, ruins: null },
     alerts: [],
@@ -87,6 +89,8 @@ export function buildLiveState(input: LiveInput, now: number = Date.now()): Demo
     build: null,
     owned: [],
     equippedSkin: null,
+    equipped: { boat: null, frame: null },
+    deposits: { month: monthKeyOf(now), byMember: {} },
     hall: [],
     recruit: [],
     sectors: liveSectors(clan.id, territories, now),
@@ -117,6 +121,7 @@ export function syncLiveState(d: DemoState, input: LiveInput, now: number = Date
   }
   d.clan.level = Math.max(d.clan.level, clan.level)
   d.clan.name = clan.name
+  d.clan.city = clan.city
   d.clan.crest = resolveCrest(clan.crest)
   d.clan.trophies = clan.trophies
   d.members = liveMembers(clan, d.live?.viewAs ?? null, userId)

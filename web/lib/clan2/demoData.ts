@@ -1,4 +1,4 @@
-import { DAY, DEFAULT_SETTINGS, HOURS, questTarget, questReward } from '@/lib/clan2/rules'
+import { DAY, DEFAULT_SETTINGS, HOURS, monthKeyOf, questTarget, questReward } from '@/lib/clan2/rules'
 import type { ClanRole, DemoMember, DemoState, HallRecord, MapSector, SectorOwner, TreasuryEntry } from '@/lib/clan2/types'
 
 // The fictional clan the demo runs on: «Морские волки» of Batumi, nine
@@ -139,7 +139,7 @@ export function initialDemoState(now: number = Date.now()): DemoState {
       trophies: 640,
     },
     members: DEMO_MEMBERS.map((m) => ({ ...m })),
-    treasury: { balance: 1240, taxRate: 5, entries: history(now), goalId: 'skin_clan_aurora' },
+    treasury: { balance: 1240, taxRate: 5, entries: history(now), goalId: 'skin_depth' },
     buff: { phase: 'idle', startsAt: null, endsAt: null, cooldownUntil: null, rsvp: [], startedBy: null, lastBonus: 0 },
     hq: { sectorId: HQ_SECTOR_ID, placedAt: now - 2.5 * DAY, lastMoveAt: null, siege: null, defenseAt: now - 0.5 * DAY, ruins: null },
     alerts: [
@@ -149,8 +149,10 @@ export function initialDemoState(now: number = Date.now()): DemoState {
     quest: { kind: 'catches', target: questTarget('catches', active), progress: 21, reward: questReward('catches', 1), endsAt: now + 3.2 * DAY, claimed: false, sim: 0 },
     projects: { dock: 1, beacon: 0, fort: 0, board: 1, storage: 0, market: 0 },
     build: null,
-    owned: ['clan_tide'],
-    equippedSkin: 'clan_tide',
+    owned: ['skin_wave'],
+    equippedSkin: 'skin_wave',
+    equipped: { boat: null, frame: null },
+    deposits: { month: monthKeyOf(now), byMember: Object.fromEntries(DEMO_MEMBERS.map((m) => [m.id, m.weekDeposit])) },
     hall: HALL.map((h) => ({ ...h, at: now + h.at })),
     recruit: [
       { name: 'Лео', state: 'caught', daysLeft: 0 },

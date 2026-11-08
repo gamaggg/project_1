@@ -8,6 +8,7 @@ import { CLAN_BACKGROUNDS } from '@/lib/data/clanBackgrounds'
 import { KIND_LABEL } from '@/lib/data/species'
 import { sectorCapturer } from '@/lib/data/sectorHolders'
 import { tn } from '@/lib/i18n/runtime'
+import { BUILD_CLAN_LEVEL, SHOP_ITEMS, fmt, treasuryCap } from '@/lib/clan2/rules'
 import type { ClanDetail } from '@/lib/data/types'
 
 export type ClanInfoKind = 'level' | 'league' | 'sectors' | 'race'
@@ -15,7 +16,9 @@ export type ClanInfoKind = 'level' | 'league' | 'sectors' | 'race'
 // What a clan level brings: more members, new crest shapes, symbols and
 // backgrounds (the same `level` fields the editor locks by), the golden
 // crest frame at the top. Numbers match public._clan_capacity/_clan_level.
-function levelPerks(level: number): string[] {
+// clan2: the clan update is on — a level also raises the treasury's cap, opens the next level of the base's
+// buildings and items of the clan shop (lib/clan2/rules.ts).
+function levelPerks(level: number, clan2 = false): string[] {
   const perks: string[] = []
   const capacity = clanCapacity(level)
   if (level === 1) perks.push(tn('clanInfo.perkCapacity', { capacity }))
@@ -31,10 +34,18 @@ function levelPerks(level: number): string[] {
     perks.push(tn('clanInfo.perkBasic'))
   }
   if (level === 10) perks.push(tn('clanInfo.perkGold'))
+  if (clan2) {
+    const cap = treasuryCap(level, 0)
+    if (level === 1 || cap > treasuryCap(level - 1, 0)) perks.push(tn('clan2.levels.cap', { n: fmt(cap) }))
+    const build = BUILD_CLAN_LEVEL.indexOf(level as 2 | 4 | 6)
+    if (build >= 0) perks.push(tn('clan2.levels.build', { n: build + 1 }))
+    const items = SHOP_ITEMS.filter((x) => x.minLevel === level).length
+    if (items > 0) perks.push(tn('clan2.levels.shop', { count: items }))
+  }
   return perks
 }
 
-function LevelInfo({ clan }: { clan: ClanDetail }) {
+function LevelInfo({ clan, clan2 }: { clan: ClanDetail; clan2?: boolean }) {
   const progress = clanLevelProgress(clan.xp)
   const extra = clan.extraSlots ?? 0
   return (
@@ -72,7 +83,7 @@ function LevelInfo({ clan }: { clan: ClanDetail }) {
                   {tn('clanInfo.level', { level })}
                   <span>{xp === 0 ? tn('clanInfo.xpNow') : tn('clanInfo.xpNeed', { xp })}</span>
                 </div>
-                {levelPerks(level).map((p) => (
+                {levelPerks(level, clan2).map((p) => (
                   <div key={p} className="clan-info-level-perk">
                     {p}
                   </div>
@@ -190,12 +201,14 @@ export function ClanInfoSheet({
   onClose,
   onOpenTerritory,
   onOpenRace,
+  clan2,
 }: {
   kind: ClanInfoKind
   clan: ClanDetail
   onClose: () => void
   onOpenTerritory: (id: string) => void
   onOpenRace: () => void
+  clan2?: boolean
 }) {
   const title = kind === 'level' ? tn('clanInfo.levelTitle') : kind === 'league' ? tn('clanInfo.leagueTitle') : kind === 'race' ? tn('race.title') : tn('clanInfo.sectorsTitle')
   return createPortal(
@@ -203,7 +216,7 @@ export function ClanInfoSheet({
       <div className="move-sheet clan-info-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
         <div className="move-sheet-handle" />
         <div className="clan-info-scroll">
-          {kind === 'level' && <LevelInfo clan={clan} />}
+          {kind === 'level' && <LevelInfo clan={clan} clan2={clan2} />}
           {kind === 'league' && <LeagueInfo clan={clan} />}
           {kind === 'race' && (
             <RaceInfo

@@ -61,6 +61,11 @@
    "ru": "Битва",
    "en": "Battle",
    "ka": "ბრძოლა"
+  },
+  "shop": {
+   "ru": "Магазин",
+   "en": "Shop",
+   "ka": "მაღაზია"
   }
  },
  "demo": {
@@ -155,9 +160,9 @@
    "ka": "კვირის შედეგები"
   },
   "evLeaderAway": {
-   "ru": "Глава пропал на 14 дней",
-   "en": "The leader is gone for 14 days",
-   "ka": "ლიდერი 14 დღით გაქრა"
+   "ru": "Глава пропал на 30 дней",
+   "en": "The leader is gone for 30 days",
+   "ka": "ლიდერი 30 დღით გაქრა"
   },
   "evRecruit": {
    "ru": "Новичок сделал улов",
@@ -420,6 +425,26 @@
    "ru": "Сейчас ничего не строится",
    "en": "Nothing is being built right now",
    "ka": "ახლა არაფერი შენდება"
+  },
+  "owned": {
+   "ru": "Это у клана уже есть",
+   "en": "The clan already has it",
+   "ka": "ეს კლანს უკვე აქვს"
+  },
+  "network": {
+   "ru": "Сервер не ответил, попробуй ещё раз",
+   "en": "The server did not answer, try again",
+   "ka": "სერვერმა არ უპასუხა, სცადე თავიდან"
+  },
+  "catchToDefend": {
+   "ru": "Чтобы снять осаду, поймай рыбу на секторе штаба",
+   "en": "To break the siege, catch a fish on the HQ sector",
+   "ka": "ალყის მოსახსნელად დაიჭირე თევზი შტაბის სექტორზე"
+  },
+  "serverGame": {
+   "ru": "В настоящей игре это происходит само",
+   "en": "In the real game this happens by itself",
+   "ka": "ნამდვილ თამაშში ეს თავისით ხდება"
   }
  },
  "ok": {
@@ -474,9 +499,9 @@
    "ka": "შტაბი გადატანილია"
   },
   "siegeBroken": {
-   "ru": "Осада снята, тебе +20 монет",
-   "en": "The siege is broken, +20 coins for you",
-   "ka": "ალყა მოხსნილია, შენ +20 მონეტა"
+   "ru": "Осада снята, тебе +150 монет",
+   "en": "Siege broken, +150 coins to you",
+   "ka": "ალყა მოხსნილია, შენ +150 მონეტა"
   },
   "defence": {
    "ru": "Защита штаба +1",
@@ -532,6 +557,16 @@
    "ru": "Стройка завершена досрочно",
    "en": "The build is finished ahead of time",
    "ka": "მშენებლობა ვადაზე ადრე დასრულდა"
+  },
+  "equipped": {
+   "ru": "Готово, надето",
+   "en": "Done, in use",
+   "ka": "მზადაა, გამოყენებაშია"
+  },
+  "goalCleared": {
+   "ru": "Цель убрана",
+   "en": "Goal removed",
+   "ka": "მიზანი მოიხსნა"
   }
  },
  "time": {
@@ -603,9 +638,9 @@
    "ka": "კლანის ყოველი სექტორი ყოველ 3 საათში 1 მონეტას პირდაპირ ფონდში აგროვებს (დღეში 8). საერთო სექტორი ერთნახევარჯერ მეტს, შტაბის სექტორი კი ორმაგს: 2 მონეტა 3 საათში."
   },
   "sourcesTitle": {
-   "ru": "Откуда деньги за неделю",
-   "en": "Where the money came from this week",
-   "ka": "საიდან მოვიდა ფული ამ კვირას"
+   "ru": "Откуда монеты за неделю",
+   "en": "Where the week's coins came from",
+   "ka": "საიდან მოვიდა კვირის მონეტები"
   },
   "spentTitle": {
    "ru": "Потрачено за неделю",
@@ -733,9 +768,9 @@
    "ka": "შენატანები და დაჭერიდან გამოქვითვა, რენტის გარეშე."
   },
   "patron": {
-   "ru": "Меценат недели",
-   "en": "Patron of the week",
-   "ka": "კვირის მეცენატი"
+   "ru": "Меценат месяца",
+   "en": "Patron of the month",
+   "ka": "თვის მეცენატი"
   },
   "journalTitle": {
    "ru": "Журнал",
@@ -813,9 +848,9 @@
    "ka": "წევრის მიერ დაჭერილი თევზის მონეტების ნაწილი ფონდში მიდის. განაკვეთს ლიდერი ირჩევს: 0, 5 ან 10 %."
   },
   "infoDeposit": {
-   "ru": "Любой участник может добровольно внести свои монеты. Кто вносит больше всех за неделю, становится «Меценатом недели».",
-   "en": "Any member can put in coins of their own. Whoever gives the most in a week becomes the week's Patron.",
-   "ka": "ნებისმიერ წევრს შეუძლია საკუთარი მონეტები შეიტანოს. ვინც კვირაში ყველაზე მეტს შეიტანს, ხდება კვირის მეცენატი."
+   "ru": "Любой участник может добровольно внести свои монеты. Кто отдал в общак больше всех за месяц, тот «Меценат месяца»: корона в списке участников.",
+   "en": "Any member can put in coins of their own. Whoever gave the treasury most this month is the «Patron of the month»: a crown in the members list.",
+   "ka": "ნებისმიერ წევრს შეუძლია საკუთარი მონეტების შეტანა. ვინც თვეში სალაროს ყველაზე მეტი მისცა, ის «თვის მეცენატია»: გვირგვინი წევრების სიაში."
   },
   "infoShares": {
    "ru": "Четверть монет из сундука недели и из битвы кланов идёт в общак.",
@@ -823,9 +858,9 @@
    "ka": "კვირის სკივრისა და კლანების ბრძოლის მონეტების მეოთხედი ფონდში მიდის."
   },
   "infoOther": {
-   "ru": "Задание недели, награда за новичка, турнир и возвраты по заказам.",
-   "en": "The weekly task, the recruit reward, the tournament and refunded bounties.",
-   "ka": "კვირის დავალება, ახალბედის ჯილდო, ტურნირი და შეკვეთების დაბრუნებული თანხა."
+   "ru": "Награда за задание недели, 100 монет за новичка, сделавшего первый улов, и возврат за отменённый выход.",
+   "en": "The weekly task's reward, 100 coins for a newcomer's first catch and the refund of a cancelled outing.",
+   "ka": "კვირის დავალების ჯილდო, 100 მონეტა ახალბედას პირველ დაჭერაზე და გაუქმებული გასვლის დაბრუნება."
   },
   "tapForMore": {
    "ru": "Нажми, чтобы узнать подробнее",
@@ -926,6 +961,51 @@
    "ru": "Обычные",
    "en": "Plain",
    "ka": "ჩვეულებრივი"
+  },
+  "savingFor": {
+   "ru": "Копим на",
+   "en": "Saving for",
+   "ka": "ვაგროვებთ"
+  },
+  "goalPickInShop": {
+   "ru": "Выбрать, на что копить, в магазине клана",
+   "en": "Choose what to save for in the clan shop",
+   "ka": "აირჩიე, რისთვის დააგროვო, კლანის მაღაზიაში"
+  },
+  "depositFull": {
+   "ru": "Общак полон: больше не помещается",
+   "en": "The treasury is full: nothing more fits",
+   "ka": "სალარო სავსეა: მეტი აღარ ეტევა"
+  },
+  "depositWalletShort": {
+   "ru": "На кошельке только {n}",
+   "en": "Only {n} in the wallet",
+   "ka": "საფულეში მხოლოდ {n}"
+  },
+  "depositMin": {
+   "ru": "Минимальный взнос — 10 монет",
+   "en": "The smallest deposit is 10 coins",
+   "ka": "მინიმალური შენატანი — 10 მონეტა"
+  },
+  "depositRoom": {
+   "ru": "В общак поместится только {n}",
+   "en": "Only {n} fits into the treasury",
+   "ka": "სალაროში მხოლოდ {n} ჩაეტევა"
+  },
+  "weekNone": {
+   "ru": "За эту неделю здесь пусто",
+   "en": "Nothing here this week",
+   "ka": "ამ კვირაში აქ ცარიელია"
+  },
+  "weekTotal": {
+   "ru": "за последние 7 дней",
+   "en": "over the last 7 days",
+   "ka": "ბოლო 7 დღეში"
+  },
+  "infoSpent": {
+   "ru": "Всё, что клан потратил из общака: постройки и ускорения, штаб, выход и покупки в магазине клана.",
+   "en": "Everything the clan spent from the treasury: buildings and speed-ups, the HQ, the outing and the clan shop.",
+   "ka": "ყველაფერი, რაც კლანმა სალაროდან დახარჯა: ნაგებობები და დაჩქარებები, შტაბი, გასვლა და კლანის მაღაზია."
   }
  },
  "goal": {
@@ -1055,6 +1135,51 @@
    "ru": "Штаб пал: унесли из общака",
    "en": "The HQ fell: carried off the treasury",
    "ka": "შტაბი დაეცა: ფონდიდან წაიღეს"
+  },
+  "title": {
+   "ru": "Журнал клана",
+   "en": "Clan journal",
+   "ka": "კლანის ჟურნალი"
+  },
+  "filter_all": {
+   "ru": "Всё",
+   "en": "All",
+   "ka": "ყველა"
+  },
+  "filter_money": {
+   "ru": "Монеты",
+   "en": "Coins",
+   "ka": "მონეტები"
+  },
+  "filter_event": {
+   "ru": "События",
+   "en": "Events",
+   "ka": "მოვლენები"
+  },
+  "boughtItem": {
+   "ru": "Куплено: {name}",
+   "en": "Bought: {name}",
+   "ka": "ნაყიდია: {name}"
+  },
+  "questDone": {
+   "ru": "Задание недели выполнено: {name}",
+   "en": "Weekly task done: {name}",
+   "ka": "კვირის დავალება შესრულდა: {name}"
+  },
+  "refundBuff": {
+   "ru": "Возврат: выход отменён, мало «иду»",
+   "en": "Refund: the outing was cancelled, too few going",
+   "ka": "დაბრუნება: გასვლა გაუქმდა, ცოტა «მივდივარ»"
+  },
+  "projectLevel": {
+   "ru": "{name}: уровень {n}",
+   "en": "{name}: level {n}",
+   "ka": "{name}: დონე {n}"
+  },
+  "speedup": {
+   "ru": "Ускорение: {name}",
+   "en": "Speed-up: {name}",
+   "ka": "დაჩქარება: {name}"
   }
  },
  "solo": {
@@ -1164,13 +1289,8 @@
   },
   "plan": {
    "ru": "Назначить выход",
-   "en": "Set the outing",
+   "en": "Plan the outing",
    "ka": "გასვლის დანიშვნა"
-  },
-  "planFor": {
-   "ru": "Назначить за {n}",
-   "en": "Set it for {n}",
-   "ka": "დანიშვნა {n}-ად"
   },
   "waitLeader": {
    "ru": "Ждём, когда глава назначит выход",
@@ -1302,9 +1422,9 @@
    "ka": "შტაბზე თავს ესხმიან: დაცვა {n}"
   },
   "hqSiege": {
-   "ru": "Штаб в осаде! {clan} держит его, у вас 30 минут: поймайте рыбу на секторе штаба",
-   "en": "The HQ is under siege! {clan} is on it, you have 30 minutes: catch a fish on the HQ sector",
-   "ka": "შტაბი ალყაშია! {clan} მას აკონტროლებს, გაქვთ 30 წუთი: დაიჭირეთ თევზი შტაბის სექტორზე"
+   "ru": "Штаб в осаде! {clan} держит его: поймайте рыбу на секторе штаба",
+   "en": "The HQ is under siege! {clan} holds it: catch a fish on the HQ sector",
+   "ka": "შტაბი ალყაშია! {clan} იკავებს მას: დაიჭირეთ თევზი შტაბის სექტორზე"
   },
   "hqSaved": {
    "ru": "{name} снял осаду со штаба",
@@ -1347,9 +1467,9 @@
    "ka": "ხელმძღვანელობა გადაეცა: {name}"
   },
   "autoLeader": {
-   "ru": "Глава не заходил 14 дней, руководство перешло к {name}",
-   "en": "The leader was away for 14 days, {name} took over",
-   "ka": "ლიდერი 14 დღე არ შემოსულა, ხელმძღვანელობა გადაეცა {name}-ს"
+   "ru": "Глава не заходил 30 дней, руководство перешло к {name}",
+   "en": "The leader was away for 30 days, {name} took over",
+   "ka": "ლიდერი 30 დღე არ შემოსულა, ხელმძღვანელობა გადაეცა {name}-ს"
   },
   "questDone": {
    "ru": "Задание недели выполнено: награда в общаке",
@@ -1464,9 +1584,9 @@
    "ka": "დარჩა {n} დღე"
   },
   "claimLeader": {
-   "ru": "Награду забирает глава или заместитель",
-   "en": "The leader or the co-leader collects the reward",
-   "ka": "ჯილდოს იღებს ლიდერი ან მოადგილე"
+   "ru": "Задание выполнено! Награду в общак заберёт глава или заместитель.",
+   "en": "Task complete! The leader or a co-leader collects the reward into the treasury.",
+   "ka": "დავალება შესრულდა! ჯილდოს სალაროში აიღებს ლიდერი ან მოადგილე."
   },
   "recruitNone": {
    "ru": "Новичков пока нет: позови друга по ссылке-приглашению.",
@@ -1502,6 +1622,52 @@
    "ru": "Ещё {n} — и награду можно забрать",
    "en": "{n} more and the reward can be claimed",
    "ka": "კიდევ {n} და ჯილდოს აღება შეიძლება"
+  },
+  "doneTitle": {
+   "ru": "Выполнено",
+   "en": "Done",
+   "ka": "შესრულებულია"
+  },
+  "readyTitle": {
+   "ru": "Задание выполнено!",
+   "en": "Task complete!",
+   "ka": "დავალება შესრულდა!"
+  },
+  "nextIn": {
+   "ru": "Новое задание через {t}",
+   "en": "New task in {t}",
+   "ka": "ახალი დავალება {t}-ში"
+  },
+  "paidTo": {
+   "ru": "В общак",
+   "en": "To the treasury",
+   "ka": "სალაროში"
+  },
+  "claimedBy": {
+   "ru": "Забрал: {name}",
+   "en": "Collected by {name}",
+   "ka": "აიღო: {name}"
+  },
+  "helpers": {
+   "ru": {
+    "one": "Вместе: {count} участник",
+    "few": "Вместе: {count} участника",
+    "many": "Вместе: {count} участников",
+    "other": "Вместе: {count} участника"
+   },
+   "en": {
+    "one": "Together: {count} member",
+    "other": "Together: {count} members"
+   },
+   "ka": {
+    "one": "ერთად: {count} წევრი",
+    "other": "ერთად: {count} წევრი"
+   }
+  },
+  "claimFor": {
+   "ru": "Забрать +{n} в общак",
+   "en": "Collect +{n} into the treasury",
+   "ka": "აიღე +{n} სალაროში"
   }
  },
  "hq": {
@@ -1561,9 +1727,9 @@
    "ka": "ალყის მოსახსნელად დარჩა {t}"
   },
   "siegeHow": {
-   "ru": "Любой участник, поймавший рыбу на секторе штаба, снимает осаду и получает 20 монет.",
-   "en": "Any member who catches a fish on the HQ sector breaks the siege and gets 20 coins.",
-   "ka": "ნებისმიერი წევრი, ვინც შტაბის სექტორზე თევზს დაიჭერს, ალყას ხსნის და 20 მონეტას იღებს."
+   "ru": "Любой участник, поймавший рыбу на секторе штаба, снимает осаду и получает {r} монет.",
+   "en": "Any member who catches a fish on the HQ sector breaks the siege and gets {r} coins.",
+   "ka": "ნებისმიერი წევრი, ვინც შტაბის სექტორზე თევზს დაიჭერს, ალყას ხსნის და იღებს {r} მონეტას."
   },
   "ruleTitle": {
    "ru": "Как защищать штаб",
@@ -1576,14 +1742,14 @@
    "ka": "კლანის ყოველი დაჭერა შტაბის სექტორზე +1 დაცვას ამატებს, მაქსიმუმ 3 ფარი."
   },
   "rule2": {
-   "ru": "Чужой улов снимает 1 защиты. Когда защиты нет, следующий чужой улов начинает осаду, а не захват.",
-   "en": "An outsider's catch takes 1 defence off. With none left, the next outsider's catch starts a siege, not a capture.",
-   "ka": "უცხო დაჭერა 1 დაცვას აკლებს. როცა დაცვა აღარ არის, შემდეგი უცხო დაჭერა ალყას იწყებს და არა დაკავებას."
+   "ru": "Каждый чужой улов на секторе штаба снимает 1 щит. Когда щитов не осталось, следующий чужой улов не забирает сектор, а начинает осаду. Свои уловы щиты возвращают.",
+   "en": "Every outsider's catch on the HQ sector takes 1 shield. With no shields left, the next outsider's catch does not take the sector, it starts a siege. The clan's own catches bring shields back.",
+   "ka": "უცხოს ყოველი დაჭერა შტაბის სექტორზე 1 ფარს ხსნის. როცა ფარი აღარ დარჩა, უცხოს შემდეგი დაჭერა სექტორს არ იღებს, არამედ ალყას იწყებს. კლანის დაჭერები ფარებს აბრუნებს."
   },
   "rule3": {
-   "ru": "У клана {m} минут: поймайте рыбу на секторе штаба, и осада снята (+20 монет тому, кто поймал). Иначе штаб падает.",
-   "en": "The clan has {m} minutes: catch a fish on the HQ sector and the siege is lifted (+20 coins to who caught it). Otherwise the HQ falls.",
-   "ka": "კლანს აქვს {m} წუთი: დაიჭირეთ თევზი შტაბის სექტორზე და ალყა მოიხსნება (+20 მონეტა დამჭერს). თუ არა, შტაბი ეცემა."
+   "ru": "У клана {m} минут: любой участник ловит рыбу на секторе штаба, и осада снята, ему +{r} монет. Не успели, и штаб падает.",
+   "en": "The clan has {m} minutes: any member catches a fish on the HQ sector and the siege is broken, +{r} coins to them. Too late, and the HQ falls.",
+   "ka": "კლანს აქვს {m} წუთი: ნებისმიერი წევრი იჭერს თევზს შტაბის სექტორზე და ალყა მოხსნილია, მას +{r} მონეტა. ვერ მოასწარით და შტაბი ეცემა."
   },
   "place": {
    "ru": "Поставить штаб",
@@ -1640,36 +1806,6 @@
    "en": "Fully built",
    "ka": "სრულად აშენებულია"
   },
-  "skinsTitle": {
-   "ru": "Скины клановых секторов",
-   "en": "Skins for clan sectors",
-   "ka": "კლანის სექტორების სკინები"
-  },
-  "skinsHint": {
-   "ru": "Анимированные, видны всем на карте. Покупаются на монеты общака как цель.",
-   "en": "Animated, seen by everyone on the map. Bought with the treasury's coins as a goal.",
-   "ka": "ანიმაციური, ყველას ჩანს რუკაზე. ფონდის მონეტებით ინახება როგორც მიზანი."
-  },
-  "skinOn": {
-   "ru": "Надет",
-   "en": "Worn",
-   "ka": "გააქტიურებულია"
-  },
-  "skinWear": {
-   "ru": "Надеть",
-   "en": "Wear",
-   "ka": "ჩაცმა"
-  },
-  "skinSave": {
-   "ru": "Копить",
-   "en": "Save for it",
-   "ka": "დაგროვება"
-  },
-  "skinNone": {
-   "ru": "Без скина",
-   "en": "No skin",
-   "ka": "სკინის გარეშე"
-  },
   "fallTitle": {
    "ru": "Если штаб падёт",
    "en": "If the HQ falls",
@@ -1686,9 +1822,9 @@
    "ka": "შტაბის სექტორი თავდამსხმელებს გადაეცემა."
   },
   "fall3": {
-   "ru": "Постройки засыпают: пока нового штаба нет, их плюшки не работают.",
-   "en": "The buildings fall asleep: without an HQ their perks do not work.",
-   "ka": "ნაგებობები იძინებს: ახალი შტაბის გარეშე მათი სარგებელი არ მუშაობს."
+   "ru": "Постройки засыпают: пока нового штаба нет, их усиления не работают.",
+   "en": "The buildings fall asleep: without an HQ their boosts do not work.",
+   "ka": "ნაგებობებს ეძინებათ: შტაბის გარეშე მათი გაძლიერებები არ მუშაობს."
   },
   "fall4": {
    "ru": "Новый штаб можно ставить через 24 часа на любом захваченном секторе клана.",
@@ -1719,6 +1855,121 @@
    "ru": "Перенести снова можно через {t}",
    "en": "The HQ can be moved again in {t}",
    "ka": "შტაბის ხელახლა გადატანა შეიძლება {t}-ში"
+  },
+  "placeLeaders": {
+   "ru": "Штаб ставят глава и заместители.",
+   "en": "The leader and the co-leaders place the HQ.",
+   "ka": "შტაბს დებენ ლიდერი და მოადგილეები."
+  },
+  "step_guard": {
+   "ru": "Защита",
+   "en": "Guard",
+   "ka": "დაცვა"
+  },
+  "step_attack": {
+   "ru": "Атака",
+   "en": "Attack",
+   "ka": "შეტევა"
+  },
+  "step_siege": {
+   "ru": "Осада",
+   "en": "Siege",
+   "ka": "ალყა"
+  },
+  "step_fall": {
+   "ru": "Падение",
+   "en": "Fall",
+   "ka": "დაცემა"
+  },
+  "picCatch": {
+   "ru": "{n}-й улов",
+   "en": "catch {n}",
+   "ka": "{n}-ე დაჭერა"
+  },
+  "picLeft": {
+   "ru": "осталось {n}",
+   "en": "{n} left",
+   "ka": "დარჩა {n}"
+  },
+  "picNone": {
+   "ru": "защиты нет",
+   "en": "no defence",
+   "ka": "დაცვა არ არის"
+  },
+  "picMin": {
+   "ru": "минут",
+   "en": "minutes",
+   "ka": "წუთი"
+  },
+  "picReward": {
+   "ru": "Снявшему осаду",
+   "en": "To whoever breaks it",
+   "ka": "ალყის მომხსნელს"
+  },
+  "picHit": {
+   "ru": "{n}-й чужой улов",
+   "en": "outsider's catch {n}",
+   "ka": "უცხოს {n}-ე დაჭერა"
+  },
+  "picSiege": {
+   "ru": "осада!",
+   "en": "siege!",
+   "ka": "ალყა!"
+  },
+  "picTime": {
+   "ru": "Время",
+   "en": "Time",
+   "ka": "დრო"
+  },
+  "picTimeVal": {
+   "ru": "{m} мин",
+   "en": "{m} min",
+   "ka": "{m} წთ"
+  },
+  "siegeWhen": {
+   "ru": "Осада начинается, когда у штаба не осталось щитов: следующий чужой улов не забирает сектор, а запускает часы.",
+   "en": "A siege starts once the HQ has no shields left: the next outsider's catch does not take the sector, it starts the clock.",
+   "ka": "ალყა იწყება, როცა შტაბს ფარი აღარ დარჩა: უცხოს შემდეგი დაჭერა სექტორს არ იღებს, არამედ საათს რთავს."
+  },
+  "fallT1": {
+   "ru": "Уносят {p} % общака",
+   "en": "{p} % of the treasury is carried off",
+   "ka": "სალაროს {p} %-ს წაიღებენ"
+  },
+  "fallS1": {
+   "ru": "но не больше {n} монет",
+   "en": "but no more than {n} coins",
+   "ka": "მაგრამ არაუმეტეს {n} მონეტისა"
+  },
+  "fallT2": {
+   "ru": "Сектор у нападавших",
+   "en": "The sector goes to the attackers",
+   "ka": "სექტორი თავდამსხმელებს გადადის"
+  },
+  "fallS2": {
+   "ru": "на месте штаба остаются руины",
+   "en": "ruins stand where the HQ was",
+   "ka": "შტაბის ადგილას ნანგრევები რჩება"
+  },
+  "fallT3": {
+   "ru": "Постройки спят",
+   "en": "The buildings sleep",
+   "ka": "ნაგებობებს სძინავთ"
+  },
+  "fallS3": {
+   "ru": "их усиления не работают до нового штаба",
+   "en": "their boosts are off until a new HQ",
+   "ka": "მათი გაძლიერებები არ მუშაობს ახალ შტაბამდე"
+  },
+  "fallT4": {
+   "ru": "Новый штаб через {h} ч",
+   "en": "A new HQ in {h} h",
+   "ka": "ახალი შტაბი {h} სთ-ში"
+  },
+  "fallS4": {
+   "ru": "на любом захваченном секторе клана",
+   "en": "on any captured sector of the clan",
+   "ka": "კლანის ნებისმიერ დაკავებულ სექტორზე"
   }
  },
  "project": {
@@ -1959,6 +2210,16 @@
    "ru": "Глава и старейшины могут раз в сутки позвать участника на воду: придёт пуш в Telegram.",
    "en": "The leader and elders can call a member to the water once a day: a Telegram push goes out.",
    "ka": "ლიდერს და უხუცესებს დღეში ერთხელ შეუძლიათ წევრს წყალზე დაუძახონ: Telegram-ში push მივა."
+  },
+  "monthHead": {
+   "ru": "Справа — сколько монет каждый отдал в общак в этом месяце. С 1-го числа счёт начинается заново.",
+   "en": "On the right: the coins each member gave to the treasury this month. The count starts again on the 1st.",
+   "ka": "მარჯვნივ — რამდენი მონეტა მისცა თითოეულმა სალაროს ამ თვეში. 1-ლი რიცხვიდან თვლა თავიდან იწყება."
+  },
+  "monthShort": {
+   "ru": "в общак",
+   "en": "to treasury",
+   "ka": "სალაროში"
   }
  },
  "map": {
@@ -2106,6 +2367,11 @@
    "ru": "Штаб клана «{name}»",
    "en": "HQ of the clan «{name}»",
    "ka": "კლანის «{name}» შტაბი"
+  },
+  "hqOf": {
+   "ru": "Штаб клана «{name}»",
+   "en": "HQ of the clan «{name}»",
+   "ka": "კლანის «{name}» შტაბი"
   }
  },
  "profile": {
@@ -2232,9 +2498,9 @@
    "ka": "მთავარი ამომრთველი"
   },
   "switchHint": {
-   "ru": "Выключает общак, ренту, баф и заказы для всех. Деньги и записи остаются на местах.",
-   "en": "Switches off the treasury, the rent, the buff and bounties for everyone. The money and records stay where they are.",
-   "ka": "ფონდს, რენტას, ბაფს და შეკვეთებს ყველასთვის თიშავს. ფული და ჩანაწერები ადგილზე რჩება."
+   "ru": "Выключает общак, ренту и выход для всех. Монеты и записи остаются на местах.",
+   "en": "Switches the treasury, the rent and the outing off for everybody. Coins and records stay where they are.",
+   "ka": "თიშავს სალაროს, რენტას და გასვლას ყველასთვის. მონეტები და ჩანაწერები ადგილზე რჩება."
   },
   "switchOn": {
    "ru": "Включено",
@@ -2384,9 +2650,9 @@
    "ka": "კლანის განახლება"
   },
   "introText": {
-   "ru": "Теперь у клана есть общак, общие выходы, штаб на карте и задания. Покажем главное за минуту.",
-   "en": "A clan now has a treasury, shared outings, a headquarters on the map and quests. A minute to show the main things.",
-   "ka": "ახლა კლანს აქვს ფონდი, საერთო გასვლები, შტაბი რუკაზე და დავალებები. ერთ წუთში მთავარს გაჩვენებთ."
+   "ru": "Теперь у клана есть общак, магазин клана, штаб с базой построек, общие выходы и задание недели. Покажем всё по порядку за минуту.",
+   "en": "The clan now has a treasury, a clan shop, an HQ with a base of buildings, outings together and a weekly task. We'll show it all in order in a minute.",
+   "ka": "კლანს ახლა აქვს სალარო, კლანის მაღაზია, შტაბი ნაგებობების ბაზით, საერთო გასვლები და კვირის დავალება. ყველაფერს თანმიმდევრობით გაჩვენებთ ერთ წუთში."
   },
   "introStart": {
    "ru": "Показать",
@@ -2399,9 +2665,9 @@
    "ka": "ფონდი კლანის საერთო ფულადი ყულაბაა: რამდენი მონეტაა, რა ზღვრამდე და სად მიდის რენტა."
   },
   "p2": {
-   "ru": "Откуда деньги: рента секторов, отчисление с уловов, взносы и доля наград клана.",
-   "en": "Where the money comes from: sector rent, the catch tax, deposits and a share of the clan's rewards.",
-   "ka": "საიდან მოდის ფული: სექტორების რენტა, დაჭერიდან გამოქვითვა, შენატანები და კლანის ჯილდოების წილი."
+   "ru": "Откуда монеты: рента секторов, отчисление с уловов, взносы и доля наград клана.",
+   "en": "Where the coins come from: the rent of the sectors, the catch tax, deposits and the clan's share of the rewards.",
+   "ka": "საიდან მოდის მონეტები: სექტორების რენტა, დაჭერის გადასახადი, შენატანები და კლანის ჯილდოების წილი."
   },
   "p3": {
    "ru": "Отчисление с улова: глава ставит долю монет за рыбу, которая уходит в общак.",
@@ -2456,9 +2722,9 @@
    "ka": "კლანის ბაზა"
   },
   "hint": {
-   "ru": "Постройки дают клану настоящие плюшки, но работают, только пока стоит штаб. Нажми на постройку.",
-   "en": "The buildings give the clan real perks, but only work while the HQ stands. Tap a building.",
-   "ka": "ნაგებობები კლანს რეალურ სარგებელს აძლევს, მაგრამ მუშაობს მხოლოდ შტაბის არსებობისას. დააჭირე ნაგებობას."
+   "ru": "Постройки усиливают клан, но работают, только пока стоит штаб. Нажми на постройку.",
+   "en": "The buildings boost the clan, but only while the HQ stands. Tap a building.",
+   "ka": "ნაგებობები აძლიერებს კლანს, მაგრამ მხოლოდ სანამ შტაბი დგას. დააჭირე ნაგებობას."
   },
   "hq": {
    "ru": "Штаб",
@@ -2574,6 +2840,11 @@
    "ru": "Уровень клана {n} (сейчас {have})",
    "en": "Clan level {n} (now {have})",
    "ka": "კლანის დონე {n} (ახლა {have})"
+  },
+  "siegeLeft": {
+   "ru": "Осада! Осталось {t}",
+   "en": "Siege! {t} left",
+   "ka": "ალყა! დარჩა {t}"
   }
  },
  "live": {
@@ -2630,9 +2901,9 @@
    "ka": "შტაბი"
   },
   "t_rent": {
-   "ru": "Каждый захваченный сектор клана сам приносит монеты в общак: 1 монета каждые 3 часа. Чем больше секторов держит клан, тем больше капает.",
-   "en": "Every captured clan sector brings coins into the treasury by itself: 1 coin every 3 hours. The more sectors the clan holds, the more comes in.",
-   "ka": "კლანის ყოველი დაკავებული სექტორი თავისით ამატებს მონეტებს ფონდში: 1 მონეტა ყოველ 3 საათში. რაც მეტ სექტორს ფლობს კლანი, მით მეტი შემოდის."
+   "ru": "Каждый захваченный сектор клана сам приносит монеты в общак: 1 монета каждые 3 часа. Общий сектор приносит в полтора раза больше, сектор со штабом вдвое.",
+   "en": "Every captured sector of the clan brings coins to the treasury by itself: 1 coin every 3 hours. A shared sector brings half as much again, the HQ sector twice as much.",
+   "ka": "კლანის ყოველი დაკავებული სექტორი თავად შემოაქვს მონეტებს სალაროში: 1 მონეტა ყოველ 3 საათში. საერთო სექტორი ერთნახევარჯერ მეტს, შტაბის სექტორი ორჯერ მეტს."
   },
   "t_save": {
    "ru": "Монеты общака общие. Ещё в него идут взносы участников и небольшой налог с уловов (ставку ставит глава). Копить можно до потолка, он растёт с уровнем клана.",
@@ -2640,9 +2911,9 @@
    "ka": "ფონდის მონეტები საერთოა. მასში ასევე შედის წევრების შენატანი და დაჭერებზე მცირე გადასახადი (განაკვეთს ლიდერი ადგენს). დაგროვება შეიძლება ლიმიტამდე, რომელიც კლანის დონესთან ერთად იზრდება."
   },
   "t_build": {
-   "ru": "На монеты общака клан строит постройки на базе (они дают настоящие плюшки), покупает анимированные скины секторов и назначает общий «Выход» на воду. Каждая стройка занимает время: от нескольких часов до нескольких суток.",
-   "en": "The clan spends the treasury on buildings of its base (they give real perks), on animated sector skins, and on a shared «Outing» on the water. Every build takes time: from a few hours to a few days.",
-   "ka": "კლანი ფონდის მონეტებს ხარჯავს ბაზის ნაგებობებზე (ისინი რეალურ სარგებელს იძლევა), სექტორების ანიმირებულ სკინებზე და წყალზე საერთო «გასვლაზე». ყოველი მშენებლობა დროს მოითხოვს: რამდენიმე საათიდან რამდენიმე დღემდე."
+   "ru": "На монеты общака клан строит постройки на базе (каждая даёт клану усиление), покупает в магазине клана скины секторов, лодки и рамки и назначает общий «Выход». Стройка занимает время, а уровни открываются с уровнем клана.",
+   "en": "With the treasury's coins the clan builds on its base (each building boosts the clan), buys sector skins, boats and frames in the clan shop and plans an outing together. A build takes time, and its levels open with the clan's level.",
+   "ka": "სალაროს მონეტებით კლანი აშენებს ნაგებობებს ბაზაზე (თითოეული აძლიერებს კლანს), ყიდულობს კლანის მაღაზიაში სექტორის სკინებს, ნავებს და ჩარჩოებს და ნიშნავს საერთო გასვლას. მშენებლობას დრო სჭირდება, დონეები კი კლანის დონესთან ერთად იხსნება."
   },
   "t_defend": {
    "ru": "Штаб стоит на одном из секторов клана. Пока он стоит, постройки работают. Если соперники сломят защиту сектора и клан не успеет ответить, штаб падает, а из общака уносят часть монет.",
@@ -2675,9 +2946,9 @@
    "ka": "ააშენე პირველი ნაგებობა"
   },
   "nextText_build": {
-   "ru": "Постройки дают клану плюшки: места, защиту, монеты. Начни с любой, стройка займёт несколько часов.",
-   "en": "Buildings give the clan perks: places, defence, coins. Start with any; a build takes a few hours.",
-   "ka": "ნაგებობები კლანს სარგებელს აძლევს: ადგილებს, დაცვას, მონეტებს. დაიწყე ნებისმიერით, მშენებლობა რამდენიმე საათს გასტანს."
+   "ru": "Постройки усиливают клан: места, защита, монеты. Начни с любой, стройка займёт несколько часов.",
+   "en": "Buildings boost the clan: places, defence, coins. Start with any; a build takes a few hours.",
+   "ka": "ნაგებობები აძლიერებს კლანს: ადგილები, დაცვა, მონეტები. დაიწყე ნებისმიერით; მშენებლობას რამდენიმე საათი სჭირდება."
   },
   "nextBtn_build": {
    "ru": "К базе клана",
@@ -2690,14 +2961,14 @@
    "ka": "აირჩიე დაგროვების მიზანი"
   },
   "nextText_goal": {
-   "ru": "Цель — то, на что клан копит: скин секторов или знамя. Полоска покажет, сколько ещё осталось. Нажми «Выбрать цель» ниже.",
-   "en": "A goal is what the clan saves for: a sector skin or a banner. The bar shows how much is left. Tap «Pick a goal» below.",
-   "ka": "მიზანი არის ის, რისთვისაც კლანი აგროვებს: სექტორის სკინი ან დროშა. ზოლი აჩვენებს, რამდენია დარჩენილი. ქვემოთ დააჭირე «მიზნის არჩევას»."
+   "ru": "Цель — то, на что клан копит: скин секторов, лодка для битвы или рамка герба. Выбери её в магазине клана, и все увидят полоску до цели.",
+   "en": "The goal is what the clan saves for: a sector skin, a boat for the battle or a crest frame. Pick it in the clan shop, and everybody sees how far it is.",
+   "ka": "მიზანი არის ის, რისთვისაც კლანი აგროვებს: სექტორის სკინი, ნავი ბრძოლისთვის ან გერბის ჩარჩო. აირჩიე კლანის მაღაზიაში და ყველა დაინახავს, რამდენი დარჩა."
   },
   "nextBtn_goal": {
-   "ru": "Выбрать цель",
-   "en": "Pick a goal",
-   "ka": "მიზნის არჩევა"
+   "ru": "В магазин клана",
+   "en": "To the clan shop",
+   "ka": "კლანის მაღაზიაში"
   },
   "next_quest": {
    "ru": "Забери награду недели",
@@ -2758,6 +3029,562 @@
    "ru": "Понятно",
    "en": "Got it",
    "ka": "გასაგებია"
+  },
+  "rent_plain": {
+   "ru": "обычный сектор в сутки",
+   "en": "a plain sector a day",
+   "ka": "ჩვეულებრივი სექტორი დღეში"
+  },
+  "rent_shared": {
+   "ru": "общий сектор в сутки",
+   "en": "a shared sector a day",
+   "ka": "საერთო სექტორი დღეში"
+  },
+  "rent_hq": {
+   "ru": "сектор со штабом в сутки",
+   "en": "the HQ sector a day",
+   "ka": "შტაბის სექტორი დღეში"
+  },
+  "src_rent": {
+   "ru": "Рента",
+   "en": "Rent",
+   "ka": "რენტა"
+  },
+  "src_tax": {
+   "ru": "Отчисления с уловов",
+   "en": "Catch tax",
+   "ka": "დაჭერის გადასახადი"
+  },
+  "src_deposit": {
+   "ru": "Взносы",
+   "en": "Deposits",
+   "ka": "შენატანები"
+  },
+  "src_rewards": {
+   "ru": "Награды клана",
+   "en": "Clan rewards",
+   "ka": "კლანის ჯილდოები"
+  },
+  "capLine": {
+   "ru": "потолок {n}",
+   "en": "cap {n}",
+   "ka": "ზღვარი {n}"
+  },
+  "levelFrom": {
+   "ru": "с уровня клана {n}",
+   "en": "from clan level {n}",
+   "ka": "კლანის {n} დონიდან"
+  },
+  "oneAtATime": {
+   "ru": "Строится одна постройка за раз: от 12 часов до 5 суток",
+   "en": "One building at a time: from 12 hours to 5 days",
+   "ka": "ერთდროულად ერთი ნაგებობა: 12 საათიდან 5 დღემდე"
+  },
+  "whileHq": {
+   "ru": "Постройки работают, пока стоит штаб. Щиты — его защита.",
+   "en": "The buildings work while the HQ stands. The shields are its defence.",
+   "ka": "ნაგებობები მუშაობს, სანამ შტაბი დგას. ფარები მისი დაცვაა."
+  },
+  "tourAgain": {
+   "ru": "Пройти тур",
+   "en": "Take the tour",
+   "ka": "ტურის გავლა"
+  }
+ },
+ "shop": {
+  "inTreasury": {
+   "ru": "в общаке · потолок {cap}",
+   "en": "in the treasury · cap {cap}",
+   "ka": "სალაროში · ზღვარი {cap}"
+  },
+  "noteManager": {
+   "ru": "Покупаешь для всего клана из общака. «Поставить как цель» — и все участники увидят, на что копим.",
+   "en": "You buy for the whole clan from the treasury. «Set as goal», and every member sees what the clan is saving for.",
+   "ka": "ყიდულობ მთელი კლანისთვის სალაროდან. «მიზნად დაყენება» — და ყველა წევრი დაინახავს, რისთვის ვაგროვებთ."
+  },
+  "noteMember": {
+   "ru": "Покупают глава и заместители. Ты можешь примерить что угодно.",
+   "en": "The leader and the co-leaders buy. You can try anything on.",
+   "ka": "ყიდულობენ ლიდერი და მოადგილეები. შენ შეგიძლია ნებისმიერი მოირგო."
+  },
+  "goalNow": {
+   "ru": "Цель общака:",
+   "en": "The treasury's goal:",
+   "ka": "სალაროს მიზანი:"
+  },
+  "takeOff": {
+   "ru": "Снять",
+   "en": "Take off",
+   "ka": "მოხსნა"
+  },
+  "worn": {
+   "ru": "Надето",
+   "en": "In use",
+   "ka": "გამოყენებაშია"
+  },
+  "wear": {
+   "ru": "Надеть",
+   "en": "Use",
+   "ka": "გამოყენება"
+  },
+  "bought": {
+   "ru": "Куплено",
+   "en": "Bought",
+   "ka": "ნაყიდია"
+  },
+  "fromLevel": {
+   "ru": "С уровня клана {n}",
+   "en": "From clan level {n}",
+   "ka": "კლანის {n} დონიდან"
+  },
+  "isGoal": {
+   "ru": "Цель общака",
+   "en": "Treasury goal",
+   "ka": "სალაროს მიზანი"
+  },
+  "setGoal": {
+   "ru": "Поставить как цель",
+   "en": "Set as goal",
+   "ka": "მიზნად დაყენება"
+  },
+  "clearGoal": {
+   "ru": "Убрать из цели",
+   "en": "Remove the goal",
+   "ka": "მიზნის მოხსნა"
+  },
+  "price": {
+   "ru": "Цена",
+   "en": "Price",
+   "ka": "ფასი"
+  },
+  "buyFor": {
+   "ru": "Купить за {n}",
+   "en": "Buy for {n}",
+   "ka": "ყიდვა {n}-ად"
+  },
+  "kind_clan_skin": {
+   "ru": "Скины секторов",
+   "en": "Sector skins",
+   "ka": "სექტორის სკინები"
+  },
+  "kind_boat": {
+   "ru": "Лодки",
+   "en": "Boats",
+   "ka": "ნავები"
+  },
+  "kind_frame": {
+   "ru": "Рамки",
+   "en": "Frames",
+   "ka": "ჩარჩოები"
+  },
+  "caption_clan_skin": {
+   "ru": "Скин ложится на все сектора клана на слое «Кланы», в цвете вашего герба.",
+   "en": "The skin covers every sector of the clan on the «Clans» layer, in the colour of your crest.",
+   "ka": "სკინი ფარავს კლანის ყველა სექტორს ფენაზე «კლანები», თქვენი გერბის ფერში."
+  },
+  "caption_boat": {
+   "ru": "Лодка клана в битве кланов: её видят все, кто смотрит гонку.",
+   "en": "The clan's boat in the clan battle: everybody watching the race sees it.",
+   "ka": "კლანის ნავი კლანების ბრძოლაში: მას ხედავს ყველა, ვინც შეჯიბრს უყურებს."
+  },
+  "caption_frame": {
+   "ru": "Рамка вокруг герба на экране клана: видна всем, кто открывает ваш клан.",
+   "en": "A frame round the crest on the clan screen: everybody who opens your clan sees it.",
+   "ka": "ჩარჩო გერბის გარშემო კლანის ეკრანზე: ჩანს ყველასთვის, ვინც თქვენს კლანს ხსნის."
+  },
+  "what_clan_skin": {
+   "ru": "Так будут выглядеть все сектора клана на слое «Кланы». Цвет берётся из герба.",
+   "en": "This is how every sector of the clan will look on the «Clans» layer. The colour comes from the crest.",
+   "ka": "ასე გამოიყურება კლანის ყველა სექტორი ფენაზე «კლანები». ფერი გერბიდან მოდის."
+  },
+  "what_boat": {
+   "ru": "Так ваша лодка поплывёт в битве кланов.",
+   "en": "This is how your boat will sail in the clan battle.",
+   "ka": "ასე იცურავებს თქვენი ნავი კლანების ბრძოლაში."
+  },
+  "what_frame": {
+   "ru": "Так будет выглядеть шапка клана с этой рамкой.",
+   "en": "This is how the clan's banner will look with this frame.",
+   "ka": "ასე გამოიყურება კლანის ქუდი ამ ჩარჩოთი."
+  },
+  "item": {
+   "boat_coral": {
+    "ru": "Коралловая",
+    "en": "Coral",
+    "ka": "მარჯნისფერი"
+   },
+   "boat_night": {
+    "ru": "Ночная",
+    "en": "Night",
+    "ka": "ღამის"
+   },
+   "boat_gold": {
+    "ru": "Золотая",
+    "en": "Golden",
+    "ka": "ოქროსფერი"
+   },
+   "boat_dragon": {
+    "ru": "Дракон",
+    "en": "Dragon",
+    "ka": "დრაკონი"
+   },
+   "frame_bronze": {
+    "ru": "Бронзовая",
+    "en": "Bronze",
+    "ka": "ბრინჯაოს"
+   },
+   "frame_silver": {
+    "ru": "Серебряная",
+    "en": "Silver",
+    "ka": "ვერცხლის"
+   },
+   "frame_gold": {
+    "ru": "Золотая",
+    "en": "Golden",
+    "ka": "ოქროს"
+   },
+   "frame_legend": {
+    "ru": "Легендарная",
+    "en": "Legendary",
+    "ka": "ლეგენდარული"
+   }
+  }
+ },
+ "cap": {
+  "title": {
+   "ru": "Потолок общака",
+   "en": "The treasury's cap",
+   "ka": "სალაროს ზღვარი"
+  },
+  "total": {
+   "ru": "столько вмещает общак сейчас",
+   "en": "what the treasury holds now",
+   "ka": "ამდენს იტევს სალარო ახლა"
+  },
+  "fromLevel": {
+   "ru": "Уровень клана {n}",
+   "en": "Clan level {n}",
+   "ka": "კლანის დონე {n}"
+  },
+  "fromStorage": {
+   "ru": "Склад, уровень {n}",
+   "en": "Storehouse, level {n}",
+   "ka": "საწყობი, დონე {n}"
+  },
+  "noStorage": {
+   "ru": "Склад не построен",
+   "en": "No storehouse yet",
+   "ka": "საწყობი არ არის აშენებული"
+  },
+  "nextLevel": {
+   "ru": "На уровне клана {n} потолок вырастет до {cap}.",
+   "en": "At clan level {n} the cap grows to {cap}.",
+   "ka": "კლანის {n} დონეზე ზღვარი გაიზრდება {cap}-მდე."
+  },
+  "nextStorage": {
+   "ru": "Склад уровня {n} добавит ещё {plus}.",
+   "en": "A level {n} storehouse adds {plus} more.",
+   "ka": "{n} დონის საწყობი კიდევ {plus}-ს დაამატებს."
+  },
+  "over": {
+   "ru": "Монеты сверх потолка в общак не помещаются: в журнале видно, сколько не вошло.",
+   "en": "Coins over the cap do not fit into the treasury: the journal shows how many did not.",
+   "ka": "ზღვარს ზემოთ მონეტები სალაროში არ ეტევა: ჟურნალში ჩანს, რამდენი ვერ შევიდა."
+  },
+  "toStorage": {
+   "ru": "К складу на базе",
+   "en": "To the storehouse",
+   "ka": "საწყობთან"
+  }
+ },
+ "levels": {
+  "cap": {
+   "ru": "Общак вмещает {n} монет",
+   "en": "The treasury holds {n} coins",
+   "ka": "სალარო იტევს {n} მონეტას"
+  },
+  "build": {
+   "ru": "Постройки базы: уровень {n}",
+   "en": "Base buildings: level {n}",
+   "ka": "ბაზის ნაგებობები: დონე {n}"
+  },
+  "shop": {
+   "ru": {
+    "one": "В магазине клана открывается {count} товар",
+    "few": "В магазине клана открываются {count} товара",
+    "many": "В магазине клана открываются {count} товаров",
+    "other": "В магазине клана открываются {count} товара"
+   },
+   "en": {
+    "one": "{count} item opens in the clan shop",
+    "other": "{count} items open in the clan shop"
+   },
+   "ka": {
+    "one": "კლანის მაღაზიაში იხსნება {count} ნივთი",
+    "other": "კლანის მაღაზიაში იხსნება {count} ნივთი"
+   }
+  }
+ },
+ "chest": {
+  "title": {
+   "ru": "Клану в общак",
+   "en": "To the clan's treasury",
+   "ka": "კლანის სალაროში"
+  },
+  "next": {
+   "ru": "Сверх наград участникам в общак уходит {p} % от всех наград сундука. На следующем сундуке будет +{n}. Начисляется в конце недели, так же и с битвы кланов.",
+   "en": "On top of the members' rewards, {p} % of all the chest's rewards goes to the treasury. At the next chest it will be +{n}. Paid at the end of the week, and the same with the clan battle.",
+   "ka": "წევრების ჯილდოს გარდა, ზარდახშის ყველა ჯილდოს {p} % სალაროში მიდის. შემდეგ ზარდახშაზე იქნება +{n}. ირიცხება კვირის ბოლოს, ასევე კლანების ბრძოლიდანაც."
+  },
+  "all": {
+   "ru": "Все сундуки открыты: сверх наград участникам в общак уйдёт {p} % от всех наград. Начисляется в конце недели.",
+   "en": "All chests are open: on top of the members' rewards, {p} % of all the rewards goes to the treasury. Paid at the end of the week.",
+   "ka": "ყველა ზარდახშა გახსნილია: წევრების ჯილდოს გარდა, ყველა ჯილდოს {p} % სალაროში წავა. ირიცხება კვირის ბოლოს."
+  }
+ },
+ "moment": {
+  "hitDefender": {
+   "ru": "Щит штаба снят · осталось {n}",
+   "en": "HQ shield knocked off · {n} left",
+   "ka": "შტაბის ფარი მოიხსნა · დარჩა {n}"
+  },
+  "hitAttacker": {
+   "ru": "Щит снят · осталось {n}",
+   "en": "Shield off · {n} left",
+   "ka": "ფარი მოიხსნა · დარჩა {n}"
+  },
+  "siegeDefender": {
+   "ru": "Штаб в осаде! {m} мин",
+   "en": "HQ under siege! {m} min",
+   "ka": "შტაბი ალყაშია! {m} წთ"
+  },
+  "siegeAttacker": {
+   "ru": "Осада началась · {m} мин",
+   "en": "Siege started · {m} min",
+   "ka": "ალყა დაიწყო · {m} წთ"
+  },
+  "saved": {
+   "ru": "{name} снял осаду!",
+   "en": "{name} broke the siege!",
+   "ka": "{name}-მა ალყა მოხსნა!"
+  },
+  "fell": {
+   "ru": "Штаб пал",
+   "en": "The HQ has fallen",
+   "ka": "შტაბი დაეცა"
+  },
+  "captured": {
+   "ru": "Штаб захвачен!",
+   "en": "HQ taken!",
+   "ka": "შტაბი აღებულია!"
+  },
+  "minutes": {
+   "ru": "{m} мин",
+   "en": "{m} min",
+   "ka": "{m} წთ"
+  },
+  "textHit": {
+   "ru": "Чужой улов на секторе штаба. Поймайте рыбу там, чтобы вернуть щит.",
+   "en": "An outsider caught on the HQ sector. Catch a fish there to get the shield back.",
+   "ka": "უცხომ შტაბის სექტორზე დაიჭირა. დაიჭირეთ თევზი იქ, რომ ფარი დააბრუნოთ."
+  },
+  "textSiege": {
+   "ru": "Щитов нет, и началась осада. Любой участник, поймавший рыбу на секторе штаба, её снимет.",
+   "en": "No shields left, and a siege has started. Any member who catches a fish on the HQ sector breaks it.",
+   "ka": "ფარები აღარ არის და ალყა დაიწყო. ნებისმიერი წევრი, ვინც შტაბის სექტორზე თევზს დაიჭერს, მოხსნის მას."
+  },
+  "textSaved": {
+   "ru": "Штаб устоял. Снявший осаду получил награду, у штаба снова есть щит.",
+   "en": "The HQ held. Whoever broke the siege got the reward, and the HQ has a shield again.",
+   "ka": "შტაბი გადარჩა. ალყის მომხსნელმა ჯილდო მიიღო, შტაბს ისევ აქვს ფარი."
+  },
+  "textFell": {
+   "ru": "Осаду не сняли вовремя. Постройки спят, новый штаб можно поставить через сутки.",
+   "en": "The siege was not broken in time. The buildings sleep; a new HQ can be placed in a day.",
+   "ka": "ალყა დროზე ვერ მოიხსნა. ნაგებობებს სძინავთ; ახალი შტაბის დადგმა ერთ დღეში შეიძლება."
+  },
+  "toMap": {
+   "ru": "Показать на карте",
+   "en": "Show on the map",
+   "ka": "რუკაზე ჩვენება"
+  },
+  "ok": {
+   "ru": "Понятно",
+   "en": "Got it",
+   "ka": "გასაგებია"
+  },
+  "built": {
+   "ru": "Готово: {name}, уровень {n}",
+   "en": "Done: {name}, level {n}",
+   "ka": "მზადაა: {name}, დონე {n}"
+  },
+  "textBuilt": {
+   "ru": "Постройка готова, и её усиление уже работает на весь клан.",
+   "en": "The building is ready, and its boost already works for the whole clan.",
+   "ka": "ნაგებობა მზადაა და მისი გაძლიერება უკვე მთელ კლანზე მუშაობს."
+  },
+  "toBase": {
+   "ru": "На базу",
+   "en": "To the base",
+   "ka": "ბაზაზე"
+  }
+ },
+ "ltour": {
+  "balance": {
+   "ru": "Это общак клана: общие монеты. Он наполняется сам, рентой с секторов клана, а нажатие на «из …» покажет, сколько он вмещает и как поднять потолок.",
+   "en": "This is the clan's treasury: shared coins. It fills by itself with the rent of the clan's sectors; tap «of …» to see how much it holds and how to raise the cap.",
+   "ka": "ეს კლანის სალაროა: საერთო მონეტები. ის თავისით ივსება კლანის სექტორების რენტით; დააჭირე «…-დან»-ს, რომ ნახო, რამდენს იტევს და როგორ გაზარდო ზღვარი."
+  },
+  "sources": {
+   "ru": "Откуда пришли монеты за неделю. Нажми на строку, и увидишь каждое поступление: что, когда и от кого.",
+   "en": "Where the week's coins came from. Tap a line to see every entry: what, when and from whom.",
+   "ka": "საიდან მოვიდა კვირის მონეტები. დააჭირე ხაზს და ნახავ თითოეულ შემოსავალს: რა, როდის და ვისგან."
+  },
+  "journal": {
+   "ru": "Журнал клана: монеты, тревоги штаба, выходы, кто вступил. Всё, что случилось с кланом, в одном месте.",
+   "en": "The clan journal: coins, HQ alarms, outings, who joined. Everything that happened to the clan, in one place.",
+   "ka": "კლანის ჟურნალი: მონეტები, შტაბის განგაში, გასვლები, ვინ შემოვიდა. ყველაფერი, რაც კლანს შეემთხვა, ერთ ადგილას."
+  },
+  "shop": {
+   "ru": "Магазин клана: скины секторов, лодки для битвы и рамки герба. Покупают глава и заместители, а «Поставить как цель» покажет всем, на что копим.",
+   "en": "The clan shop: sector skins, boats for the battle and crest frames. The leader and co-leaders buy; «Set as goal» shows everybody what the clan is saving for.",
+   "ka": "კლანის მაღაზია: სექტორის სკინები, ნავები ბრძოლისთვის და გერბის ჩარჩოები. ყიდულობენ ლიდერი და მოადგილეები; «მიზნად დაყენება» ყველას აჩვენებს, რისთვის ვაგროვებთ."
+  },
+  "hq": {
+   "ru": "Штаб — сердце клана. Он стоит на одном из секторов клана, приносит двойную ренту, и на нём держатся постройки.",
+   "en": "The HQ is the heart of the clan. It stands on one of the clan's sectors, brings double rent, and the buildings depend on it.",
+   "ka": "შტაბი კლანის გულია. ის დგას კლანის ერთ-ერთ სექტორზე, მოაქვს ორმაგი რენტა და მასზეა დამოკიდებული ნაგებობები."
+  },
+  "base": {
+   "ru": "База клана: шесть построек вокруг штаба. Каждая даёт клану усиление, а уровни открываются с уровнем клана.",
+   "en": "The clan base: six buildings round the HQ. Each gives the clan a boost, and their levels open with the clan's level.",
+   "ka": "კლანის ბაზა: ექვსი ნაგებობა შტაბის გარშემო. თითოეული კლანს აძლიერებს, დონეები კი კლანის დონესთან ერთად იხსნება."
+  },
+  "defend": {
+   "ru": "Как защищать штаб: щиты, атака, осада и падение. Ловите рыбу на секторе штаба, и щиты держатся.",
+   "en": "How to defend the HQ: shields, attack, siege and fall. Keep catching on the HQ sector and the shields hold.",
+   "ka": "როგორ დავიცვათ შტაბი: ფარები, შეტევა, ალყა და დაცემა. იჭირეთ თევზი შტაბის სექტორზე და ფარები გაძლებს."
+  },
+  "exit": {
+   "ru": "Выход клана: два часа ×2 монеты за улов для всех, кто нажал «иду». Назначают глава и заместители.",
+   "en": "The clan outing: two hours of ×2 coins per catch for everybody who tapped «going». The leader and co-leaders plan it.",
+   "ka": "კლანის გასვლა: ორი საათი ×2 მონეტა დაჭერაზე ყველასთვის, ვინც «მივდივარ» დააჭირა. ნიშნავენ ლიდერი და მოადგილეები."
+  },
+  "week": {
+   "ru": "Задание недели: одно на весь клан. Выполните его вместе, и награда уйдёт в общак.",
+   "en": "The weekly task: one for the whole clan. Do it together and the reward goes to the treasury.",
+   "ka": "კვირის დავალება: ერთი მთელი კლანისთვის. შეასრულეთ ერთად და ჯილდო სალაროში წავა."
+  },
+  "members": {
+   "ru": "Участники клана. Справа видно, сколько каждый отдал в общак в этом месяце. У того, кто больше всех, корона.",
+   "en": "The clan's members. On the right, how much each gave to the treasury this month. The one who gave most wears a crown.",
+   "ka": "კლანის წევრები. მარჯვნივ ჩანს, რამდენი მისცა თითოეულმა სალაროს ამ თვეში. ვინც ყველაზე მეტი მისცა, გვირგვინი აქვს."
+  },
+  "chest": {
+   "ru": "Сундук недели: награды всем, кто ловил. Сверх них четверть уходит в общак клана.",
+   "en": "The week's chest: rewards for everybody who fished. On top of them, a quarter goes to the clan's treasury.",
+   "ka": "კვირის ზარდახშა: ჯილდოები ყველას, ვინც თევზაობდა. ამის გარდა მეოთხედი კლანის სალაროში მიდის."
+  },
+  "map": {
+   "ru": "И последнее: на карте включи слой «Кланы». Там видно штаб клана, его щиты и осаду.",
+   "en": "And last: on the map, switch on the «Clans» layer. There you see the clan's HQ, its shields and any siege.",
+   "ka": "და ბოლოს: რუკაზე ჩართე ფენა «კლანები». იქ ჩანს კლანის შტაბი, მისი ფარები და ალყა."
+  }
+ },
+ "other": {
+  "title": {
+   "ru": "Штаб клана «{name}»",
+   "en": "HQ of the clan «{name}»",
+   "ka": "კლანის «{name}» შტაბი"
+  },
+  "meta": {
+   "ru": "Уровень {level} · {n} из {cap} участников",
+   "en": "Level {level} · {n} of {cap} members",
+   "ka": "დონე {level} · {n} / {cap} წევრი"
+  },
+  "why": {
+   "ru": "Это база клана: всё, что на ней построено, работает на каждого его рыбака.",
+   "en": "This is the clan's base: everything built on it works for each of its anglers.",
+   "ka": "ეს კლანის ბაზაა: ყველაფერი, რაც მასზეა აშენებული, მის ყველა მეთევზეს ეხმარება."
+  },
+  "full": {
+   "ru": "Мест в клане сейчас нет",
+   "en": "The clan has no free places now",
+   "ka": "კლანში ახლა თავისუფალი ადგილი არ არის"
+  },
+  "join": {
+   "ru": "Вступить в клан",
+   "en": "Join the clan",
+   "ka": "კლანში შესვლა"
+  },
+  "open": {
+   "ru": "Открыть клан",
+   "en": "Open the clan",
+   "ka": "კლანის გახსნა"
+  },
+  "preview": {
+   "ru": "Предпросмотр: штабы и постройки других кланов пока условные",
+   "en": "Preview: other clans' HQs and buildings are made up for now",
+   "ka": "გადახედვა: სხვა კლანების შტაბები და ნაგებობები ჯერ პირობითია"
+  },
+  "hint": {
+   "ru": "Флаги на карте — штабы кланов. Нажми на флаг: увидишь базу клана и сможешь вступить",
+   "en": "The flags on the map are the clans' HQs. Tap one to see the clan's base and join it",
+   "ka": "რუკაზე დროშები კლანების შტაბებია. დააჭირე დროშას: დაინახავ კლანის ბაზას და შეძლებ შესვლას"
+  },
+  "hintClose": {
+   "ru": "Скрыть подсказку",
+   "en": "Hide the hint",
+   "ka": "მინიშნების დამალვა"
+  }
+ },
+ "tg": {
+  "weekTitle": {
+   "ru": "Итоги недели клана «{clan}»",
+   "en": "The week of the clan «{clan}»",
+   "ka": "კლანის «{clan}» კვირის შედეგები"
+  },
+  "weekMoney": {
+   "ru": "Общак: пришло {income}",
+   "en": "Treasury: {income} came in",
+   "ka": "სალარო: შემოვიდა {income}"
+  },
+  "weekMoneySpent": {
+   "ru": "Общак: пришло {income}, потрачено {spent}",
+   "en": "Treasury: {income} came in, {spent} spent",
+   "ka": "სალარო: შემოვიდა {income}, დაიხარჯა {spent}"
+  },
+  "weekTop": {
+   "ru": "Больше всех вложили: {list}",
+   "en": "Gave the most: {list}",
+   "ka": "ყველაზე მეტი შეიტანეს: {list}"
+  },
+  "weekBuilt": {
+   "ru": "Построено: {list}",
+   "en": "Built: {list}",
+   "ka": "აშენდა: {list}"
+  },
+  "weekWater": {
+   "ru": "Секторов: {sectors} · уловов: {catches} · ловили: {fishers}",
+   "en": "Sectors: {sectors} · catches: {catches} · fished: {fishers}",
+   "ka": "სექტორები: {sectors} · დაჭერები: {catches} · თევზაობდა: {fishers}"
+  }
+ },
+ "activity": {
+  "weekSub": {
+   "ru": "Общак +{income} · уловов {catches} · ловили {fishers}",
+   "en": "Treasury +{income} · catches {catches} · fished {fishers}",
+   "ka": "სალარო +{income} · დაჭერები {catches} · თევზაობდა {fishers}"
+  },
+  "nudge": {
+   "ru": "{name} зовёт тебя на воду",
+   "en": "{name} is calling you out to fish",
+   "ka": "{name} თევზაობაზე გეძახის"
+  },
+  "nudgeSub": {
+   "ru": "Клан «{clan}»: выходи ловить вместе",
+   "en": "The clan «{clan}»: come and fish together",
+   "ka": "კლანი «{clan}»: გამოდი, ერთად ვითევზაოთ"
   }
  }
 }

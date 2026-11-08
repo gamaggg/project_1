@@ -23,7 +23,9 @@ import { tn } from '@/lib/i18n/runtime'
 // user would multiply writes for no gain — so they're fetched globally and
 // merged back in at the right chronological spot.
 // Game notifications drawn as one generic row in «Активность».
-const GAME_EVENT_KINDS = new Set(['hot_sector_week', 'hot_sector_won', 'legend_gained', 'legend_lost', 'bite_forecast', 'sector_forecast', 'daily_reward_reminder', 'sector_attacked', 'support_reply', 'admin_gift', 'geo_bonus', 'catch_edited', 'catch_species_changed', 'rating_overtaken'])
+const GAME_EVENT_KINDS = new Set(['hot_sector_week', 'hot_sector_won', 'legend_gained', 'legend_lost', 'bite_forecast', 'sector_forecast', 'daily_reward_reminder', 'sector_attacked', 'support_reply', 'admin_gift', 'geo_bonus', 'catch_edited', 'catch_species_changed', 'rating_overtaken',
+  // The clan update (supabase-drafts/clan-update-06-11/04_clan_notifications.sql).
+  'clan_hq_attacked', 'clan_hq_siege', 'clan_hq_saved', 'clan_hq_fell', 'clan_buff_planned', 'clan_quest_done', 'clan_project_done', 'clan_item_bought', 'clan_recruit_joined', 'clan_recruit_paid', 'clan_week_digest', 'clan_nudge'])
 
 export function useActivity() {
   const { user } = useAuth()

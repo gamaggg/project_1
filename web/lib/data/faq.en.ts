@@ -288,28 +288,29 @@ export const FAQ_EN: FaqSection[] = [
           [
             'Rent: every captured clan sector brings 1 coin every 3 hours (8 a day). A shared sector that clan-mates hold together brings one and a half times more, the HQ sector double (2 coins per 3 hours).',
             'The catch tax: 0, 5 or 10 % of the coins for a fish. The leader or the co-leader picks the rate; it is part of your reward, not taken on top.',
-            'Deposits: any member can put in coins of their own. Whoever gives the most in a week is the week\'s Patron.',
+            'Deposits: any member can put in coins of their own. The members list shows how much each one gave this month (deposits and the catch tax); the count starts again on the 1st. Whoever gave the most wears the «Patron of the month» crown. Everyone sees this column, clan-mates and players of other clans.',
             'A quarter of the coins from the week\'s chest and the clan battle, the weekly task reward and 100 coins for every newcomer who makes a first catch.',
           ],
-          'It saves up to a cap: 3 000 coins for a clan of level 1–2, 5 000 for 3–4, 8 000 for 5–6, 12 000 for 7–8, 20 000 for 9–10; the Storehouse adds more. What does not fit is lost. The leader and the co-leader spend it: on buildings, sector skins, the HQ and the «Outing».',
+          'It saves up to a cap: 3 000 coins for a clan of level 1–2, 5 000 for 3–4, 8 000 for 5–6, 12 000 for 7–8, 20 000 for 9–10; the Storehouse adds more. Tap «of …» under the treasury sum to see what the clan level gives, what the Storehouse gives and what the next level brings. What does not fit is lost. The leader and the co-leader spend it: on buildings, the HQ, the «Outing» and the clan shop.',
+          'Everything about the clan is in one journal on the «Treasury» tab: coins (rent, deposits, purchases), HQ alarms, outings, who joined and left. The filter on top splits coins and events.',
         ],
       },
       {
         q: 'What is the clan HQ and what happens if it falls?',
         a: [
-          'The HQ is the clan sector with its crest on it. The leader or the co-leader sets it only on a captured clan sector (1 000 coins from the treasury, moving it costs 2 000 and is allowed once in 3 days). A sector never has two HQs. While the HQ stands, the buildings work and the HQ sector pays double.',
+          'The HQ is the clan sector with its crest on it. The leader or the co-leader sets it only on a captured clan sector (1 000 coins from the treasury; moving it costs 2 000 and is allowed once in 3 days). A sector never has two HQs. While the HQ stands, the buildings work and the HQ sector pays double.',
           [
             'The HQ sector\'s defence is the same three shields. Every clan catch there adds one, an outsider\'s catch takes one off.',
-            'With no shields left, the next outsider\'s catch does not take the sector but starts a siege: the clan has 30 minutes (the Beacon adds up to 30). A catch by any member on the HQ sector lifts the siege and brings them 20 coins.',
+            'With no shields left, the next outsider\'s catch does not take the sector but starts a siege: the clan has 90 minutes (the Beacon adds up to 30). A catch by any member on the HQ sector lifts the siege and brings them 150 coins.',
             'If it is not lifted in time the HQ falls: the attackers carry off 20 % of the treasury (at most 1 500 coins), the HQ sector goes to them, the buildings fall asleep and a new HQ can only be set after 24 hours.',
           ],
-          'The whole clan is told when the HQ is attacked: an alert in the app and a push in Telegram.',
+          'An attack on the HQ, a siege and a fall are sent to the whole clan in «Activity» and in Telegram: an attack at most once in 30 minutes, a siege at once, even at night (there are only 90 minutes to lift it).',
         ],
       },
       {
         q: 'How does the clan base work: buildings, build time, speed-up?',
         a: [
-          'The base is the clan\'s sector with the HQ in the middle and six plots round it. Each plot takes one building of three levels; it gives the clan a real perk while the HQ stands.',
+          'The base is the clan\'s sector with the HQ in the middle and six plots round it. Each plot takes one building of three levels; it boosts the clan while the HQ stands.',
           [
             'Dock: +2/+4/+6 places in the clan (900…4 500 coins).',
             'Beacon: 10/20/30 more minutes to lift a siege.',
@@ -318,20 +319,46 @@ export const FAQ_EN: FaqSection[] = [
             'Storehouse: the treasury cap +1 000/2 500/5 000.',
             'Market: the rent of every sector +5/10/15 %.',
           ],
-          'Levels cost from 400 to 4 800 coins and the whole base 35 000: a clan that plays together builds it in about three months. The first level opens at clan level 2, the second at 4, the third at 6. A build takes time: from 12 hours (first level) to 4–5 days (the third level of the heavy buildings), and one building is built at a time. A build can be finished at once for treasury coins: the price is up to 35 % of the building\'s price, in proportion to the time left.',
+          'Levels cost from 400 to 4 800 coins and the whole base 35 000: a clan that plays together builds it in about three months. The first level opens at clan level 2, the second at 4, the third at 6. A build takes time: from 12 hours (first level) to 4–5 days (the third level of the heavy buildings), one building at a time. An unfinished build can be completed at once with treasury coins: up to 35 % of the building\'s price, in proportion to the time left.',
         ],
       },
       {
         q: 'What is the clan «Outing»?',
         a: [
-          'A clan buff in place of the personal «Double coins». The leader or the co-leader plans an «Outing» for 300 treasury coins to start in 5–180 minutes. Those who tap «I\'m in» get one more fish price per catch for 2 hours (×2), and their chest and clan battle meters grow one and a half times faster.',
+          'A clan buff in place of the personal «Double coins». The leader or the co-leader plans an «Outing» for 300 treasury coins to start in 5–180 minutes. Those who tap «I\'m in» get one more fish price per catch for 2 hours (×2), and their catches and sector captures bring one and a half times more metres in the clan battle (a catch 15 m instead of 10). The chest points do not change.',
           'At least three members must tap «I\'m in»: otherwise the «Outing» is cancelled and the coins go back to the treasury. After an «Outing» the clan rests for 12 hours. A hot sector and an «Outing» together are ×3, not ×4.',
         ],
       },
       {
-        q: 'What are the clan sector skins?',
+        q: 'What does the clan shop sell?',
         a: [
-          'Animated skins of the clan\'s sectors, seen by everybody on the «Clans» layer. They are bought from the treasury and the whole clan wears one: «Tide» 5 000 coins (from clan level 3), «Aurora» 8 000 (from 5), «Flotilla» 11 000 (from 7), «Lanterns» 15 000 (from 9). The clan saves up for a skin as a goal with a bar.',
+          'The clan shop is the third tab of the «Treasury» (Treasury · HQ · Shop). The leader and the co-leaders buy from the treasury; the others see the same and can try anything on. Every item opens with a clan level; any of them can be «Set as the goal»: then every member sees at the bottom of the treasury card what the clan is saving for and how much is left.',
+          [
+            'Sector skins: the same 18 skins the players have, five times dearer: from 1 500 to 15 000 coins. The skin lies on every clan sector on the «Clans» layer, in the crest\'s colour.',
+            'Boats for the clan battle: «Coral» 3 000 (from clan level 2), «Night» 4 500 (from 4), «Golden» 6 000 (from 5), «Dragon» 9 000 (from 7). Each boat has its own details: shells and a starfish, stars and lanterns, a crown and sparks; the «Dragon» hull is the dragon\'s body itself: the neck with the head at the bow, the tail at the stern.',
+            'Frames round the crest on the clan screen, in the crest\'s own shape: «Bronze» 2 000 (from level 2), «Silver» 4 000 (from 4), «Gold» 7 000 (from 6), «Legendary» 12 000 (from 8). The inner edge always follows the crest; the gold one has a laurel wreath and a crown, the legendary one wings and a star.',
+          ],
+          'What is bought is put on at once; you can take it off or put on something else you bought at any time. «Try on» shows the skin on the map, the boat on the water, the frame on the clan banner. While the treasury is short, the buy button is off.',
+        ],
+      },
+      {
+        q: 'What notifications does the clan send?',
+        a: [
+          [
+            'To the whole clan: the HQ is attacked, the HQ is under siege, who lifted the siege, the HQ fell, an «Outing» is planned (come in and tap «I\'m in»), a building is ready (everyone in the app sees its moment).',
+            'To those who fished for the weekly task: the task is done, the reward is in the treasury.',
+            'To the leader and the co-leaders: a shop item bought, a newcomer joined and made a first catch.',
+            'Every Monday at 10:00 Moscow time, the clan\'s week: what came into the treasury and was spent, who gave the most, what was built, sectors and catches of the week. A clan with no coins and no catches that week gets nothing.',
+            'A leader or a co-leader can call a member out to fish («Call to the water»), at most once a day per member.',
+          ],
+          'Notifications come to «Activity» and Telegram; at night Telegram holds them till morning, except a siege. A cancelled «Outing» and attacks on ordinary sectors are only in the clan journal.',
+        ],
+      },
+      {
+        q: 'How do I see another clan\'s base and join a clan?',
+        a: [
+          'Switch on the «Clans» layer on the map: the flags are the clans\' HQs. Tap a flag and open the sector: it shows that clan\'s base with its buildings and levels, the clan\'s level and how many places it has.',
+          'If you are not in a clan, the «Join the clan» button leads to the clan\'s page: its conditions (open, by request or by invitation, how many sectors are needed) and the join button itself.',
         ],
       },
       {
@@ -339,7 +366,7 @@ export const FAQ_EN: FaqSection[] = [
         a: [
           [
             'Only the leader can hand leadership over: on the clan screen from a member\'s menu; you become the co-leader.',
-            'If the leader does not come in for 14 days, leadership passes to the co-leader by itself.',
+            'If the leader does not open the app for 30 days, leadership passes to the co-leader by itself (no co-leader — to an elder, no elder — to whoever came in last), and the former leader becomes a co-leader. Catches do not matter here: it is enough for the leader to open the app at least once in 30 days.',
             'If the clan is disbanded, the treasury burns: the coins do not go to the players. This is so that coins cannot be taken out through a disbandment.',
           ],
         ],

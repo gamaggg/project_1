@@ -5,7 +5,8 @@ import dynamic from 'next/dynamic'
 import { useEffect, useRef, useState } from 'react'
 import type { Clan2Section } from '@/components/clan2/live/Clan2Panel'
 import { ClanGroupIcon, type ClanGroupId } from '@/components/clan2/ClanGroupIcon'
-import { useDemoState } from '@/lib/clan2/demoStore'
+import { markTourSeen, monthDepositOf, useDemoState } from '@/lib/clan2/demoStore'
+import { LIVE_TOUR } from '@/lib/clan2/tours'
 import { useClan2Enabled } from '@/lib/clan2/live/flag'
 import { getLiveUi, setLiveUi, subscribeLiveUi, useLiveUi } from '@/lib/clan2/live/ui'
 import { createPortal } from 'react-dom'
@@ -47,11 +48,13 @@ type Tab = 'members' | 'chest' | 'race' | Clan2Section
 
 // The clan update's sections (Общак, Выход, …) — only when it is switched on for this browser (lib/clan2/live/flag.ts).
 const Clan2Panel = dynamic(() => import('@/components/clan2/live/Clan2Panel').then((m) => m.Clan2Panel), { ssr: false })
-const CLAN2_TABS = ['treasury', 'exit', 'week', 'hq', 'glory'] as const
-// With the clan update on, the sections pair up under four tabs, each with a two-way switch inside:
-// treasury + HQ, outing + week, members + hall of fame, clan battle + chest.
-const CLAN2_GROUPS: { id: ClanGroupId; label: string; tabs: [Tab, Tab] }[] = [
-  { id: 'money', label: 'clan2.sub.treasury', tabs: ['treasury', 'hq'] },
+// The clan tour (the clan update): the first time by itself, again from «Как это работает».
+const C2Tour = dynamic(() => import('@/components/clan2/C2Tour').then((m) => m.C2Tour), { ssr: false })
+const CLAN2_TABS = ['treasury', 'shop', 'exit', 'week', 'hq', 'glory'] as const
+// With the clan update on, the sections group under four tabs, each with a switch inside:
+// treasury + HQ + the clan shop, outing + week, members + hall of fame, clan battle + chest.
+const CLAN2_GROUPS: { id: ClanGroupId; label: string; tabs: Tab[] }[] = [
+  { id: 'money', label: 'clan2.sub.treasury', tabs: ['treasury', 'hq', 'shop'] },
   { id: 'outing', label: 'clan2.sub.exit', tabs: ['exit', 'week'] },
   { id: 'people', label: 'clan2.sub.people', tabs: ['members', 'glory'] },
   { id: 'battle', label: 'clan2.sub.race', tabs: ['race', 'chest'] },
@@ -59,6 +62,7 @@ const CLAN2_GROUPS: { id: ClanGroupId; label: string; tabs: [Tab, Tab] }[] = [
 const CLAN2_PART_LABEL: Partial<Record<Tab, string>> = {
   treasury: 'clan2.sub.treasury',
   hq: 'clan2.sub.hq',
+  shop: 'clan2.sub.shop',
   exit: 'clan2.sub.exit',
   week: 'clan2.sub.week',
   members: 'guest.members',
@@ -243,6 +247,9 @@ export function ClanScreen({
     setTabPicked(next)
     if (liveUi.clanTab) setLiveUi({ clanTab: null })
   }
+  // The clan update's single journal (on «Общак») takes the clan's own events too.
+  const clanEvents = c2 && clan ? clan.events.map((e) => ({ text: eventText(e), at: new Date(e.createdAt).getTime() })) : undefined
+  const topMonth = c2 && clan ? Math.max(0, ...clan.members.map((m) => monthDepositOf(demo, m.userId))) : 0
   // The tab pair the open section belongs to, and the part last opened in each pair.
   const group = c2 ? CLAN2_GROUPS.find((g) => g.tabs.includes(tab)) : undefined
   const [lastPart, setLastPart] = useState<Record<string, Tab>>({})
@@ -388,7 +395,7 @@ export function ClanScreen({
 
   return (
     <div ref={rootRef} className="clan-screen" onClick={() => menuFor && setMenuFor(null)}>
-      <ClanHero crest={clan.crest} name={clan.name} motto={clan.motto} background={clan.background} golden={clan.level >= 10} top={headerTop}>
+      <ClanHero crest={clan.crest} name={clan.name} motto={clan.motto} background={clan.background} golden={clan.level >= 10} top={headerTop} frame={c2 ? demo.equipped?.frame : null}>
         <div className="clan-chips">
           <button type="button" className="clan-chip tap-scale" onClick={() => setInfo('level')} aria-label={tn('clan.levelAria')}>
             {tn('guest.level', { level: clan.level })}
@@ -620,10 +627,14 @@ export function ClanScreen({
               </div>
             )}
 
-            <div className="clan-card">
+            <div className={`clan-card${c2 ? ' c2-roster' : ''}`} data-tour={c2 ? 'members-list' : undefined}>
               <div className="clan-card-title">{tn('clan.membersTitle', { count: clan.members.length })}</div>
+              {c2 && <div className="c2-month-head">{tn('clan2.members.monthHead')}</div>}
               {clan.members.map((m, i) => {
                 const actions = memberActions(m)
+                // The clan update: what the member put into the treasury this month, and the crown of the one who put most.
+                const month = c2 ? monthDepositOf(demo, m.userId) : 0
+                const patron = c2 && month > 0 && month === topMonth
                 return (
                   <div key={m.userId} className={`clan-member-row${menuFor === m.userId ? ' menu-open' : ''}`} style={{ animationDelay: `${Math.min(i, 12) * 35}ms` }}>
                     <button className="avatar clan-member-avatar tap-scale" onClick={() => onOpenUser(m.userId)} aria-label={m.displayName}>
@@ -636,13 +647,28 @@ export function ClanScreen({
                       </span>
                       <span className={`clan-role clan-role-${m.role}`}>
                         <RoleIcon role={m.role} />
-                        {CLAN_ROLE_LABEL[m.role]}
+                        <span className="clan-role-text">{CLAN_ROLE_LABEL[m.role]}</span>
                       </span>
                     </button>
                     <div className="clan-member-stats">
                       <b>{m.weekCatches}</b>
                       <span>{tn('clan.weekCatches')}</span>
                     </div>
+                    {c2 && (
+                      <div className={`clan-member-stats c2-month${patron ? ' patron' : ''}`} title={patron ? tn('clan2.treasury.patron') : undefined}>
+                        <b>
+                          {patron && (
+                            <svg className="c2-month-crown" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-label={tn('clan2.treasury.patron')}>
+                              <path d="M4 18 3 8l5 4 4-7 4 7 5-4-1 10z" />
+                            </svg>
+                          )}
+                          {month.toLocaleString('ru-RU').replace(/[\u00a0\u202f]/g, ' ')}
+                        </b>
+                        <span>{tn('clan2.members.monthShort')}</span>
+                      </div>
+                    )}
+                    {/* With the clan update's column the rows without a menu keep its place, so the numbers stand in one line. */}
+                    {c2 && actions.length === 0 && <span className="c2-menu-gap" aria-hidden />}
                     {actions.length > 0 && (
                       <div style={{ position: 'relative' }}>
                         <button
@@ -683,8 +709,8 @@ export function ClanScreen({
               })}
             </div>
 
-            {/* The journal is for the clan's own members only. */}
-            {isMember && clan.events.length > 0 && (
+            {/* The journal is for the clan's own members only. With the clan update it is one with the treasury's, on «Общак». */}
+            {isMember && !c2 && clan.events.length > 0 && (
               <div className="clan-card">
                 <div className="clan-card-title">{tn('clan.journal')}</div>
                 {clan.events.slice(0, eventsShown).map((e, i) => (
@@ -706,9 +732,20 @@ export function ClanScreen({
           </div>
         )}
 
-        {c2 && ((CLAN2_TABS as readonly string[]).includes(tab) || (tab === 'admin' && c2Admin)) && <Clan2Panel key={tab} section={tab as Clan2Section} />}
-        {tab === 'race' && <ClanRacePreview key="race" city={clan.city} clanId={clan.id} onOpenRace={onOpenRace} />}
-        {tab === 'chest' && <ClanChestPanel key="chest" clanId={clan.id} isMember={isMember} />}
+        {c2 && ((CLAN2_TABS as readonly string[]).includes(tab) || (tab === 'admin' && c2Admin)) && <Clan2Panel key={tab} section={tab as Clan2Section} events={clanEvents} />}
+        {c2 && (liveUi.tour || !demo.toursSeen.player) && (
+          <C2Tour
+            live
+            steps={LIVE_TOUR}
+            onStep={(st) => st.sub && setLiveUi({ clanTab: st.sub })}
+            onClose={() => {
+              markTourSeen('player')
+              setLiveUi({ tour: false, clanTab: 'treasury' })
+            }}
+          />
+        )}
+        {tab === 'race' && <ClanRacePreview key="race" city={clan.city} clanId={clan.id} onOpenRace={onOpenRace} boatSkins={c2 && demo.equipped?.boat ? { [clan.id]: demo.equipped.boat } : undefined} />}
+        {tab === 'chest' && <ClanChestPanel key="chest" clanId={clan.id} isMember={isMember} treasuryShare={c2 ? demo.settings.chestShare : undefined} />}
 
         {isSuperAdmin && !clan.disbanded && (
           <div className="clan-card clan-admin">
@@ -760,7 +797,7 @@ export function ClanScreen({
         )}
       </div>
 
-      {info && <ClanInfoSheet kind={info} clan={clan} onClose={() => setInfo(null)} onOpenTerritory={onOpenTerritory} onOpenRace={onOpenRace} />}
+      {info && <ClanInfoSheet kind={info} clan={clan} onClose={() => setInfo(null)} onOpenTerritory={onOpenTerritory} onOpenRace={onOpenRace} clan2={c2} />}
 
       {confirm &&
         createPortal(

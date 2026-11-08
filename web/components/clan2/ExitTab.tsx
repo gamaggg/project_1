@@ -10,7 +10,7 @@ import { tn } from '@/lib/i18n/runtime'
 // «Выход»: the clan's two-hour buff. The leader sets it and pays from the
 // treasury; members tap «иду» — only those who did get ×2 coins per catch and
 // ×1,5 metres of the chest and the battle. If too few tap by the start, the
-// outing is cancelled and the coins go back. Under it, the clan's alerts.
+// outing is cancelled and the coins go back. (The clan's alerts are lines of the clan journal on «Общак».)
 
 const STARTS = [
   { minutes: 10, key: 'now' },
@@ -19,7 +19,7 @@ const STARTS = [
   { minutes: 180, key: 'in3h' },
 ] as const
 
-export function ExitTab({ onOpenSector }: { onOpenSector?: (id: string) => void }) {
+export function ExitTab() {
   const s = useDemoState()
   const now = useDemoNow()
   const { act } = useC2()
@@ -34,7 +34,7 @@ export function ExitTab({ onOpenSector }: { onOpenSector?: (id: string) => void 
 
   return (
     <div className="c2-stack">
-      <C2Card title={tn('clan2.exit.title')} tour="exit-card">
+      <C2Card title={tn('clan2.exit.title')} tour="exit-card" focus="exit-card">
         {b.phase === 'idle' && (
           <>
             <p className="c2-hint">{tn('clan2.exit.idleText')}</p>
@@ -56,9 +56,10 @@ export function ExitTab({ onOpenSector }: { onOpenSector?: (id: string) => void 
                     </button>
                   ))}
                 </div>
-                <button className="btn-primary" style={{ marginTop: 12 }} onClick={() => act(planBuff(startIn), 'buffPlanned')}>
-                  {tn('clan2.exit.planFor', { n: price })}
+                <button className="btn-primary" style={{ marginTop: 12 }} disabled={s.treasury.balance < price} onClick={() => act(planBuff(startIn), 'buffPlanned')}>
+                  {tn('clan2.exit.plan')}
                 </button>
+                {s.treasury.balance < price && <p className="c2-short">{tn('clan2.base.missing', { n: price - s.treasury.balance })}</p>}
               </>
             ) : (
               <p className="c2-muted">{tn('clan2.exit.waitLeader')}</p>
@@ -69,7 +70,7 @@ export function ExitTab({ onOpenSector }: { onOpenSector?: (id: string) => void 
         {b.phase === 'planned' && b.startsAt !== null && (
           <>
             <div className="c2-big">{tn('clan2.exit.startsIn', { t: fmtLeft(b.startsAt - now) })}</div>
-            <div className={`c2-chip ${going.length >= need ? 'good' : 'warn'}`}>{tn('clan2.exit.going', { n: going.length, need })}</div>
+            <div className={`c2-chip ${going.length >= need ? 'accent' : 'warn'}`}>{tn('clan2.exit.going', { n: going.length, need })}</div>
             <Going list={going} />
             <p className="c2-hint faint">{tn('clan2.exit.cancelNote', { n: need })}</p>
             {isMember && (
@@ -91,7 +92,7 @@ export function ExitTab({ onOpenSector }: { onOpenSector?: (id: string) => void 
               <span>{tn('clan2.exit.effectCoins')}</span>
               <span>{tn('clan2.exit.effectMeters')}</span>
             </div>
-            <div className="c2-chip good">{tn('clan2.exit.bonusSoFar', { n: b.lastBonus })}</div>
+            <div className="c2-chip accent">{tn('clan2.exit.bonusSoFar', { n: b.lastBonus })}</div>
             <Going list={going} />
             {isMember && !imIn && (
               <>
@@ -108,12 +109,10 @@ export function ExitTab({ onOpenSector }: { onOpenSector?: (id: string) => void 
           <>
             <div className="c2-big">{tn('clan2.exit.cooldownTitle')}</div>
             <p className="c2-muted">{tn('clan2.exit.nextIn', { t: fmtLeft(b.cooldownUntil - now) })}</p>
-            {b.lastBonus > 0 && <div className="c2-chip good">{tn('clan2.exit.lastBonus', { n: b.lastBonus })}</div>}
+            {b.lastBonus > 0 && <div className="c2-chip accent">{tn('clan2.exit.lastBonus', { n: b.lastBonus })}</div>}
           </>
         )}
       </C2Card>
-
-      <AlertsCard onOpenSector={onOpenSector} />
     </div>
   )
 }

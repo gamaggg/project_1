@@ -52,7 +52,7 @@ export type TreasuryEntry = {
 
 export type GoalItem = {
   id: string
-  kind: 'clan_skin' | 'boat' | 'banner' | 'project'
+  kind: 'clan_skin' | 'boat' | 'frame'
   cost: number
   // The clan level that opens it.
   minLevel: number
@@ -97,6 +97,10 @@ export type WeeklyQuest = {
   // Live mode: how much of the progress the real catches of the clan give, and how much the test bench added.
   real?: number
   sim: number
+  // Who collected the reward and when; the members who caught for it this week.
+  claimedBy?: string | null
+  claimedAt?: number | null
+  helpers?: string[]
 }
 
 export type ProjectId = 'dock' | 'beacon' | 'fort' | 'board' | 'storage' | 'market'
@@ -141,6 +145,8 @@ export type EconomySettings = {
 
 export type ClanInfo = {
   name: string
+  // The clan's city (live mode: the real one); the shop tries a sector skin on this city's map.
+  city?: import('@/lib/data/city').CityId
   motto: string
   crest: { shape: string; symbol: string; primary: string; secondary: string }
   background: string
@@ -177,9 +183,14 @@ export type DemoState = {
   projects: Record<ProjectId, ProjectLevel>
   // The building under construction (one at a time): what, to which level, when it is ready.
   build: { id: ProjectId; toLevel: 1 | 2 | 3; startedAt: number; endsAt: number } | null
-  // What the clan has bought: clan skins (clan_*), the golden boat, the banner.
+  // What the clan has bought: the ids of the shop's items (skin_wave, boat_gold, frame_gold…).
   owned: string[]
+  // The sector skin the clan's sectors wear, and the boat and the frame in use (item ids).
   equippedSkin: string | null
+  equipped: { boat: string | null; frame: string | null }
+  // What every member put into the treasury this month (deposits and the catch tax), by member id; it starts again
+  // on the 1st.
+  deposits: { month: number; byMember: Record<string, number> }
   hall: HallRecord[]
   recruit: RecruitEntry[]
   sectors: MapSector[]
@@ -194,4 +205,6 @@ export type DemoState = {
   nudgedAt: Record<string, number>
   // The next id for entries, alerts and bounties.
   seq: number
+  // The server's id of the current «Выход» (live mode on the server: «иду» is said to it).
+  buffId?: number | null
 }

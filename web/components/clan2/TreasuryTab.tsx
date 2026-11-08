@@ -2,18 +2,19 @@
 
 import { useMemo, useState } from 'react'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
-import { C2Avatar, C2Bar, C2Card, C2Coins, C2Count, C2Sheet, fmtAgo, speciesName, useC2, useDemoNow } from '@/components/clan2/C2Common'
+import { C2Bar, C2Card, C2Coins, C2Count, C2Sheet, fmtAgo, speciesName, useC2, useDemoNow } from '@/components/clan2/C2Common'
+import { ItemPreview, itemName } from '@/components/clan2/ClanItems'
 import { HowItWorks, NextStep, type Go } from '@/components/clan2/Guide'
-import { SkinSwatch } from '@/components/clan2/SkinSwatch'
-import { buyGoal, canManage, capOf, deposit, goalOf, rentPerDay, setGoal, setTaxRate, useDemoState } from '@/lib/clan2/demoStore'
+import { alertText } from '@/components/clan2/alertText'
+import { buyGoal, canManage, capOf, deposit, goalOf, levelOf, rentPerDay, setTaxRate, useDemoState } from '@/lib/clan2/demoStore'
 import { requestMap, setLiveUi } from '@/lib/clan2/live/ui'
-import { DAY, GOAL_CATALOG, TAX_RATES, fmt, isSpend } from '@/lib/clan2/rules'
-import type { TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
+import { DAY, PROJECT_EFFECTS, TAX_RATES, fmt, isSpend, treasuryCap } from '@/lib/clan2/rules'
+import type { AlertKind, QuestKind, TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
+import { questLabel } from '@/components/clan2/WeekTab'
 import { tn, tnd } from '@/lib/i18n/runtime'
 
-// «Общак»: what is in the clan's treasury, where it comes from, what it is
-// saving up for and what has been done with it — the one place the clan's
-// money is looked at, and the replacement of the personal Kazna.
+// «Общак»: what is in the clan's treasury and what it is saving for, where the coins of the week came from, the catch
+// tax (the leaders' setting), and the clan's one journal — the coins, the clan's events and its alarms in one list.
 
 const SOURCE_GROUPS: { id: 'srcRent' | 'srcTax' | 'srcDeposit' | 'srcShares' | 'srcOther'; kinds: TreasuryKind[] }[] = [
   { id: 'srcRent', kinds: ['rent', 'hot_rent'] },
@@ -25,16 +26,21 @@ const SOURCE_GROUPS: { id: 'srcRent' | 'srcTax' | 'srcDeposit' | 'srcShares' | '
 
 const PRESETS = [50, 100, 250, 500]
 
-export function TreasuryTab({ onGo }: { onGo?: (to: Go) => void } = {}) {
+// A line of the clan's own journal (who joined, left, changed role), as the clan screen words it.
+export type ClanEventLine = { text: string; at: number }
+
+export function TreasuryTab({ onGo, events, onTour }: { onGo?: (to: Go) => void; events?: ClanEventLine[]; onTour?: () => void } = {}) {
   const s = useDemoState()
   const now = useDemoNow()
   const { act, say } = useC2()
   const [depositOpen, setDepositOpen] = useState(false)
-  const [goalOpen, setGoalOpen] = useState(false)
-  const [amount, setAmount] = useState(100)
-  const [more, setMore] = useState(false)
+  // The field's own text: an emptied field stays empty (a number state put a «0» in front of what was typed next).
+  const [amountText, setAmountText] = useState('100')
+  const amount = Number(amountText) || 0
   const [rentOpen, setRentOpen] = useState(false)
-  const [info, setInfo] = useState<'srcTax' | 'srcDeposit' | 'srcShares' | 'srcOther' | null>(null)
+  const [capOpen, setCapOpen] = useState(false)
+  // The source opened to its lines: one of the week's groups, or what was spent.
+  const [info, setInfo] = useState<'srcTax' | 'srcDeposit' | 'srcShares' | 'srcOther' | 'spent' | null>(null)
 
   const manage = canManage(s)
   const cap = capOf(s)
@@ -54,16 +60,26 @@ export function TreasuryTab({ onGo }: { onGo?: (to: Go) => void } = {}) {
     return days
   }, [s.treasury.entries, now])
   const maxFlow = Math.max(1, ...flow)
-  const contributors = [...s.members].filter((m) => m.weekDeposit > 0).sort((a, b) => b.weekDeposit - a.weekDeposit).slice(0, 6)
-  const maxContribution = Math.max(1, contributors[0]?.weekDeposit ?? 1)
-  const entries = [...s.treasury.entries].reverse().slice(0, more ? 24 : 8)
   const wallet = s.wallet
   const goalLeft = goal ? Math.max(0, goal.cost - s.treasury.balance) : 0
+  const isMember = s.members.some((m) => m.id === s.myId)
+  // Why the deposit cannot go in as typed (the button stays off and says nothing else).
+  const room = Math.max(0, cap - s.treasury.balance)
+  const depositProblem =
+    room === 0
+      ? tn('clan2.treasury.depositFull')
+      : amount > wallet
+        ? tn('clan2.treasury.depositWalletShort', { n: fmt(wallet) })
+        : amount > 0 && amount < 10
+          ? tn('clan2.treasury.depositMin')
+          : amount > room
+            ? tn('clan2.treasury.depositRoom', { n: fmt(room) })
+            : null
 
   return (
     <div className="c2-stack">
       <C2Card style={{ padding: 0 }}>
-        <div className="c2-balance">
+        <div className="c2-balance" data-focus="treasury-top">
           {/* The tour's first step lights up just the balance, not the whole card. */}
           <div className="c2-balance-core" data-tour="treasury-balance">
             <div className="c2-balance-label">{tn('clan2.treasury.balance')}</div>
@@ -72,7 +88,12 @@ export function TreasuryTab({ onGo }: { onGo?: (to: Go) => void } = {}) {
               <CoinIcon size={28} />
             </div>
             <C2Bar value={s.treasury.balance / cap} tone={s.treasury.balance / cap > 0.9 ? 'warn' : 'accent'} label={tn('clan2.treasury.balance')} />
-            <div className="c2-balance-cap">{tn('clan2.treasury.capOf', { cap: fmt(cap) })}</div>
+            <button type="button" className="c2-balance-cap" onClick={() => setCapOpen(true)}>
+              {tn('clan2.treasury.capOf', { cap: fmt(cap) })}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="m9 6 6 6-6 6" />
+              </svg>
+            </button>
           </div>
           <div className="c2-flow-label">{tn('clan2.treasury.weekFlow')}</div>
           <div className="c2-flow" aria-label={tn('clan2.treasury.weekFlow')}>
@@ -80,56 +101,62 @@ export function TreasuryTab({ onGo }: { onGo?: (to: Go) => void } = {}) {
               <i key={i} style={{ height: `${Math.max(6, (v / maxFlow) * 100)}%` }} className={i === 6 ? 'now' : undefined} />
             ))}
           </div>
-          <button type="button" className="c2-chip good c2-chip-btn" onClick={() => setRentOpen(true)} aria-label={tn('clan2.treasury.tapForMore')}>
+          <button type="button" className="c2-chip accent c2-chip-btn" onClick={() => setRentOpen(true)} aria-label={tn('clan2.treasury.tapForMore')}>
             {tn('clan2.treasury.rentToday', { n: fmt(rent) })}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="m9 6 6 6-6 6" />
             </svg>
           </button>
           <p className="c2-hint">{tn('clan2.treasury.rentNote')}</p>
-          <p className="c2-hint faint">{tn('clan2.treasury.capNote')}</p>
         </div>
         <div className="c2-balance-actions">
-          <button className="btn-primary" onClick={() => setDepositOpen(true)} disabled={s.persona === 'solo'}>
+          <button className="btn-primary" onClick={() => setDepositOpen(true)} disabled={!isMember}>
             {tn('clan2.treasury.deposit')}
           </button>
         </div>
+        {/* The goal of the treasury, chosen in the shop: what the clan is saving for, seen by everybody. */}
+        {goal ? (
+          <div className={`c2-goal-strip${goalLeft === 0 ? ' ready' : ''}`}>
+            <span className="c2-goal-pic">
+              <ItemPreview item={goal} crest={s.clan.crest} size={goal.kind === 'boat' ? 104 : 72} />
+            </span>
+            <div className="c2-goal-main">
+              <small>{tn('clan2.treasury.savingFor')}</small>
+              <b>{itemName(goal.id)}</b>
+              <C2Bar value={s.treasury.balance / goal.cost} tone="accent" label={itemName(goal.id)} />
+              <span className="c2-goal-left">
+                {goalLeft === 0 ? tn('clan2.treasury.goalReady') : tn('clan2.treasury.goalLeft', { n: fmt(goalLeft) })}
+                <span>
+                  {fmt(Math.min(s.treasury.balance, goal.cost))} / {fmt(goal.cost)}
+                </span>
+              </span>
+              {manage && (
+                <div className="c2-goal-btns">
+                  {goalLeft === 0 && s.clan.level >= goal.minLevel && (
+                    <button className="btn-primary" onClick={() => act(buyGoal(), 'bought')}>
+                      {tn('clan2.shop.buyFor', { n: fmt(goal.cost) })}
+                    </button>
+                  )}
+                  <button className="c2-link" onClick={() => onGo?.('shop')}>
+                    {tn('clan2.treasury.goalChange')}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          manage && (
+            <button type="button" className="c2-goal-strip empty" onClick={() => onGo?.('shop')}>
+              <span>{tn('clan2.treasury.goalPickInShop')}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="m9 6 6 6-6 6" />
+              </svg>
+            </button>
+          )
+        )}
       </C2Card>
 
       <NextStep onGo={onGo} />
-
-      <HowItWorks />
-
-      <C2Card title={tn('clan2.treasury.goalTitle')} hint={tn('clan2.treasury.goalExplain')} tour="treasury-goal">
-        {goal ? (
-          <>
-            <div className="c2-goal-row">
-              {goal.kind === 'clan_skin' && <SkinSwatch id={goal.id.replace(/^skin_/, '')} color={s.clan.crest.primary} size={64} seed={0.3} />}
-              <strong>{tnd(`clan2.goal.${goal.id}`)}</strong>
-              <C2Coins n={goal.cost} />
-            </div>
-            <C2Bar value={s.treasury.balance / goal.cost} tone={goalLeft === 0 ? 'good' : 'accent'} label={tnd(`clan2.goal.${goal.id}`)} />
-            <div className="c2-goal-foot">
-              <span className={goalLeft === 0 ? 'c2-ok' : 'c2-muted'}>{goalLeft === 0 ? tn('clan2.treasury.goalReady') : tn('clan2.treasury.goalLeft', { n: fmt(goalLeft) })}</span>
-              <span className="c2-muted">{Math.min(100, Math.round((s.treasury.balance / goal.cost) * 100))} %</span>
-            </div>
-          </>
-        ) : (
-          <p className="c2-muted">{tn('clan2.treasury.goalNone')}</p>
-        )}
-        {manage && (
-          <div className="c2-row-btns">
-            <button className="btn-secondary" onClick={() => setGoalOpen(true)}>
-              {goal ? tn('clan2.treasury.goalChange') : tn('clan2.treasury.goalPick')}
-            </button>
-            {goal && (
-              <button className="btn-primary" disabled={goalLeft > 0} onClick={() => act(buyGoal(), 'bought')}>
-                {tn('clan2.treasury.goalBuy')}
-              </button>
-            )}
-          </div>
-        )}
-      </C2Card>
 
       <C2Card title={tn('clan2.treasury.sourcesTitle')} tour="treasury-sources">
         <ul className="c2-sources">
@@ -140,90 +167,64 @@ export function TreasuryTab({ onGo }: { onGo?: (to: Go) => void } = {}) {
                   <span>{tn(`clan2.treasury.${x.id}`)}</span>
                   <C2Coins n={x.sum} sign />
                 </div>
-                <C2Bar value={x.sum / maxSource} tone="good" />
+                <C2Bar value={x.sum / maxSource} tone="accent" />
               </button>
             </li>
           ))}
         </ul>
-        <div className="c2-sources-spent">
+        <button type="button" className="c2-sources-spent" onClick={() => setInfo('spent')} aria-label={`${tn('clan2.treasury.spentTitle')}. ${tn('clan2.treasury.tapForMore')}`}>
           <span>{tn('clan2.treasury.spentTitle')}</span>
-          <C2Coins n={-spent} />
-        </div>
-      </C2Card>
-
-      <C2Card title={tn('clan2.treasury.taxTitle')} hint={tn('clan2.treasury.taxHint')} tour="treasury-tax">
-        <div className="c2-seg" role="radiogroup" aria-label={tn('clan2.treasury.taxTitle')}>
-          {TAX_RATES.filter((r) => r <= s.settings.taxMax).map((r) => (
-            <button
-              key={r}
-              role="radio"
-              aria-checked={s.treasury.taxRate === r}
-              className={s.treasury.taxRate === r ? 'on' : undefined}
-              disabled={!manage}
-              onClick={() => act(setTaxRate(r), 'taxSet')}
-            >
-              {r === 0 ? tn('clan2.treasury.taxOff') : tn('clan2.treasury.taxPct', { n: r })}
-            </button>
-          ))}
-        </div>
-      </C2Card>
-
-      <C2Card title={tn('clan2.treasury.contribTitle')} hint={tn('clan2.treasury.contribNote')} tour="treasury-contrib">
-        <ul className="c2-contrib">
-          {contributors.map((m, i) => (
-            <li key={m.id}>
-              <C2Avatar member={m} size={32} />
-              <div className="c2-contrib-main">
-                <div className="c2-contrib-top">
-                  <span className="c2-name">
-                    {m.name}
-                    {m.id === s.myId && <em className="c2-you">{tn('clan2.treasury.you')}</em>}
-                    {i === 0 && (
-                      <span className="c2-patron" title={tn('clan2.treasury.patron')}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                          <path d="M4 18 3 8l5 4 4-7 4 7 5-4-1 10z" />
-                        </svg>
-                        {tn('clan2.treasury.patron')}
-                      </span>
-                    )}
-                  </span>
-                  <C2Coins n={m.weekDeposit} />
-                </div>
-                <C2Bar value={m.weekDeposit / maxContribution} tone={i === 0 ? 'warn' : 'accent'} />
-              </div>
-            </li>
-          ))}
-        </ul>
-      </C2Card>
-
-      <C2Card title={tn('clan2.treasury.journalTitle')} tour="treasury-journal">
-        {entries.length === 0 ? (
-          <p className="c2-muted">{tn('clan2.treasury.journalEmpty')}</p>
-        ) : (
-          <ul className="c2-journal">
-            {entries.map((e) => (
-              <JournalRow key={e.id} e={e} now={now} />
-            ))}
-          </ul>
-        )}
-        <button className="btn-secondary" onClick={() => setMore((v) => !v)}>
-          {more ? tn('clan2.treasury.journalLess') : tn('clan2.treasury.journalMore')}
+          <span className="c2-sources-spent-n">
+            <C2Coins n={-spent} />
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="m9 6 6 6-6 6" />
+            </svg>
+          </span>
         </button>
       </C2Card>
+
+      {/* The catch tax is the leaders' setting: the others meet it on every catch, not here. */}
+      {manage && (
+        <C2Card title={tn('clan2.treasury.taxTitle')} hint={tn('clan2.treasury.taxHint')} tour="treasury-tax">
+          <div className="c2-seg" role="radiogroup" aria-label={tn('clan2.treasury.taxTitle')}>
+            {TAX_RATES.filter((r) => r <= s.settings.taxMax).map((r) => (
+              <button key={r} role="radio" aria-checked={s.treasury.taxRate === r} className={s.treasury.taxRate === r ? 'on' : undefined} onClick={() => act(setTaxRate(r), 'taxSet')}>
+                {r === 0 ? tn('clan2.treasury.taxOff') : tn('clan2.treasury.taxPct', { n: r })}
+              </button>
+            ))}
+          </div>
+        </C2Card>
+      )}
+
+      <ClanJournal events={events} />
+
+      <HowItWorks onTour={onTour} />
 
       <C2Sheet open={depositOpen} onClose={() => setDepositOpen(false)} title={tn('clan2.treasury.depositTitle')}>
         <p className="c2-muted">{tn('clan2.treasury.depositWallet', { n: fmt(wallet) })}</p>
         <div className="c2-presets">
           {PRESETS.map((p) => (
-            <button key={p} className={`filter-chip${amount === p ? ' active' : ''}`} onClick={() => setAmount(p)}>
+            <button key={p} className={`filter-chip${amount === p ? ' active' : ''}`} onClick={() => setAmountText(String(p))}>
               {fmt(p)}
             </button>
           ))}
         </div>
-        <input className="c2-input" type="number" min={10} step={10} value={amount} onChange={(e) => setAmount(Math.max(0, Number(e.target.value)))} aria-label={tn('clan2.treasury.depositTitle')} />
+        <input
+          className="c2-input"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          autoComplete="off"
+          value={amountText}
+          placeholder="0"
+          onChange={(e) => setAmountText(e.target.value.replace(/\D/g, '').replace(/^0+/, '').slice(0, 7))}
+          aria-label={tn('clan2.treasury.depositTitle')}
+        />
+        {depositProblem && <p className="c2-short">{depositProblem}</p>}
         <p className="c2-hint faint">{tn('clan2.treasury.depositNote')}</p>
         <button
           className="btn-primary"
+          disabled={!!depositProblem || amount === 0}
           onClick={() => {
             if (act(deposit(amount))) {
               say(tn('clan2.ok.deposited', { n: fmt(amount) }))
@@ -235,67 +236,207 @@ export function TreasuryTab({ onGo }: { onGo?: (to: Go) => void } = {}) {
         </button>
       </C2Sheet>
 
-      <C2Sheet open={goalOpen} onClose={() => setGoalOpen(false)} title={tn('clan2.treasury.goalPick')}>
-        <ul className="c2-pick">
-          {GOAL_CATALOG.filter((g) => !s.owned.includes(g.id.replace(/^skin_/, ''))).map((g) => (
-            <li key={g.id}>
-              <button
-                className={s.treasury.goalId === g.id ? 'on' : undefined}
-                onClick={() => {
-                  if (act(setGoal(g.id), 'goalSet')) setGoalOpen(false)
-                }}
-              >
-                <span>{tnd(`clan2.goal.${g.id}`)}</span>
-                <C2Coins n={g.cost} />
-              </button>
-            </li>
-          ))}
-        </ul>
-      </C2Sheet>
-
       <C2Sheet open={rentOpen} onClose={() => setRentOpen(false)} title={tn('clan2.treasury.rentSheetTitle')}>
         <RentDetail />
       </C2Sheet>
-      <C2Sheet open={!!info} onClose={() => setInfo(null)} title={info ? tn(`clan2.treasury.${info}`) : ''}>
-        {info && (
-          <p className="c2-muted" style={{ fontSize: 14, lineHeight: 1.5 }}>
-            {tn(`clan2.treasury.info${info.slice(3)}` as 'clan2.treasury.infoTax')}
-          </p>
-        )}
+      <C2Sheet open={capOpen} onClose={() => setCapOpen(false)} title={tn('clan2.cap.title')}>
+        <CapDetail
+          onStorage={() => {
+            setCapOpen(false)
+            onGo?.('storage')
+          }}
+        />
+      </C2Sheet>
+      <C2Sheet open={!!info} onClose={() => setInfo(null)} title={info ? (info === 'spent' ? tn('clan2.treasury.spentTitle') : tn(`clan2.treasury.${info}`)) : ''}>
+        {info && <SourceDetail id={info} lines={info === 'spent' ? week.filter((e) => isSpend(e.kind)) : week.filter((e) => SOURCE_GROUPS.find((g) => g.id === info)!.kinds.includes(e.kind) && e.amount > 0)} />}
       </C2Sheet>
     </div>
   )
 }
 
-function JournalRow({ e, now }: { e: TreasuryEntry; now: number }) {
+// A source of the week opened up: what it is in one line, its total, and every entry — what, when, who, how much.
+function SourceDetail({ id, lines }: { id: 'srcTax' | 'srcDeposit' | 'srcShares' | 'srcOther' | 'spent'; lines: TreasuryEntry[] }) {
   const s = useDemoState()
-  const [kind, lost] = [e.kind, /\|lost:(\d+)/.exec(e.note)?.[1]]
-  const raw = e.note.replace(/\|lost:\d+/, '').replace(/^reversed:?/, '')
-  const actor = s.members.find((m) => m.id === e.actor)
-  const text = tnd(`clan2.journal.${kind}`, { species: kind === 'tax' ? speciesName(raw) : '', name: raw })
+  const total = lines.reduce((n, e) => n + e.amount, 0)
+  const sorted = [...lines].sort((a, b) => b.at - a.at)
   return (
-    <li className={e.amount < 0 ? 'out' : 'in'}>
-      <span className="c2-journal-dot" aria-hidden>
-        {e.amount < 0 ? '−' : '+'}
-      </span>
-      <div className="c2-journal-main">
-        <div>{text}</div>
-        <div className="c2-muted small">
-          {actor ? `${actor.name} · ` : ''}
-          {fmtAgo(now - e.at)}
-          {lost ? ` · ${tn('clan2.treasury.lost', { n: lost })}` : ''}
-          {e.note.startsWith('reversed') ? ` · ${tn('clan2.treasury.reversed')}` : ''}
-        </div>
+    <div className="c2-stack c2-source-detail">
+      <div className="c2-cap-total">
+        <C2Coins n={total} sign />
+        <small>{tn('clan2.treasury.weekTotal')}</small>
       </div>
-      <C2Coins n={e.amount} sign />
-    </li>
+      <p className="c2-muted">{tn(`clan2.treasury.info${id === 'spent' ? 'Spent' : id.slice(3)}` as 'clan2.treasury.infoTax')}</p>
+      {sorted.length === 0 ? (
+        <p className="c2-source-none">{tn('clan2.treasury.weekNone')}</p>
+      ) : (
+        <ul className="c2-journal">
+          {sorted.map((e) => {
+            const l = moneyLine(e, s.members)
+            return (
+              <li key={e.id} className={l.tone}>
+                <span className="c2-journal-dot" aria-hidden>
+                  {l.tone === 'in' ? '+' : '−'}
+                </span>
+                <div className="c2-journal-main">
+                  <div>{l.text}</div>
+                  <div className="c2-muted small">
+                    {l.meta}
+                    {whenOf(e.at)}
+                  </div>
+                </div>
+                <C2Coins n={e.amount} sign />
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
   )
+}
+
+// «пт, 14:30» — the day of the week and the time of an entry.
+const whenOf = (at: number) => new Date(at).toLocaleString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+
+// Where the treasury's cap comes from: the clan's level, and the «Склад» of the base on top; what the next level and
+// the next level of the «Склад» would give.
+function CapDetail({ onStorage }: { onStorage: () => void }) {
+  const s = useDemoState()
+  const level = s.clan.level
+  const storage = levelOf(s, 'storage')
+  const base = treasuryCap(level, 0)
+  const extra = PROJECT_EFFECTS.storage.cap[storage]
+  let nextLevel = level + 1
+  while (nextLevel <= 10 && treasuryCap(nextLevel, 0) === base) nextLevel++
+  const nextBase = nextLevel <= 10 ? treasuryCap(nextLevel, 0) : null
+  const nextStorage = storage < 3 ? PROJECT_EFFECTS.storage.cap[storage + 1] : null
+  return (
+    <div className="c2-stack c2-cap">
+      <div className="c2-cap-total">
+        <C2Coins n={base + extra} />
+        <small>{tn('clan2.cap.total')}</small>
+      </div>
+      <ul className="c2-cap-rows">
+        <li>
+          <span>{tn('clan2.cap.fromLevel', { n: level })}</span>
+          <b>{fmt(base)}</b>
+        </li>
+        <li className={extra > 0 ? undefined : 'off'}>
+          <span>{storage > 0 ? tn('clan2.cap.fromStorage', { n: storage }) : tn('clan2.cap.noStorage')}</span>
+          <b>+{fmt(extra)}</b>
+        </li>
+      </ul>
+      <div className="c2-cap-next">
+        {nextBase !== null && <p>{tn('clan2.cap.nextLevel', { n: nextLevel, cap: fmt(nextBase + extra) })}</p>}
+        {nextStorage !== null && <p>{tn('clan2.cap.nextStorage', { n: storage + 1, plus: fmt(nextStorage - extra) })}</p>}
+      </div>
+      <p className="c2-hint faint">{tn('clan2.cap.over')}</p>
+      {nextStorage !== null && (
+        <button className="btn-secondary" onClick={onStorage}>
+          {tn('clan2.cap.toStorage')}
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ───────────── the clan's journal ─────────────
+
+const DANGER: AlertKind[] = ['sector_attack', 'hq_siege', 'hq_fallen']
+type Line = { key: string; at: number; kind: 'money' | 'event'; tone: 'in' | 'out' | 'danger' | 'event'; text: string; meta: string; amount?: number }
+
+// One list for everything that happens to the clan: the coins of the treasury, the alarms (attacks, sieges, the
+// outing, buildings) and the clan's own events (who joined, left, changed role). Filters split coins from events.
+function ClanJournal({ events }: { events?: ClanEventLine[] }) {
+  const s = useDemoState()
+  const now = useDemoNow()
+  const [filter, setFilter] = useState<'all' | 'money' | 'event'>('all')
+  const [shown, setShown] = useState(8)
+  const lines = useMemo(() => {
+    const out: Line[] = []
+    for (const e of s.treasury.entries) out.push(moneyLine(e, s.members))
+    for (const a of s.alerts) {
+      // The coins of a bought item are already a line of the treasury; its alert would only repeat it.
+      if (a.kind === 'project_done' && !a.text.includes(':')) continue
+      out.push({ key: `a${a.id}`, at: a.at, kind: 'event', tone: DANGER.includes(a.kind) ? 'danger' : 'event', text: alertText(a), meta: '' })
+    }
+    for (const [i, e] of (events ?? []).entries()) out.push({ key: `e${i}`, at: e.at, kind: 'event', tone: 'event', text: e.text, meta: '' })
+    return out.sort((a, b) => b.at - a.at)
+  }, [s.treasury.entries, s.alerts, s.members, events])
+  const list = lines.filter((l) => filter === 'all' || l.kind === filter)
+  return (
+    <C2Card title={tn('clan2.journal.title')} tour="treasury-journal">
+      <div className="c2-journal-filter" role="tablist">
+        {(['all', 'money', 'event'] as const).map((f) => (
+          <button
+            key={f}
+            role="tab"
+            aria-selected={filter === f}
+            className={`filter-chip${filter === f ? ' active' : ''}`}
+            onClick={() => {
+              setFilter(f)
+              setShown(8)
+            }}
+          >
+            {tn(`clan2.journal.filter_${f}`)}
+          </button>
+        ))}
+      </div>
+      {list.length === 0 ? (
+        <p className="c2-muted">{tn('clan2.treasury.journalEmpty')}</p>
+      ) : (
+        <ul className="c2-journal">
+          {list.slice(0, shown).map((l) => (
+            <li key={l.key} className={l.tone}>
+              <span className="c2-journal-dot" aria-hidden>
+                {l.tone === 'in' ? '+' : l.tone === 'out' ? '−' : l.tone === 'danger' ? '!' : '•'}
+              </span>
+              <div className="c2-journal-main">
+                <div>{l.text}</div>
+                <div className="c2-muted small">
+                  {l.meta}
+                  {fmtAgo(now - l.at)}
+                </div>
+              </div>
+              {l.amount !== undefined && <C2Coins n={l.amount} sign />}
+            </li>
+          ))}
+        </ul>
+      )}
+      {list.length > shown && (
+        <button className="btn-secondary" onClick={() => setShown((n) => n + 10)}>
+          {tn('clan2.treasury.journalMore')}
+        </button>
+      )}
+    </C2Card>
+  )
+}
+
+function moneyLine(e: TreasuryEntry, members: { id: string; name: string }[]): Line {
+  const lost = /\|lost:(\d+)/.exec(e.note)?.[1]
+  const raw = e.note.replace(/\|lost:\d+/, '').replace(/^reversed:?/, '')
+  const actor = members.find((m) => m.id === e.actor)
+  const bought = e.kind === 'spend_goal' || e.kind === 'spend_skin'
+  // The weekly task says which one it was (its kind and target sit in the entry's note: «catches:25»).
+  const [questKind, questTarget] = raw.split(':')
+  const text =
+    bought && raw
+      ? tn('clan2.journal.boughtItem', { name: itemName(raw) })
+      : e.kind === 'quest' && questTarget
+        ? tn('clan2.journal.questDone', { name: questLabel(questKind as QuestKind, Number(questTarget)) })
+        : e.kind === 'refund' && raw === 'buff'
+          ? tn('clan2.journal.refundBuff')
+          : e.kind === 'spend_project' && raw.includes(':')
+            ? tn('clan2.journal.projectLevel', { name: raw.startsWith('speedup:') ? tn('clan2.journal.speedup', { name: tnd(`clan2.project.${raw.split(':')[1]}.name`) }) : tnd(`clan2.project.${raw.split(':')[0]}.name`), n: raw.split(':').at(-1) ?? '' })
+            : tnd(`clan2.journal.${e.kind}`, { species: e.kind === 'tax' ? speciesName(raw) : '', name: raw })
+  const meta = [actor?.name, lost ? tn('clan2.treasury.lost', { n: lost }) : '', e.note.startsWith('reversed') ? tn('clan2.treasury.reversed') : ''].filter(Boolean).join(' · ')
+  return { key: `m${e.id}`, at: e.at, kind: 'money', tone: e.amount < 0 ? 'out' : 'in', text, meta: meta ? `${meta} · ` : '', amount: e.amount }
 }
 
 // The rent of the clan, seen from three sides: how much it is (per day, week or month), what it is made of (one bar
 // with a legend), and every sector with its own share — a tap on a sector shows it on the map (live mode).
 type RentKind = 'plain' | 'shared' | 'hq' | 'hot'
-const RENT_COLOR: Record<RentKind | 'market', string> = { plain: '#9DB8D2', shared: '#4C8DF5', hq: '#17181B', hot: '#FF7A1A', market: '#2FA84F' }
+// The app's own colours: the HQ in ink, a shared sector in the accent, a hot one in its flame orange, a plain one grey.
+const RENT_COLOR: Record<RentKind | 'market', string> = { plain: '#C9C5BB', shared: '#FC5200', hq: '#17181B', hot: '#FFA25C', market: '#E0A63A' }
 
 function RentDetail() {
   const s = useDemoState()
@@ -383,12 +524,14 @@ function RentDetail() {
       ) : (
         <>
           <div className="c2-rent-filter">
-            {(['all', 'hq', 'shared', 'hot', 'plain'] as const).filter((f) => f === 'all' || rows.some((r) => r.kind === f)).map((f) => (
-              <button key={f} type="button" className={`filter-chip${filter === f ? ' active' : ''}`} onClick={() => setFilter(f)}>
-                {tn(`clan2.treasury.rentFilter_${f}`)}
-                <small>{f === 'all' ? rows.length : rows.filter((r) => r.kind === f).length}</small>
-              </button>
-            ))}
+            {(['all', 'hq', 'shared', 'hot', 'plain'] as const)
+              .filter((f) => f === 'all' || rows.some((r) => r.kind === f))
+              .map((f) => (
+                <button key={f} type="button" className={`filter-chip${filter === f ? ' active' : ''}`} onClick={() => setFilter(f)}>
+                  {tn(`clan2.treasury.rentFilter_${f}`)}
+                  <small>{f === 'all' ? rows.length : rows.filter((r) => r.kind === f).length}</small>
+                </button>
+              ))}
           </div>
           <ul className="c2-rent-rows">
             {shown.map((r) => (
@@ -414,7 +557,7 @@ function RentDetail() {
                   <span className="c2-rent-bar">
                     <i style={{ width: `${(r.day / max) * 100}%`, background: RENT_COLOR[r.kind] }} />
                   </span>
-                  <C2Coins n={r.day * mult} />
+                  <b className="c2-rent-sum">{fmt(r.day * mult)}</b>
                 </button>
               </li>
             ))}
