@@ -2757,4 +2757,11 @@ export const ru = {
     cities: { one: '{count} город', few: '{count} города', many: '{count} городов', other: '{count} города' },
   },
   clan2: clan2Ru,
+  maintenance: {
+    title: 'Идут технические работы',
+    text: 'Готовим обновление RANGE. Уловы, сектора и монеты на месте — скоро вернёмся.',
+    retry: 'Проверить снова',
+    admin: 'Вход для администратора',
+    adminOther: 'Войти как администратор',
+  },
 }

@@ -2752,4 +2752,11 @@ export const en: Dict = {
     cities: { one: '{count} city', other: '{count} cities' },
   },
   clan2: clan2En,
+  maintenance: {
+    title: 'Maintenance in progress',
+    text: 'We are getting a RANGE update ready. Your catches, sectors and coins are safe — back soon.',
+    retry: 'Check again',
+    admin: 'Admin sign-in',
+    adminOther: 'Sign in as an admin',
+  },
 }
