@@ -26,9 +26,9 @@ export const FAQ_EN: FaqSection[] = [
       {
         q: 'What are «First steps»?',
         a: [
-          'Six tasks for a newcomer — a card on the map, on the right above the sector card:',
-          ['Catch your first fish.', 'Strengthen a sector — catch one more fish in the same sector.', 'Collect the Treasury.', 'Collect the daily reward.', 'Complete a weekly challenge.', 'Join a clan.'],
-          'Progress counts by itself, on any device. Finish all six and collect 100 coins. New players, and those who have not caught anything yet, see the list.',
+          'Five tasks for a newcomer — a card on the map, on the right above the sector card:',
+          ['Catch your first fish.', 'Strengthen a sector — catch one more fish in the same sector.', 'Collect the daily reward.', 'Complete a weekly challenge.', 'Join a clan.'],
+          'Progress counts by itself, on any device. Finish all five and collect 100 coins. New players, and those who have not caught anything yet, see the list.',
         ],
       },
       {

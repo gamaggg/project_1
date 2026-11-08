@@ -7,7 +7,8 @@ import { useClaimFirstSteps, useFirstSteps, type FirstStepKey } from '@/lib/supa
 import { useI18n } from '@/lib/i18n'
 import { currentLocale } from '@/lib/i18n/runtime'
 
-const ORDER: FirstStepKey[] = ['catch', 'fortify', 'treasury', 'daily', 'challenge', 'clan']
+// «Забери Казну» is gone with the personal Казна (closed 09.11.2026, supabase-drafts/first-steps-no-treasury-09-11).
+const ORDER: FirstStepKey[] = ['catch', 'fortify', 'daily', 'challenge', 'clan']
 
 // «Задание новичка»: what's left of the 7 days for the first catch to pay triple,
 // or null when there's no such task (already caught, too late, an older server).
@@ -20,7 +21,7 @@ function newbieDeadline(until: string | null | undefined, t: ReturnType<typeof u
   return { left, date }
 }
 
-// «Первые шаги» on the map, right of the «Неделя» sticker: a newcomer's six
+// «Первые шаги» on the map, right of the «Неделя» sticker: a newcomer's five
 // steps with progress, then «Забрать 100» once all are done (the server
 // checks and pays — supabase-drafts/first_steps.sql). Gone after that, and
 // for anyone who isn't a newcomer.

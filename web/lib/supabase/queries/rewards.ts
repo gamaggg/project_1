@@ -8,7 +8,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 // worked out on the server from what they've actually done, and the one-off
 // 100 coins for all six. Null when the server doesn't have it (yet) — then
 // the app behaves as before: no checklist, the «Что нового» tours.
-export type FirstStepKey = 'catch' | 'treasury' | 'daily' | 'fortify' | 'challenge' | 'clan'
+export type FirstStepKey = 'catch' | 'daily' | 'fortify' | 'challenge' | 'clan'
 // newbie_until: «Задание новичка» (supabase-drafts/newbie-forecast-30-10) — until when the first
 // catch pays triple and brings a shield; null once it's caught or the 7 days are over.
 export type FirstSteps = { eligible: boolean; claimed: boolean; reward: number; newbie_until?: string | null; steps: Record<FirstStepKey, boolean> }

@@ -463,7 +463,7 @@ export const en: Dict = {
     legend: { title: 'The city is split into sectors', text: 'Yours, others’ and free ones — each its own colour. A free sector becomes yours with your first catch.' },
     sectorCard: { title: 'Sector card', text: 'Tap a sector on the map: who holds it, how much was caught there, what bites.' },
     nearest: { title: 'A free sector nearby', text: 'We’ll find the nearest free sector and route you there.' },
-    firstSteps: { title: 'First steps', text: 'Six easy tasks to get started. 100 coins for all of them.' },
+    firstSteps: { title: 'First steps', text: 'Five easy tasks to get started. 100 coins for all of them.' },
     species: { title: 'Pick the fish', text: 'Search by the first letters, your usual ones on top. Size and weight are optional.' },
     catchReward: { title: 'Coins for the catch', text: 'Every fish earns coins — the rarer, the more. A new sector adds 25.' },
     treasuryOwner: { title: 'Your sector earns coins', text: 'They pile up every day, up to 30 a day. Tap to collect.' },
@@ -538,7 +538,6 @@ export const en: Dict = {
     steps: {
       catch: { title: 'Catch your first fish', hint: 'Stand in a sector and tap the camera at the bottom' },
       fortify: { title: 'Fortify a sector', hint: 'Catch one more fish in the same sector — its defense grows' },
-      treasury: { title: 'Collect the Treasury', hint: 'Your sector earns coins — the coin chip at the top of the map' },
       daily: { title: 'Take the daily reward', hint: 'The coin badge at the top of the map — every day, up to 100 coins' },
       challenge: { title: 'Complete a weekly challenge', hint: 'In your profile, «Weekly challenges»' },
       clan: { title: 'Join a clan', hint: 'In your profile — «Join a clan or create your own»' },
