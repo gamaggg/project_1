@@ -75,8 +75,11 @@ export function C2Tour({ steps, onStep, onClose, live = false }: { steps: TourSt
       // sticky clan tabs when the element is under them, so they never cover its top.
       const tabs = el.closest('.c2-phone-body')?.querySelector<HTMLElement>('.c2-subtabs')
       const underTabs = tabs && tabs.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING ? tabs.offsetHeight : 0
-      // In the real app the screen's own top (the status bar, Telegram's buttons) is kept clear.
-      el.style.scrollMarginTop = live ? 'calc(var(--sticky-reach, 0px) + 24px)' : `${underTabs + 16}px`
+      // In the real app the screen's own top (the status bar, Telegram's buttons) is kept clear: the screen's top
+      // padding is exactly that band (Telegram, the home-screen app or nothing in a browser). --sticky-reach is set only
+      // on the sticky bars, so the element itself had 0 there and was put under Telegram's buttons.
+      const screenTop = live ? parseFloat(getComputedStyle(el.closest('.screen') ?? document.body).paddingTop) || 0 : 0
+      el.style.scrollMarginTop = live ? `${screenTop + 24}px` : `${underTabs + 16}px`
       const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
       el.scrollIntoView({ block: 'start', behavior: calm ? 'auto' : 'smooth' })
       // Settled once the element has kept still for a few frames (or after 900 ms at most).
