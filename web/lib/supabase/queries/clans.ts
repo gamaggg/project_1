@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useQueryClient, useMutation, useQuery, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query'
+import { useQueryClient, useMutation, useQuery, useQueries, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/AuthProvider'
 import type { ClanEligibility, ClanSummary, ClanDetail, ClanMember, ClanChatMessage, ClanRoleId, ClanChatSummary, ClanInvite, ClanChest, ClanRace, ClanWarCandidate } from '@/lib/data/types'
@@ -82,28 +82,42 @@ export function useClanEligibility(enabled: boolean) {
   })
 }
 
+async function fetchClanList(city: CityId, query: string): Promise<ClanSummary[]> {
+  const supabase = createClient()
+  const { data, error } = await supabase.rpc('list_clans', { p_city: city, p_query: query.trim() || null })
+  if (error) throw error
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    name: r.name,
+    motto: r.motto,
+    crest: r.crest,
+    background: r.background,
+    level: r.level,
+    trophies: r.trophies,
+    members: r.members,
+    capacity: r.capacity,
+    joinType: r.join_type as ClanSummary['joinType'],
+    minSectors: r.min_sectors,
+    sectorsHeld: r.sectors_held,
+  }))
+}
+
 export function useClanList(city: CityId, query: string) {
   return useQuery({
     queryKey: ['clans', city, query.trim().toLowerCase()],
-    queryFn: async (): Promise<ClanSummary[]> => {
-      const supabase = createClient()
-      const { data, error } = await supabase.rpc('list_clans', { p_city: city, p_query: query.trim() || null })
-      if (error) throw error
-      return (data ?? []).map((r) => ({
-        id: r.id,
-        name: r.name,
-        motto: r.motto,
-        crest: r.crest,
-        background: r.background,
-        level: r.level,
-        trophies: r.trophies,
-        members: r.members,
-        capacity: r.capacity,
-        joinType: r.join_type as ClanSummary['joinType'],
-        minSectors: r.min_sectors,
-        sectorsHeld: r.sectors_held,
-      }))
-    },
+    queryFn: () => fetchClanList(city, query),
+  })
+}
+
+// The clans of several cities at once (the «Кланы» tab shows the other cities under the player's own). The same query
+// keys as useClanList, so a city read here is the one the clan list screen already has.
+export function useClanListsOfCities(cities: CityId[]) {
+  return useQueries({
+    queries: cities.map((city) => ({
+      queryKey: ['clans', city, ''],
+      queryFn: () => fetchClanList(city, ''),
+      staleTime: 60_000,
+    })),
   })
 }
 

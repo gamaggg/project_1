@@ -36,6 +36,7 @@ import { ClanInfoSheet, type ClanInfoKind } from '@/components/app-shell/ClanInf
 import { BackButton } from '@/components/app-shell/BackButton'
 import { ClanHero } from '@/components/app-shell/ClanHero'
 import { ClanChestPanel } from '@/components/app-shell/ClanChestPanel'
+import { ForeignBase } from '@/components/clan2/live/ForeignBase'
 import { ClanRacePreview } from '@/components/app-shell/ClanRace'
 import { StyledName } from '@/components/app-shell/StyledName'
 import { CLAN_ROLE_LABEL, CLAN_ROLE_RANK, JOIN_TYPE_LABEL, clanErrorMessage, clanLevelProgress, leagueFor, type ClanRole } from '@/lib/data/clanLevels'
@@ -598,6 +599,7 @@ export function ClanScreen({
 
         {tab === 'members' && (
           <div className="clan-tab-body" key="members">
+            {!isMember && <ForeignBase clanId={clan.id} level={clan.level} members={clan.members.length} capacity={clan.capacity} />}
             {clan.announcement && (
               <div className="clan-announcement">
                 <div className="clan-announcement-kicker">{tn('clan.announcement')}</div>

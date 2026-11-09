@@ -890,6 +890,7 @@ export const ka: Dict = {
     createFind: 'შექმენი ან მოძებნე კლანი',
     members: '{count} წევრი',
     all: 'ქალაქის ყველა კლანი',
+    otherCities: 'სხვა ქალაქების კლანები',
   },
   install: {
     title: 'მთავარ ეკრანზე დამატება',

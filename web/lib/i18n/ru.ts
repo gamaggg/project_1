@@ -891,6 +891,7 @@ export const ru = {
     createFind: 'Создать или найти клан',
     members: '{count} уч.',
     all: 'Все кланы города',
+    otherCities: 'Кланы других городов',
   },
   // «Добавить RANGE на главный экран» (InstallAppModal): шаги для iPhone,
   // Android и Telegram.

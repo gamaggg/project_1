@@ -888,6 +888,7 @@ export const en: Dict = {
     createFind: 'Create or find a clan',
     members: '{count} members',
     all: 'All clans in the city',
+    otherCities: 'Clans in other cities',
   },
   install: {
     title: 'Add to home screen',
