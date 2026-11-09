@@ -288,7 +288,7 @@ export const FAQ_EN: FaqSection[] = [
           'The treasury is the clan\'s shared pot. It replaces the personal Treasury: the coins for sectors now build up for the whole clan, not for one player.',
           [
             'Rent: every captured clan sector brings 1 coin every 3 hours (8 a day). A shared sector that clan-mates hold together brings one and a half times more, the HQ sector double (2 coins per 3 hours).',
-            'The catch tax: 0, 5 or 10 % of the coins for a fish. The leader or the co-leader picks the rate; it is part of your reward, not taken on top.',
+            'The catch tax: 0, 5 or 10 % of the coins for a fish, but at least 1 coin per reward (nothing is taken from a 1-coin reward). The leader or the co-leader picks the rate; it is part of your reward, not taken on top.',
             'Deposits: any member can put in coins of their own. The members list shows how much each one gave this month (deposits and the catch tax); the count starts again on the 1st. Whoever gave the most wears the «Patron of the month» crown. Everyone sees this column, clan-mates and players of other clans.',
             'A quarter of the coins from the week\'s chest and the clan battle, the weekly task reward and 100 coins for every newcomer who makes a first catch.',
           ],
