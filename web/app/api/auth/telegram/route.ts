@@ -55,7 +55,11 @@ async function handlePOST(request: Request) {
   if (!existing && !mayCreate) return NextResponse.json({ status: 'no_account' })
 
   if (!existing) {
-    const displayName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || tgUser.username || `tg${tgUser.id}`
+    // profiles.display_name is limited to 40 characters (check constraint): a long first + last name
+    // used to fail the whole sign-up with "Database error creating new user". Cut by code points
+    // so an emoji is not split in half.
+    const rawName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ').trim() || tgUser.username || `tg${tgUser.id}`
+    const displayName = Array.from(rawName).slice(0, 40).join('').trim() || `tg${tgUser.id}`
     const { data: created, error: createError } = await admin.auth.admin.createUser({
       email,
       email_confirm: true,
