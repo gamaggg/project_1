@@ -359,7 +359,10 @@ export function ClanScreen({
         run: () => run(setRole.mutateAsync({ userId: m.userId, role: 'leader', clanId: clan.id }), tn('clan.nowLeader', { name: m.displayName })),
       })
     } else if (clan.myRole === 'co_leader') {
+      // The same as the server's set_clan_member_role: a co-leader moves members and elders (up to co-leader too),
+      // never another co-leader or the leader (those rows are filtered out above by the rank).
       if (m.role === 'member') promote('elder', tn('clan.makeElder'))
+      if (m.role === 'member' || m.role === 'elder') promote('co_leader', tn('clan.makeCoLeader'))
       if (m.role === 'elder') promote('member', tn('clan.demoteMember'))
     }
     list.push({

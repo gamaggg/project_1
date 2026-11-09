@@ -366,6 +366,7 @@ export const FAQ_EN: FaqSection[] = [
         q: 'What if the leader is gone? How is leadership handed over and how is a clan disbanded?',
         a: [
           [
+            'Roles: the leader can set anyone. A co-leader can make members elders or co-leaders and elders members again; they cannot touch another co-leader or the leader.',
             'Only the leader can hand leadership over: on the clan screen from a member\'s menu; you become the co-leader.',
             'If the leader does not open the app for 30 days, leadership passes to the co-leader by itself (no co-leader — to an elder, no elder — to whoever came in last), and the former leader becomes a co-leader. Catches do not matter here: it is enough for the leader to open the app at least once in 30 days.',
             'If the clan is disbanded, the treasury burns: the coins do not go to the players. This is so that coins cannot be taken out through a disbandment.',
