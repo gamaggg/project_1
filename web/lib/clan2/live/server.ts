@@ -24,7 +24,8 @@ export async function readServerClan(clanId: number, userId: string): Promise<Se
   const [state, notes, me] = await Promise.all([
     rpc('get_clan_state', { p_clan_id: clanId }),
     supabase.from('notifications').select('id,kind,created_at,payload,territory_id').eq('user_id', userId).like('kind', 'clan_%').order('created_at', { ascending: false }).limit(60),
-    supabase.from('profiles').select('coins').eq('id', userId).maybeSingle(),
+    // The view, not the table: the players' role may not read `profiles` itself (the app reads its own coins the same way).
+    supabase.from('profiles_with_stats').select('coins').eq('id', userId).maybeSingle(),
   ])
   if (state.error) return { ok: false, missing: state.error.code === 'PGRST202' || /function .* does not exist|Could not find the function/i.test(state.error.message) }
   const coins = !me.error && me.data && typeof me.data.coins === 'number' ? me.data.coins : null
