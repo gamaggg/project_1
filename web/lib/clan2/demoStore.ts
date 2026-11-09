@@ -161,6 +161,8 @@ export async function refreshFromServer(clanId: number, userId: string): Promise
   load()
   const draft = structuredClone(state) as DemoState
   applyServerClan(draft, r.data, r.alerts)
+  // The wallet is the player's real coins, not the copy saved in the browser at the first visit.
+  if (r.coins != null) draft.wallet = r.coins
   commit(draft)
   return true
 }

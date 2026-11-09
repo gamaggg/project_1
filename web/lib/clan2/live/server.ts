@@ -13,19 +13,22 @@ type Json = Record<string, unknown>
 const t = (v: unknown): number => (typeof v === 'string' ? Date.parse(v) : typeof v === 'number' ? v : NaN)
 const num = (v: unknown, d = 0): number => (typeof v === 'number' ? v : typeof v === 'string' && v !== '' ? Number(v) : d)
 
-export type ServerRead = { ok: true; data: Json; alerts: Json[] } | { ok: false; missing: boolean }
+export type ServerRead = { ok: true; data: Json; alerts: Json[]; coins: number | null } | { ok: false; missing: boolean }
 
-// The whole clan, and the clan's notifications of this player (the moments, the bell, the journal's events).
+// The whole clan, and the clan's notifications of this player (the moments, the bell, the journal's events), and the
+// player's real coins: the wallet of the deposit sheet is read here again, so it never drifts from the profile.
 export async function readServerClan(clanId: number, userId: string): Promise<ServerRead> {
   const supabase = createClient()
   // The generated types do not know the functions of the drafts yet.
   const rpc = supabase.rpc.bind(supabase) as unknown as (fn: string, args?: Json) => Promise<{ data: unknown; error: { code?: string; message: string } | null }>
-  const [state, notes] = await Promise.all([
+  const [state, notes, me] = await Promise.all([
     rpc('get_clan_state', { p_clan_id: clanId }),
     supabase.from('notifications').select('id,kind,created_at,payload,territory_id').eq('user_id', userId).like('kind', 'clan_%').order('created_at', { ascending: false }).limit(60),
+    supabase.from('profiles').select('coins').eq('id', userId).maybeSingle(),
   ])
   if (state.error) return { ok: false, missing: state.error.code === 'PGRST202' || /function .* does not exist|Could not find the function/i.test(state.error.message) }
-  return { ok: true, data: (state.data ?? {}) as Json, alerts: ((notes.data ?? []) as unknown as Json[]) }
+  const coins = !me.error && me.data && typeof me.data.coins === 'number' ? me.data.coins : null
+  return { ok: true, data: (state.data ?? {}) as Json, alerts: ((notes.data ?? []) as unknown as Json[]), coins }
 }
 
 // The server's journal kinds in the preview's words; the zero lines (a setting, a finished build) are not money.
