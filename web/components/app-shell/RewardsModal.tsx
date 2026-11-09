@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useClaimDailyReward, useCollectTreasury, useDailyRewardState, useProfile, type TreasuryState } from '@/lib/supabase/queries'
+import { useClan2Enabled } from '@/lib/clan2/live/flag'
 import { useI18n } from '@/lib/i18n'
 import { nowInZone } from '@/lib/forecast/bite'
 import { CITIES } from '@/lib/data/city'
@@ -24,6 +25,22 @@ export function RewardsModal({ treasury, onClose, onToast }: { treasury: Treasur
   const dailyReady = !!daily && !daily.claimedToday
   const treasuryReady = !!treasury && treasury.available > 0
   const [tab, setTab] = useState<'daily' | 'treasury'>(dailyReady || !treasuryReady ? 'daily' : 'treasury')
+  // With the clan update the personal Казна is closed (09.11.2026): the sheet
+  // is the daily reward alone, no tabs.
+  const clan2On = useClan2Enabled()
+
+  if (clan2On)
+    return createPortal(
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-card double-modal rewards-modal" role="dialog" aria-label={t('daily.title')} onClick={(e) => e.stopPropagation()}>
+          <DailyTab onToast={onToast} />
+          <button className="btn-primary" onClick={onClose}>
+            {tn('common.gotIt')}
+          </button>
+        </div>
+      </div>,
+      document.body
+    )
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
