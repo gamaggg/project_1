@@ -230,7 +230,15 @@ async function staleWhileRevalidate(req, cacheName) {
   )
   if (hit) return hit
   const res = await fresh
-  return res || Response.error()
+  if (res && res.ok) return res
+  // The readable (CORS) copy did not come: the picture as the page asked for it, the way it loads with no worker at
+  // all. Without this a failed copy was a broken picture (13.11.2026: on the owner's iPhone in Telegram every photo
+  // not seen before showed «?», while the server and CORS answered fine).
+  try {
+    return await netFetch(req)
+  } catch {
+    return res || Response.error()
+  }
 }
 
 function fetchReadable(req) {
