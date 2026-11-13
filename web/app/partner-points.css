@@ -23,10 +23,14 @@
 /* The card. */
 .pp-overlay{z-index:960;}
 .pp-over{z-index:980;}
-.pp-sheet{position:relative; overflow:hidden; transition:transform .25s var(--ease-out);}
+.move-sheet.pp-sheet{position:relative; overflow:hidden; transition:transform .25s var(--ease-out);
+  /* Below Telegram's own «Закрыть» / «…» buttons (--tg-safe-area-top, set by AuthProvider) and the notch, never under them. */
+  max-height:calc(100dvh - max(24px, env(safe-area-inset-top) + var(--tg-safe-area-top, 0px) + 10px));
+  /* The bottom inset goes inside the scroll (.pp-scroll), so the content runs to the very edge instead of a white strip. */
+  padding-bottom:0;}
 .pp-grab{flex:0 0 auto; display:flex; justify-content:center; padding:8px 0 10px; cursor:grab; touch-action:none;}
 .pp-grab span{width:38px; height:4px; border-radius:2px; background:var(--line);}
-.pp-scroll{flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding-bottom:calc(var(--tg-safe-area-bottom, 0px) + 18px); -webkit-overflow-scrolling:touch;}
+.pp-scroll{flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding-bottom:calc(env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px) + 18px); -webkit-overflow-scrolling:touch;}
 .pp-gwrap{position:relative; margin:0 16px; border-radius:18px; overflow:hidden; background:#EFF3F6;}
 .pp-gallery{display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none;}
 .pp-gallery::-webkit-scrollbar{display:none;}
@@ -43,10 +47,12 @@
 .pp-kind{margin:3px 0 0; font-size:14px; font-weight:600; color:var(--ink-soft);}
 .pp-hours{display:flex; align-items:center; gap:6px; margin:8px 0 0; font-size:13.5px; font-weight:700; color:var(--ink);}
 .pp-hours svg{color:var(--green); flex:0 0 auto;}
-.pp-actions{display:grid; gap:8px; margin-top:14px;}
-.pp-actions-1{grid-template-columns:1fr;}
-.pp-actions-2{grid-template-columns:1fr 1fr;}
-.pp-actions-3{grid-template-columns:repeat(3, minmax(0, 1fr));}
+/* Equal widths while everything fits; on a narrow screen a button never squeezes its icon or text — it keeps its
+   content width and the others give way (flex-basis 0 + min-width: content). */
+.pp-actions{display:flex; flex-wrap:wrap; gap:6px; margin-top:14px;}
+.pp-actions .pp-act{flex:1 1 0; min-width:max-content; gap:5px; padding:0 clamp(6px, 2vw, 12px); font-size:clamp(12.5px, 3.6vw, 15px);}
+.pp-actions .pp-act svg{width:18px; height:18px;}
+.pp-act svg{flex:0 0 auto;}
 .pp-act{display:flex; align-items:center; justify-content:center; gap:7px; min-height:48px; padding:0 10px; border:1.5px solid #E2DFD8; border-radius:14px; background:#fff; color:var(--ink); font-family:inherit; font-size:14.5px; font-weight:700; text-decoration:none; cursor:pointer; white-space:nowrap; transition:transform .15s var(--ease);}
 .pp-act:active{transform:scale(0.97);}
 .pp-act-main{border-color:transparent; background:linear-gradient(160deg,#FF6A1F,var(--accent) 65%); color:#fff; box-shadow:0 8px 18px rgba(252,82,0,0.26);}
