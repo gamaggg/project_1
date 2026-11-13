@@ -1964,10 +1964,6 @@ export type Database = {
       buy_extra_challenge: { Args: { p_city: string; p_timezone: string }; Returns: undefined }
       buy_shield: { Args: { p_territory_id: string }; Returns: undefined }
       activate_buff: { Args: { p_buff_id: string }; Returns: undefined }
-      spin_wheel: {
-        Args: { p_bet: number }
-        Returns: { segment_index: number; multiplier: number; payout: number; new_balance: number }[]
-      }
       create_telegram_link_token: { Args: Record<string, never>; Returns: string }
       get_slot_state: { Args: Record<string, never>; Returns: Json }
       get_geo_today: { Args: Record<string, never>; Returns: Json }
