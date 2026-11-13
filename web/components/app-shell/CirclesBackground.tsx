@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { observeScreenActive } from '@/lib/observeScreenActive'
+import { observeScreenActiveReleasing } from '@/lib/observeScreenActive'
 
 // Concentric arcs sweeping slowly around an off-centre point, each ring at
 // its own speed so the motion never reads as one mechanically synced spin —
@@ -92,18 +92,24 @@ export function CirclesBackground({ color = '#7C8CFF' }: { color?: string }) {
       cancelAnimationFrame(frameId)
     }
 
-    const ro = new ResizeObserver(() => {
+    function fit() {
       if (!resize()) return
       sized = true
       drawFrame()
       start()
-    })
+    }
+    const ro = new ResizeObserver(fit)
     ro.observe(container)
-    const stopWatching = observeScreenActive(canvas, (active) => {
-      screenActive = active
-      if (active) start()
-      else stop()
-    })
+    // Out of sight for a while, the canvas lets go of its pixels; fit() draws it again on the way back.
+    const stopWatching = observeScreenActiveReleasing(
+      canvas,
+      (active) => {
+        screenActive = active
+        if (active) start()
+        else stop()
+      },
+      fit,
+    )
 
     return () => {
       stop()

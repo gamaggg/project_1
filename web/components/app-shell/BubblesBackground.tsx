@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { observeScreenActive } from '@/lib/observeScreenActive'
+import { observeScreenActiveReleasing } from '@/lib/observeScreenActive'
 
 type Bubble = { x: number; y: number; r: number; speed: number; phase: number; amp: number }
 
@@ -102,18 +102,24 @@ export function BubblesBackground({ color = '#7FD8F0' }: { color?: string }) {
       cancelAnimationFrame(frameId)
     }
 
-    const ro = new ResizeObserver(() => {
+    function fit() {
       if (!resize()) return
       sized = true
       drawFrame()
       start()
-    })
+    }
+    const ro = new ResizeObserver(fit)
     ro.observe(container)
-    const stopWatching = observeScreenActive(canvas, (active) => {
-      screenActive = active
-      if (active) start()
-      else stop()
-    })
+    // Out of sight for a while, the canvas lets go of its pixels; fit() draws it again on the way back.
+    const stopWatching = observeScreenActiveReleasing(
+      canvas,
+      (active) => {
+        screenActive = active
+        if (active) start()
+        else stop()
+      },
+      fit,
+    )
 
     return () => {
       stop()

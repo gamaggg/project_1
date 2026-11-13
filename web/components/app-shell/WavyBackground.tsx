@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { createNoise3D } from 'simplex-noise'
-import { observeScreenActive } from '@/lib/observeScreenActive'
+import { observeScreenActiveReleasing } from '@/lib/observeScreenActive'
 
 // Close port of ui.aceternity.com/components/wavy-background — same
 // algorithm (5 layered noise waves) and the same prop shape (waveWidth/
@@ -129,18 +129,24 @@ export function WavyBackground({
     // real post-layout size, async, typically within a frame or two) to
     // both size the canvas and kick off the first paint. See resize()'s
     // comment for why measuring synchronously here isn't safe everywhere.
-    const ro = new ResizeObserver(() => {
+    function fit() {
       if (!resize()) return
       sized = true
       drawFrame()
       start()
-    })
+    }
+    const ro = new ResizeObserver(fit)
     ro.observe(container)
-    const stopWatching = observeScreenActive(canvas, (active) => {
-      screenActive = active
-      if (active) start()
-      else stop()
-    })
+    // Out of sight for a while, the canvas lets go of its pixels; fit() draws it again on the way back.
+    const stopWatching = observeScreenActiveReleasing(
+      canvas,
+      (active) => {
+        screenActive = active
+        if (active) start()
+        else stop()
+      },
+      fit,
+    )
 
     return () => {
       stop()

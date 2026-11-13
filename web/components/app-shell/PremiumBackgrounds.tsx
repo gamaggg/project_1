@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { observeScreenActive } from '@/lib/observeScreenActive'
+import { observeScreenActiveReleasing } from '@/lib/observeScreenActive'
 
 // The premium (800+) hero backgrounds — each a whole little scene painted
 // on one canvas: «Глубина» (light shafts and drifting motes under water),
@@ -65,24 +65,30 @@ function LiveCanvas({ scene }: { scene: Scene }) {
       cancelAnimationFrame(frameId)
     }
 
-    const ro = new ResizeObserver(() => {
-      const w = canvas.clientWidth
-      const h = canvas.clientHeight
+    function fit() {
+      const w = canvas!.clientWidth
+      const h = canvas!.clientHeight
       if (w === 0 || h === 0) return
-      canvas.width = Math.round(w * dpr)
-      canvas.height = Math.round(h * dpr)
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      draw = scene(ctx, w, h)
+      canvas!.width = Math.round(w * dpr)
+      canvas!.height = Math.round(h * dpr)
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0)
+      draw = scene(ctx!, w, h)
       sized = true
       draw(t)
       start()
-    })
+    }
+    const ro = new ResizeObserver(fit)
     ro.observe(container)
-    const stopWatching = observeScreenActive(canvas, (a) => {
-      active = a
-      if (a) start()
-      else stop()
-    })
+    // Out of sight for a while, the canvas lets go of its pixels; fit() draws it again on the way back.
+    const stopWatching = observeScreenActiveReleasing(
+      canvas,
+      (a) => {
+        active = a
+        if (a) start()
+        else stop()
+      },
+      fit,
+    )
     return () => {
       stop()
       ro.disconnect()

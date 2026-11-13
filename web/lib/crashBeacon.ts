@@ -22,7 +22,7 @@ const EARLY_FOR_MS = 60_000
 const AWAY_AFTER_MS = 60_000
 const REPORT_EVERY_MS = 60 * 60_000
 
-type Beacon = { screen: string; at: number; started: number; clean: boolean; nodes: number; canvases: number; screens: number; images: number; heapMB: number | null; nav: string; trail: string; ver?: string; light?: boolean | null; memory?: Weight }
+type Beacon = { screen: string; layer?: string; at: number; started: number; clean: boolean; nodes: number; canvases: number; screens: number; images: number; heapMB: number | null; nav: string; trail: string; ver?: string; light?: boolean | null; memory?: Weight }
 
 function read(): Beacon | null {
   try {
@@ -45,6 +45,15 @@ function activeScreen(): string {
   const id = document.querySelector('.screens .screen.active')?.id ?? document.querySelector('.screen.active')?.id
   if (id) return id
   return document.querySelector('.screen') ? 'none' : 'загрузка'
+}
+
+// What lies over the screen: a sheet or a viewer is not a screen of its own, and the report of 13.11 (id 695) said
+// «screen-catch-photo» when the comments sheet had just been opened over it.
+function openLayer(): string | undefined {
+  if (document.querySelector('.comments-overlay')) return 'комментарии'
+  if (document.querySelector('.photo-viewer, .lightbox-overlay')) return 'фото крупно'
+  if (document.querySelector('.modal-overlay, .move-sheet-overlay')) return 'окно'
+  return undefined
 }
 
 // What the pictures and canvases on the page weigh once drawn — iOS gives no heap figure, and the count of
@@ -137,7 +146,7 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
       } catch {}
       const lived = Math.round((prev.at - prev.started) / 1000)
       report(
-        `страница сброшена без ухода в фон: экран ${prev.screen}; жила ${lived} с, последний сигнал ${Math.round((now - prev.at) / 1000)} с назад; ` +
+        `страница сброшена без ухода в фон: экран ${prev.screen}${prev.layer ? ` (поверх: ${prev.layer})` : ''}; жила ${lived} с, последний сигнал ${Math.round((now - prev.at) / 1000)} с назад; ` +
           `узлов ${prev.nodes}, экранов ${prev.screens}, canvas ${prev.canvases}${prev.images !== undefined ? `, картинок ${prev.images}` : ''}${prev.heapMB !== null ? `, куча ${prev.heapMB} МБ` : ''}${weightText(prev.memory)}; открыта как ${prev.nav ?? '?'}; версия ${prev.ver ?? '?'}${prev.ver && prev.ver !== BUILD ? `, теперь ${BUILD}` : ''}; ${platform(prev.light)}${prev.trail ? `; путь: ${prev.trail}` : ''}`
       )
     }
@@ -156,6 +165,7 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
     }
     write({
       screen,
+      layer: openLayer(),
       at: Date.now(),
       started,
       clean,
@@ -182,7 +192,8 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
     timer = window.setTimeout(tick, Date.now() - started < EARLY_FOR_MS ? HEARTBEAT_EARLY_MS : HEARTBEAT_MS)
   }
   timer = window.setTimeout(tick, HEARTBEAT_EARLY_MS)
-  // A screen change is worth a note at once: it is what the report names.
+  // A screen change is worth a note at once: it is what the report names. So is a sheet or viewer opened over it
+  // (lib/overlayWatch.ts marks <html> with has-modal / has-lightbox).
   const root = document.querySelector('.screens') ?? document.body
   let pending = 0
   const observer = new MutationObserver(() => {
@@ -192,6 +203,7 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
     }, 400)
   })
   observer.observe(root, { attributes: true, attributeFilter: ['class'], subtree: true })
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
   const onVisibility = () => beat(document.visibilityState === 'hidden')
   const onHide = () => beat(true)
   document.addEventListener('visibilitychange', onVisibility)
