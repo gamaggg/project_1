@@ -4,7 +4,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 
 // «Идут технические работы»: one switch in the database (supabase-drafts/maintenance-08-11), turned on and off by the
-// super admin from «Управление» in the profile. Asked every 30 seconds and whenever the app comes back to the screen;
+// super admin from «Управление» in the profile. Asked every 5 minutes while the app is in front (was 30 s from every
+// player online) and whenever the app comes back to the screen (staleTime 15 s, so a return always asks);
 // while it is on, everybody but the super admin sees the maintenance screen (FishZoneApp). Any failure to ask (no
 // network, the function not there yet) counts as «off»: the switch must never lock players out by accident.
 export type Maintenance = { enabled: boolean; message: string | null; since: string | null }
@@ -14,7 +15,7 @@ export function useMaintenance() {
   return useQuery({
     queryKey: ['maintenance'],
     staleTime: 15_000,
-    refetchInterval: 30_000,
+    refetchInterval: 5 * 60_000,
     refetchOnWindowFocus: true,
     queryFn: async (): Promise<Maintenance> => {
       const supabase = createClient()

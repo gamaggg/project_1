@@ -1,6 +1,6 @@
 ---
 name: limits
-description: Проверка лимитов и квот всех сервисов RANGE (Supabase, Vercel, Mapbox, Fishial, Telegram, Open-Meteo) с прогнозом до конца месяца и списком действий. Use when the user says "/limits", «проверь лимиты», «не упираемся ли мы в лимиты», «квоты», «usage», «сколько осталось на бесплатном тарифе».
+description: Проверка лимитов и квот всех сервисов RANGE (Supabase, Cloudflare R2, Vercel, Mapbox, Fishial, Telegram, Open-Meteo) с прогнозом до конца месяца и списком действий. Use when the user says "/limits", «проверь лимиты», «не упираемся ли мы в лимиты», «квоты», «usage», «сколько осталось на бесплатном тарифе».
 ---
 
 # /limits — упираемся ли мы в лимиты
@@ -57,6 +57,16 @@ document.querySelector('main').innerText.split('\n').map(s=>s.trim()).filter(Boo
 
 Сравнить блок Overview с таблицей лимитов Hobby ниже.
 
+## 3а. Cloudflare R2 — фото (с 13.11.2026)
+
+Фото уловов, аватарки, панорамы и картинки постов — в R2 (бакет `range-photos`, адрес `photos.catchrange.com`, см. `docs/50 Эксплуатация/Перенос фото в Cloudflare R2.md`). Во встроенном браузере открыть `https://dash.cloudflare.com/af10c19265ae62e8742d567ab47de809/r2/overview`, подождать 5 с и выполнить:
+
+```js
+(() => { const t = document.body.innerText; const i = t.indexOf('Usage'); return t.slice(i, i + 400) })()
+```
+
+Там период (с 13-го по 13-е), Class A Operations, Class B Operations, Total storage и «Billable usage» — должно быть $0.00. Сравнить с лимитами R2 ниже. На экране «Лимиты сервисов» место (`r2_storage`) обновляет сама ночная чистка (`/api/cron/cleanup-photos`); операции (`r2_class_a`, `r2_class_b`) — строки `service_limits_manual`, их переписывают после /limits отдельной командой, как цифры Vercel.
+
 ## 4. Сервисы без счётчика — оценка по активности
 
 Берём `activity_7d` из шага 1 и считаем на 30 дней (× 30 / 7):
@@ -90,6 +100,15 @@ document.querySelector('main').innerText.split('\n').map(s=>s.trim()).filter(Boo
 | Image Transformations | в панели «Unavailable in plan», но `render/image` отвечает и уменьшает — следить |
 
 При превышении на бесплатном тарифе Supabase «может ограничить» проект. Опаснее всего файлы: если упрёмся, не загрузится фото улова, а значит не сохранится и сам улов.
+
+**Cloudflare R2** (месяц с 13-го по 13-е; сверх лимита не выключает, а берёт деньги с карты):
+
+| Ресурс | Бесплатно | Сверх |
+|---|---|---|
+| Место | 10 ГБ | $0,015 за ГБ в месяц |
+| Class A (загрузка, копирование, список) | 1 млн | $4,50 за млн |
+| Class B (чтение; из кэша Cloudflare не считается) | 10 млн | $0,36 за млн |
+| Трафик | без лимита | бесплатно |
 
 **Vercel Hobby** (скользящие 30 дней):
 

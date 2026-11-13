@@ -19,7 +19,10 @@ export function useClan2Access(profile: { isSuperAdmin?: boolean; clanId?: numbe
       // The table is not in the generated types until the migrations are applied.
       const from = supabase.from.bind(supabase) as unknown as (t: string) => { select: (c: string) => { eq: (k: string, v: number) => { maybeSingle: () => Promise<{ data: { enabled: boolean; pilot_clans: number[] | null } | null; error: unknown }> } } }
       const { data, error } = await from('clan_economy').select('enabled,pilot_clans').eq('id', 1).maybeSingle()
-      if (error || !data) return null
+      // A failed read (a 504 under load) throws: react-query keeps the last answer and tries again, instead of
+      // switching the clan update off for this player until the next read. No row: the server has no update yet.
+      if (error) throw error
+      if (!data) return null
       return { enabled: !!data.enabled, pilot: (data.pilot_clans ?? []).map(Number) }
     },
   })

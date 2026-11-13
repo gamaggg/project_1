@@ -15,6 +15,10 @@ import { requestMap, setLiveUi, useLiveUi } from '@/lib/clan2/live/ui'
 import { DEFENSE_MAX, SIEGE_BREAK_REWARD } from '@/lib/clan2/rules'
 import type { ClanDetail, Profile, Territory } from '@/lib/data/types'
 import { tn } from '@/lib/i18n/runtime'
+import { appInFront, onAppFocus } from '@/lib/appFocus'
+import { CLAN_NOTIFICATION_EVENT } from '@/lib/supabase/queries/realtime'
+
+const CLAN_POLL_MS = 3 * 60_000
 
 // The clan update inside the real app: binds the demo store to the player's real clan (read-only), keeps its
 // clock running, and puts the pieces that belong to no screen of their own on top of the app: the test bench
@@ -65,17 +69,39 @@ export function Clan2Live({
     return () => window.clearInterval(id)
   }, [])
 
-  // The server (once its functions are in the database): the clan read now and every 30 s; the store mirrors it.
+  // The server (once its functions are in the database): the clan read now, at once on a clan notification for
+  // this player (useRealtimeSync) and when the app comes back in front, and every 3 minutes as a fallback while the
+  // app is in front (was every 30 s: three requests each time from every clan member online). The player's own
+  // actions read it again themselves (demoStore srv). The store mirrors it.
   const serverKey = input ? `${input.clan.id}:${input.userId}` : ''
   useEffect(() => {
     if (!serverKey) return
     const [clanId, userId] = serverKey.split(':')
-    const read = () => void refreshFromServer(Number(clanId), userId).catch(() => {})
+    let last = 0
+    const read = () => {
+      last = Date.now()
+      void refreshFromServer(Number(clanId), userId).catch(() => {})
+    }
     const first = window.setTimeout(read, 300)
-    const id = window.setInterval(read, 30_000)
+    const id = window.setInterval(() => {
+      if (appInFront()) read()
+    }, CLAN_POLL_MS)
+    const stopFocus = onAppFocus((inFront) => {
+      if (inFront && Date.now() - last > 20_000) read()
+    })
+    // A burst of clan notifications (a siege lands several at once) is one read.
+    let nudge = 0
+    const onClanNote = () => {
+      window.clearTimeout(nudge)
+      nudge = window.setTimeout(read, 1000)
+    }
+    window.addEventListener(CLAN_NOTIFICATION_EVENT, onClanNote)
     return () => {
       window.clearTimeout(first)
+      window.clearTimeout(nudge)
       window.clearInterval(id)
+      stopFocus()
+      window.removeEventListener(CLAN_NOTIFICATION_EVENT, onClanNote)
     }
   }, [serverKey])
 
@@ -92,7 +118,9 @@ export function Clan2Live({
         .catch(() => {})
     // The saved state is bound by the effect above; give it a moment, then read.
     const first = window.setTimeout(load, 600)
-    const id = window.setInterval(load, 5 * 60_000)
+    const id = window.setInterval(() => {
+      if (appInFront()) load()
+    }, 5 * 60_000)
     return () => {
       stop = true
       window.clearTimeout(first)

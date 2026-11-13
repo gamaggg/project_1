@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { isR2Photo } from '@/lib/photoUrl'
 
 // «Улов в истории Telegram»: a 1080×1920 card the server draws for one
 // catch — the photo as its own framed card with nothing laid over it (the
@@ -76,6 +77,8 @@ async function dataUrl(url: string | null): Promise<string | null> {
 
 // A Supabase public object, resized and cropped to the photo card.
 function storyPhotoUrl(url: string): string {
+  // R2 (lib/photoUrl.ts) does not resize: the original, cropped by the card.
+  if (isR2Photo(url)) return url
   const marker = '/storage/v1/object/public/'
   const i = url.indexOf(marker)
   if (i === -1) return url

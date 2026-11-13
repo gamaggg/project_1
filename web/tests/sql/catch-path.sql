@@ -20,7 +20,9 @@
 --  8. горячий сектор + «Двойные монеты»: ×3 (так в коде, см. комментарий в confirm_catch);
 --     +25 за захват того же сектора — не чаще раза в сутки;
 --  9. выдуманный сектор, чужая ссылка на фото, время улова за пределами суток — отказ;
--- 10. каждая выплата за улов записана в coin_transactions с catch_id.
+-- 10. каждая выплата за улов записана в coin_transactions с catch_id;
+-- 11. фото с Cloudflare R2 (photos.catchrange.com, черновик db-load-13-11/07): своё принимается, чужое — отказ.
+--     Шаг идёт, только когда confirm_catch уже знает этот адрес; до миграции 07 он пропускается.
 do $test$
 declare
   a uuid := gen_random_uuid();
@@ -35,6 +37,7 @@ declare
   ledger int;
   err text;
   step int := 0;
+  r2_checked boolean := false;
 begin
   -- Помощники живут во временной схеме и откатываются вместе со всем.
   create function pg_temp.act(u uuid) returns void language sql as $f$
@@ -193,7 +196,31 @@ begin
     raise exception 'ТЕСТ НЕ ПРОЙДЕН, шаг 10 (журнал монет): в журнале %, выплачено по ответам %', ledger, paid;
   end if;
 
-  raise exception 'ТЕСТ ПРОЙДЕН (всё откатано): сектор %, вид % (% мон.), 10 шагов', sector, sp, price;
+  -- 11. Фото с Cloudflare R2: чужая папка — PHOTO_URL_INVALID, своя — улов принят.
+  step := 11;
+  if position('photos.catchrange.com' in pg_get_functiondef('public.confirm_catch(text,text,text,integer,numeric,text,text,timestamp with time zone)'::regprocedure)) > 0 then
+    perform pg_temp.later(a, b);
+    err := null;
+    begin
+      perform public.confirm_catch(sector, sp, 'https://photos.catchrange.com/catch-photos/' || b || '/чужое.jpg');
+    exception when others then err := sqlerrm;
+    end;
+    if err is distinct from 'PHOTO_URL_INVALID' then
+      raise exception 'ТЕСТ НЕ ПРОЙДЕН, шаг 11 (чужое фото в R2): получено %', coalesce(err, 'улов принят');
+    end if;
+    err := null;
+    begin
+      perform public.confirm_catch(sector, sp, 'https://photos.catchrange.com/catch-photos/' || a || '/8.jpg');
+    exception when others then err := sqlerrm;
+    end;
+    if err is not null then
+      raise exception 'ТЕСТ НЕ ПРОЙДЕН, шаг 11 (своё фото в R2): получено %', err;
+    end if;
+    r2_checked := true;
+  end if;
+
+  raise exception 'ТЕСТ ПРОЙДЕН (всё откатано): сектор %, вид % (% мон.), %', sector, sp, price,
+    case when r2_checked then '11 шагов' else '10 шагов (шаг 11 — фото в R2 — пропущен: миграции 07 ещё нет)' end;
 exception when others then
   -- Неожиданная ошибка самой базы (не наша проверка) — с номером шага, где случилась.
   if sqlerrm like 'ТЕСТ %' then raise; end if;

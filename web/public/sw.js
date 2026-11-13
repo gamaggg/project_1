@@ -136,7 +136,7 @@ self.addEventListener('fetch', (event) => {
 
   // The game's own data (Supabase, /api, other sites): ours to keep nothing of,
   // but in the simulation it fails like everything else.
-  if (simulateOffline && url.origin !== self.location.origin && !/api\.mapbox\.com|\.tiles\.mapbox\.com|\/storage\/v1\//.test(req.url)) {
+  if (simulateOffline && url.origin !== self.location.origin && !/api\.mapbox\.com|\.tiles\.mapbox\.com|\/storage\/v1\/|photos\.catchrange\.com/.test(req.url)) {
     event.respondWith(Response.error())
     return
   }
@@ -171,6 +171,11 @@ self.addEventListener('fetch', (event) => {
   }
   // Avatars and catch photos from storage.
   if (url.hostname.endsWith('.supabase.co') && /^\/storage\/v1\/(render\/image|object)\/public\//.test(url.pathname)) {
+    event.respondWith(staleWhileRevalidate(req, IMAGES))
+    return
+  }
+  // The same photos on Cloudflare R2 (lib/photoUrl.ts) — never changed under their name.
+  if (url.hostname === 'photos.catchrange.com') {
     event.respondWith(staleWhileRevalidate(req, IMAGES))
   }
 })

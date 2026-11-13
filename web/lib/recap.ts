@@ -3,6 +3,8 @@
 // the server that draws a slide as an image for «Поделиться», so nothing
 // here touches the browser.
 
+import { isR2Photo } from '@/lib/photoUrl'
+
 export type WeekRecap = {
   weekStart: string
   weekEnd: string
@@ -132,6 +134,8 @@ export function busiestWindow(hours: number[]): { from: number; to: number } | n
 
 // Image-service URL for a Supabase public photo at a given box.
 export function sizedPhoto(url: string, width: number, height: number): string {
+  // R2 (lib/photoUrl.ts) does not resize: the original, cropped by the slide itself.
+  if (isR2Photo(url)) return url
   const marker = '/storage/v1/object/public/'
   const i = url.indexOf(marker)
   if (i === -1) return url

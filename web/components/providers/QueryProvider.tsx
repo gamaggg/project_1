@@ -7,6 +7,11 @@ import { installStandaloneViewportHeal } from '@/lib/standaloneViewport'
 import { installOfflineCache } from '@/lib/offlineCache'
 import { installOverlayWatch } from '@/lib/overlayWatch'
 import { reportClientError } from '@/lib/supabase/queries'
+import { installAppFocus } from '@/lib/appFocus'
+import { installScreenImagePark } from '@/lib/screenImagePark'
+
+// Before the first query subscribes: the polls pause while the app is away, Telegram's collapse included.
+installAppFocus()
 
 export function QueryProvider({ children }: { children: ReactNode }) {
   const [client] = useState(
@@ -33,5 +38,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
   useEffect(() => installOfflineCache(client), [client])
   // The has-overlay / has-lightbox classes the stylesheet keys off (lib/overlayWatch.ts).
   useEffect(() => installOverlayWatch(), [])
+  // Screens out of sight let go of their pictures after 10 s (lib/screenImagePark.ts): iOS memory.
+  useEffect(() => installScreenImagePark(), [])
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>
 }

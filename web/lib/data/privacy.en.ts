@@ -4,7 +4,7 @@ export const PRIVACY_EN: PrivacyDoc = {
   lang: 'en',
   title: 'Privacy Policy',
   metaDescription: 'What data RANGE collects, why, who receives it and how to have it deleted.',
-  updated: 'In effect since 26 October 2026',
+  updated: 'In effect since 13 November 2026',
   intro:
     'RANGE (the catchrange.com website, the Telegram bot and the mini app) is a map game for anglers. Here, briefly and without legal fog: what data we collect, why, who receives it and how to delete it.',
   sections: [
@@ -90,12 +90,12 @@ export const PRIVACY_EN: PrivacyDoc = {
       blocks: [
         'We use third-party services. Each receives only what it needs to work:',
         [
-          'Supabase: the database, account sign-in and photo storage. The server is in Ireland (EU);',
+          'Supabase: the database and account sign-in. The server is in Ireland (EU);',
           'Vercel: hosting of the website and server functions, and anonymous visit statistics;',
           'Mapbox: the map. It receives your IP address and the map area you are viewing;',
           'Open-Meteo: weather and bite forecast. It receives the coordinates of a sector or city and, for requests made from the app, your IP address;',
           'Fishial: fish species suggestion. When you record a catch, the photo is sent for recognition through our server;',
-          'Cloudflare (Turnstile): the «you are not a robot» check at sign-in;',
+          'Cloudflare: storing and showing catch photos, avatars and pictures (R2, servers in Eastern Europe) and the «you are not a robot» check at sign-in (Turnstile);',
           'Telegram: sign-in with Telegram and notifications;',
           'GitHub: storage of our encrypted nightly database backups (without photos).',
         ],

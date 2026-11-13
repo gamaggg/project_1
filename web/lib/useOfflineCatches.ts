@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { listOfflineCatches, onOfflineCatchesChanged, syncOfflineCatches, type SyncResult } from '@/lib/offlineCatches'
+import { appInFront, onAppFocus } from '@/lib/appFocus'
 
 // Whether the phone thinks it's online (navigator.onLine + its events).
 export function useOnline(): boolean {
@@ -57,10 +58,19 @@ export function useOfflineCatchQueue(userId: string | null, onResult: (r: SyncRe
     return () => window.clearTimeout(id)
   }, [online, userId, sync])
 
+  // Every minute while catches wait and the app is in front; at once when it comes back in front.
   useEffect(() => {
     if (!count || !userId) return
-    const id = window.setInterval(() => void sync(), 60_000)
-    return () => window.clearInterval(id)
+    const id = window.setInterval(() => {
+      if (appInFront()) void sync()
+    }, 60_000)
+    const stopFocus = onAppFocus((inFront) => {
+      if (inFront) void sync()
+    })
+    return () => {
+      window.clearInterval(id)
+      stopFocus()
+    }
   }, [count, userId, sync])
 
   return { count, syncing: syncing && count > 0 }

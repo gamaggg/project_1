@@ -22,7 +22,7 @@ const EARLY_FOR_MS = 60_000
 const AWAY_AFTER_MS = 60_000
 const REPORT_EVERY_MS = 60 * 60_000
 
-type Beacon = { screen: string; at: number; started: number; clean: boolean; nodes: number; canvases: number; screens: number; images: number; heapMB: number | null; nav: string; trail: string; ver?: string; light?: boolean | null }
+type Beacon = { screen: string; at: number; started: number; clean: boolean; nodes: number; canvases: number; screens: number; images: number; heapMB: number | null; nav: string; trail: string; ver?: string; light?: boolean | null; memory?: Weight }
 
 function read(): Beacon | null {
   try {
@@ -45,6 +45,50 @@ function activeScreen(): string {
   const id = document.querySelector('.screens .screen.active')?.id ?? document.querySelector('.screen.active')?.id
   if (id) return id
   return document.querySelector('.screen') ? 'none' : 'загрузка'
+}
+
+// What the pictures and canvases on the page weigh once drawn — iOS gives no heap figure, and the count of
+// <img> alone (it was 140–280 in most reports, 13.11.2026) cannot tell a page of small thumbnails from one holding
+// a few 1600 px originals (≈7.7 MB each when decoded). A decoded picture is width × height × 4 bytes, one per
+// address however many <img> show it; parked ones (lib/screenImagePark.ts) have let theirs go.
+type Weight = { imgMB: number; originals: number; biggest: string; canvasMB: number; parked: number }
+
+function imageKind(src: string): string {
+  if (src.startsWith('blob:')) return 'снимок'
+  if (src.startsWith('data:')) return 'встроенная'
+  if (src.includes('/storage/v1/render/image/') || /\.t\d+\.jpg(\?|$)/.test(src)) return 'миниатюра'
+  if (src.includes('/storage/v1/object/public/') || src.startsWith('https://photos.catchrange.com/')) return 'оригинал'
+  if (src.startsWith(location.origin)) return 'своя'
+  return 'чужая'
+}
+
+export function pageWeight(): Weight {
+  const seen = new Set<string>()
+  let bytes = 0
+  let originals = 0
+  let best = 0
+  let biggest = ''
+  for (const img of Array.from(document.images)) {
+    const src = img.currentSrc || img.src
+    if (!src || img.hasAttribute('data-parked-src') || !img.complete || !img.naturalWidth || seen.has(src)) continue
+    seen.add(src)
+    const px = img.naturalWidth * img.naturalHeight
+    bytes += px * 4
+    const kind = imageKind(src)
+    if (kind === 'оригинал') originals++
+    if (px > best) {
+      best = px
+      biggest = `${img.naturalWidth}×${img.naturalHeight} ${kind}`
+    }
+  }
+  let canvas = 0
+  for (const c of Array.from(document.getElementsByTagName('canvas'))) canvas += c.width * c.height * 4
+  return { imgMB: Math.round(bytes / 1048576), originals, biggest, canvasMB: Math.round(canvas / 1048576), parked: document.querySelectorAll('img[data-parked-src]').length }
+}
+
+export function weightText(w: Weight | undefined): string {
+  if (!w) return ''
+  return `; картинки ~${w.imgMB} МБ (оригиналов ${w.originals}${w.biggest ? `, крупнейшая ${w.biggest}` : ''}), холсты ~${w.canvasMB} МБ, отпущено ${w.parked}`
 }
 
 // How this page was opened: a fresh visit, a reload, or back/forward.
@@ -94,7 +138,7 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
       const lived = Math.round((prev.at - prev.started) / 1000)
       report(
         `страница сброшена без ухода в фон: экран ${prev.screen}; жила ${lived} с, последний сигнал ${Math.round((now - prev.at) / 1000)} с назад; ` +
-          `узлов ${prev.nodes}, экранов ${prev.screens}, canvas ${prev.canvases}${prev.images !== undefined ? `, картинок ${prev.images}` : ''}${prev.heapMB !== null ? `, куча ${prev.heapMB} МБ` : ''}; открыта как ${prev.nav ?? '?'}; версия ${prev.ver ?? '?'}${prev.ver && prev.ver !== BUILD ? `, теперь ${BUILD}` : ''}; ${platform(prev.light)}${prev.trail ? `; путь: ${prev.trail}` : ''}`
+          `узлов ${prev.nodes}, экранов ${prev.screens}, canvas ${prev.canvases}${prev.images !== undefined ? `, картинок ${prev.images}` : ''}${prev.heapMB !== null ? `, куча ${prev.heapMB} МБ` : ''}${weightText(prev.memory)}; открыта как ${prev.nav ?? '?'}; версия ${prev.ver ?? '?'}${prev.ver && prev.ver !== BUILD ? `, теперь ${BUILD}` : ''}; ${platform(prev.light)}${prev.trail ? `; путь: ${prev.trail}` : ''}`
       )
     }
   }
@@ -126,6 +170,7 @@ export function installCrashBeacon(report: (message: string) => void): () => voi
       trail: trail.join(' → '),
       ver: BUILD,
       light: lightMapState(),
+      memory: pageWeight(),
     })
   }
   beat(false)

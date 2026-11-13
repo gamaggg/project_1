@@ -1,3 +1,5 @@
+import { isR2Photo, r2Thumb } from '@/lib/photoUrl'
+
 const PUBLIC_OBJECT = '/storage/v1/object/public/'
 
 // Asks Supabase Storage for an already-resized copy instead of the original.
@@ -13,6 +15,9 @@ const PUBLIC_OBJECT = '/storage/v1/object/public/'
 // Anything that isn't a Supabase public object (a Telegram CDN avatar, a
 // local blob: preview) is handed back untouched.
 export function thumbUrl(url: string, size: number): string {
+  // On Cloudflare R2 (lib/photoUrl.ts) there is no resizing on the fly: the square thumbnail uploaded beside the
+  // photo (160 or 480 px), or the original past that.
+  if (isR2Photo(url)) return r2Thumb(url, size)
   const i = url.indexOf(PUBLIC_OBJECT)
   if (i === -1) return url
   const origin = url.slice(0, i)

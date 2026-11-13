@@ -509,11 +509,20 @@ async function upload() {
   const todo = manifest.filter((r) => !have.has(r.source_id))
   console.log(`${city}: ${todo.length} of ${manifest.length} prepared panoramas to upload`)
   let added = 0
+  // After the move to Cloudflare R2 (NEXT_PUBLIC_PHOTO_BASE_URL set, lib/photoUrl.ts): the files go there, under
+  // geo-panoramas/<path>, with the R2_* keys from .env.local; before it, to the Supabase bucket as always.
+  const r2Lib = process.env.NEXT_PUBLIC_PHOTO_BASE_URL ? await import('../lib/server/r2.ts') : null
+  const r2 = r2Lib ? r2Lib.r2FromEnv() : null
+  if (r2Lib && !r2) throw new Error('NEXT_PUBLIC_PHOTO_BASE_URL is set but the R2_* keys are not in .env.local')
   await pool(todo, 4, async (row) => {
     try {
       const small = row.image_path.replace(/\.jpg$/, '_s.jpg')
       for (const path of [row.image_path, small]) {
         const body = await readFile(new URL(path, OUT_DIR))
+        if (r2) {
+          await r2Lib.putObject(r2, `geo-panoramas/${path}`, body, { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=31536000, immutable' })
+          continue
+        }
         const { error: upErr } = await supabase.storage.from('geo-panoramas').upload(path, body, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: true })
         if (upErr) throw upErr
       }

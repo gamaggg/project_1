@@ -30,7 +30,8 @@ export function useMySupport(live = false) {
         .select('id, body, photo_path, created_at, answered_at, started_by, support_replies(body, photo_path, created_at), support_messages(body, photo_path, created_at)')
         .order('created_at', { ascending: false })
         .limit(20)
-      if (error) return []
+      // Throw, not []: a failed read keeps the chat on screen instead of emptying it (react-query tries again).
+      if (error) throw error
       return (data ?? []).map((r) => {
         const replies = (r.support_replies ?? []) as { body: string; photo_path: string | null; created_at: string }[]
         const mine = (r.support_messages ?? []) as { body: string; photo_path: string | null; created_at: string }[]

@@ -55,8 +55,10 @@ export function useClan2Map(territories: Territory[]): Clan2MapProps | null {
   const { data: server } = useQuery({
     queryKey: ['clan2-bases', city],
     enabled: enabled && !!city,
-    staleTime: 30_000,
-    refetchInterval: 60_000,
+    // Every 5 minutes (was every minute from every player of the city, 174 ms each on the database); the clan's
+    // own HQ comes with its own clan read.
+    staleTime: 60_000,
+    refetchInterval: 5 * 60_000,
     queryFn: async (): Promise<{ bases: ServerBase[]; skins: Record<number, string> } | null> => {
       const supabase = createClient() as unknown as {
         rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: ServerBase[] | null; error: unknown }>

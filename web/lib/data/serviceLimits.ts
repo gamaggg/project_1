@@ -19,10 +19,11 @@ export type LimitRow = {
 
 export type ServiceLimits = { now: string; items: LimitRow[] }
 
-export type ServiceId = 'supabase' | 'vercel' | 'mapbox' | 'fishial' | 'openmeteo' | 'telegram'
+export type ServiceId = 'supabase' | 'r2' | 'vercel' | 'mapbox' | 'fishial' | 'openmeteo' | 'telegram'
 
 export const SERVICES: { id: ServiceId; name: string; about: string }[] = [
   { id: 'supabase', name: 'Supabase', about: 'Наш склад: здесь хранятся игроки, уловы, сектора, монеты и все фотографии.' },
+  { id: 'r2', name: 'Cloudflare R2', about: 'Хранилище фото с 13.11.2026: фото уловов, аватарки, панорамы «Где это?» и картинки постов (photos.catchrange.com). Трафик бесплатный всегда; сверх бесплатного Cloudflare не выключает, а берёт деньги с карты.' },
   { id: 'vercel', name: 'Vercel', about: 'Наш хостинг: на нём живёт сайт catchrange.com и серверный код приложения. Считает за последние 30 дней.' },
   { id: 'mapbox', name: 'Mapbox', about: 'Карта: подложка с водой и берегами и маленькие картинки секторов.' },
   { id: 'fishial', name: 'Fishial', about: 'Узнаёт породу рыбы по фотографии улова.' },
@@ -49,6 +50,24 @@ const CATALOG: Record<string, Entry> = {
     title: 'Место для фотографий',
     what: 'Все фото уловов, аватарки, панорамы «Где это?» и картинки постов лежат здесь. Это самое «тесное» место: оно только растёт.',
     ifFull: 'Новые фото перестанут загружаться, а значит игрок не сможет сохранить улов. Это самое неприятное, что может случиться.',
+  },
+  r2_storage: {
+    service: 'r2', kind: 'level',
+    title: 'Место для фотографий',
+    what: 'Все фото (с миниатюрами) в Cloudflare R2. Бесплатно 10 ГБ. Считается каждую ночь по всему хранилищу, вместе с ночной чисткой брошенных фото.',
+    ifFull: 'Ничего не ломается: каждый следующий гигабайт стоит $0,015 в месяц (полтора цента). Списывается с карты в Cloudflare.',
+  },
+  r2_class_a: {
+    service: 'r2', kind: 'month',
+    title: 'Загрузки и изменения файлов',
+    what: 'Загрузка фото (каждое фото — три файла: само фото и две миниатюры), копирование, списки файлов. Бесплатно 1 млн в месяц. Цифру берём из панели Cloudflare командой /limits.',
+    ifFull: 'Ничего не ломается: каждый следующий миллион стоит $4,50.',
+  },
+  r2_class_b: {
+    service: 'r2', kind: 'month',
+    title: 'Просмотры файлов',
+    what: 'Сколько раз фото скачали из хранилища. То, что уже лежит в кэше Cloudflare или в телефоне, не считается. Бесплатно 10 млн в месяц. Цифру берём из панели Cloudflare командой /limits.',
+    ifFull: 'Ничего не ломается: каждый следующий миллион стоит $0,36.',
   },
   database: {
     service: 'supabase', kind: 'level',

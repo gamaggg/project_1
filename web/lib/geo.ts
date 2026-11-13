@@ -1,4 +1,5 @@
 import { tn, currentLanguage } from '@/lib/i18n/runtime'
+import { photosOnR2, r2PhotoUrl } from '@/lib/photoUrl'
 // «Где это?» — one 360° panorama of a shore a day per city; the player picks
 // on the map the sector it was taken in: the right one pays GEO_COINS, any
 // other nothing. Where it was taken stays on the server until the guess
@@ -54,6 +55,8 @@ export function geoEmoji(correct: boolean, neighbour: boolean): string {
 
 export function geoImageUrl(path: string, size: 'full' | 'small' = 'full'): string {
   const name = size === 'small' ? path.replace(/\.jpg$/, '_s.jpg') : path
+  // After the move to Cloudflare R2 (lib/photoUrl.ts) the same path under geo-panoramas/ there.
+  if (photosOnR2) return r2PhotoUrl(`geo-panoramas/${name}`)
   return `${SUPABASE_URL}/storage/v1/object/public/geo-panoramas/${name}`
 }
 

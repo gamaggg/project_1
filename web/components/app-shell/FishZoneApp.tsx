@@ -305,7 +305,7 @@ export function FishZoneApp() {
   if (away === undefined && (awayRows.isError || (awayRows.data && territoriesReady && myProfile))) {
     setAway(awayRows.data && myProfile ? pickAwayEvents(awayRows.data.rows, territories, myProfile.territoryColor ?? DEFAULT_TERRITORY_COLOR) : null)
   }
-  useRealtimeSync()
+  useRealtimeSync(city)
   // One «app_open» per launch, signed in or not (the funnel starts before
   // an account exists).
   useEffect(() => {

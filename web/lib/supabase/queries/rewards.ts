@@ -24,7 +24,8 @@ export function useFirstSteps() {
     queryFn: async (): Promise<FirstSteps | null> => {
       const supabase = createClient()
       const { data, error } = await supabase.rpc('get_first_steps')
-      if (error) return null
+      // Throw, not null: a failed read keeps the checklist that was on screen (react-query tries again).
+      if (error) throw error
       return data as unknown as FirstSteps
     },
     staleTime: 30_000,
