@@ -22,7 +22,9 @@ export function ProfileTrophies({ catches, onOpenPhoto }: { catches: Catch[]; on
         <span className="trophy-top">{tn('profile.trophiesTop', { count: catches.length })}</span>
       </div>
       <button className="trophy-hero tap-scale" onClick={() => onOpenPhoto(first.id, ids)}>
-        <img src={thumbUrl(first.photoUrl, 720)} alt={first.speciesName} loading="lazy" decoding="async" />
+        {/* 480, not more: on R2 anything past the 480 copy is the original (1200×1600, ~7.5 MB once decoded), and
+            this card on every profile (own tab and each player opened) kept one (13.11.2026). */}
+        <img src={thumbUrl(first.photoUrl, 480)} alt={first.speciesName} loading="lazy" decoding="async" />
         <TrophyMedal place={1} />
         <span className="trophy-hero-text">
           <b>{first.speciesName}</b>
