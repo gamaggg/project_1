@@ -102,6 +102,23 @@ export function useCatchesByUser(userId: string | null) {
   })
 }
 
+// Several catches by id, in the order given — for CatchPhotoScreen opened from a list of different players' catches
+// (the clan's «Зал славы»).
+export function useCatchesByIds(ids: number[] | null) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['catches', 'by-ids', ids?.join(',') ?? ''],
+    queryFn: async (): Promise<Catch[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.from('catches').select(CATCH_SELECT).in('id', ids!)
+      if (error) throw error
+      const byId = new Map((data as CatchRow[]).map((c) => [c.id, rowToCatch(c, user?.id)]))
+      return ids!.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []))
+    },
+    enabled: !!ids?.length,
+  })
+}
+
 // Fetches one catch directly by id — for CatchPhotoScreen, which needs to be
 // self-contained (same reasoning as MyCatchesScreen/AchievementDetailScreen)
 // and openable from a ?catch=<id> deep link a viewer's own list caches may

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
-import { useCatchById, useCatchesByTerritory, useCatchesByUser, useCatchLikes, useToggleCatchLike, useIsSuperAdmin, useCatchComments, useCatchConditions, useProfile, useIsFollowing, useSetFollowing } from '@/lib/supabase/queries'
+import { useCatchById, useCatchesByIds, useCatchesByTerritory, useCatchesByUser, useCatchLikes, useToggleCatchLike, useIsSuperAdmin, useCatchComments, useCatchConditions, useProfile, useIsFollowing, useSetFollowing } from '@/lib/supabase/queries'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import { CatchConditions } from '@/components/app-shell/CatchConditions'
@@ -155,7 +155,8 @@ type CatchPageHandlers = {
 // shared link may open straight into this screen with nothing else loaded.
 // Pages through the list it was opened from: a player's catches (feedUserId,
 // from a profile or «Мои уловы»), only some of them in a set order (feedIds with
-// feedUserId: the profile's «Трофеи»), or else the catch's sector. Only the photos
+// feedUserId: the profile's «Трофеи»), a set list of different players' catches (feedIds alone: the clan's «Зал
+// славы»), or else the catch's sector. Only the photos
 // slide (they follow the finger, the neighbours beside them); the facts and
 // reactions stay on the screen and swap what changed once the page lands.
 export function CatchPhotoScreen({
@@ -186,10 +187,12 @@ export function CatchPhotoScreen({
   // The sector of the catch it was opened on, kept: every catch paged to is in it, and the list must not drop
   // out while the next catch's own fetch is on the way.
   const [sectorId, setSectorId] = useState<string | null>(null)
-  if (!feedUserId && !sectorId && byId?.territoryId) setSectorId(byId.territoryId)
+  const byList = !feedUserId && !!feedIds?.length
+  if (!feedUserId && !byList && !sectorId && byId?.territoryId) setSectorId(byId.territoryId)
   const { data: byUser = [] } = useCatchesByUser(feedUserId)
-  const { data: bySector = [] } = useCatchesByTerritory(feedUserId ? null : sectorId)
-  const feed = feedUserId ? (feedIds ? feedIds.flatMap((id) => byUser.filter((x) => x.id === id)) : byUser) : bySector
+  const { data: byIds = [] } = useCatchesByIds(byList ? feedIds : null)
+  const { data: bySector = [] } = useCatchesByTerritory(feedUserId || byList ? null : sectorId)
+  const feed = feedUserId ? (feedIds ? feedIds.flatMap((id) => byUser.filter((x) => x.id === id)) : byUser) : byList ? byIds : bySector
   const index = feed.findIndex((x) => x.id === activeId)
   // The list already has the catch while its own fetch is on the way, so a page turn never shows a blank screen.
   const c = byId?.id === activeId ? byId : index >= 0 ? feed[index] : undefined
@@ -402,7 +405,7 @@ export function CatchPhotoScreen({
             {/* The player's and the sector's catches come newest first, but are numbered as they were caught: the latest
                 one is the highest number («91 / 91»), the very first «1 / 91». «Трофеи» (feedIds) are a ranking by size,
                 so there the biggest is «1». */}
-            {feedIds && feedUserId ? index + 1 : feed.length - index} / {feed.length}
+            {feedIds ? index + 1 : feed.length - index} / {feed.length}
           </div>
         )}
         {/* No circles: just a see-through chevron at each edge (the touch area stays a comfortable size). */}

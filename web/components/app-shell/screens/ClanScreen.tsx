@@ -203,6 +203,7 @@ export function ClanScreen({
   onOpenRace,
   onOpenChat,
   onOpenTerritory,
+  onOpenCatch,
 }: {
   clanId: number
   // From an invite link (?clan=<id>&invite=<code>) — counts as an invitation.
@@ -214,6 +215,8 @@ export function ClanScreen({
   onOpenRace: () => void
   onOpenChat: (clanId: number) => void
   onOpenTerritory: (id: string) => void
+  // A record of the «Зал славы»: its photo, paging through the hall's records only.
+  onOpenCatch?: (id: number, ids: number[]) => void
 }) {
   const { user } = useAuth()
   const { data: clan, isLoading } = useClan(clanId)
@@ -737,7 +740,7 @@ export function ClanScreen({
           </div>
         )}
 
-        {c2 && ((CLAN2_TABS as readonly string[]).includes(tab) || (tab === 'admin' && c2Admin)) && <Clan2Panel key={tab} section={tab as Clan2Section} events={clanEvents} />}
+        {c2 && ((CLAN2_TABS as readonly string[]).includes(tab) || (tab === 'admin' && c2Admin)) && <Clan2Panel key={tab} section={tab as Clan2Section} events={clanEvents} onOpenCatch={onOpenCatch} />}
         {c2 && (liveUi.tour || !demo.toursSeen.player) && (
           <C2Tour
             live

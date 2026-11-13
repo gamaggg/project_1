@@ -17,7 +17,7 @@ import { requestMap, setLiveUi } from '@/lib/clan2/live/ui'
 export type Clan2Section = 'treasury' | 'shop' | 'exit' | 'week' | 'hq' | 'glory' | 'admin'
 export const CLAN2_SECTIONS: Clan2Section[] = ['treasury', 'shop', 'exit', 'week', 'hq', 'glory']
 
-export function Clan2Panel({ section, events }: { section: Clan2Section; events?: ClanEventLine[] }) {
+export function Clan2Panel({ section, events, onOpenCatch }: { section: Clan2Section; events?: ClanEventLine[]; onOpenCatch?: (id: number, ids: number[]) => void }) {
   useFocusScroll()
   return (
     <C2PortalProvider value="body">
@@ -37,7 +37,7 @@ export function Clan2Panel({ section, events }: { section: Clan2Section; events?
           )}
           {section === 'week' && <WeekTab />}
           {section === 'hq' && <HqTab onGoMap={(focus) => requestMap(focus ?? {})} />}
-          {section === 'glory' && <GloryTab />}
+          {section === 'glory' && <GloryTab onOpenCatch={onOpenCatch} />}
           {section === 'admin' && <AdminTab bare />}
         </div>
         <C2Toast />

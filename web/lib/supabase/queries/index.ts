@@ -5,7 +5,7 @@
 export { useActivity, useAdminPostAnnouncement, useCityFeed, useClaimReferral, useMarkNotificationsRead, useSharePreview, useUnreadNotificationCount } from './activity'
 export type { ClaimReferralResult } from './activity'
 export { useAdminActions, useAdminDeleteUser, useAdminPermissions, useAdminSetPublicId, useCurrentAdmins, useFindUserByPublicId, useSetAdminPermissions, useSetBlocked, useAccountFreeze, useUnfreeze } from './admin'
-export { latestOwnCatchId, useAdminDeleteCatch, useAdminEditCatch, useAdminMoveCatch, useCatchById, useCatchConditions, useCatchesByTerritory, useCatchesByUser, useConfirmCatch, useEditMyCatch, useLastCatchChoices, useMyCatches, useSpecies } from './catches'
+export { latestOwnCatchId, useAdminDeleteCatch, useAdminEditCatch, useAdminMoveCatch, useCatchById, useCatchConditions, useCatchesByIds, useCatchesByTerritory, useCatchesByUser, useConfirmCatch, useEditMyCatch, useLastCatchChoices, useMyCatches, useSpecies } from './catches'
 export type { CatchConditions, LastCatchChoices } from './catches'
 export { logChallengeEvent, useBuyExtraChallenge, useChallengeWeekState, useEarnedAchievements, useHasClaimedFromOthers, useMyChallenges, useOtherCityChallenges, useSwapChallenge, useSyncMyAchievements } from './challenges'
 export type { WeeklyChallenge } from './challenges'

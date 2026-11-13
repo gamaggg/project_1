@@ -916,7 +916,7 @@ export type RealClan = {
   lastCatchMin: Record<string, number | null>
   // How many catches each member made this week (the members who worked for the weekly task).
   byMember: Record<string, number>
-  hall: { species: string; member: string; userId: string; cm: number | null; kg: number | null; at: number; photo: string | null; avatarUrl?: string | null }[]
+  hall: { species: string; member: string; userId: string; cm: number | null; kg: number | null; at: number; photo: string | null; avatarUrl?: string | null; catchId?: number }[]
 }
 
 export function applyReal(r: RealClan, hueOf: (id: string) => number): Result {
@@ -927,7 +927,7 @@ export function applyReal(r: RealClan, hueOf: (id: string) => number): Result {
     if (server) {
       for (const m of d.members) if (m.id in r.lastCatchMin) m.lastCatchMin = r.lastCatchMin[m.id]
       d.hall = r.hall
-        .map((h) => ({ species: h.species, member: h.member, cm: h.cm, kg: h.kg, at: h.at, hue: hueOf(h.userId), photo: h.photo, avatarUrl: h.avatarUrl ?? null }))
+        .map((h) => ({ species: h.species, member: h.member, cm: h.cm, kg: h.kg, at: h.at, hue: hueOf(h.userId), photo: h.photo, avatarUrl: h.avatarUrl ?? null, catchId: h.catchId }))
         .sort((a, b) => (b.cm ?? -1) - (a.cm ?? -1))
       return
     }

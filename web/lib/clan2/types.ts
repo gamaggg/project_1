@@ -113,7 +113,7 @@ export type ProjectId = 'dock' | 'beacon' | 'fort' | 'board' | 'storage' | 'mark
 export type ProjectLevel = 0 | 1 | 2 | 3
 
 // photo: the catch's own photo (live mode, from catches.photo_url), shown in the hall of fame instead of a drawing.
-export type HallRecord = { species: string; member: string; cm: number | null; kg: number | null; at: number; hue: number; photo?: string | null; avatarUrl?: string | null }
+export type HallRecord = { species: string; member: string; cm: number | null; kg: number | null; at: number; hue: number; photo?: string | null; avatarUrl?: string | null; catchId?: number }
 
 export type RecruitEntry = { name: string; state: 'invited' | 'joined' | 'caught' | 'paid'; daysLeft: number }
 

@@ -909,11 +909,12 @@ export function FishZoneApp() {
   // commentId comes from a comment notification or a ?comment= link — the
   // sheet opens on top of the catch with that comment flashed.
   // feedUserId: opened from a player's catches, so the swipe goes through theirs, not the sector's.
-  // feedIds: only these of the player's catches, in this order («Трофеи» on a profile).
+  // feedIds: only these of the player's catches, in this order («Трофеи» on a profile); without feedUserId — these
+  // catches of different players, in this order (the clan's «Зал славы»).
   function openCatchPhoto(id: number, commentId?: number | null, feedUserId?: string | null, feedIds?: number[] | null) {
     setViewingCatchId(id)
     setViewingCatchFeedUserId(feedUserId ?? null)
-    setViewingCatchFeedIds(feedUserId && feedIds?.length ? feedIds : null)
+    setViewingCatchFeedIds(feedIds?.length ? feedIds : null)
     setCatchOpenSeq((n) => n + 1)
     push({ screen: 'screen-catch-photo', catchId: id })
     if (commentId) setViewingCommentsFor({ catchId: id, highlightId: commentId })
@@ -1734,7 +1735,7 @@ export function FishZoneApp() {
             }
           />
         </Screen>
-        <Screen id="screen-territory" current={currentScreen} onBack={pop}>
+        <Screen id="screen-territory" current={currentScreen} onBack={pop} releaseAfterMs={400}>
           {viewingTerritory && (
             <TerritoryScreen
               territory={viewingTerritory}
@@ -1860,6 +1861,7 @@ export function FishZoneApp() {
               onOpenRace={openClanRace}
               onOpenChat={openClanChat}
               onOpenTerritory={openTerritory}
+              onOpenCatch={(id, ids) => openCatchPhoto(id, null, null, ids)}
             />
           )}
         </Screen>
@@ -2485,7 +2487,10 @@ export function FishZoneApp() {
 // was, and work started there (a slot spin, a request) settle first.
 // `releaseAfterMs` shortens that for a screen no quick return can reach (the
 // catch photo: every opening builds it anew), so its pictures go as soon as
-// the fade-out ends.
+// the fade-out ends. The sector screen too (13.11.2026): «Назад» from it brings
+// back the catch photo's original at the same moment, and for 10 s the sector's
+// Leaflet map (@2x tiles, its canvases) and catch list stayed beside it — the
+// owner's page was discarded right on that «Назад» (activity → photo → sector).
 const UNMOUNT_AFTER_MS = 10_000
 const KeptScreens = createContext<ReadonlySet<ScreenId>>(new Set())
 

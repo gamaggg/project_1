@@ -8,7 +8,7 @@ import { CITIES } from '@/lib/data/city'
 // fame (the biggest fish of every species among the members' catches, ever), and who fished lately.
 // Two reads of `catches` for the clan's members and one of the species table; nothing is written.
 
-type Row = { user_id: string; species: string; length_cm: number | null; weight_kg: number | null; caught_at: string; territory_id: string; photo_url?: string | null }
+type Row = { id?: number; user_id: string; species: string; length_cm: number | null; weight_kg: number | null; caught_at: string; territory_id: string; photo_url?: string | null }
 
 export async function fetchRealClan(clan: ClanDetail, now: number): Promise<RealClan | null> {
   const ids = clan.members.map((m) => m.userId)
@@ -18,7 +18,7 @@ export async function fetchRealClan(clan: ClanDetail, now: number): Promise<Real
   const [recent, top, species] = await Promise.all([
     supabase.from('catches').select('user_id,species,length_cm,weight_kg,caught_at,territory_id').in('user_id', ids).gte('caught_at', since).limit(2000),
     // The hall of fame counts only the clan's own city: catches on sectors of that city (sector ids start with its letter).
-    supabase.from('catches').select('user_id,species,length_cm,weight_kg,caught_at,territory_id,photo_url').in('user_id', ids).like('territory_id', `${CITIES[clan.city].idPrefix}%`).order('length_cm', { ascending: false, nullsFirst: false }).order('weight_kg', { ascending: false, nullsFirst: false }).order('caught_at', { ascending: true }).limit(3000),
+    supabase.from('catches').select('id,user_id,species,length_cm,weight_kg,caught_at,territory_id,photo_url').in('user_id', ids).like('territory_id', `${CITIES[clan.city].idPrefix}%`).order('length_cm', { ascending: false, nullsFirst: false }).order('weight_kg', { ascending: false, nullsFirst: false }).order('caught_at', { ascending: true }).limit(3000),
     supabase.from('species').select('key,coin_value'),
   ])
   if (recent.error || top.error) return null
@@ -61,7 +61,7 @@ export async function fetchRealClan(clan: ClanDetail, now: number): Promise<Real
   for (const c of (top.data ?? []) as Row[]) {
     if (best.has(c.species)) continue
     const kg = c.weight_kg != null ? Number(c.weight_kg) : null
-    best.set(c.species, { species: c.species, member: name.get(c.user_id) ?? '', userId: c.user_id, cm: c.length_cm, kg, at: new Date(c.caught_at).getTime(), photo: c.photo_url ?? null, avatarUrl: avatar.get(c.user_id) ?? null })
+    best.set(c.species, { species: c.species, member: name.get(c.user_id) ?? '', userId: c.user_id, cm: c.length_cm, kg, at: new Date(c.caught_at).getTime(), photo: c.photo_url ?? null, avatarUrl: avatar.get(c.user_id) ?? null, catchId: c.id })
   }
   return {
     catches: week.length,

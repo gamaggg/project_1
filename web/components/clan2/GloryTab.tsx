@@ -12,10 +12,11 @@ import { leagueFor } from '@/lib/data/clanLevels'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 
-// «Слава»: the clan's records — the biggest fish of each species among its
+// «Зал славы»: the clan's records — the biggest fish of each species among its
 // members — and the clan card for a Telegram story built from them.
 
-export function GloryTab() {
+// onOpenCatch: a tap on a record opens its photo, and the swipe there goes through the hall's records only.
+export function GloryTab({ onOpenCatch }: { onOpenCatch?: (id: number, ids: number[]) => void } = {}) {
   const s = useDemoState()
   const { say } = useC2()
   const league = leagueFor(s.clan.trophies)
@@ -23,6 +24,10 @@ export function GloryTab() {
   const records = [...s.hall].sort((a, b) => (b.cm ?? -1) - (a.cm ?? -1) || (b.kg ?? -1) - (a.kg ?? -1))
   const date = (at: number) => new Date(at).toLocaleDateString(currentLocale(), { day: 'numeric', month: 'short' })
   const top = records.slice(0, 3)
+  const hallIds = records.flatMap((r) => (r.catchId ? [r.catchId] : []))
+  const open = (id: number | undefined) => {
+    if (id && onOpenCatch) onOpenCatch(id, hallIds)
+  }
   const hq = s.hq.sectorId
   // The card wears the clan's own background (the one chosen in the editor) and the frame bought in the shop.
   const bg = resolveClanBackground(s.clan.background)
@@ -39,7 +44,16 @@ export function GloryTab() {
       <C2Card title={tn('clan2.glory.title')} hint={tn('clan2.glory.hint')} tour="glory-hall">
         <ul className="c2-hall">
           {records.map((r, i) => (
-            <li key={r.species}>
+            <li
+              key={r.species}
+              className={onOpenCatch && r.catchId ? 'c2-hall-tap tap-scale' : undefined}
+              role={onOpenCatch && r.catchId ? 'button' : undefined}
+              tabIndex={onOpenCatch && r.catchId ? 0 : undefined}
+              onClick={() => open(r.catchId)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') open(r.catchId)
+              }}
+            >
               <div className={`c2-hall-photo${r.photo ? ' has' : ''}`} style={{ background: `linear-gradient(150deg, hsl(${r.hue} 55% 62%), hsl(${(r.hue + 40) % 360} 55% 38%))` }}>
                 {r.photo ? (
                   <img src={thumbUrl(r.photo, 240)} alt={speciesName(r.species)} loading="lazy" decoding="async" />
