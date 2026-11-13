@@ -9,7 +9,7 @@
 //
 // A file is { builtAt, sectors: [{ id, kind, lat, lng, corners }] }, sectors in id order. What goes in:
 //  - every sector that is not deleted in the database and has a shape: from the files already
-//    there (or, the first time, from the old public/data/sectors.json) when it is in them,
+//    there when it is in them,
 //    else from its database row (shape and centre never change; the water type does, so the
 //    type is always the database's when the sector has a row);
 //  - nothing for a deleted sector.
@@ -59,10 +59,8 @@ const readJson = (name) => {
   return existsSync(url) ? JSON.parse(readFileSync(url, 'utf8')) : null
 }
 
-// What is already there: the newest per-city files, or the old single file the first time.
+// What is already there: the per-city files.
 const existing = new Map()
-const legacy = readJson('sectors.json')
-if (legacy) for (const s of legacy) existing.set(s.id, s)
 const fileNames = readdirSync(dataDir).filter((n) => /^sectors-[A-Z]\.[0-9TZ]+\.json$/.test(n)).sort()
 for (const name of fileNames) for (const s of readJson(name).sectors) existing.set(s.id, s) // older versions first, newest last
 

@@ -31,8 +31,9 @@ const noKindChanged = process.argv.includes('--no-kind-changed')
 const breakClauses = (arg('break') ?? '').split(',').filter(Boolean)
 
 const readJson = (name) => JSON.parse(readFileSync(new URL(`public/data/${name}`, root), 'utf8'))
-const legacy = readJson('sectors.json')
 const files = Object.fromEntries(Object.values(CITIES).map((c) => [c.id, readJson(`sectors-${c.idPrefix}.${SECTOR_GEOMETRY_VERSION}.json`)]))
+// The old load had one file for every city (public/data/sectors.json, removed 13.11.2026): the city files together.
+const legacy = Object.values(files).flatMap((f) => f.sectors)
 
 // Old load: every row, then what the old query would have returned for each scenario.
 const allRows = []

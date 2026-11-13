@@ -7,7 +7,7 @@ import { COAST_STILL_AT, createCoastScene, type CoastData, type TickerLine } fro
 // between the headline (headRef) and the buttons (footRef), so it adapts to
 // any screen; stops when the app is in the background; with reduced motion
 // it's one still frame. The map data (~110 KB) is fetched only here.
-// Shared with the two intro screens (IntroMap), which show the same coast.
+// Shared with the intro journey (IntroJourney), which shows the same coast.
 let dataPromise: Promise<CoastData> | null = null
 export function loadCoast() {
   dataPromise ??= fetch('/welcome/batumi-coast.json').then((r) => {

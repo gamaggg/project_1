@@ -1,6 +1,6 @@
 // The map's sectors the way the app put them together before 27.10.2026: every territories_with_stats
 // row of the city (and the player's own elsewhere) plus the one static file for all cities
-// (public/data/sectors.json). Kept as the reference the new load (lib/data/territoryMerge.ts: a file
+// (public/data/sectors.json, removed 13.11.2026). Kept as the reference the new load (lib/data/territoryMerge.ts: a file
 // per city plus only the rows that matter) is compared against, in tests/territory-merge.test.mjs and
 // scripts/verify-sector-load.mjs. A verbatim copy of the old useTerritories queryFn after its fetch.
 import { CITIES, cityForSectorId } from '@/lib/data/city.ts'
