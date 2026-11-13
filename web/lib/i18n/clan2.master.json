@@ -1505,6 +1505,11 @@
    "ru": "Новичок {name} сделал улов: +100 в общак",
    "en": "Recruit {name} made a catch: +100 to the treasury",
    "ka": "ახალბედამ {name} დაიჭირა: +100 ფონდში"
+  },
+  "hqSiegeAnon": {
+   "ru": "Штаб в осаде! Поймайте рыбу на секторе штаба, чтобы снять осаду",
+   "en": "The HQ is under siege! Catch a fish on the HQ sector to break it",
+   "ka": "შტაბი ალყაშია! ალყის მოსახსნელად დაიჭირეთ თევზი შტაბის სექტორზე"
   }
  },
  "week": {
@@ -1847,9 +1852,9 @@
    "ka": "შტაბი სექტორზე {id} დაეცა"
   },
   "ruinsBy": {
-   "ru": "{by} унесли {n} монет из общака.",
-   "en": "{by} carried off {n} coins from the treasury.",
-   "ka": "{by} წაიღო {n} მონეტა საერთო ფონდიდან."
+   "ru": "Клан «{by}» унёс {n} монет из общака.",
+   "en": "The clan «{by}» carried off {n} coins from the treasury.",
+   "ka": "კლანმა «{by}» საერთო ფონდიდან {n} მონეტა წაიღო."
   },
   "ruinsWait": {
    "ru": "Новый штаб можно поставить через {t}.",
@@ -2000,6 +2005,16 @@
    "ru": "Первое восстановление штаба после падения бесплатное, один раз. Следующие — {n} монет из общака.",
    "en": "The first rebuild of the HQ after a fall is free, once. The next ones cost {n} coins from the treasury.",
    "ka": "დაცემის შემდეგ შტაბის პირველი აღდგენა უფასოა, ერთხელ. შემდეგი — {n} მონეტა ფონდიდან."
+  },
+  "ruinsByClan": {
+   "ru": "Нападавшие унесли {n} монет из общака.",
+   "en": "The attackers carried off {n} coins from the treasury.",
+   "ka": "თავდამსხმელებმა საერთო ფონდიდან {n} მონეტა წაიღეს."
+  },
+  "ruinsBySolo": {
+   "ru": "Игрок без клана унёс {n} монет из общака.",
+   "en": "A player with no clan carried off {n} coins from the treasury.",
+   "ka": "უკლანო მოთამაშემ საერთო ფონდიდან {n} მონეტა წაიღო."
   }
  },
  "project": {

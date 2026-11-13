@@ -11,7 +11,8 @@ export function alertText(a: ClanAlert): string {
       if (head === 'hq') return tn('clan2.alert.hqAttack', { n: tail })
       return tail ? tn('clan2.alert.sectorAttack', { id: head, n: tail }) : tn('clan2.alert.sectorAttackPlain', { id: head })
     case 'hq_siege':
-      return tn('clan2.alert.hqSiege', { clan: a.text })
+      // The server's siege notice names no attacker: then the sentence without one (it read «Штаб в осаде!  держит его»).
+      return a.text ? tn('clan2.alert.hqSiege', { clan: a.text }) : tn('clan2.alert.hqSiegeAnon')
     case 'hq_saved':
       return tn('clan2.alert.hqSaved', { name: a.text })
     case 'hq_fallen':

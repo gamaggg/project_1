@@ -8,6 +8,7 @@ import { canManage, hqFreeRebuild, hqPlaceCostOf, siegeMinutesOf, useDemoState }
 import { DAY, DEFENSE_MAX, HQ_LOOT_MAX, HQ_LOOT_SHARE, HQ_MOVE_COOLDOWN_DAYS, HQ_RUINS_HOURS, SIEGE_BREAK_REWARD, fmt } from '@/lib/clan2/rules'
 import { hqBannerSvg } from '@/lib/clan2/live/hqMarker'
 import { tn } from '@/lib/i18n/runtime'
+import { useClan } from '@/lib/supabase/queries'
 
 // «Штаб»: the clan's headquarters (where, how strong, moving it), the base of buildings round it, and — last — how the
 // headquarters is defended, as four steps that open one by one.
@@ -22,6 +23,11 @@ export function HqTab({ onGoMap }: { onGoMap?: (focus?: MapFocus) => void }) {
   const sector = s.sectors.find((x) => x.id === hq.sectorId)
   const coolLeft = hq.sectorId ? Math.max(0, (hq.lastMoveAt ?? hq.placedAt ?? 0) + HQ_MOVE_COOLDOWN_DAYS * DAY - now) : 0
   const ruinsOn = !!hq.ruins && now < hq.ruins.until
+  // Who took the HQ: on the server it is the attacking clan's id (empty — a player with no clan), shown by its name.
+  const byRaw = hq.ruins?.by ?? ''
+  const byClanId = /^\d+$/.test(byRaw) ? Number(byRaw) : null
+  const { data: byClan } = useClan(ruinsOn ? byClanId : null)
+  const byName = byClanId ? (byClan?.name ?? '') : byRaw
 
   return (
     <div className="c2-stack">
@@ -71,11 +77,11 @@ export function HqTab({ onGoMap }: { onGoMap?: (focus?: MapFocus) => void }) {
             </p>
           </>
         ) : (
-          <>
+          <div className="c2-stack c2-hq-none">
             {ruinsOn ? (
               <div className="c2-ruins-card">
                 <strong>{tn('clan2.hq.ruinsTitle', { id: hq.ruins!.sectorId })}</strong>
-                <span>{tn('clan2.hq.ruinsBy', { by: hq.ruins!.by, n: hq.ruins!.loot })}</span>
+                <span>{byName ? tn('clan2.hq.ruinsBy', { by: byName, n: hq.ruins!.loot }) : byClanId ? tn('clan2.hq.ruinsByClan', { n: hq.ruins!.loot }) : tn('clan2.hq.ruinsBySolo', { n: hq.ruins!.loot })}</span>
                 <span>{tn('clan2.hq.ruinsWait', { t: fmtLeft(hq.ruins!.until - now) })}</span>
                 <small>{tn('clan2.hq.ruinsBuildings')}</small>
               </div>
@@ -96,7 +102,7 @@ export function HqTab({ onGoMap }: { onGoMap?: (focus?: MapFocus) => void }) {
             ) : (
               <p className="c2-hint faint">{tn('clan2.hq.placeLeaders')}</p>
             )}
-          </>
+          </div>
         )}
       </C2Card>
 

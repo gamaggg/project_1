@@ -395,6 +395,9 @@
 .c2-perk-name{font-weight:800; font-size:13.5px;}
 .c2-perk-eff{font-size:12.5px; color:var(--ink-soft,#5B6475); text-align:right;}
 .c2-ruins-card{display:flex; flex-direction:column; gap:3px; padding:12px; border-radius:14px; background:#FDECEA; color:#8A2A22; font-size:13.5px;}
+/* The HQ card with no HQ: the ruins (or «no HQ»), the button and its hint, with room between them (they ran together). */
+.c2-hq-none{gap:10px;}
+.c2-hq-none > p{margin:0;}
 .c2-ruins-card strong{color:#B3261E; font-size:15px;}
 .c2-fall{margin:6px 0 0; padding-left:18px; display:grid; gap:4px; font-size:13.5px;}
 @media (prefers-reduced-motion: reduce){.c2-glow,.c2-beam,.c2-flag,.c2-smoke,.c2-zzz,.c2-bld.built,.c2-dust,.c2-spark{animation:none;}}

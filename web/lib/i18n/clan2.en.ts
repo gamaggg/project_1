@@ -323,6 +323,7 @@ export const clan2En = {
     bought: "Bought: {name}",
     joined: "You joined the clan",
     recruitPaid: "Recruit {name} made a catch: +100 to the treasury",
+    hqSiegeAnon: "The HQ is under siege! Catch a fish on the HQ sector to break it",
   },
   week: {
     questTitle: "Weekly quest",
@@ -392,7 +393,7 @@ export const clan2En = {
     fall3: "The buildings fall asleep: without an HQ their boosts do not work.",
     fall4: "A new HQ can be set after 24 hours on any captured clan sector.",
     ruinsTitle: "The HQ on sector {id} has fallen",
-    ruinsBy: "{by} carried off {n} coins from the treasury.",
+    ruinsBy: "The clan «{by}» carried off {n} coins from the treasury.",
     ruinsWait: "A new HQ can be set in {t}.",
     ruinsBuildings: "The buildings sleep until a new HQ.",
     moveCooldown: "The HQ can be moved again in {t}",
@@ -423,6 +424,8 @@ export const clan2En = {
     placeFree: "Rebuild the HQ for free",
     free: "free",
     freeRebuildHint: "The first rebuild of the HQ after a fall is free, once. The next ones cost {n} coins from the treasury.",
+    ruinsByClan: "The attackers carried off {n} coins from the treasury.",
+    ruinsBySolo: "A player with no clan carried off {n} coins from the treasury.",
   },
   project: {
     dock: {

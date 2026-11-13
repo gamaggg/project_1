@@ -590,8 +590,12 @@ export const LeafletMap = forwardRef<
             const hexPx = t && map ? map.latLngToContainerPoint(t.corners[0]).distanceTo(map.latLngToContainerPoint(t.corners[3])) * 0.866 : 0
             const bannerH = fitBannerH(hexPx)
             const box = m.box(tier, bannerH)
+            // Ruins go to the lower part of the hexagon, not its middle: the middle shows who holds the sector now
+            // (avatar, crest, number), and the ruins covered all of it (owner, 13.11). Far out there is nothing to
+            // cover, so they stay in the middle.
+            const dropY = m.kind === 'ruins' && tier > 0 ? Math.round(hexPx * 0.3) : 0
             const marker = L.marker([m.lat, m.lng], {
-              icon: L.divIcon({ className: 'c2-hq-wrap', html: m.html(tier, bannerH), iconSize: box, iconAnchor: [box[0] / 2, box[1] / 2] }),
+              icon: L.divIcon({ className: 'c2-hq-wrap', html: m.html(tier, bannerH), iconSize: box, iconAnchor: [box[0] / 2, box[1] / 2 - dropY] }),
               zIndexOffset: 1200,
               keyboard: false,
             }).addTo(markersLayer)
