@@ -783,7 +783,7 @@
 .c2-defense{display:flex; flex-direction:column; gap:10px; animation:c2-card-in .3s var(--ease-out);}
 .c2-defense p{margin:0; font-size:13.5px; line-height:1.5; color:var(--ink);}
 .c2-defense-pic{display:grid; grid-template-columns:repeat(3,1fr); gap:6px;}
-.c2-defense-stage{display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px 4px; border-radius:14px; background:#F7F5F1;}
+.c2-defense-stage{display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px 4px; border-radius:14px; background:#F7F5F1; text-align:center;}
 .c2-defense-stage small{font-size:11px; font-weight:800; color:var(--ink-soft);}
 .c2-defense-pic.down .c2-defense-stage:last-child{background:#FFE3E0;}
 .c2-defense-pic.down .c2-defense-stage:last-child small{color:#B3261E;}
