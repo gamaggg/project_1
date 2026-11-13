@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { DefenseShields } from '@/components/app-shell/SectorDefense'
 import { C2Card, fmtLeft, useDemoNow } from '@/components/clan2/C2Common'
 import { BaseScene } from '@/components/clan2/BaseScene'
-import { canManage, siegeMinutesOf, useDemoState } from '@/lib/clan2/demoStore'
-import { DAY, DEFENSE_MAX, HQ_LOOT_MAX, HQ_LOOT_SHARE, HQ_MOVE_COOLDOWN_DAYS, HQ_RUINS_HOURS, SIEGE_BREAK_REWARD } from '@/lib/clan2/rules'
+import { canManage, hqFreeRebuild, hqPlaceCostOf, siegeMinutesOf, useDemoState } from '@/lib/clan2/demoStore'
+import { DAY, DEFENSE_MAX, HQ_LOOT_MAX, HQ_LOOT_SHARE, HQ_MOVE_COOLDOWN_DAYS, HQ_RUINS_HOURS, SIEGE_BREAK_REWARD, fmt } from '@/lib/clan2/rules'
 import { hqBannerSvg } from '@/lib/clan2/live/hqMarker'
 import { tn } from '@/lib/i18n/runtime'
 
@@ -82,15 +82,16 @@ export function HqTab({ onGoMap }: { onGoMap?: (focus?: MapFocus) => void }) {
             ) : (
               <>
                 <p className="c2-muted">{tn('clan2.hq.none')}</p>
-                <p className="c2-hint">{tn('clan2.hq.noneHint', { n: s.settings.hqPlaceCost })}</p>
+                <p className="c2-hint">{hqFreeRebuild(s) ? tn('clan2.hq.freeRebuildHint', { n: fmt(s.settings.hqPlaceCost) }) : tn('clan2.hq.noneHint', { n: s.settings.hqPlaceCost })}</p>
               </>
             )}
             {manage ? (
               <>
-                <button className="btn-primary" disabled={ruinsOn || s.treasury.balance < s.settings.hqPlaceCost} onClick={() => onGoMap?.({ place: true })}>
-                  {tn('clan2.hq.place')}
+                <button className="btn-primary" disabled={ruinsOn || s.treasury.balance < hqPlaceCostOf(s)} onClick={() => onGoMap?.({ place: true })}>
+                  {hqFreeRebuild(s) ? tn('clan2.hq.placeFree') : tn('clan2.hq.place')}
                 </button>
-                {!ruinsOn && s.treasury.balance < s.settings.hqPlaceCost && <p className="c2-short">{tn('clan2.base.missing', { n: s.settings.hqPlaceCost - s.treasury.balance })}</p>}
+                {ruinsOn && hqFreeRebuild(s) && <p className="c2-hint">{tn('clan2.hq.freeRebuildHint', { n: fmt(s.settings.hqPlaceCost) })}</p>}
+                {!ruinsOn && s.treasury.balance < hqPlaceCostOf(s) && <p className="c2-short">{tn('clan2.base.missing', { n: hqPlaceCostOf(s) - s.treasury.balance })}</p>}
               </>
             ) : (
               <p className="c2-hint faint">{tn('clan2.hq.placeLeaders')}</p>

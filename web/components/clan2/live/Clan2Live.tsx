@@ -6,7 +6,7 @@ import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { C2Coins, C2PortalProvider, C2Sheet, C2Toast, C2ToastProvider, fmtLeft, useC2, useDemoNow } from '@/components/clan2/C2Common'
 import { DemoPanel } from '@/components/clan2/DemoPanel'
 import { HqMomentOverlay } from '@/components/clan2/live/HqMomentOverlay'
-import { applyReal, bindLive, defendHq, placeHq, refreshFromServer, resetLive, serverOn, tick, useDemoState } from '@/lib/clan2/demoStore'
+import { applyReal, bindLive, defendHq, hqPlaceCostOf, placeHq, refreshFromServer, resetLive, serverOn, tick, useDemoState } from '@/lib/clan2/demoStore'
 import { fetchRealClan } from '@/lib/clan2/live/real'
 import { clan2ToolsOn, setClan2Enabled } from '@/lib/clan2/live/flag'
 import { DefenseShields } from '@/components/app-shell/SectorDefense'
@@ -152,7 +152,7 @@ function LiveLayer({ input, visible, onOpenClan }: { input: LiveInput; visible: 
   const clock = new Date(now).toLocaleString('ru-RU', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
   const place = ui.confirmPlace ? s.sectors.find((x) => x.id === ui.confirmPlace) : null
   const moving = !!s.hq.sectorId
-  const cost = moving ? s.settings.hqMoveCost : s.settings.hqPlaceCost
+  const cost = hqPlaceCostOf(s)
   const hqSector = s.sectors.find((x) => x.id === s.hq.sectorId)
   // On the server a siege is broken by a catch on the HQ sector: the button takes the player there.
   const defend = () => {
@@ -246,7 +246,7 @@ function LiveLayer({ input, visible, onOpenClan }: { input: LiveInput; visible: 
               <C2Coins n={s.treasury.balance} />
               <span>·</span>
               <span>{moving ? tn('clan2.live.moveCost') : tn('clan2.live.placeCost')}</span>
-              <C2Coins n={cost} />
+              {cost === 0 ? <b>{tn('clan2.hq.free')}</b> : <C2Coins n={cost} />}
             </div>
             {s.treasury.balance < cost && <p className="c2-short">{tn('clan2.base.missing', { n: cost - s.treasury.balance })}</p>}
             <div className="c2-row-btns">
@@ -260,7 +260,7 @@ function LiveLayer({ input, visible, onOpenClan }: { input: LiveInput; visible: 
                   if (act(placeHq(place.id), moving ? 'hqMoved' : 'hqPlaced')) setLiveUi({ confirmPlace: null, placing: false })
                 }}
               >
-                {moving ? tn('clan2.hq.move') : tn('clan2.hq.place')}
+                {moving ? tn('clan2.hq.move') : cost === 0 ? tn('clan2.hq.placeFree') : tn('clan2.hq.place')}
               </button>
             </div>
           </div>

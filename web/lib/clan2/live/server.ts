@@ -21,15 +21,19 @@ export async function readServerClan(clanId: number, userId: string): Promise<Se
   const supabase = createClient()
   // The generated types do not know the functions of the drafts yet.
   const rpc = supabase.rpc.bind(supabase) as unknown as (fn: string, args?: Json) => Promise<{ data: unknown; error: { code?: string; message: string } | null }>
-  const [state, notes, me] = await Promise.all([
+  const [state, notes, me, freeRebuild] = await Promise.all([
     rpc('get_clan_state', { p_clan_id: clanId }),
     supabase.from('notifications').select('id,kind,created_at,payload,territory_id').eq('user_id', userId).like('kind', 'clan_%').order('created_at', { ascending: false }).limit(60),
     // The view, not the table: the players' role may not read `profiles` itself (the app reads its own coins the same way).
     supabase.from('profiles_with_stats').select('coins').eq('id', userId).maybeSingle(),
+    // After a fall the first new HQ is free, once (supabase-drafts/clan-hq-free-rebuild-13-11); before that migration
+    // the function is not there and the answer is «no».
+    rpc('clan_hq_free_rebuild', { p_clan_id: clanId }),
   ])
   if (state.error) return { ok: false, missing: state.error.code === 'PGRST202' || /function .* does not exist|Could not find the function/i.test(state.error.message) }
   const coins = !me.error && me.data && typeof me.data.coins === 'number' ? me.data.coins : null
-  return { ok: true, data: (state.data ?? {}) as Json, alerts: ((notes.data ?? []) as unknown as Json[]), coins }
+  const data = { ...((state.data ?? {}) as Json), hq_free_rebuild: !freeRebuild.error && freeRebuild.data === true }
+  return { ok: true, data, alerts: ((notes.data ?? []) as unknown as Json[]), coins }
 }
 
 // The server's journal kinds in the preview's words; the zero lines (a setting, a finished build) are not money.
@@ -137,6 +141,7 @@ export function applyServerClan(d: DemoState, s: Json, notes: Json[]): void {
     siege: siege ? { by: String(siege.attacker_id ?? ''), startedAt: t(siege.started_at), endsAt: t(siege.ends_at) } : null,
     defenseAt: d.hq.defenseAt,
     ruins: ruins ? { sectorId: String(ruins.territory_id), by: String(ruins.by_clan_id ?? ''), loot: num(ruins.loot), fellAt: t(ruins.fell_at), until: t(ruins.until) } : null,
+    freeRebuild: s.hq_free_rebuild === true,
   }
 
   // «Выход»: the phase follows from its times and the cooldown.

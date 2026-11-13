@@ -420,6 +420,9 @@ export const clan2En = {
     fallT4: "A new HQ in {h} h",
     fallS4: "on any captured sector of the clan",
     moveSiege: "While the HQ is under siege it cannot be moved. Break the siege with a catch on the HQ sector.",
+    placeFree: "Rebuild the HQ for free",
+    free: "free",
+    freeRebuildHint: "The first rebuild of the HQ after a fall is free, once. The next ones cost {n} coins from the treasury.",
   },
   project: {
     dock: {

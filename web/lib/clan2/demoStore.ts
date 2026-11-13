@@ -283,6 +283,9 @@ export function fallHq(d: DemoState, by: string, fellAt: number) {
     siege: null,
     defenseAt: null,
     ruins: { sectorId, by, loot, fellAt, until: fellAt + HQ_RUINS_HOURS * HOURS },
+    // The first new HQ after a fall is free, once.
+    freeRebuild: !d.hq.freeRebuildUsed,
+    freeRebuildUsed: d.hq.freeRebuildUsed,
   }
 }
 
@@ -625,6 +628,10 @@ export const buffActive = (s: DemoState) => s.buff.phase === 'active'
 // (coins still come in). The server refuses the same (CLAN:siege_lock, supabase-drafts/clan-siege-lock-13-11).
 export const siegeLocked = (s: DemoState) => !!s.hq.siege
 
+// What setting the HQ costs now: a move, a placing, or nothing — the first new HQ after a fall is free, once.
+export const hqFreeRebuild = (s: DemoState) => !s.hq.sectorId && !!s.hq.freeRebuild
+export const hqPlaceCostOf = (s: DemoState) => (s.hq.sectorId ? s.settings.hqMoveCost : hqFreeRebuild(s) ? 0 : s.settings.hqPlaceCost)
+
 // ───────────── the headquarters ─────────────
 
 export function placeHq(sectorId: string): Result {
@@ -642,12 +649,13 @@ export function placeHq(sectorId: string): Result {
       const since = nowOf(d) - (d.hq.lastMoveAt ?? d.hq.placedAt ?? 0)
       if (since < HQ_MOVE_COOLDOWN_DAYS * DAY) return no('hqCooldown')
     }
-    const cost = moving ? d.settings.hqMoveCost : d.settings.hqPlaceCost
-    if (!spend(d, 'spend_hq', cost, d.myId, moving ? 'move' : 'place')) return no('notEnough')
+    const cost = hqPlaceCostOf(d)
+    if (cost > 0 && !spend(d, 'spend_hq', cost, d.myId, moving ? 'move' : 'place')) return no('notEnough')
+    const freeUsed = !moving && hqFreeRebuild(d)
     const old = d.sectors.find((x) => x.id === d.hq.sectorId)
     if (old) old.hq = null
     target.hq = 'mine'
-    d.hq = { sectorId, placedAt: nowOf(d), lastMoveAt: moving ? nowOf(d) : d.hq.lastMoveAt, siege: null, defenseAt: nowOf(d), ruins: null }
+    d.hq = { sectorId, placedAt: nowOf(d), lastMoveAt: moving ? nowOf(d) : d.hq.lastMoveAt, siege: null, defenseAt: nowOf(d), ruins: null, freeRebuild: false, freeRebuildUsed: d.hq.freeRebuildUsed || freeUsed }
     // A fresh HQ stands with some defence, even on a thinly held sector.
     target.defense = Math.max(target.defense, 1)
   })

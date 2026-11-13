@@ -307,6 +307,7 @@ export const FAQ_EN: FaqSection[] = [
             'If it is not lifted in time the HQ falls: the attackers carry off 20 % of the treasury (at most 1 500 coins), the HQ sector goes to them, the buildings fall asleep and a new HQ can only be set after 24 hours.',
             'Three quarters of the loot go to the attacker\'s clan treasury, or to the attacker personally if they have no clan. The remaining quarter is lost.',
             'The buildings keep their levels when the HQ falls: they sleep while the clan has no HQ and work again as soon as the clan sets a new HQ on any of its sectors.',
+            'The first rebuild of the HQ after a fall is free, once in the clan\'s life. The next ones cost 1 000 coins from the treasury, like an ordinary placing.',
           ],
           'An attack on the HQ, a siege and a fall are sent to the whole clan in «Activity» and in Telegram: an attack at most once in 30 minutes, a siege at once, even at night (there are only 90 minutes to lift it).',
         ],

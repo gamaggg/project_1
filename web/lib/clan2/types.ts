@@ -79,6 +79,10 @@ export type HqState = {
   defenseAt: number | null
   // After a fall: the ruins of the old HQ, what the attackers carried off and until when a new one cannot be built.
   ruins: { sectorId: string; by: string; loot: number; fellAt: number; until: number } | null
+  // After a fall the first new HQ is free, once in the clan's life (owner, 13.11.2026): true while it is still due.
+  freeRebuild?: boolean
+  // The browser-only preview: the free rebuild was spent.
+  freeRebuildUsed?: boolean
 }
 
 export type AlertKind = 'sector_attack' | 'hq_siege' | 'hq_saved' | 'hq_fallen' | 'buff' | 'nudge' | 'quest_done' | 'project_done' | 'recruit'
