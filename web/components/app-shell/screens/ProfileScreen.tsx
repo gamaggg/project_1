@@ -437,6 +437,7 @@ export function ProfileScreen({
   onOpenClan,
   onOpenGeo,
   onOpenAdminGeo,
+  onOpenAdminPartners,
   active,
   adminPanelActive,
 }: {
@@ -481,6 +482,8 @@ export function ProfileScreen({
   onOpenClan: (id: number) => void
   onOpenGeo: () => void
   onOpenAdminGeo: () => void
+  // «Точки партнёров» (super admin only).
+  onOpenAdminPartners: () => void
   // The profile tab is the one on screen: its numbers count up each time it comes into view.
   active: boolean
   // The profile is on screen and no admin window is over it (AdminPanel reopens its sheet then).
@@ -839,6 +842,7 @@ export function ProfileScreen({
                   { id: 'log', label: 'Последние действия', icon: ADMIN_ICONS.log, tone: 'data' as const, badge: adminLogUnreadCount, onClick: onOpenAdminLog },
                   { id: 'access', label: 'Доступы', icon: ADMIN_ICONS.access, tone: 'manage' as const, onClick: onOpenAdminAccess },
                   { id: 'post', label: 'Написать пост', icon: ADMIN_ICONS.post, tone: 'manage' as const, onClick: onPostAnnouncement },
+                  { id: 'partners', label: 'Точки партнёров', icon: ADMIN_ICONS.partners, tone: 'manage' as const, onClick: onOpenAdminPartners },
                   { id: 'economy', label: 'Клановая экономика', icon: ADMIN_ICONS.coins, tone: 'manage' as const, onClick: () => setEconomyOpen(true) },
                   { id: 'maintenance', label: maintenanceOn ? 'Техработы: включены' : 'Технические работы', icon: ADMIN_ICONS.maintenance, tone: 'manage' as const, badge: maintenanceOn ? 1 : 0, onClick: onOpenMaintenance },
                 ]

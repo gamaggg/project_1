@@ -5,13 +5,13 @@ import { formatCoords, mapsLinks, openExternal } from '@/lib/openExternal'
 import { useT } from '@/lib/i18n'
 
 // «Маршрут до сектора»: pick a maps app and it opens with a route to the
-// point. Shared by the sector screen and the map's nearest-free card.
-export function RouteModal({ lat, lng, onClose }: { lat: number; lng: number; onClose: () => void }) {
+// point. Shared by the sector screen, the map's nearest-free card and a partner's card (with its own title).
+export function RouteModal({ lat, lng, onClose, title, overlayClass }: { lat: number; lng: number; onClose: () => void; title?: string; overlayClass?: string }) {
   const t = useT()
   return createPortal(
-    <div className="modal-overlay" onClick={onClose}>
+    <div className={overlayClass ? `modal-overlay ${overlayClass}` : 'modal-overlay'} onClick={onClose}>
       <div className="modal-card sector-maps-card" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-title">{t('route.title')}</div>
+        <div className="modal-title">{title ?? t('route.title')}</div>
         <div className="modal-body" style={{ margin: '6px 0 14px' }}>
           {formatCoords(lat, lng)}
         </div>

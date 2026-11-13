@@ -10,6 +10,8 @@ import { formatWeekOfMonth, pluralCatches, pluralSectors } from '@/lib/format'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { seededRandom, seedFrom } from '@/lib/seededRandom'
 import { tn } from '@/lib/i18n/runtime'
+import { PartnerPrizeCard } from '@/components/app-shell/PartnerPrizeCard'
+import { useAuth } from '@/components/providers/AuthProvider'
 
 const CONFETTI_COLORS = ['#FC5200', '#F0A93E', '#B8C0CC', '#B06B36']
 // Reveal 3rd -> 2nd -> 1st, slowest for 1st so the ceremony builds toward it.
@@ -27,6 +29,7 @@ export function LastWeekScreen({
   onOpenCurrentRating: () => void
 }) {
   const cityInfo = CITIES[city]
+  const { user } = useAuth()
   const { data: entries = [], isLoading } = useWeeklyLeaderboard(false, -1, cityInfo.idPrefix, cityInfo.timezone)
   const podium = entries.slice(0, 3)
   const rest = entries.slice(3, 10)
@@ -79,6 +82,14 @@ export function LastWeekScreen({
             </div>
           )}
         </div>
+
+        {!isLoading && (
+          <PartnerPrizeCard
+            city={city}
+            week={-1}
+            winner={entries[0] ? { name: entries[0].displayName, isMe: entries[0].userId === user?.id } : null}
+          />
+        )}
 
         {rest.length > 0 && (
           <div className="card" style={{ overflow: 'hidden' }}>

@@ -6,6 +6,7 @@ import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useClanBadges, useWeeklyLeaderboard } from '@/lib/supabase/queries'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
+import { PartnerPrizeCard } from '@/components/app-shell/PartnerPrizeCard'
 import type { WeeklyLeaderboardEntry } from '@/lib/data/types'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { formatWeekOfMonth, pluralCatches, pluralSectors } from '@/lib/format'
@@ -121,6 +122,8 @@ export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUs
         </div>
         <span className="rating-week-badge rating-week-badge-inline">{formatWeekOfMonth(0, cityInfo.timezone)}</span>
       </div>
+
+      <PartnerPrizeCard city={city} week={0} />
 
       {isLoading ? (
         <SkeletonRows count={6} thumb={40} round />

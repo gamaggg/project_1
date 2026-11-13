@@ -1,0 +1,167 @@
+/* Partner points in the app (components/app-shell/PartnerPointSheet.tsx, the pins in LeafletMap, the admin screen).
+   The look follows the /partners demo (app/partners/partners.css): the same orange pin, the same sheet. */
+
+/* The pin on the map (still, no pulse: owner 14.11): an orange drop with the partner's icon, a green badge with the discount, a gold crown in a prize week,
+   the name under it from the label zoom. */
+.pp-mk-wrap{background:transparent; border:0;}
+.pp-mk{position:relative; width:56px; height:78px; cursor:pointer; -webkit-tap-highlight-color:transparent;}
+.pp-mk-pin{position:absolute; left:50%; top:6px; width:40px; height:40px; margin-left:-20px; display:flex; align-items:center; justify-content:center; border-radius:50% 50% 50% 6%; transform:rotate(-45deg); background:linear-gradient(160deg,#FF6A1F,#FC5200 65%); border:3px solid #fff; box-shadow:0 6px 12px rgba(23,24,27,0.32); transition:transform .2s var(--ease-out);}
+.pp-mk-pin svg{transform:rotate(45deg);}
+/* The partner's own SVG instead of the drop: up to 48 px tall and 76 px wide, its bottom edge on the point (y = 54 in the
+   56×78 box, where the drop's tip is), a soft shadow so it stands off the map. */
+.pp-mk-own{position:absolute; left:50%; bottom:24px; max-width:76px; height:44px; width:auto; transform:translateX(-50%); object-fit:contain; filter:drop-shadow(0 3px 5px rgba(23,24,27,0.35)); pointer-events:none; -webkit-user-drag:none; transition:transform .2s var(--ease-out);}
+.pp-mk-custom:active .pp-mk-own{transform:translateX(-50%) scale(0.94);}
+.pp-mk-custom .pp-mk-promo{right:-14px;}
+.pp-mk-custom .pp-mk-week{left:-10px;}
+.pp-mk:active .pp-mk-pin{transform:rotate(-45deg) scale(0.92);}
+.pp-mk-badge{position:absolute; top:-4px; display:flex; align-items:center; justify-content:center; min-width:22px; height:22px; padding:0 6px; border-radius:11px; border:2px solid #fff; color:#fff; font-size:10.5px; font-weight:800; white-space:nowrap; box-shadow:0 3px 8px rgba(0,0,0,0.28);}
+.pp-mk-promo{right:-10px; background:#E5383B;}
+.pp-mk-week{left:-6px; background:#F5B301;}
+.pp-mk-name{position:absolute; left:50%; top:58px; transform:translateX(-50%); max-width:150px; overflow:hidden; text-overflow:ellipsis; padding:2px 8px; border-radius:7px; background:rgba(23,24,27,0.82); color:#fff; font-size:10.5px; font-weight:800; white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,0.3); pointer-events:none;}
+.pp-mk-far .pp-mk-name{display:none;}
+
+/* The card. */
+.pp-overlay{z-index:960;}
+.pp-over{z-index:980;}
+.pp-sheet{position:relative; overflow:hidden; transition:transform .25s var(--ease-out);}
+.pp-grab{flex:0 0 auto; display:flex; justify-content:center; padding:8px 0 10px; cursor:grab; touch-action:none;}
+.pp-grab span{width:38px; height:4px; border-radius:2px; background:var(--line);}
+.pp-scroll{flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding-bottom:calc(var(--tg-safe-area-bottom, 0px) + 18px); -webkit-overflow-scrolling:touch;}
+.pp-gwrap{position:relative; margin:0 16px; border-radius:18px; overflow:hidden; background:#EFF3F6;}
+.pp-gallery{display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none;}
+.pp-gallery::-webkit-scrollbar{display:none;}
+.pp-slide{flex:0 0 100%; display:block; padding:0; border:0; background:none; scroll-snap-align:center; aspect-ratio:400 / 240; max-height:32vh; width:100%; cursor:zoom-in;}
+.pp-slide img{display:block; width:100%; height:100%; object-fit:cover;}
+.pp-slide-empty{display:flex; align-items:center; justify-content:center; aspect-ratio:400 / 170; color:#B5BEC6; cursor:default;}
+.pp-dots{position:absolute; left:0; right:14px; bottom:12px; display:flex; gap:6px; justify-content:flex-end; align-items:center; pointer-events:none;}
+.pp-dots i{width:7px; height:7px; border-radius:4px; background:rgba(255,255,255,0.6); box-shadow:0 0 0 1px rgba(0,0,0,0.12); transition:background .22s var(--ease-out);}
+.pp-dots i.on{width:20px; background:#fff;}
+
+.pp-body{padding:14px 18px 4px;}
+.pp-kicker{display:inline-block; font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--accent);}
+.pp-title{margin:2px 0 0; font-family:var(--font-display),var(--font-georgian),'Oswald',sans-serif; font-weight:700; font-size:25px; line-height:1.15; text-transform:uppercase; color:var(--ink); overflow-wrap:anywhere;}
+.pp-kind{margin:3px 0 0; font-size:14px; font-weight:600; color:var(--ink-soft);}
+.pp-hours{display:flex; align-items:center; gap:6px; margin:8px 0 0; font-size:13.5px; font-weight:700; color:var(--ink);}
+.pp-hours svg{color:var(--green); flex:0 0 auto;}
+.pp-actions{display:grid; gap:8px; margin-top:14px;}
+.pp-actions-1{grid-template-columns:1fr;}
+.pp-actions-2{grid-template-columns:1fr 1fr;}
+.pp-actions-3{grid-template-columns:repeat(3, minmax(0, 1fr));}
+.pp-act{display:flex; align-items:center; justify-content:center; gap:7px; min-height:48px; padding:0 10px; border:1.5px solid #E2DFD8; border-radius:14px; background:#fff; color:var(--ink); font-family:inherit; font-size:14.5px; font-weight:700; text-decoration:none; cursor:pointer; white-space:nowrap; transition:transform .15s var(--ease);}
+.pp-act:active{transform:scale(0.97);}
+.pp-act-main{border-color:transparent; background:linear-gradient(160deg,#FF6A1F,var(--accent) 65%); color:#fff; box-shadow:0 8px 18px rgba(252,82,0,0.26);}
+.pp-act-green{background:var(--green); color:#fff;}
+.pp-full{width:100%; margin-top:10px;}
+.pp-promo .pp-act-main{box-shadow:none;}
+.pp-block p.pp-promo-until{margin-top:10px; text-align:center; font-size:12.5px; font-weight:700; color:var(--accent);}
+.pp-row{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px; padding:12px 14px; border:1.5px solid #E2DFD8; border-radius:14px; background:#fff;}
+.pp-row b{display:block; margin-top:2px; font-size:14.5px; font-weight:800; overflow-wrap:anywhere;}
+.pp-label{display:block; font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint);}
+.pp-copy{flex:0 0 auto; min-height:36px; padding:0 13px; border:0; border-radius:11px; background:#F1EFEA; color:var(--ink); font-family:inherit; font-size:13px; font-weight:800; cursor:pointer;}
+.pp-copy:active{transform:scale(0.96);}
+.pp-block{margin-top:12px; padding:15px; border-radius:16px;}
+.pp-block h4{margin:0; font-size:16px; line-height:1.3; font-weight:800;}
+.pp-block p{margin:4px 0 0; font-size:13.5px; color:var(--ink-soft); line-height:1.45;}
+.pp-promo{background:#FFE7D9; border:1.5px solid #FFCDB1;}
+.pp-ticket{display:flex; align-items:center; gap:8px; width:100%; margin-top:12px; padding:10px 12px; border:2px dashed #FDA77A; border-radius:14px; background:#fff; font-family:inherit; color:var(--ink); text-align:left; cursor:pointer; transition:border-color .2s var(--ease), box-shadow .3s var(--ease-out);}
+.pp-ticket b{flex:1; min-width:0; font-family:var(--font-display),'Oswald',sans-serif; font-size:22px; letter-spacing:0.06em; overflow-wrap:anywhere;}
+.pp-ticket > span{font-size:18px; font-weight:800; color:#E5383B; white-space:nowrap;}
+.pp-ticket-on{border-style:solid; border-color:var(--accent); box-shadow:0 0 0 5px rgba(252,82,0,0.16);}
+.pp-prize{background:linear-gradient(150deg,#FFEDC2,#FFDCC7); border:1.5px solid #FFD39A;}
+.pp-chip{display:inline-block; margin-bottom:8px; padding:3px 10px; border-radius:999px; background:var(--accent); color:#fff; font-size:10.5px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase;}
+.pp-prize .pp-prize-from{margin-top:2px; font-weight:700; color:var(--ink);}
+.pp-desc{margin:8px 0 0; font-size:14px; line-height:1.5; color:var(--ink); white-space:pre-line;}
+.pp-until{margin:14px 0 0; font-size:12px; font-weight:600; color:var(--ink-faint);}
+.pp-toast{position:absolute; left:50%; bottom:calc(var(--tg-safe-area-bottom, 0px) + env(safe-area-inset-bottom) + 18px); transform:translateX(-50%); padding:10px 16px; border-radius:12px; background:rgba(23,24,27,0.9); color:#fff; font-size:13.5px; font-weight:700; white-space:nowrap; pointer-events:none; animation:move-fade .2s var(--ease-out) both;}
+
+/* The weekly prize in the rating and in last week's results. */
+.pp-rating-prize{display:flex; align-items:center; gap:12px; width:100%; margin:0 0 14px; padding:12px 14px; border:0; border-radius:16px; background:linear-gradient(150deg,#FFF3D6,#FFE4D6); color:var(--ink); font-family:inherit; text-align:left; cursor:pointer;}
+.pp-rating-prize[disabled]{cursor:default;}
+.pp-rating-gift{flex:0 0 auto; width:42px; height:42px; display:flex; align-items:center; justify-content:center; border-radius:13px; background:#fff; box-shadow:var(--shadow-sm);}
+.pp-rating-text{flex:1; min-width:0;}
+.pp-rating-kicker{display:block; font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--accent);}
+.pp-rating-title{display:block; margin-top:1px; font-size:15px; font-weight:800; line-height:1.25; overflow-wrap:anywhere;}
+.pp-rating-sub{display:block; margin-top:2px; font-size:12px; font-weight:600; color:var(--ink-soft); line-height:1.35;}
+.pp-rating-me{display:block; margin-top:6px; font-size:13px; font-weight:800; color:var(--green);}
+.pp-rating-more{flex:0 0 auto; font-size:12.5px; font-weight:800; color:var(--accent);}
+
+/* The super admin's screen «Точки партнёров» (components/app-shell/screens/AdminPartnersScreen.tsx). */
+.ppa-list{display:flex; flex-direction:column; gap:8px; margin-top:14px; padding-bottom:calc(150px + env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px));}
+.ppa-card{border:1px solid var(--line); border-radius:16px; background:var(--surface); overflow:hidden;}
+.ppa-item{display:flex; align-items:flex-start; gap:12px; width:100%; padding:12px; border:0; background:transparent; font-family:inherit; color:var(--ink); text-align:left; cursor:pointer;}
+.ppa-item:active{transform:scale(0.99);}
+.ppa-over .ppa-item, .ppa-paused .ppa-item{opacity:0.62;}
+.ppa-thumb{flex:0 0 auto; width:54px; height:54px; border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center; background:var(--accent-soft); color:var(--accent); font-weight:800; font-size:20px;}
+.ppa-thumb img{width:100%; height:100%; object-fit:cover;}
+.ppa-main{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+.ppa-name{font-size:15px; font-weight:800; overflow-wrap:anywhere;}
+.ppa-meta{font-size:12.5px; color:var(--ink-soft); font-weight:600;}
+.ppa-status{font-size:12.5px; font-weight:800; color:var(--ink-faint);}
+.ppa-live .ppa-status{color:var(--green);}
+.ppa-soon .ppa-status{color:var(--blue);}
+
+.ppa-form{padding-bottom:calc(150px + env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px));}
+.ppa-h{margin:22px 0 10px; font-size:11.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint);}
+.ppa-h:first-child{margin-top:4px;}
+.ppa-sub{display:block; margin:2px 0 8px; font-size:12.5px; font-weight:700; color:var(--ink-soft);}
+.ppa-chips{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;}
+.ppa-chips .filter-chip{margin:0;}
+.ppa-plans{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.ppa-plan{display:flex; flex-direction:column; gap:3px; padding:12px; border:2px solid var(--line); border-radius:14px; background:var(--surface); font-family:inherit; color:var(--ink); text-align:left; cursor:pointer;}
+.ppa-plan b{font-size:15px; font-weight:800;}
+.ppa-plan span{font-size:12.5px; color:var(--ink-soft); line-height:1.35;}
+.ppa-plan.on{border-color:var(--accent); background:#FFF7F2;}
+.ppa-row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.ppa-row2 .stats-more{margin-top:0;}
+.ppa-count{align-self:flex-end; font-size:11.5px; color:var(--ink-faint);}
+.ppa-ok{display:block; font-size:12.5px; font-weight:700; color:var(--green); line-height:1.4;}
+.ppa-warn{display:block; font-size:12.5px; font-weight:700; color:#D33; line-height:1.4;}
+.ppa-photos{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px;}
+.ppa-photo{position:relative; aspect-ratio:4 / 3; border-radius:12px; overflow:hidden; background:#F3F1EC;}
+.ppa-photo img{width:100%; height:100%; object-fit:cover; display:block;}
+.ppa-photo-bar{position:absolute; top:4px; right:4px; display:flex; gap:4px;}
+.ppa-photo-bar button{width:28px; height:28px; border:0; border-radius:50%; background:rgba(23,24,27,0.62); color:#fff; font-size:13px; font-weight:800; cursor:pointer;}
+.ppa-photo-main{position:absolute; left:4px; bottom:4px; padding:2px 7px; border-radius:7px; background:var(--accent); color:#fff; font-size:10.5px; font-weight:800;}
+.ppa-photo-up, .ppa-photo-add{display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; color:var(--ink-soft);}
+.ppa-photo-add{border:2px dashed var(--line); background:var(--surface); cursor:pointer;}
+.ppa-weeks{display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px; margin-bottom:8px;}
+.ppa-week{display:flex; flex-direction:column; gap:1px; padding:9px 10px; border:2px solid var(--line); border-radius:12px; background:var(--surface); font-family:inherit; color:var(--ink); text-align:left; cursor:pointer;}
+.ppa-week b{font-size:13.5px; font-weight:800;}
+.ppa-week span{font-size:11.5px; color:var(--ink-soft); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.ppa-week.on{border-color:#F5B301; background:#FFF6DC;}
+.ppa-week:disabled{opacity:0.5; cursor:default;}
+.ppa-week.taken span{color:#B26A00;}
+.ppa-toggle{display:flex; align-items:center; gap:10px; margin-top:14px; font-size:14px; font-weight:700; cursor:pointer;}
+.ppa-toggle input{width:20px; height:20px; accent-color:var(--accent);}
+.ppa-actions{display:flex; flex-direction:column; gap:10px; margin-top:20px;}
+
+/* One-tap renew under a point in the list. */
+.ppa-renew{display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:0 12px 12px;}
+.ppa-renew-label{font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-right:2px;}
+.ppa-renew-btn{min-height:34px; padding:0 12px; border:1.5px solid var(--line); border-radius:10px; background:var(--surface); font-family:inherit; font-size:13px; font-weight:800; color:var(--ink); cursor:pointer;}
+.ppa-renew-btn:active{transform:scale(0.96);}
+.ppa-renew-btn:disabled{opacity:0.5; cursor:default;}
+.ppa-renew-main{border-color:var(--accent); background:var(--accent); color:#fff;}
+.ppa-note{padding:0 12px 12px;}
+
+/* Icon picker in the admin form: a live pin on a map-coloured square, the ready icons and «Свой SVG». */
+.ppa-icon-row{display:flex; gap:12px; align-items:flex-start;}
+.ppa-pin-preview{flex:0 0 auto; width:84px; height:96px; display:flex; align-items:center; justify-content:center; border-radius:14px; background:#DCE7E9; overflow:hidden; padding-top:8px;}
+.ppa-pin-preview .pp-mk-name{max-width:76px;}
+.ppa-icons{flex:1; min-width:0; display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px;}
+.ppa-icon{display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 2px; border:2px solid var(--line); border-radius:12px; background:var(--surface); font-family:inherit; color:var(--ink); cursor:pointer;}
+.ppa-icon > span, .ppa-icon > img{width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--accent); object-fit:contain;}
+.ppa-icon > img{background:transparent; border-radius:0;}
+.ppa-icon em{font-style:normal; font-size:10.5px; font-weight:700; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;}
+.ppa-icon.on{border-color:var(--accent); background:#FFF7F2;}
+.ppa-icon-plus{background:#F3F1EC !important; color:var(--ink-soft); font-size:20px; font-weight:800;}
+
+/* «Предпросмотр» from the admin form (PartnerPreview.tsx): the map at the point, a bar on top, the card on a tap. */
+.ppv{position:fixed; inset:0; z-index:940; background:#DCE7E9; isolation:isolate;}
+.ppv-map{position:absolute; inset:0; z-index:0;}
+.ppv-bar{position:absolute; z-index:1; top:calc(env(safe-area-inset-top) + var(--tg-safe-area-top, 0px) + 10px); left:12px; right:12px; display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:16px; background:rgba(23,24,27,0.86); color:#fff; box-shadow:var(--shadow-lg);}
+.ppv-text{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+.ppv-text b{font-size:14px; font-weight:800;}
+.ppv-text span{font-size:12px; font-weight:600; color:rgba(255,255,255,0.78); line-height:1.35;}
+.ppv-close{flex:0 0 auto; min-height:36px; padding:0 12px; border:0; border-radius:11px; background:#fff; color:var(--ink); font-family:inherit; font-size:13px; font-weight:800; cursor:pointer;}
+.ppv-open{position:absolute; z-index:1; left:16px; right:16px; bottom:calc(env(safe-area-inset-bottom) + var(--tg-safe-area-bottom, 0px) + 18px); min-height:50px; border:0; border-radius:15px; background:linear-gradient(160deg,#FF6A1F,var(--accent) 65%); color:#fff; font-family:inherit; font-size:15.5px; font-weight:800; box-shadow:0 10px 22px rgba(252,82,0,0.28); cursor:pointer;}

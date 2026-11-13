@@ -166,6 +166,11 @@ export const ADMIN_ICONS = {
       <circle cx="20.5" cy="5" r="1.5" />
     </svg>
   ),
+  partners: (
+    <svg {...stroke}>
+      <path d="M3 21h18M4 21V10M20 21V10M3 7l1.5-4h15L21 7a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0M9 21v-6h6v6" />
+    </svg>
+  ),
   maintenance: (
     <svg {...stroke}>
       <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z" />

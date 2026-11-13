@@ -401,6 +401,20 @@ export const FAQ_EN: FaqSection[] = [
         a: ['Sectors of the week first, then catches in the city that week. A sector of the week is one you captured this week and still hold, or a share in a clanmate’s sector you joined this week. A catch on your own sector is not a capture: an old sector does not become a sector of the week. The week’s results use the same numbers.'],
       },
       {
+        q: 'What are the orange shop pins on the map?',
+        a: [
+          'These are RANGE partners: fishing shops, saunas, boat rentals and other places near the water. Tap a pin to open its card: photos, opening hours, the address (you can copy it) and the buttons «Directions» (Google, Yandex or Apple Maps), «Call» and «Website».',
+          'The green badge on a pin is a discount for players. The card has a promo code: copy it or show the screen at the checkout. A pin stays while the partner’s period lasts and then disappears by itself.',
+        ],
+      },
+      {
+        q: 'What is a partner’s prize of the week?',
+        a: [
+          'Sometimes a partner sponsors a week in the city. Then a «Prize of the week» card with the prize and the partner’s name sits at the top of the weekly rating, and the partner’s pin wears a gold crown.',
+          'The prize goes to the first in the weekly rating at the end of Sunday (sectors of the week first, then catches). Last week’s results show who got it; the winner shows that screen at the partner’s place and collects the prize.',
+        ],
+      },
+      {
         q: 'Where is my diary?',
         a: [
           'In «My catches» — the «Diary» tab: fishing days with the weather, notes, trips without a catch and catches from the gallery.',

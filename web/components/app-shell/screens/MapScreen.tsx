@@ -1,7 +1,8 @@
 'use client'
 
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useFirstSteps } from '@/lib/supabase/queries'
+import { useFirstSteps, usePartnerPoints } from '@/lib/supabase/queries'
+import { PartnerPointSheet } from '@/components/app-shell/PartnerPointSheet'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { MapView } from '@/components/app-shell/MapView'
 import type { GeoMarks, LeafletMapHandle, SectorMoment } from '@/components/app-shell/LeafletMap'
@@ -150,6 +151,10 @@ export const MapScreen = forwardRef<
   const clan2 = useClan2Map(territories)
   const now = useNow()
   const { data: firstSteps } = useFirstSteps()
+  // Partner points (shops and other places that bought a plan on /partners): pins on the map, a tap opens the card.
+  const { data: partnerPoints } = usePartnerPoints()
+  const [partnerId, setPartnerId] = useState<number | null>(null)
+  const openPartner = partnerId != null ? partnerPoints?.find((p) => p.id === partnerId) ?? null : null
   const firstStepsShown = !!firstSteps && firstSteps.eligible && !firstSteps.claimed
   const isHot = (s: Territory) => !!s.hotUntil && new Date(s.hotUntil).getTime() > now
   // «Кланы» layer toggle — remembered per device, a pure viewing preference.
@@ -438,6 +443,8 @@ export const MapScreen = forwardRef<
           clanLayer={clanLayer}
           clan2={clan2 ? { ...clan2, onMarker: handlePolygonSelect } : null}
           geo={geo ? { picked: geo.picked, answer: geo.answer, spot: geo.spot, dim: geo.dim } : null}
+          partners={partnerPoints}
+          onPartner={setPartnerId}
         />
         {/* Map chrome, top: ONE panel on a single edge instead of pieces
             floating at different sizes — brand + «Игроки | Кланы» on the
@@ -666,6 +673,7 @@ export const MapScreen = forwardRef<
           </div>
         </div>
       </div>
+      {openPartner && <PartnerPointSheet point={openPartner} onClose={() => setPartnerId(null)} />}
     </div>
   )
   }

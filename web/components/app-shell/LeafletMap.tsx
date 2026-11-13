@@ -25,6 +25,8 @@ import { mapLoad } from '@/lib/mapbox/lightMode'
 import { tn } from '@/lib/i18n/runtime'
 import type { Clan2MapProps } from '@/components/clan2/live/overlay'
 import { fitBannerH } from '@/lib/clan2/live/hqMarker'
+import { partnerPinHtml, sponsorsThisWeek, type PartnerPoint } from '@/lib/data/partnerPoints'
+import '@/app/partner-points.css'
 
 // Trial swap from OpenFreeMap — a custom Mapbox Standard style, hand-tuned to
 // RANGE's brand colors (deep-water blue that's deliberately distinct from the
@@ -290,6 +292,9 @@ export const LeafletMap = forwardRef<
     geo?: GeoMarks | null
     // The clan update (lib/clan2/live): the clan's animated skin on its sectors, the headquarters, the «place the HQ» mode.
     clan2?: Clan2MapProps | null
+    // Partner points (shops and other places that bought a plan): a pin each, a tap opens the card.
+    partners?: PartnerPoint[]
+    onPartner?: (id: number) => void
   }
 >(function LeafletMap(
   {
@@ -308,9 +313,16 @@ export const LeafletMap = forwardRef<
     clanLayer = false,
     geo = null,
     clan2 = null,
+    partners,
+    onPartner,
   },
   ref
 ) {
+    const partnersRef = useRef(partners)
+    partnersRef.current = partners
+    const onPartnerRef = useRef(onPartner)
+    onPartnerRef.current = onPartner
+    const partnersLayerRef = useRef<L.LayerGroup | null>(null)
     const clan2Ref = useRef(clan2)
     clan2Ref.current = clan2
     const clanLayerRef = useRef(clanLayer)
@@ -977,6 +989,7 @@ export const LeafletMap = forwardRef<
         svgRendererRef.current = L.svg({ padding: 0.2 })
         highlightLayerRef.current = L.layerGroup().addTo(map)
         momentLayerRef.current = L.layerGroup().addTo(map)
+        partnersLayerRef.current = L.layerGroup().addTo(map)
 
         // Over the player's last known position if there is one (the dot appears with it),
         // else the city's own centre.
@@ -1110,6 +1123,7 @@ export const LeafletMap = forwardRef<
 
         animatedSkinsRef.current = createAnimatedSkinLayer(L, map)
         draw(territories)
+        drawPartners()
         updateLabelVisibility()
       })
 
@@ -1153,6 +1167,34 @@ export const LeafletMap = forwardRef<
       draw(territories)
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [territories, myTerritoryColor, selectedIds, pendingAddDrafts, skinAssetsVersion, zoomTick, clanLayer, plain, clan2?.signature])
+
+    // Partner pins: their own layer, redrawn when the list changes or the zoom crosses the label zoom (the name).
+    function drawPartners() {
+      const L = leafletRef.current
+      const map = mapRef.current
+      const layer = partnersLayerRef.current
+      if (!L || !map || !layer) return
+      layer.clearLayers()
+      if (plainRef.current) return
+      const far = map.getZoom() < withShift(LABEL_MIN_ZOOM, zoomShiftRef.current)
+      for (const p of partnersRef.current ?? []) {
+        const marker = L.marker([p.lat, p.lng], {
+          icon: L.divIcon({ className: 'pp-mk-wrap', html: partnerPinHtml(p, { far, crown: sponsorsThisWeek(p) }), iconSize: [56, 78], iconAnchor: [28, 54] }),
+          zIndexOffset: 1500,
+          keyboard: true,
+          title: p.name,
+        }).addTo(layer)
+        marker.on('click', (e) => {
+          L.DomEvent.stopPropagation(e)
+          hapticTap()
+          onPartnerRef.current?.(p.id)
+        })
+      }
+    }
+    const partnersKey = (partners ?? []).map((p) => `${p.id}:${p.lat}:${p.lng}:${p.name}:${p.promoDiscount}:${p.promoCode ? 1 : 0}:${sponsorsThisWeek(p) ? 1 : 0}:${p.icon ?? ''}`).join('|')
+    useEffect(() => {
+      drawPartners()
+    }, [partnersKey, zoomTick, plain])
 
     const geoKey = geo ? `${geo.picked}|${geo.answer}|${geo.dim}|${geo.spot?.join(',')}` : null
     // Kept separate from the effect above — retargeting the highlight on
