@@ -58,7 +58,7 @@ export function GloryTab() {
                   {i === 0 && <span className="c2-chip warn">{tn('clan2.glory.top')}</span>}
                 </div>
                 <div className="c2-muted small c2-hall-by">
-                  <C2Avatar member={{ name: r.member, hue: r.hue }} size={18} />
+                  <C2Avatar member={{ name: r.member, hue: r.hue, avatarUrl: r.avatarUrl }} size={18} />
                   <span>{tn('clan2.glory.by', { name: r.member, date: date(r.at) })}</span>
                 </div>
               </div>

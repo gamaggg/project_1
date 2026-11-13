@@ -1,5 +1,7 @@
 'use client'
 
+import { thumbUrl } from '@/lib/supabase/imageUrl'
+
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
@@ -40,10 +42,10 @@ export function fmtLeft(ms: number): string {
 
 export const speciesName = (key: string) => tnd(`species.${key}`)
 
-export function C2Avatar({ member, size = 36 }: { member: Pick<DemoMember, 'name' | 'hue'>; size?: number }) {
+export function C2Avatar({ member, size = 36 }: { member: Pick<DemoMember, 'name' | 'hue' | 'avatarUrl'>; size?: number }) {
   return (
     <span className="c2-avatar" style={{ width: size, height: size, fontSize: Math.round(size * 0.38), background: `hsl(${member.hue} 62% 52%)` }} aria-hidden>
-      {member.name.slice(0, 2).toUpperCase()}
+      {member.avatarUrl ? <img src={thumbUrl(member.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : member.name.slice(0, 2).toUpperCase()}
     </span>
   )
 }

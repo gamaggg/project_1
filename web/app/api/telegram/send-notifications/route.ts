@@ -10,7 +10,7 @@ import { localSpeciesNameLoose } from '@/lib/data/species'
 import { withErrorReport } from '@/lib/serverErrors'
 import { asCityId, cityForSectorId, type CityId } from '@/lib/data/city'
 import { clanWeekDigestText, readClanWeekDigest } from '@/lib/telegram/clanDigest'
-import { itemName } from '@/lib/clan2/itemName'
+import { itemKindWord, itemName } from '@/lib/clan2/itemName'
 
 // «in the city» as the notification texts name it (tg.in…).
 const IN_CITY = { batumi: 'tg.inBatumi', moscow: 'tg.inMoscow', spb: 'tg.inSpb', sochi: 'tg.inSochi', tbilisi: 'tg.inTbilisi' } as const satisfies Record<CityId, string>
@@ -44,7 +44,10 @@ type NotificationRef = {
   territory_id: string | null
   catch_id: number | null
   user_id: string
+  actor_id: string | null
   actor: ActorRef | ActorRef[] | null
+  // Filled before rendering for the HQ notices: the attacker's clan in the sector's city ('' — a player with no clan).
+  actorClan?: string | null
   owner: OwnerRef | OwnerRef[] | null
   payload: Record<string, unknown> | null
 }
@@ -223,15 +226,21 @@ function renderMessage(notification: NotificationRef): Message | null {
       const id = String(p.territory_id ?? notification.territory_id ?? '')
       const who = actor?.display_name ?? tn('activity.someone')
       const project = typeof p.project === 'string' ? tnd(`clan2.project.${p.project}.name`) : String(p.name ?? '')
+      // Who attacks the HQ (owner, 13.11): the attacker's clan, or the player when they have none; nothing when unknown.
+      const by = notification.actorClan ? tn('activity.clanHqByClan', { clan: notification.actorClan }) : notification.actorClan === '' && actor?.display_name ? tn('activity.clanHqBySolo', { name: actor.display_name }) : ''
+      const took = notification.actorClan ? tn('activity.clanHqTookClan', { clan: notification.actorClan }) : notification.actorClan === '' && actor?.display_name ? tn('activity.clanHqTookSolo', { name: actor.display_name }) : ''
+      const withBy = (line: string, extra: string) => (extra ? `${extra}\n${line}` : line)
+      const item = typeof p.item === 'string' ? p.item : ''
+      const itemKind = item ? itemKindWord(item) : null
       const lines: Record<string, [string, string?]> = {
-        clan_hq_attacked: [tn('activity.clanHqAttacked', { clan }), tn('activity.clanHqAttackedSub', { id, n: n('defense') })],
-        clan_hq_siege: [tn('activity.clanHqSiege', { clan }), tn('activity.clanHqSiegeSub', { id, m: n('minutes') || 90 })],
+        clan_hq_attacked: [tn('activity.clanHqAttacked', { clan }), withBy(tn('activity.clanHqAttackedSub', { id, n: n('defense') }), by)],
+        clan_hq_siege: [tn('activity.clanHqSiege', { clan }), withBy(tn('activity.clanHqSiegeSub', { id, m: n('minutes') || 90 }), by)],
         clan_hq_saved: [tn('activity.clanHqSaved', { name: who, clan })],
-        clan_hq_fell: [tn('activity.clanHqFell', { clan }), tn('activity.clanHqFellSub', { n: n('loot') })],
+        clan_hq_fell: [tn('activity.clanHqFell', { clan }), withBy(tn('activity.clanHqFellSub', { n: n('loot') }), took)],
         clan_buff_planned: [tn('activity.clanBuff', { clan }), tn('activity.clanBuffSub')],
         clan_quest_done: [tn('activity.clanQuestDone', { clan }), tn('activity.clanQuestDoneSub', { n: n('reward') })],
         clan_project_done: [tn('activity.clanProjectDone', { name: project, n: n('level') })],
-        clan_item_bought: [tn('activity.clanItemBought', { clan, name: typeof p.item === 'string' ? itemName(p.item) : String(p.name ?? '') })],
+        clan_item_bought: [itemKind ? tn('activity.clanItemBoughtKind', { clan, what: itemKind, name: itemName(item) }) : tn('activity.clanItemBought', { clan, name: item ? itemName(item) : String(p.name ?? '') })],
         clan_recruit_joined: [tn('activity.clanRecruitJoined', { name: who, clan })],
         clan_recruit_paid: [tn('activity.clanRecruitPaid', { name: who, n: n('amount') || 100 })],
         clan_nudge: [tn('clan2.activity.nudge', { name: who }), tn('clan2.activity.nudgeSub', { clan })],
@@ -450,7 +459,7 @@ async function handleGET(req: Request) {
   const { data: due, error } = await admin
     .from('telegram_outbox')
     .select(
-      'id, chat_id, attempts, notifications!inner(kind, territory_id, catch_id, user_id, payload, actor:profiles!notifications_actor_id_fkey(display_name, public_id), owner:profiles!notifications_user_id_fkey(tg_auto_enabled_at, tg_auto_notice_at))'
+      'id, chat_id, attempts, notifications!inner(kind, territory_id, catch_id, user_id, actor_id, payload, actor:profiles!notifications_actor_id_fkey(display_name, public_id), owner:profiles!notifications_user_id_fkey(tg_auto_enabled_at, tg_auto_notice_at))'
     )
     .is('sent_at', null)
     .lte('deliver_after', new Date().toISOString())
@@ -467,6 +476,27 @@ async function handleGET(req: Request) {
   const userIds = [...new Set(due.map((r) => first(r.notifications as NotificationRef | NotificationRef[])?.user_id).filter((id): id is string => !!id))]
   const { data: langRows } = await admin.from('profiles').select('id, language').in('id', userIds)
   for (const r of (langRows ?? []) as unknown as { id: string; language: string | null }[]) if (isLang(r.language)) langs.set(r.id, r.language)
+
+  // The HQ notices name the attacker's clan: every attacker's clans (one per city), the one of the sector's city is used.
+  const HQ_KINDS = new Set(['clan_hq_attacked', 'clan_hq_siege', 'clan_hq_fell'])
+  const attackerIds = [...new Set(due.map((r) => first(r.notifications as NotificationRef | NotificationRef[])).filter((x): x is NotificationRef => !!x && HQ_KINDS.has(x.kind) && !!x.actor_id).map((x) => x.actor_id as string))]
+  const clansOf = new Map<string, { name: string; city: string }[]>()
+  if (attackerIds.length) {
+    // clan_members is not in the generated types.
+    const loose = admin as unknown as { from: (t: string) => { select: (c: string) => { in: (c: string, v: string[]) => { is: (c: string, v: null) => Promise<{ data: unknown[] | null }> } } } }
+    const { data: memberRows } = await loose.from('clan_members').select('user_id, clans(name, city)').in('user_id', attackerIds).is('left_at', null)
+    for (const r of (memberRows ?? []) as unknown as { user_id: string; clans: { name: string; city: string } | { name: string; city: string }[] | null }[]) {
+      const c = first(r.clans)
+      if (c) clansOf.set(r.user_id, [...(clansOf.get(r.user_id) ?? []), c])
+    }
+  }
+  const attackerClan = (n: NotificationRef): string | null => {
+    if (!HQ_KINDS.has(n.kind) || !n.actor_id) return null
+    const list = clansOf.get(n.actor_id) ?? []
+    const sectorId = String(n.payload?.territory_id ?? n.territory_id ?? '')
+    const city = sectorId ? cityForSectorId(sectorId) : null
+    return (list.find((c) => c.city === city) ?? list[0])?.name ?? ''
+  }
 
   let sent = 0
   let blocked = 0
@@ -494,6 +524,7 @@ async function handleGET(req: Request) {
       continue
     }
 
+    notification.actorClan = attackerClan(notification)
     // renderMessage is synchronous, so setting the language right before it is safe.
     setCurrentLanguage(langs.get(notification.user_id) ?? 'ru')
     const message = renderMessage(notification)

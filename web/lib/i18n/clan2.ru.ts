@@ -11,7 +11,7 @@ export const clan2Ru = {
     exit: "Выход",
     week: "Неделя",
     hq: "Штаб",
-    glory: "Слава",
+    glory: "Зал славы",
     members: "Участники",
     people: "Люди",
     race: "Битва",

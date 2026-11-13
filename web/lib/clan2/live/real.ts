@@ -27,6 +27,7 @@ export async function fetchRealClan(clan: ClanDetail, now: number): Promise<Real
   const coins = new Map<string, number>(speciesRows.map((s) => [s.key, s.coin_value ?? 0]))
   const week = (recent.data ?? []) as Row[]
   const name = new Map(clan.members.map((m) => [m.userId, m.displayName]))
+  const avatar = new Map(clan.members.map((m) => [m.userId, m.avatarUrl ?? null]))
   const seenSpecies = new Set<string>()
   const seenMembers = new Set<string>()
   const seenDays = new Set<string>()
@@ -60,7 +61,7 @@ export async function fetchRealClan(clan: ClanDetail, now: number): Promise<Real
   for (const c of (top.data ?? []) as Row[]) {
     if (best.has(c.species)) continue
     const kg = c.weight_kg != null ? Number(c.weight_kg) : null
-    best.set(c.species, { species: c.species, member: name.get(c.user_id) ?? '', userId: c.user_id, cm: c.length_cm, kg, at: new Date(c.caught_at).getTime(), photo: c.photo_url ?? null })
+    best.set(c.species, { species: c.species, member: name.get(c.user_id) ?? '', userId: c.user_id, cm: c.length_cm, kg, at: new Date(c.caught_at).getTime(), photo: c.photo_url ?? null, avatarUrl: avatar.get(c.user_id) ?? null })
   }
   return {
     catches: week.length,

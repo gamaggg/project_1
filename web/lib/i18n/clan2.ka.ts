@@ -11,7 +11,7 @@ export const clan2Ka = {
     exit: "გასვლა",
     week: "კვირა",
     hq: "შტაბი",
-    glory: "დიდება",
+    glory: "დიდების დარბაზი",
     members: "წევრები",
     people: "ხალხი",
     race: "ბრძოლა",

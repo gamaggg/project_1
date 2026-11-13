@@ -1,6 +1,6 @@
 'use client'
 
-import { itemName } from '@/lib/clan2/itemName'
+import { itemKindWord, itemName } from '@/lib/clan2/itemName'
 import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useEffect, useMemo, useState } from 'react'
 import { useActivity, useCityFeed, useMarkNotificationsRead } from '@/lib/supabase/queries'
@@ -565,7 +565,8 @@ export function ActivityScreen({
                 } else if (ev.kind === 'clan_item_bought') {
                   tone = 'gold'
                   icon = FEED_ICONS.gift
-                  title = tr('activity.clanItemBought', { clan, name: typeof p.item === 'string' ? itemName(p.item) : String(p.name ?? '') })
+                  const kind = typeof p.item === 'string' ? itemKindWord(p.item) : null
+                  title = kind && typeof p.item === 'string' ? tr('activity.clanItemBoughtKind', { clan, what: kind, name: itemName(p.item) }) : tr('activity.clanItemBought', { clan, name: typeof p.item === 'string' ? itemName(p.item) : String(p.name ?? '') })
                 } else if (ev.kind === 'clan_nudge') {
                   icon = FEED_ICONS.flame
                   title = tr('clan2.activity.nudge', { name: a.who || tr('activity.someone') })

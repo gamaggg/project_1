@@ -50,6 +50,7 @@ export function liveMembers(clan: ClanDetail, viewAs: ClanRole | null, userId: s
     name: m.displayName,
     role: m.userId === userId && viewAs ? viewAs : m.role,
     hue: hueOf(m.userId),
+    avatarUrl: m.avatarUrl ?? null,
     weekDeposit: 0,
     weekMeters: m.weekCatches * 10,
     lastCatchMin: m.weekCatches > 0 ? 180 : null,
