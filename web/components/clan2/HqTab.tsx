@@ -57,13 +57,17 @@ export function HqTab({ onGoMap }: { onGoMap?: (focus?: MapFocus) => void }) {
                 {tn('clan2.hq.onMap')}
               </button>
               {manage && (
-                <button className="btn-secondary" disabled={coolLeft > 0 || s.treasury.balance < s.settings.hqMoveCost} onClick={() => onGoMap?.({ place: true })}>
+                <button className="btn-secondary" disabled={!!hq.siege || coolLeft > 0 || s.treasury.balance < s.settings.hqMoveCost} onClick={() => onGoMap?.({ place: true })}>
                   {tn('clan2.hq.move')}
                 </button>
               )}
             </div>
             <p className="c2-muted small" style={{ marginTop: 8 }}>
-              {coolLeft > 0 ? `${tn('clan2.hq.moveCost', { n: s.settings.hqMoveCost })}. ${tn('clan2.hq.moveCooldown', { t: fmtLeft(coolLeft) })}` : tn('clan2.hq.moveCost', { n: s.settings.hqMoveCost })}
+              {hq.siege
+                ? tn('clan2.hq.moveSiege')
+                : coolLeft > 0
+                  ? `${tn('clan2.hq.moveCost', { n: s.settings.hqMoveCost })}. ${tn('clan2.hq.moveCooldown', { t: fmtLeft(coolLeft) })}`
+                  : tn('clan2.hq.moveCost', { n: s.settings.hqMoveCost })}
             </p>
           </>
         ) : (

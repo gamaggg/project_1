@@ -7,7 +7,7 @@ import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorP
 import { resolveCrest } from '@/lib/data/clanCrests'
 import { C2Coins, C2Count, C2Sheet, useC2 } from '@/components/clan2/C2Common'
 import { ItemPreview, itemName } from '@/components/clan2/ClanItems'
-import { buyItem, canManage, capOf, equipItem, goalOf, setGoal, useDemoState } from '@/lib/clan2/demoStore'
+import { buyItem, canManage, capOf, equipItem, goalOf, setGoal, siegeLocked, useDemoState } from '@/lib/clan2/demoStore'
 import { CLAN_SKIN_FACTOR, SHOP_ITEMS, SHOP_KINDS, fmt, type ShopKind } from '@/lib/clan2/rules'
 import type { DemoState, GoalItem } from '@/lib/clan2/types'
 import { tn } from '@/lib/i18n/runtime'
@@ -198,8 +198,8 @@ function TryOn({ item, onDone }: { item: GoalItem; onDone: () => void }) {
             )
           ) : (
             <>
-              <button className="btn-primary" disabled={locked || short > 0} onClick={() => act(buyItem(item.id), 'bought') && onDone()}>
-                {locked ? tn('clan2.base.levelLow', { n: item.minLevel }) : short > 0 ? tn('clan2.base.missing', { n: fmt(short) }) : tn('clan2.shop.buyFor', { n: fmt(item.cost) })}
+              <button className="btn-primary" disabled={siegeLocked(s) || locked || short > 0} onClick={() => act(buyItem(item.id), 'bought') && onDone()}>
+                {siegeLocked(s) ? tn('clan2.siegeLock.btn') : locked ? tn('clan2.base.levelLow', { n: item.minLevel }) : short > 0 ? tn('clan2.base.missing', { n: fmt(short) }) : tn('clan2.shop.buyFor', { n: fmt(item.cost) })}
               </button>
               {isGoal ? (
                 <button className="btn-secondary" onClick={() => act(setGoal(null), 'goalCleared')}>

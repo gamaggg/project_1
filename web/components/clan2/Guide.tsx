@@ -168,10 +168,9 @@ export function NextStep({ onGo }: { onGo?: (to: Go) => void }) {
   } else if (hq && !built) {
     key = 'build'
     to = 'base'
-  } else if (!s.treasury.goalId) {
-    key = 'goal'
-    to = 'shop'
   } else if (questReady) {
+    // No «выбери цель» step: the treasury card right above already has its own «Выбрать, на что копить» button (the
+    // owner saw the same thing twice, 13.11).
     key = 'quest'
     to = 'week'
   } else if (s.buff.phase === 'idle') {

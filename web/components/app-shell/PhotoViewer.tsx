@@ -12,6 +12,9 @@ type View = { s: number; x: number; y: number }
 // A full-screen photo you can zoom: pinch with two fingers, double-tap (or a
 // mouse wheel) to zoom in and out, drag to move around once zoomed. The
 // image is drawn «contain» on black, so the whole frame is visible at 1×.
+// At 1× a one-finger swipe in any direction (sideways or down) throws the photo
+// off the screen and closes the viewer, so the × at the top need not be reached;
+// a short drag springs back.
 // Rendered into <body> (a screen is its own stacking context and would keep
 // the nav above it); its touch and click events are stopped before they
 // bubble through the React tree into the card's swipe-to-next-catch handler.
@@ -29,6 +32,9 @@ export function PhotoViewer({ src, alt, onClose }: { src: string; alt: string; o
   const lastTap = useRef<{ t: number; x: number; y: number } | null>(null)
   const moved = useRef(false)
   const [hint, setHint] = useState(true)
+  // The swipe-to-close at 1×: where the photo is pulled to, and whether it is flying off (or springing back).
+  const [pull, setPull] = useState<{ x: number; y: number; anim: 'none' | 'back' | 'out' }>({ x: 0, y: 0, anim: 'none' })
+  const swipe = useRef<{ x: number; y: number; t: number } | null>(null)
 
   const apply = useCallback((next: View) => {
     const stage = stageRef.current
@@ -71,6 +77,11 @@ export function PhotoViewer({ src, alt, onClose }: { src: string; alt: string; o
       drag.current = null
     } else if (pointers.current.size === 1) {
       drag.current = { x: e.clientX, y: e.clientY, vx: v.x, vy: v.y }
+      swipe.current = v.s <= 1.01 ? { x: e.clientX, y: e.clientY, t: e.timeStamp } : null
+    }
+    if (pointers.current.size > 1 && swipe.current) {
+      swipe.current = null
+      setPull({ x: 0, y: 0, anim: 'back' })
     }
   }
 
@@ -90,6 +101,7 @@ export function PhotoViewer({ src, alt, onClose }: { src: string; alt: string; o
       const dy = e.clientY - drag.current.y
       if (Math.abs(dx) + Math.abs(dy) > 6) moved.current = true
       if (viewRef.current.s > 1) apply({ ...viewRef.current, x: drag.current.vx + dx, y: drag.current.vy + dy })
+      else if (swipe.current) setPull({ x: e.clientX - swipe.current.x, y: e.clientY - swipe.current.y, anim: 'none' })
     }
   }
 
@@ -104,6 +116,21 @@ export function PhotoViewer({ src, alt, onClose }: { src: string; alt: string; o
       return
     }
     drag.current = null
+    const sw = swipe.current
+    swipe.current = null
+    if (sw && moved.current) {
+      const dx = e.clientX - sw.x
+      const dy = e.clientY - sw.y
+      const dist = Math.hypot(dx, dy)
+      const speed = dist / Math.max(1, e.timeStamp - sw.t)
+      if (dist > 90 || (dist > 30 && speed > 0.5)) {
+        // Off the screen the way it was thrown, then closed.
+        const k = (Math.max(window.innerWidth, window.innerHeight) * 1.2) / Math.max(1, dist)
+        setPull({ x: dx * k, y: dy * k, anim: 'out' })
+        window.setTimeout(onClose, 200)
+      } else setPull({ x: 0, y: 0, anim: 'back' })
+      return
+    }
     if (moved.current) return
     // A tap: two in a row zoom in on the spot (or back out).
     const now = Date.now()
@@ -151,8 +178,20 @@ export function PhotoViewer({ src, alt, onClose }: { src: string; alt: string; o
 
   const stop = (e: React.SyntheticEvent) => e.stopPropagation()
 
+  const pullDist = Math.hypot(pull.x, pull.y)
+  const pullFade = pull.anim === 'out' ? 0 : Math.max(0.25, 1 - pullDist / 420)
+  const pullTransition = pull.anim === 'out' ? 'transform .2s cubic-bezier(.4,0,.6,1)' : pull.anim === 'back' ? 'transform .25s cubic-bezier(.2,.8,.25,1)' : 'none'
+
   return createPortal(
-    <div className="photo-viewer" onTouchStart={stop} onTouchEnd={stop} onClick={stop} role="dialog" aria-label={tn('catch.viewerAria')}>
+    <div
+      className="photo-viewer"
+      style={{ background: `rgba(0,0,0,${pullFade})`, transition: pull.anim === 'none' ? 'none' : 'background-color .2s' }}
+      onTouchStart={stop}
+      onTouchEnd={stop}
+      onClick={stop}
+      role="dialog"
+      aria-label={tn('catch.viewerAria')}
+    >
       <div
         ref={stageRef}
         className="photo-viewer-stage"
@@ -168,7 +207,7 @@ export function PhotoViewer({ src, alt, onClose }: { src: string; alt: string; o
           alt={alt}
           draggable={false}
           className="photo-viewer-img"
-          style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.s})` }}
+          style={{ transform: `translate(${view.x + pull.x}px, ${view.y + pull.y}px) scale(${view.s})`, transition: pullTransition }}
         />
       </div>
       <button type="button" className="photo-viewer-close tap-scale" onClick={onClose} aria-label={tn('common.close')}>

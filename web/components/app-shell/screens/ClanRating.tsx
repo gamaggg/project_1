@@ -1,8 +1,8 @@
 'use client'
 
 import { HexLoader } from '@/components/app-shell/HexLoader'
-import { useClanList, useClanListsOfCities } from '@/lib/supabase/queries'
-import { ClanCrest } from '@/components/app-shell/ClanCrest'
+import { useClanFrames, useClanList, useClanListsOfCities } from '@/lib/supabase/queries'
+import { FramedCrest } from '@/components/clan2/ClanItems'
 import { leagueFor } from '@/lib/data/clanLevels'
 import { pluralSectors } from '@/lib/format'
 import { CITIES, CITY_LIST, type CityId } from '@/lib/data/city'
@@ -12,12 +12,12 @@ import { tn } from '@/lib/i18n'
 // How many clans of each other city the tab lists (the city's own list goes to 30).
 const OTHER_CITY_LIMIT = 10
 
-function ClanRow({ clan, rank, onOpenClan }: { clan: ClanSummary; rank: number; onOpenClan: (id: number) => void }) {
+function ClanRow({ clan, rank, frame, onOpenClan }: { clan: ClanSummary; rank: number; frame?: string; onOpenClan: (id: number) => void }) {
   const league = leagueFor(clan.trophies)
   return (
     <button className="clan-list-row tap-scale" onClick={() => onOpenClan(clan.id)}>
       <span className="clan-list-rank">{rank}</span>
-      <ClanCrest crest={clan.crest} size={40} />
+      <FramedCrest crest={clan.crest} frame={frame} size={40} />
       <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
         <span className="clan-list-name">{clan.name}</span>
         <span className="clan-list-meta">
@@ -40,6 +40,7 @@ function ClanRow({ clan, rank, onOpenClan }: { clan: ClanSummary; rank: number; 
 // cannot be joined, its screen says so).
 export function ClanRating({ city, onOpenClan, onOpenClans }: { city: CityId; onOpenClan: (id: number) => void; onOpenClans: () => void }) {
   const { data: clans = [], isLoading } = useClanList(city, '')
+  const { data: frames = {} } = useClanFrames()
   const otherCityIds = CITY_LIST.map((c) => c.id).filter((id) => id !== city)
   const others = useClanListsOfCities(otherCityIds)
   const top = clans.slice(0, 3)
@@ -69,7 +70,7 @@ export function ClanRating({ city, onOpenClan, onOpenClans }: { city: CityId; on
             {[top[1], top[0], top[2]].map((c, i) =>
               c ? (
                 <button key={c.id} className={`clan-podium-item${i === 1 ? ' first' : ''}`} onClick={() => onOpenClan(c.id)}>
-                  <ClanCrest crest={c.crest} size={i === 1 ? 72 : 56} shine={i === 1} />
+                  <FramedCrest crest={c.crest} frame={frames[c.id]} size={i === 1 ? 72 : 56} shine={i === 1} />
                   <span className="clan-podium-place">{i === 1 ? 1 : i === 0 ? 2 : 3}</span>
                   <span className="clan-podium-name">{c.name}</span>
                   <span className="clan-podium-trophies">🏆 {c.trophies}</span>
@@ -82,7 +83,7 @@ export function ClanRating({ city, onOpenClan, onOpenClans }: { city: CityId; on
           {rest.length > 0 && (
             <div className="clan-card">
               {rest.map((c, i) => (
-                <ClanRow key={c.id} clan={c} rank={i + 4} onOpenClan={onOpenClan} />
+                <ClanRow key={c.id} clan={c} rank={i + 4} frame={frames[c.id]} onOpenClan={onOpenClan} />
               ))}
             </div>
           )}
@@ -98,7 +99,7 @@ export function ClanRating({ city, onOpenClan, onOpenClans }: { city: CityId; on
             <div key={b.id} className="clan-card" style={{ marginBottom: 12 }}>
               <div className="clan-card-title">{CITIES[b.id].name}</div>
               {b.clans.map((c, i) => (
-                <ClanRow key={c.id} clan={c} rank={i + 1} onOpenClan={onOpenClan} />
+                <ClanRow key={c.id} clan={c} rank={i + 1} frame={frames[c.id]} onOpenClan={onOpenClan} />
               ))}
             </div>
           ))}

@@ -303,7 +303,10 @@ export const FAQ_EN: FaqSection[] = [
           [
             'The HQ sector\'s defence is the same three shields. Every clan catch there adds one, an outsider\'s catch takes one off.',
             'With no shields left, the next outsider\'s catch does not take the sector but starts a siege: the clan has 90 minutes (the Beacon adds up to 30). A catch by any member on the HQ sector lifts the siege and brings them 150 coins.',
+            'While the siege lasts the treasury is shut for spending: nothing can be bought in the clan shop, built or sped up, no «Outing» planned and the HQ cannot be moved. Deposits still go in, and the rent and the catch tax come as usual.',
             'If it is not lifted in time the HQ falls: the attackers carry off 20 % of the treasury (at most 1 500 coins), the HQ sector goes to them, the buildings fall asleep and a new HQ can only be set after 24 hours.',
+            'Three quarters of the loot go to the attacker\'s clan treasury, or to the attacker personally if they have no clan. The remaining quarter is lost.',
+            'The buildings keep their levels when the HQ falls: they sleep while the clan has no HQ and work again as soon as the clan sets a new HQ on any of its sectors.',
           ],
           'An attack on the HQ, a siege and a fall are sent to the whole clan in «Activity» and in Telegram: an attack at most once in 30 minutes, a siege at once, even at night (there are only 90 minutes to lift it).',
         ],

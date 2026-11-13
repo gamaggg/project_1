@@ -3,7 +3,8 @@
 import { useEffect } from 'react'
 
 // Swipe a bottom sheet down to close it — every `.move-sheet` at once (the
-// bite forecast, defense rules, support, gifts…), mounted once by FishZoneApp.
+// bite forecast, defense rules, support, gifts…) and every sheet of the clan
+// update (`.c2-sheet`: rent, deposit, sources, HQ…), mounted once by FishZoneApp.
 // A tall sheet leaves only a sliver of the dimmed overlay above it, and in
 // Telegram that sliver sits under its own header buttons, so tapping outside
 // couldn't close it. The sheet follows the finger; let go far enough (or
@@ -13,6 +14,9 @@ import { useEffect } from 'react'
 // drag upwards. Text fields keep their own gestures, and so does anything
 // marked data-own-gesture (the forecast's hour scale, dragged sideways and
 // down alike).
+const SHEET = '.move-sheet, .c2-sheet'
+const OVERLAY = '.move-sheet-overlay, .c2-sheet-overlay'
+
 export function useSheetSwipeToClose() {
   useEffect(() => {
     let sheet: HTMLElement | null = null
@@ -24,10 +28,10 @@ export function useSheetSwipeToClose() {
     const onStart = (e: TouchEvent) => {
       if (e.touches.length !== 1) return
       const target = e.target as Element | null
-      const s = target?.closest<HTMLElement>('.move-sheet')
+      const s = target?.closest<HTMLElement>(SHEET)
       if (!s || target?.closest('input, textarea, select, [data-own-gesture]')) return
-      const scroller = target?.closest<HTMLElement>('.move-body, .support-thread')
-      if (scroller && scroller.scrollTop > 0) return
+      // Content scrolled down (the sheet itself or anything inside it): the drag scrolls it back up first.
+      for (let el: Element | null = target; el && el !== s.parentElement; el = el.parentElement) if (el.scrollTop > 0) return
       sheet = s
       startY = e.touches[0].clientY
       startT = performance.now()
@@ -66,7 +70,7 @@ export function useSheetSwipeToClose() {
       if (dy > 110 || (dy > 40 && speed > 0.5)) {
         s.style.transform = `translateY(${s.offsetHeight}px)`
         window.setTimeout(() => {
-          ;(s.closest('.move-sheet-overlay') as HTMLElement | null)?.click()
+          ;(s.closest(OVERLAY) as HTMLElement | null)?.click()
           // An overlay that doesn't close right now (something is saving):
           // the sheet comes back.
           window.setTimeout(() => {

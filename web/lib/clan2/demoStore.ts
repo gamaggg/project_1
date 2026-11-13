@@ -496,6 +496,7 @@ export function buyItem(id: string): Result {
     if (d.owned.includes(item.id)) return no('owned')
     if (d.clan.level < item.minLevel) return no('levelLow')
     if (d.treasury.balance < item.cost) return no('notEnough')
+    if (d.hq.siege) return no('siegeLock')
     if (!spend(d, item.kind === 'clan_skin' ? 'spend_skin' : 'spend_goal', item.cost, d.myId, item.id)) return no('notEnough')
     d.owned.push(item.id)
     wear(d, item.kind, item.id)
@@ -536,6 +537,7 @@ export function upgradeProject(id: ProjectId): Result {
     if (level >= 3) return no('maxLevel')
     if (d.clan.level < BUILD_CLAN_LEVEL[level as 0 | 1 | 2]) return no('levelLow')
     const cost = PROJECTS[id].costs[level as 0 | 1 | 2]
+    if (d.hq.siege) return no('siegeLock')
     if (!spend(d, 'spend_project', cost, d.myId, `${id}:${level + 1}`)) return no('notEnough')
     const now = nowOf(d)
     d.build = { id, toLevel: (level + 1) as 1 | 2 | 3, startedAt: now, endsAt: now + BUILD_HOURS[id][level as 0 | 1 | 2] * HOURS }
@@ -555,6 +557,7 @@ export function speedUpBuild(): Result {
     if (!canManage(d)) return no('notManager')
     if (!d.build) return no('buildNone')
     const cost = speedupPrice(d)
+    if (d.hq.siege) return no('siegeLock')
     if (!spend(d, 'spend_project', cost, d.myId, `speedup:${d.build.id}:${d.build.toLevel}`)) return no('notEnough')
     d.build.endsAt = nowOf(d)
     runTime(d)
@@ -584,6 +587,7 @@ export function planBuff(inMinutes: number): Result {
   return mutate((d) => {
     if (!canManage(d)) return no('notManager')
     if (d.buff.phase !== 'idle') return no(d.buff.phase === 'cooldown' ? 'buffCooldown' : 'buffBusy')
+    if (d.hq.siege) return no('siegeLock')
     if (!spend(d, 'spend_buff', d.settings.buffPrice, d.myId, 'buff')) return no('notEnough')
     const at = nowOf(d) + inMinutes * 60_000
     d.buff = { phase: 'planned', startsAt: at, endsAt: null, cooldownUntil: null, rsvp: [d.myId], startedBy: d.myId, lastBonus: 0 }
@@ -617,6 +621,10 @@ export function othersRsvp(count: number): Result {
 
 export const buffActive = (s: DemoState) => s.buff.phase === 'active'
 
+// While the HQ is under siege the treasury is shut: nothing is bought, built, sped up, launched or moved with it
+// (coins still come in). The server refuses the same (CLAN:siege_lock, supabase-drafts/clan-siege-lock-13-11).
+export const siegeLocked = (s: DemoState) => !!s.hq.siege
+
 // ───────────── the headquarters ─────────────
 
 export function placeHq(sectorId: string): Result {
@@ -628,6 +636,8 @@ export function placeHq(sectorId: string): Result {
     if (target.hq) return no('hqTaken')
     if (d.hq.ruins && nowOf(d) < d.hq.ruins.until) return no('hqRuins')
     const moving = !!d.hq.sectorId
+    // A besieged HQ stays where it is: moving it would end the siege for the price of the move.
+    if (moving && d.hq.siege) return no('hqMoveSiege')
     if (moving) {
       const since = nowOf(d) - (d.hq.lastMoveAt ?? d.hq.placedAt ?? 0)
       if (since < HQ_MOVE_COOLDOWN_DAYS * DAY) return no('hqCooldown')

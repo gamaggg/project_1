@@ -3,9 +3,9 @@
 import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useClanList, useProfile, useMyClanInvites, useClanEligibility } from '@/lib/supabase/queries'
+import { useClanFrames, useClanList, useProfile, useMyClanInvites, useClanEligibility } from '@/lib/supabase/queries'
 import { BackButton } from '@/components/app-shell/BackButton'
-import { ClanCrest } from '@/components/app-shell/ClanCrest'
+import { FramedCrest } from '@/components/clan2/ClanItems'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { CLAN_PRICE, JOIN_TYPE_LABEL, leagueFor } from '@/lib/data/clanLevels'
 import { tn } from '@/lib/i18n/runtime'
@@ -38,6 +38,7 @@ export function ClanListScreen({
   const debounced = useDebounced(query, 300)
   const { data: clans = [], isLoading } = useClanList(city, debounced)
   const { data: invites = [] } = useMyClanInvites(true)
+  const { data: frames = {} } = useClanFrames()
   const inClan = !!me?.clanId
   const { data: eligibility } = useClanEligibility(!inClan)
 
@@ -62,7 +63,7 @@ export function ClanListScreen({
 
         {inClan && me?.clanId && (
           <button className="clan-mine tap-scale" onClick={() => onOpenClan(me.clanId!)}>
-            <ClanCrest crest={me.clanCrest} size={48} />
+            <FramedCrest crest={me.clanCrest} frame={frames[me.clanId]} size={48} />
             <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
               <span className="clan-mine-kicker">{tn('clanList.yours')}</span>
               <span className="clan-mine-name">{me.clanName}</span>
@@ -78,7 +79,7 @@ export function ClanListScreen({
             <div className="clan-card-title">{tn('clanList.invites', { count: invites.length })}</div>
             {invites.map((inv) => (
               <button key={inv.clanId} className="clan-list-row tap-scale" onClick={() => onOpenClan(inv.clanId)}>
-                <ClanCrest crest={inv.crest} size={40} />
+                <FramedCrest crest={inv.crest} frame={frames[inv.clanId]} size={40} />
                 <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                   <span className="clan-list-name">{inv.name}</span>
                   <span className="clan-list-meta">{tn('clanList.invitedBy', { name: inv.invitedByName ?? tn('clanList.clanMember') })}</span>
@@ -123,7 +124,7 @@ export function ClanListScreen({
               return (
                 <button key={c.id} className="clan-list-row tap-scale" style={{ animationDelay: `${Math.min(i, 12) * 35}ms` }} onClick={() => onOpenClan(c.id)}>
                   <span className="clan-list-rank">{i + 1}</span>
-                  <ClanCrest crest={c.crest} size={44} />
+                  <FramedCrest crest={c.crest} frame={frames[c.id]} size={44} />
                   <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                     <span className="clan-list-name">{c.name}</span>
                     <span className="clan-list-meta">

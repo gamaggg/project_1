@@ -236,12 +236,14 @@
 .c2-hall-size .c2-chip{font-size:11px; padding:2px 8px;}
 .c2-hall-by{display:flex; align-items:center; gap:6px; min-width:0;}
 .c2-hall-by > span{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-.c2-sharecard{border-radius:22px; padding:22px 18px; color:#fff; text-align:center; display:flex; flex-direction:column; align-items:center; gap:6px; box-shadow:var(--shadow);}
+.c2-sharecard{position:relative; z-index:0; isolation:isolate; overflow:hidden; border-radius:22px; padding:22px 18px; color:rgb(var(--hero-text-rgb,255,255,255)); text-align:center; display:flex; flex-direction:column; align-items:center; gap:6px; box-shadow:var(--shadow);}
+.c2-sharecard > :not(:first-child){position:relative;}
+.c2-sharecard-crest{line-height:0;}
 .c2-sharecard-name{font-size:22px; font-weight:800; letter-spacing:-.02em;}
 .c2-sharecard-meta{font-size:12.5px; font-weight:700; opacity:.85;}
 .c2-sharecard-records{display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:8px;}
 .c2-sharecard-records > span{width:100%; font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; opacity:.7;}
-.c2-sharecard-records > b{padding:5px 10px; border-radius:999px; background:rgba(255,255,255,.16); font-size:12px;}
+.c2-sharecard-records > b{padding:5px 10px; border-radius:999px; background:rgba(var(--hero-text-rgb,255,255,255),.16); font-size:12px;}
 .c2-members{display:flex; flex-direction:column;}
 .c2-members > li{display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--line);}
 .c2-members > li:last-child{border-bottom:none;}
@@ -722,7 +724,9 @@
 .c2-goal-main{flex:1; min-width:0; display:flex; flex-direction:column; gap:5px;}
 .c2-goal-main small{font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint);}
 .c2-goal-main b{font-size:14.5px; line-height:1.2;}
-.c2-goal-left{display:flex; justify-content:space-between; gap:8px; font-size:12px; font-weight:700; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+.c2-goal-left{display:flex; flex-wrap:wrap; justify-content:space-between; column-gap:8px; row-gap:2px; font-size:12px; font-weight:700; color:var(--ink-soft); font-variant-numeric:tabular-nums; white-space:nowrap;}
+/* A wide picture (the gold or the legendary frame, a boat) leaves the text a narrow column: the two parts go one under
+   the other instead of a number broken in the middle («5 / 494»). */
 .c2-goal-strip.ready .c2-goal-left{color:#C23F00;}
 .c2-goal-btns{display:flex; align-items:center; gap:12px; margin-top:4px;}
 .c2-goal-btns .btn-primary{width:auto; padding:9px 14px; font-size:13px;}
@@ -765,12 +769,7 @@
 .c2-fact-ok{color:var(--ink);}
 
 /* A frame round the crest: the crest keeps its box, the frame reaches past it. */
-.c2-frame{position:relative; display:inline-flex; align-items:center; justify-content:center; flex:none;}
-.c2-frame-art{position:absolute; left:-20%; top:-20%; width:140%; height:140%; overflow:visible; pointer-events:none;}
-.c2-frame-in{position:relative; display:inline-flex;}
-.c2-frame-preview{display:inline-flex; align-items:center; justify-content:center;}
-.c2-frame_legend .c2-frame-glow{animation:c2-frame-glow 2.8s ease-in-out infinite;}
-@keyframes c2-frame-glow{0%,100%{opacity:.18}50%{opacity:.5}}
+/* The clan frame (.c2-frame*, ClanItems.tsx) lives in globals.css: the clan lists show it without this file. */
 
 /* A boat on a strip of water. */
 .c2-boat-preview{position:relative; display:inline-flex; align-items:flex-end; justify-content:center; padding:18px 0 4px;}
@@ -813,7 +812,7 @@
 .c2-quest-helpers-faces i{font-style:normal; font-size:11px; font-weight:800; color:var(--ink-soft); margin-left:4px; align-self:center; box-shadow:none;}
 .c2-quest-left.ready{background:var(--accent-soft); color:#C23F00;}
 .c2-quest-claim{margin-top:10px;}
-@media (prefers-reduced-motion: reduce){.c2-quest-badge,.c2-defense-clock-run,.c2-frame_legend .c2-frame-glow,.c2-focus-flash{animation:none;}}
+@media (prefers-reduced-motion: reduce){.c2-quest-badge,.c2-defense-clock-run,.c2-focus-flash{animation:none;}}
 
 /* The members list of the real clan screen: what each member gave to the treasury this month. */
 .c2-month-head{margin:-4px 0 8px; font-size:12px; line-height:1.4; color:var(--ink-soft);}
@@ -1018,7 +1017,7 @@
 .c2-base-siege-smoke i:nth-child(3){animation-delay:1.6s; left:-13px;}
 @keyframes c2-siege-smoke{0%{transform:translateY(0) scale(.5); opacity:0}20%{opacity:.9}100%{transform:translateY(-46px) scale(1.6); opacity:0}}
 .c2-base-hex.siege .c2-base-hq-art{animation:hqx-tremble .42s linear infinite;}
-.c2-base-siege-bar{position:absolute; left:10px; right:10px; top:10px; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 8px 8px 12px; border-radius:14px; background:#B3261E; color:#fff; font-size:13px; box-shadow:0 6px 16px rgba(179,38,30,.35); pointer-events:auto;}
+.c2-base-siege-bar{position:relative; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 8px 8px 12px; border-radius:14px; background:#B3261E; color:#fff; font-size:13px; box-shadow:0 6px 16px rgba(179,38,30,.35); pointer-events:auto;}
 .c2-base-siege-bar button{flex:none; border:none; border-radius:10px; padding:7px 10px; background:#fff; color:#B3261E; font:inherit; font-size:12.5px; font-weight:800; cursor:pointer;}
 @media (prefers-reduced-motion: reduce){.c2-base-siege-veil,.c2-base-siege-smoke i,.c2-base-hex.siege .c2-base-hq-art{animation:none;}}
 

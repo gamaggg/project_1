@@ -173,6 +173,20 @@ export function BoatPreview({ id, crest, width = 132 }: { id: string; crest: unk
   )
 }
 
+// A crest with the clan's frame for lists (clan list, rating, podium): the frame and the crest fit in a `size` box
+// (the frame may stick out a little at the sides), so a framed row is as tall as a plain one. No frame — the bare crest.
+export function FramedCrest({ crest, frame, size, shine }: { crest: unknown; frame: string | null | undefined; size: number; shine?: boolean }) {
+  if (!frame || !FRAME_LOOK[frame]) return <ClanCrest crest={crest} size={size} shine={shine} />
+  const inner = Math.round(size / (frameSpan(frame) * 0.9))
+  return (
+    <span className="c2-framed-crest" style={{ width: size, height: size }}>
+      <ClanFrame id={frame} size={inner} crest={crest}>
+        <ClanCrest crest={crest} size={inner} shine={shine} />
+      </ClanFrame>
+    </span>
+  )
+}
+
 // The item as a picture: `size` is the width of the picture.
 export function ItemPreview({ item, crest, size = 76 }: { item: GoalItem; crest: unknown; size?: number }) {
   if (item.kind === 'clan_skin') return <SkinPreview skinId={item.id} color={resolveCrest(crest).primary} width={size} />

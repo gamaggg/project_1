@@ -3189,6 +3189,18 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 @keyframes clan-crest-shine{0%,70%{transform:translateX(0) skewX(-18deg);}100%{transform:translateX(170px) skewX(-18deg);}}
 @media (prefers-reduced-motion: reduce){.clan-crest-shine{animation:none; display:none;}}
 
+/* ---------- Clan frame round the crest (ClanFrame / FramedCrest in components/clan2/ClanItems.tsx) ----------
+   Here, not in clan2.css: the hero, the clan list and the rating show it too. */
+.c2-frame{position:relative; display:inline-flex; align-items:center; justify-content:center; flex:none;}
+.c2-frame-art{position:absolute; left:-20%; top:-20%; width:140%; height:140%; overflow:visible; pointer-events:none;}
+.c2-frame-in{position:relative; display:inline-flex;}
+.c2-frame-preview{display:inline-flex; align-items:center; justify-content:center;}
+.c2-framed-crest{display:inline-flex; align-items:center; justify-content:center; flex:none;}
+.c2-framed-crest .c2-frame{margin:0 !important;}
+.c2-frame_legend .c2-frame-glow{animation:c2-frame-glow 2.8s ease-in-out infinite;}
+@keyframes c2-frame-glow{0%,100%{opacity:.18}50%{opacity:.5}}
+@media (prefers-reduced-motion: reduce){.c2-frame_legend .c2-frame-glow{animation:none;}}
+
 /* ---------- Clan hero (see ClanHero.tsx) ---------- */
 .clan-hero{
   position:relative; z-index:0; isolation:isolate; overflow:hidden;

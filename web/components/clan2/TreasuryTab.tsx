@@ -1,14 +1,16 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { C2Bar, C2Card, C2Coins, C2Count, C2Sheet, fmtAgo, speciesName, useC2, useDemoNow } from '@/components/clan2/C2Common'
 import { ItemPreview, itemName } from '@/components/clan2/ClanItems'
 import { HowItWorks, NextStep, type Go } from '@/components/clan2/Guide'
 import { alertText } from '@/components/clan2/alertText'
-import { buyGoal, canManage, capOf, deposit, goalOf, levelOf, rentPerDay, setTaxRate, useDemoState } from '@/lib/clan2/demoStore'
+import { buyGoal, canManage, capOf, deposit, goalOf, levelOf, rentPerDay, setTaxRate, siegeLocked, useDemoState } from '@/lib/clan2/demoStore'
 import { requestMap, setLiveUi } from '@/lib/clan2/live/ui'
-import { DAY, PROJECT_EFFECTS, TAX_RATES, fmt, isSpend, treasuryCap } from '@/lib/clan2/rules'
+import { readWeekLog } from '@/lib/clan2/live/server'
+import { DAY, PROJECT_EFFECTS, TAX_RATES, fmt, treasuryCap } from '@/lib/clan2/rules'
 import type { AlertKind, QuestKind, TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
 import { questLabel } from '@/components/clan2/WeekTab'
 import { tn, tnd } from '@/lib/i18n/runtime'
@@ -46,19 +48,32 @@ export function TreasuryTab({ onGo, events, onTour }: { onGo?: (to: Go) => void;
   const cap = capOf(s)
   const rent = rentPerDay(s)
   const goal = goalOf(s)
-  const week = useMemo(() => s.treasury.entries.filter((e) => e.at >= now - 7 * DAY), [s.treasury.entries, now])
+  // The week in full from the server (the state's journal is only its last 50 lines); refreshed with every change of
+  // the balance. The browser-only preview counts its own entries.
+  const clanId = s.live?.clanId ?? null
+  const { data: weekLog } = useQuery({
+    queryKey: ['clan2-week-log', clanId, s.treasury.balance, s.treasury.entries.at(-1)?.id ?? 0],
+    enabled: !!clanId && s.settings.enabled,
+    staleTime: 60_000,
+    placeholderData: (prev) => prev,
+    queryFn: () => readWeekLog(clanId!),
+  })
+  const allEntries = weekLog ?? s.treasury.entries
+  const week = useMemo(() => allEntries.filter((e) => e.at >= now - 7 * DAY), [allEntries, now])
   const income = (kinds: TreasuryKind[]) => week.filter((e) => kinds.includes(e.kind) && e.amount > 0).reduce((n, e) => n + e.amount, 0)
   const sources = SOURCE_GROUPS.map((g) => ({ ...g, sum: income(g.kinds) }))
   const maxSource = Math.max(1, ...sources.map((x) => x.sum))
-  const spent = week.filter((e) => isSpend(e.kind)).reduce((n, e) => n + -e.amount, 0)
+  // Every coin that left, the HQ's loot taken by attackers included (it is not a purchase, but it is gone).
+  const isOut = (e: TreasuryEntry) => e.amount < 0
+  const spent = week.filter(isOut).reduce((n, e) => n + -e.amount, 0)
   const flow = useMemo(() => {
     const days = Array.from({ length: 7 }, () => 0)
-    for (const e of s.treasury.entries) {
+    for (const e of allEntries) {
       const back = Math.floor((now - e.at) / DAY)
       if (back >= 0 && back < 7 && e.amount > 0) days[6 - back] += e.amount
     }
     return days
-  }, [s.treasury.entries, now])
+  }, [allEntries, now])
   const maxFlow = Math.max(1, ...flow)
   const wallet = s.wallet
   const goalLeft = goal ? Math.max(0, goal.cost - s.treasury.balance) : 0
@@ -113,6 +128,7 @@ export function TreasuryTab({ onGo, events, onTour }: { onGo?: (to: Go) => void;
           <button className="btn-primary" onClick={() => setDepositOpen(true)} disabled={!isMember}>
             {tn('clan2.treasury.deposit')}
           </button>
+          {siegeLocked(s) && <p className="c2-short">{tn('clan2.siegeLock.text')}</p>}
         </div>
         {/* The goal of the treasury, chosen in the shop: what the clan is saving for, seen by everybody. */}
         {goal ? (
@@ -133,8 +149,8 @@ export function TreasuryTab({ onGo, events, onTour }: { onGo?: (to: Go) => void;
               {manage && (
                 <div className="c2-goal-btns">
                   {goalLeft === 0 && s.clan.level >= goal.minLevel && (
-                    <button className="btn-primary" onClick={() => act(buyGoal(), 'bought')}>
-                      {tn('clan2.shop.buyFor', { n: fmt(goal.cost) })}
+                    <button className="btn-primary" disabled={siegeLocked(s)} onClick={() => act(buyGoal(), 'bought')}>
+                      {siegeLocked(s) ? tn('clan2.siegeLock.btn') : tn('clan2.shop.buyFor', { n: fmt(goal.cost) })}
                     </button>
                   )}
                   <button className="c2-link" onClick={() => onGo?.('shop')}>
@@ -248,7 +264,7 @@ export function TreasuryTab({ onGo, events, onTour }: { onGo?: (to: Go) => void;
         />
       </C2Sheet>
       <C2Sheet open={!!info} onClose={() => setInfo(null)} title={info ? (info === 'spent' ? tn('clan2.treasury.spentTitle') : tn(`clan2.treasury.${info}`)) : ''}>
-        {info && <SourceDetail id={info} lines={info === 'spent' ? week.filter((e) => isSpend(e.kind)) : week.filter((e) => SOURCE_GROUPS.find((g) => g.id === info)!.kinds.includes(e.kind) && e.amount > 0)} />}
+        {info && <SourceDetail id={info} lines={info === 'spent' ? week.filter(isOut) : week.filter((e) => SOURCE_GROUPS.find((g) => g.id === info)!.kinds.includes(e.kind) && e.amount > 0)} />}
       </C2Sheet>
     </div>
   )

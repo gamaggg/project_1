@@ -1685,7 +1685,7 @@ export const en: Dict = {
     deleting: 'Deleting…',
     nobodyFound: 'Nobody found',
     viewerAria: 'Catch photo',
-    zoomHint: 'Pinch or double-tap to zoom in',
+    zoomHint: 'Pinch or double-tap to zoom in, swipe to close',
     uploadingSlow: 'Weak connection, still uploading the photo…',
     saveWithoutNet: 'Save offline — we’ll send it later',
   },

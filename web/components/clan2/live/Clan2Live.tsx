@@ -177,20 +177,14 @@ function LiveLayer({ input, visible, onOpenClan }: { input: LiveInput; visible: 
         </div>
       )}
 
-      {visible && (siege || ui.placing) && (
+      {/* No floating «Штаб в осаде» bar any more (owner, 13.11): it covered the sector card and the clan screen's
+          bottom; the siege is told by the HQ row of the sector card, the HQ tab, the base and the moment over the app. */}
+      {visible && ui.placing && (
         <div className="c2-live-stack">
-          {siege && hqSector && (
-            <div className="c2-live-banner danger" role="alert">
-              <span>{tn('clan2.map.siegeBar', { t: fmtLeft(siege.endsAt - now) })}</span>
-              <button onClick={defend}>{tn('clan2.map.defend')}</button>
-            </div>
-          )}
-          {ui.placing && (
-            <div className="c2-live-banner">
-              <span>{tn('clan2.map.placing')}</span>
-              <button onClick={() => setLiveUi({ placing: false })}>{tn('clan2.map.cancel')}</button>
-            </div>
-          )}
+          <div className="c2-live-banner">
+            <span>{tn('clan2.map.placing')}</span>
+            <button onClick={() => setLiveUi({ placing: false })}>{tn('clan2.map.cancel')}</button>
+          </div>
         </div>
       )}
 

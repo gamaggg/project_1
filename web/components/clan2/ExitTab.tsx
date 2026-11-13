@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { C2Avatar, C2Card, fmtAgo, fmtLeft, useC2, useDemoNow } from '@/components/clan2/C2Common'
 import { alertText } from '@/components/clan2/alertText'
-import { canManage, markAlertsRead, planBuff, rsvpBuff, useDemoState } from '@/lib/clan2/demoStore'
+import { canManage, markAlertsRead, planBuff, rsvpBuff, siegeLocked, useDemoState } from '@/lib/clan2/demoStore'
 import type { AlertKind, ClanAlert } from '@/lib/clan2/types'
 import { tn } from '@/lib/i18n/runtime'
 
@@ -56,9 +56,10 @@ export function ExitTab() {
                     </button>
                   ))}
                 </div>
-                <button className="btn-primary" style={{ marginTop: 12 }} disabled={s.treasury.balance < price} onClick={() => act(planBuff(startIn), 'buffPlanned')}>
-                  {tn('clan2.exit.plan')}
+                <button className="btn-primary" style={{ marginTop: 12 }} disabled={siegeLocked(s) || s.treasury.balance < price} onClick={() => act(planBuff(startIn), 'buffPlanned')}>
+                  {siegeLocked(s) ? tn('clan2.siegeLock.btn') : tn('clan2.exit.plan')}
                 </button>
+                {siegeLocked(s) && <p className="c2-short">{tn('clan2.siegeLock.text')}</p>}
                 {s.treasury.balance < price && <p className="c2-short">{tn('clan2.base.missing', { n: price - s.treasury.balance })}</p>}
               </>
             ) : (

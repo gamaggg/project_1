@@ -109,6 +109,25 @@ export function useClanList(city: CityId, query: string) {
   })
 }
 
+// The frame every clan wears (bought in its clan shop): clan id -> frame item id. One small public table, read once
+// in a while for the clan lists and the rating.
+export function useClanFrames() {
+  return useQuery({
+    queryKey: ['clan-frames'],
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<Record<number, string>> => {
+      const supabase = createClient() as unknown as {
+        from: (t: string) => { select: (c: string) => { not: (col: string, op: string, v: null) => Promise<{ data: { clan_id: number; frame: string | null }[] | null; error: unknown }> } }
+      }
+      const { data, error } = await supabase.from('clan_equipped').select('clan_id,frame').not('frame', 'is', null)
+      if (error) return {}
+      const out: Record<number, string> = {}
+      for (const r of data ?? []) if (r.frame) out[Number(r.clan_id)] = r.frame
+      return out
+    },
+  })
+}
+
 // The clans of several cities at once (the «Кланы» tab shows the other cities under the player's own). The same query
 // keys as useClanList, so a city read here is the one the clan list screen already has.
 export function useClanListsOfCities(cities: CityId[]) {

@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ART } from '@/components/clan2/BaseArt'
 import { C2Bar, C2Coins, fmtLeft, useC2, useDemoNow } from '@/components/clan2/C2Common'
-import { buildingsOn, canManage, speedUpBuild, speedupPrice, upgradeProject, useDemoState } from '@/lib/clan2/demoStore'
+import { buildingsOn, canManage, siegeLocked, speedUpBuild, speedupPrice, upgradeProject, useDemoState } from '@/lib/clan2/demoStore'
 import { BUILD_CLAN_LEVEL, BUILD_HOURS, PROJECTS, PROJECT_EFFECTS, PROJECT_IDS } from '@/lib/clan2/rules'
 import type { ProjectId, ProjectLevel } from '@/lib/clan2/types'
 import { getLiveUi, requestMap, setLiveUi, subscribeLiveUi, useLiveUi, type HqGeo } from '@/lib/clan2/live/ui'
@@ -128,7 +128,7 @@ export function BaseScene() {
   const moneyOk = s.treasury.balance >= cost
   const busy = !!s.build
   const building = s.build?.id === sel ? s.build : null
-  const can = !!next && on && levelOk && moneyOk && !busy && manage
+  const can = !!next && on && !siegeLocked(s) && levelOk && moneyOk && !busy && manage
   const SelArt = ART[sel]
   // The big picture in the card: the building is blown up to fill its frame (a flat dock more than a tall lighthouse).
   const heroRef = useRef<SVGGElement>(null)
@@ -153,23 +153,26 @@ export function BaseScene() {
 
   return (
     <div className="c2-base">
+      {/* The siege bar stands above the picture, not on it: on the picture the plots' names and badges ran over it. */}
+      {s.hq.siege && (
+        <div className="c2-base-siege-bar" role="alert">
+          <b>{tn('clan2.base.siegeLeft', { t: fmtLeft(s.hq.siege.endsAt - now) })}</b>
+          {s.hq.sectorId && (
+            <button type="button" onClick={() => requestMap({ sectorId: s.hq.sectorId ?? undefined })}>
+              {tn('clan2.moment.toMap')}
+            </button>
+          )}
+        </div>
+      )}
       <div className={`c2-base-hex${s.hq.siege ? ' siege' : ''}`} data-tour="base-scene" style={{ ['--clan' as string]: clanColor, ['--clan-dark' as string]: outline }}>
         {s.hq.siege && (
-          <div className="c2-base-siege" role="alert">
+          <div className="c2-base-siege" aria-hidden>
             <span className="c2-base-siege-veil" aria-hidden />
             <span className="c2-base-siege-smoke" aria-hidden style={{ left: px(HQ_AT.x), top: py(HQ_AT.y) }}>
               <i />
               <i />
               <i />
             </span>
-            <div className="c2-base-siege-bar">
-              <b>{tn('clan2.base.siegeLeft', { t: fmtLeft(s.hq.siege.endsAt - now) })}</b>
-              {s.hq.sectorId && (
-                <button type="button" onClick={() => requestMap({ sectorId: s.hq.sectorId ?? undefined })}>
-                  {tn('clan2.moment.toMap')}
-                </button>
-              )}
-            </div>
           </div>
         )}
         <svg className="c2-base-svg" viewBox={`0 0 ${VW} ${VH}`} aria-hidden="true">
@@ -322,8 +325,8 @@ export function BaseScene() {
           <span>{tn('clan2.base.buildLeft', { t: fmtLeft(s.build.endsAt - now) })}</span>
           <C2Bar value={(now - s.build.startedAt) / (s.build.endsAt - s.build.startedAt)} />
           {manage && (
-            <button className="btn-secondary" disabled={s.treasury.balance < speedupPrice(s)} onClick={() => act(speedUpBuild())}>
-              {tn('clan2.base.speedup', { n: speedupPrice(s) })}
+            <button className="btn-secondary" disabled={siegeLocked(s) || s.treasury.balance < speedupPrice(s)} onClick={() => act(speedUpBuild())}>
+              {siegeLocked(s) ? tn('clan2.siegeLock.btn') : tn('clan2.base.speedup', { n: speedupPrice(s) })}
             </button>
           )}
         </div>
@@ -390,7 +393,7 @@ export function BaseScene() {
                     if (act(upgradeProject(sel), 'upgraded')) setBuilt(null)
                   }}
                 >
-                  {!on ? tn('clan2.base.needHq') : !levelOk ? tn('clan2.base.levelLow', { n: needLevel }) : !moneyOk ? tn('clan2.base.missing', { n: cost - s.treasury.balance }) : busy ? tn('clan2.base.busy') : level === 0 ? tn('clan2.base.buildBtn', { n: cost }) : tn('clan2.base.upgradeBtn', { n: cost })}
+                  {!on ? tn('clan2.base.needHq') : siegeLocked(s) ? tn('clan2.siegeLock.btn') : !levelOk ? tn('clan2.base.levelLow', { n: needLevel }) : !moneyOk ? tn('clan2.base.missing', { n: cost - s.treasury.balance }) : busy ? tn('clan2.base.busy') : level === 0 ? tn('clan2.base.buildBtn', { n: cost }) : tn('clan2.base.upgradeBtn', { n: cost })}
                 </button>
               ) : (
                 <p className="c2-hint">{tn('clan2.base.managersOnly')}</p>

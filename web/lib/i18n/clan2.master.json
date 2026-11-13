@@ -445,6 +445,16 @@
    "ru": "В настоящей игре это происходит само",
    "en": "In the real game this happens by itself",
    "ka": "ნამდვილ თამაშში ეს თავისით ხდება"
+  },
+  "hqMoveSiege": {
+   "ru": "Во время осады штаб не перенести: сначала снимите осаду",
+   "en": "The HQ cannot be moved during a siege: break the siege first",
+   "ka": "ალყის დროს შტაბს ვერ გადაიტან: ჯერ ალყა მოხსენით"
+  },
+  "siegeLock": {
+   "ru": "Пока штаб в осаде, общак закрыт: тратить из него нельзя",
+   "en": "While the HQ is under siege the treasury is shut: nothing can be spent from it",
+   "ka": "სანამ შტაბი ალყაშია, სალარო დაკეტილია: მისგან ხარჯვა არ შეიძლება"
   }
  },
  "ok": {
@@ -858,9 +868,9 @@
    "ka": "კვირის სკივრისა და კლანების ბრძოლის მონეტების მეოთხედი ფონდში მიდის."
   },
   "infoOther": {
-   "ru": "Награда за задание недели, 100 монет за новичка, сделавшего первый улов, и возврат за отменённый выход.",
-   "en": "The weekly task's reward, 100 coins for a newcomer's first catch and the refund of a cancelled outing.",
-   "ka": "კვირის დავალების ჯილდო, 100 მონეტა ახალბედას პირველ დაჭერაზე და გაუქმებული გასვლის დაბრუნება."
+   "ru": "Награда за задание недели, 100 монет за новичка, сделавшего первый улов, возврат за отменённый выход и добыча со взятого чужого штаба.",
+   "en": "The weekly task's reward, 100 coins for a newcomer's first catch, the refund of a cancelled outing and the loot from an enemy HQ the clan took.",
+   "ka": "კვირის დავალების ჯილდო, 100 მონეტა ახალბედას პირველ დაჭერაზე, გაუქმებული გასვლის დაბრუნება და აღებული მტრის შტაბის ნადავლი."
   },
   "tapForMore": {
    "ru": "Нажми, чтобы узнать подробнее",
@@ -1003,9 +1013,9 @@
    "ka": "ბოლო 7 დღეში"
   },
   "infoSpent": {
-   "ru": "Всё, что клан потратил из общака: постройки и ускорения, штаб, выход и покупки в магазине клана.",
-   "en": "Everything the clan spent from the treasury: buildings and speed-ups, the HQ, the outing and the clan shop.",
-   "ka": "ყველაფერი, რაც კლანმა სალაროდან დახარჯა: ნაგებობები და დაჩქარებები, შტაბი, გასვლა და კლანის მაღაზია."
+   "ru": "Всё, что ушло из общака: постройки и ускорения, штаб, выход, покупки в магазине клана и добыча, которую унесли при взятии нашего штаба.",
+   "en": "Everything that left the treasury: buildings and speed-ups, the HQ, the outing, the clan shop and the loot carried off when our HQ fell.",
+   "ka": "ყველაფერი, რაც სალაროდან წავიდა: ნაგებობები და დაჩქარებები, შტაბი, გასვლა, კლანის მაღაზია და ნადავლი, რომელიც ჩვენი შტაბის აღებისას წაიღეს."
   }
  },
  "goal": {
@@ -1970,6 +1980,11 @@
    "ru": "на любом захваченном секторе клана",
    "en": "on any captured sector of the clan",
    "ka": "კლანის ნებისმიერ დაკავებულ სექტორზე"
+  },
+  "moveSiege": {
+   "ru": "Пока штаб в осаде, его нельзя перенести. Снимите осаду уловом на секторе штаба.",
+   "en": "While the HQ is under siege it cannot be moved. Break the siege with a catch on the HQ sector.",
+   "ka": "სანამ შტაბი ალყაშია, მისი გადატანა არ შეიძლება. მოხსენით ალყა შტაბის სექტორზე დაჭერით."
   }
  },
  "project": {
@@ -3585,6 +3600,18 @@
    "ru": "Клан «{clan}»: выходи ловить вместе",
    "en": "The clan «{clan}»: come and fish together",
    "ka": "კლანი «{clan}»: გამოდი, ერთად ვითევზაოთ"
+  }
+ },
+ "siegeLock": {
+  "btn": {
+   "ru": "Штаб в осаде",
+   "en": "HQ under siege",
+   "ka": "შტაბი ალყაშია"
+  },
+  "text": {
+   "ru": "Пока штаб в осаде, тратить из общака нельзя. Снимите осаду уловом на секторе штаба. Вносить монеты можно.",
+   "en": "While the HQ is under siege nothing can be spent from the treasury. Break the siege with a catch on the HQ sector. Deposits still go in.",
+   "ka": "სანამ შტაბი ალყაშია, სალაროდან ხარჯვა არ შეიძლება. მოხსენით ალყა შტაბის სექტორზე დაჭერით. მონეტების შეტანა შეიძლება."
   }
  }
 }

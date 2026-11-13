@@ -50,6 +50,31 @@ function entryKind(kind: string, amount: number): TreasuryKind | null {
   }
 }
 
+// The treasury's lines of the last 7 days, every one of them. get_clan_state brings only the last 50 lines (the journal),
+// and the rent alone writes 8 lines a day, so «Откуда монеты за неделю» counted from those 50 lost most of the week
+// (rent 148 instead of ~2000, the coins in and out did not add up). The members may read their clan's log
+// («treasury log: members read»), so the week is read here in full.
+export async function readWeekLog(clanId: number): Promise<TreasuryEntry[] | null> {
+  const supabase = createClient() as unknown as {
+    from: (t: string) => {
+      select: (c: string) => {
+        eq: (c: string, v: number) => { gte: (c: string, v: string) => { order: (c: string, o: { ascending: boolean }) => { limit: (n: number) => Promise<{ data: Json[] | null; error: unknown }> } } }
+      }
+    }
+  }
+  const since = new Date(Date.now() - 7 * 86_400_000).toISOString()
+  const { data, error } = await supabase.from('clan_treasury_log').select('id,kind,amount,user_id,label,created_at').eq('clan_id', clanId).gte('created_at', since).order('id', { ascending: true }).limit(5000)
+  if (error || !data) return null
+  const out: TreasuryEntry[] = []
+  for (const l of data) {
+    const amount = num(l.amount)
+    const kind = entryKind(String(l.kind), amount)
+    if (!kind) continue
+    out.push({ id: num(l.id), at: t(l.created_at), kind, amount, actor: (l.user_id as string | null) ?? null, note: String(l.label ?? '') })
+  }
+  return out
+}
+
 const ALERT_OF: Record<string, AlertKind> = {
   clan_hq_attacked: 'sector_attack',
   clan_hq_siege: 'hq_siege',
@@ -201,6 +226,8 @@ const REASON: Record<string, string> = {
   hq_not_ours: 'hqNotMine',
   hq_taken: 'hqTaken',
   hq_cooldown: 'hqCooldown',
+  hq_siege: 'hqMoveSiege',
+  siege_lock: 'siegeLock',
   buff_busy: 'buffBusy',
   buff_cooldown: 'buffCooldown',
   buff_gone: 'buffNone',

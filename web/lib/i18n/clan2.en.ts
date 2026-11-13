@@ -95,6 +95,8 @@ export const clan2En = {
     network: "The server did not answer, try again",
     catchToDefend: "To break the siege, catch a fish on the HQ sector",
     serverGame: "In the real game this happens by itself",
+    hqMoveSiege: "The HQ cannot be moved during a siege: break the siege first",
+    siegeLock: "While the HQ is under siege the treasury is shut: nothing can be spent from it",
   },
   ok: {
     deposited: "{n} coins deposited",
@@ -182,7 +184,7 @@ export const clan2En = {
     infoTax: "A share of the coins for every fish a member catches goes into the treasury. The leader picks the rate: 0, 5 or 10 %.",
     infoDeposit: "Any member can put in coins of their own. Whoever gave the treasury most this month is the «Patron of the month»: a crown in the members list.",
     infoShares: "A quarter of the coins from the week's chest and the clan battle goes into the treasury.",
-    infoOther: "The weekly task's reward, 100 coins for a newcomer's first catch and the refund of a cancelled outing.",
+    infoOther: "The weekly task's reward, 100 coins for a newcomer's first catch, the refund of a cancelled outing and the loot from an enemy HQ the clan took.",
     tapForMore: "Tap for details",
     rentDay: "Day",
     rentWeek: "Week",
@@ -211,7 +213,7 @@ export const clan2En = {
     depositRoom: "Only {n} fits into the treasury",
     weekNone: "Nothing here this week",
     weekTotal: "over the last 7 days",
-    infoSpent: "Everything the clan spent from the treasury: buildings and speed-ups, the HQ, the outing and the clan shop.",
+    infoSpent: "Everything that left the treasury: buildings and speed-ups, the HQ, the outing, the clan shop and the loot carried off when our HQ fell.",
   },
   goal: {
     skin_clan_tide: "Skin «Tide»",
@@ -417,6 +419,7 @@ export const clan2En = {
     fallS3: "their boosts are off until a new HQ",
     fallT4: "A new HQ in {h} h",
     fallS4: "on any captured sector of the clan",
+    moveSiege: "While the HQ is under siege it cannot be moved. Break the siege with a catch on the HQ sector.",
   },
   project: {
     dock: {
@@ -781,5 +784,9 @@ export const clan2En = {
     weekSub: "Treasury +{income} · catches {catches} · fished {fishers}",
     nudge: "{name} is calling you out to fish",
     nudgeSub: "The clan «{clan}»: come and fish together",
+  },
+  siegeLock: {
+    btn: "HQ under siege",
+    text: "While the HQ is under siege nothing can be spent from the treasury. Break the siege with a catch on the HQ sector. Deposits still go in.",
   },
 }

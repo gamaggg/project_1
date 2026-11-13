@@ -1,6 +1,10 @@
 'use client'
 
+import type { CSSProperties } from 'react'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
+import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
+import { ClanFrame } from '@/components/clan2/ClanItems'
+import { resolveClanBackground } from '@/lib/data/clanBackgrounds'
 import { C2Avatar, C2Card, speciesName, useC2 } from '@/components/clan2/C2Common'
 import { useDemoState } from '@/lib/clan2/demoStore'
 import { formatCatchMeta } from '@/lib/format'
@@ -20,6 +24,9 @@ export function GloryTab() {
   const date = (at: number) => new Date(at).toLocaleDateString(currentLocale(), { day: 'numeric', month: 'short' })
   const top = records.slice(0, 3)
   const hq = s.hq.sectorId
+  // The card wears the clan's own background (the one chosen in the editor) and the frame bought in the shop.
+  const bg = resolveClanBackground(s.clan.background)
+  const frame = s.equipped.frame
 
   const share = () => {
     const text = `${s.clan.name} · ${tn('clan2.clan.level', { n: s.clan.level })}\n${top.map((r) => `${speciesName(r.species)}: ${formatCatchMeta(r.cm, r.kg)}`).join('\n')}`
@@ -61,9 +68,15 @@ export function GloryTab() {
       </C2Card>
 
       <C2Card title={tn('clan2.glory.shareTitle')} hint={tn('clan2.glory.shareHint')} tour="glory-card">
-        <div className="c2-sharecard" style={{ background: `linear-gradient(160deg, ${s.clan.crest.primary}, #0B1B2B)` }}>
+        <div
+          className="c2-sharecard"
+          style={{ background: bg.animated ? bg.base : bg.css, '--hero-text-rgb': bg.textRgb ?? '255,255,255' } as CSSProperties}
+        >
+          <HeroBgLive bg={bg} variant="preview" />
           <div className="c2-sharecard-crest">
-            <ClanCrest crest={s.clan.crest} size={72} shine />
+            <ClanFrame id={frame} size={72} crest={s.clan.crest}>
+              <ClanCrest crest={s.clan.crest} size={72} shine />
+            </ClanFrame>
           </div>
           <div className="c2-sharecard-name">{s.clan.name}</div>
           <div className="c2-sharecard-meta">
