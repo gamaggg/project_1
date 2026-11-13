@@ -13,7 +13,7 @@
 
    Bump CACHE_VERSION to throw every cache away. */
 
-const CACHE_VERSION = 'v1'
+const CACHE_VERSION = 'v2'
 const SHELL = `range-shell-${CACHE_VERSION}`
 const STATIC = `range-static-${CACHE_VERSION}`
 const TILES = `range-tiles-${CACHE_VERSION}`
@@ -174,10 +174,9 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(staleWhileRevalidate(req, IMAGES))
     return
   }
-  // The same photos on Cloudflare R2 (lib/photoUrl.ts) — never changed under their name.
-  if (url.hostname === 'photos.catchrange.com') {
-    event.respondWith(staleWhileRevalidate(req, IMAGES))
-  }
+  // Photos on Cloudflare R2 (lib/photoUrl.ts) are left to the browser itself, as for every player without the worker:
+  // through the worker the owner's iPhone in Telegram showed «?» for every photo it had not cached before (13.11.2026),
+  // while the same photos opened fine elsewhere. R2 sends them with a one-year immutable cache, so the browser keeps them.
 })
 
 // The page: the server first (a new version must not be held back), the copy
