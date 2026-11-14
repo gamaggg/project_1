@@ -47,6 +47,7 @@ import { useWeekTopModal } from '@/lib/weekTopModal'
 import { InstallOffer } from '@/components/app-shell/InstallOffer'
 import { useClanBattleCeremony } from '@/lib/clanBattleCeremony'
 import { HotSectorsTour, useHotSectorsTour } from '@/components/app-shell/HotSectorsTour'
+import { PartnerIntroTour, usePartnerIntroTour } from '@/components/app-shell/PartnerIntroTour'
 import { AwayReplay } from '@/components/app-shell/AwayReplay'
 import { markAwayReplaySeen, useAwayEvents } from '@/lib/supabase/queries/awayReplay'
 import { pickAwayEvents, type AwayReplayData } from '@/lib/data/awayEvents'
@@ -302,6 +303,8 @@ export function FishZoneApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clan2On])
   const hotTour = useHotSectorsTour(territories, city)
+  // A new partner point in this city: the map flies to its pin once (PartnerIntroTour).
+  const partnerTour = usePartnerIntroTour(city)
   // «Пока тебя не было»: picked once, when the city's sectors are in, and kept
   // until the replay closes (the sectors change under it as it plays).
   const awayRows = useAwayEvents(!!myProfile?.onboardingCompleted && territoriesReady)
@@ -2441,6 +2444,19 @@ export function FishZoneApp() {
               if (finished && hotTour.sectors[0]) mapHandleRef.current?.showTerritory(hotTour.sectors[0].id)
             }}
           />
+        )}
+
+      {partnerTour.show &&
+        partnerTour.point &&
+        away === null &&
+        !geoPlay &&
+        myProfile?.onboardingCompleted &&
+        currentScreen === 'screen-map' &&
+        !showWeekTop &&
+        !clanCeremony.show &&
+        !unlockedAchievement &&
+        !showingTrophyScene && (
+          <PartnerIntroTour key={partnerTour.point.id} point={partnerTour.point} map={mapHandleRef} onStart={partnerTour.start} onDone={partnerTour.end} />
         )}
 
       {geoPlay && currentScreen === 'screen-map' && (

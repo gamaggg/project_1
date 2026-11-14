@@ -220,3 +220,6 @@
 .ppx-switch:checked{background:var(--accent);}
 .ppx-switch:checked::after{transform:translateX(18px);}
 .ppx-switch:disabled{opacity:.5;}
+
+/* The new-partner intro (PartnerIntroTour.tsx): a tap target over the pin inside the round window. */
+.ppi-hole{position:fixed; border:0; border-radius:50%; background:transparent; cursor:pointer; -webkit-tap-highlight-color:transparent;}

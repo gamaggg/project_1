@@ -126,13 +126,13 @@ const CROWN_SVG = '<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="
 // icon in white. The partner's own SVG: that picture alone takes the place of the drop (owner, 14.11), its bottom edge on
 // the point. Either way: the discount in a green badge, a gold crown in its prize week, the name under it unless `far`.
 // Everything typed by the admin is escaped; the own SVG goes only through <img>, where its scripts never run.
-export function partnerPinHtml(p: Pick<PartnerPoint, 'name' | 'icon' | 'promoCode' | 'promoDiscount'>, opts: { far?: boolean; crown?: boolean } = {}): string {
+export function partnerPinHtml(p: Pick<PartnerPoint, 'name' | 'icon' | 'promoCode' | 'promoDiscount'> & { id?: number }, opts: { far?: boolean; crown?: boolean } = {}): string {
   const own = isCustomIcon(p.icon)
   const body = own
     ? `<img class="pp-mk-own" src="${esc(svgDataUrl(p.icon!))}" alt="" draggable="false"/>`
     : `<div class="pp-mk-pin">${presetIconSvg(p.icon ?? 'shop')}</div>`
   return (
-    `<div class="pp-mk${own ? ' pp-mk-custom' : ''}${opts.far ? ' pp-mk-far' : ''}" role="button" aria-label="${esc(p.name)}">` +
+    `<div class="pp-mk${own ? ' pp-mk-custom' : ''}${opts.far ? ' pp-mk-far' : ''}"${p.id ? ` data-pp="${Number(p.id)}"` : ''} role="button" aria-label="${esc(p.name)}">` +
     body +
     (p.promoDiscount?.trim() ? `<span class="pp-mk-badge pp-mk-promo">${esc(p.promoDiscount.trim())}</span>` : '') +
     (opts.crown ? `<span class="pp-mk-badge pp-mk-week">${CROWN_SVG}</span>` : '') +

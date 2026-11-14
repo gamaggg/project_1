@@ -75,7 +75,7 @@ function shieldBadge(shieldUntil: string | null) {
 // swatch for them is the palette's own hues.
 const PLAYER_COLORS_SWATCH = 'conic-gradient(#FF6B6B, #FFD60A, #7EF5A0, #4CC9F0, #A88EF5, #EEAAE3, #FF6B6B)'
 
-export type MapScreenHandle = LeafletMapHandle & { showTerritory: (id: string) => void }
+export type MapScreenHandle = LeafletMapHandle & { showTerritory: (id: string) => void; openPartner: (id: number) => void }
 
 // forwardRef so FishZoneApp can fly the map to a geolocated sector (from the
 // "+" handler) even while the camera screen is showing — the map stays
@@ -280,6 +280,8 @@ export const MapScreen = forwardRef<
       handlePolygonSelect(id)
       mapRef.current?.flyToTerritory(id)
     },
+    // The partner intro tour's «Открыть»: the card, as a tap on the pin would open it.
+    openPartner: (id: number) => setPartnerId(id),
   }))
   // Skips the fly-over on the very first render — the map already opens
   // straight at CITIES[city]'s own center/zoom (see the init effect below,
