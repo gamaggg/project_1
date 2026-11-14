@@ -124,7 +124,7 @@ export const FAQ_EN: FaqSection[] = [
       {
         q: 'What are hot sectors?',
         a: [
-          'Every Friday at 12:00, two hot sectors of the week are picked in each city: the most popular one (most catches in 30 days) and its neighbour — the one that touches it. They burn on the map until the end of Sunday. The same sector is never hot two weeks in a row.',
+          'Every Friday at 12:00, two hot sectors of the week are picked in each city: a random one among those with 5 or more catches in 30 days, and its neighbour — the one that touches it. They burn on the map until the end of Sunday. The same sector is never hot two weeks in a row.',
           'A catch there brings ×2 coins (×3 with a clan «Outing» or «Double coins»), and such a sector pays triple rent into the clan treasury. Whoever holds a hot sector at the end of Sunday gets 100 coins and a medal — if anyone caught at least one fish on that sector during the week. An untouched hot sector gives no reward.',
           'A hot sector cannot be shielded, and the Tide does not trigger when it is claimed — the sector is open to everyone until the end of the week.',
           'When the hot sectors are picked, the app shows them by itself the first time you open the map: the camera flies to each in turn, with a dimmed background and a hint with the rules. Once a week.',
