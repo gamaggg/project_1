@@ -405,7 +405,6 @@ export const FAQ_EN: FaqSection[] = [
         a: [
           'These are RANGE partners: fishing shops, saunas, boat rentals and other places near the water. Tap a pin to open its card: photos, opening hours, the address (you can copy it) and the buttons «Directions» (Google, Yandex or Apple Maps), «Call» and «Website».',
           'The red badge on a pin is a discount for players. The card has a promo code: copy it or show the screen at the checkout. A pin stays while the partner’s period lasts and then disappears by itself.',
-          'The partner sees how many times their card was opened and its buttons tapped, but not who tapped them.',
         ],
       },
       {
