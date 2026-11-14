@@ -1169,7 +1169,9 @@ html.has-overlay:root :is(.bottomnav, .nav-edge) {
 }
 
 /* ---------- Fish species: the collection screen (SpeciesListModal) ---------- */
-.sp-card { max-height: min(86dvh, 720px); display: flex; flex-direction: column; padding-left: 18px; padding-right: 18px; }
+/* The card is centred, so it is kept 2 × the top inset shorter than the screen: in Telegram its top (and the ×)
+   then stays below Telegram's own «Закрыть» / «…» buttons (--tg-safe-area-top, set by AuthProvider) and the notch. */
+.sp-card { --sp-h: min(86dvh, 720px, calc(100dvh - 2 * (env(safe-area-inset-top) + var(--tg-safe-area-top, 0px) + 10px))); max-height: var(--sp-h); display: flex; flex-direction: column; padding-left: 18px; padding-right: 18px; }
 .sp-scroll { overflow-y: auto; flex: 1; margin: 14px -18px 0; padding: 0 18px 4px; overscroll-behavior: contain; }
 .sp-empty { padding: 28px 0 12px; text-align: center; color: var(--ink-faint); font-size: 13px; }
 
@@ -1347,7 +1349,7 @@ html.has-overlay:root :is(.bottomnav, .nav-edge) {
 /* Species tiles: every label is one line at the same height, so the labels, the numbers and the names under them line up. */
 .sp-tile span { display: block; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* The window keeps its size whatever is filtered or unfolded inside it. */
-.sp-card--fixed { height: min(86dvh, 720px); }
+.sp-card--fixed { height: var(--sp-h); }
 /* An unfinished task is always unfolded: nothing to tap, no arrow. */
 .challenge-card.pinned .challenge-head { cursor: default; }
 .challenge-card.pinned .challenge-head:active { transform: none; }
