@@ -3,6 +3,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useFirstSteps, usePartnerPoints } from '@/lib/supabase/queries'
 import { PartnerPointSheet } from '@/components/app-shell/PartnerPointSheet'
+import { trackPartner } from '@/lib/partnerTrack'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { MapView } from '@/components/app-shell/MapView'
 import type { GeoMarks, LeafletMapHandle, SectorMoment } from '@/components/app-shell/LeafletMap'
@@ -444,7 +445,10 @@ export const MapScreen = forwardRef<
           clan2={clan2 ? { ...clan2, onMarker: handlePolygonSelect } : null}
           geo={geo ? { picked: geo.picked, answer: geo.answer, spot: geo.spot, dim: geo.dim } : null}
           partners={partnerPoints}
-          onPartner={setPartnerId}
+          onPartner={(id) => {
+            setPartnerId(id)
+            trackPartner(id, 'pin')
+          }}
         />
         {/* Map chrome, top: ONE panel on a single edge instead of pieces
             floating at different sizes — brand + «Игроки | Кланы» on the

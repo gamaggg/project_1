@@ -54,6 +54,7 @@ const SCREEN_NAMES: Record<string, string> = {
   'screen-admin-stats': 'Статистика',
   'screen-admin-limits': 'Лимиты сервисов',
   'screen-admin-partners': 'Точки партнёров',
+  'screen-partner-stats': 'Статистика точки партнёра',
 }
 
 const ONBOARDING_STEPS: { id: string; name: string }[] = [

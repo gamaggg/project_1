@@ -9,6 +9,7 @@ import { CITIES } from '@/lib/data/city'
 import { sponsorsThisWeek, telHref, type PartnerPoint } from '@/lib/data/partnerPoints'
 import { openExternal } from '@/lib/openExternal'
 import { hapticTap } from '@/lib/telegram/haptics'
+import { trackPartner, type PartnerEventKind } from '@/lib/partnerTrack'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
 
 // A partner's card (lib/data/partnerPoints.ts): a sheet that rises from the bottom when the pin on the map is tapped,
@@ -93,6 +94,14 @@ export function PartnerPointSheet({ point, onClose, preview = false }: { point: 
   const galleryRef = useRef<HTMLDivElement>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // The partner's statistics: what the player does here (never in the admin's preview).
+  const track = (kind: PartnerEventKind) => {
+    if (!preview) trackPartner(point.id, kind)
+  }
+  useEffect(() => {
+    if (!preview) trackPartner(point.id, 'open')
+  }, [point.id, preview])
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && !route && !photo && onClose()
     window.addEventListener('keydown', onKey)
@@ -160,7 +169,10 @@ export function PartnerPointSheet({ point, onClose, preview = false }: { point: 
                 }}
               >
                 {photos.map((src, n) => (
-                  <button key={src + n} className="pp-slide" onClick={() => setPhoto(src)} aria-label={tn('partner.photoOf', { n: n + 1, total: photos.length })}>
+                  <button key={src + n} className="pp-slide" onClick={() => {
+                    setPhoto(src)
+                    track('photo')
+                  }} aria-label={tn('partner.photoOf', { n: n + 1, total: photos.length })}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={src} alt="" loading={n === 0 ? 'eager' : 'lazy'} decoding="async" />
                   </button>
@@ -197,13 +209,19 @@ export function PartnerPointSheet({ point, onClose, preview = false }: { point: 
                 onClick={() => {
                   hapticTap()
                   setRoute(true)
+                  track('route')
                 }}
               >
                 {Icon.route}
                 {tn('partner.route')}
               </button>
               {point.phone && (
-                <a className="pp-act" href={telHref(point.phone)} onClick={() => hapticTap()}>
+                <a className="pp-act" href={telHref(point.phone)}
+                  onClick={() => {
+                    hapticTap()
+                    track('call')
+                  }}
+                >
                   {Icon.call}
                   {tn('partner.call')}
                 </a>
@@ -214,6 +232,7 @@ export function PartnerPointSheet({ point, onClose, preview = false }: { point: 
                   onClick={() => {
                     hapticTap()
                     openExternal(point.website!)
+                    track('site')
                   }}
                 >
                   {Icon.site}
@@ -228,7 +247,10 @@ export function PartnerPointSheet({ point, onClose, preview = false }: { point: 
                   <span className="pp-label">{tn('partner.address')}</span>
                   <b>{point.address}</b>
                 </div>
-                <button className="pp-copy" onClick={() => copy(point.address!, tn('partner.addressCopied'))}>
+                <button className="pp-copy" onClick={() => {
+                    copy(point.address!, tn('partner.addressCopied'))
+                    track('copy_address')
+                  }}>
                   {tn('partner.copy')}
                 </button>
               </div>
@@ -247,6 +269,7 @@ export function PartnerPointSheet({ point, onClose, preview = false }: { point: 
                   onClick={() => {
                     setCodeShown(true)
                     copy(point.promoCode!, tn('partner.codeCopied'))
+                    track('copy_promo')
                   }}
                 >
                   {tn('partner.copyCode')}

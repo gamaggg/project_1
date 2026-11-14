@@ -1,5 +1,6 @@
 'use client'
 
+import { PartnerAccessSheet } from '@/components/app-shell/PartnerAccessSheet'
 import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useRef, useState, type CSSProperties } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
@@ -128,6 +129,7 @@ export function UserProfileScreen({
   const setFollowing = useSetFollowing()
   const isAdmin = useIsAdmin()
   const isSuperAdmin = useIsSuperAdmin()
+  const [partnerAccessOpen, setPartnerAccessOpen] = useState(false)
   const canBlockUsers = useCanBlockUsers()
   const canMessagePlayers = useCanMessagePlayers()
   const [supportChatOpen, setSupportChatOpen] = useState(false)
@@ -329,6 +331,13 @@ export function UserProfileScreen({
             Удалить пользователя
           </button>
         )}
+
+        {isSuperAdmin && (
+          <button className="btn-secondary" style={{ marginTop: 8 }} onClick={() => setPartnerAccessOpen(true)}>
+            Статистика точки партнёра
+          </button>
+        )}
+        {partnerAccessOpen && <PartnerAccessSheet userId={userId} name={profile?.displayName ?? 'Игрок'} onClose={() => setPartnerAccessOpen(false)} />}
 
         {isSuperAdmin && (
           <button className="btn-secondary" style={{ marginTop: 8 }} onClick={() => onEditPublicId(userId)}>

@@ -28,6 +28,7 @@ import {
   useCreateTelegramLink,
   useClanChatSummary,
   useGeoToday,
+  useSharedPartnerPoints,
 } from '@/lib/supabase/queries'
 import { AwardsRing, type AwardGroup } from '@/components/app-shell/AwardsRing'
 import { uploadAvatar } from '@/lib/supabase/storage'
@@ -438,6 +439,7 @@ export function ProfileScreen({
   onOpenGeo,
   onOpenAdminGeo,
   onOpenAdminPartners,
+  onOpenPartnerStats,
   active,
   adminPanelActive,
 }: {
@@ -484,6 +486,8 @@ export function ProfileScreen({
   onOpenAdminGeo: () => void
   // «Точки партнёров» (super admin only).
   onOpenAdminPartners: () => void
+  // «Статистика точки» — a partner whose point's statistics the super admin shared with them.
+  onOpenPartnerStats: () => void
   // The profile tab is the one on screen: its numbers count up each time it comes into view.
   active: boolean
   // The profile is on screen and no admin window is over it (AdminPanel reopens its sheet then).
@@ -502,6 +506,7 @@ export function ProfileScreen({
   const canViewStats = useCanViewStats()
   const canViewLimits = useCanViewLimits()
   const isSuperAdmin = useIsSuperAdmin()
+  const { data: sharedPartnerPoints = [] } = useSharedPartnerPoints(!!user)
   // «Где это?» only while the city has a panorama of the day — not for a city without the
   // game yet (the new ones), super admin included: they fill the game from the panorama
   // review, not from this card. Nor a game played earlier today in the city moved from: the
@@ -829,6 +834,11 @@ export function ProfileScreen({
 
       {/* Every admin tool behind one «Управление» card (AdminPanel). The
           super admin sees all of them; an admin, the ones given to them. */}
+      {sharedPartnerPoints.length > 0 && (
+        <button className="btn-secondary" style={{ marginTop: 16 }} onClick={onOpenPartnerStats}>
+          {sharedPartnerPoints.length === 1 ? `Статистика точки «${sharedPartnerPoints[0].name}»` : 'Статистика моих точек на карте'}
+        </button>
+      )}
       {economyOpen && <EconomyAdminLazy onClose={() => setEconomyOpen(false)} />}
       <AdminPanel
         active={adminPanelActive}

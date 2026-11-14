@@ -120,6 +120,7 @@ import { ChallengesScreen } from '@/components/app-shell/screens/ChallengesScree
 import { AdminStatsScreen } from '@/components/app-shell/screens/AdminStatsScreen'
 import { AdminLimitsScreen } from '@/components/app-shell/screens/AdminLimitsScreen'
 import { AdminPartnersScreen } from '@/components/app-shell/screens/AdminPartnersScreen'
+import { PartnerStatsScreen } from '@/components/app-shell/screens/PartnerStatsScreen'
 import { FaqScreen } from '@/components/app-shell/screens/FaqScreen'
 import { ClanListScreen } from '@/components/app-shell/screens/ClanListScreen'
 import { ClanScreen } from '@/components/app-shell/screens/ClanScreen'
@@ -164,6 +165,7 @@ export type ScreenId =
   | 'screen-admin-stats'
   | 'screen-admin-limits'
   | 'screen-admin-partners'
+  | 'screen-partner-stats'
   | 'screen-faq'
   | 'screen-achievements'
   | 'screen-achievement-detail'
@@ -206,6 +208,7 @@ type StackEntry =
   | { screen: 'screen-admin-stats' }
   | { screen: 'screen-admin-limits' }
   | { screen: 'screen-admin-partners' }
+  | { screen: 'screen-partner-stats' }
   | { screen: 'screen-faq' }
   | { screen: 'screen-achievements'; userId: string }
   | { screen: 'screen-achievement-detail'; userId: string; icon: Achievement['icon'] }
@@ -2001,6 +2004,7 @@ export function FishZoneApp() {
             onOpenAdminStats={() => push({ screen: 'screen-admin-stats' })}
             onOpenAdminLimits={() => push({ screen: 'screen-admin-limits' })}
             onOpenAdminPartners={() => push({ screen: 'screen-admin-partners' })}
+            onOpenPartnerStats={() => push({ screen: 'screen-partner-stats' })}
             onOpenFaq={() => push({ screen: 'screen-faq' })}
             onOpenAdminLog={() => {
               markAdminLogRead()
@@ -2110,6 +2114,9 @@ export function FishZoneApp() {
         </Screen>
         <Screen id="screen-admin-partners" current={currentScreen} onBack={pop}>
           {isSuperAdmin && <AdminPartnersScreen onBack={pop} active={currentScreen === 'screen-admin-partners'} />}
+        </Screen>
+        <Screen id="screen-partner-stats" current={currentScreen} onBack={pop}>
+          <PartnerStatsScreen onBack={pop} active={currentScreen === 'screen-partner-stats'} />
         </Screen>
         <Screen id="screen-admin-log" current={currentScreen} onBack={pop}>
           <AdminActionsScreen title="Последние действия" onBack={pop} onOpenUser={openUserProfile} onOpenTerritory={openTerritory} />

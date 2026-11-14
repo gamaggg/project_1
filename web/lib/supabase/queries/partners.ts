@@ -149,3 +149,99 @@ export function useDeletePartnerPoint() {
     onSuccess: done,
   })
 }
+
+// ---- Statistics (03_partner_stats.sql) ----
+
+export type PartnerStatKind = 'pin' | 'open' | 'route' | 'call' | 'site' | 'copy_address' | 'copy_promo' | 'photo'
+export type PartnerStats = {
+  people: number
+  totals: Record<PartnerStatKind, { count: number; people: number }>
+  funnel: { opened: number; copied: number; copied_then_route: number; copied_then_call: number; copied_then_site: number; copied_then_any: number }
+  days: { day: string; pin: number; open: number; copy_promo: number }[]
+  tz: string
+}
+
+// The point's numbers for [from, to). The super admin, or the player the point was shared with.
+export function usePartnerStats(pointId: number | null, from: string, to: string) {
+  return useQuery({
+    queryKey: ['partner-stats', pointId, from, to],
+    enabled: pointId != null,
+    staleTime: 30_000,
+    queryFn: async (): Promise<PartnerStats> => {
+      const { data, error } = await db().rpc('partner_point_stats', { p_point: pointId, p_from: from, p_to: to })
+      if (error) throw new Error(error.message)
+      return data as PartnerStats
+    },
+  })
+}
+
+export type SharedPartnerPoint = { id: number; city: CityId; name: string; startsAt: string; endsAt: string; paused: boolean }
+
+// The points whose statistics were shared with me (a partner's own account). Empty before the migration.
+export function useSharedPartnerPoints(enabled: boolean) {
+  return useQuery({
+    queryKey: ['partner-shared'],
+    enabled,
+    staleTime: 5 * 60_000,
+    retry: false,
+    queryFn: async (): Promise<SharedPartnerPoint[]> => {
+      const { data, error } = await db().rpc('partner_points_shared_with_me')
+      if (error) return []
+      return ((data as { id: number; city: CityId; name: string; starts_at: string; ends_at: string; paused: boolean }[] | null) ?? []).map((r) => ({
+        id: Number(r.id),
+        city: r.city,
+        name: r.name,
+        startsAt: r.starts_at,
+        endsAt: r.ends_at,
+        paused: r.paused,
+      }))
+    },
+  })
+}
+
+export type PartnerViewer = { userId: string; displayName: string | null; avatarUrl: string | null; grantedAt: string }
+
+export function useAdminPartnerViewers(pointId: number | null) {
+  return useQuery({
+    queryKey: ['admin-partner-viewers', pointId],
+    enabled: pointId != null,
+    queryFn: async (): Promise<PartnerViewer[]> => {
+      const { data, error } = await db().rpc('admin_partner_viewers', { p_point: pointId })
+      if (error) throw new Error(error.message)
+      return ((data as { user_id: string; display_name: string | null; avatar_url: string | null; granted_at: string }[] | null) ?? []).map((r) => ({
+        userId: r.user_id,
+        displayName: r.display_name,
+        avatarUrl: r.avatar_url,
+        grantedAt: r.granted_at,
+      }))
+    },
+  })
+}
+
+// The points a player can see the statistics of (their profile, for the super admin).
+export function useAdminPartnerAccessOf(userId: string | null) {
+  return useQuery({
+    queryKey: ['admin-partner-access', userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<number[]> => {
+      const { data, error } = await db().rpc('admin_partner_access_of', { p_user: userId })
+      if (error) throw new Error(error.message)
+      return ((data as { point_id: number }[] | null) ?? []).map((r) => Number(r.point_id))
+    },
+  })
+}
+
+export function useSetPartnerViewer() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ pointId, userId, on }: { pointId: number; userId: string; on: boolean }) => {
+      const { error } = await db().rpc('admin_partner_viewer_set', { p_point: pointId, p_user: userId, p_on: on })
+      if (error) throw new Error(error.message)
+    },
+    onSuccess: (_d, { pointId, userId }) => {
+      qc.invalidateQueries({ queryKey: ['admin-partner-viewers', pointId] })
+      qc.invalidateQueries({ queryKey: ['admin-partner-access', userId] })
+      qc.invalidateQueries({ queryKey: ['admin-actions'] })
+    },
+  })
+}

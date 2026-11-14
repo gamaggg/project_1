@@ -43,6 +43,11 @@ function ids(): { device: string; session: string } {
   return { device: deviceId, session: sessionId }
 }
 
+// The same random id per phone, for counts that also take guests (partner points: lib/partnerTrack.ts).
+export function analyticsDeviceId(): string {
+  return ids().device
+}
+
 function start() {
   if (started || typeof window === 'undefined') return
   started = true

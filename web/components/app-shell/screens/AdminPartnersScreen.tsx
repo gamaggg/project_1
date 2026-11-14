@@ -4,6 +4,7 @@ import '@/app/partner-points.css'
 import { useMemo, useRef, useState } from 'react'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { PartnerPreview } from '@/components/app-shell/PartnerPreview'
+import { PartnerStatsView } from '@/components/app-shell/PartnerStatsView'
 import { useAdminPartnerPoints, useDeletePartnerPoint, useSavePartnerPoint } from '@/lib/supabase/queries'
 import { uploadAnnouncementPhoto } from '@/lib/supabase/storage'
 import { downscaleToJpeg } from '@/lib/exif'
@@ -202,6 +203,7 @@ export function AdminPartnersScreen({ onBack, active }: { onBack: () => void; ac
   const { data: points = [], isLoading, isError } = useAdminPartnerPoints(active)
   const [editing, setEditing] = useState<{ id: number | null; form: Form } | null>(null)
   const save = useSavePartnerPoint()
+  const [statsFor, setStatsFor] = useState<PartnerPointAdmin | null>(null)
   const [busy, setBusy] = useState<number | null>(null)
   const [note, setNote] = useState<{ id: number; text: string; bad?: boolean } | null>(null)
 
@@ -222,6 +224,21 @@ export function AdminPartnersScreen({ onBack, active }: { onBack: () => void; ac
     } finally {
       setBusy(null)
     }
+  }
+
+  if (statsFor) {
+    return (
+      <>
+        <div className="header-row">
+          <BackButton onClick={() => setStatsFor(null)} registerNative={false} />
+          <div style={{ fontWeight: 800, fontSize: 15 }}>Статистика</div>
+          <div style={{ width: 36 }} />
+        </div>
+        <div className="screen-inner">
+          <PartnerStatsView pointId={statsFor.id} city={statsFor.city} name={statsFor.name} startsAt={statsFor.startsAt} admin />
+        </div>
+      </>
+    )
   }
 
   if (editing) {
@@ -280,6 +297,11 @@ export function AdminPartnersScreen({ onBack, active }: { onBack: () => void; ac
                   </span>
                 </button>
                 <RenewBar status={st.key} busy={busy === p.id} disabled={busy !== null} onRenew={(n) => quick(p, n)} />
+                <div className="ppa-renew">
+                  <button type="button" className="ppa-renew-btn ppa-stats-btn" onClick={() => setStatsFor(p)}>
+                    Статистика
+                  </button>
+                </div>
                 {note?.id === p.id && <div className={note.bad ? 'ppa-warn ppa-note' : 'ppa-ok ppa-note'}>{note.text}</div>}
               </div>
             )

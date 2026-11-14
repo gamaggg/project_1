@@ -32,4 +32,5 @@ export type { AppStats, AppStatsPlayer, AppStatsPoint, SectorInsights } from './
 export { useAddSupportMessage, useAdminSendSupportMessage, useAdminSupportChat, useCreateSupportTicket, useMySupport, useSupportPhotoUrl } from './support'
 export type { AdminSupportTicket, SupportMessage, SupportTicket } from './support'
 export { extraSectorsKey, fetchSectorsById, useAdminAddTerritory, useAdminDeleteTerritory, useAdminSetTerritoryKind, useAllTerritoryIds, useExtraSectors, useSectorsGeometry, useTerritories, useUseFreeShield } from './territories'
-export { useAdminPartnerPoints, useDeletePartnerPoint, usePartnerPoints, usePartnerPrize, useSavePartnerPoint } from './partners'
+export { useAdminPartnerAccessOf, useAdminPartnerPoints, useAdminPartnerViewers, useDeletePartnerPoint, usePartnerPoints, usePartnerPrize, usePartnerStats, useSavePartnerPoint, useSetPartnerViewer, useSharedPartnerPoints } from './partners'
+export type { PartnerStatKind, PartnerStats, PartnerViewer, SharedPartnerPoint } from './partners'
