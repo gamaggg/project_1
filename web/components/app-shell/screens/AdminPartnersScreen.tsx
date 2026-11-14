@@ -1,7 +1,7 @@
 'use client'
 
 import '@/app/partner-points.css'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { PartnerPreview } from '@/components/app-shell/PartnerPreview'
 import { PartnerStatsView } from '@/components/app-shell/PartnerStatsView'
@@ -199,11 +199,33 @@ function statusOf(p: PartnerPointAdmin): Status {
   return { key: 'live', text: `На карте · осталось ${daysWord(left)}, до ${dm(lastDay)}` }
 }
 
-export function AdminPartnersScreen({ onBack, active }: { onBack: () => void; active: boolean }) {
+export function AdminPartnersScreen({
+  onBack,
+  active,
+  backRef,
+}: {
+  onBack: () => void
+  active: boolean
+  // Telegram's own «Назад» (owned by FishZoneApp's <Screen>) asks this first: it closes the statistics or the
+  // form and says true, or says false and the screen itself is closed — same as our in-page arrow.
+  backRef?: RefObject<(() => boolean) | null>
+}) {
   const { data: points = [], isLoading, isError } = useAdminPartnerPoints(active)
   const [editing, setEditing] = useState<{ id: number | null; form: Form } | null>(null)
   const save = useSavePartnerPoint()
   const [statsFor, setStatsFor] = useState<PartnerPointAdmin | null>(null)
+  useEffect(() => {
+    if (!backRef) return
+    backRef.current = () => {
+      if (statsFor) setStatsFor(null)
+      else if (editing) setEditing(null)
+      else return false
+      return true
+    }
+    return () => {
+      backRef.current = null
+    }
+  }, [backRef, statsFor, editing])
   const [busy, setBusy] = useState<number | null>(null)
   const [note, setNote] = useState<{ id: number; text: string; bad?: boolean } | null>(null)
 

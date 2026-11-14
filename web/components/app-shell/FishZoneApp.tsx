@@ -683,6 +683,9 @@ export function FishZoneApp() {
   // run of in-app taps may take a couple of extra presses before it does
   // anything visible. That's a minor, non-crashing rough edge; it beats the
   // alternative of reliably reloading on every single in-app back tap.
+  // «Точки партнёров» opens its point statistics and its point form inside the same screen: Telegram's
+  // «Назад» first closes that inner view (the screen sets this and says whether it closed one).
+  const partnersBackRef = useRef<(() => boolean) | null>(null)
   function pop() {
     if (stackRef.current.length <= 1) return
     const targetLen = stackRef.current.length - 1
@@ -2115,8 +2118,8 @@ export function FishZoneApp() {
         <Screen id="screen-admin-limits" current={currentScreen} onBack={pop}>
           {canViewLimits && <AdminLimitsScreen onBack={pop} active={currentScreen === 'screen-admin-limits'} />}
         </Screen>
-        <Screen id="screen-admin-partners" current={currentScreen} onBack={pop}>
-          {isSuperAdmin && <AdminPartnersScreen onBack={pop} active={currentScreen === 'screen-admin-partners'} />}
+        <Screen id="screen-admin-partners" current={currentScreen} onBack={() => partnersBackRef.current?.() || pop()}>
+          {isSuperAdmin && <AdminPartnersScreen onBack={pop} active={currentScreen === 'screen-admin-partners'} backRef={partnersBackRef} />}
         </Screen>
         <Screen id="screen-partner-stats" current={currentScreen} onBack={pop}>
           <PartnerStatsScreen onBack={pop} active={currentScreen === 'screen-partner-stats'} />
