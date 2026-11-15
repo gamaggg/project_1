@@ -661,6 +661,8 @@ export const ru = {
     clanBuffSub: 'Зайди и отметь «иду», чтобы получить бонус',
     clanQuestDone: 'Задание недели клана «{clan}» выполнено',
     clanQuestDoneSub: 'В общак +{n} монет. Спасибо, что ловил вместе со всеми',
+    clanQuestReady: 'Задание недели клана «{clan}» выполнено, награда не забрана',
+    clanQuestReadySub: 'Забери +{n} монет в общак до полуночи: в понедельник награда сгорит',
     clanProjectDone: 'Постройка готова: {name}, уровень {n}',
     clanItemBought: 'Клан «{clan}» купил: {name}',
     clanItemBoughtKind: 'Клан «{clan}» купил {what} «{name}»',

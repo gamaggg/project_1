@@ -213,6 +213,7 @@ function renderMessage(notification: NotificationRef): Message | null {
     case 'clan_hq_fell':
     case 'clan_buff_planned':
     case 'clan_quest_done':
+    case 'clan_quest_ready':
     case 'clan_project_done':
     case 'clan_item_bought':
     case 'clan_recruit_joined':
@@ -239,6 +240,7 @@ function renderMessage(notification: NotificationRef): Message | null {
         clan_hq_fell: [tn('activity.clanHqFell', { clan }), withBy(tn('activity.clanHqFellSub', { n: n('loot') }), took)],
         clan_buff_planned: [tn('activity.clanBuff', { clan }), tn('activity.clanBuffSub')],
         clan_quest_done: [tn('activity.clanQuestDone', { clan }), tn('activity.clanQuestDoneSub', { n: n('reward') })],
+        clan_quest_ready: [tn('activity.clanQuestReady', { clan }), tn('activity.clanQuestReadySub', { n: n('reward') })],
         clan_project_done: [tn('activity.clanProjectDone', { name: project, n: n('level') })],
         clan_item_bought: [itemKind ? tn('activity.clanItemBoughtKind', { clan, what: itemKind, name: itemName(item) }) : tn('activity.clanItemBought', { clan, name: item ? itemName(item) : String(p.name ?? '') })],
         clan_recruit_joined: [tn('activity.clanRecruitJoined', { name: who, clan })],

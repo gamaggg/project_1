@@ -662,6 +662,8 @@ export const ka: Dict = {
     clanBuffSub: 'შედი და მონიშნე «მივდივარ», რომ ბონუსი მიიღო',
     clanQuestDone: 'კლან «{clan}»-ის კვირის დავალება შესრულდა',
     clanQuestDoneSub: 'სალაროში +{n} მონეტა. მადლობა, რომ ყველასთან ერთად თევზაობდი',
+    clanQuestReady: 'კლან «{clan}»-ის კვირის დავალება შესრულდა, ჯილდო ჯერ არ არის აღებული',
+    clanQuestReadySub: 'აიღე +{n} მონეტა სალაროში შუაღამემდე: ორშაბათს ჯილდო გაქრება',
     clanProjectDone: 'ნაგებობა მზადაა: {name}, დონე {n}',
     clanItemBought: 'კლანმა «{clan}» იყიდა: {name}',
     clanItemBoughtKind: 'კლანმა «{clan}» იყიდა {what} «{name}»',

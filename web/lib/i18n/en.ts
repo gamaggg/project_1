@@ -660,6 +660,8 @@ export const en: Dict = {
     clanBuffSub: 'Open the app and tap «going» to get the bonus',
     clanQuestDone: 'The weekly task of «{clan}» is done',
     clanQuestDoneSub: '+{n} coins to the treasury. Thanks for fishing with everybody',
+    clanQuestReady: 'The weekly task of «{clan}» is done, but the reward is not collected',
+    clanQuestReadySub: 'Collect +{n} coins to the treasury before midnight: on Monday the reward is gone',
     clanProjectDone: 'Building ready: {name}, level {n}',
     clanItemBought: '«{clan}» bought: {name}',
     clanItemBoughtKind: '«{clan}» bought {what} «{name}»',

@@ -523,7 +523,7 @@ export function ActivityScreen({
                 title = tr('activity.ratingOvertaken', { rank: n('rank') })
                 sub = [tr('activity.ratingOvertakenSub', { prev: n('prev_rank') }), a.who ? tr('activity.ratingAhead', { name: a.who }) : null].filter(Boolean).join(' · ')
                 action = onOpenRating
-              } else if (ev.kind.startsWith('clan_') && (ev.kind.startsWith('clan_hq_') || ['clan_buff_planned', 'clan_quest_done', 'clan_project_done', 'clan_item_bought', 'clan_recruit_joined', 'clan_recruit_paid', 'clan_week_digest', 'clan_nudge'].includes(ev.kind))) {
+              } else if (ev.kind.startsWith('clan_') && (ev.kind.startsWith('clan_hq_') || ['clan_buff_planned', 'clan_quest_done', 'clan_quest_ready', 'clan_project_done', 'clan_item_bought', 'clan_recruit_joined', 'clan_recruit_paid', 'clan_week_digest', 'clan_nudge'].includes(ev.kind))) {
                 // The clan update: its alarms and news (04_clan_notifications.sql). Every one opens the clan.
                 const clan = String(p.clan_name ?? '')
                 const id = String(p.territory_id ?? a.territoryId ?? '')
@@ -558,6 +558,12 @@ export function ActivityScreen({
                   icon = FEED_ICONS.medal
                   title = tr('activity.clanQuestDone', { clan })
                   sub = tr('activity.clanQuestDoneSub', { n: n('reward') })
+                } else if (ev.kind === 'clan_quest_ready') {
+                  // Sunday evening, to the leader and deputies: the task is done but nobody collected it (clan-quest-remind-15-11).
+                  tone = 'gold'
+                  icon = FEED_ICONS.gift
+                  title = tr('activity.clanQuestReady', { clan })
+                  sub = tr('activity.clanQuestReadySub', { n: n('reward') })
                 } else if (ev.kind === 'clan_project_done') {
                   tone = 'gold'
                   icon = FEED_ICONS.gift

@@ -352,7 +352,7 @@ export const FAQ_EN: FaqSection[] = [
           [
             'To the whole clan: the HQ is attacked, the HQ is under siege, who lifted the siege, the HQ fell, an «Outing» is planned (come in and tap «I\'m in»), a building is ready (everyone in the app sees its moment).',
             'To those who fished for the weekly task: the task is done, the reward is in the treasury.',
-            'To the leader and the co-leaders: a shop item bought, a newcomer joined and made a first catch.',
+            'To the leader and the co-leaders: a shop item bought, a newcomer joined and made a first catch; on Sunday evening (18:00 to 23:00 in the clan\'s city) a reminder if the weekly task is done but its reward is not collected yet: on Monday at 00:00 it is gone.',
             'Every Monday at 10:00 Moscow time, the clan\'s week: what came into the treasury and was spent, who gave the most, what was built, sectors and catches of the week. A clan with no coins and no catches that week gets nothing.',
             'A leader or a co-leader can call a member out to fish («Call to the water»), at most once a day per member.',
           ],
