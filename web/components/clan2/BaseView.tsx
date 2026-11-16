@@ -64,7 +64,7 @@ export function BaseView({ crest, projects, geo }: { crest: unknown; projects: R
                 </g>
               </svg>
             )}
-            {lv > 0 && <span className={`c2-plot-badge ${lv === 3 ? 'max' : 'lv'}`}>{lv}</span>}
+            {lv > 0 && <span className={`c2-plot-badge ${lv === 3 ? 'max' : 'lv'}`}>{lv === 3 ? 'MAX' : lv}</span>}
             <span className="c2-base-pill" style={PILL_DX[id] ? { ['--pill-dx' as string]: `${PILL_DX[id]}%` } : undefined}>
               <span>{tnd(`clan2.project.${id}.name`)}</span>
             </span>
