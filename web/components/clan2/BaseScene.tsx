@@ -284,15 +284,16 @@ export function BaseScene() {
                   </g>
                 )}
               </svg>
-              {/* What it says at a glance: «+» build / upgrade (orange: possible now, grey: not yet), otherwise its level. */}
+              {/* What it says at a glance: its level, and «+» when it can be built / upgraded (orange: possible now, grey:
+                  not yet). A built plot that could be upgraded used to show the «+» alone: the level vanished, and after
+                  a new HQ the leader read six «+» as six buildings lost (16.11.2026). */}
               {!under && (
-                <span className={`c2-plot-badge ${lv === 0 || ready ? (ready ? 'plus' : 'off') : lv === 3 ? 'max' : 'lv'}`}>
-                  {lv === 0 || ready ? (
-                    <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-                      <path d="M5 1.5v7M1.5 5h7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <span className={`c2-plot-badge ${lv === 0 || ready ? (ready ? 'plus' : 'off') : lv === 3 ? 'max' : 'lv'}${lv > 0 && ready ? ' up' : ''}`}>
+                  {lv > 0 && lv}
+                  {(lv === 0 || ready) && (
+                    <svg width={lv > 0 ? 8 : 10} height={lv > 0 ? 8 : 10} viewBox="0 0 10 10" aria-hidden="true">
+                      <path d="M5 1.5v7M1.5 5h7" stroke="currentColor" strokeWidth={lv > 0 ? 2.4 : 2} strokeLinecap="round" />
                     </svg>
-                  ) : (
-                    lv
                   )}
                 </span>
               )}

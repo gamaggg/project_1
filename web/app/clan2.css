@@ -632,6 +632,7 @@
 .c2-plot-badge{position:absolute; left:64%; top:44%; min-width:18px; height:18px; padding:0 4px; border-radius:9px; background:#FC5200; color:#fff; font:800 12px/1 system-ui,-apple-system,sans-serif; font-variant-numeric:tabular-nums; display:flex; align-items:center; justify-content:center; box-sizing:border-box; box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(252,82,0,.45); pointer-events:none;}
 .c2-plot-badge.off{background:#A3A9B4; box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(23,24,27,.2);}
 .c2-plot-badge.lv{background:#17181B; box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(23,24,27,.28); font-size:11px;}
+.c2-plot-badge.up{gap:1px; padding:0 4px 0 5px; font-size:11px;}
 .c2-plot-badge.max{background:#F0B53E; color:#5A3A00; box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(176,122,16,.4); font-size:11px;}
 @keyframes c2-badge-hop{0%,100%{transform:translateY(0)}45%{transform:translateY(-5px)}}
 .c2-zzz-html{position:absolute; left:68%; top:4%; font:800 10px system-ui,sans-serif; color:#5B6475; animation:c2-zzz 2.4s ease-in-out infinite; pointer-events:none;}
