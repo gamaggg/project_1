@@ -271,6 +271,14 @@ export const FAQ_EN: FaqSection[] = [
         ],
       },
       {
+        q: 'What happens if a roster player leaves the clan or is kicked during the battle?',
+        a: [
+          'The metres they brought in while in the clan stay with the boat. After they leave, their catches and claims no longer move the clan’s boat.',
+          'Their place in the roster is not freed: the finish stays 200 m for every roster player and does not get shorter. Other players can still be added, but each one makes the finish another 200 m longer.',
+          'Battle and chest rewards go only to those who are in the clan on Sunday night, when the results are counted. A player who left or was kicked gets none, even if they rowed.',
+        ],
+      },
+      {
         q: 'How does the clan chest work?',
         a: [
           'During the week the clan collects metres: a catch +10 m, claiming a sector +30 m, a completed challenge +20 m. There are 5 chests, and their thresholds grow with the number of members.',

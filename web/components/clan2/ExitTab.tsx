@@ -93,7 +93,9 @@ export function ExitTab() {
               <span>{tn('clan2.exit.effectCoins')}</span>
               <span>{tn('clan2.exit.effectMeters')}</span>
             </div>
-            <div className="c2-chip accent">{tn('clan2.exit.bonusSoFar', { n: b.lastBonus })}</div>
+            {/* Only the browser-only preview counts the outing's bonus; the live clan does not (yet) bring it from the
+                server, and a «+0» that never moves read as a broken promise. */}
+            {b.lastBonus > 0 && <div className="c2-chip accent">{tn('clan2.exit.bonusSoFar', { n: b.lastBonus })}</div>}
             <Going list={going} />
             {isMember && !imIn && (
               <>

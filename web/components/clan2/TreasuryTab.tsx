@@ -13,7 +13,7 @@ import { readWeekLog } from '@/lib/clan2/live/server'
 import { DAY, PROJECT_EFFECTS, TAX_RATES, fmt, treasuryCap } from '@/lib/clan2/rules'
 import type { AlertKind, QuestKind, TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
 import { questLabel } from '@/components/clan2/WeekTab'
-import { tn, tnd } from '@/lib/i18n/runtime'
+import { currentLocale, tn, tnd } from '@/lib/i18n/runtime'
 
 // «Общак»: what is in the clan's treasury and what it is saving for, where the coins of the week came from, the catch
 // tax (the leaders' setting), and the clan's one journal — the coins, the clan's events and its alarms in one list.
@@ -66,14 +66,29 @@ export function TreasuryTab({ onGo, events, onTour }: { onGo?: (to: Go) => void;
   // Every coin that left, the HQ's loot taken by attackers included (it is not a purchase, but it is gone).
   const isOut = (e: TreasuryEntry) => e.amount < 0
   const spent = week.filter(isOut).reduce((n, e) => n + -e.amount, 0)
+  // The coins in, by calendar day (today and the six days before it), each bar over its weekday. The bars used to be
+  // «the last 24 hours, the 24 before them…» counted back from this second: a deposit slid from one bar to the next as
+  // the clock went on, and nothing said which bar was which day. A live clan waits for the full week from the server:
+  // the state's own journal holds only its last 50 lines, and the bars jumped when the week arrived.
+  const flowEntries = clanId && s.settings.enabled ? weekLog : s.treasury.entries
+  const todayStart = useMemo(() => {
+    const d = new Date(now)
+    d.setHours(0, 0, 0, 0)
+    return d.getTime()
+  }, [now])
   const flow = useMemo(() => {
     const days = Array.from({ length: 7 }, () => 0)
-    for (const e of allEntries) {
-      const back = Math.floor((now - e.at) / DAY)
-      if (back >= 0 && back < 7 && e.amount > 0) days[6 - back] += e.amount
+    for (const e of flowEntries ?? []) {
+      if (e.amount <= 0 || e.at > now) continue
+      const back = e.at >= todayStart ? 0 : Math.ceil((todayStart - e.at) / DAY)
+      if (back < 7) days[6 - back] += e.amount
     }
     return days
-  }, [allEntries, now])
+  }, [flowEntries, now, todayStart])
+  const flowDays = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => new Date(todayStart - (6 - i) * DAY + DAY / 2).toLocaleDateString(currentLocale(), { weekday: 'short' }).replace('.', '')),
+    [todayStart],
+  )
   const maxFlow = Math.max(1, ...flow)
   const wallet = s.wallet
   const goalLeft = goal ? Math.max(0, goal.cost - s.treasury.balance) : 0
@@ -111,9 +126,15 @@ export function TreasuryTab({ onGo, events, onTour }: { onGo?: (to: Go) => void;
             </button>
           </div>
           <div className="c2-flow-label">{tn('clan2.treasury.weekFlow')}</div>
-          <div className="c2-flow" aria-label={tn('clan2.treasury.weekFlow')}>
+          <div className="c2-flow" role="list" aria-label={tn('clan2.treasury.weekFlow')}>
             {flow.map((v, i) => (
-              <i key={i} style={{ height: `${Math.max(6, (v / maxFlow) * 100)}%` }} className={i === 6 ? 'now' : undefined} />
+              <div key={i} role="listitem" className={`c2-flow-day${i === 6 ? ' now' : ''}`} aria-label={`${flowDays[i]}: +${fmt(v)}`}>
+                <span className="c2-flow-n">{flowEntries && v > 0 ? fmt(v) : ''}</span>
+                <span className="c2-flow-bar">
+                  <i style={{ height: `${v > 0 ? Math.max(8, (v / maxFlow) * 100) : 4}%` }} />
+                </span>
+                <span className="c2-flow-wd">{flowDays[i]}</span>
+              </div>
             ))}
           </div>
           <button type="button" className="c2-chip accent c2-chip-btn" onClick={() => setRentOpen(true)} aria-label={tn('clan2.treasury.tapForMore')}>
