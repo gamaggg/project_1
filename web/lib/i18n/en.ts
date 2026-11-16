@@ -2661,6 +2661,7 @@ export const en: Dict = {
     ch_ekspansiya_d: 'Claim three different sectors in a week',
   },
   tg: {
+    widget: { nowMine: 'The sector is yours again now', nowHeld: 'Held by {name} now · defense {defense} of 3' },
     autoOn: 'RANGE now writes here about the important things in the game. To turn it off — the /stop command or «Telegram notifications» in your profile.',
     otherAngler: 'Another angler',
     btnSector: 'Open the sector',

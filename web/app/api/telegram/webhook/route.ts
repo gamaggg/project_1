@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { isEmptyTelegramAccount } from '@/lib/telegram/accounts'
 import { miniAppUrlForPayload } from '@/lib/telegram/startParamCodec'
 import { stopFishingDay } from '@/lib/telegram/fishing'
+import { answerWidgetQuery } from '@/lib/telegram/widgetQuery'
 import { withErrorReport } from '@/lib/serverErrors'
 import { TRANSLATION_READY, langFromLocale, translate, type Lang, type TKey, type TVars } from '@/lib/i18n/core'
 
@@ -139,6 +140,12 @@ async function handlePOST(req: Request) {
   }
 
   const update = await req.json()
+
+  // A chat widget asking for the live state (lib/telegram/widgetQuery.ts).
+  if (update.widget_query) {
+    await answerWidgetQuery(update.widget_query)
+    return NextResponse.json({ ok: true })
+  }
 
   // «Я уже закончил» under a «Ещё на рыбалке?» reminder (see
   // lib/telegram/fishing.ts): quiet until tomorrow.

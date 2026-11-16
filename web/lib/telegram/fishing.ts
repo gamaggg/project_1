@@ -2,6 +2,7 @@ import { SITE_URL } from '@/lib/site'
 import { CITIES, asCityId } from '@/lib/data/city'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isLang, translate, type Lang, type TKey, type TVars } from '@/lib/i18n/core'
+import { catchSeriesData, widgetKindFor, widgetTemplate } from '@/lib/telegram/widgets/build'
 
 // «Ещё на рыбалке?» (fishing_sessions — one row per player per fishing day).
 // Players asked for a reminder to photograph the catch while they fish: a
@@ -128,17 +129,24 @@ export async function runFishingReminders({ dryRun = false }: { dryRun?: boolean
     if (s.chat_id && s.reminder_message_id) await tg('deleteMessage', { chat_id: s.chat_id, message_id: s.reminder_message_id })
     const n = todays.length
     const lang = langs.get(p.id) ?? 'ru'
-    const sent = await tg('sendMessage', {
-      chat_id: p.telegram_id,
-      text: say(lang, 'fishing.remind', { time: localTime(last, tz, lang), today: n > 1 ? say(lang, 'fishing.todayN', { catches: catchesPhrase(lang, n) }) : '' }),
-      disable_notification: true,
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: say(lang, 'fishing.btnCamera'), web_app: { url: `${SITE_URL}/?camera=1` } }],
-          [{ text: say(lang, 'fishing.btnDone'), callback_data: 'fishing_stop' }],
-        ],
-      },
-    })
+    const text = say(lang, 'fishing.remind', { time: localTime(last, tz, lang), today: n > 1 ? say(lang, 'fishing.todayN', { catches: catchesPhrase(lang, n) }) : '' })
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: say(lang, 'fishing.btnCamera'), web_app: { url: `${SITE_URL}/?camera=1` } }],
+        [{ text: say(lang, 'fishing.btnDone'), callback_data: 'fishing_stop' }],
+      ],
+    }
+    // Where chat widgets are on (lib/telegram/widgets/build.ts): the day's catches as «Активность» shows a run,
+    // the reminder as its caption. Refused or not built — the plain reminder, as before.
+    let sent: Awaited<ReturnType<typeof tg>> | null = null
+    if (widgetKindFor('fishing_reminder', p.telegram_id)) {
+      const chatData = await catchSeriesData(admin, p.id, last.toISOString(), lang).catch(() => null)
+      if (chatData) {
+        const w = await tg('sendWidget', { chat_id: p.telegram_id, html: widgetTemplate('catches', lang), chat_data: chatData, caption: text, disable_notification: true, reply_markup: keyboard })
+        if (w.ok || w.status === 403) sent = w
+      }
+    }
+    if (!sent) sent = await tg('sendMessage', { chat_id: p.telegram_id, text, disable_notification: true, reply_markup: keyboard })
     if (sent.status === 403) {
       await admin.from('profiles').update({ tg_unreachable_at: now.toISOString(), tg_notifications_enabled: false }).eq('id', p.id)
       continue
@@ -172,11 +180,10 @@ export async function stopFishingDay(telegramId: number): Promise<boolean> {
     const { count } = await admin.from('catches').select('id', { count: 'exact', head: true }).eq('user_id', p.id).gte('caught_at', s.started_at)
     const n = count ?? 0
     const lang = (await languagesOf(admin, [p.id])).get(p.id) ?? 'ru'
-    await tg('editMessageText', {
-      chat_id: s.chat_id,
-      message_id: s.reminder_message_id,
-      text: say(lang, 'fishing.wrapUp', { n: n > 0 ? say(lang, 'fishing.wrapN', { catches: catchesPhrase(lang, n) }) : '' }),
-    })
+    const wrap = say(lang, 'fishing.wrapUp', { n: n > 0 ? say(lang, 'fishing.wrapN', { catches: catchesPhrase(lang, n) }) : '' })
+    const edited = await tg('editMessageText', { chat_id: s.chat_id, message_id: s.reminder_message_id, text: wrap })
+    // A reminder sent as a widget has a caption, not text.
+    if (!edited.ok) await tg('editMessageCaption', { chat_id: s.chat_id, message_id: s.reminder_message_id, caption: wrap })
   }
   return true
 }

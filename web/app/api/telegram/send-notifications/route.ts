@@ -11,6 +11,7 @@ import { withErrorReport } from '@/lib/serverErrors'
 import { asCityId, cityForSectorId, type CityId } from '@/lib/data/city'
 import { clanWeekDigestText, readClanWeekDigest } from '@/lib/telegram/clanDigest'
 import { itemKindWord, itemName } from '@/lib/clan2/itemName'
+import { buildWidget } from '@/lib/telegram/widgets/build'
 
 // «in the city» as the notification texts name it (tg.in…).
 const IN_CITY = { batumi: 'tg.inBatumi', moscow: 'tg.inMoscow', spb: 'tg.inSpb', sochi: 'tg.inSochi', tbilisi: 'tg.inTbilisi' } as const satisfies Record<CityId, string>
@@ -41,6 +42,7 @@ type ActorRef = { display_name: string | null; public_id: string | null }
 type OwnerRef = { tg_auto_enabled_at: string | null; tg_auto_notice_at: string | null }
 type NotificationRef = {
   kind: string
+  created_at?: string | null
   territory_id: string | null
   catch_id: number | null
   user_id: string
@@ -461,7 +463,7 @@ async function handleGET(req: Request) {
   const { data: due, error } = await admin
     .from('telegram_outbox')
     .select(
-      'id, chat_id, attempts, notifications!inner(kind, territory_id, catch_id, user_id, actor_id, payload, actor:profiles!notifications_actor_id_fkey(display_name, public_id), owner:profiles!notifications_user_id_fkey(tg_auto_enabled_at, tg_auto_notice_at))'
+      'id, chat_id, attempts, notifications!inner(kind, created_at, territory_id, catch_id, user_id, actor_id, payload, actor:profiles!notifications_actor_id_fkey(display_name, public_id), owner:profiles!notifications_user_id_fkey(tg_auto_enabled_at, tg_auto_notice_at))'
     )
     .is('sent_at', null)
     .lte('deliver_after', new Date().toISOString())
@@ -563,15 +565,58 @@ async function handleGET(req: Request) {
     const unsure = async (why: string) => {
       await admin.from('telegram_outbox').update({ sent_at: new Date().toISOString(), last_error: `not retried, may have been delivered: ${why}`.slice(0, 500) }).eq('id', row.id)
     }
-    let res: Response
+    // A chat widget instead of the plain text, where it is switched on (lib/telegram/widgets/build.ts:
+    // TG_WIDGETS / TG_WIDGETS_CHATS). The text goes as the caption, the same buttons under it. If the
+    // widget can't be built or Telegram refuses it, the plain message goes out as before.
+    let res: Response | null = null
+    const widget = await buildWidget(admin, notification, langs.get(notification.user_id) ?? 'ru', row.chat_id).catch(() => null)
+    if (widget && text.length <= 1024) {
+      try {
+        const wres = await fetch(`${TELEGRAM_API}/sendWidget`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
+          body: JSON.stringify({
+            chat_id: row.chat_id,
+            html: widget.html,
+            chat_data: widget.chatData,
+            caption: text,
+            allow_queries: widget.allowQueries,
+            reply_markup: { inline_keyboard: [[{ text: message.buttonLabel, web_app: { url: message.url } }]] },
+          }),
+        })
+        if (wres.ok) {
+          await admin.from('telegram_outbox').update({ sent_at: new Date().toISOString() }).eq('id', row.id)
+          if (explain) {
+            noticed.add(notification.user_id)
+            await admin.from('profiles').update({ tg_auto_notice_at: new Date().toISOString() }).eq('id', notification.user_id)
+          }
+          sent++
+          continue
+        }
+        // 403 (blocked) and 429 (slow down) are the plain path's to handle; anything else falls back to text.
+        if (wres.status === 403 || wres.status === 429) {
+          res = wres
+        } else {
+          console.warn('sendWidget refused, sending text', wres.status, (await wres.text()).slice(0, 200))
+        }
+      } catch (e) {
+        // No answer in time: the widget may have arrived — don't send a second copy as text.
+        await unsure(`widget: ${e instanceof Error ? e.message : 'send failed'}`)
+        continue
+      }
+    }
     try {
-      res = await send(message.extraButtons ?? [])
-      // A tg://user link can be refused (the person's privacy settings); the alert itself must still arrive.
-      if (res.status === 400 && message.extraButtons?.length) res = await send([])
+      if (!res) {
+        res = await send(message.extraButtons ?? [])
+        // A tg://user link can be refused (the person's privacy settings); the alert itself must still arrive.
+        if (res.status === 400 && message.extraButtons?.length) res = await send([])
+      }
     } catch (e) {
       await unsure(e instanceof Error ? e.message : 'send failed')
       continue
     }
+    if (!res) continue
     if (res.status === 504) {
       await unsure('504 Gateway Timeout')
       continue

@@ -2666,6 +2666,7 @@ export const ru = {
     ch_ekspansiya_d: 'Захвати три разных сектора за неделю',
   },
   tg: {
+    widget: { nowMine: 'Сейчас сектор снова твой', nowHeld: 'Сейчас держит {name} · защита {defense} из 3' },
     autoOn: 'Теперь RANGE пишет сюда о важном в игре. Выключить — команда /stop или «Уведомления в Telegram» в профиле.',
     otherAngler: 'Другой рыбак',
     btnSector: 'Открыть сектор',
