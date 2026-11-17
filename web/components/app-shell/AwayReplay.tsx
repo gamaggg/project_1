@@ -5,6 +5,7 @@ import { useI18n } from '@/lib/i18n'
 import { formatWhen } from '@/lib/format'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import type { SectorMoment } from './LeafletMap'
+import { nameInitials } from '@/lib/initials'
 
 // «Пока тебя не было»: a player opens the app and, before anything else, is shown
 // what happened to their sectors meanwhile — a slow flight to each one and the
@@ -71,7 +72,7 @@ export function AwayReplay({ events, me, play, onOpenSector, onClose }: Props) {
 
   if (!ev) return null
   const face = (url: string | null, name: string | null) =>
-    url ? <img src={thumbUrl(url, 96)} alt="" /> : (name ?? t('common.angler')).slice(0, 2).toUpperCase()
+    url ? <img src={thumbUrl(url, 96)} alt="" /> : nameInitials(name ?? t('common.angler'), 2)
   const last = index === events.length - 1
   const lost = ev.kind === 'lost'
   const next = () => {

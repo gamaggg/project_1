@@ -27,6 +27,7 @@ import type { Clan2MapProps } from '@/components/clan2/live/overlay'
 import { fitBannerH } from '@/lib/clan2/live/hqMarker'
 import { partnerPinHtml, sponsorsThisWeek, type PartnerPoint } from '@/lib/data/partnerPoints'
 import '@/app/partner-points.css'
+import { nameInitials } from '@/lib/initials'
 
 // Trial swap from OpenFreeMap — a custom Mapbox Standard style, hand-tuned to
 // RANGE's brand colors (deep-water blue that's deliberately distinct from the
@@ -132,7 +133,7 @@ function escapeHtml(s: string): string {
 function avatarInnerHtml(avatarUrl: string | null, displayName: string | null): string {
   return avatarUrl
     ? `<img src="${escapeHtml(thumbUrl(avatarUrl, 48))}" alt="" decoding="async" />`
-    : escapeHtml((displayName ?? tn('common.angler')).slice(0, 2).toUpperCase())
+    : escapeHtml(nameInitials(displayName ?? tn('common.angler'), 2))
 }
 
 // A hot sector's id label turns brand orange with a flame in front of the

@@ -4,6 +4,7 @@ import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useNow } from '@/lib/useNow'
 import { tn } from '@/lib/i18n/runtime'
+import { nameInitials } from '@/lib/initials'
 
 // A catch sent to someone else's sector while a shield is up (confirm_catch's
 // SHIELDED:<until>): it can't count there, but the photo and the fish needn't
@@ -80,7 +81,7 @@ export function ShieldedSectorModal({
           </svg>
           <div className="shield-modal-hex">
             <div className="shield-modal-hex-in">
-              {ownerAvatarUrl ? <img src={thumbUrl(ownerAvatarUrl, 192)} alt="" decoding="async" /> : <span>{(ownerName ?? '?').slice(0, 2).toUpperCase()}</span>}
+              {ownerAvatarUrl ? <img src={thumbUrl(ownerAvatarUrl, 192)} alt="" decoding="async" /> : <span>{nameInitials(ownerName ?? '?', 2)}</span>}
             </div>
           </div>
           <div className="shield-modal-badge">

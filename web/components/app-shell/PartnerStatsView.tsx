@@ -6,6 +6,7 @@ import { useAdminPartnerViewers, usePartnerStats, useSetPartnerViewer, type Part
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { addDays } from '@/lib/data/partnerPoints'
+import { nameInitials } from '@/lib/initials'
 
 // A partner point's statistics (03_partner_stats.sql, partner_point_stats): for the super admin («Точки партнёров» →
 // «Статистика») and for the partner's own account once the point was shared with them (Профиль → «Статистика точки»).
@@ -212,7 +213,7 @@ function Viewers({ pointId }: { pointId: number }) {
         <div key={v.userId} className="pps-viewer">
           <span className="avatar" style={{ width: 34, height: 34, fontSize: 12 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            {v.avatarUrl ? <img src={thumbUrl(v.avatarUrl, 96)} alt="" /> : (v.displayName ?? 'И').slice(0, 2).toUpperCase()}
+            {v.avatarUrl ? <img src={thumbUrl(v.avatarUrl, 96)} alt="" /> : nameInitials(v.displayName ?? 'И', 2)}
           </span>
           <span className="pps-viewer-name">{v.displayName ?? 'Игрок'}</span>
           <button

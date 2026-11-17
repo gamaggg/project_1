@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isR2Photo } from '@/lib/photoUrl'
+import { nameInitials } from '@/lib/initials'
 
 // «Улов в истории Telegram»: a 1080×1920 card the server draws for one
 // catch — the photo as its own framed card with nothing laid over it (the
@@ -183,7 +184,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ catc
                 <img src={avatar} width={72} height={72} style={{ width: 72, height: 72, borderRadius: 36, objectFit: 'cover', border: '3px solid #FC5200', flex: '0 0 auto' }} alt="" />
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 72, height: 72, borderRadius: 36, background: '#FC5200', color: '#fff', fontSize: 28, flex: '0 0 auto' }}>
-                  {name.slice(0, 2).toUpperCase()}
+                  {nameInitials(name, 2)}
                 </div>
               )}
               <span style={{ display: 'block', color: '#fff', fontSize: 34, maxWidth: 300, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{name}</span>

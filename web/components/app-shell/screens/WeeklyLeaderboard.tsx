@@ -11,6 +11,7 @@ import type { WeeklyLeaderboardEntry } from '@/lib/data/types'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { formatWeekOfMonth, pluralCatches, pluralSectors } from '@/lib/format'
 import { tn } from '@/lib/i18n'
+import { nameInitials } from '@/lib/initials'
 
 type Scope = 'all' | 'friends'
 
@@ -33,7 +34,7 @@ function Crown() {
 
 function PodiumAvatar({ entry, rank }: { entry: WeeklyLeaderboardEntry; rank: 1 | 2 | 3 }) {
   const size = rank === 1 ? 88 : 72
-  const initials = entry.displayName.slice(0, 2).toUpperCase()
+  const initials = nameInitials(entry.displayName, 2)
   return (
     <div className="rating-podium-stage">
       {/* Rank 1 gets a floating bob — the shadow lives outside the moving
@@ -146,7 +147,7 @@ export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUs
           {rest.length > 0 && (
             <div className="card" style={{ overflow: 'hidden' }}>
               {rest.map((entry, i) => {
-                const initials = entry.displayName.slice(0, 2).toUpperCase()
+                const initials = nameInitials(entry.displayName, 2)
                 return (
                   <button
                     key={entry.userId}

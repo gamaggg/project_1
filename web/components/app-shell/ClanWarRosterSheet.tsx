@@ -9,6 +9,7 @@ import { CLAN_ROLE_LABEL, clanErrorMessage } from '@/lib/data/clanLevels'
 import { formatShortAgo } from '@/lib/format'
 import { tn } from '@/lib/i18n/runtime'
 import type { ClanRoleId } from '@/lib/data/types'
+import { nameInitials } from '@/lib/initials'
 
 const MIN_ROSTER = 3
 
@@ -73,7 +74,7 @@ export function ClanWarRosterSheet({ clanId, onClose, mode = 'start' }: { clanId
                 .filter((m) => picked.has(m.userId))
                 .map((m) => (
                   <span key={m.userId} className="avatar war-roster-face" title={m.displayName}>
-                    {m.avatarUrl ? <img src={thumbUrl(m.avatarUrl, 96)} alt={m.displayName} loading="lazy" decoding="async" /> : m.displayName.slice(0, 1).toUpperCase()}
+                    {m.avatarUrl ? <img src={thumbUrl(m.avatarUrl, 96)} alt={m.displayName} loading="lazy" decoding="async" /> : nameInitials(m.displayName, 1)}
                   </span>
                 ))}
             </div>
@@ -138,7 +139,7 @@ export function ClanWarRosterSheet({ clanId, onClose, mode = 'start' }: { clanId
                           )}
                         </span>
                         <span className="avatar war-pick-avatar">
-                          {m.avatarUrl ? <img src={thumbUrl(m.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : m.displayName.slice(0, 1).toUpperCase()}
+                          {m.avatarUrl ? <img src={thumbUrl(m.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : nameInitials(m.displayName, 1)}
                         </span>
                         <span className="move-row-main">
                           <b>

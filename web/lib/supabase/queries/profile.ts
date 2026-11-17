@@ -135,7 +135,8 @@ export function useUpdateProfile() {
       const { error } = await supabase
         .from('profiles')
         .update({
-          ...(patch.displayName !== undefined ? { display_name: patch.displayName } : {}),
+          // NFKC: «𝙏𝙤𝙧𝙚𝙤𝙙𝙤𝙧» → «Toreodor», as the profiles_normalize_display_name trigger does.
+          ...(patch.displayName !== undefined ? { display_name: patch.displayName.normalize('NFKC') } : {}),
           ...(patch.avatarUrl !== undefined ? { avatar_url: patch.avatarUrl } : {}),
           ...(patch.bio !== undefined ? { bio: patch.bio } : {}),
           ...(patch.birthDate !== undefined ? { birth_date: patch.birthDate } : {}),

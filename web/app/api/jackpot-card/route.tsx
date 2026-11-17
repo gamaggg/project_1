@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { CITIES, asCityId } from '@/lib/data/city'
 import { isLang, translate, type Lang, type TKey, type TVars } from '@/lib/i18n/core'
+import { nameInitials } from '@/lib/initials'
 
 // The slots jackpot as a 1080×1920 card — what «В историю» and «Скачать» on
 // the jackpot screen send out: the night sea with gold rays and coins,
@@ -172,7 +173,7 @@ export async function GET(request: Request) {
                 <img src={avatar} width={120} height={120} style={{ borderRadius: 60, border: '6px solid #F5C451', objectFit: 'cover' }} alt="" />
               ) : (
                 <div style={{ width: 120, height: 120, borderRadius: 60, border: '6px solid #F5C451', background: '#123A5C', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48 }}>
-                  {name.slice(0, 2).toUpperCase()}
+                  {nameInitials(name, 2)}
                 </div>
               )}
               <div style={{ display: 'flex', fontSize: 56 }}>{name.slice(0, 22)}</div>

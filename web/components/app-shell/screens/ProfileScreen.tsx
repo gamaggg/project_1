@@ -61,6 +61,7 @@ import { LanguagePicker } from '@/components/app-shell/LanguagePicker'
 import { tn } from '@/lib/i18n'
 import { Flag } from '@/components/app-shell/Flag'
 import { EconomyAdminLazy } from '@/components/clan2/live/lazy'
+import { nameInitials } from '@/lib/initials'
 
 // Telegram notifications, as one row rather than a screen of its own —
 // there's a single setting to make so far. Which control it shows depends on
@@ -269,7 +270,7 @@ export function EditProfileModal({ onClose }: { onClose: () => void }) {
     onClose()
   }
 
-  const initials = (profile?.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()
+  const initials = nameInitials(profile?.displayName ?? tn('common.angler'), 2)
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -548,7 +549,7 @@ export function ProfileScreen({
   )
   const recentMine = myCatches.slice(0, 3)
   const visibleTerritories = myTerritories.slice(0, 5)
-  const initials = (profile?.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()
+  const initials = nameInitials(profile?.displayName ?? tn('common.angler'), 2)
   // Synthetic placeholder set by the Telegram auto-sign-in handshake (see
   // api/auth/telegram/route.ts) — never a real address the person chose, so
   // offering "Link email" only makes sense while it's still this pattern.

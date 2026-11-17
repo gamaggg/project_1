@@ -12,6 +12,7 @@ import { seededRandom, seedFrom } from '@/lib/seededRandom'
 import { tn } from '@/lib/i18n/runtime'
 import { PartnerPrizeCard } from '@/components/app-shell/PartnerPrizeCard'
 import { useAuth } from '@/components/providers/AuthProvider'
+import { nameInitials } from '@/lib/initials'
 
 const CONFETTI_COLORS = ['#FC5200', '#F0A93E', '#B8C0CC', '#B06B36']
 // Reveal 3rd -> 2nd -> 1st, slowest for 1st so the ceremony builds toward it.
@@ -94,7 +95,7 @@ export function LastWeekScreen({
         {rest.length > 0 && (
           <div className="card" style={{ overflow: 'hidden' }}>
             {rest.map((entry, i) => {
-              const initials = entry.displayName.slice(0, 2).toUpperCase()
+              const initials = nameInitials(entry.displayName, 2)
               return (
                 <button
                   key={entry.userId}

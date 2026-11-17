@@ -8,6 +8,7 @@ import { useWeeklyLeaderboard } from '@/lib/supabase/queries'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { tn } from '@/lib/i18n/runtime'
+import { nameInitials } from '@/lib/initials'
 
 const CONFETTI_EXTRA = '#FC5200'
 
@@ -30,7 +31,7 @@ function DuelistTop({ city }: { city: CityId }) {
       {entries.slice(0, 3).map((e) => (
         <div key={e.userId} className="award-top3-row">
           <span className={`award-top3-rank rank-${e.rank}`}>{e.rank}</span>
-          <span className="avatar award-top3-avatar">{e.avatarUrl ? <img src={thumbUrl(e.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : e.displayName.slice(0, 2).toUpperCase()}</span>
+          <span className="avatar award-top3-avatar">{e.avatarUrl ? <img src={thumbUrl(e.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : nameInitials(e.displayName, 2)}</span>
           <span className="award-top3-name">{e.displayName}</span>
         </div>
       ))}

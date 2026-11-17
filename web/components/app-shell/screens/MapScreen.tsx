@@ -38,6 +38,7 @@ import { Clan2SectorRow } from '@/components/clan2/live/SectorRow'
 import { Clan2SoloHintLazy } from '@/components/clan2/live/lazy'
 import { useClan2Enabled } from '@/lib/clan2/live/flag'
 import { setLiveUi } from '@/lib/clan2/live/ui'
+import { nameInitials } from '@/lib/initials'
 
 function statusBadge(status: Territory['status'], myTerritoryColor: string, myShare = false) {
   // myShare: a clan-mate's sector the viewer holds a part of.
@@ -620,7 +621,7 @@ export const MapScreen = forwardRef<
                       {t.coHolders.length === 0 ? (
                         <button type="button" className="map-sheet-owner" onClick={() => onOpenUser(t.ownerId!)}>
                           <span className="avatar" style={{ width: 24, height: 24, fontSize: 10 }}>
-                            {t.ownerAvatarUrl ? <img src={thumbUrl(t.ownerAvatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : t.ownerDisplayName.slice(0, 2).toUpperCase()}
+                            {t.ownerAvatarUrl ? <img src={thumbUrl(t.ownerAvatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : nameInitials(t.ownerDisplayName, 2)}
                           </span>
                           <span className="map-sheet-owner-name">{t.ownerDisplayName}</span>
                         </button>
@@ -635,7 +636,7 @@ export const MapScreen = forwardRef<
                               aria-label={h.displayName ?? tn('common.angler')}
                               onClick={() => onOpenUser(h.id)}
                             >
-                              {h.avatarUrl ? <img src={thumbUrl(h.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : (h.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()}
+                              {h.avatarUrl ? <img src={thumbUrl(h.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : nameInitials(h.displayName ?? tn('common.angler'), 2)}
                             </button>
                           ))}
                         </div>

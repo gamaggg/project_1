@@ -72,7 +72,8 @@ const HEX = /^#[0-9a-fA-F]{6}$/
 export const safeColor = (c: unknown, fallback: string): string => (typeof c === 'string' && HEX.test(c) ? c : fallback)
 
 // The first two letters of a name, as the app's avatar fallback (avatarInnerHtml).
-export const initials = (name: string | null | undefined, fallback: string): string => (name || fallback).slice(0, 2).toUpperCase()
+// By whole characters (Array.from), as lib/initials.ts: .slice cut an emoji in half.
+export const initials = (name: string | null | undefined, fallback: string): string => Array.from((name || fallback).normalize('NFKC')).slice(0, 2).join('').toUpperCase()
 
 // Fits a string into `max` UTF-8 bytes (chat_data and query answers are limited in bytes).
 export function clipBytes(s: string, max: number): string {

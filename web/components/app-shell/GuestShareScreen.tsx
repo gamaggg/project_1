@@ -19,11 +19,12 @@ import { computeAchievements } from '@/lib/data/achievements'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { tn } from '@/lib/i18n'
 import { CITIES, asCityId, cityForSectorId } from '@/lib/data/city'
+import { nameInitials } from '@/lib/initials'
 
 const BONUS = 100
 
 function initials(name: string | null) {
-  return (name ?? tn('common.angler')).slice(0, 2).toUpperCase()
+  return nameInitials(name ?? tn('common.angler'), 2)
 }
 
 function Avatar({ url, name, size = 40 }: { url: string | null; name: string | null; size?: number }) {

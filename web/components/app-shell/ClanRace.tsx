@@ -11,6 +11,7 @@ import { currentLocale, tn } from '@/lib/i18n/runtime'
 import type { CityId } from '@/lib/data/city'
 import { ClanWarRosterSheet } from '@/components/app-shell/ClanWarRosterSheet'
 import type { ClanRace, ClanRaceEntry } from '@/lib/data/types'
+import { nameInitials } from '@/lib/initials'
 
 // How far along the river a clan's boat is, 0..1. A clan that crossed the
 // line stays on it even if (in theory) its meters were later recounted.
@@ -130,7 +131,7 @@ export function ClanWarCard({ race, clanId }: { race: ClanRace; clanId: number }
         <div className="war-roster-faces">
           {w.roster.slice(0, 12).map((m) => (
             <span key={m.userId} className="avatar war-roster-face" title={m.displayName}>
-              {m.avatarUrl ? <img src={thumbUrl(m.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : m.displayName.slice(0, 1).toUpperCase()}
+              {m.avatarUrl ? <img src={thumbUrl(m.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : nameInitials(m.displayName, 1)}
             </span>
           ))}
           {w.roster.length > 12 && <span className="war-roster-more">+{w.roster.length - 12}</span>}
@@ -231,7 +232,7 @@ function RaceRowers({ rowers }: { rowers: ClanRace['myRowers'] }) {
         rowers.map((r, i) => (
           <div key={r.userId} className="clan-member-row" style={{ animationDelay: `${Math.min(i, 12) * 35}ms` }}>
             <div className="avatar clan-member-avatar" style={{ cursor: 'default' }}>
-              {r.avatarUrl ? <img src={thumbUrl(r.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : r.displayName.slice(0, 1).toUpperCase()}
+              {r.avatarUrl ? <img src={thumbUrl(r.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : nameInitials(r.displayName, 1)}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="clan-member-name">{r.displayName}</div>

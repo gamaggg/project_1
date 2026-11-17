@@ -29,6 +29,7 @@ import { useDoubleCoinsUntil } from '@/components/app-shell/DoubleCoinsChip'
 import { tn, currentLocale } from '@/lib/i18n'
 import { Clan2SectorHqCardLazy, Clan2SectorHqRibbonLazy } from '@/components/clan2/live/lazy'
 import { useClan2Enabled } from '@/lib/clan2/live/flag'
+import { nameInitials } from '@/lib/initials'
 
 export function statusBadge(status: Territory['status'], myTerritoryColor: string, myShare = false) {
   // myShare: a clan-mate's sector the viewer holds a part of.
@@ -82,7 +83,7 @@ function SectorOwnerCard({
   const { data: fresh } = useProfile(capturer.id)
   const profile = fresh ?? capturer
   const isMine = capturer.isMe
-  const initials = (profile.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()
+  const initials = nameInitials(profile.displayName ?? tn('common.angler'), 2)
   return (
     <div className="sector-owner-highlight">
       <div className="sector-owner-highlight-label">{tn('sector.capturedBy')}</div>
@@ -113,7 +114,7 @@ function SectorOwnerCard({
             {coHolders.map((h) => (
               <button key={h.id} className="sector-coholder tap-scale" onClick={() => onOpenUser(h.id)} disabled={h.isMe}>
                 <span className="sector-coholder-avatar">
-                  {h.avatarUrl ? <img src={thumbUrl(h.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : (h.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()}
+                  {h.avatarUrl ? <img src={thumbUrl(h.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : nameInitials(h.displayName ?? tn('common.angler'), 2)}
                 </span>
                 <span className="sector-coholder-name">{h.isMe ? tn('sector.you') : h.displayName ?? tn('common.angler')}</span>
               </button>
@@ -304,7 +305,7 @@ export function TerritoryScreen({
           territory={territory}
           myTerritoryColor={myTerritoryColor}
           ownerAvatarUrl={ownerProfile?.avatarUrl ?? null}
-          ownerInitials={(ownerProfile?.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()}
+          ownerInitials={nameInitials(ownerProfile?.displayName ?? tn('common.angler'), 2)}
           claimFx
         />
         {onShowOnMap && (

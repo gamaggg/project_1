@@ -15,6 +15,7 @@ import { EditMyCatchSheet } from '@/components/app-shell/EditMyCatchSheet'
 import { EditCatchSheet, MoveCatchSheet } from '@/components/app-shell/lazyScreens'
 import type { Catch, ProfileSummary } from '@/lib/data/types'
 import { tn } from '@/lib/i18n'
+import { nameInitials } from '@/lib/initials'
 
 // "Иван" / "Иван и Мария" / "Иван, Мария и ещё 5" — sidesteps gender-correct
 // verb conjugation entirely (no existing activity text in this app bothers
@@ -100,7 +101,7 @@ function CatchAuthor({ userId, mine, onOpenUser }: { userId: string; mine: boole
   const name = mine ? tn('sector.you') : (profile?.displayName ?? '')
   const avatar = (
     <span className="reel-avatar" aria-hidden>
-      {profile?.avatarUrl ? <img src={thumbUrl(profile.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : (name || '?').slice(0, 1).toUpperCase()}
+      {profile?.avatarUrl ? <img src={thumbUrl(profile.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : nameInitials(name || '?', 1)}
     </span>
   )
   if (mine) {

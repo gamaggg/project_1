@@ -10,6 +10,7 @@ import { onServerReply, useDemoState, type Result } from '@/lib/clan2/demoStore'
 import { DAY, HOURS, fmt } from '@/lib/clan2/rules'
 import type { DemoMember } from '@/lib/clan2/types'
 import { tn, tnd } from '@/lib/i18n/runtime'
+import { nameInitials } from '@/lib/initials'
 
 // Small pieces shared by every screen of the clan update: the demo clock, time
 // phrases, avatars, coin amounts, a progress bar, a bottom sheet and the toast.
@@ -45,7 +46,7 @@ export const speciesName = (key: string) => tnd(`species.${key}`)
 export function C2Avatar({ member, size = 36 }: { member: Pick<DemoMember, 'name' | 'hue' | 'avatarUrl'>; size?: number }) {
   return (
     <span className="c2-avatar" style={{ width: size, height: size, fontSize: Math.round(size * 0.38), background: `hsl(${member.hue} 62% 52%)` }} aria-hidden>
-      {member.avatarUrl ? <img src={thumbUrl(member.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : member.name.slice(0, 2).toUpperCase()}
+      {member.avatarUrl ? <img src={thumbUrl(member.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : nameInitials(member.name, 2)}
     </span>
   )
 }

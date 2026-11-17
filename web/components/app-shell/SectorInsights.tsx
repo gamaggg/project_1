@@ -7,6 +7,7 @@ import { useT } from '@/lib/i18n'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import type { Catch, Territory } from '@/lib/data/types'
+import { nameInitials } from '@/lib/initials'
 
 // The sector legend's mark — a small laurel wreath, gold.
 export function LaurelIcon({ size = 16, color = '#C9921F' }: { size?: number; color?: string }) {
@@ -241,7 +242,7 @@ export function SectorLegendRow({
               // eslint-disable-next-line @next/next/no-img-element -- small avatar thumbnail, same as the rest of the sector screen
               <img src={thumbUrl(legend.avatarUrl, 96)} alt="" />
             ) : (
-              (legend.name ?? '?').slice(0, 2).toUpperCase()
+              nameInitials(legend.name ?? '?', 2)
             )}
           </span>
         </LegendWreath>

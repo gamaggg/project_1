@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useProfile, useAdminPermissions, useSetAdminPermissions } from '@/lib/supabase/queries'
 import type { AdminPermissions } from '@/lib/data/types'
+import { nameInitials } from '@/lib/initials'
 
 const PERMISSIONS: { key: keyof Omit<AdminPermissions, 'isAdmin'>; label: string }[] = [
   { key: 'canModerateReports', label: 'Модерация жалоб на фото' },
@@ -63,7 +64,7 @@ export function AdminPermissionsModal({ userId, onClose }: { userId: string; onC
     onClose()
   }
 
-  const initials = (profile?.displayName ?? 'Рыбак').slice(0, 2).toUpperCase()
+  const initials = nameInitials(profile?.displayName ?? 'Рыбак', 2)
 
   return (
     <div className="modal-overlay" onClick={onClose}>

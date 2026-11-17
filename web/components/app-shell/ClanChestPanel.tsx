@@ -9,6 +9,7 @@ import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { formatMeters } from '@/components/app-shell/ClanRace'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { tn } from '@/lib/i18n/runtime'
+import { nameInitials } from '@/lib/initials'
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V']
 
@@ -266,7 +267,7 @@ function ChestBody({ chest, isMember, treasuryShare }: { chest: Chest; isMember:
           chest.contributors.map((c, i) => (
             <div key={c.userId} className={`clan-member-row${c.userId === user?.id ? ' me' : ''}`} style={{ animationDelay: `${Math.min(i, 12) * 35}ms` }}>
               <div className="avatar clan-member-avatar" style={{ cursor: 'default' }}>
-                {c.avatarUrl ? <img src={thumbUrl(c.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : c.displayName.slice(0, 1).toUpperCase()}
+                {c.avatarUrl ? <img src={thumbUrl(c.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : nameInitials(c.displayName, 1)}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="clan-member-name">

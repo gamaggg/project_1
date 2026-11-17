@@ -13,6 +13,7 @@ import { thumbUrl } from '@/lib/supabase/imageUrl'
 import type { ShopItem } from '@/lib/supabase/queries'
 import type { CityId } from '@/lib/data/city'
 import { tn } from '@/lib/i18n/runtime'
+import { nameInitials } from '@/lib/initials'
 
 export type TryOnLook = {
   displayName: string
@@ -48,7 +49,7 @@ export function ShopTryOn({
   const bg = resolveHeroBackground(item.category === 'hero_bg' ? item.id : look.heroBg)
   const frame = resolveAvatarFrame(item.category === 'avatar_frame' ? item.id : look.frame)
   const nameStyle = item.category === 'name_style' ? item.id : look.nameStyle
-  const initials = look.displayName.slice(0, 2).toUpperCase()
+  const initials = nameInitials(look.displayName, 2)
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>

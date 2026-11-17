@@ -13,6 +13,7 @@ import { LegendWreath } from '@/components/app-shell/SectorInsights'
 import { useNow } from '@/lib/useNow'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
 import { KIND_LABEL } from '@/lib/data/species'
+import { nameInitials } from '@/lib/initials'
 
 const IN_CITY: Record<CityId, string> = {
   get batumi() {
@@ -338,7 +339,7 @@ function GeoResultView({
                   // eslint-disable-next-line @next/next/no-img-element -- small avatar from storage
                   <img className="geo-board-avatar" src={thumbUrl(avatar, 64)} alt="" />
                 ) : (
-                  <span className="geo-board-avatar initials">{(name ?? tn('common.angler')).slice(0, 1).toUpperCase()}</span>
+                  <span className="geo-board-avatar initials">{nameInitials(name ?? tn('common.angler'), 1)}</span>
                 )}
                 <span className="geo-board-name">
                   {name ?? tn('common.angler')}
@@ -449,7 +450,7 @@ function SectorStory({
                 // eslint-disable-next-line @next/next/no-img-element -- small avatar from storage
                 <img src={thumbUrl(story.owner.avatarUrl, 96)} alt="" />
               ) : (
-                <span>{(story.owner?.name ?? tn('common.angler')).slice(0, 1).toUpperCase()}</span>
+                <span>{nameInitials(story.owner?.name ?? tn('common.angler'), 1)}</span>
               )}
             </button>
             <div>
@@ -558,7 +559,7 @@ function SectorStory({
                         // eslint-disable-next-line @next/next/no-img-element -- small avatar thumbnail, as on the sector screen
                         <img src={thumbUrl(insights.legend.avatarUrl, 96)} alt="" />
                       ) : (
-                        (insights.legend.name ?? '?').slice(0, 2).toUpperCase()
+                        nameInitials(insights.legend.name ?? '?', 2)
                       )}
                     </span>
                   </LegendWreath>

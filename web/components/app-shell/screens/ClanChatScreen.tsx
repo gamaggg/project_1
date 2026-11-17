@@ -17,6 +17,7 @@ import { CLAN_ROLE_LABEL } from '@/lib/data/clanLevels'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
 import { CLAN_CHAT_MAX_LENGTH, chatModerationMessage, chatMutedMessage, moderationMessage, quickCheck } from '@/lib/moderation'
 import type { ClanChatMessage, ClanEvent } from '@/lib/data/types'
+import { nameInitials } from '@/lib/initials'
 
 // Consecutive messages from one author within this window read as one
 // block: name on the first bubble, avatar beside the last.
@@ -439,7 +440,7 @@ export function ClanChatScreen({
                     <div className="clan-chat-avatar-slot">
                       {item.last && (
                         <button className="clan-chat-avatar" onClick={() => m.userId && onOpenUser(m.userId)} aria-label={m.displayName}>
-                          {m.avatarUrl ? <img src={thumbUrl(m.avatarUrl, 64)} alt="" loading="lazy" decoding="async" /> : m.displayName.slice(0, 2).toUpperCase()}
+                          {m.avatarUrl ? <img src={thumbUrl(m.avatarUrl, 64)} alt="" loading="lazy" decoding="async" /> : nameInitials(m.displayName, 2)}
                         </button>
                       )}
                     </div>
@@ -506,7 +507,7 @@ export function ClanChatScreen({
                   onClick={() => pickMention(m.displayName)}
                 >
                   <span className="clan-chat-mention-avatar">
-                    {m.avatarUrl ? <img src={thumbUrl(m.avatarUrl, 64)} alt="" loading="lazy" decoding="async" /> : m.displayName.slice(0, 2).toUpperCase()}
+                    {m.avatarUrl ? <img src={thumbUrl(m.avatarUrl, 64)} alt="" loading="lazy" decoding="async" /> : nameInitials(m.displayName, 2)}
                   </span>
                   {m.displayName}
                 </button>

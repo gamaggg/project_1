@@ -39,6 +39,7 @@ import {
   type Buff,
 } from '@/lib/supabase/queries'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
+import { nameInitials } from '@/lib/initials'
 
 // A pending refund, captured at the moment the admin taps "Вернуть" so the
 // confirm modal can show its name/price without re-deriving them from
@@ -191,7 +192,7 @@ export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpen
                 key={item.id}
                 item={item}
                 avatarUrl={profile?.avatarUrl ?? null}
-                initials={(profile?.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()}
+                initials={nameInitials(profile?.displayName ?? tn('common.angler'), 2)}
                 owned={owned.has(item.id)}
                 equipped={profile?.equippedFrame === item.id}
                 onBuy={() => request(item.price, item.name, () => buyItem.mutate(item.id))}

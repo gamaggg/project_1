@@ -8,6 +8,7 @@ import type { ReactNode } from 'react'
 import { busiestWindow, type SlideId, type WeekRecap } from '@/lib/recap'
 import type { CityId } from '@/lib/data/city'
 import type { Lang, TKey, TVars } from '@/lib/i18n/core'
+import { nameInitials } from '@/lib/initials'
 
 export const SLIDE_W = 1080
 export const SLIDE_H = 1920
@@ -142,7 +143,7 @@ function Avatar({ env, url, name, size, ring }: { env: SlideEnv; url: string | n
     <img src={src} width={size} height={size} style={{ width: size, height: size, borderRadius: size / 2, objectFit: 'cover', border }} alt="" />
   ) : (
     <div style={{ width: size, height: size, borderRadius: size / 2, border, background: 'rgba(255,255,255,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size / 2.6, fontWeight: 800 }}>
-      {(name ?? '?').slice(0, 2).toUpperCase()}
+      {nameInitials(name ?? '?', 2)}
     </div>
   )
 }

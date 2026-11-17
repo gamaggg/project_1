@@ -10,6 +10,7 @@ import { ChallengeCountdown } from '@/components/app-shell/ChallengeCountdown'
 import { ClanWarCard, RaceRiver, RaceRulesCard, formatMeters, raceHeadline, raceProgress } from '@/components/app-shell/ClanRace'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
 import type { CityId } from '@/lib/data/city'
+import { nameInitials } from '@/lib/initials'
 
 function finishTime(iso: string): string {
   return new Date(iso).toLocaleString(currentLocale(), { weekday: 'short', hour: '2-digit', minute: '2-digit' })
@@ -143,7 +144,7 @@ export function ClanRaceScreen({
                   race.myRowers.map((r, i) => (
                     <button key={r.userId} className="clan-member-row race-rower" style={{ animationDelay: `${Math.min(i, 12) * 35}ms` }} onClick={() => onOpenUser(r.userId)}>
                       <span className="avatar clan-member-avatar">
-                        {r.avatarUrl ? <img src={thumbUrl(r.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : r.displayName.slice(0, 1).toUpperCase()}
+                        {r.avatarUrl ? <img src={thumbUrl(r.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : nameInitials(r.displayName, 1)}
                       </span>
                       <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                         <span className="clan-member-name">{r.displayName}</span>

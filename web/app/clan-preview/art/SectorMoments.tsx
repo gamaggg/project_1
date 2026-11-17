@@ -1,6 +1,7 @@
 'use client'
 
 import { tn } from '@/lib/i18n/runtime'
+import { nameInitials } from '@/lib/initials'
 
 // The sector moments of solo play, as the map plays them after a catch (components/app-shell/LeafletMap.tsx
 // runSectorMoment): the same markup and the same classes (.smx in globals.css), drawn here without a map so the
@@ -26,7 +27,7 @@ export function sectorMomentHtml(m: SectorMomentDemo, id: string, r: number): st
   const fromOpacity = m.kind === 'capture' ? 0.22 : 0.32
   const floods = m.kind === 'capture' || m.kind === 'steal'
   const hitAt = HIT_AT[m.kind]
-  const face = (name: string | null, cls: string, ring: string) => `<div class="smx-face ${cls}" style="--smx-ring:${ring}">${esc((name ?? '').slice(0, 2).toUpperCase())}</div>`
+  const face = (name: string | null, cls: string, ring: string) => `<div class="smx-face ${cls}" style="--smx-ring:${ring}">${esc(nameInitials(name ?? '', 2))}</div>`
   const oldFace = m.kind === 'steal' || m.kind === 'attack' ? face(m.fromName, 'smx-old', m.fromColor) : ''
   const newFace = face(m.toName, 'smx-new', m.kind === 'attack' ? '#E24B4A' : m.toColor)
   const after = floods ? 1 : Math.max(0, Math.min(3, m.defense))

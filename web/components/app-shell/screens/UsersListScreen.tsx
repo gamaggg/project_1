@@ -7,6 +7,7 @@ import { useAdminGift, useCanViewAllUsers, useAllUsers, useFindUserByPublicId, u
 import { formatWhen } from '@/lib/format'
 import type { UserListEntry } from '@/lib/data/types'
 import { BackButton } from '@/components/app-shell/BackButton'
+import { nameInitials } from '@/lib/initials'
 
 type SortKey = 'new' | 'catches' | 'territories' | 'name'
 
@@ -141,7 +142,7 @@ export function UsersListScreen({
             <div style={{ padding: 26, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13.5 }}>Загрузка…</div>
           ) : sorted.length ? (
             sorted.map((u, i) => {
-              const initials = u.displayName.slice(0, 2).toUpperCase()
+              const initials = nameInitials(u.displayName, 2)
               return (
                 <button
                   key={u.id}

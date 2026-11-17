@@ -44,6 +44,7 @@ import { formatShortAgo } from '@/lib/format'
 import type { ClanDetail, ClanEvent, ClanMember } from '@/lib/data/types'
 import { tn, currentLocale } from '@/lib/i18n'
 import { labels } from '@/lib/i18n/runtime'
+import { nameInitials } from '@/lib/initials'
 
 type Tab = 'members' | 'chest' | 'race' | Clan2Section
 
@@ -616,7 +617,7 @@ export function ClanScreen({
                 {clan.requests.map((r) => (
                   <div key={r.userId} className="clan-member-row">
                     <button className="avatar clan-member-avatar tap-scale" onClick={() => onOpenUser(r.userId)} aria-label={r.displayName}>
-                      {r.avatarUrl ? <img src={thumbUrl(r.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : r.displayName.slice(0, 1).toUpperCase()}
+                      {r.avatarUrl ? <img src={thumbUrl(r.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : nameInitials(r.displayName, 1)}
                     </button>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="clan-member-name">{r.displayName}</div>
@@ -646,7 +647,7 @@ export function ClanScreen({
                 return (
                   <div key={m.userId} className={`clan-member-row${menuFor === m.userId ? ' menu-open' : ''}`} style={{ animationDelay: `${Math.min(i, 12) * 35}ms` }}>
                     <button className="avatar clan-member-avatar tap-scale" onClick={() => onOpenUser(m.userId)} aria-label={m.displayName}>
-                      {m.avatarUrl ? <img src={thumbUrl(m.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : m.displayName.slice(0, 1).toUpperCase()}
+                      {m.avatarUrl ? <img src={thumbUrl(m.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : nameInitials(m.displayName, 1)}
                     </button>
                     <button className="clan-member-main" onClick={() => onOpenUser(m.userId)}>
                       <span className="clan-member-name">

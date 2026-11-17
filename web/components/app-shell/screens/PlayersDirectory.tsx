@@ -10,6 +10,7 @@ import { pluralCatches, pluralSectors } from '@/lib/format'
 import type { CityPlayer } from '@/lib/data/types'
 import { CITIES, CITY_LIST, type CityId } from '@/lib/data/city'
 import { currentLocale, labels, tn } from '@/lib/i18n/runtime'
+import { nameInitials } from '@/lib/initials'
 
 type Order = 'rating' | 'name'
 type CityFilter = 'all' | CityId
@@ -129,7 +130,7 @@ export function PlayersDirectory({ onOpenUser }: { onOpenUser: (id: string) => v
               >
                 {numbered && <div className="rating-list-rank">{i + 1}</div>}
                 <div className="avatar" style={{ width: 36, height: 36, fontSize: 12.5 }}>
-                  {p.avatarUrl ? <img src={thumbUrl(p.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : p.displayName.slice(0, 2).toUpperCase()}
+                  {p.avatarUrl ? <img src={thumbUrl(p.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : nameInitials(p.displayName, 2)}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, fontSize: 14.5, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>

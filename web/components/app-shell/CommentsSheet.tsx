@@ -23,6 +23,7 @@ import { useVisibleViewport } from '@/lib/useKeyboardInset'
 import { COMMENT_REPORT_REASONS, reportReasonLabel } from '@/lib/data/reportReasons'
 import { tn } from '@/lib/i18n'
 import type { CatchComment } from '@/lib/data/types'
+import { nameInitials } from '@/lib/initials'
 
 type ReplyTarget = { rootId: number; userId: string; name: string }
 
@@ -288,7 +289,7 @@ export function CommentsSheet({
     return (
       <div key={c.id} id={`comment-${c.id}`} className={classes.join(' ')}>
         <button className="avatar comment-avatar tap-scale" onClick={() => openUser(c.userId)} aria-label={c.displayName}>
-          {c.avatarUrl ? <img src={thumbUrl(c.avatarUrl, 64)} alt="" loading="lazy" decoding="async" /> : c.displayName.slice(0, 1).toUpperCase()}
+          {c.avatarUrl ? <img src={thumbUrl(c.avatarUrl, 64)} alt="" loading="lazy" decoding="async" /> : nameInitials(c.displayName, 1)}
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="comment-head">
@@ -482,7 +483,7 @@ export function CommentsSheet({
           ) : (
             <div className="comments-compose-row">
               <div className="avatar comments-me" aria-hidden>
-                {me?.avatarUrl ? <img src={thumbUrl(me.avatarUrl, 96)} alt="" decoding="async" /> : (me?.displayName ?? '?').slice(0, 1).toUpperCase()}
+                {me?.avatarUrl ? <img src={thumbUrl(me.avatarUrl, 96)} alt="" decoding="async" /> : nameInitials(me?.displayName ?? '?', 1)}
               </div>
               <div className={`comments-input-box${error ? ' has-error' : ''}${shaking ? ' shake' : ''}`} onAnimationEnd={() => setShaking(false)}>
               <textarea

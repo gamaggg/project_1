@@ -30,6 +30,7 @@ import {
   type PartnerPointAdmin,
   type PartnerPointInput,
 } from '@/lib/data/partnerPoints'
+import { nameInitials } from '@/lib/initials'
 
 // «Точки партнёров» — the super admin's screen (Профиль → admin tools): every partner point, and the form that adds
 // or changes one. What the form saves is what players see on the map (PartnerPointSheet); «Предпросмотр» opens
@@ -304,7 +305,7 @@ export function AdminPartnersScreen({
                 <button className="ppa-item" onClick={() => setEditing({ id: p.id, form: formOf(p) })}>
                   <span className="ppa-thumb">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    {p.photos[0] ? <img src={p.photos[0]} alt="" loading="lazy" /> : <span>{p.name.slice(0, 1).toUpperCase()}</span>}
+                    {p.photos[0] ? <img src={p.photos[0]} alt="" loading="lazy" /> : <span>{nameInitials(p.name, 1)}</span>}
                   </span>
                   <span className="ppa-main">
                     <span className="ppa-name">{p.name}</span>

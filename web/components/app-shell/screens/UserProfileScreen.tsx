@@ -44,6 +44,7 @@ import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { tn } from '@/lib/i18n'
 import { AdminSupportChatSheet } from '@/components/app-shell/AdminSupportChatSheet'
+import { nameInitials } from '@/lib/initials'
 
 // Which anti-abuse check froze the account (profiles.frozen_reason, _abuse_check_catch / abuse_scan).
 const FREEZE_REASON: Record<string, string> = {
@@ -166,7 +167,7 @@ export function UserProfileScreen({
     viewedCity
   )
   const recent = catches.slice(0, 3)
-  const initials = (profile?.displayName ?? tn('common.angler')).slice(0, 2).toUpperCase()
+  const initials = nameInitials(profile?.displayName ?? tn('common.angler'), 2)
   const territoriesRef = useRef<HTMLDivElement>(null)
 
   function handleShare() {
