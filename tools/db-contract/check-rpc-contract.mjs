@@ -122,11 +122,13 @@ function objectKeys(obj) {
 
 // A file that makes calls with the service-role client (createAdminClient —
 // server routes only) doesn't need `authenticated` to hold EXECUTE: those
-// functions are often service-role-only on purpose (onboarding_due).
+// functions are often service-role-only on purpose (onboarding_due). A file
+// that only imports it to take the client as a parameter is server code too
+// (lib/telegram/widgets/build.ts: _weekly_sector_counts, _daily_reward_amounts).
 function extractCalls(files) {
   const calls = []
   for (const f of files) {
-    const server = /createAdminClient\(/.test(f.text)
+    const server = /createAdminClient\(|from ['"]@\/lib\/supabase\/admin['"]/.test(f.text)
     const re = /\.rpc\(\s*['"]([a-z0-9_]+)['"]\s*(,)?/g
     let m
     while ((m = re.exec(f.text))) {
