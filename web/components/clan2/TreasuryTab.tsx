@@ -9,7 +9,7 @@ import { HowItWorks, NextStep, type Go } from '@/components/clan2/Guide'
 import { alertText } from '@/components/clan2/alertText'
 import { buyGoal, canManage, capOf, deposit, goalOf, levelOf, rentPerDay, setTaxRate, siegeLocked, useDemoState } from '@/lib/clan2/demoStore'
 import { requestMap, setLiveUi } from '@/lib/clan2/live/ui'
-import { readWeekLog } from '@/lib/clan2/live/server'
+import { readDonatable, readWeekLog } from '@/lib/clan2/live/server'
 import { DAY, PROJECT_EFFECTS, TAX_RATES, fmt, treasuryCap } from '@/lib/clan2/rules'
 import type { AlertKind, QuestKind, TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
 import { questLabel } from '@/components/clan2/WeekTab'
@@ -40,6 +40,9 @@ export function TreasuryTab({ onGo, events, onTour }: { onGo?: (to: Go) => void;
   const [amountText, setAmountText] = useState('100')
   const amount = Number(amountText) || 0
   const [rentOpen, setRentOpen] = useState(false)
+  // Gift coins (the welcome and invite bonuses) may not go into the treasury: the server says how many may,
+  // read when the sheet opens; a deposit over it opens the window that explains why instead.
+  const [giftOpen, setGiftOpen] = useState(false)
   const [capOpen, setCapOpen] = useState(false)
   // The source opened to its lines: one of the week's groups, or what was spent.
   const [info, setInfo] = useState<'srcTax' | 'srcDeposit' | 'srcShares' | 'srcOther' | 'spent' | null>(null)
@@ -91,6 +94,12 @@ export function TreasuryTab({ onGo, events, onTour }: { onGo?: (to: Go) => void;
   )
   const maxFlow = Math.max(1, ...flow)
   const wallet = s.wallet
+  const { data: donatable = null } = useQuery({
+    queryKey: ['clan2-donatable', clanId, wallet],
+    enabled: depositOpen && !!clanId && s.settings.enabled,
+    staleTime: 0,
+    queryFn: readDonatable,
+  })
   const goalLeft = goal ? Math.max(0, goal.cost - s.treasury.balance) : 0
   const isMember = s.members.some((m) => m.id === s.myId)
   // Why the deposit cannot go in as typed (the button stays off and says nothing else).
@@ -263,6 +272,11 @@ export function TreasuryTab({ onGo, events, onTour }: { onGo?: (to: Go) => void;
           className="btn-primary"
           disabled={!!depositProblem || amount === 0}
           onClick={() => {
+            if (donatable !== null && amount > donatable) {
+              setDepositOpen(false)
+              setGiftOpen(true)
+              return
+            }
             if (act(deposit(amount))) {
               say(tn('clan2.ok.deposited', { n: fmt(amount) }))
               setDepositOpen(false)
@@ -270,6 +284,14 @@ export function TreasuryTab({ onGo, events, onTour }: { onGo?: (to: Go) => void;
           }}
         >
           {tn('clan2.treasury.depositGo', { n: fmt(amount) })}
+        </button>
+      </C2Sheet>
+
+      <C2Sheet open={giftOpen} onClose={() => setGiftOpen(false)} title={tn('clan2.treasury.giftTitle')}>
+        <p className="c2-muted">{tn('clan2.treasury.giftText')}</p>
+        <p className="c2-hint">{donatable ? tn('clan2.treasury.giftCan', { n: fmt(donatable) }) : tn('clan2.treasury.giftNone')}</p>
+        <button className="btn-primary" onClick={() => setGiftOpen(false)}>
+          {tn('clan2.treasury.giftOk')}
         </button>
       </C2Sheet>
 

@@ -243,6 +243,7 @@ const REASON: Record<string, string> = {
   bad_goal: 'noGoal',
   bad_entry: 'badEntry',
   bad_amount: 'minDeposit',
+  gift_coins: 'giftCoins',
 }
 export function reasonOf(message: string): string {
   const m = /CLAN:([a-z_]+)/.exec(message)
@@ -250,6 +251,15 @@ export function reasonOf(message: string): string {
   if (/not enough coins/i.test(message)) return 'wallet'
   if (/not allowed/i.test(message)) return 'notAdmin'
   return 'network'
+}
+
+// How many coins the player may put into the treasury: the welcome and invite bonuses may not go there
+// (supabase-drafts/clan-gift-coins-17-11). Null before that migration, or on an error: then nothing is checked here.
+export async function readDonatable(): Promise<number | null> {
+  const supabase = createClient()
+  const rpc = supabase.rpc.bind(supabase) as unknown as (fn: string) => Promise<{ data: unknown; error: { message: string } | null }>
+  const { data, error } = await rpc('clan_treasury_donatable')
+  return error || typeof data !== 'number' ? null : data
 }
 
 export async function callServer(fn: string, args: Json): Promise<{ ok: true } | { ok: false; reason: string }> {

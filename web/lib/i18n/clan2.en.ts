@@ -97,6 +97,7 @@ export const clan2En = {
     serverGame: "In the real game this happens by itself",
     hqMoveSiege: "The HQ cannot be moved during a siege: break the siege first",
     siegeLock: "While the HQ is under siege the treasury is shut: nothing can be spent from it",
+    giftCoins: "Welcome coins can't go into the treasury",
   },
   ok: {
     deposited: "{n} coins deposited",
@@ -214,6 +215,11 @@ export const clan2En = {
     weekNone: "Nothing here this week",
     weekTotal: "over the last 7 days",
     infoSpent: "Everything that left the treasury: buildings and speed-ups, the HQ, the outing, the clan shop and the loot carried off when our HQ fell.",
+    giftTitle: "These coins can't be deposited",
+    giftText: "The welcome bonus and the invite bonus are a gift to get you started. You can spend them in the shop, but not put them into the treasury: only coins earned in the game go there — for catches, challenges, the chest and more.",
+    giftCan: "You can deposit now: {n}",
+    giftNone: "Nothing to deposit yet. Catch a fish or finish a challenge — earned coins can go in.",
+    giftOk: "Got it",
   },
   goal: {
     skin_clan_tide: "Skin «Tide»",

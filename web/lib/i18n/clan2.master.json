@@ -455,6 +455,11 @@
    "ru": "Пока штаб в осаде, общак закрыт: тратить из него нельзя",
    "en": "While the HQ is under siege the treasury is shut: nothing can be spent from it",
    "ka": "სანამ შტაბი ალყაშია, სალარო დაკეტილია: მისგან ხარჯვა არ შეიძლება"
+  },
+  "giftCoins": {
+   "ru": "Приветственные монеты нельзя внести в общак",
+   "en": "Welcome coins can't go into the treasury",
+   "ka": "მისასალმებელი მონეტების სალაროში შეტანა არ შეიძლება"
   }
  },
  "ok": {
@@ -1016,6 +1021,31 @@
    "ru": "Всё, что ушло из общака: постройки и ускорения, штаб, выход, покупки в магазине клана и добыча, которую унесли при взятии нашего штаба.",
    "en": "Everything that left the treasury: buildings and speed-ups, the HQ, the outing, the clan shop and the loot carried off when our HQ fell.",
    "ka": "ყველაფერი, რაც სალაროდან წავიდა: ნაგებობები და დაჩქარებები, შტაბი, გასვლა, კლანის მაღაზია და ნადავლი, რომელიც ჩვენი შტაბის აღებისას წაიღეს."
+  },
+  "giftTitle": {
+   "ru": "Эти монеты нельзя внести",
+   "en": "These coins can't be deposited",
+   "ka": "ამ მონეტების შეტანა არ შეიძლება"
+  },
+  "giftText": {
+   "ru": "Приветственный бонус и бонус за приглашение — подарок на старт. Их можно тратить в магазине, но не вносить в общак: в общак идут только монеты, заработанные в игре — за улов, задания, сундук и другое.",
+   "en": "The welcome bonus and the invite bonus are a gift to get you started. You can spend them in the shop, but not put them into the treasury: only coins earned in the game go there — for catches, challenges, the chest and more.",
+   "ka": "მისასალმებელი ბონუსი და მოწვევის ბონუსი სასტარტო საჩუქარია. მათი დახარჯვა მაღაზიაში შეიძლება, მაგრამ სალაროში შეტანა — არა: სალაროში მხოლოდ თამაშში გამომუშავებული მონეტები შედის — დაჭერისთვის, დავალებებისთვის, სკივრისთვის და სხვა."
+  },
+  "giftCan": {
+   "ru": "Сейчас можно внести: {n}",
+   "en": "You can deposit now: {n}",
+   "ka": "ახლა შეგიძლია შეიტანო: {n}"
+  },
+  "giftNone": {
+   "ru": "Сейчас внести нечего. Поймай рыбу или выполни задание — заработанные монеты внести можно.",
+   "en": "Nothing to deposit yet. Catch a fish or finish a challenge — earned coins can go in.",
+   "ka": "ჯერ შესატანი არაფერია. დაიჭირე თევზი ან შეასრულე დავალება — გამომუშავებული მონეტების შეტანა შეიძლება."
+  },
+  "giftOk": {
+   "ru": "Понятно",
+   "en": "Got it",
+   "ka": "გასაგებია"
   }
  },
  "goal": {
