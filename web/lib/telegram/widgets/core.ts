@@ -87,3 +87,6 @@ export function clipBytes(s: string, max: number): string {
 }
 
 export type WidgetLang = Lang
+
+// A sector around the one a widget is about: [x, y] px from the scene's centre, colour (0 — free), id.
+export type AroundHex = [number, number, string | 0, string]

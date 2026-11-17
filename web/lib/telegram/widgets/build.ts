@@ -12,7 +12,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { CITIES, asCityId, cityForSectorId, type CityId } from '@/lib/data/city'
 import { fetchRawForecast, nowInZone, scoreForecast, type ForecastDay } from '@/lib/forecast/bite'
 import { translate, type Lang, type TKey } from '@/lib/i18n/core'
-import type { BuiltWidget, WidgetKind } from './core'
+import type { AroundHex, BuiltWidget, WidgetKind } from './core'
 import { sectorChatData, sectorWidgetHtml } from './sector'
 import { lanesFromRace, raceChatData, raceWidgetHtml } from './race'
 import { forecastChatData, forecastWidgetHtml } from './forecast'
@@ -195,6 +195,66 @@ export async function catchSeriesData(admin: Admin, userId: string, around: stri
   })
 }
 
+// The map round some sectors, for a widget scene: every sector near them at its real place, in
+// px from the middle of `centre` at the widget's hexagon size (`radius` px). The grid is regular,
+// so the hexagon's size in metres is the distance to the nearest neighbour / √3 (corners are in the
+// map files, not in the database). Colours as the map paints them: the player's own sectors in their
+// colour, others' in the holder's colour (the "someone else" blue if none), free ones grey (0).
+async function mapAround(
+  admin: Admin,
+  centre: string[],
+  playerId: string,
+  radius: number,
+  box: { left: number; right: number; top: number; bottom: number },
+): Promise<{ hexes: AroundHex[]; at: Map<string, [number, number]> }> {
+  const empty = { hexes: [], at: new Map<string, [number, number]>() }
+  const { data: cs } = await admin.from('territories').select('id, lat, lng').in('id', centre)
+  const mids = (cs ?? []) as { id: string; lat: number; lng: number }[]
+  if (!mids.length) return empty
+  const lat0 = mids.reduce((a, c) => a + c.lat, 0) / mids.length
+  const lng0 = mids.reduce((a, c) => a + c.lng, 0) / mids.length
+  const { data: near } = await admin
+    .from('territories')
+    .select('id, lat, lng, owner_id')
+    .eq('is_deleted', false)
+    .gte('lat', lat0 - 0.02)
+    .lte('lat', lat0 + 0.02)
+    .gte('lng', lng0 - 0.026)
+    .lte('lng', lng0 + 0.026)
+    .limit(400)
+  const rows = (near ?? []) as { id: string; lat: number; lng: number; owner_id: string | null }[]
+  const kx = Math.cos((lat0 * Math.PI) / 180) * 111_320
+  const m = (r: { lat: number; lng: number }): [number, number] => [(r.lng - lng0) * kx, -(r.lat - lat0) * 110_540]
+  const first = m(mids[0])
+  let step = Infinity
+  for (const r of rows) {
+    const [x, y] = m(r)
+    const d = Math.hypot(x - first[0], y - first[1])
+    if (d > 1 && d < step) step = d
+  }
+  const scale = radius / (Number.isFinite(step) ? step / Math.sqrt(3) : 344)
+  const at = new Map<string, [number, number]>()
+  const placed = rows
+    .map((r) => {
+      const [x, y] = m(r)
+      return { r, px: Math.round(x * scale), py: Math.round(y * scale) }
+    })
+    .filter(({ px, py }) => px >= box.left && px <= box.right && py >= box.top && py <= box.bottom)
+    .sort((a, b) => Math.hypot(a.px, a.py) - Math.hypot(b.px, b.py))
+  for (const p of placed) if (centre.includes(p.r.id)) at.set(p.r.id, [p.px, p.py])
+  const others = placed.filter((p) => !centre.includes(p.r.id)).slice(0, 14)
+  const owners = [...new Set(others.map((p) => p.r.owner_id).filter((x): x is string => !!x)), playerId]
+  const who = await people(admin, owners)
+  const mine = who.get(playerId)?.territory_color
+  const hexes: AroundHex[] = others.map(({ r, px, py }) => [
+    px,
+    py,
+    !r.owner_id ? 0 : r.owner_id === playerId ? (mine ?? '#2FA84F') : (who.get(r.owner_id)?.territory_color ?? '#3E7BFA'),
+    r.id,
+  ])
+  return { hexes, at }
+}
+
 // The race of a city right now, as lanes (get_clan_race works for the service role; its «my_*» fields stay empty).
 export async function cityRace(admin: Admin, city: CityId, myClanId: number | null): Promise<string | null> {
   const { data, error } = await admin.rpc('get_clan_race', { p_city: city })
@@ -233,7 +293,9 @@ export async function buildWidget(admin: Admin, n: WidgetNotification, lang: Lan
 
   if (kind === 'sector') {
     if (!n.territory_id) return null
-    const who = await people(admin, [n.user_id, ...(n.actor_id ? [n.actor_id] : [])])
+    const { data: t } = await admin.from('territories').select('owner_id, defense').eq('id', n.territory_id).maybeSingle()
+    const sectorNow = t as { owner_id: string | null; defense: number | null } | null
+    const who = await people(admin, [n.user_id, ...(n.actor_id ? [n.actor_id] : []), ...(sectorNow?.owner_id ? [sectorNow.owner_id] : [])])
     const me = who.get(n.user_id)
     const by = n.actor_id ? who.get(n.actor_id) : undefined
     return {
@@ -247,6 +309,9 @@ export async function buildWidget(admin: Admin, n: WidgetNotification, lang: Lan
         me: { name: me?.display_name ?? null, color: me?.territory_color ?? null },
         defense: Number(p.defense ?? 0),
         when: clock(n.created_at, cityForSectorId(n.territory_id)),
+        now: sectorNow?.owner_id
+          ? { mine: sectorNow.owner_id === n.user_id, name: who.get(sectorNow.owner_id)?.display_name ?? null, defense: sectorNow.defense ?? 0 }
+          : null,
       }),
     }
   }
@@ -302,7 +367,10 @@ export async function buildWidget(admin: Admin, n: WidgetNotification, lang: Lan
     })
     const city = cityForSectorId(ids[0]) ?? 'batumi'
     const until = typeof p.until === 'string' ? formatWeekdayTime(p.until, lang, CITIES[city].timezone) : ''
-    return { kind, html: widgetTemplate(kind, lang), allowQueries: false, chatData: hotChatData(sectors, until) }
+    // Only where the two stand to each other; the sectors around are not drawn (owner's choice 17.11).
+    const map = await mapAround(admin, ids, n.user_id, 40, { left: -200, right: 200, top: -120, bottom: 120 }).catch(() => null)
+    const placed = sectors.map((s) => ({ ...s, at: map?.at.get(s.id) }))
+    return { kind, html: widgetTemplate(kind, lang), allowQueries: false, chatData: hotChatData(placed, until) }
   }
 
   if (kind === 'catches') {

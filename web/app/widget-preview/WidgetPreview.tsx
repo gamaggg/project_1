@@ -37,13 +37,16 @@ export function WidgetPreview({ items }: { items: PreviewItem[] }) {
       const next: Record<string, number> = {}
       document.querySelectorAll<HTMLIFrameElement>('iframe[data-widget]').forEach((el) => {
         try {
-          const h = (el.contentDocument?.getElementById('r') as HTMLElement | null)?.offsetHeight
+          // Rounded up: a height of 327.4 px in a 327 px frame shows a scrollbar (Telegram itself never scrolls a widget).
+          const box = (el.contentDocument?.getElementById('r') as HTMLElement | null)?.getBoundingClientRect()
+          const h = box ? Math.ceil(box.height) : 0
           if (h) next[el.dataset.widget as string] = Math.min(600, h)
         } catch {}
       })
       setHeights((s) => (JSON.stringify(s) === JSON.stringify({ ...s, ...next }) ? s : { ...s, ...next }))
     }
-    const id = window.setInterval(read, 400)
+    read()
+    const id = window.setInterval(read, 100)
     return () => window.clearInterval(id)
   }, [])
 
@@ -52,7 +55,7 @@ export function WidgetPreview({ items }: { items: PreviewItem[] }) {
       <div style={{ maxWidth: 960, margin: '0 auto' }}>
         <h1 style={{ margin: 0, fontSize: 22 }}>Виджеты в чате бота — предпросмотр</h1>
         <p style={{ margin: '6px 0 14px', fontSize: 14, color: '#4B5A55' }}>
-          Так виджет нарисуется в сообщении бота. Данные выдуманные, кроме прогноза. Через 0,6 с «бот» отвечает на запрос виджета. Сцену сектора можно запустить снова нажатием на неё, по шкале прогноза можно вести пальцем.
+          Так виджет нарисуется в сообщении бота. Данные выдуманные, кроме прогноза. Через 0,6 с «бот» отвечает на запрос виджета. Анимацию запускает заново «↻ Сначала», по шкале прогноза можно вести пальцем, тур горячих секторов листается «Далее».
         </p>
         <div style={{ display: 'flex', gap: 6, marginBottom: 18 }}>
           {WIDTHS.map((w) => (
@@ -80,7 +83,8 @@ export function WidgetPreview({ items }: { items: PreviewItem[] }) {
                   srcDoc={frameDoc(item)}
                   sandbox="allow-scripts allow-same-origin"
                   data-widget={item.id}
-                  style={{ display: 'block', width: '100%', height: heights[item.id] ?? 420, border: 0, borderRadius: 12 }}
+                  scrolling="no"
+                  style={{ display: 'block', width: '100%', height: heights[item.id] ?? 420, border: 0, borderRadius: 12, visibility: heights[item.id] ? 'visible' : 'hidden' }}
                 />
                 <div style={{ padding: '7px 8px 4px', fontSize: 14, lineHeight: 1.38 }}>{item.caption}</div>
               </div>

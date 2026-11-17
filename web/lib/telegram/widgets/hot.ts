@@ -1,5 +1,5 @@
 // «Горячие сектора недели» as a chat widget: the app's hot-sector tour
-// (HotSectorsTour) on a piece of the map — the two neighbouring sectors in
+// (HotSectorsTour) — the two neighbouring sectors, large, in
 // their holders' colours with the holders' avatars and the hot id labels
 // (orange, the flame, the white ring — LeafletMap idLabelHtml), the glowing
 // orange edge round the sector of the step, and the tour's own card under it:
@@ -7,22 +7,22 @@
 // ×2, the end of the week and who holds it now; tap «Дальше» for the second
 // sector and for «Удержи до конца воскресенья».
 //
-// Not like the app, because a widget can't: no map tiles under the sectors (a
-// shore in two colours), avatars as initials, the sectors drawn side by side
-// rather than at their real positions, the system font.
+// Not like the app, because a widget can't: the two sectors alone, large, on a plain ground
+// instead of the map (owner's choice 17.11), avatars as initials, the system font.
 
 import { translate, type Lang, type TKey } from '@/lib/i18n/core'
 import { HOT_FLAME_PATH } from '@/lib/map/hotFlame'
 import { pack, jsonForScript, safeColor, clipBytes } from './core'
 import { MIN_JS } from './min.generated'
 
-export type HotSector = { id: string; holder: 'mine' | 'other' | 'free'; name: string | null; color: string | null }
+export type HotSector = { id: string; holder: 'mine' | 'other' | 'free'; name: string | null; color: string | null; at?: [number, number] }
 
 const CSS = `
 body{margin:0}
-.ht{padding:10px;font:15px/1.35 system-ui,sans-serif;color:#17181B;background:linear-gradient(172deg,#CFE2EC,#D9E8EF 44%,#E7EBE1 44.6%,#EEF0E8)}
-.mp{position:relative;height:170px}
-.mp svg.h{position:absolute;left:50%;top:50%;width:240px;height:170px;margin:-85px 0 0 -120px;overflow:visible}
+.ht{position:relative;padding:10px;overflow:hidden;font:15px/1.35 system-ui,sans-serif;color:#17181B;background:radial-gradient(80% 70% at 50% 40%,#F3F4F0 0%,#E2E4DE 100%)}
+.mp{position:relative;height:200px;overflow:hidden}
+.zm{position:absolute;left:0;top:0;right:0;bottom:0;transform:scale(1.45)}
+.mp svg.h{position:absolute;left:50%;top:50%;width:480px;height:340px;margin:-170px 0 0 -240px;overflow:visible}
 .eg{fill:none;stroke:#FF7A2F;stroke-width:3;stroke-linejoin:round;filter:drop-shadow(0 0 7px rgba(255,122,47,.9));animation:eg 1.3s ease-in-out .5s 2}
 .pin{position:absolute;display:flex;flex-direction:column;align-items:center;gap:3px;transform:translate(-50%,-50%)}
 .av{width:30px;height:30px;border-radius:50%;border:2.5px solid;background:linear-gradient(160deg,#FF7A38,#FC5200 70%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;box-shadow:0 3px 8px rgba(23,24,27,.25)}
@@ -38,23 +38,24 @@ body{margin:0}
 @keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 `
 
-// Two flat-top hexagons of radius 40, the second one up-right of the first (a real neighbour's place).
+// The two hot sectors, flat-top hexagons of radius 40 at their real places round their middle
+// (px from the centre, worked out on the server), shown large (×1.45) on a plain ground.
 const JS = `
 var W=window.TelegramWidget,S=__S__,D={},st=0;
 try{D=JSON.parse(W&&W.chatData||'{}')||{}}catch(e){}
 function e(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function f(s,o){return s.replace(/\\{(\\w+)\\}/g,function(x,k){return k in o?o[k]:x})}
-var A=D.a||{},B=D.b,P=[[95,98],[155,63]];
+var A=D.a||{},B=D.b,P=[A.p||[-30,17],B&&B.p||[30,-17]];
 function hp(c){var x=c[0],y=c[1];return (x+40)+','+y+' '+(x+20)+','+(y+34.6)+' '+(x-20)+','+(y+34.6)+' '+(x-40)+','+y+' '+(x-20)+','+(y-34.6)+' '+(x+20)+','+(y-34.6)}
 function who(s){return s.h==='m'?S.hm:s.h==='o'?f(S.ho,{name:e(s.n||S.oa)}):S.hf}
 function draw(){
 var ss=B?[A,B]:[A],n=B?3:2,h='',pins='',i;
 for(i=0;i<ss.length;i++){var s=ss[i],c=s.h==='f'?'#9AA0A6':(s.c||'#3E7BFA');
 h+='<polygon points="'+hp(P[i])+'" fill="'+c+'" fill-opacity=".32" stroke="'+c+'" stroke-opacity=".9" stroke-width="1.5"/>';
-pins+='<div class="pin" style="left:calc(50% + '+(P[i][0]-120)+'px);top:calc(50% + '+(P[i][1]-85)+'px)">'+(s.h==='f'?'':'<div class="av" style="border-color:'+c+'">'+e((s.h==='m'?S.me:s.n||S.oa).slice(0,2).toUpperCase())+'</div>')+'<div class="lb">'+S.fl+e(s.i)+'</div></div>'}
+pins+='<div class="pin" style="left:calc(50% + '+P[i][0]+'px);top:calc(50% + '+P[i][1]+'px)">'+(s.h==='f'?'':'<div class="av" style="border-color:'+c+'">'+e((s.h==='m'?S.me:s.n||S.oa).slice(0,2).toUpperCase())+'</div>')+'<div class="lb">'+S.fl+e(s.i)+'</div></div>'}
 var on=st===2||!B?[0,1]:[st],eg='';for(i=0;i<on.length;i++)if(ss[on[i]])eg+='<polygon class="eg" points="'+hp(P[on[i]])+'"/>';
 var t=st===0?[f(S.t1,{id:e(A.i)}),f(S.x1,{until:e(D.u),mult:2,extra:S.xn,holder:who(A)})]:st===1&&B?[f(S.t2,{id:e(B.i)}),f(S.x2,{a:e(A.i),until:e(D.u),mult:2,holder:who(B)})]:[S.t3,S.x3];
-document.getElementById('r').innerHTML='<div class="ht"><div class="mp"><svg class="h" viewBox="0 0 240 170">'+h+eg+'</svg>'+pins+'</div>'
+document.getElementById('r').innerHTML='<div class="ht"><div class="mp"><div class="zm"><svg class="h" viewBox="-240 -170 480 340">'+h+eg+'</svg>'+pins+'</div></div>'
 +'<div class="tp in"><div class="kk">'+f(S.kk,{index:st+1,total:n})+'</div><div class="tt">'+t[0]+'</div><div class="tx">'+t[1]+'</div>'+(st<n-1?'<div class="ac"><div class="nx">'+S.nx+'</div></div>':'')+'</div></div>';
 var x=document.querySelector('.nx');if(x)x.addEventListener('click',function(){st++;draw()})}
 draw();
@@ -85,7 +86,7 @@ export function hotWidgetHtml(lang: Lang): string {
   return pack(CSS, '<div id="r"></div>', (MIN_JS.hot || JS).replace('__S__', jsonForScript(strings)))
 }
 
-const one = (s: HotSector) => ({ i: s.id, h: s.holder === 'mine' ? 'm' : s.holder === 'other' ? 'o' : 'f', n: clipBytes(s.name ?? '', 48), c: safeColor(s.color, '#3E7BFA') })
+const one = (s: HotSector) => ({ i: s.id, h: s.holder === 'mine' ? 'm' : s.holder === 'other' ? 'o' : 'f', n: clipBytes(s.name ?? '', 48), c: safeColor(s.color, '#3E7BFA'), ...(s.at ? { p: s.at } : {}) })
 
 // until: «вс 23:59» (formatWeekdayTime in the sectors' city).
 export function hotChatData(sectors: HotSector[], until: string): string {

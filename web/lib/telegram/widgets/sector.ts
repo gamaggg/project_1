@@ -5,14 +5,15 @@
 // victim's side of runSectorMoment (.smx steal / attack, victim): the catcher
 // charges in from below-left and knocks your avatar off spinning, the new
 // colour floods the hex, the ring and the white label, the defense marks; at the
-// bottom what the sector is like right now (asked from the bot when the widget
-// appears). The replay's explanation («Чтобы вернуть, лови в нём…») is the
+// bottom what the sector is like now — as of sending, then refreshed by the
+// bot's answer when the widget appears (the line is there from the start, so
+// the widget keeps its height). The replay's explanation («Чтобы вернуть, лови в нём…») is the
 // message caption under the widget, so it is not repeated inside. Timings are the app's: the plaque's
 // own (.35–.95 s), the scene 700 ms after it (AwayReplay INTRO_MS) with the
-// hit 400 ms later (MOMENT_HIT_AT). Tap the scene to play it again.
+// hit 400 ms later (MOMENT_HIT_AT).
 //
-// Not like the app, because a widget can't: no map tiles under the scene (a
-// shore drawn in two colours instead), avatars as initials (photos can't be
+// Not like the app, because a widget can't: the sector alone, large, on a plain
+// ground instead of the map (owner's choice 17.11: one big sector, neutral background), avatars as initials (photos can't be
 // loaded), the system font, the grey of a lost avatar made with colour and
 // brightness (no grayscale filter), and the sector chip on the plaque drawn as
 // a true hexagon next to the number.
@@ -30,12 +31,15 @@ export type SectorWidgetData = {
   defense: number
   // «07:42» — when it happened, in the sector's city time.
   when: string
+  // The sector when the message is sent (the line at the bottom shows it from the start, so the
+  // widget never grows when the bot's fresher answer comes); null — not known.
+  now?: { mine: boolean; name: string | null; defense: number } | null
 }
 
 const CSS = `
 body{margin:0}
 .w{position:relative;padding:10px;font:15px/1.35 system-ui,sans-serif;color:#17181B;overflow:hidden;
- background:linear-gradient(172deg,#B9CFDB,#C9DCE5 44%,#D5DACF 44.6%,#DCDED5)}
+ background:radial-gradient(80% 70% at 50% 55%,#F3F4F0 0%,#E2E4DE 100%)}
 .l{--a:#E24B4A;--g:rgba(226,75,74,.38);--b:rgba(226,75,74,.7);--h:rgba(226,75,74,.35)}
 .t{--a:#F5A524;--g:rgba(245,165,36,.38);--b:rgba(245,165,36,.7);--h:rgba(245,165,36,.35)}
 .c{position:relative;z-index:2;padding:12px 14px 14px;border-radius:22px;overflow:hidden;color:#fff;
@@ -58,8 +62,8 @@ body{margin:0}
 .sb svg{width:16px;height:14px;flex:none}
 .sb b{color:#fff;font-weight:900;letter-spacing:.03em;margin-right:2px}
 .wh{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.m{position:relative;height:178px}
-.x{position:absolute;left:50%;top:60%;width:0;height:0}
+.m{position:relative;height:230px}
+.x{position:absolute;left:50%;top:56%;width:0;height:0;transform:scale(1.35)}
 .hs{position:absolute;left:-60px;top:-60px;overflow:visible}
 .ho{animation:sh .24s ease-in-out 1.1s,of .35s ease-out 1.4s both}
 .t .ho{animation:none}
@@ -79,18 +83,19 @@ body{margin:0}
 .pp span{width:14px;height:8px;border-radius:4px;background:#D9DADF}
 .pp .g{animation:pi .32s ease-out 1.7s both}
 .pp .z{animation:pl .6s ease-out 1.55s both}
-.lv{position:relative;z-index:2;display:flex;align-items:center;gap:8px;padding:11px 14px;border-radius:16px;background:#fff;box-shadow:0 10px 28px rgba(0,0,0,.22);font-size:14px;font-weight:800;animation:fa .45s ease-out 2.6s both}
-.lv[hidden]{display:none}
+.lv{position:relative;z-index:2;display:flex;align-items:center;gap:8px;padding:11px 14px;min-height:calc(2.6em + 22px);box-sizing:border-box;border-radius:16px;background:#fff;box-shadow:0 10px 28px rgba(0,0,0,.22);font-size:14px;font-weight:800;animation:fa .45s ease-out 2.6s both}
+.lv.off{visibility:hidden}
+.lv span{flex:1;min-width:0;line-height:1.3;max-height:2.6em;overflow:hidden}
 .lv i{width:8px;height:8px;border-radius:50%;background:var(--a);flex:none}
 .lv.ok{background:#E3F4E8;color:#1E7A39}.lv.ok i{background:#2FA84F}
 @keyframes dr{from{opacity:0;transform:translateY(-130%) scale(.96)}to{opacity:1;transform:none}}
-@keyframes jo{0%,100%{translate:0 0}20%{translate:-5px 0}45%{translate:4px 0}70%{translate:-2px 0}}
 @keyframes pu{0%{box-shadow:0 0 0 0 var(--b)}100%{box-shadow:0 0 0 9px rgba(0,0,0,0)}}
 @keyframes ch{0%{transform:translateX(-46px) scale(.7);opacity:0}70%{transform:translateX(10px) scale(1.06);opacity:1}100%{transform:none;opacity:1}}
 @keyframes rc{0%{transform:none}30%{transform:translateX(9px) rotate(16deg)}100%{transform:translateX(3px) rotate(8deg)}}
 @keyframes gr{to{background-color:#8A8C93;filter:brightness(.75)}}
 @keyframes bs{0%{transform:scale(.2) rotate(-30deg);opacity:0}35%{transform:scale(1.35) rotate(10deg);opacity:1}100%{transform:scale(.9) rotate(20deg);opacity:0}}
 @keyframes po{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+@keyframes jo{0%,100%{translate:0 0}20%{translate:-5px 0}45%{translate:4px 0}70%{translate:-2px 0}}
 @keyframes sl{from{transform:translateX(12px);opacity:0}to{transform:none;opacity:1}}
 @keyframes fa{from{opacity:0}to{opacity:1}}
 @keyframes fl{to{transform:scale(1)}}
@@ -116,7 +121,7 @@ var L=D.k!=='a',b=D.b||{},m=D.m||{},id=String(D.id||''),d=Math.max(0,Math.min(3,
 function e(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function f(s,o,r){return s.replace(/\\{(\\w+)\\}/g,function(x,k){return k in o?(r?String(o[k]):e(o[k])):x})}
 function n2(n){return e((n||S.an).slice(0,2).toUpperCase())}
-var bc=b.c||'#FC5200',mc=m.c||'#3E7BFA',tc=L?bc:mc,H='52,0 26,45 -26,45 -52,0 -26,-45 26,-45',lv=null;
+var bc=b.c||'#FC5200',mc=m.c||'#3E7BFA',tc=L?bc:mc,H='52,0 26,45 -26,45 -52,0 -26,-45 26,-45',lv=D.n||null;
 function draw(){
 var p='';for(var i=0;i<3;i++){var on=L?i<1:i<=d;p+='<span class="'+(L?(i<1?'g':''):(i===d?'z':''))+'" style="'+(on?'background:var(--p)':'')+'"></span>'}
 document.getElementById('r').innerHTML='<div class="w '+(L?'l':'t')+'"><div class="c"><div class="tg"><i></i>'+e(S.tag)+'</div><div class="rw"><div class="du">'
@@ -130,10 +135,10 @@ document.getElementById('r').innerHTML='<div class="w '+(L?'l':'t')+'"><div clas
 :'<polygon class="he" points="'+H+'" fill="none" stroke="#E24B4A" stroke-width="3"/>')
 +'</svg><span class="rg"></span><div class="sf ol" style="border-color:'+mc+'">'+n2(m.n)+'</div><div class="sf nw" style="border-color:'+(L?bc:'#E24B4A')+'">'+n2(b.n)+'</div>'
 +'<div class="lb"><i style="background:'+(L?bc:'#E24B4A')+'"></i>'+f(L?S.ml:S.mh,{id:id})+'</div><div class="pp">'+p+'</div></div></div>'
-+'<div class="lv" id="lv" hidden><i></i><span></span></div></div>';
++'<div class="lv off" id="lv"><i></i><span>\u00a0</span></div></div>';
 if(lv)live(lv);
-document.querySelector('.m').addEventListener('click',function(){var h=W&&W.HapticFeedback;draw();if(h)setTimeout(function(){try{h.notificationOccurred('warning')}catch(e){}},1100)})}
-function live(o){lv=o;var el=document.getElementById('lv');if(!el)return;el.hidden=false;el.className='lv'+(o.m?' ok':'');el.querySelector('span').textContent=o.m?S.nm:f(S.nh,{name:o.n||S.an,defense:+o.d||0},1)}
+}
+function live(o){lv=o;var el=document.getElementById('lv');if(!el)return;el.className='lv'+(o.m?' ok':'');el.querySelector('span').textContent=o.m?S.nm:f(S.nh,{name:o.n||S.an,defense:+o.d||0},1)}
 draw();
 if(W&&W.request&&id)W.request('s:'+id).then(function(r){var o=null;try{o=JSON.parse(r&&r.result||'null')}catch(e){}if(o)live(o)},function(){});
 `
@@ -163,6 +168,7 @@ export function sectorChatData(d: SectorWidgetData): string {
     m: { n: clipBytes(d.me.name ?? '', 60), c: safeColor(d.me.color, '#3E7BFA') },
     d: d.defense,
     w: d.when,
+    ...(d.now ? { n: d.now.mine ? { m: 1, d: d.now.defense } : { m: 0, n: clipBytes(d.now.name ?? '', 60), d: d.now.defense } } : {}),
   })
 }
 
