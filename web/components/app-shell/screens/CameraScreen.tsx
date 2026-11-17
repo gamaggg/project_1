@@ -33,17 +33,18 @@ declare const ImageCapture: { new (track: MediaStreamTrack): ImageCaptureLike } 
 // Draws any image source down to MAX_PHOTO_SIDE on its long side and encodes
 // one JPEG — the same pass for a live frame, a sensor still and an admin's
 // gallery pick, so they all look and weigh alike in confirm/upload.
-function encodePhoto(source: CanvasImageSource, width: number, height: number, done: (blob: Blob) => void) {
+function encodePhoto(source: CanvasImageSource, width: number, height: number, done: (blob: Blob) => void, failed?: () => void) {
   const scale = Math.min(1, MAX_PHOTO_SIDE / Math.max(width, height))
   const canvas = document.createElement('canvas')
   canvas.width = Math.round(width * scale)
   canvas.height = Math.round(height * scale)
   const ctx = canvas.getContext('2d')
-  if (!ctx) return
+  if (!ctx) return failed?.()
   ctx.imageSmoothingQuality = 'high'
   ctx.drawImage(source, 0, 0, canvas.width, canvas.height)
   canvas.toBlob((blob) => {
     if (blob) done(blob)
+    else failed?.()
   }, 'image/jpeg', JPEG_QUALITY)
 }
 
@@ -74,6 +75,11 @@ export function CameraScreen({
   const [flashOnShot, setFlashOnShot] = useState(false)
   // A sensor still takes a moment (Android) — the shutter waits for it.
   const [shooting, setShooting] = useState(false)
+  // One tap, one photo: set by the first tap and kept until this camera session ends (FishZoneApp remounts the
+  // screen for every new one, key={cameraSessionId}). Without it the shutter on the preview-frame path (iPhone)
+  // took a photo per tap while the first was still encoding, each one was uploaded (and counted by abuse_scan:
+  // ~3 uploads per catch froze a real player on 17.11.2026), and the taps after the stream stopped gave black frames.
+  const takenRef = useRef(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
@@ -225,13 +231,25 @@ export function CameraScreen({
     onBack()
   }
 
+  // Only one shot gets through; if it could not be encoded the shutter works again.
+  function releaseShutter() {
+    takenRef.current = false
+    setShooting(false)
+  }
+
   function grabFrame() {
     const video = videoRef.current
-    if (!video || !video.videoWidth) return
-    encodePhoto(video, video.videoWidth, video.videoHeight, (blob) => {
-      stopStream()
-      onCapture(blob)
-    })
+    if (!video || !video.videoWidth || !streamRef.current) return releaseShutter()
+    encodePhoto(
+      video,
+      video.videoWidth,
+      video.videoHeight,
+      (blob) => {
+        stopStream()
+        onCapture(blob)
+      },
+      releaseShutter
+    )
   }
 
   // A real still where the browser can take one (Android), else a frame of
@@ -239,24 +257,32 @@ export function CameraScreen({
   // the torch off for its own exposure.
   async function shoot() {
     const video = videoRef.current
-    if (!video || !video.videoWidth || shooting) return
+    if (!video || !video.videoWidth || takenRef.current) return
+    takenRef.current = true
+    setShooting(true)
     const track = streamRef.current?.getVideoTracks()[0]
     const flashNow = torchOn && !torchSupported
     if (track && (!torchOn || flashNow) && typeof ImageCapture !== 'undefined') {
-      setShooting(true)
       try {
         const still = await new ImageCapture(track).takePhoto(flashNow ? { fillLightMode: 'flash' } : undefined)
         const bitmap = await createImageBitmap(still)
-        encodePhoto(bitmap, bitmap.width, bitmap.height, (blob) => {
-          bitmap.close()
-          stopStream()
-          onCapture(blob)
-        })
+        encodePhoto(
+          bitmap,
+          bitmap.width,
+          bitmap.height,
+          (blob) => {
+            bitmap.close()
+            stopStream()
+            onCapture(blob)
+          },
+          () => {
+            bitmap.close()
+            releaseShutter()
+          }
+        )
         return
       } catch {
         // Some devices refuse a still mid-preview — the frame still works.
-      } finally {
-        setShooting(false)
       }
     }
     grabFrame()
@@ -268,15 +294,26 @@ export function CameraScreen({
   function handleGalleryPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     e.target.value = ''
-    if (!file) return
+    if (!file || takenRef.current) return
+    takenRef.current = true
     const img = new Image()
     const url = URL.createObjectURL(file)
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      releaseShutter()
+    }
     img.onload = () => {
       URL.revokeObjectURL(url)
-      encodePhoto(img, img.naturalWidth, img.naturalHeight, (blob) => {
-        stopStream()
-        onCapture(blob)
-      })
+      encodePhoto(
+        img,
+        img.naturalWidth,
+        img.naturalHeight,
+        (blob) => {
+          stopStream()
+          onCapture(blob)
+        },
+        releaseShutter
+      )
     }
     img.src = url
   }
