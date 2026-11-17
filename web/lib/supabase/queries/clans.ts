@@ -140,6 +140,36 @@ export function useClanListsOfCities(cities: CityId[]) {
   })
 }
 
+// Every clan the player is in — one per city at most — for the profile's
+// clan cards. Read straight from clan_members / clans (both readable by
+// anyone); under the 'clans' key so joining or leaving refreshes it.
+export type MyClanCard = { clanId: number; city: CityId; name: string; crest: unknown; role: ClanRoleId }
+export function useMyClans(userId: string | null) {
+  return useQuery({
+    queryKey: ['clans', 'mine', userId],
+    enabled: !!userId,
+    staleTime: 60_000,
+    queryFn: async (): Promise<MyClanCard[]> => {
+      // clan_members / clans are not in the generated types.
+      const loose = createClient() as unknown as {
+        from: (t: string) => { select: (c: string) => { eq: (c: string, v: unknown) => { is: (c: string, v: null) => Promise<{ data: unknown; error: Error | null }> } } }
+      }
+      const { data, error } = await loose
+        .from('clan_members')
+        .select('clan_id, role, clans(city, name, crest, disbanded_at)')
+        .eq('user_id', userId)
+        .is('left_at', null)
+      if (error) throw error
+      type Row = { clan_id: number; role: string; clans: { city: string; name: string; crest: unknown; disbanded_at: string | null } | { city: string; name: string; crest: unknown; disbanded_at: string | null }[] | null }
+      return ((data as Row[] | null) ?? []).flatMap((r) => {
+        const c = Array.isArray(r.clans) ? r.clans[0] : r.clans
+        if (!c || c.disbanded_at) return []
+        return [{ clanId: r.clan_id, city: c.city as CityId, name: c.name, crest: c.crest, role: r.role as ClanRoleId }]
+      })
+    },
+  })
+}
+
 export function useClan(clanId: number | null) {
   return useQuery({
     queryKey: ['clan', clanId],

@@ -536,3 +536,22 @@ export function shadeHex(hex: string, amount: number): string {
   const b = ch(n & 255)
   return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`
 }
+
+// The profile's clan card: dark grey with a glow from the top in the crest's
+// colour. A black crest takes its ring colour instead (a dark glow would not
+// show on grey); black with a white or cream ring glows soft white.
+export function clanCardBackground(raw: unknown): string {
+  const c = resolveCrest(raw)
+  const rgb = (hex: string) => {
+    const n = parseInt(hex.slice(1), 16)
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+  }
+  const dark = (v: number[]) => Math.max(...v) < 0x50
+  const pale = (v: number[]) => Math.min(...v) > 0xc0
+  const p = rgb(c.primary)
+  const s = rgb(c.secondary)
+  const glow = !dark(p) ? p : !dark(s) && !pale(s) ? s : [200, 206, 214]
+  const a = glow === p || glow === s ? 0.55 : 0.32
+  const g = glow.join(',')
+  return `radial-gradient(120% 90% at 50% -10%, rgba(${g},${a}), rgba(${g},0) 60%), linear-gradient(180deg,#25282D,#111316 85%)`
+}

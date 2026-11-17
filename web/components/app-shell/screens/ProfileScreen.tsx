@@ -27,6 +27,7 @@ import {
   useSetTelegramNotifications,
   useCreateTelegramLink,
   useClanChatSummary,
+  useMyClans,
   useGeoToday,
   useSharedPartnerPoints,
 } from '@/lib/supabase/queries'
@@ -37,7 +38,7 @@ import { ProfileSectorRow } from '@/components/app-shell/ProfileSectors'
 import { AchievementCard } from '@/components/app-shell/AchievementCard'
 import { computeAchievements, heldTerritories, trophies, type Achievement } from '@/lib/data/achievements'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
-import { resolveClanBackground } from '@/lib/data/clanBackgrounds'
+import { clanCardBackground } from '@/lib/data/clanCrests'
 import { CLAN_ROLE_LABEL } from '@/lib/data/clanLevels'
 import { formatJoinedDate, pluralCatches, pluralFollowers, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
 import { CTA_ICONS } from '@/components/app-shell/icons'
@@ -522,6 +523,16 @@ export function ProfileScreen({
   const geoPauseSeen = geoPaused && ui.state?.[GEO_PAUSE_SEEN_KEY] === true
   const geoCardShown = showGeoCard && (!geoPaused || (ui.ready && !geoPauseSeen))
   const geoCardPending = !geoCardShown && !geoPauseSeen && (geoPending || (geoPaused && showGeoCard && !ui.ready))
+  // A player can be in one clan per city: the profile carries this city's, the
+  // others come from useMyClans, in the cities' order. The cards run in two
+  // columns; with an odd number the last one takes the whole row.
+  const { data: myClans = [] } = useMyClans(user?.id ?? null)
+  const cityOrder = Object.keys(CITIES)
+  const otherClans = myClans
+    .filter((c) => c.clanId !== profile?.clanId && c.city !== profile?.city)
+    .sort((a, b) => cityOrder.indexOf(a.city) - cityOrder.indexOf(b.city))
+  const duoCount = 1 + otherClans.length + (geoCardShown || geoCardPending ? 1 : 0)
+  const duoWide = (i: number) => duoCount % 2 === 1 && i === duoCount - 1
   const { data: reports = [] } = useReports()
   const { data: claimedFromOthers = false } = useHasClaimedFromOthers(user?.id ?? null)
   const { data: earnedAchievements } = useEarnedAchievements(user?.id ?? null)
@@ -698,19 +709,21 @@ export function ProfileScreen({
         </button>
       </div>
 
-      {/* The clan and «Где это?» side by side, half each, like «Челленджи» and
-          «Магазин» above — the clan alone takes the whole row. */}
-      <div className={`profile-duo${geoCardShown || geoCardPending ? '' : ' single'}`}>
+      {/* The clans (this city's first, then the other cities') and «Где это?»
+          in two columns, like «Челленджи» and «Магазин» above; an odd last
+          card takes the whole row. */}
+      <div className="profile-duo">
       {profile?.clanId ? (
         <button
-          data-tour="clan" className="profile-clan-card tap-scale"
-          style={{ background: resolveClanBackground(null).css }}
+          data-tour="clan" className={`profile-clan-card tap-scale${duoWide(0) ? ' profile-duo-wide' : ''}`}
+          style={{ background: clanCardBackground(profile.clanCrest) }}
           onClick={() => onOpenClan(profile.clanId!)}
         >
           <ClanCrest crest={profile.clanCrest} size={52} />
           <span className="profile-clan-text">
-            <span className="profile-clan-kicker">{profile.clanRole ? CLAN_ROLE_LABEL[profile.clanRole] : tn('map.clan')}</span>
+            <span className="profile-clan-kicker">{otherClans.length > 0 ? CITIES[profile.city].name : profile.clanRole ? CLAN_ROLE_LABEL[profile.clanRole] : tn('map.clan')}</span>
             <span className="profile-clan-name">{profile.clanName}</span>
+            {otherClans.length > 0 && profile.clanRole && <span className="profile-clan-role">{CLAN_ROLE_LABEL[profile.clanRole]}</span>}
           </span>
           {(clanChat?.unread ?? 0) > 0 && (
             <span className="profile-clan-unread" aria-label={tn('profile.unreadChat', { count: clanChat!.unread })}>
@@ -727,7 +740,7 @@ export function ProfileScreen({
           </span>
         </button>
       ) : (
-        <button data-tour="clan" className="profile-clan-card profile-clan-card-empty tap-scale" onClick={onOpenClans}>
+        <button data-tour="clan" className={`profile-clan-card profile-clan-card-empty tap-scale${duoWide(0) ? ' profile-duo-wide' : ''}`} onClick={onOpenClans}>
           <span className="profile-clan-stack" aria-hidden>
             <ClanCrest crest={{ shape: 'shield', symbol: 'anchor', primary: '#1D6FC9', secondary: '#FFFFFF' }} size={34} />
             <ClanCrest crest={{ shape: 'hex', symbol: 'pike', primary: '#FC5200', secondary: '#FFE7C2' }} size={42} />
@@ -745,14 +758,36 @@ export function ProfileScreen({
         </button>
       )}
 
+      {/* The player's clans in the other cities (one per city at most). */}
+      {otherClans.map((c, i) => (
+        <button
+          key={c.clanId}
+          className={`profile-clan-card tap-scale${duoWide(1 + i) ? ' profile-duo-wide' : ''}`}
+          style={{ background: clanCardBackground(c.crest) }}
+          onClick={() => onOpenClan(c.clanId)}
+        >
+          <ClanCrest crest={c.crest} size={52} />
+          <span className="profile-clan-text">
+            <span className="profile-clan-kicker">{CITIES[c.city]?.name ?? c.city}</span>
+            <span className="profile-clan-name">{c.name}</span>
+            <span className="profile-clan-role">{CLAN_ROLE_LABEL[c.role] ?? CLAN_ROLE_LABEL.member}</span>
+          </span>
+          <span className="profile-cta-arrow" style={{ position: 'static' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+        </button>
+      ))}
+
       {/* «Где это?» — shown once the city has a panorama of the day (or to a
           super admin, who fills the game). */}
-      {geoCardPending && <span className="skel profile-geo-skel" aria-hidden />}
+      {geoCardPending && <span className={`skel profile-geo-skel${duoWide(duoCount - 1) ? ' profile-duo-wide' : ''}`} aria-hidden />}
       {geoCardShown && (
         <button
           // On pause: no tour about the game and no panorama behind the card.
           data-tour={geoPaused ? undefined : 'geo'}
-          className="profile-geo-card tap-scale"
+          className={`profile-geo-card tap-scale${duoWide(duoCount - 1) ? ' profile-duo-wide' : ''}`}
           // The day's panorama itself behind the card (its small copy, where
           // the view opens), darkened towards the words.
           style={geo?.panorama && !geoPaused ? ({ '--geo-bg': `url(${geoImageUrl(geo.panorama.image, 'small')})`, '--geo-x': `${50 + (geo.panorama.heading / 360) * 100}%` } as React.CSSProperties) : undefined}
