@@ -471,6 +471,8 @@ export function FishZoneApp() {
   const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null)
   // A catch refused by someone else's shield, kept so it can go to the diary.
   const [shieldBlock, setShieldBlock] = useState<{ territoryId: string; until: string; photoUrl: string; form: CatchFormData } | null>(null)
+  // Why «Добавить в дневник» failed, shown inside the shield modal: a toast sits under it.
+  const [shieldError, setShieldError] = useState<string | null>(null)
   const [reportingCatchId, setReportingCatchId] = useState<number | null>(null)
   const [deletingCatchId, setDeletingCatchId] = useState<number | null>(null)
   const [deletingTerritoryId, setDeletingTerritoryId] = useState<string | null>(null)
@@ -1198,6 +1200,7 @@ export function FishZoneApp() {
       if (cooldownMatch) {
         setCooldownSeconds(Number(cooldownMatch[1]))
       } else if (shieldedMatch) {
+        setShieldError(null)
         setShieldBlock({ territoryId: catchTerritoryId, until: new Date(Number(shieldedMatch[1]) * 1000).toISOString(), photoUrl, form })
       } else if (message === 'account blocked') {
         showToast(tn('shell.blocked'))
@@ -1221,25 +1224,40 @@ export function FishZoneApp() {
     // The server takes a moment from 24 hours back to 2 minutes ahead: the photo's own time, else now.
     const photoMs = capturedAt ? new Date(capturedAt).getTime() : NaN
     const caughtAt = new Date(Number.isFinite(photoMs) && Date.now() - photoMs < 23 * 3_600_000 ? Math.min(photoMs, Date.now()) : Date.now()).toISOString()
+    const errorText = (err: unknown) => (typeof err === 'object' && err !== null && 'message' in err ? String((err as { message: unknown }).message) : '')
+    const save = (at: string) => confirmCatchMutation.mutateAsync({ ...shieldBlock.form, territoryId: shieldBlock.territoryId, photoUrl: shieldBlock.photoUrl, caughtAt: at })
+    setShieldError(null)
     try {
-      await confirmCatchMutation.mutateAsync({ ...shieldBlock.form, territoryId: shieldBlock.territoryId, photoUrl: shieldBlock.photoUrl, caughtAt })
+      try {
+        await save(caughtAt)
+      } catch (err) {
+        // COOLDOWN:0 — the photo's moment is within 2.5 min of another catch
+        // (17.11: a second fish snapped a minute after the first). Waiting
+        // can't change that, so the catch goes in at the moment of saving,
+        // which counts the pause from now, as an ordinary catch does.
+        if (!/COOLDOWN:0\b/.test(errorText(err))) throw err
+        await save(new Date().toISOString())
+      }
       track('catch_to_diary_shielded', { territory: shieldBlock.territoryId }, city)
       setShieldBlock(null)
       showToast(tn('shell.savedToDiary'))
       finishCatchFlow()
     } catch (err) {
-      const message = typeof err === 'object' && err !== null && 'message' in err ? String((err as { message: unknown }).message) : ''
+      const message = errorText(err)
       const cooldown = /COOLDOWN:(\d+)/.exec(message)
       if (cooldown && Number(cooldown[1]) > 0) {
         setShieldBlock(null)
         setCooldownSeconds(Number(cooldown[1]))
+      } else if (cooldown) {
+        // The last catch was under 2.5 min ago even counted from now: an expected refusal, not an alarm.
+        setShieldError(tn('shell.diaryWait'))
       } else if (message === 'FROZEN') {
-        showToast(tn('shell.frozen'))
+        setShieldError(tn('shell.frozen'))
       } else if (message.startsWith('RATE_LIMIT')) {
-        showToast(tn('shell.catchLimit'))
+        setShieldError(tn('shell.catchLimit'))
       } else {
         reportClientError('diary_from_shield', err)
-        showToast(tn('shell.diarySaveFailed'))
+        setShieldError(tn('shell.diarySaveFailed'))
       }
     }
   }
@@ -2164,6 +2182,7 @@ export function FishZoneApp() {
           speciesName={speciesList.find((sp) => sp.key === shieldBlock.form.species)?.name ?? shieldBlock.form.species}
           catchMeta={formatCatchMeta(shieldBlock.form.lengthCm, shieldBlock.form.weightKg)}
           saving={confirmCatchMutation.isPending}
+          error={shieldError}
           onAddToDiary={() => void addShieldedCatchToDiary()}
           onClose={() => setShieldBlock(null)}
         />

@@ -798,6 +798,7 @@ export const en: Dict = {
     catchLimit: "That's 60 catches today — the limit for a day. More tomorrow",
     savedToDiary: 'Catch saved to your diary',
     diarySaveFailed: "Couldn't save to the diary, try again",
+    diaryWait: 'Your last catch was under 2.5 minutes ago. Wait a little and tap again',
     sectorLinkCopied: 'Sector link copied',
     inviteText: 'Catch fish and claim sectors in RANGE — use my link for +100 coins to start',
     inviteLinkCopied: 'Invite link copied — send it to your friends',

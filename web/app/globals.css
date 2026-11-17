@@ -510,6 +510,7 @@ html.has-lightbox:root .bottomnav::after{
 .shield-modal-catch div{display:flex; flex:1; flex-direction:column; min-width:0;}
 .shield-modal-catch b{overflow:hidden; font-size:14px; font-weight:800; white-space:nowrap; text-overflow:ellipsis;}
 .shield-modal-catch span{font-size:12px; color:var(--ink-faint);}
+.shield-modal-error{margin:0 0 10px; padding:10px 12px; border-radius:12px; background:#FFF1E8; color:#B23A00; font-size:13.5px; font-weight:600; line-height:1.35; text-align:center;}
 .shield-modal-close{display:block; width:100%; margin-top:8px; padding:13px 18px; border:1.5px solid #E0DDD4; border-radius:15px; background:#ECEAE4; font:inherit; font-size:15px; font-weight:700; color:var(--ink); cursor:pointer;}
 .shield-modal-close:active{background:#E2DFD7;}
 .shield-modal-close:disabled{opacity:.5;}

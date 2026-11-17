@@ -26,6 +26,7 @@ export function ShieldedSectorModal({
   speciesName,
   catchMeta,
   saving,
+  error,
   onAddToDiary,
   onClose,
 }: {
@@ -39,6 +40,7 @@ export function ShieldedSectorModal({
   speciesName: string
   catchMeta: string
   saving: boolean
+  error: string | null
   onAddToDiary: () => void
   onClose: () => void
 }) {
@@ -118,6 +120,11 @@ export function ShieldedSectorModal({
           </div>
         </div>
 
+        {error && (
+          <div className="shield-modal-error" role="alert">
+            {error}
+          </div>
+        )}
         <button className="btn-primary" disabled={saving} onClick={onAddToDiary}>
           {saving ? tn('common.saving') : tn('boost.addToDiary')}
         </button>
