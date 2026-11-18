@@ -1218,7 +1218,7 @@ export const ru = {
     acceptBtn: 'Принять',
     membersTitle: 'Участники · {count}',
     you: 'ты',
-    weekCatches: 'уловов за нед.',
+    weekCatches: 'ул/нед',
     actionsAria: 'Действия',
     journal: 'Журнал клана',
     nowIn: '{name} в клане',

@@ -1213,7 +1213,7 @@ export const en: Dict = {
     acceptBtn: 'Accept',
     membersTitle: 'Members · {count}',
     you: 'you',
-    weekCatches: 'catches this week',
+    weekCatches: 'per wk',
     actionsAria: 'Actions',
     journal: 'Clan log',
     nowIn: '{name} is in the clan',

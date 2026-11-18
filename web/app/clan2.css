@@ -1040,11 +1040,17 @@
 .art-tile-replay{width:100%; padding:9px 12px; font-size:13px;}
 
 /* The members list with the month's column (08.11): the two number columns keep a fixed width, the name and the role
-   take what is left and end in «…» rather than run into the numbers («Соруководитель» did). */
-.c2-roster .clan-member-stats{flex:none; width:74px; min-width:0; overflow:hidden;}
+   take what is left and end in «…» rather than run into the numbers («Соруководитель» did).
+   18.11: the catches' label is short («ул/нед»), so its column is narrow and the name gets the room
+   (on an iPhone with a wider font «уловов за нед.» spilled over the name and left 3 letters of it). */
+.c2-roster .clan-member-stats{flex:none; width:46px; min-width:0; overflow:hidden;}
+.c2-roster .clan-member-stats b{white-space:nowrap; font-variant-numeric:tabular-nums;}
 .c2-roster .clan-member-stats span{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;}
-.c2-roster .clan-member-stats.c2-month{width:56px;}
+.c2-roster .clan-member-stats.c2-month{width:64px;}
 .c2-roster .clan-role{max-width:100%; min-width:0; overflow:hidden;}
+/* The name itself ends in «…» too (the row is a flex box, so the «…» has to sit on the name's own span), the «ты» tag stays whole. */
+.c2-roster .clan-member-name > span:first-child{min-width:0; overflow:hidden; text-overflow:ellipsis;}
+.c2-roster .clan-member-name > .clan-you{flex:none;}
 /* «Рента»: a «+1» with the game's coin rises off the sector and fades — once through, as often as the sector pays. */
 .c2-how-plus{position:absolute; left:50%; top:20px; display:inline-flex; align-items:center; gap:2px; padding:2px 6px 2px 7px; border-radius:999px; background:#fff; color:#9A5B00; font-style:normal; font-size:11px; font-weight:800; box-shadow:0 2px 6px rgba(23,24,27,.16); transform:translateX(-50%); opacity:0; animation:c2-how-plus 1.3s var(--ease-out) both;}
 @keyframes c2-how-plus{0%{transform:translate(-50%, 8px) scale(.7); opacity:0}25%{transform:translate(-50%, 0) scale(1); opacity:1}70%{opacity:1}100%{transform:translate(-50%, -22px); opacity:0}}
