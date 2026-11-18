@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import type { CityId } from '@/lib/data/city'
 import { CATEGORY_LABEL, speciesOfCity, type SpeciesCategory } from '@/lib/data/species'
+import { speciesImageUrl } from '@/lib/data/speciesImages'
 import { formatWeightGrams, type SpeciesEntry } from '@/lib/format'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
@@ -162,7 +163,11 @@ export function SpeciesListModal({
                 return (
                   <div key={s.key} className={`sp-row${isOpen ? ' open' : ''}`} style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
                     <button className="sp-row-head tap-scale" onClick={() => setOpen(isOpen ? null : s.key)} aria-expanded={isOpen}>
-                      <i className="sp-dot" style={{ background: CATEGORY_COLOR[s.category] }} />
+                      {speciesImageUrl(s.key) ? (
+                        <img className="sp-fish" src={speciesImageUrl(s.key)!} alt="" loading="lazy" decoding="async" />
+                      ) : (
+                        <i className="sp-dot" style={{ background: CATEGORY_COLOR[s.category] }} />
+                      )}
                       <span className="sp-row-main">
                         <span className="sp-name">{s.name}</span>
                         <span className="sp-bar">

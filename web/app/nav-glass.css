@@ -1214,6 +1214,7 @@ html.has-overlay:root :is(.bottomnav, .nav-edge) {
 .sp-row:last-child { border-bottom: 0; }
 .sp-row-head { display: flex; align-items: center; gap: 11px; width: 100%; padding: 11px 0; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .sp-dot { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; display: block; }
+.sp-fish { width: 56px; height: 40px; flex: 0 0 auto; display: block; object-fit: contain; }
 .sp-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .sp-name { font-weight: 700; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sp-bar { display: block; height: 5px; border-radius: 3px; background: rgba(23, 24, 27, 0.07); overflow: hidden; }
