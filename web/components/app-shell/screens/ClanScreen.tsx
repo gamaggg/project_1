@@ -639,7 +639,10 @@ export function ClanScreen({
             <div className={`clan-card${c2 ? ' c2-roster' : ''}`} data-tour={c2 ? 'members-list' : undefined}>
               <div className="clan-card-title">{tn('clan.membersTitle', { count: clan.members.length })}</div>
               {c2 && <div className="c2-month-head">{tn('clan2.members.monthHead')}</div>}
-              {clan.members.map((m, i) => {
+              {(() => {
+                // The «…» place is kept only when someone in the list has a menu; otherwise it was an empty gap on the right.
+                const anyMenu = clan.members.some((m) => memberActions(m).length > 0)
+                return clan.members.map((m, i) => {
                 const actions = memberActions(m)
                 // The clan update: what the member put into the treasury this month, and the crown of the one who put most.
                 const month = c2 ? monthDepositOf(demo, m.userId) : 0
@@ -677,7 +680,7 @@ export function ClanScreen({
                       </div>
                     )}
                     {/* With the clan update's column the rows without a menu keep its place, so the numbers stand in one line. */}
-                    {c2 && actions.length === 0 && <span className="c2-menu-gap" aria-hidden />}
+                    {c2 && anyMenu && actions.length === 0 && <span className="c2-menu-gap" aria-hidden />}
                     {actions.length > 0 && (
                       <div style={{ position: 'relative' }}>
                         <button
@@ -715,7 +718,8 @@ export function ClanScreen({
                     )}
                   </div>
                 )
-              })}
+                })
+              })()}
             </div>
 
             {/* The journal is for the clan's own members only. With the clan update it is one with the treasury's, on «Общак». */}
