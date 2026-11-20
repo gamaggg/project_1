@@ -658,7 +658,7 @@ export function ProfileScreen({
         )}
       </div>
       <div className="profile-body">
-      <div data-tour="profile-stats" className="hero-stat-grid">
+      <div className="hero-stat-grid">
         <button className="hero-stat" onClick={onOpenAllTerritories}>
           <b><CountUp value={myTerritories.length} play={active} /></b>
           <span>{pluralTerritories(myTerritories.length)}</span>

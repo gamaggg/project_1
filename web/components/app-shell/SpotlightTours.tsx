@@ -187,8 +187,8 @@ export function SpotlightTours({ screen, audience, memberSince }: { screen: stri
         {!clamped && <span className="tour-arrow" style={{ left: arrowX - 7 }} />}
         <div className="tour-kicker">
           {tour.steps.length > 1
-            ? t(audience === 'newcomer' || tour.def.tip ? 'tour.kickerTip' : 'tour.kicker', { n: index + 1, total: tour.steps.length })
-            : t(audience === 'newcomer' || tour.def.tip ? 'tour.kickerTipOne' : 'tour.kickerNewOne')}
+            ? t(audience === 'newcomer' ? 'tour.kickerTip' : 'tour.kicker', { n: index + 1, total: tour.steps.length })
+            : t(audience === 'newcomer' ? 'tour.kickerTipOne' : 'tour.kickerNewOne')}
         </div>
         <div className="tour-title">{t(`tour.${step.key}.title`)}</div>
         <div className="tour-text">{t(`tour.${step.key}.text`)}</div>

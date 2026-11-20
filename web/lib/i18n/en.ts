@@ -551,12 +551,6 @@ export const en: Dict = {
     warPill: { title: 'Clan battle by sign-up', text: 'A clan now takes part only if its leader or a co-leader has opened the battle. While it is not open this says «not started». Tap to go to the battle.' },
     warCard: { title: 'Roster and start', text: 'The leader or a co-leader picks the roster — from 3 players up to the whole clan — and starts the battle. Only the roster’s metres count. After the start players can be added, not removed.' },
     warHow: { title: 'How the battle goes', text: 'Four steps: roster, metres, finish and rewards. Tap and try in each — for example, work out how long the finish is for your roster.' },
-    profileStats: { title: 'Your numbers', text: 'Sectors, catches, fish species and followers. Tap a number to see more: your sectors, your catch diary, your fish collection.' },
-    profileChallenges: { title: 'Weekly challenges', text: 'New tasks for coins every week. Take a look at what’s left to do.' },
-    profileShop: { title: 'Shop', text: 'Frames, backgrounds, name effects and sector skins — try anything on. The «Fishing slots» are there too.' },
-    profileClan: { title: 'Clan', text: 'Fish together: shared sectors, your own chat and the clan battle. No clan yet? Join one or start your own.' },
-    profileGeo: { title: '«Where is this?»', text: 'A game for every day: guess the place from a panorama and find its sector on the map. Guess right and take the coins.' },
-    profileFaq: { title: 'Got questions?', text: 'All the rules in plain words. If something’s unclear, look here.' },
   },
   faq: {
     title: 'Questions and answers',
