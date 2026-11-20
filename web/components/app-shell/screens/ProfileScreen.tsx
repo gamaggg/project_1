@@ -40,7 +40,7 @@ import { computeAchievements, heldTerritories, trophies, type Achievement } from
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { clanCardBackground } from '@/lib/data/clanCrests'
 import { CLAN_ROLE_LABEL } from '@/lib/data/clanLevels'
-import { formatJoinedDate, pluralCatches, pluralFollowers, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
+import { formatJoinedDate, pluralCatches, pluralFollowers, pluralTerritories, speciesBreakdown } from '@/lib/format'
 import { CTA_ICONS } from '@/components/app-shell/icons'
 import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorPreviewMap'
 import { DEFAULT_TERRITORY_COLOR, TERRITORY_COLORS } from '@/lib/data/territoryColors'
@@ -472,7 +472,7 @@ export function ProfileScreen({
   // «Пригласи друзей» — the plain referral link (+100 coins each side).
   onInviteFriends: () => void
   onOpenFollowers: (people: ProfileSummary[]) => void
-  onOpenSpecies: (species: SpeciesEntry[]) => void
+  onOpenSpecies: () => void
   onPostAnnouncement: () => void
   onEditPublicId: (id: string) => void
   onGrantCoins: (id: string) => void
@@ -667,7 +667,7 @@ export function ProfileScreen({
           <b>{myCatchesPending ? <span className="skel hero-stat-skel" /> : <CountUp value={myCatches.length} play={active} />}</b>
           <span>{pluralCatches(myCatches.length)}</span>
         </button>
-        <button data-tour="species-stats" className="hero-stat" onClick={() => onOpenSpecies(mySpecies)}>
+        <button data-tour="species-stats" className="hero-stat" onClick={onOpenSpecies}>
           <b><CountUp value={speciesCount} play={active} /></b>
           <span>{tn('profile.speciesOfFish', { count: speciesCount })}</span>
         </button>
@@ -680,7 +680,12 @@ export function ProfileScreen({
         </button>
       </div>
 
-      <div className="profile-cta-row">
+      {/* «Челленджи», «Магазин», the clans (this city's first, then the other
+          cities') and «Где это?» — one two-column grid, so every pair of
+          cards is the same height (explicit 1fr rows: all as tall as the
+          tallest pair). An odd last card takes the whole row (.profile-duo-wide)
+          and keeps its own height (it falls into an implicit auto row). */}
+      <div className="profile-duo" style={{ gridTemplateRows: `repeat(${1 + Math.floor(duoCount / 2)}, 1fr)` }}>
         <button data-tour="challenges" className="profile-cta-btn profile-cta-challenges tap-scale" onClick={onOpenChallenges}>
           <div className="profile-cta-pattern" />
           <span className="profile-cta-arrow">
@@ -707,12 +712,6 @@ export function ProfileScreen({
           <span className="profile-cta-title">{tn('profile.shopTitle')}</span>
           <span className="profile-cta-sub">{tn('profile.shopSub')}</span>
         </button>
-      </div>
-
-      {/* The clans (this city's first, then the other cities') and «Где это?»
-          in two columns, like «Челленджи» and «Магазин» above; an odd last
-          card takes the whole row. */}
-      <div className="profile-duo">
       {profile?.clanId ? (
         <button
           data-tour="clan" className={`profile-clan-card tap-scale${duoWide(0) ? ' profile-duo-wide' : ''}`}

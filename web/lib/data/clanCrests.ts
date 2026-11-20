@@ -555,3 +555,26 @@ export function clanCardBackground(raw: unknown): string {
   const g = glow.join(',')
   return `radial-gradient(120% 90% at 50% -10%, rgba(${g},${a}), rgba(${g},0) 60%), linear-gradient(180deg,#25282D,#111316 85%)`
 }
+
+// The clan card for a story (app/api/clan-story) and its preview in «Зал
+// славы»: deep water in shades of the crest's colour and a light tone of it
+// glowing behind the crest. A black or white crest takes its ring colour (as
+// clanCardBackground); black or white on both — a neutral blue-grey.
+export function clanStoryColors(raw: unknown): { tone: string; water: string; glowRgb: string } {
+  const c = resolveCrest(raw)
+  const rgbOf = (hex: string) => {
+    const n = parseInt(hex.slice(1), 16)
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+  }
+  const usable = (hex: string) => {
+    const v = rgbOf(hex)
+    return Math.max(...v) >= 0x50 && Math.min(...v) <= 0xc0
+  }
+  const tone = usable(c.primary) ? c.primary : usable(c.secondary) ? c.secondary : '#5B6B7C'
+  return {
+    tone,
+    water: `linear-gradient(170deg, ${shadeHex(tone, -0.42)} 0%, ${shadeHex(tone, -0.68)} 50%, ${shadeHex(tone, -0.86)} 100%)`,
+    glowRgb: rgbOf(shadeHex(tone, 0.25)).join(','),
+  }
+}
+

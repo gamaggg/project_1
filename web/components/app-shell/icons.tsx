@@ -39,7 +39,7 @@ export const STAT_ICONS: Record<'territory' | 'catch' | 'species' | 'followers',
   ),
 }
 
-// Profile CTA row icons (see ProfileScreen.tsx's profile-cta-row) — redrawn
+// Profile CTA row icons (see ProfileScreen.tsx's profile-cta-btn cards) — redrawn
 // as line icons matching the app's own style instead of 🎯/🛍 emoji, which
 // render inconsistently across platforms/fonts.
 export const CTA_ICONS = {

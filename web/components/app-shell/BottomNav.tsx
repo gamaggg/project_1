@@ -115,10 +115,9 @@ export function BottomNav({
       </NavItem>
       <NavItem id="screen-territories" active={active === 'screen-territories'} onClick={onNavigate}>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="9.85,4.88 14.15,4.88 16.3,8.6 14.15,12.32 9.85,12.32 7.7,8.6" />
-          <polygon points="3.4,8.6 7.7,8.6 9.85,12.32 7.7,16.04 3.4,16.04 1.25,12.32" />
-          <polygon points="16.3,8.6 20.6,8.6 22.75,12.32 20.6,16.04 16.3,16.04 14.15,12.32" />
-          <polygon points="9.85,12.32 14.15,12.32 16.3,16.04 14.15,19.76 9.85,19.76 7.7,16.04" />
+          {/* «Рейтинг»: a podium with a star over first place (was sector hexes until 20.11.2026). */}
+          <path d="M3 21v-6.5h6V21M9 21V9.5h6V21M15 21v-8.5h6V21M2 21h20" />
+          <path d="M12 2.6l1 2 2.2.32-1.6 1.56.38 2.2L12 7.64l-1.98 1.04.38-2.2-1.6-1.56 2.2-.32z" />
         </svg>
         <span>{tn('nav.territories')}</span>
       </NavItem>

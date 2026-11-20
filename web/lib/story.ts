@@ -72,3 +72,12 @@ export function shareCatchStory(catchId: number, lang: Lang, caption: string): P
   const origin = window.location.origin
   return shareImageToStory(`${origin}/api/story/${catchId}?lang=${lang}`, caption, `${origin}${window.location.pathname}?catch=${catchId}`, `range-${catchId}.png`)
 }
+
+// «Виды рыб» → «В историю»: the player's fish collection as a 9:16 card
+// (app/api/species-story). v changes with the collection, so neither
+// Telegram nor a cache hands back yesterday's picture.
+export function shareSpeciesStory(userId: string, city: string, lang: Lang, caption: string, publicId: string | null, v: string): Promise<StoryResult> {
+  const origin = window.location.origin
+  const link = publicId ? `${origin}${window.location.pathname}?user=${publicId}` : null
+  return shareImageToStory(`${origin}/api/species-story/${userId}?lang=${lang}&city=${city}&v=${encodeURIComponent(v)}`, caption, link, 'range-species.png')
+}

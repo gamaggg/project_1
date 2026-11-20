@@ -1,5 +1,5 @@
 import type { Catch } from '@/lib/data/types'
-import type { SpeciesCategory } from '@/lib/data/species'
+import { speciesBaseKey, type SpeciesCategory } from '@/lib/data/species'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
 
 export type SpeciesEntry = {
@@ -12,6 +12,8 @@ export type SpeciesEntry = {
   lastCatchId: number
   lastAt: string
   firstAt: string
+  /** The first catch of the species (when it joined the collection). */
+  firstCatchId: number
   /** The biggest by length, then by weight; null when no catch had either. */
   bestLengthCm: number | null
   bestWeightKg: number | null
@@ -23,13 +25,21 @@ export type SpeciesEntry = {
 // not just the count) into one row per distinct species, most-caught first,
 // with what the statistics screen (SpeciesListModal) needs per species: first
 // and last catch, the record length and weight.
+// One row per fish, not per species row: a perch caught in Moscow (okun_msk)
+// and in Tbilisi (okun) is one «Окунь» (key = speciesBaseKey). Its colour is
+// the category it was caught under most.
 export function speciesBreakdown(catches: Catch[]): SpeciesEntry[] {
   const byKey = new Map<string, SpeciesEntry>()
+  const categories = new Map<string, Map<SpeciesCategory, number>>()
   for (const c of catches) {
-    const e = byKey.get(c.species)
+    const key = speciesBaseKey(c.species)
+    const cats = categories.get(key) ?? new Map<SpeciesCategory, number>()
+    cats.set(c.speciesCategory, (cats.get(c.speciesCategory) ?? 0) + 1)
+    categories.set(key, cats)
+    const e = byKey.get(key)
     if (!e) {
-      byKey.set(c.species, {
-        key: c.species,
+      byKey.set(key, {
+        key,
         name: c.speciesName,
         category: c.speciesCategory,
         count: 1,
@@ -37,6 +47,7 @@ export function speciesBreakdown(catches: Catch[]): SpeciesEntry[] {
         lastCatchId: c.id,
         lastAt: c.caughtAt,
         firstAt: c.caughtAt,
+        firstCatchId: c.id,
         bestLengthCm: c.lengthCm,
         bestWeightKg: c.weightKg,
         bestCatchId: c.id,
@@ -49,12 +60,18 @@ export function speciesBreakdown(catches: Catch[]): SpeciesEntry[] {
       e.lastCatchId = c.id
       e.photoUrl = c.photoUrl
     }
-    if (c.caughtAt < e.firstAt) e.firstAt = c.caughtAt
+    if (c.caughtAt < e.firstAt) {
+      e.firstAt = c.caughtAt
+      e.firstCatchId = c.id
+    }
     const longer = (c.lengthCm ?? 0) > (e.bestLengthCm ?? 0)
     const heavier = (c.lengthCm ?? 0) === (e.bestLengthCm ?? 0) && (c.weightKg ?? 0) > (e.bestWeightKg ?? 0)
     if (longer || heavier) e.bestCatchId = c.id
     if ((c.lengthCm ?? 0) > (e.bestLengthCm ?? 0)) e.bestLengthCm = c.lengthCm
     if ((c.weightKg ?? 0) > (e.bestWeightKg ?? 0)) e.bestWeightKg = c.weightKg
+  }
+  for (const [key, cats] of categories) {
+    if (cats.size > 1) byKey.get(key)!.category = [...cats.entries()].sort((a, b) => b[1] - a[1])[0][0]
   }
   return [...byKey.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, currentLocale()))
 }

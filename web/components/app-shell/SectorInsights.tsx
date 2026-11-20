@@ -8,6 +8,8 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
 import type { Catch, Territory } from '@/lib/data/types'
 import { nameInitials } from '@/lib/initials'
+import { speciesImageUrl } from '@/lib/data/speciesImages'
+import { useState } from 'react'
 
 // The sector legend's mark — a small laurel wreath, gold.
 export function LaurelIcon({ size = 16, color = '#C9921F' }: { size?: number; color?: string }) {
@@ -105,7 +107,9 @@ const hh = (h: number) => `${String(h).padStart(2, '0')}:00`
 
 export function SectorInsightsCard({ territory }: { territory: Territory }) {
   const t = useT()
-  const { data, isPending } = useSectorInsights(territory.id)
+  // «Всё время» first; «30 дней» shows what bites here lately.
+  const [days, setDays] = useState<0 | 30>(0)
+  const { data, isPending, isPlaceholderData } = useSectorInsights(territory.id, days)
   const { data: species = [] } = useSpecies()
   // Nobody has fished here: nothing to say about this spot (the catches
   // list below already says it's empty).
@@ -118,48 +122,104 @@ export function SectorInsightsCard({ territory }: { territory: Territory }) {
         <div className="insights-head">
           <span className="insights-title">{t('insights.title')}</span>
         </div>
-        <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
-          <SkeletonBlock height={26} width={84} radius={13} />
-          <SkeletonBlock height={26} width={70} radius={13} />
-          <SkeletonBlock height={26} width={92} radius={13} />
+        <SkeletonBlock height={92} radius={18} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+          <SkeletonBlock height={30} radius={10} />
+          <SkeletonBlock height={30} radius={10} />
         </div>
-        <SkeletonBlock height={56} radius={10} />
       </div>
     )
   }
-  if (!data || data.total === 0) return null
+  if (!data) return null
+  // All time empty: nobody's catch here counts (blocked players only).
+  if (data.total === 0 && (data.legacy || days === 0)) return null
 
   return (
-    <div data-tour="insights" className="insights-card">
+    <div data-tour="insights" className={`insights-card${isPlaceholderData ? ' is-loading' : ''}`}>
       <div className="insights-head">
         <span className="insights-title">{t('insights.title')}</span>
-        <span className="insights-period">{data.scope === 'sector' ? t('insights.period90') : t('insights.periodAll')}</span>
+        {data.legacy ? (
+          <span className="insights-period">{data.scope === 'sector' ? t('insights.period90') : t('insights.periodAll')}</span>
+        ) : (
+          <div className="insights-switch" role="tablist">
+            {([0, 30] as const).map((d) => (
+              <button key={d} role="tab" aria-selected={days === d} className={days === d ? 'on' : undefined} onClick={() => setDays(d)}>
+                {d === 0 ? t('insights.switchAll') : t('insights.switch30')}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
-      <InsightsBody data={data} speciesName={(key) => species.find((s) => s.key === key)?.name ?? key} />
+      {data.total === 0 ? (
+        <div className="insights-empty">{t('insights.empty30')}</div>
+      ) : (
+        <InsightsBody data={data} speciesName={(key) => species.find((s) => s.key === key)?.name ?? key} />
+      )}
     </div>
+  )
+}
+
+// The drawn fish, or a quiet outline when a species has no picture yet.
+function InsightsFish({ speciesKey, className }: { speciesKey: string; className: string }) {
+  const src = speciesImageUrl(speciesKey)
+  if (src) {
+    // eslint-disable-next-line @next/next/no-img-element -- small static webp from /public/fish
+    return <img className={className} src={src} alt="" loading="lazy" decoding="async" />
+  }
+  return (
+    <span className={`${className} insights-fish-none`} aria-hidden>
+      <svg viewBox="0 0 48 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
+        <path d="M4 12c6-8 18-9 28-3l10-5v16l-10-5C22 21 10 20 4 12z" />
+        <circle cx="12" cy="11" r="1.4" fill="currentColor" stroke="none" />
+      </svg>
+    </span>
   )
 }
 
 function InsightsBody({ data, speciesName }: { data: Insights; speciesName: (key: string) => string }) {
   const t = useT()
-  const top = data.species[0]?.count ?? 1
+  const [lead, ...rest] = data.species
+  const top = lead?.count ?? 1
   const window = bestWindow(data.hours)
   const peak = Math.max(1, ...data.hours)
   const inWindow = (h: number) => !!window && ((h - window.from + 24) % 24) < 3
+  const pct = (n: number) => Math.max(1, Math.round((n / Math.max(1, data.total)) * 100))
 
   return (
     <>
-      <div className="insights-species">
-        {data.species.map((s) => (
-          <div key={s.key} className="insights-species-row">
-            <span className="insights-species-name">{speciesName(s.key)}</span>
-            <span className="insights-species-bar">
-              <i style={{ width: `${Math.max(4, (s.count / top) * 100)}%` }} />
-            </span>
-            <span className="insights-species-count">{s.count}</span>
+      {/* The fish that bites here most: drawn big, with its share of all catches. */}
+      {lead && (
+        <div className="insights-lead" key={lead.key}>
+          <div className="insights-lead-art">
+            <InsightsFish speciesKey={lead.key} className="insights-lead-fish" />
           </div>
-        ))}
-      </div>
+          <div className="insights-lead-text">
+            <span className="insights-lead-kicker">{t('insights.leadKicker')}</span>
+            <b className="insights-lead-name">{speciesName(lead.key)}</b>
+            <span className="insights-lead-count">
+              {t('insights.catches', { count: lead.count })}
+              <span>· {t('insights.share', { pct: pct(lead.count) })}</span>
+            </span>
+          </div>
+        </div>
+      )}
+
+      {rest.length > 0 && (
+        <div className="insights-species">
+          {rest.map((s) => (
+            <div key={s.key} className="insights-species-row">
+              <InsightsFish speciesKey={s.key} className="insights-fish" />
+              <span className="insights-species-main">
+                <span className="insights-species-name">{speciesName(s.key)}</span>
+                <span className="insights-species-bar">
+                  <i style={{ width: `${Math.max(4, (s.count / top) * 100)}%` }} />
+                </span>
+              </span>
+              <span className="insights-species-count">{s.count}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {window && (
         <>

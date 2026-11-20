@@ -802,8 +802,11 @@ html.has-modal .screen.active :is(*, *::before, *::after):not(.modal-overlay, .c
 }
 
 /* A scrolling strip clips whatever sticks out of it, shadows included — leave
-   them room (padding) and take it back with a negative margin. */
-.shop-tabs { padding: 4px 6px 14px; margin: 12px -6px -10px; }
+   them room (padding) and take it back with a negative margin. The active
+   tab's shadow reaches 20px down and 14px to the sides: the strip runs to the
+   screen edges (the sticky block's 20px sides) and 24px under the tabs, the
+   tabs themselves stay where they were. */
+.shop-tabs { padding: 8px 20px 24px; margin: 8px -20px -20px; scroll-padding-inline: 20px; }
 .clan-chat-mentions { padding: 4px 6px 14px; margin: -4px -6px -6px; }
 .shop-tab { box-shadow: var(--glass-rim), 0 3px 8px rgba(23, 24, 27, 0.07); }
 .shop-tab.active {
@@ -1168,85 +1171,8 @@ html.has-overlay:root :is(.bottomnav, .nav-edge) {
   .nav-indicator.ready { transition: opacity 0.2s var(--ease); }
 }
 
-/* ---------- Fish species: the collection screen (SpeciesListModal) ---------- */
-/* The card is centred, so it is kept 2 × the top inset shorter than the screen: in Telegram its top (and the ×)
-   then stays below Telegram's own «Закрыть» / «…» buttons (--tg-safe-area-top, set by AuthProvider) and the notch. */
-.sp-card { --sp-h: min(86dvh, 720px, calc(100dvh - 2 * (env(safe-area-inset-top) + var(--tg-safe-area-top, 0px) + 10px))); max-height: var(--sp-h); display: flex; flex-direction: column; padding-left: 18px; padding-right: 18px; }
-.sp-scroll { overflow-y: auto; flex: 1; margin: 14px -18px 0; padding: 0 18px 4px; overscroll-behavior: contain; }
-.sp-empty { padding: 28px 0 12px; text-align: center; color: var(--ink-faint); font-size: 13px; }
-
-.sp-hero { display: flex; align-items: center; gap: 16px; }
-.sp-ring { position: relative; width: 92px; height: 92px; flex: 0 0 auto; }
-.sp-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
-.sp-ring circle { fill: none; stroke-width: 7; }
-.sp-ring-bg { stroke: rgba(23, 24, 27, 0.08); }
-.sp-ring-fg { stroke: #FC5200; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: calc(100 - var(--p)); animation: sp-ring 1.1s var(--ease-out) 0.1s both; }
-@keyframes sp-ring { from { stroke-dashoffset: 100; } }
-.sp-ring-num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
-.sp-ring-num b { font-family: var(--font-display), var(--font-georgian), 'Oswald', sans-serif; font-size: 30px; font-weight: 700; }
-.sp-ring-num span { font-size: 10.5px; font-weight: 700; color: var(--ink-faint); margin-top: 3px; }
-.sp-hero-side { flex: 1; min-width: 0; }
-.sp-hero-total { font-size: 13px; font-weight: 800; color: var(--ink-soft); margin-bottom: 8px; }
-.sp-stack { display: flex; gap: 3px; height: 12px; }
-.sp-seg { border: 0; padding: 0; min-width: 8px; border-radius: 6px; cursor: pointer; transition: opacity 0.2s, transform 0.2s var(--ease-out); transform-origin: left center; animation: sp-seg 0.7s var(--ease-out) 0.2s both; }
+/* A bar growing in from the left (challenge progress, the weekly path; was the species modal's). */
 @keyframes sp-seg { from { transform: scaleX(0); } }
-.sp-seg.dim { opacity: 0.28; }
-.sp-seg.on { transform: scaleY(1.35); }
-.sp-legend { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-top: 8px; }
-.sp-leg { display: inline-flex; align-items: center; gap: 5px; border: 0; background: rgba(23, 24, 27, 0.05); border-radius: 10px; padding: 4px 8px; font: inherit; font-size: 11.5px; font-weight: 700; color: var(--ink-soft); cursor: pointer; transition: background 0.2s, color 0.2s; }
-.sp-leg i { width: 8px; height: 8px; border-radius: 3px; display: block; }
-.sp-leg.on { background: var(--ink); color: #fff; }
-
-.sp-tiles { display: grid; grid-template-columns: 0.8fr 1.1fr 1.1fr; gap: 8px; margin-top: 16px; }
-.sp-tile { appearance: none; border: 0; font: inherit; text-align: left; color: inherit; background: rgba(23, 24, 27, 0.045); border-radius: 14px; padding: 10px 11px; display: flex; flex-direction: column; gap: 2px; min-width: 0; cursor: pointer; transition: transform 0.15s var(--ease); }
-.sp-tile:disabled { cursor: default; }
-.sp-tile:not(:disabled):active { transform: scale(0.96); }
-.sp-tile span { font-size: 10.5px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); }
-.sp-tile b { font-family: var(--font-display), var(--font-georgian), 'Oswald', sans-serif; font-size: 20px; font-weight: 700; line-height: 1.15; }
-.sp-tile em { font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.sp-sorts { display: flex; gap: 4px; margin-top: 16px; padding: 3px; background: rgba(23, 24, 27, 0.05); border-radius: 12px; }
-.sp-sort { flex: 1; border: 0; background: none; font: inherit; font-size: 12.5px; font-weight: 800; color: var(--ink-soft); padding: 7px 4px; border-radius: 9px; cursor: pointer; transition: background 0.2s, color 0.2s, box-shadow 0.2s; }
-.sp-sort.on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(23, 24, 27, 0.12); }
-
-.sp-list { margin-top: 8px; }
-.sp-row { border-bottom: 1px solid var(--line); animation: comment-in 0.35s var(--ease-out) both; }
-.sp-row:last-child { border-bottom: 0; }
-.sp-row-head { display: flex; align-items: center; gap: 11px; width: 100%; padding: 11px 0; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
-.sp-dot { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; display: block; }
-.sp-fish { width: 56px; height: 40px; flex: 0 0 auto; display: block; object-fit: contain; }
-.sp-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.sp-name { font-weight: 700; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sp-bar { display: block; height: 5px; border-radius: 3px; background: rgba(23, 24, 27, 0.07); overflow: hidden; }
-.sp-bar span { display: block; height: 100%; border-radius: 3px; transform-origin: left center; animation: sp-seg 0.7s var(--ease-out) both; }
-.sp-count { font-size: 13px; font-weight: 800; color: var(--ink-soft); flex: 0 0 auto; font-variant-numeric: tabular-nums; }
-.sp-chev { flex: 0 0 auto; color: var(--ink-faint); transition: transform 0.3s var(--ease-out); }
-.sp-row.open .sp-chev, .sp-missing-head.open .sp-chev { transform: rotate(180deg); }
-
-/* The open part grows from 0 to its height without measuring it. */
-.sp-more { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 0.35s var(--ease-out), opacity 0.25s; }
-.sp-more-in { overflow: hidden; min-height: 0; }
-.sp-row.open .sp-more, .sp-more.show { grid-template-rows: 1fr; opacity: 1; }
-.sp-facts { display: flex; gap: 12px; align-items: stretch; padding: 2px 0 10px; }
-.sp-photo { width: 84px; height: 84px; border-radius: 14px; object-fit: cover; flex: 0 0 auto; background: rgba(23, 24, 27, 0.06); }
-.sp-facts dl { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; margin: 0; align-content: center; }
-.sp-facts dt { font-size: 10.5px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); }
-.sp-facts dd { margin: 1px 0 0; font-size: 13.5px; font-weight: 800; font-variant-numeric: tabular-nums; }
-.sp-share { font-size: 12px; font-weight: 700; color: var(--ink-soft); padding-bottom: 8px; }
-.sp-actions { display: flex; gap: 8px; padding-bottom: 12px; }
-.sp-act { flex: 1; border: 0; font: inherit; font-size: 12.5px; font-weight: 800; padding: 9px 10px; border-radius: 12px; background: rgba(252, 82, 0, 0.1); color: #C73F00; cursor: pointer; transition: transform 0.15s var(--ease); }
-.sp-act:active { transform: scale(0.96); }
-
-.sp-missing { margin-top: 10px; border-top: 1px solid var(--line); }
-.sp-missing-head { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 14px 0 10px; background: none; border: 0; font: inherit; font-size: 13.5px; font-weight: 800; color: var(--ink-soft); cursor: pointer; }
-.sp-ghosts { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 2px; }
-.sp-ghost { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px; border-radius: 10px; border: 1px dashed rgba(23, 24, 27, 0.2); font-size: 12px; font-weight: 700; color: var(--ink-faint); }
-.sp-hint { font-size: 12px; color: var(--ink-faint); line-height: 1.4; padding: 10px 0 6px; }
-.sp-done { padding: 14px 0 6px; text-align: center; font-size: 13.5px; font-weight: 800; color: #1E8A5C; }
-@media (prefers-reduced-motion: reduce) {
-  .sp-ring-fg, .sp-seg, .sp-bar span, .sp-row { animation: none; }
-  .sp-more, .sp-chev { transition: none; }
-}
 
 /* ---------- Clan chest: tappable chests, detail card, own share (ClanChestPanel) ---------- */
 .clan-chest-stop { appearance: none; background: none; border: 0; font: inherit; color: inherit; cursor: pointer; position: relative; border-radius: 14px; padding: 4px 0 6px; transition: background 0.25s; }

@@ -74,7 +74,8 @@ export function TerritoriesListScreen({
   // The viewer's sectors in the other city — «Мои» lists them after this city's.
   heldElsewhere?: Territory[]
 }) {
-  const [mode, setMode] = useState<Mode>('territories')
+  // Рейтинг first (20.11.2026): the bottom-nav tab is «Рейтинг» now.
+  const [mode, setMode] = useState<Mode>('rating')
   // The row swiped open, and the sector whose «Маршрут» sheet is up.
   const [swipedId, setSwipedId] = useState<string | null>(null)
   const [routeTo, setRouteTo] = useState<Territory | null>(null)
@@ -160,14 +161,14 @@ export function TerritoriesListScreen({
       <div className="page-sub">{CITIES[city].boundaryLabel} · {territories.length} {pluralSectors(territories.length)}</div>
 
       <div className="rating-tabs">
-        <button className={`rating-tab${mode === 'territories' ? ' active' : ''}`} onClick={() => setMode('territories')}>
-          {tn('terr.title')}
-        </button>
         <button className={`rating-tab${mode === 'rating' ? ' active' : ''}`} onClick={() => setMode('rating')}>
           {tn('terr.tabRating')}
         </button>
         <button className={`rating-tab${mode === 'clans' ? ' active' : ''}`} onClick={() => setMode('clans')}>
           {tn('terr.tabClans')}
+        </button>
+        <button className={`rating-tab${mode === 'territories' ? ' active' : ''}`} onClick={() => setMode('territories')}>
+          {tn('terr.title')}
         </button>
       </div>
 

@@ -29,7 +29,7 @@ import { ProfileCatchRow, ProfileTrophies } from '@/components/app-shell/Profile
 import { ProfileSectorRow } from '@/components/app-shell/ProfileSectors'
 import { AchievementCard } from '@/components/app-shell/AchievementCard'
 import { computeAchievements, heldTerritories, trophies, type Achievement } from '@/lib/data/achievements'
-import { formatJoinedDate, pluralTerritories, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
+import { formatJoinedDate, pluralTerritories, speciesBreakdown } from '@/lib/format'
 import type { Territory, ProfileSummary } from '@/lib/data/types'
 import { CITIES } from '@/lib/data/city'
 import { Flag } from '@/components/app-shell/Flag'
@@ -120,7 +120,7 @@ export function UserProfileScreen({
   onShareProfile: (publicId: string, text: string) => void
   onOpenFollowers: (people: ProfileSummary[]) => void
   onOpenAvatarPreview: (url: string) => void
-  onOpenSpecies: (species: SpeciesEntry[]) => void
+  onOpenSpecies: () => void
   onOpenClan: (id: number) => void
 }) {
   const { data: profile } = useProfile(userId)
@@ -368,7 +368,7 @@ export function UserProfileScreen({
             <b>{catchesPending ? <span className="skel hero-stat-skel" /> : catches.length}</b>
             <span>{tn('sector.catchesLabel')}</span>
           </button>
-          <button className="hero-stat" onClick={() => onOpenSpecies(catchSpecies)}>
+          <button className="hero-stat" onClick={onOpenSpecies}>
             <b>{catchesPending ? <span className="skel hero-stat-skel" /> : speciesCount}</b>
             <span>{tn('profile.speciesOfFish', { count: speciesCount })}</span>
           </button>

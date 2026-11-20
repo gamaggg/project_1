@@ -59,9 +59,9 @@ function ShieldBadge({ shieldUntil }: { shieldUntil: string | null }) {
   return (
     <span className="badge badge-shield" title={tn('sector.shieldTitle', { when: new Date(shieldUntil!).toLocaleString(currentLocale(), { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) })}>
       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l8 3v6c0 5-3.4 8.7-8 11-4.6-2.3-8-6-8-11V5l8-3z" /></svg>
-      {/* Narrow phones get the short form, so the sector id beside it keeps its room. */}
-      <span className="shield-badge-long">{tn('sector.shieldLong', { time })}</span>
-      <span className="shield-badge-short">{tn('sector.shieldShort', { time })}</span>
+      {/* Always the short form «Щит · 2 ч 45 мин»: the long one didn't fit
+          beside the sector id on an iPhone with its bigger text. */}
+      <span>{tn('sector.shieldShort', { time })}</span>
     </span>
   )
 }
@@ -342,10 +342,16 @@ export function TerritoryScreen({
               <br />
               {territory.id}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+            {/* sector-head-badges: the column takes what the title leaves; a
+                badge too long for it ends in «…» inside the card. */}
+            <div className="sector-head-badges">
               {statusBadge(territory.status, myTerritoryColor, territory.coHolders.some((h) => h.isMe))}
               <ShieldBadge shieldUntil={territory.shieldUntil} />
-              {isMostPopular && <span className="badge badge-accent">{tn('sector.mostPopular')}</span>}
+              {isMostPopular && (
+                <span className="badge badge-accent">
+                  <span>{tn('sector.mostPopular')}</span>
+                </span>
+              )}
             </div>
           </div>
           <div className="page-sub" style={{ marginBottom: 0 }}>

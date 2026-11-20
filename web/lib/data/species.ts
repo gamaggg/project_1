@@ -38,6 +38,14 @@ export const CATEGORIES_BY_CITY: Record<CityId, SpeciesCategory[]> = {
 }
 const cityIds = Object.keys(CITIES) as CityId[]
 
+// One fish, whatever the city: Moscow's and Petersburg's rows of a fish the
+// southern cities also have (okun_msk, kumzha_spb) are the same fish as the
+// base row (okun, kumzha) — only their category pair differs. The player's
+// species statistics and the drawn pictures go by this key.
+export function speciesBaseKey(key: string): string {
+  return key.replace(/_(msk|spb)$/, '')
+}
+
 // The species a city offers (the catch form, the diary, the collection).
 export function speciesOfCity<T extends { key: string; category: SpeciesCategory | string }>(all: readonly T[], city: CityId): T[] {
   const categories = CATEGORIES_BY_CITY[city] as string[]

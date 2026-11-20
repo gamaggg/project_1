@@ -62,6 +62,10 @@ export const FAQ_EN: FaqSection[] = [
         a: ['Yes. Open your catch: in the row under your name, next to «To story», there is a button with a down arrow. In Telegram it opens its save prompt, in a browser the photo downloads. You get the photo as the app stores it: up to 1600 pixels on the long side, without the date and place it was taken.'],
       },
       {
+        q: 'How do I see and show off my fish collection?',
+        a: ['In your profile tap «species» — the «Fish species» screen opens: how many fish of the city’s list you have, the one you catch most, your record and newest species, every fish you caught with its drawing (tap a card for records, dates and the photo) and the ones still to catch as silhouettes. A fish counts once, whatever city it was caught in. «Share my collection to a story» makes a picture of your collection: in Telegram the story opens right away, in a browser the picture goes to Share or downloads.'],
+      },
+      {
         q: 'What are «Trophies» in the profile?',
         a: ['Up to three of your biggest catches: the longest first; if fewer than three have a length, the heaviest of those with only a weight fill the rest. The first is shown big on its own photo with a gold medal, the second and third beside each other with silver and bronze. Catches without a length or weight are not shown. Other players see this block in your profile too; a tap opens the photo of the catch.'],
       },
@@ -132,7 +136,7 @@ export const FAQ_EN: FaqSection[] = [
       },
       {
         q: 'Who is a sector legend?',
-        a: ['The angler who caught the most in the sector over the last 90 days — at least 10 catches. Their avatar is in a laurel wreath on the sector screen. The bar under it shows your catches here against theirs (and while there is no legend yet — against 10). If you are the legend, the sector carries a gold «Legend» tag in your sector list (Sectors tab → Mine, and your profile).'],
+        a: ['The angler who caught the most in the sector over the last 90 days — at least 10 catches. Their avatar is in a laurel wreath on the sector screen. The bar under it shows your catches here against theirs (and while there is no legend yet — against 10). If you are the legend, the sector carries a gold «Legend» tag in your sector list (the «Rating» tab → «Territories» → Mine, and your profile).'],
       },
       {
         q: 'What is a sector trophy?',
@@ -143,7 +147,7 @@ export const FAQ_EN: FaqSection[] = [
         a: [
           'On the map — the «Bite» badge with today’s score. Tap it and the forecast opens: pick a day at the top (today and 3 more), the big number is the score for that whole day, with the best time beside it.',
           'Slide your finger along the «By the hour» scale — under it you see that hour’s score («3/5») and the weather: air, wind, pressure, wave. The scale has the numbers 1–5 on its left: each bar stands at the level of its score, and the current number lights up. Below — what helps the bite (green dot) and what hurts it (red); the sea water temperature is there too, for reference — it does not affect the score.',
-          'On the sector screen — the forecast for that place and «What’s biting here»: which fish, when and on what they are caught here.',
+          'On the sector screen — the forecast for that place and «What’s biting here»: which fish, when and on what they are caught here. The switch at the top of the block: «All time» (the default) or «30 days» — what has been biting this past month.',
           'If you hold a sector, in the evening the bot may write «Good bite tomorrow morning at your sector» — when the morning there (4 am to noon) scores 4–5 of 5. One message, for the best of your sectors; together with the city forecast, no more than twice a week and never two days running.',
         ],
       },
@@ -355,6 +359,10 @@ export const FAQ_EN: FaqSection[] = [
         ],
       },
       {
+        q: 'How do I invite people to my clan with a story?',
+        a: ['In the clan open «Hall of fame» → «Clan card» → «Share to a story». A picture is made: the clan’s background and crest, level and league, HQ, how many anglers, the clan’s three record fish (the longest caught by members in the clan’s city) and «Join our clan!». In Telegram the story opens right away with the picture and a caption; with Telegram Premium a link to the clan is attached, through which people can join. In a browser the picture goes to Share or downloads.'],
+      },
+      {
         q: 'What notifications does the clan send?',
         a: [
           [
@@ -397,12 +405,12 @@ export const FAQ_EN: FaqSection[] = [
       {
         q: 'Where can I see all the players?',
         a: [
-          'The «Territories» tab → «Rating» → «All players»: everyone who plays, from all cities (you can keep only Batumi or Moscow & MO). The order is «By rating» (first those with more sectors, then catches — all time) or «By name»; search by name is at the top, and to its right a filter: players without a clan (whom you can invite), in a clan, with sectors, new in two weeks, by catches (none, any, 10 or more, 50 or more), by city. Tap a player and their profile opens.',
+          'The «Rating» tab → «All players»: everyone who plays, from all cities (you can keep only Batumi or Moscow & MO). The order is «By rating» (first those with more sectors, then catches — all time) or «By name»; search by name is at the top, and to its right a filter: players without a clan (whom you can invite), in a clan, with sectors, new in two weeks, by catches (none, any, 10 or more, 50 or more), by city. Tap a player and their profile opens.',
         ],
       },
       {
         q: 'How do I quickly get a route to a sector?',
-        a: ['On the «Territories» tab, swipe a sector row to the left — «Route» (pick a maps app: Google, Yandex, Apple) and «On the map» (for sectors of the city on the map now) appear. On the sector screen — the same «Route» button under the coordinates. And the «Activity» feed refreshes when you pull it down from the very top.'],
+        a: ['On the «Rating» tab → «Territories», swipe a sector row to the left — «Route» (pick a maps app: Google, Yandex, Apple) and «On the map» (for sectors of the city on the map now) appear. On the sector screen — the same «Route» button under the coordinates. And the «Activity» feed refreshes when you pull it down from the very top.'],
       },
       {
         q: 'What is «Week in the city»?',

@@ -14,6 +14,7 @@ import './journey.css'
 import './hex-loader.css'
 import './profile-blocks.css'
 import './alive.css'
+import './species-screen.css'
 
 const manrope = Manrope({
   subsets: ['latin', 'cyrillic'],

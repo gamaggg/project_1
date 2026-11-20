@@ -63,7 +63,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { forgetRememberedRef, parseGuestShare, peekRememberedRef, refParam, rememberClanInvite, rememberRef, type ClanInvite } from '@/lib/guestShare'
 import { readLaunchSearch, shareLink } from '@/lib/telegram/startParam'
 import { GuestShareScreen } from '@/components/app-shell/GuestShareScreen'
-import { formatCatchMeta, formatCooldown, type SpeciesEntry } from '@/lib/format'
+import { formatCatchMeta, formatCooldown } from '@/lib/format'
 import { DEFAULT_TERRITORY_COLOR, resolveTerritoryColor } from '@/lib/data/territoryColors'
 import type { SectorMoment } from '@/components/app-shell/LeafletMap'
 import { draftHexAt } from '@/lib/data/hexGrid'
@@ -132,7 +132,7 @@ import { ActivityScreen } from '@/components/app-shell/screens/ActivityScreen'
 import { ProfileScreen, EditProfileModal, ChangeColorModal } from '@/components/app-shell/screens/ProfileScreen'
 import { CityPickerModal } from '@/components/app-shell/CityPickerModal'
 import { UserProfileScreen, AvatarPreviewModal } from '@/components/app-shell/screens/UserProfileScreen'
-import { SpeciesListModal } from '@/components/app-shell/screens/SpeciesListModal'
+import { SpeciesScreen } from '@/components/app-shell/screens/SpeciesScreen'
 import { ReportPhotoModal } from '@/components/app-shell/screens/ReportPhotoModal'
 import { DeleteCatchModal } from '@/components/app-shell/screens/DeleteCatchModal'
 import { CatchPhotoScreen } from '@/components/app-shell/screens/CatchPhotoScreen'
@@ -170,6 +170,7 @@ export type ScreenId =
   | 'screen-faq'
   | 'screen-achievements'
   | 'screen-achievement-detail'
+  | 'screen-species'
   | 'screen-last-week'
   | 'screen-shop'
   | 'screen-slots'
@@ -213,6 +214,7 @@ type StackEntry =
   | { screen: 'screen-faq' }
   | { screen: 'screen-achievements'; userId: string }
   | { screen: 'screen-achievement-detail'; userId: string; icon: Achievement['icon'] }
+  | { screen: 'screen-species'; userId: string }
   | { screen: 'screen-last-week' }
   | { screen: 'screen-shop' }
   | { screen: 'screen-slots' }
@@ -495,7 +497,7 @@ export function FishZoneApp() {
   const [viewingCommentsFor, setViewingCommentsFor] = useState<{ catchId: number; highlightId: number | null } | null>(null)
   const [viewingFollowersFor, setViewingFollowersFor] = useState<ProfileSummary[] | null>(null)
   const [viewingAvatarUrl, setViewingAvatarUrl] = useState<string | null>(null)
-  const [viewingSpeciesFor, setViewingSpeciesFor] = useState<SpeciesEntry[] | null>(null)
+  const [viewingSpeciesUserId, setViewingSpeciesUserId] = useState<string | null>(null)
   const [postingAnnouncement, setPostingAnnouncement] = useState(false)
   const [maintenanceModal, setMaintenanceModal] = useState(false)
   const { data: editingPublicIdProfile } = useProfile(editingPublicIdUserId)
@@ -633,6 +635,7 @@ export function FishZoneApp() {
       if (top.screen === 'screen-clan') setViewingClanId(top.clanId)
       if (top.screen === 'screen-clan-chat') setChatClanId(top.clanId)
       if (top.screen === 'screen-achievements') setViewingAchievementsUserId(top.userId)
+      if (top.screen === 'screen-species') setViewingSpeciesUserId(top.userId)
       if (top.screen === 'screen-achievement-detail') setViewingAchievementDetail({ userId: top.userId, icon: top.icon })
       return next
     })
@@ -1011,6 +1014,10 @@ export function FishZoneApp() {
   function openAchievements(userId: string) {
     setViewingAchievementsUserId(userId)
     push({ screen: 'screen-achievements', userId })
+  }
+  function openSpecies(userId: string) {
+    setViewingSpeciesUserId(userId)
+    push({ screen: 'screen-species', userId })
   }
   function openAchievementDetail(userId: string, icon: Achievement['icon']) {
     setViewingAchievementDetail({ userId, icon })
@@ -2041,7 +2048,7 @@ export function FishZoneApp() {
             onShareProfile={shareProfile}
             onInviteFriends={inviteFriends}
             onOpenFollowers={setViewingFollowersFor}
-            onOpenSpecies={setViewingSpeciesFor}
+            onOpenSpecies={() => user && openSpecies(user.id)}
             onPostAnnouncement={() => setPostingAnnouncement(true)}
             onEditPublicId={setEditingPublicIdUserId}
             onGrantCoins={setGrantingCoinsUserId}
@@ -2081,7 +2088,7 @@ export function FishZoneApp() {
               onShareProfile={shareProfile}
               onOpenFollowers={setViewingFollowersFor}
               onOpenAvatarPreview={setViewingAvatarUrl}
-              onOpenSpecies={setViewingSpeciesFor}
+              onOpenSpecies={() => openSpecies(viewingUserId)}
               onOpenClan={openClan}
             />
           )}
@@ -2095,6 +2102,9 @@ export function FishZoneApp() {
               onOpenDetail={(icon) => openAchievementDetail(viewingAchievementsUserId, icon)}
             />
           )}
+        </Screen>
+        <Screen id="screen-species" current={currentScreen} onBack={pop}>
+          {viewingSpeciesUserId && <SpeciesScreen userId={viewingSpeciesUserId} city={city} onBack={pop} onOpenCatch={(id) => openCatchPhoto(id)} onToast={showToast} />}
         </Screen>
         <Screen id="screen-achievement-detail" current={currentScreen} onBack={pop}>
           {viewingAchievementDetail && (
@@ -2351,17 +2361,6 @@ export function FishZoneApp() {
         />
       )}
       {viewingAvatarUrl !== null && <AvatarPreviewModal url={viewingAvatarUrl} onClose={() => setViewingAvatarUrl(null)} />}
-      {viewingSpeciesFor !== null && (
-        <SpeciesListModal
-          species={viewingSpeciesFor}
-          city={city}
-          onClose={() => setViewingSpeciesFor(null)}
-          onOpenCatch={(id) => {
-            setViewingSpeciesFor(null)
-            openCatchPhoto(id)
-          }}
-        />
-      )}
       {postingAnnouncement && <PostAnnouncementModal onClose={() => setPostingAnnouncement(false)} />}
       {maintenanceModal && <MaintenanceModal onClose={() => setMaintenanceModal(false)} />}
       {/* The super admin goes on using the app under maintenance: a red pill says the players see the maintenance screen. */}

@@ -8,10 +8,12 @@ import { type CityId } from '@/lib/data/city'
 import { type WeekRecap, mapRecap } from '@/lib/recap'
 
 export type SectorInsights = {
-  // Only ever this sector's own catches. 'sector': 3+ here in 90 days,
-  // these are they. 'sector_all': fewer, so every catch ever made here
-  // (total 0 — nobody has fished here, and the card stays hidden).
-  scope: 'sector' | 'sector_all'
+  // Only ever this sector's own catches. 'all': every catch ever made here;
+  // 'days': strictly the last N days (may be empty). 'sector' / 'sector_all'
+  // are the database's old 90-day answer, only seen before the p_days
+  // migration is applied (legacy then true, and the card has no switch).
+  scope: 'all' | 'days' | 'sector' | 'sector_all'
+  legacy: boolean
   kind: TerritoryKind
   total: number
   species: { key: string; count: number }[]
@@ -26,18 +28,30 @@ export type SectorInsights = {
 }
 
 // «Что клюёт здесь» and the sector's legend — one request per opened
-// sector screen, public like the map itself.
-export function useSectorInsights(territoryId: string | null) {
+// sector screen, public like the map itself. days: 0 = all time (the
+// default, shared with the legend row), 30 = the last 30 days. The legend
+// and myCount are the same 90-day figures whatever the period.
+export function useSectorInsights(territoryId: string | null, days: 0 | 30 = 0) {
   const { user } = useAuth()
   return useQuery({
-    queryKey: ['sector-insights', territoryId, user?.id ?? null],
+    queryKey: ['sector-insights', territoryId, user?.id ?? null, days],
     enabled: !!territoryId,
+    // Switching the period keeps the old numbers up until the new ones land —
+    // only within one sector (another sector's numbers are never shown).
+    placeholderData: (prev, prevQuery) => (prevQuery?.queryKey[1] === territoryId ? prev : undefined),
     queryFn: async (): Promise<SectorInsights> => {
       const supabase = createClient()
-      const { data, error } = await supabase.rpc('get_sector_insights', { p_territory_id: territoryId! })
+      let legacy = false
+      let { data, error } = await supabase.rpc('get_sector_insights', { p_territory_id: territoryId!, p_days: days })
+      // The database without p_days yet (PGRST202 «function not found»):
+      // the old one-argument call, its own 90-day rule, no switch.
+      if (error?.code === 'PGRST202') {
+        legacy = true
+        ;({ data, error } = await supabase.rpc('get_sector_insights', { p_territory_id: territoryId! }))
+      }
       if (error) throw error
       const d = data as {
-        scope: 'sector' | 'sector_all'
+        scope: SectorInsights['scope']
         kind: TerritoryKind
         total: number
         species: { key: string; count: number }[]
@@ -50,6 +64,7 @@ export function useSectorInsights(territoryId: string | null) {
       }
       return {
         scope: d.scope,
+        legacy,
         kind: d.kind,
         total: d.total,
         species: d.species,

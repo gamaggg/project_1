@@ -1,3 +1,5 @@
+import { speciesBaseKey } from '@/lib/data/species'
+
 // Drawn fish for the species collection: one picture per fish in
 // public/fish/<key>.webp (336×240, transparent, head to the left).
 // A fish caught in several cities has one picture: the city suffix of its
@@ -15,6 +17,6 @@ const DRAWN = new Set([
 ])
 
 export function speciesImageUrl(key: string): string | null {
-  const base = key.replace(/_(msk|spb)$/, '')
+  const base = speciesBaseKey(key)
   return DRAWN.has(base) ? `/fish/${base}.webp` : null
 }

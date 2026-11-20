@@ -1,10 +1,16 @@
 'use client'
 
-import type { CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { useClanInviteCode, useProfile } from '@/lib/supabase/queries'
+import { CLAN_ROLE_RANK } from '@/lib/data/clanLevels'
+import { useI18n } from '@/lib/i18n'
+import { shareImageToStory } from '@/lib/story'
+import { shareLink } from '@/lib/telegram/startParam'
+import { refParam } from '@/lib/guestShare'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
-import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { ClanFrame } from '@/components/clan2/ClanItems'
-import { resolveClanBackground } from '@/lib/data/clanBackgrounds'
+import { clanStoryColors } from '@/lib/data/clanCrests'
 import { C2Avatar, C2Card, speciesName, useC2 } from '@/components/clan2/C2Common'
 import { useDemoState } from '@/lib/clan2/demoStore'
 import { formatCatchMeta } from '@/lib/format'
@@ -29,14 +35,35 @@ export function GloryTab({ onOpenCatch }: { onOpenCatch?: (id: number, ids: numb
     if (id && onOpenCatch) onOpenCatch(id, hallIds)
   }
   const hq = s.hq.sectorId
-  // The card wears the clan's own background (the one chosen in the editor) and the frame bought in the shop.
-  const bg = resolveClanBackground(s.clan.background)
+  // The card is the story picture's preview (app/api/clan-story): water in shades of the crest's colour with a glow of it,
+  // and the frame bought in the shop.
+  const card = clanStoryColors(s.clan.crest)
   const frame = s.equipped.frame
 
-  const share = () => {
-    const text = `${s.clan.name} · ${tn('clan2.clan.level', { n: s.clan.level })}\n${top.map((r) => `${speciesName(r.species)}: ${formatCatchMeta(r.cm, r.kg)}`).join('\n')}`
-    void navigator.clipboard?.writeText(text).catch(() => undefined)
-    say(tn('clan2.glory.shareDone'))
+  // «Поделиться в истории»: the card as a picture (app/api/clan-story) with
+  // the clan's invite link — a working «Вступить» for anyone who opens it
+  // (with the invite code for an elder and up, as the clan's «Пригласить»).
+  // The demo clan has no real id: there the button only says what it does.
+  const { lang } = useI18n()
+  const { user } = useAuth()
+  const { data: me } = useProfile(user?.id ?? null)
+  const clanId = s.live?.clanId ?? null
+  const canInvite = !!s.live && CLAN_ROLE_RANK[s.live.realRole] >= 2
+  const { data: inviteCode } = useClanInviteCode(clanId, canInvite)
+  const [sharing, setSharing] = useState(false)
+  const share = async () => {
+    if (!clanId) {
+      say(tn('clan2.glory.shareDone'))
+      return
+    }
+    setSharing(true)
+    const invite = inviteCode ? `&invite=${encodeURIComponent(inviteCode)}` : ''
+    const link = shareLink(`clan=${clanId}${invite}${refParam(me?.publicId)}`)
+    const v = `${s.clan.level}-${s.clan.trophies}-${hq ?? ''}-${top.map((r) => r.cm ?? r.kg ?? 0).join('.')}-${card.tone}`
+    const result = await shareImageToStory(`${window.location.origin}/api/clan-story/${clanId}?lang=${lang}&v=${encodeURIComponent(v)}`, tn('clan2.glory.storyCaption', { name: s.clan.name }), link, 'range-clan.png')
+    setSharing(false)
+    if (result === 'downloaded') say(tn('story.downloaded'))
+    if (result === 'failed') say(tn('story.failed'))
   }
 
   return (
@@ -84,9 +111,8 @@ export function GloryTab({ onOpenCatch }: { onOpenCatch?: (id: number, ids: numb
       <C2Card title={tn('clan2.glory.shareTitle')} hint={tn('clan2.glory.shareHint')} tour="glory-card">
         <div
           className="c2-sharecard"
-          style={{ background: bg.animated ? bg.base : bg.css, '--hero-text-rgb': bg.textRgb ?? '255,255,255' } as CSSProperties}
+          style={{ background: `radial-gradient(90% 45% at 50% 22%, rgba(${card.glowRgb},0.5), rgba(${card.glowRgb},0) 70%), ${card.water}`, '--hero-text-rgb': '255,255,255' } as CSSProperties}
         >
-          <HeroBgLive bg={bg} variant="preview" />
           <div className="c2-sharecard-crest">
             <ClanFrame id={frame} size={72} crest={s.clan.crest}>
               <ClanCrest crest={s.clan.crest} size={72} shine />
@@ -107,8 +133,12 @@ export function GloryTab({ onOpenCatch }: { onOpenCatch?: (id: number, ids: numb
             ))}
           </div>
         </div>
-        <button className="btn-secondary" style={{ marginTop: 12 }} onClick={share}>
-          {tn('clan2.glory.shareBtn')}
+        <button className="story-btn big" style={{ marginTop: 12 }} disabled={sharing} onClick={() => void share()}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
+            <circle cx="12" cy="12" r="9" strokeDasharray="4 2.6" />
+            <path d="M12 8v8M8 12h8" />
+          </svg>
+          {sharing ? tn('story.preparing') : tn('clan2.glory.shareBtn')}
         </button>
       </C2Card>
     </div>

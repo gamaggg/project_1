@@ -2200,9 +2200,14 @@
    "ka": "სურათი Telegram-ის ისტორიისთვის: გერბი, დონე, შტაბი და რეკორდები."
   },
   "shareBtn": {
-   "ru": "Поделиться",
-   "en": "Share",
-   "ka": "გაზიარება"
+   "ru": "Поделиться в истории",
+   "en": "Share to a story",
+   "ka": "ისტორიაში გაზიარება"
+  },
+  "storyCaption": {
+   "ru": "🎣 Вступай в клан {name} в RANGE — рыбачим вместе! @catchrangebot",
+   "en": "🎣 Join the {name} clan in RANGE — let's fish together! @catchrangebot",
+   "ka": "🎣 შემოუერთდი კლანს {name} RANGE-ში — ერთად ვითევზაოთ! @catchrangebot"
   },
   "shareDone": {
    "ru": "Готово. В приложении здесь будет картинка для истории.",
