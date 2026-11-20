@@ -893,6 +893,8 @@ export const ru = {
     title: 'Сектора',
     tabRating: 'Рейтинг',
     tabClans: 'Кланы',
+    subRating: 'Лучшие рыбаки {city}',
+    subClans: 'Команды рыбаков {city}',
     week: 'Неделя',
     allPlayers: 'Все игроки',
     filterAll: 'Все',

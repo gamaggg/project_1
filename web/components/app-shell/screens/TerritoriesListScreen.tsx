@@ -157,8 +157,15 @@ export function TerritoriesListScreen({
   return (
     <div className="screen-inner" ref={ptrRef} style={pullShift(pull, dragging)}>
       <PullIndicator pull={pull} refreshing={refreshing} />
-      <div className="page-title">{tn('terr.title')}</div>
-      <div className="page-sub">{CITIES[city].boundaryLabel} · {territories.length} {pluralSectors(territories.length)}</div>
+      {/* The title is the open tab's (20.11.2026): the bottom-nav button is «Рейтинг», so «Сектора» over the rating read wrong. */}
+      <div className="page-title">{mode === 'rating' ? tn('terr.tabRating') : mode === 'clans' ? tn('terr.tabClans') : tn('terr.title')}</div>
+      <div className="page-sub">
+        {mode === 'rating'
+          ? tn('terr.subRating', { city: tn(`recap.cityIn.${city}`) })
+          : mode === 'clans'
+            ? tn('terr.subClans', { city: tn(`recap.cityIn.${city}`) })
+            : `${CITIES[city].boundaryLabel} · ${territories.length} ${pluralSectors(territories.length)}`}
+      </div>
 
       <div className="rating-tabs">
         <button className={`rating-tab${mode === 'rating' ? ' active' : ''}`} onClick={() => setMode('rating')}>

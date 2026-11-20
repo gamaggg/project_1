@@ -890,6 +890,8 @@ export const en: Dict = {
     title: 'Territories',
     tabRating: 'Rating',
     tabClans: 'Clans',
+    subRating: 'Top anglers {city}',
+    subClans: 'Angler teams {city}',
     week: 'Week',
     allPlayers: 'All players',
     filterAll: 'All',

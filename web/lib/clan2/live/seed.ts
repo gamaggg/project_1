@@ -127,6 +127,8 @@ export function syncLiveState(d: DemoState, input: LiveInput, now: number = Date
   // The background chosen in the clan editor (the «Зал славы» card wears it):
   // without this the card kept the one the clan had when the state was first built.
   d.clan.background = clan.background
+  // The motto from the clan editor, the same way (it too stayed as it was when the state was first built).
+  d.clan.motto = clan.motto ?? ''
   d.clan.trophies = clan.trophies
   d.members = liveMembers(clan, d.live?.viewAs ?? null, userId)
   if (d.live) d.live.realRole = clan.myRole ?? d.live.realRole

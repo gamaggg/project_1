@@ -892,6 +892,8 @@ export const ka: Dict = {
     title: 'ტერიტორიები',
     tabRating: 'რეიტინგი',
     tabClans: 'კლანები',
+    subRating: 'საუკეთესო მეთევზეები {city}',
+    subClans: 'მეთევზეთა გუნდები {city}',
     week: 'კვირა',
     allPlayers: 'ყველა მოთამაშე',
     filterAll: 'ყველა',

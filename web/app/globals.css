@@ -2995,11 +2995,16 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 
 /* Glossy, slightly-3D circles — same depth treatment as .fish-thumb (shadow + inset rim + radial highlight). */
 .color-preview-map{height:210px; margin-top:20px; margin-bottom:8px;}
+/* «Цвет сектора»: the strip runs to the card's edges (its 22px sides, taken back
+   with a negative margin) and the circles fade out there — it used to stop 22px
+   short of the edge, cutting a circle in the middle of the white card. */
 .color-row{
-  display:flex; gap:14px; overflow-x:auto; padding:16px 18px; margin:8px 0 26px;
+  display:flex; gap:14px; overflow-x:auto; padding:16px 22px; margin:8px -22px 26px;
   -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity;
-  scroll-padding-left:18px; scroll-padding-right:18px;
+  scroll-padding-left:22px; scroll-padding-right:22px;
   scrollbar-width:none; -ms-overflow-style:none;
+  -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%);
+  mask-image:linear-gradient(90deg, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%);
 }
 .color-row::-webkit-scrollbar{display:none;}
 .color-row .color-swatch{flex:none; width:54px; height:54px; scroll-snap-align:start;}
