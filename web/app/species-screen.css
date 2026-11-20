@@ -81,7 +81,8 @@
 .spx-hero-fav {
   --fw: min(286px, 82%);
   position: absolute;
-  top: 6px;
+  /* Raised 20.11.2026 (owner): lower, the fins touched the category tiles. */
+  top: -8px;
   right: calc(var(--fw) * -0.3);
   z-index: 0;
   width: var(--fw);

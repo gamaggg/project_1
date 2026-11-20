@@ -1984,8 +1984,11 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
    (~400px) on short screens — at 320px wide on a phone in Telegram it didn't fit. */
 .catch-trophy-stage{
   width:100%; perspective:900px; position:relative; z-index:1; margin-top:auto; flex:0 0 auto;
-  max-width:min(320px, max(180px, calc((100dvh - env(safe-area-inset-top) - var(--tg-safe-area-top, 0px) - env(safe-area-inset-bottom) - var(--tg-safe-area-bottom, 0px) - 400px) * .75)));
+  max-width:min(320px, max(var(--trophy-min, 180px), calc((100dvh - env(safe-area-inset-top) - var(--tg-safe-area-top, 0px) - env(safe-area-inset-bottom) - var(--tg-safe-area-bottom, 0px) - var(--trophy-rest, 400px)) * .75)));
 }
+/* The «Новый вид» card (~86px with its margins) is one more thing under the photo card: the photo card gives
+   that height up, and on short phones (iPhone SE in Telegram) may get narrower than usual (130px), so «Готово» fits. */
+.catch-trophy-scene.with-new-species{--trophy-rest:500px; --trophy-min:130px;}
 .catch-trophy-card{
   width:100%; aspect-ratio:3/4; border-radius:24px; position:relative;
   transform-style:preserve-3d;
@@ -3491,13 +3494,13 @@ html:not([lang="ru"]) .map-layer-opt{flex:1 1 auto; min-width:0; overflow:hidden
 @media (prefers-reduced-motion: reduce){.catch-trophy-support{animation:none;}}
 /* «Новый вид в коллекции!» after the first catch of a fish (ConfirmScreen): its drawing on a glass card. */
 .catch-new-species{
-  display:flex; align-items:center; gap:12px; width:100%; max-width:320px; margin:-6px auto 18px; padding:10px 16px 10px 10px;
+  display:flex; align-items:center; gap:12px; width:100%; max-width:320px; margin:-6px auto 16px; padding:8px 16px 8px 10px;
   border:0; border-radius:18px; font:inherit; text-align:left; color:#fff; cursor:pointer; position:relative; z-index:1;
   background:linear-gradient(135deg, rgba(60,170,220,.26), rgba(255,255,255,.07)); box-shadow:inset 0 0 0 1px rgba(140,210,255,.32);
   animation:comment-in .5s var(--ease-out) 1.2s both;
 }
 .catch-new-species:disabled{cursor:default;}
-.catch-new-species-art{flex:0 0 auto; width:96px; height:68px; object-fit:contain; display:block; filter:drop-shadow(0 6px 10px rgba(0,0,0,.35));}
+.catch-new-species-art{flex:0 0 auto; width:84px; height:60px; object-fit:contain; display:block; filter:drop-shadow(0 6px 10px rgba(0,0,0,.35));}
 .catch-new-species-art.fish-drawing-none{color:rgba(255,255,255,.5);}
 .catch-new-species-text{display:flex; flex-direction:column; gap:2px; min-width:0;}
 .catch-new-species-text b{font-size:15px; font-weight:800; line-height:1.25;}

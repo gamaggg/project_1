@@ -222,7 +222,8 @@ export function ConfirmScreen({
       .join(' · ')
 
     return (
-      <div className="catch-trophy-scene">
+      // With the «new species» card the photo card shrinks by its height, so «Готово» still fits without scrolling.
+      <div className={`catch-trophy-scene${newSpeciesNth !== null && pendingCatch ? ' with-new-species' : ''}`}>
         <div className="catch-trophy-glow" />
         <div className="catch-trophy-stage">
           <div className="catch-trophy-card">
