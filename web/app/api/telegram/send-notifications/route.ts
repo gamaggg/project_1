@@ -8,7 +8,7 @@ import { isLang, type Lang } from '@/lib/i18n/core'
 import { localAwardTitle, localChallengeName } from '@/lib/data/dbText'
 import { localSpeciesNameLoose } from '@/lib/data/species'
 import { withErrorReport } from '@/lib/serverErrors'
-import { asCityId, cityForSectorId, type CityId } from '@/lib/data/city'
+import { asCityId, CITIES, cityForSectorId, type CityId } from '@/lib/data/city'
 import { clanWeekDigestText, readClanWeekDigest } from '@/lib/telegram/clanDigest'
 import { itemKindWord, itemName } from '@/lib/clan2/itemName'
 import { buildWidget } from '@/lib/telegram/widgets/build'
@@ -436,6 +436,24 @@ function renderMessage(notification: NotificationRef): Message | null {
         buttonLabel: 'Посмотреть улов',
         url: `${SITE_URL}/?catch=${notification.catch_id}`,
       }
+    }
+    case 'partner_point_expiry': {
+      // Super admins (supabase-drafts/partner-expiry-20-11): a partner's marker leaves the map in under a day
+      // («soon»), then it has left («gone»). Russian only, like the other admin notices.
+      const p = notification.payload ?? {}
+      const name = typeof p.name === 'string' ? p.name : ''
+      const endsAt = typeof p.ends_at === 'string' ? new Date(p.ends_at) : null
+      if (!name || !endsAt || Number.isNaN(endsAt.getTime())) return null
+      const tz = typeof p.tz === 'string' ? p.tz : 'Europe/Moscow'
+      const city = CITIES[asCityId(p.city)]?.name ?? ''
+      const when = new Intl.DateTimeFormat('ru-RU', { timeZone: tz, day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).format(endsAt).replace(',', ' в')
+      const zone = tz === 'Asia/Tbilisi' ? 'по Тбилиси' : 'по Москве'
+      const where = city ? ` (${city})` : ''
+      const text =
+        p.stage === 'gone'
+          ? `🏁 Метка партнёра «${name}»${where} пропала с карты: срок кончился ${when} ${zone}.\nЧтобы вернуть, продли срок в «Управление» → «Точки партнёров».`
+          : `⏳ Метка партнёра «${name}»${where} пропадёт с карты ${when} ${zone} — меньше чем через сутки.\nЧтобы оставить, продли срок в «Управление» → «Точки партнёров».`
+      return { text, buttonLabel: 'Открыть RANGE', url: SITE_URL }
     }
     case 'daily_reward_reminder': {
       const day = notification.payload?.day as number | undefined
