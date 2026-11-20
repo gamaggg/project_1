@@ -551,6 +551,7 @@ export const en: Dict = {
     warPill: { title: 'Clan battle by sign-up', text: 'A clan now takes part only if its leader or a co-leader has opened the battle. While it is not open this says «not started». Tap to go to the battle.' },
     warCard: { title: 'Roster and start', text: 'The leader or a co-leader picks the roster — from 3 players up to the whole clan — and starts the battle. Only the roster’s metres count. After the start players can be added, not removed.' },
     warHow: { title: 'How the battle goes', text: 'Four steps: roster, metres, finish and rewards. Tap and try in each — for example, work out how long the finish is for your roster.' },
+    speciesAlbum: { title: 'Fish species — now an album', text: 'Tap to open your collection: every fish is drawn, and you can see how many you have in each category, your records and who’s still to catch. You can share the collection to a story.' },
   },
   faq: {
     title: 'Questions and answers',

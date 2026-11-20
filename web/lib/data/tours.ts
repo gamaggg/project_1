@@ -68,6 +68,7 @@ export type TourKey =
   | 'warPill'
   | 'warCard'
   | 'warHow'
+  | 'speciesAlbum'
 export type TourStep = { target: string; key: TourKey }
 // `always`: shown even to a player who pressed «Пропустить» on the tours.
 // `unlessSeen`: not shown once the tour with that id has been seen.
@@ -238,8 +239,21 @@ const UPDATE_19_10_TOURS: Tour[] = [
   },
 ]
 
+// 20.11: «Виды рыб» became a screen of its own — an album with every fish drawn, the categories,
+// records and the ones still to catch, and a story picture. One step on the profile's «видов рыб»
+// button, for everyone, once per account (even after «Пропустить»); shown before the other profile
+// tours. A new id, so the 16.10 step on the same button doesn't hide it.
+const SPECIES_ALBUM_TOUR: Tour = {
+  id: 'u2011-species',
+  screen: 'screen-profile',
+  requires: 'species-stats',
+  steps: [{ target: 'species-stats', key: 'speciesAlbum' }],
+  always: true,
+}
+
 export const TOURS: Record<TourAudience, Tour[]> = {
   whatsNew: [
+    SPECIES_ALBUM_TOUR,
     {
       id: 'map',
       screen: 'screen-map',
@@ -282,6 +296,7 @@ export const TOURS: Record<TourAudience, Tour[]> = {
     ...UPDATE_19_10_TOURS,
   ],
   newcomer: [
+    SPECIES_ALBUM_TOUR,
     {
       id: 'map',
       screen: 'screen-map',
