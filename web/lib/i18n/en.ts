@@ -739,6 +739,7 @@ export const en: Dict = {
     freeShield: 'Put a shield on',
     freeShieldLeft: 'In reserve: {count}',
     freeShieldHot: "A shield can't go on a hot sector until the week ends",
+    freeShieldSiege: 'The HQ is under siege: a shield won’t help. Only a catch on this sector lifts the siege — the shield stays in your reserve',
   },
   plural: {
     sector: { one: 'sector', other: 'sectors' },

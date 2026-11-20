@@ -741,6 +741,7 @@ export const ka: Dict = {
     freeShield: 'ფარის დადება',
     freeShieldLeft: 'მარაგში: {count}',
     freeShieldHot: 'ცხელ სექტორზე ფარი კვირის ბოლომდე არ იდება',
+    freeShieldSiege: 'შტაბი ალყაშია: ფარი არ დაგეხმარება. ალყას მხოლოდ ამ სექტორზე დაჭერა მოხსნის — ფარი მარაგში დარჩა',
   },
   plural: {
     sector: { one: 'სექტორი', other: 'სექტორი' },

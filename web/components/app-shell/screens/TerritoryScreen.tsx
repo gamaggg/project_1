@@ -177,7 +177,10 @@ function ShieldButton({ territory, hot }: { territory: Territory; hot: boolean }
   const t = useT()
 
   if (freeShields === 0) return null
-  const locked = hot || /HOT_SECTOR/.test(useFreeShield.error?.message ?? '')
+  // A clan HQ under siege (HQ_SIEGE, 20.11.2026): a shield would not lift the siege and would pass to whoever takes
+  // the sector, so the server refuses it before taking it from the reserve.
+  const siege = /HQ_SIEGE/.test(useFreeShield.error?.message ?? '')
+  const locked = hot || siege || /HOT_SECTOR/.test(useFreeShield.error?.message ?? '')
   return (
     <>
       <button
@@ -188,7 +191,7 @@ function ShieldButton({ territory, hot }: { territory: Territory; hot: boolean }
       >
         {t('territory.freeShield')} · {t('territory.freeShieldLeft', { count: freeShields })}
       </button>
-      {locked && <div className="shield-hot-note">{t('territory.freeShieldHot')}</div>}
+      {locked && <div className="shield-hot-note">{t(siege ? 'territory.freeShieldSiege' : 'territory.freeShieldHot')}</div>}
     </>
   )
 }
