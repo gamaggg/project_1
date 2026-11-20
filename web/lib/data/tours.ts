@@ -68,10 +68,17 @@ export type TourKey =
   | 'warPill'
   | 'warCard'
   | 'warHow'
+  | 'profileStats'
+  | 'profileChallenges'
+  | 'profileShop'
+  | 'profileClan'
+  | 'profileGeo'
+  | 'profileFaq'
 export type TourStep = { target: string; key: TourKey }
 // `always`: shown even to a player who pressed «Пропустить» on the tours.
 // `unlessSeen`: not shown once the tour with that id has been seen.
-export type Tour = { id: string; screen: string; requires: string; steps: TourStep[]; always?: boolean; unlessSeen?: string }
+// `tip`: titled «Подсказка» for every audience (a guide, not news — even for players who were here before).
+export type Tour = { id: string; screen: string; requires: string; steps: TourStep[]; always?: boolean; unlessSeen?: string; tip?: boolean }
 export type TourAudience = 'whatsNew' | 'newcomer'
 
 // 09.10: the daily reward and the Казна are collected from the coin chip on
@@ -107,13 +114,33 @@ const MAP_REWARDS_TOUR: Tour = {
   always: true,
 }
 
+// 20.11: the profile tab, the way it is now — the numbers, challenges, shop, clan, «Где это?», questions.
+// For everyone (old players too), once per account, even after «Пропустить»; it replaces the older
+// profile tours (newcomer «profile», whatsNew «profile» and «u1610-profile»), and the one-step
+// «Где это?» card tour is not shown after it.
+const PROFILE_TOUR: Tour = {
+  id: 'p2011-profile',
+  screen: 'screen-profile',
+  requires: 'profile-stats',
+  steps: [
+    { target: 'profile-stats', key: 'profileStats' },
+    { target: 'challenges', key: 'profileChallenges' },
+    { target: 'shop', key: 'profileShop' },
+    { target: 'clan', key: 'profileClan' },
+    { target: 'geo', key: 'profileGeo' },
+    { target: 'faq', key: 'profileFaq' },
+  ],
+  always: true,
+  tip: true,
+}
+
 // 10.10: «Где это?», the daily panorama game. Its card on the profile is
 // pointed out to everyone; then, once each, how to play: the screen before
 // the answer, the map while picking (SpotlightTours is told 'screen-geo'
 // then too), and the result with the day's quest. Marked `always` — it's
 // how the game works, a player who skipped the tours still needs it.
 const GEO_TOURS: Tour[] = [
-  { id: 'geo-card', screen: 'screen-profile', requires: 'geo', steps: [{ target: 'geo', key: 'geoCard' }], always: true },
+  { id: 'geo-card', screen: 'screen-profile', requires: 'geo', steps: [{ target: 'geo', key: 'geoCard' }], always: true, unlessSeen: PROFILE_TOUR.id },
   {
     id: 'geo-intro',
     screen: 'screen-geo',
@@ -160,17 +187,6 @@ const UPDATE_16_10_TOURS: Tour[] = [
     screen: 'screen-map',
     requires: 'legend',
     steps: [{ target: 'legend', key: 'ownerColours' }],
-    always: true,
-  },
-  {
-    id: 'u1610-profile',
-    screen: 'screen-profile',
-    requires: 'species-stats',
-    steps: [
-      { target: 'species-stats', key: 'speciesStats' },
-      { target: 'challenges', key: 'challengesNew' },
-      { target: 'language', key: 'language' },
-    ],
     always: true,
   },
   {
@@ -261,16 +277,7 @@ export const TOURS: Record<TourAudience, Tour[]> = {
         { target: 'insights', key: 'insights' },
       ],
     },
-    {
-      id: 'profile',
-      screen: 'screen-profile',
-      requires: 'shop',
-      steps: [
-        { target: 'shop', key: 'shop' },
-        { target: 'diary', key: 'diary' },
-        { target: 'faq', key: 'faq' },
-      ],
-    },
+    PROFILE_TOUR,
     // 09.10: the slots left the end of the Shop's tab row for a card under
     // the balance — everyone who knew them as a tab is told where they went.
     { id: 'shop-slots', screen: 'screen-shop', requires: 'slots-card', steps: [{ target: 'slots-card', key: 'slotsMoved' }], always: true },
@@ -308,17 +315,7 @@ export const TOURS: Record<TourAudience, Tour[]> = {
         { target: 'insights', key: 'insights' },
       ],
     },
-    {
-      id: 'profile',
-      screen: 'screen-profile',
-      requires: 'challenges',
-      steps: [
-        { target: 'challenges', key: 'challenges' },
-        { target: 'shop', key: 'shop' },
-        { target: 'clan', key: 'clan' },
-        { target: 'faq', key: 'faq' },
-      ],
-    },
+    PROFILE_TOUR,
     { id: 'shop-slots', screen: 'screen-shop', requires: 'slots-card', steps: [{ target: 'slots-card', key: 'slots' }], always: true },
     MAP_REWARDS_TOUR,
     DIARY_STATS_TOUR,
