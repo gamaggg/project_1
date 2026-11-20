@@ -25,7 +25,9 @@ import { tn } from '@/lib/i18n/runtime'
 // Game notifications drawn as one generic row in «Активность».
 const GAME_EVENT_KINDS = new Set(['hot_sector_week', 'hot_sector_won', 'legend_gained', 'legend_lost', 'bite_forecast', 'sector_forecast', 'daily_reward_reminder', 'sector_attacked', 'support_reply', 'admin_gift', 'geo_bonus', 'catch_edited', 'catch_species_changed', 'rating_overtaken',
   // The clan update (supabase-drafts/clan-update-06-11/04_clan_notifications.sql).
-  'clan_hq_attacked', 'clan_hq_siege', 'clan_hq_saved', 'clan_hq_fell', 'clan_buff_planned', 'clan_quest_done', 'clan_quest_ready', 'clan_project_done', 'clan_item_bought', 'clan_recruit_joined', 'clan_recruit_paid', 'clan_week_digest', 'clan_nudge'])
+  'clan_hq_attacked', 'clan_hq_siege', 'clan_hq_saved', 'clan_hq_fell', 'clan_buff_planned',
+  // 20.11: the attacker's clan hears of its siege, of it being broken and of the HQ taken (hq-attackers-20-11).
+  'clan_hq_siege_ours', 'clan_hq_siege_broken', 'clan_hq_taken', 'clan_quest_done', 'clan_quest_ready', 'clan_project_done', 'clan_item_bought', 'clan_recruit_joined', 'clan_recruit_paid', 'clan_week_digest', 'clan_nudge'])
 
 export function useActivity() {
   const { user } = useAuth()

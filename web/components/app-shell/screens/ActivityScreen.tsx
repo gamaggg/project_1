@@ -549,6 +549,23 @@ export function ActivityScreen({
                   icon = FEED_ICONS.alert
                   title = tr('activity.clanHqFell', { clan })
                   sub = tr('activity.clanHqFellSub', { n: n('loot') })
+                } else if (ev.kind === 'clan_hq_siege_ours') {
+                  // 20.11: our clanmate put an enemy HQ under siege (hq-attackers-20-11); opens the sector.
+                  tone = 'gold'
+                  icon = FEED_ICONS.flame
+                  title = tr('activity.clanHqSiegeOurs', { name: a.who || tr('activity.someone'), enemy: String(p.enemy ?? '') })
+                  sub = tr('activity.clanHqSiegeOursSub', { id, m: n('minutes') || 90, enemy: String(p.enemy ?? '') })
+                  if (id) action = () => onOpenTerritory(id)
+                } else if (ev.kind === 'clan_hq_siege_broken') {
+                  tone = 'red'
+                  icon = FEED_ICONS.shield
+                  title = tr('activity.clanHqSiegeBroken', { enemy: String(p.enemy ?? '') })
+                  sub = tr('activity.clanHqSiegeBrokenSub', { id, name: a.who || tr('activity.someone') })
+                } else if (ev.kind === 'clan_hq_taken') {
+                  tone = 'green'
+                  icon = FEED_ICONS.medal
+                  title = tr('activity.clanHqTaken', { clan, enemy: String(p.enemy ?? '') })
+                  sub = n('loot') > 0 ? tr('activity.clanHqTakenSub', { name: a.who || tr('activity.someone'), id, n: n('loot'), total: n('loot_total') || n('loot'), enemy: String(p.enemy ?? '') }) : tr('activity.clanHqTakenSubNoLoot', { name: a.who || tr('activity.someone'), id })
                 } else if (ev.kind === 'clan_buff_planned') {
                   icon = FEED_ICONS.flame
                   title = tr('activity.clanBuff', { clan })

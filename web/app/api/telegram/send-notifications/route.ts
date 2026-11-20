@@ -213,6 +213,9 @@ function renderMessage(notification: NotificationRef): Message | null {
     case 'clan_hq_siege':
     case 'clan_hq_saved':
     case 'clan_hq_fell':
+    case 'clan_hq_siege_ours':
+    case 'clan_hq_siege_broken':
+    case 'clan_hq_taken':
     case 'clan_buff_planned':
     case 'clan_quest_done':
     case 'clan_quest_ready':
@@ -233,6 +236,7 @@ function renderMessage(notification: NotificationRef): Message | null {
       const by = notification.actorClan ? tn('activity.clanHqByClan', { clan: notification.actorClan }) : notification.actorClan === '' && actor?.display_name ? tn('activity.clanHqBySolo', { name: actor.display_name }) : ''
       const took = notification.actorClan ? tn('activity.clanHqTookClan', { clan: notification.actorClan }) : notification.actorClan === '' && actor?.display_name ? tn('activity.clanHqTookSolo', { name: actor.display_name }) : ''
       const withBy = (line: string, extra: string) => (extra ? `${extra}\n${line}` : line)
+      const enemy = typeof p.enemy === 'string' ? p.enemy : ''
       const item = typeof p.item === 'string' ? p.item : ''
       const itemKind = item ? itemKindWord(item) : null
       const lines: Record<string, [string, string?]> = {
@@ -240,6 +244,10 @@ function renderMessage(notification: NotificationRef): Message | null {
         clan_hq_siege: [tn('activity.clanHqSiege', { clan }), withBy(tn('activity.clanHqSiegeSub', { id, m: n('minutes') || 90 }), by)],
         clan_hq_saved: [tn('activity.clanHqSaved', { name: who, clan })],
         clan_hq_fell: [tn('activity.clanHqFell', { clan }), withBy(tn('activity.clanHqFellSub', { n: n('loot') }), took)],
+        // 20.11: the attacker's clan (hq-attackers-20-11); `enemy` is the HQ's clan.
+        clan_hq_siege_ours: [tn('activity.clanHqSiegeOurs', { name: who, enemy }), tn('activity.clanHqSiegeOursSub', { id, m: n('minutes') || 90, enemy })],
+        clan_hq_siege_broken: [tn('activity.clanHqSiegeBroken', { enemy }), tn('activity.clanHqSiegeBrokenSub', { id, name: who })],
+        clan_hq_taken: [tn('activity.clanHqTaken', { clan, enemy }), n('loot') > 0 ? tn('activity.clanHqTakenSub', { name: who, id, n: n('loot'), total: n('loot_total') || n('loot'), enemy }) : tn('activity.clanHqTakenSubNoLoot', { name: who, id })],
         clan_buff_planned: [tn('activity.clanBuff', { clan }), tn('activity.clanBuffSub')],
         clan_quest_done: [tn('activity.clanQuestDone', { clan }), tn('activity.clanQuestDoneSub', { n: n('reward') })],
         clan_quest_ready: [tn('activity.clanQuestReady', { clan }), tn('activity.clanQuestReadySub', { n: n('reward') })],
@@ -250,7 +258,7 @@ function renderMessage(notification: NotificationRef): Message | null {
         clan_nudge: [tn('clan2.activity.nudge', { name: who }), tn('clan2.activity.nudgeSub', { clan })],
       }
       const [title, sub] = lines[notification.kind]
-      const toSector = (notification.kind === 'clan_hq_attacked' || notification.kind === 'clan_hq_siege') && id
+      const toSector = (notification.kind === 'clan_hq_attacked' || notification.kind === 'clan_hq_siege' || notification.kind === 'clan_hq_siege_ours') && id
       return {
         text: sub ? `${title}\n${sub}` : title,
         ...(toSector ? sector(id) : { buttonLabel: tn('tg.btnClan'), url: `${SITE_URL}/?clan=${clanId}` }),

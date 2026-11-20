@@ -321,7 +321,7 @@ export const FAQ_EN: FaqSection[] = [
             'The buildings keep their levels when the HQ falls: they sleep while the clan has no HQ and work again as soon as the clan sets a new HQ on any of its sectors.',
             'The first rebuild of the HQ after a fall is free, once in the clan\'s life. The next ones cost 1 000 coins from the treasury, like an ordinary placing.',
           ],
-          'An attack on the HQ, a siege and a fall are sent to the whole clan in «Activity» and in Telegram: an attack at most once in 30 minutes, a siege at once, even at night (there are only 90 minutes to lift it).',
+          'An attack on the HQ, a siege and a fall are sent to the whole clan in «Activity» and in Telegram: an attack at most once in 30 minutes, a siege at once, even at night (there are only 90 minutes to lift it). The attacking clan hears too: «our clanmate has put that clan’s HQ under siege», «the siege was broken» and «the HQ is taken, +N coins to the treasury».',
         ],
       },
       {
