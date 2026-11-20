@@ -154,7 +154,8 @@ function isHotNow(t: Territory): boolean {
 // panorama was taken.
 function territoryMarkerHtml(t: Territory, clanLayer: boolean, plain = false, hq = false): string {
   // The clan's headquarters stands on this sector: its own marker (banner and «ШТАБ») replaces both crest and number.
-  if (hq) return '<div class="leaflet-territory-marker"></div>'
+  // Only on the «Кланы» layer, where that marker is drawn; on «Игроки» the sector shows its owner and number as usual.
+  if (hq && clanLayer) return '<div class="leaflet-territory-marker"></div>'
   const label = idLabelHtml(t, plain)
   if (plain || t.status === 'free' || !t.ownerId) return `<div class="leaflet-territory-marker">${label}</div>`
   // Clan layer: the owner's clan crest takes the avatar's place.

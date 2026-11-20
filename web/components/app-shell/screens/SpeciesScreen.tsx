@@ -42,6 +42,29 @@ function LockIcon({ size = 11 }: { size?: number }) {
   )
 }
 
+// The count runs up from zero as the screen opens (once; later changes show at once).
+function CountUp({ value }: { value: number }) {
+  const [shown, setShown] = useState(0)
+  const done = useRef(false)
+  useEffect(() => {
+    if (done.current || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setShown(value)
+      return
+    }
+    const start = performance.now() + 140
+    let raf = 0
+    const tick = (now: number) => {
+      const t = Math.min(1, Math.max(0, (now - start) / 750))
+      setShown(Math.round(value * (1 - Math.pow(1 - t, 3))))
+      if (t < 1) raf = requestAnimationFrame(tick)
+      else done.current = true
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [value])
+  return <>{shown}</>
+}
+
 // The drawing, or a quiet outline for a fish without one yet.
 function FishArt({ speciesKey, className }: { speciesKey: string; className: string }) {
   const src = speciesImageUrl(speciesKey)
@@ -87,14 +110,17 @@ export function SpeciesScreen({
   const [sort, setSort] = useState<Sort>('count')
   const [category, setCategory] = useState<SpeciesCategory | null>(null)
   const [open, setOpen] = useState<string | null>(null)
-  // The card whose details are folding away (kept a moment for the closing animation).
-  const [closing, setClosing] = useState<string | null>(null)
+  // The card whose details are fading away: kept a moment, lifted out of the
+  // grid (absolute, where it stood), so the cards below glide up at once.
+  const [closing, setClosing] = useState<{ key: string; top: number } | null>(null)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const toggle = (key: string) => {
+    snapPlaces()
     if (closeTimer.current) clearTimeout(closeTimer.current)
-    if (open) setClosing(open)
+    const panel = open ? gridRef.current?.querySelector<HTMLElement>(`[data-flip="d-${open}"]`) : null
+    setClosing(open && panel ? { key: open, top: panel.offsetTop } : null)
     setOpen(open === key ? null : key)
-    closeTimer.current = setTimeout(() => setClosing(null), 280)
+    closeTimer.current = setTimeout(() => setClosing(null), 220)
   }
 
   const totalCatches = catches.length
@@ -124,11 +150,24 @@ export function SpeciesScreen({
   // The fish that joined the collection last.
   const newest = useMemo(() => species.reduce<SpeciesEntry | null>((n, s) => (!n || s.firstAt > n.firstAt ? s : n), null), [species])
 
+  // Each category: how many of its fish are caught, of how many in the collection. A caught fish counts in the
+  // category it was caught under (its card's), one not yet caught in its own.
   const byCategory = useMemo(() => {
-    const m = new Map<SpeciesCategory, number>()
-    for (const s of species) m.set(s.category, (m.get(s.category) ?? 0) + 1)
-    return [...m.entries()]
-  }, [species])
+    const caughtCat = new Map(species.map((s) => [speciesBaseKey(s.key), s.category]))
+    const m = new Map<SpeciesCategory, { caught: number; of: number }>()
+    const add = (c: SpeciesCategory, caught: boolean) => {
+      const v = m.get(c) ?? { caught: 0, of: 0 }
+      v.of++
+      if (caught) v.caught++
+      m.set(c, v)
+    }
+    for (const s of collection) {
+      const base = speciesBaseKey(s.key)
+      const c = caughtCat.get(base)
+      add(c ?? (s.category as SpeciesCategory), !!c)
+    }
+    return [...m.entries()].filter(([, v]) => v.caught > 0).sort((a, b) => b[1].caught - a[1].caught)
+  }, [species, collection])
 
   const rows = useMemo(() => {
     const list = category ? species.filter((s) => s.category === category) : species.slice()
@@ -137,36 +176,54 @@ export function SpeciesScreen({
     return list
   }, [species, sort, category])
 
-  const pct = species.length && total ? Math.min(100, (species.length / total) * 100) : 0
 
   // Cards glide to their new places (a new sort, a category, a details panel
-  // opening above them) instead of jumping: each render, every card that moved
-  // is animated from where it stood (offsetLeft/Top — layout, not transforms).
+  // opening or closing above them) instead of jumping. Only transforms move:
+  // the layout changes at once, and each moved card is slid from where it was
+  // seen on the screen just before (snapPlaces, taken by the tap itself — so a
+  // card caught mid-glide carries on from where it is, and a render that moved
+  // nothing animates nothing). Nothing animates the layout itself: on iPhone a
+  // panel growing frame by frame shook every card under it.
   const gridRef = useRef<HTMLDivElement>(null)
   // The cards' rise-in plays once, when the screen opens: re-sorting moves the
   // card elements, and a moved element would replay it (cards blinking out).
   const [entering, setEntering] = useState(true)
   useEffect(() => {
-    const t = setTimeout(() => setEntering(false), 1000)
+    const t = setTimeout(() => setEntering(false), 1700)
     return () => clearTimeout(t)
   }, [])
-  const placesRef = useRef(new Map<string, { x: number; y: number }>())
-  useLayoutEffect(() => {
+  const placesRef = useRef<Map<string, { x: number; y: number }> | null>(null)
+  const flipEls = () => (gridRef.current ? (Array.from(gridRef.current.querySelectorAll(':scope > [data-flip]')) as HTMLElement[]) : [])
+  function snapPlaces() {
     const grid = gridRef.current
     if (!grid) return
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    const next = new Map<string, { x: number; y: number }>()
-    for (const el of Array.from(grid.children) as HTMLElement[]) {
-      const key = el.dataset.flip
-      if (!key) continue
-      const now = { x: el.offsetLeft, y: el.offsetTop }
-      const was = placesRef.current.get(key)
-      if (was && !reduce && (was.x !== now.x || was.y !== now.y)) {
-        el.animate([{ transform: `translate(${was.x - now.x}px, ${was.y - now.y}px)` }, { transform: 'translate(0, 0)' }], { duration: 340, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' })
-      }
-      next.set(key, now)
+    const g = grid.getBoundingClientRect()
+    const map = new Map<string, { x: number; y: number }>()
+    for (const el of flipEls()) {
+      const r = el.getBoundingClientRect()
+      map.set(el.dataset.flip!, { x: r.left - g.left, y: r.top - g.top })
     }
-    placesRef.current = next
+    placesRef.current = map
+  }
+  useLayoutEffect(() => {
+    const was = placesRef.current
+    const grid = gridRef.current
+    placesRef.current = null
+    if (!was || !grid) return
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const els = flipEls()
+    // Glides still running are stopped first, so the new places are measured without them.
+    for (const el of els) for (const a of el.getAnimations()) if (a.id === 'flip') a.cancel()
+    const g = grid.getBoundingClientRect()
+    for (const el of els) {
+      const from = was.get(el.dataset.flip!)
+      if (!from || el.classList.contains('closing')) continue
+      const r = el.getBoundingClientRect()
+      const dx = from.x - (r.left - g.left)
+      const dy = from.y - (r.top - g.top)
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) continue
+      el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'translate(0, 0)' }], { duration: 340, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', id: 'flip' })
+    }
   })
 
   // «В историю»: the collection as a picture in our style (app/api/species-story).
@@ -178,6 +235,8 @@ export function SpeciesScreen({
     if (result === 'failed') onToast(tn('story.failed'))
   }
   const pickCategory = (c: SpeciesCategory) => {
+    snapPlaces()
+    setClosing(null)
     setCategory(category === c ? null : c)
     setOpen(null)
   }
@@ -219,67 +278,93 @@ export function SpeciesScreen({
                 <i />
                 <i />
                 <i />
+                <i />
+                <i />
               </span>
-              <div className="spx-hero-top">
-                <div className="spx-hero-text">
-                  <div className="spx-hero-kicker">{tn('spc.collection')}</div>
-                  <div className="spx-hero-count">
-                    <b>{species.length}</b>
-                    <span>{tn('spc.ofTotal', { total })}</span>
-                  </div>
-                </div>
-                {favourite && (
-                  <button className="spx-hero-fav" onClick={() => onOpenCatch(favourite.lastCatchId)}>
-                    {/* The fish itself stays still (owner's call); the light under it breathes. */}
-                    <span className="spx-hero-stage">
-                      <span className="spx-hero-glow" aria-hidden />
-                      <FishArt speciesKey={favourite.key} className="spx-hero-fish" />
-                    </span>
-                    <span className="spx-hero-fav-label">
-                      {tn('spc.favourite')} · <b>{favourite.name}</b> ×{favourite.count}
-                    </span>
-                  </button>
-                )}
-              </div>
-              <div className="spx-progress" aria-hidden>
-                <span style={{ width: `${pct}%` }}>
-                  {byCategory.map(([c, n]) => (
-                    <i key={c} style={{ flexGrow: n, background: CATEGORY_COLOR[c], opacity: category && category !== c ? 0.3 : 1 }} />
-                  ))}
-                </span>
-              </div>
-              {byCategory.length > 1 && (
-                <div className="spx-legend" role="group">
-                  {byCategory.map(([c, n]) => (
-                    <button key={c} className={`spx-leg${category === c ? ' on' : ''}`} onClick={() => pickCategory(c)} aria-pressed={category === c}>
-                      <i style={{ background: CATEGORY_COLOR[c] }} />
-                      {CATEGORY_LABEL[c]} · {n}
-                    </button>
-                  ))}
+              {/* Light coming down through the water. */}
+              <span className="spx-rays" aria-hidden />
+              {favourite && (
+                // The fish caught most, big, swimming out past the right edge (only ~70% of it shows).
+                // Not a button: tapping the hero opens nothing (owner's call, 20.11.2026). The fish glides in
+                // once as the screen opens and then stays still (owner's call); the light behind it breathes.
+                <div className="spx-hero-fav" aria-hidden>
+                  <span className="spx-hero-glow" />
+                  <FishArt speciesKey={favourite.key} className="spx-hero-fish" />
                 </div>
               )}
+              <div className="spx-hero-top">
+                <div className="spx-hero-text">
+                  <div className="spx-hero-kicker spx-up" style={{ ['--d' as string]: '80ms' }}>
+                    {tn('spc.collection')}
+                  </div>
+                  <div className="spx-hero-count">
+                    <b className="spx-up" style={{ ['--d' as string]: '140ms' }}>
+                      <CountUp value={species.length} />
+                    </b>
+                    <span className="spx-up" style={{ ['--d' as string]: '220ms' }}>
+                      {tn('spc.ofTotal', { total })}
+                    </span>
+                  </div>
+                  {favourite && (
+                    <div className="spx-hero-fav-label spx-up" style={{ ['--d' as string]: '300ms' }}>
+                      <span>{tn('spc.favourite')}</span>
+                      <b>
+                        {favourite.name} <i>×{favourite.count}</i>
+                      </b>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {/* The categories: caught of the collection, each a filter for the cards below. */}
+              <div className={`spx-cats${byCategory.length === 1 ? ' one' : ''}${category ? ' picked' : ''}`} role="group">
+                {byCategory.map(([c, v], i) => (
+                  <button
+                    key={c}
+                    className={`spx-cat spx-up${category === c ? ' on' : ''}`}
+                    style={{ ['--d' as string]: `${360 + i * 70}ms`, ['--c' as string]: CATEGORY_COLOR[c] }}
+                    onClick={() => pickCategory(c)}
+                    aria-pressed={category === c}
+                  >
+                    <span className="spx-cat-top">
+                      <span className="spx-cat-name">
+                        <i />
+                        {CATEGORY_LABEL[c]}
+                      </span>
+                      <span className="spx-cat-num">
+                        <b>{v.caught}</b>/{v.of}
+                      </span>
+                    </span>
+                    <span className="spx-cat-bar">
+                      <i style={{ width: `${Math.max(4, (v.caught / Math.max(1, v.of)) * 100)}%`, ['--d' as string]: `${520 + i * 70}ms` }} />
+                    </span>
+                  </button>
+                ))}
+              </div>
             </section>
 
             <div className="spx-tiles">
-              <button className="spx-tile" onClick={onOpenCatches}>
+              <button className="spx-tile spx-up" style={{ ['--d' as string]: '420ms' }} onClick={onOpenCatches}>
                 <span>{tn('spc.catches')}</span>
                 <b>{totalCatches}</b>
               </button>
-              <button className="spx-tile" onClick={() => biggest && onOpenCatch(biggest.bestCatchId)} disabled={!biggest}>
+              <button className="spx-tile spx-up" style={{ ['--d' as string]: '480ms' }} onClick={() => biggest && onOpenCatch(biggest.bestCatchId)} disabled={!biggest}>
                 <span>{tn('spc.biggest')}</span>
                 <b>{biggest ? `${biggest.bestLengthCm} ${tn('fmt.cm')}` : '—'}</b>
                 {biggest && <em>{biggest.name}</em>}
               </button>
-              <button className="spx-tile" onClick={() => newest && onOpenCatch(newest.firstCatchId)} disabled={!newest}>
+              <button className="spx-tile spx-up" style={{ ['--d' as string]: '540ms' }} onClick={() => newest && onOpenCatch(newest.firstCatchId)} disabled={!newest}>
                 <span>{tn('spc.newest')}</span>
                 <b className="spx-tile-name">{newest?.name ?? '—'}</b>
                 {newest && <em>{dateOf(newest.firstAt, false)}</em>}
               </button>
             </div>
 
-            <div className="spx-sorts" role="tablist">
+            <div className="spx-sorts spx-up" style={{ ['--d' as string]: '600ms' }} role="tablist">
               {(['count', 'size', 'recent'] as const).map((k) => (
-                <button key={k} role="tab" aria-selected={sort === k} className={sort === k ? 'on' : undefined} onClick={() => setSort(k)}>
+                <button key={k} role="tab" aria-selected={sort === k} className={sort === k ? 'on' : undefined} onClick={() => {
+                  snapPlaces()
+                  setSort(k)
+                }}>
                   {tn(k === 'count' ? 'spc.sortCount' : k === 'size' ? 'spc.sortSize' : 'spc.sortRecent')}
                 </button>
               ))}
@@ -292,7 +377,7 @@ export function SpeciesScreen({
               {rows.map((s, i) => {
                 const isOpen = open === s.key
                 // The details go right after the card's row: after it on the right, after its neighbour on the left.
-                const panelsHere = [open, closing].filter((k, n, all) => {
+                const panelsHere = [open, closing?.key ?? null].filter((k, n, all) => {
                   if (!k || all.indexOf(k) !== n) return false
                   const at = rows.findIndex((r) => r.key === k)
                   if (at < 0) return false
@@ -303,7 +388,7 @@ export function SpeciesScreen({
                     <div
                       data-flip={s.key}
                       className={`spx-card spx-card--${s.category}${isOpen ? ' on' : ''}`}
-                      style={{ animationDelay: `${Math.min(i, 12) * 35}ms`, ['--c' as string]: CATEGORY_COLOR[s.category] }}
+                      style={{ animationDelay: `${640 + Math.min(i, 12) * 35}ms`, ['--c' as string]: CATEGORY_COLOR[s.category] }}
                     >
                       <button className="spx-card-head" onClick={() => toggle(s.key)} aria-expanded={isOpen}>
                         <span className="spx-card-art">
@@ -325,7 +410,12 @@ export function SpeciesScreen({
                       const d = rows.find((r) => r.key === k)!
                       const at = rows.indexOf(d)
                       return (
-                        <div key={`d-${k}`} data-flip={`d-${k}`} className={`spx-detail${k === open ? '' : ' closing'}`} style={{ ['--arrow' as string]: at % 2 === 0 ? '25%' : '75%' }}>
+                        <div
+                          key={`d-${k}`}
+                          data-flip={`d-${k}`}
+                          className={`spx-detail${k === open ? '' : ' closing'}`}
+                          style={{ ['--arrow' as string]: at % 2 === 0 ? '25%' : '75%', top: k === open ? undefined : closing?.top }}
+                        >
                           <div className="spx-detail-in">
                             <div className="spx-detail-card">
                               <div className="spx-facts">
