@@ -25,7 +25,10 @@ import { tn } from '@/lib/i18n'
 import type { CatchComment } from '@/lib/data/types'
 import { nameInitials } from '@/lib/initials'
 
-type ReplyTarget = { rootId: number; userId: string; name: string }
+// rootId: the thread the reply goes under (for showing it there at once); commentId: the comment tapped,
+// which goes to post_comment — the server takes the @name from that comment's author. Sending the root
+// instead (until 20.11.2026) put the thread starter's name on every reply to a reply, often the replier's own.
+type ReplyTarget = { rootId: number; commentId: number; userId: string; name: string }
 
 // A thread shows this many replies before collapsing the rest behind
 // «Показать ещё» — long threads otherwise push every later root far down.
@@ -197,7 +200,7 @@ export function CommentsSheet({
   useEffect(() => () => focusScrollTimers.current.forEach(clearTimeout), [])
 
   function startReply(c: CatchComment) {
-    setReplyTo({ rootId: c.parentId ?? c.id, userId: c.userId, name: c.displayName })
+    setReplyTo({ rootId: c.parentId ?? c.id, commentId: c.id, userId: c.userId, name: c.displayName })
     setMenuFor(null)
     setError(null)
     // Already focused: no focus event follows, so don't leave the flag set.
@@ -247,7 +250,7 @@ export function CommentsSheet({
     if (!target) requestAnimationFrame(() => listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' }))
 
     try {
-      const res = await postComment.mutateAsync({ catchId, body, parentId: target?.rootId ?? null })
+      const res = await postComment.mutateAsync({ catchId, body, parentId: target?.commentId ?? null })
       if (!res.ok) {
         setText(body)
         setReplyTo(target)
