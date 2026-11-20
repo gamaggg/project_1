@@ -2597,7 +2597,8 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .ach-desc{font-size:11.5px; color:var(--ink-soft); line-height:1.45; font-weight:500; margin-top:4px;}
 .ach-progress{font-size:11px; color:var(--ink-faint); font-weight:700; margin-top:6px;}
 
-/* ---- Profile CTA cards: Challenges + Shop, the first pair of .profile-duo (see ProfileScreen.tsx) ---- */
+/* ---- Profile CTA row: Challenges + Shop (see ProfileScreen.tsx) ---- */
+.profile-cta-row{display:flex; gap:10px; margin-top:10px;}
 .profile-cta-btn{
   position:relative; overflow:hidden; flex:1;
   display:flex; flex-direction:column; align-items:flex-start; gap:2px;

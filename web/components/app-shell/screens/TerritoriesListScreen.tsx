@@ -161,9 +161,9 @@ export function TerritoriesListScreen({
       <div className="page-title">{mode === 'rating' ? tn('terr.tabRating') : mode === 'clans' ? tn('terr.tabClans') : tn('terr.title')}</div>
       <div className="page-sub">
         {mode === 'rating'
-          ? tn('terr.subRating', { city: tn(`recap.cityIn.${city}`) })
+          ? tn('terr.subRating', { city: tn(`terr.cityOf.${city}`) })
           : mode === 'clans'
-            ? tn('terr.subClans', { city: tn(`recap.cityIn.${city}`) })
+            ? tn('terr.subClans', { city: tn(`terr.cityOf.${city}`) })
             : `${CITIES[city].boundaryLabel} · ${territories.length} ${pluralSectors(territories.length)}`}
       </div>
 

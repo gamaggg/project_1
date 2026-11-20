@@ -2104,7 +2104,14 @@ export function FishZoneApp() {
           )}
         </Screen>
         <Screen id="screen-species" current={currentScreen} onBack={pop}>
-          {viewingSpeciesUserId && <SpeciesScreen userId={viewingSpeciesUserId} city={city} onBack={pop} onOpenCatch={(id) => openCatchPhoto(id)} onToast={showToast} />}
+          {viewingSpeciesUserId && <SpeciesScreen
+              userId={viewingSpeciesUserId}
+              city={city}
+              onBack={pop}
+              onOpenCatch={(id) => openCatchPhoto(id)}
+              onOpenCatches={() => push(viewingSpeciesUserId === user?.id ? { screen: 'screen-catches' } : { screen: 'screen-catches', userId: viewingSpeciesUserId })}
+              onToast={showToast}
+            />}
         </Screen>
         <Screen id="screen-achievement-detail" current={currentScreen} onBack={pop}>
           {viewingAchievementDetail && (

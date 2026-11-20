@@ -894,7 +894,9 @@ export const ru = {
     tabRating: 'Рейтинг',
     tabClans: 'Кланы',
     subRating: 'Лучшие рыбаки {city}',
-    subClans: 'Команды рыбаков {city}',
+    subClans: 'Кланы {city}',
+    // The city «of»: «Лучшие рыбаки Москвы и МО», «Кланы Батуми».
+    cityOf: { batumi: 'Батуми', moscow: 'Москвы и МО', spb: 'Петербурга', sochi: 'Сочи', tbilisi: 'Тбилиси' },
     week: 'Неделя',
     allPlayers: 'Все игроки',
     filterAll: 'Все',

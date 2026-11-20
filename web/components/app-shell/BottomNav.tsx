@@ -115,9 +115,8 @@ export function BottomNav({
       </NavItem>
       <NavItem id="screen-territories" active={active === 'screen-territories'} onClick={onNavigate}>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          {/* «Рейтинг»: a podium with a star over first place (was sector hexes until 20.11.2026). */}
-          <path d="M3 21v-6.5h6V21M9 21V9.5h6V21M15 21v-8.5h6V21M2 21h20" />
-          <path d="M12 2.6l1 2 2.2.32-1.6 1.56.38 2.2L12 7.64l-1.98 1.04.38-2.2-1.6-1.56 2.2-.32z" />
+          {/* «Рейтинг»: a podium, no star (owner's pick 20.11.2026; was sector hexes). Steps as tall as the neighbours' icons. */}
+          <path d="M3 20.5V12h6v8.5M9 20.5V4.5h6v16M15 20.5V8.5h6v12M2 20.5h20" />
         </svg>
         <span>{tn('nav.territories')}</span>
       </NavItem>

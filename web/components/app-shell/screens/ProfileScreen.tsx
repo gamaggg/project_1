@@ -680,12 +680,7 @@ export function ProfileScreen({
         </button>
       </div>
 
-      {/* «Челленджи», «Магазин», the clans (this city's first, then the other
-          cities') and «Где это?» — one two-column grid, so every pair of
-          cards is the same height (explicit 1fr rows: all as tall as the
-          tallest pair). An odd last card takes the whole row (.profile-duo-wide)
-          and keeps its own height (it falls into an implicit auto row). */}
-      <div className="profile-duo" style={{ gridTemplateRows: `repeat(${1 + Math.floor(duoCount / 2)}, 1fr)` }}>
+      <div className="profile-cta-row">
         <button data-tour="challenges" className="profile-cta-btn profile-cta-challenges tap-scale" onClick={onOpenChallenges}>
           <div className="profile-cta-pattern" />
           <span className="profile-cta-arrow">
@@ -712,6 +707,12 @@ export function ProfileScreen({
           <span className="profile-cta-title">{tn('profile.shopTitle')}</span>
           <span className="profile-cta-sub">{tn('profile.shopSub')}</span>
         </button>
+      </div>
+
+      {/* The clans (this city's first, then the other cities') and «Где это?»
+          in two columns, like «Челленджи» and «Магазин» above; an odd last
+          card takes the whole row. */}
+      <div className="profile-duo">
       {profile?.clanId ? (
         <button
           data-tour="clan" className={`profile-clan-card tap-scale${duoWide(0) ? ' profile-duo-wide' : ''}`}

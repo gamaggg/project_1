@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { CityId } from '@/lib/data/city'
 import { CATEGORY_LABEL, speciesBaseKey, speciesOfCity, type SpeciesCategory } from '@/lib/data/species'
 import { speciesImageUrl } from '@/lib/data/speciesImages'
@@ -64,6 +64,7 @@ export function SpeciesScreen({
   city,
   onBack,
   onOpenCatch,
+  onOpenCatches,
   onToast,
 }: {
   userId: string
@@ -71,6 +72,8 @@ export function SpeciesScreen({
   city: CityId
   onBack: () => void
   onOpenCatch: (catchId: number) => void
+  // The «Уловов» tile: the player's catches list («Мои уловы» for the own one).
+  onOpenCatches: () => void
   onToast: (msg: string) => void
 }) {
   const { user } = useAuth()
@@ -84,6 +87,15 @@ export function SpeciesScreen({
   const [sort, setSort] = useState<Sort>('count')
   const [category, setCategory] = useState<SpeciesCategory | null>(null)
   const [open, setOpen] = useState<string | null>(null)
+  // The card whose details are folding away (kept a moment for the closing animation).
+  const [closing, setClosing] = useState<string | null>(null)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const toggle = (key: string) => {
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+    if (open) setClosing(open)
+    setOpen(open === key ? null : key)
+    closeTimer.current = setTimeout(() => setClosing(null), 280)
+  }
 
   const totalCatches = catches.length
   const maxCount = Math.max(1, ...species.map((s) => s.count))
@@ -126,6 +138,36 @@ export function SpeciesScreen({
   }, [species, sort, category])
 
   const pct = species.length && total ? Math.min(100, (species.length / total) * 100) : 0
+
+  // Cards glide to their new places (a new sort, a category, a details panel
+  // opening above them) instead of jumping: each render, every card that moved
+  // is animated from where it stood (offsetLeft/Top — layout, not transforms).
+  const gridRef = useRef<HTMLDivElement>(null)
+  // The cards' rise-in plays once, when the screen opens: re-sorting moves the
+  // card elements, and a moved element would replay it (cards blinking out).
+  const [entering, setEntering] = useState(true)
+  useEffect(() => {
+    const t = setTimeout(() => setEntering(false), 1000)
+    return () => clearTimeout(t)
+  }, [])
+  const placesRef = useRef(new Map<string, { x: number; y: number }>())
+  useLayoutEffect(() => {
+    const grid = gridRef.current
+    if (!grid) return
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const next = new Map<string, { x: number; y: number }>()
+    for (const el of Array.from(grid.children) as HTMLElement[]) {
+      const key = el.dataset.flip
+      if (!key) continue
+      const now = { x: el.offsetLeft, y: el.offsetTop }
+      const was = placesRef.current.get(key)
+      if (was && !reduce && (was.x !== now.x || was.y !== now.y)) {
+        el.animate([{ transform: `translate(${was.x - now.x}px, ${was.y - now.y}px)` }, { transform: 'translate(0, 0)' }], { duration: 340, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' })
+      }
+      next.set(key, now)
+    }
+    placesRef.current = next
+  })
 
   // «В историю»: the collection as a picture in our style (app/api/species-story).
   async function shareStory() {
@@ -170,6 +212,14 @@ export function SpeciesScreen({
           <>
             {/* The collection on a patch of water: how much of it, by category, and the fish caught most. */}
             <section className="spx-hero">
+              {/* A few bubbles rising through the water. */}
+              <span className="spx-bubbles" aria-hidden>
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+              </span>
               <div className="spx-hero-top">
                 <div className="spx-hero-text">
                   <div className="spx-hero-kicker">{tn('spc.collection')}</div>
@@ -180,7 +230,11 @@ export function SpeciesScreen({
                 </div>
                 {favourite && (
                   <button className="spx-hero-fav" onClick={() => onOpenCatch(favourite.lastCatchId)}>
-                    <FishArt speciesKey={favourite.key} className="spx-hero-fish" />
+                    {/* The fish itself stays still (owner's call); the light under it breathes. */}
+                    <span className="spx-hero-stage">
+                      <span className="spx-hero-glow" aria-hidden />
+                      <FishArt speciesKey={favourite.key} className="spx-hero-fish" />
+                    </span>
                     <span className="spx-hero-fav-label">
                       {tn('spc.favourite')} · <b>{favourite.name}</b> ×{favourite.count}
                     </span>
@@ -207,10 +261,10 @@ export function SpeciesScreen({
             </section>
 
             <div className="spx-tiles">
-              <div className="spx-tile">
+              <button className="spx-tile" onClick={onOpenCatches}>
                 <span>{tn('spc.catches')}</span>
                 <b>{totalCatches}</b>
-              </div>
+              </button>
               <button className="spx-tile" onClick={() => biggest && onOpenCatch(biggest.bestCatchId)} disabled={!biggest}>
                 <span>{tn('spc.biggest')}</span>
                 <b>{biggest ? `${biggest.bestLengthCm} ${tn('fmt.cm')}` : '—'}</b>
@@ -223,6 +277,101 @@ export function SpeciesScreen({
               </button>
             </div>
 
+            <div className="spx-sorts" role="tablist">
+              {(['count', 'size', 'recent'] as const).map((k) => (
+                <button key={k} role="tab" aria-selected={sort === k} className={sort === k ? 'on' : undefined} onClick={() => setSort(k)}>
+                  {tn(k === 'count' ? 'spc.sortCount' : k === 'size' ? 'spc.sortSize' : 'spc.sortRecent')}
+                </button>
+              ))}
+            </div>
+
+            {/* Caught fish: a card each. A tap keeps the card in its place and
+                unfolds its details in a panel under its row (an arrow points
+                at it); a second tap folds it away. */}
+            <div className={`spx-grid${entering ? ' entering' : ''}`} ref={gridRef}>
+              {rows.map((s, i) => {
+                const isOpen = open === s.key
+                // The details go right after the card's row: after it on the right, after its neighbour on the left.
+                const panelsHere = [open, closing].filter((k, n, all) => {
+                  if (!k || all.indexOf(k) !== n) return false
+                  const at = rows.findIndex((r) => r.key === k)
+                  if (at < 0) return false
+                  return (at % 2 === 0 ? Math.min(at + 1, rows.length - 1) : at) === i
+                })
+                return (
+                  <Fragment key={s.key}>
+                    <div
+                      data-flip={s.key}
+                      className={`spx-card spx-card--${s.category}${isOpen ? ' on' : ''}`}
+                      style={{ animationDelay: `${Math.min(i, 12) * 35}ms`, ['--c' as string]: CATEGORY_COLOR[s.category] }}
+                    >
+                      <button className="spx-card-head" onClick={() => toggle(s.key)} aria-expanded={isOpen}>
+                        <span className="spx-card-art">
+                          <FishArt speciesKey={s.key} className="spx-card-fish" />
+                        </span>
+                        <span className="spx-card-body">
+                          <span className="spx-card-name">{s.name}</span>
+                          <span className="spx-card-meta">
+                            <b>×{s.count}</b>
+                            {s.bestLengthCm ? <span>{`${s.bestLengthCm} ${tn('fmt.cm')}`}</span> : null}
+                          </span>
+                          <span className="spx-card-bar">
+                            <i style={{ transform: `scaleX(${s.count / maxCount})` }} />
+                          </span>
+                        </span>
+                      </button>
+                    </div>
+                    {panelsHere.map((k) => {
+                      const d = rows.find((r) => r.key === k)!
+                      const at = rows.indexOf(d)
+                      return (
+                        <div key={`d-${k}`} data-flip={`d-${k}`} className={`spx-detail${k === open ? '' : ' closing'}`} style={{ ['--arrow' as string]: at % 2 === 0 ? '25%' : '75%' }}>
+                          <div className="spx-detail-in">
+                            <div className="spx-detail-card">
+                              <div className="spx-facts">
+                                {d.photoUrl && (
+                                  <button className="spx-photo" onClick={() => onOpenCatch(d.lastCatchId)} aria-label={tn('spc.openLast')}>
+                                    {/* eslint-disable-next-line @next/next/no-img-element -- catch thumbnail, same as the profile's catch rows */}
+                                    <img src={thumbUrl(d.photoUrl, 200)} alt="" loading="lazy" decoding="async" />
+                                  </button>
+                                )}
+                                <dl>
+                                  <div>
+                                    <dt>{tn('spc.recLen')}</dt>
+                                    <dd>{d.bestLengthCm ? `${d.bestLengthCm} ${tn('fmt.cm')}` : '—'}</dd>
+                                  </div>
+                                  <div>
+                                    <dt>{tn('spc.recWeight')}</dt>
+                                    <dd>{d.bestWeightKg ? `${formatWeightGrams(d.bestWeightKg)} ${tn('fmt.g')}` : '—'}</dd>
+                                  </div>
+                                  <div>
+                                    <dt>{tn('spc.first')}</dt>
+                                    <dd>{dateOf(d.firstAt)}</dd>
+                                  </div>
+                                  <div>
+                                    <dt>{tn('spc.last')}</dt>
+                                    <dd>{dateOf(d.lastAt)}</dd>
+                                  </div>
+                                </dl>
+                              </div>
+                              <div className="spx-share">
+                                {d.name} · {CATEGORY_LABEL[d.category]} · {tn('spc.share', { percent: Math.max(1, Math.round((d.count / Math.max(1, totalCatches)) * 100)) })}
+                              </div>
+                              <div className="spx-actions">
+                                <button onClick={() => onOpenCatch(d.lastCatchId)}>{tn('spc.openLast')}</button>
+                                {d.bestCatchId !== d.lastCatchId && <button onClick={() => onOpenCatch(d.bestCatchId)}>{tn('spc.openBest')}</button>}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </Fragment>
+                )
+              })}
+            </div>
+
+            {/* «Поделиться коллекцией в истории» — after all the caught fish (owner's call, 20.11.2026). */}
             {isMe && (
               <button className="story-btn big spx-story" disabled={sharing} onClick={() => void shareStory()}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
@@ -232,82 +381,6 @@ export function SpeciesScreen({
                 {sharing ? tn('story.preparing') : tn('spc.storyButton')}
               </button>
             )}
-
-            <div className="spx-sorts" role="tablist">
-              {(['count', 'size', 'recent'] as const).map((k) => (
-                <button key={k} role="tab" aria-selected={sort === k} className={sort === k ? 'on' : undefined} onClick={() => setSort(k)}>
-                  {tn(k === 'count' ? 'spc.sortCount' : k === 'size' ? 'spc.sortSize' : 'spc.sortRecent')}
-                </button>
-              ))}
-            </div>
-
-            {/* Caught fish: a card each; a tap opens it across both columns. */}
-            <div className="spx-grid">
-              {rows.map((s, i) => {
-                const isOpen = open === s.key
-                const color = CATEGORY_COLOR[s.category]
-                return (
-                  <div
-                    key={s.key}
-                    className={`spx-card spx-card--${s.category}${isOpen ? ' open' : ''}`}
-                    style={{ animationDelay: `${Math.min(i, 12) * 35}ms`, ['--c' as string]: color }}
-                  >
-                    <button className="spx-card-head" onClick={() => setOpen(isOpen ? null : s.key)} aria-expanded={isOpen}>
-                      <span className="spx-card-art">
-                        <FishArt speciesKey={s.key} className="spx-card-fish" />
-                      </span>
-                      <span className="spx-card-body">
-                        <span className="spx-card-name">{s.name}</span>
-                        <span className="spx-card-meta">
-                          <b>×{s.count}</b>
-                          {s.bestLengthCm ? <span>{`${s.bestLengthCm} ${tn('fmt.cm')}`}</span> : null}
-                        </span>
-                        <span className="spx-card-bar">
-                          <i style={{ transform: `scaleX(${s.count / maxCount})` }} />
-                        </span>
-                      </span>
-                    </button>
-                    {isOpen && (
-                      <div className="spx-card-more">
-                        <div className="spx-facts">
-                          {s.photoUrl && (
-                            <button className="spx-photo" onClick={() => onOpenCatch(s.lastCatchId)} aria-label={tn('spc.openLast')}>
-                              {/* eslint-disable-next-line @next/next/no-img-element -- catch thumbnail, same as the profile's catch rows */}
-                              <img src={thumbUrl(s.photoUrl, 200)} alt="" loading="lazy" decoding="async" />
-                            </button>
-                          )}
-                          <dl>
-                            <div>
-                              <dt>{tn('spc.recLen')}</dt>
-                              <dd>{s.bestLengthCm ? `${s.bestLengthCm} ${tn('fmt.cm')}` : '—'}</dd>
-                            </div>
-                            <div>
-                              <dt>{tn('spc.recWeight')}</dt>
-                              <dd>{s.bestWeightKg ? `${formatWeightGrams(s.bestWeightKg)} ${tn('fmt.g')}` : '—'}</dd>
-                            </div>
-                            <div>
-                              <dt>{tn('spc.first')}</dt>
-                              <dd>{dateOf(s.firstAt)}</dd>
-                            </div>
-                            <div>
-                              <dt>{tn('spc.last')}</dt>
-                              <dd>{dateOf(s.lastAt)}</dd>
-                            </div>
-                          </dl>
-                        </div>
-                        <div className="spx-share">
-                          {CATEGORY_LABEL[s.category]} · {tn('spc.share', { percent: Math.max(1, Math.round((s.count / Math.max(1, totalCatches)) * 100)) })}
-                        </div>
-                        <div className="spx-actions">
-                          <button onClick={() => onOpenCatch(s.lastCatchId)}>{tn('spc.openLast')}</button>
-                          {s.bestCatchId !== s.lastCatchId && <button onClick={() => onOpenCatch(s.bestCatchId)}>{tn('spc.openBest')}</button>}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
           </>
         )}
 
