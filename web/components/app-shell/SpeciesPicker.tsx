@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { tn } from '@/lib/i18n'
+import { FishDrawing } from '@/components/app-shell/FishDrawing'
 import { localBait, localMethod } from '@/lib/data/species'
 import { currentLocale } from '@/lib/i18n/runtime'
 
@@ -33,9 +34,11 @@ type PickerText = {
 // marine/freshwater or predator/peaceful split — players asked to stop
 // hunting for a fish in the wrong tab), opened as a sheet with a search box,
 // the player's own most-caught fish first, then everything A–Я under letter
-// headings.
-export function SpeciesPicker(props: { options: Option[]; value: string; frequent: string[]; onChange: (key: string) => void }) {
-  return <OptionPicker {...props} text={{ id: 'species', title: tn('catch.species'), placeholder: tn('catch.pickSpecies'), frequentTitle: tn('catch.oftenCatch') }} dataTour="species" />
+// headings. Each fish with its drawing, the chosen one in the field too; when the
+// fish was guessed from the photo (`guessed`), the drawing is bigger with «сверь с
+// фото» under the name, so the angler can compare it with the photo above.
+export function SpeciesPicker({ guessed = false, ...props }: { options: Option[]; value: string; frequent: string[]; onChange: (key: string) => void; guessed?: boolean }) {
+  return <OptionPicker {...props} withArt guessed={guessed} text={{ id: 'species', title: tn('catch.species'), placeholder: tn('catch.pickSpecies'), frequentTitle: tn('catch.oftenCatch') }} dataTour="species" />
 }
 
 // The bait, the same way: a sheet with search, the player's usual baits
@@ -74,6 +77,8 @@ function OptionPicker({
   onChange,
   text,
   dataTour,
+  withArt = false,
+  guessed = false,
 }: {
   options: Option[]
   value: string
@@ -81,17 +86,38 @@ function OptionPicker({
   onChange: (key: string) => void
   text: PickerText
   dataTour?: string
+  withArt?: boolean
+  guessed?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const selected = options.find((o) => o.key === value)
 
   return (
     <>
-      <button type="button" id={text.id} data-tour={dataTour} className={`species-trigger${selected ? '' : ' empty'}`} onClick={() => setOpen(true)}>
-        {selected ? selected.name : text.placeholder}
+      <button
+        type="button"
+        id={text.id}
+        data-tour={dataTour}
+        className={`species-trigger${selected ? '' : ' empty'}${withArt && selected ? ' with-art' : ''}${withArt && selected && guessed ? ' guessed' : ''}`}
+        onClick={() => setOpen(true)}
+      >
+        {withArt && selected ? (
+          <>
+            <FishDrawing key={selected.key} speciesKey={selected.key} className="species-trigger-art" />
+            <span className="species-trigger-text">
+              <span className="species-trigger-name">{selected.name}</span>
+              {guessed && <span className="species-trigger-hint">{tn('catch.compareWithPhoto')}</span>}
+            </span>
+          </>
+        ) : selected ? (
+          selected.name
+        ) : (
+          text.placeholder
+        )}
       </button>
       {open && (
         <PickerSheet
+          withArt={withArt}
           options={options}
           value={value}
           frequent={frequent}
@@ -114,7 +140,9 @@ function PickerSheet({
   text,
   onPick,
   onClose,
+  withArt,
 }: {
+  withArt: boolean
   options: Option[]
   value: string
   frequent: string[]
@@ -149,8 +177,9 @@ function PickerSheet({
     </svg>
   )
   const row = (o: Option) => (
-    <button key={o.key} type="button" className={`species-row${o.key === value ? ' active' : ''}`} onClick={() => onPick(o.key)}>
-      {o.name}
+    <button key={o.key} type="button" className={`species-row${o.key === value ? ' active' : ''}${withArt ? ' with-art' : ''}`} onClick={() => onPick(o.key)}>
+      {withArt && <FishDrawing speciesKey={o.key} className="species-row-art" />}
+      <span className="species-row-name">{o.name}</span>
       {o.key === value && check}
     </button>
   )
@@ -171,7 +200,8 @@ function PickerSheet({
               <div className="species-letter">{text.frequentTitle}</div>
               <div className="species-chips">
                 {mine.map((o) => (
-                  <button key={o.key} type="button" className={`filter-chip${o.key === value ? ' active' : ''}`} onClick={() => onPick(o.key)}>
+                  <button key={o.key} type="button" className={`filter-chip${o.key === value ? ' active' : ''}${withArt ? ' with-art' : ''}`} onClick={() => onPick(o.key)}>
+                    {withArt && <FishDrawing speciesKey={o.key} className="species-chip-art" />}
                     {o.name}
                   </button>
                 ))}

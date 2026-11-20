@@ -3489,6 +3489,20 @@ html:not([lang="ru"]) .map-layer-opt{flex:1 1 auto; min-width:0; overflow:hidden
 .sector-clan-line-text{flex:1; min-width:0;}
 .catch-trophy-support{margin:-10px auto 16px; max-width:280px; text-align:center; font-size:13px; font-weight:700; color:rgba(255,255,255,.8); animation:comment-in .5s var(--ease-out) 1.35s both;}
 @media (prefers-reduced-motion: reduce){.catch-trophy-support{animation:none;}}
+/* «Новый вид в коллекции!» after the first catch of a fish (ConfirmScreen): its drawing on a glass card. */
+.catch-new-species{
+  display:flex; align-items:center; gap:12px; width:100%; max-width:320px; margin:-6px auto 18px; padding:10px 16px 10px 10px;
+  border:0; border-radius:18px; font:inherit; text-align:left; color:#fff; cursor:pointer; position:relative; z-index:1;
+  background:linear-gradient(135deg, rgba(60,170,220,.26), rgba(255,255,255,.07)); box-shadow:inset 0 0 0 1px rgba(140,210,255,.32);
+  animation:comment-in .5s var(--ease-out) 1.2s both;
+}
+.catch-new-species:disabled{cursor:default;}
+.catch-new-species-art{flex:0 0 auto; width:96px; height:68px; object-fit:contain; display:block; filter:drop-shadow(0 6px 10px rgba(0,0,0,.35));}
+.catch-new-species-art.fish-drawing-none{color:rgba(255,255,255,.5);}
+.catch-new-species-text{display:flex; flex-direction:column; gap:2px; min-width:0;}
+.catch-new-species-text b{font-size:15px; font-weight:800; line-height:1.25;}
+.catch-new-species-text span{font-size:12.5px; font-weight:600; color:rgba(255,255,255,.7);}
+@media (prefers-reduced-motion: reduce){.catch-new-species{animation:none;}}
 /* Top margin clears the 12px lift of first place (.first) — same gap under the tabs as the players' podium. */
 .clan-podium{display:flex; align-items:flex-end; justify-content:center; gap:8px; margin:34px 0 8px;}
 .clan-podium-item{flex:1; max-width:120px; display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; font:inherit; color:var(--ink); cursor:pointer; padding:0; animation:comment-in .45s var(--ease-out) both;}
@@ -4604,6 +4618,23 @@ button.diary-stats-line:disabled{cursor:default;}
 }
 .species-row.active{color:var(--accent); font-weight:800;}
 .species-empty{padding:24px 2px; color:var(--ink-faint); font-size:14px; text-align:center;}
+/* The species field and list with each fish's drawing (FishDrawing). */
+.species-trigger.with-art{display:flex; align-items:center; gap:12px; padding-top:8px; padding-bottom:8px; min-height:52px;}
+.species-trigger-art{flex:0 0 auto; width:52px; height:36px; object-fit:contain; display:block;}
+.species-trigger-text{display:flex; flex-direction:column; min-width:0;}
+.species-trigger-name{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.species-trigger-hint{font-size:12px; font-weight:600; color:var(--ink-faint); margin-top:1px;}
+.species-trigger.guessed{animation:species-guess-in .45s var(--ease-out) both;}
+.species-trigger.guessed .species-trigger-art{width:84px; height:58px;}
+@keyframes species-guess-in{from{border-color:var(--accent);}}
+.species-row.with-art{justify-content:flex-start; padding:7px 2px;}
+.species-chips .filter-chip.with-art{display:inline-flex; align-items:center; gap:7px; padding:5px 15px 5px 9px;}
+.species-chip-art{flex:0 0 auto; width:34px; height:24px; object-fit:contain; display:block;}
+.species-row-art{flex:0 0 auto; width:48px; height:34px; object-fit:contain; display:block;}
+.species-row.with-art .species-row-name{flex:1; min-width:0;}
+.fish-drawing-none{display:flex; align-items:center; justify-content:center; color:#C9CDD4;}
+.fish-drawing-none svg{width:70%; height:auto;}
+@media (prefers-reduced-motion: reduce){.species-trigger.guessed{animation:none;}}
 /* A sensor still is being taken (CameraScreen, Android) — a beat, not a freeze. */
 .shutter.busy{opacity:.55; pointer-events:none; transition:opacity .15s var(--ease);}
 
@@ -4960,7 +4991,8 @@ button.standing-col{cursor:pointer;}
 .geo-stat span{color:var(--ink-soft); font-size:11px; font-weight:700; text-align:center;}
 .geo-section-title{margin-bottom:8px; color:var(--ink-faint); font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;}
 .geo-species{display:flex; flex-direction:column; gap:9px;}
-.geo-species-row{display:grid; grid-template-columns:minmax(76px, 34%) 1fr 26px; align-items:center; gap:10px;}
+.geo-species-row{display:grid; grid-template-columns:40px minmax(70px, 32%) 1fr 26px; align-items:center; gap:10px;}
+.geo-species-art{width:40px; height:28px; object-fit:contain; display:block;}
 .geo-species-name{overflow:hidden; font-size:13.5px; font-weight:700; text-overflow:ellipsis; white-space:nowrap;}
 .geo-species-bar{height:10px; overflow:hidden; border-radius:5px; background:#EEF2F6;}
 .geo-species-bar i{display:block; width:var(--w); height:100%; border-radius:5px; background:linear-gradient(90deg,#5DB0E8,#1D6FC9); transform-origin:left; animation:geo-bar .8s var(--ease-out) calc(.35s + var(--i,0) * 90ms) both;}

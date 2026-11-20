@@ -63,7 +63,7 @@ export const FAQ_EN: FaqSection[] = [
       },
       {
         q: 'How do I see and show off my fish collection?',
-        a: ['In your profile tap «species» — the «Fish species» screen opens: how many fish of the city’s list you have, the one you catch most, your record and newest species, every fish you caught with its drawing (tap a card for records, dates and the photo) and the ones still to catch as silhouettes. A fish counts once, whatever city it was caught in. «Share my collection to a story» makes a picture of your collection: in Telegram the story opens right away, in a browser the picture goes to Share or downloads.'],
+        a: ['In your profile tap «species» — the «Fish species» screen opens: how many fish of the city’s list you have, the one you catch most, your record and newest species, every fish you caught with its drawing (tap a card for records, dates and the photo) and the ones still to catch as silhouettes. A fish counts once, whatever city it was caught in. The «Marine», «Predator» and other tiles show how many of each category you have; tap one to see only its fish. Catch a fish in another city and that city’s whole category joins your collection (for example, all of Moscow’s predators). The first time you catch a fish, «New species in your collection!» shows after the catch — tap it to open your collection. «Share my collection to a story» makes a picture of your collection: in Telegram the story opens right away, in a browser the picture goes to Share or downloads.'],
       },
       {
         q: 'What are «Trophies» in the profile?',

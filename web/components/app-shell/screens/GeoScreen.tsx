@@ -13,6 +13,7 @@ import { LegendWreath } from '@/components/app-shell/SectorInsights'
 import { useNow } from '@/lib/useNow'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
 import { KIND_LABEL } from '@/lib/data/species'
+import { FishDrawing } from '@/components/app-shell/FishDrawing'
 import { nameInitials } from '@/lib/initials'
 
 const IN_CITY: Record<CityId, string> = {
@@ -513,6 +514,7 @@ function SectorStory({
             <div className="geo-species">
               {story.species.map((s, i) => (
                 <div key={s.key} className="geo-species-row" style={{ '--i': i, '--w': `${(s.count / maxSpecies) * 100}%` } as CSSProperties}>
+                  <FishDrawing speciesKey={s.key} className="geo-species-art" />
                   <span className="geo-species-name">{s.name ?? s.key}</span>
                   <span className="geo-species-bar" aria-hidden>
                     <i />

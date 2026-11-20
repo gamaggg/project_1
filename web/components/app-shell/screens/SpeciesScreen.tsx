@@ -1,8 +1,8 @@
 'use client'
 
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import type { CityId } from '@/lib/data/city'
-import { CATEGORY_LABEL, speciesBaseKey, speciesOfCity, type SpeciesCategory } from '@/lib/data/species'
+import { cityForSectorId, type CityId } from '@/lib/data/city'
+import { CATEGORIES_BY_CITY, CATEGORY_LABEL, speciesBaseKey, speciesOfCity, type SpeciesCategory } from '@/lib/data/species'
 import { speciesImageUrl } from '@/lib/data/speciesImages'
 import { formatWeightGrams, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
@@ -66,8 +66,8 @@ function CountUp({ value }: { value: number }) {
 }
 
 // The drawing, or a quiet outline for a fish without one yet.
-function FishArt({ speciesKey, className }: { speciesKey: string; className: string }) {
-  const src = speciesImageUrl(speciesKey)
+function FishArt({ speciesKey, className, hd = false }: { speciesKey: string; className: string; hd?: boolean }) {
+  const src = speciesImageUrl(speciesKey, hd)
   if (src) {
     // eslint-disable-next-line @next/next/no-img-element -- small static webp from /public/fish
     return <img className={className} src={src} alt="" loading="lazy" decoding="async" />
@@ -126,8 +126,9 @@ export function SpeciesScreen({
   const totalCatches = catches.length
   const maxCount = Math.max(1, ...species.map((s) => s.count))
 
-  // The collection is the fish of the city on screen (see speciesOfCity), plus any
-  // other fish the player has caught, in another city or since moved out of the list.
+  // The collection is the fish of the city on screen (see speciesOfCity); a category of another
+  // city the player has caught a fish of joins whole (a pike in Moscow brings all of Moscow's
+  // «Хищная»), and any other caught fish (since moved out of the list) joins on its own.
   // One entry per fish (okun and okun_msk are one «Окунь»).
   const collection = useMemo(() => {
     const caught = new Set(species.map((s) => s.key))
@@ -139,8 +140,18 @@ export function SpeciesScreen({
       return true
     }
     const ofCity = speciesOfCity(allSpecies, city).filter(once)
-    return [...ofCity, ...allSpecies.filter((s) => caught.has(speciesBaseKey(s.key))).filter(once)]
-  }, [allSpecies, species, city])
+    const own = CATEGORIES_BY_CITY[city] as string[]
+    const joined = new Set<string>()
+    const ofOthers: typeof allSpecies = []
+    for (const c of catches) {
+      const where = cityForSectorId(c.territoryId)
+      const tag = `${where}:${c.speciesCategory}`
+      if (own.includes(c.speciesCategory) || joined.has(tag) || !(CATEGORIES_BY_CITY[where] as string[]).includes(c.speciesCategory)) continue
+      joined.add(tag)
+      ofOthers.push(...speciesOfCity(allSpecies, where).filter((s) => s.category === c.speciesCategory))
+    }
+    return [...ofCity, ...ofOthers.filter(once), ...allSpecies.filter((s) => caught.has(speciesBaseKey(s.key))).filter(once)]
+  }, [allSpecies, species, catches, city])
   const caughtKeys = useMemo(() => new Set(species.map((s) => s.key)), [species])
   const missing = collection.filter((s) => !caughtKeys.has(speciesBaseKey(s.key)))
   const total = collection.length ? Math.max(collection.length, species.length) : species.length
@@ -166,8 +177,12 @@ export function SpeciesScreen({
       const c = caughtCat.get(base)
       add(c ?? (s.category as SpeciesCategory), !!c)
     }
-    return [...m.entries()].filter(([, v]) => v.caught > 0).sort((a, b) => b[1].caught - a[1].caught)
+    // Every category, the ones with nothing caught yet too («Пресноводная 0/12»): most caught first.
+    return [...m.entries()].sort((a, b) => b[1].caught - a[1].caught || b[1].of - a[1].of)
   }, [species, collection])
+
+  // The fish still to catch, of the picked category only when one is picked (counted there in byCategory too).
+  const shownMissing = category ? missing.filter((s) => s.category === category) : missing
 
   const rows = useMemo(() => {
     const list = category ? species.filter((s) => s.category === category) : species.slice()
@@ -289,7 +304,7 @@ export function SpeciesScreen({
                 // once as the screen opens and then stays still (owner's call); the light behind it breathes.
                 <div className="spx-hero-fav" aria-hidden>
                   <span className="spx-hero-glow" />
-                  <FishArt speciesKey={favourite.key} className="spx-hero-fish" />
+                  <FishArt speciesKey={favourite.key} className="spx-hero-fish" hd />
                 </div>
               )}
               <div className="spx-hero-top">
@@ -335,7 +350,7 @@ export function SpeciesScreen({
                       </span>
                     </span>
                     <span className="spx-cat-bar">
-                      <i style={{ width: `${Math.max(4, (v.caught / Math.max(1, v.of)) * 100)}%`, ['--d' as string]: `${520 + i * 70}ms` }} />
+                      <i style={{ width: `${v.caught ? Math.max(4, (v.caught / Math.max(1, v.of)) * 100) : 0}%`, ['--d' as string]: `${520 + i * 70}ms` }} />
                     </span>
                   </button>
                 ))}
@@ -475,17 +490,18 @@ export function SpeciesScreen({
         )}
 
         {/* Still to catch: the same drawings as dark silhouettes, like empty places in an album. */}
-        {!isPending && collection.length > 0 && (
+        {/* A category picked above narrows them too: «Пресноводная 0/12» shows its twelve still to catch. */}
+        {!isPending && collection.length > 0 && !(category && shownMissing.length === 0) && (
           <section className="spx-missing">
-            {missing.length === 0 ? (
+            {shownMissing.length === 0 ? (
               <div className="spx-done">{tn('spc.allCaught')}</div>
             ) : (
               <>
                 <div className="spx-missing-head">
-                  <span>{tn('spc.missing', { count: missing.length })}</span>
+                  <span>{tn('spc.missing', { count: shownMissing.length })}</span>
                 </div>
                 <div className="spx-ghosts">
-                  {missing.map((m) => (
+                  {shownMissing.map((m) => (
                     <div key={m.key} className="spx-ghost">
                       <span className="spx-ghost-art">
                         <FishArt speciesKey={m.key} className="spx-ghost-fish" />

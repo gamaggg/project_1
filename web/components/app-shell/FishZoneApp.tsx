@@ -1990,6 +1990,14 @@ export function FishZoneApp() {
               onFinish={finishCatchFlow}
               onBack={backToCamera}
               onShare={() => shareTerritory(catchTerritory.id)}
+              onOpenSpecies={
+                user
+                  ? () => {
+                      finishCatchFlow()
+                      openSpecies(user.id)
+                    }
+                  : undefined
+              }
             />
           )}
         </Screen>

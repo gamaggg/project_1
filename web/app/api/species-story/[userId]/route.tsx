@@ -1,11 +1,11 @@
 import { ImageResponse } from 'next/og'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { speciesBaseKey, speciesOfCity } from '@/lib/data/species'
+import { CATEGORIES_BY_CITY, speciesBaseKey, speciesOfCity } from '@/lib/data/species'
 import { speciesImageUrl } from '@/lib/data/speciesImages'
 import { translate, type Lang } from '@/lib/i18n/core'
 import { ru } from '@/lib/i18n/ru'
 import { nameInitials } from '@/lib/initials'
-import type { CityId } from '@/lib/data/city'
+import { cityForSectorId, type CityId } from '@/lib/data/city'
 
 // «Виды рыб» → «В историю»: a 1080×1920 card of one player's fish collection,
 // drawn by the server like the catch story (app/api/story): deep water, the
@@ -85,7 +85,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
   const admin = createAdminClient()
   const [{ data: profile }, { data: catches }, { data: allSpecies }] = await Promise.all([
     admin.from('profiles').select('display_name, avatar_url').eq('id', userId).maybeSingle(),
-    admin.from('catches').select('species, length_cm, caught_at').eq('user_id', userId),
+    admin.from('catches').select('species, length_cm, caught_at, territory_id').eq('user_id', userId),
     admin.from('species').select('key, name, category').order('sort_order').order('name'),
   ])
   if (!profile) return new Response('not found', { status: 404 })
@@ -117,7 +117,19 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
     seen.add(b)
     return true
   }
-  const collection = [...speciesOfCity(species, city).filter(once), ...species.filter((s) => byKey.has(speciesBaseKey(s.key))).filter(once)]
+  // As on the screen: a category of another city the player has a fish from joins whole.
+  const own = CATEGORIES_BY_CITY[city] as string[]
+  const joined = new Set<string>()
+  const ofOthers: typeof species = []
+  for (const c of catches ?? []) {
+    const category = species.find((s) => s.key === c.species)?.category
+    const where = cityForSectorId(c.territory_id)
+    const tag = `${where}:${category}`
+    if (!category || own.includes(category) || joined.has(tag) || !(CATEGORIES_BY_CITY[where] as string[]).includes(category)) continue
+    joined.add(tag)
+    ofOthers.push(...speciesOfCity(species, where).filter((s) => s.category === category))
+  }
+  const collection = [...speciesOfCity(species, city).filter(once), ...ofOthers.filter(once), ...species.filter((s) => byKey.has(speciesBaseKey(s.key))).filter(once)]
   const total = Math.max(collection.length, fish.length)
   const pct = total ? Math.min(1, fish.length / total) : 0
 

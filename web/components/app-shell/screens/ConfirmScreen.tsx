@@ -2,8 +2,8 @@
 
 import { HexLoader } from '@/components/app-shell/HexLoader'
 import { useEffect, useRef, useState } from 'react'
-import { useSpecies, useLastCatchChoices } from '@/lib/supabase/queries'
-import { CATEGORIES_BY_CITY, KIND_LABEL, METHODS, BAITS_BY_CITY, speciesOfCity } from '@/lib/data/species'
+import { useCatchesByUser, useSpecies, useLastCatchChoices } from '@/lib/supabase/queries'
+import { CATEGORIES_BY_CITY, KIND_LABEL, METHODS, BAITS_BY_CITY, speciesBaseKey, speciesOfCity } from '@/lib/data/species'
 import { matchFishialSpecies } from '@/lib/data/fishSpeciesMatch'
 import { createClient } from '@/lib/supabase/client'
 import { cityForSectorId } from '@/lib/data/city'
@@ -15,6 +15,8 @@ import { useDoubleCoinsUntil } from '@/components/app-shell/DoubleCoinsChip'
 import { StoryButton } from '@/components/app-shell/StoryButton'
 import { BaitPicker, MethodPicker, SpeciesPicker } from '@/components/app-shell/SpeciesPicker'
 import { DefenseShields } from '@/components/app-shell/SectorDefense'
+import { FishDrawing } from '@/components/app-shell/FishDrawing'
+import { useAuth } from '@/components/providers/AuthProvider'
 import { useT } from '@/lib/i18n'
 import type { PendingCatch, Territory } from '@/lib/data/types'
 import { tn } from '@/lib/i18n'
@@ -52,6 +54,7 @@ export function ConfirmScreen({
   onFinish,
   onBack,
   onShare,
+  onOpenSpecies,
 }: {
   territory: Territory
   pendingCatch: PendingCatch | null
@@ -83,6 +86,8 @@ export function ConfirmScreen({
   onFinish: () => void
   onBack: () => void
   onShare: () => void
+  // The «new species» card after the catch opens «Виды рыб».
+  onOpenSpecies?: () => void
 }) {
   const t = useT()
   // the coins below are already doubled — say so, players couldn't tell
@@ -105,6 +110,12 @@ export function ConfirmScreen({
   const [baitFromLast, setBaitFromLast] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const touchedSpeciesRef = useRef(false)
+  // The player's catches (the same cache as the profile): was this fish never caught before? Decided at
+  // the moment of saving — afterwards the list already holds the new catch. Null: not a new species, or
+  // the list not loaded yet (then nothing is claimed).
+  const { user } = useAuth()
+  const { data: myCatches } = useCatchesByUser(user?.id ?? null)
+  const [newSpeciesNth, setNewSpeciesNth] = useState<number | null>(null)
 
   // Opens on whatever method/bait this person used last (see
   // useLastCatchChoices) — most people fish the same way catch after catch —
@@ -190,6 +201,8 @@ export function ConfirmScreen({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!speciesKey || (photoStatus !== 'success' && !offlineMode)) return
+    const caughtBefore = myCatches ? new Set(myCatches.map((c) => speciesBaseKey(c.species))) : null
+    setNewSpeciesNth(caughtBefore && !caughtBefore.has(speciesBaseKey(speciesKey)) ? caughtBefore.size + 1 : null)
     onSubmit({
       species: speciesKey,
       lengthCm: lengthCm.trim() ? Number(lengthCm) : null,
@@ -245,6 +258,16 @@ export function ConfirmScreen({
           </div>
         )}
         {captureNoCoins && <div className="catch-trophy-support">{t('defense.captureOncePerDay')}</div>}
+        {/* The first catch of this fish: its drawing and its place in the collection. */}
+        {newSpeciesNth !== null && pendingCatch && (
+          <button type="button" className="catch-new-species tap-scale" onClick={onOpenSpecies} disabled={!onOpenSpecies}>
+            <FishDrawing speciesKey={pendingCatch.species} className="catch-new-species-art" hd />
+            <span className="catch-new-species-text">
+              <b>{tn('catch.newSpecies')}</b>
+              <span>{tn('catch.newSpeciesNth', { n: newSpeciesNth })}</span>
+            </span>
+          </button>
+        )}
         {clanSupport && (
           <div className="catch-trophy-support">
             {clanShare
@@ -347,6 +370,7 @@ export function ConfirmScreen({
               options={speciesOptions}
               value={speciesKey}
               frequent={lastChoices?.frequentSpecies ?? []}
+              guessed={speciesGuessed}
               onChange={(key) => {
                 touchedSpeciesRef.current = true
                 setSpeciesGuessed(false)

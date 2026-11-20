@@ -16,7 +16,9 @@ const DRAWN = new Set([
   'tolstolobik', 'ugor', 'uklejka', 'usach', 'yaz', 'yorsh', 'zelenushka', 'zherekh', 'zubar', 'zvezdochet',
 ])
 
-export function speciesImageUrl(key: string): string | null {
+// `hd`: the large copy (public/fish/hd, 840×600, scripts/fish-hero-images.py) for the «Виды рыб» hero,
+// where the fish is drawn ~286 CSS px wide and the 336×240 one came out blurry on a phone.
+export function speciesImageUrl(key: string, hd = false): string | null {
   const base = speciesBaseKey(key)
-  return DRAWN.has(base) ? `/fish/${base}.webp` : null
+  return DRAWN.has(base) ? `/fish/${hd ? 'hd/' : ''}${base}.webp` : null
 }
