@@ -83,6 +83,7 @@ export function ensureSession(): Promise<boolean> {
     // Nothing brought it back: the player stays where they are, and the report
     // goes out once a session is there again (flushSessionReport).
     pendingReport = `сессия не читается ${why} — игрок оставлен в приложении`
+    pendingSince ??= Date.now()
     return false
   })()
     .then((ok) => {
@@ -98,9 +99,17 @@ export function ensureSession(): Promise<boolean> {
 }
 
 let pendingReport: string | null = null
+let pendingSince: number | null = null
+// A session back within this long was a hiccup, not a loss (21.11: Android Chrome woken after an hour in
+// the background, the token expired, the first refresh failed before the network was up and the next one,
+// seconds later, worked — the same session, nothing lost, yet an alarm each time).
+const HICCUP_MS = 60_000
+
 // Called once a player is signed in again.
 export function flushSessionReport() {
   if (!pendingReport) return
-  report(pendingReport)
+  const healedIn = pendingSince === null ? 0 : Date.now() - pendingSince
+  if (healedIn >= HICCUP_MS) report(`${pendingReport}; вернулась через ${Math.round(healedIn / 1000)} с`)
   pendingReport = null
+  pendingSince = null
 }
