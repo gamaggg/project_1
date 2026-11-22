@@ -10,6 +10,7 @@
 import fs from 'fs';
 import { CONFIG } from './cities.mjs';
 import { overpass } from './overpass.mjs';
+import * as turf from '@turf/turf';
 
 const city = process.argv[2];
 const cfg = CONFIG[city];
@@ -22,6 +23,22 @@ for (let lat = s; lat < n; lat += TILE_DEG) {
   for (let lon = w; lon < e; lon += TILE_DEG) {
     tiles.push([lat, lon, Math.min(lat + TILE_DEG, n), Math.min(lon + TILE_DEG, e)].map((x) => +x.toFixed(5)));
   }
+}
+
+// Плитки вне города не качаем: у большой рамки (город + 30 км, побережье Болгарии) их больше половины.
+// Город — полигон границы (boundaryFile) или полоса вдоль примерной линии берега (coastGuide, км) плюс
+// extraAreas. Плитка берётся, если задевает город хоть краем.
+const area = [];
+if (cfg.boundaryFile && fs.existsSync(cfg.boundaryFile)) area.push(...JSON.parse(fs.readFileSync(cfg.boundaryFile, 'utf8')).features);
+if (cfg.coastGuide) area.push(turf.buffer(turf.lineString(cfg.coastGuide), cfg.coastGuideKm ?? 12, { units: 'kilometers' }));
+for (const b of cfg.extraAreas || []) area.push(turf.bboxPolygon([b.w, b.s, b.e, b.n]));
+for (const f of cfg.extraFiles || []) area.push(...JSON.parse(fs.readFileSync(f, 'utf8')).features);
+if (area.length) {
+  const before = tiles.length;
+  const keep = tiles.filter(([la1, lo1, la2, lo2]) => area.some((p) => turf.booleanIntersects(turf.bboxPolygon([lo1, la1, lo2, la2]), p)));
+  tiles.length = 0;
+  tiles.push(...keep);
+  console.error(`плиток: ${tiles.length} из ${before}`);
 }
 
 const waterQuery = (b) => `[out:json][timeout:240];
@@ -38,7 +55,7 @@ out skel qt;`;
 // Заповедники и строгие охранные зоны (класс 1, 1a, 1b, 2), военные территории, порты,
 // аэродромы. Заказники и парки не берём: там рыбачить часто можно.
 const restrictedQuery = (b) => {
-  const pick = ['["leisure"="nature_reserve"]', '["boundary"="protected_area"]["protect_class"~"^(1|1a|1b|2)$"]', '["landuse"="military"]', '["military"]', '["industrial"="port"]', '["landuse"="port"]', '["aeroway"="aerodrome"]'];
+  const pick = ['["leisure"="nature_reserve"]', '["boundary"="protected_area"]["protect_class"~"^(1|1a|1b|2)$"]', '["landuse"="military"]', '["military"]', '["industrial"="port"]', '["landuse"="port"]', '["landuse"="harbour"]', '["aeroway"="aerodrome"]'];
   return `[out:json][timeout:240];
 (
 ${pick.map((p) => `  way${p}(${b});\n  relation${p}(${b});`).join('\n')}
@@ -67,8 +84,10 @@ async function grab(file, makeQuery) {
   console.log(file, elements.length, 'элементов');
 }
 
-await grab(`osm_${city}.json`, waterQuery);
-await grab(`osm_${city}_restricted.json`, restrictedQuery);
+// --only=water / --only=restricted: одну половину (вторую можно качать параллельно другим процессом).
+const only = (process.argv.find((a) => a.startsWith('--only=')) || '').slice(7);
+if (only !== 'restricted') await grab(`osm_${city}.json`, waterQuery);
+if (only !== 'water') await grab(`osm_${city}_restricted.json`, restrictedQuery);
 
 // Автомагистрали над водой (дамба, мосты): одним запросом по рамке damBox.
 if (cfg.damBox) {

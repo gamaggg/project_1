@@ -35,6 +35,15 @@ export const CATEGORIES_BY_CITY: Record<CityId, SpeciesCategory[]> = {
   tbilisi: ['freshwater'],
   moscow: ['predator', 'peaceful'],
   spb: ['predator', 'peaceful'],
+  // Kazan and Nizhny Novgorod play Moscow's list, «Варна/Бургас» and Anapa the Black Sea one.
+  kazan: ['predator', 'peaceful'],
+  nnov: ['predator', 'peaceful'],
+  varna: ['marine', 'freshwater'],
+  anapa: ['marine', 'freshwater'],
+  // Kyiv like Moscow, Odesa like the Black Sea cities, «Ереван/Севан» like Tbilisi.
+  kyiv: ['predator', 'peaceful'],
+  odesa: ['marine', 'freshwater'],
+  yerevan: ['freshwater'],
 }
 const cityIds = Object.keys(CITIES) as CityId[]
 

@@ -18,9 +18,10 @@ export const FAQ_EN: FaqSection[] = [
       {
         q: 'Which cities can I play in?',
         a: [
-          'Five right now: Batumi, Moscow & MO, Saint Petersburg, Sochi (with Adler) and Tbilisi. «Moscow & MO» has sectors both in Moscow itself and in the Moscow Region up to the Central Ring Road (TsKAD). You pick the city when you sign up and can change it later: Profile → «City».',
+          'Twelve right now. Russia: Moscow & MO, Saint Petersburg, Sochi/Adler, Kazan, Nizhny Novgorod, Anapa. Georgia: Batumi, Tbilisi. Bulgaria: Varna/Burgas. Ukraine: Kyiv, Odesa. Armenia: Yerevan/Sevan. You pick the city when you sign up and can change it later: Profile → «City». Your city isn’t there? On the city step of sign-up tap «Your city isn’t here?» and type it in — we’ll try to add it.',
+          '«Moscow & MO» has sectors both in Moscow itself and in the Moscow Region up to the Central Ring Road (TsKAD). Kazan, Nizhny Novgorod, Kyiv, Odesa and Yerevan are the city and 30 km around it (ponds only in the city itself). «Varna/Burgas» is the whole Black Sea coast of Bulgaria with the Varna and Burgas lakes. Anapa is the coast of its district with the limans. «Yerevan/Sevan» is Yerevan and around plus the shore of Lake Sevan.',
           'Sectors run only along the water where you can actually fish: sea, rivers, lakes and ponds. There are none in reserves, ports, airports, military areas or other closed places. Every city has its own rating, clans and clan battle, and its local time zone.',
-          'Sochi and Batumi play the marine and freshwater species of the Black Sea and its rivers. Tbilisi plays freshwater species (river, lake, pond). Moscow has the predator and peaceful fish of its rivers and ponds. Saint Petersburg has the same as Moscow plus the Gulf of Finland and Neva Bay species: smelt, Baltic herring, eel, flounder, salmon and more.',
+          'Batumi, Sochi/Adler, Anapa, Varna/Burgas and Odesa play the marine and freshwater species of the Black Sea and its rivers. Tbilisi and Yerevan/Sevan play freshwater species (river, lake, pond). Moscow, Kazan, Nizhny Novgorod and Kyiv have the predator and peaceful fish of rivers and ponds. Saint Petersburg has the same as Moscow plus the Gulf of Finland and Neva Bay species: smelt, Baltic herring, eel, flounder, salmon and more.',
         ],
       },
       {
@@ -173,9 +174,9 @@ export const FAQ_EN: FaqSection[] = [
         q: 'How many coins for which fish?',
         a: [
           'The coins for a catch depend only on the species — size and weight do not matter. The rarer the fish, the more it pays.',
-          { title: 'Batumi and Sochi', rows: BATUMI_ROWS },
-          { title: 'Tbilisi', rows: TBILISI_ROWS },
-          { title: 'Moscow & MO', rows: MOSCOW_ROWS },
+          { title: 'Batumi, Sochi/Adler, Anapa, Varna/Burgas, Odesa', rows: BATUMI_ROWS },
+          { title: 'Tbilisi and Yerevan/Sevan', rows: TBILISI_ROWS },
+          { title: 'Moscow & MO, Kazan, Nizhny Novgorod, Kyiv', rows: MOSCOW_ROWS },
           { title: 'Saint Petersburg', rows: SPB_ROWS },
           'On a hot sector the coins for a catch double; «Double coins» and a clan «Outing» are ×2 too. Any two of the three together are ×3, all three at once ×4. If the catch claimed the sector, there is another +25 on top (+50 with «Double coins»).',
         ],
@@ -211,8 +212,8 @@ export const FAQ_EN: FaqSection[] = [
         q: 'How do the slots work?',
         a: [
           'Every day — 1 free spin and one more for each catch, no more than 4 a day. Under the button you can see how many spins are left and how many more you can get for catches today.',
-          'The reels show your city’s fish: in Batumi and Sochi horse mackerel, scorpionfish, bluefish and dogfish, in Moscow, Saint Petersburg and Tbilisi — perch, bream, pike and catfish. Plus a hook and a hex.',
-          'Prizes: the jackpot (0.3% chance) — the «Katran» frame in Batumi and Sochi or «Catfish» in Moscow, Saint Petersburg and Tbilisi; these frames are not sold, you can only win them, and if you already have it — 300 coins. Also: a shield into the reserve (5%, shields exist only here; if the reserve already has 3 — 70 coins), double coins for a day (6%), 100 coins (4%), 3 horse mackerel or 3 perch — 25 coins (14%), 3 scorpionfish or 3 bream — a free spin (8%), a pair — 10 coins (38%). It is all in the pay table in the slots.',
+          'The reels show your city’s fish: in the sea cities (Batumi, Sochi/Adler, Anapa, Varna/Burgas, Odesa) horse mackerel, scorpionfish, bluefish and dogfish, in the others — perch, bream, pike and catfish. Plus a hook and a hex.',
+          'Prizes: the jackpot (0.3% chance) — the «Katran» frame in the sea cities or «Catfish» in the others; these frames are not sold, you can only win them, and if you already have it — 300 coins. Also: a shield into the reserve (5%, shields exist only here; if the reserve already has 3 — 70 coins), double coins for a day (6%), 100 coins (4%), 3 horse mackerel or 3 perch — 25 coins (14%), 3 scorpionfish or 3 bream — a free spin (8%), a pair — 10 coins (38%). It is all in the pay table in the slots.',
           'The slots are in the Shop, the «Angler’s slots» block together with your balance: it shows how many spins are left; tap it and the slots open. While a spin is waiting, a «Slots» sticker hangs on the map and the number of spins is on the profile badge and on the «Shop». You can hide the sticker with the cross: for this time (until a new spin) or for good.',
           'The free spin from the slots and the spins RANGE sometimes gives are bonus ones: they do not burn at the end of the day and are used when the regular ones run out.',
         ],

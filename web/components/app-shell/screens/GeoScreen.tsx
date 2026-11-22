@@ -32,6 +32,27 @@ const IN_CITY: Record<CityId, string> = {
   get tbilisi() {
     return tn('geoGame.inTbilisi')
   },
+  get kazan() {
+    return tn('geoGame.inKazan')
+  },
+  get nnov() {
+    return tn('geoGame.inNnov')
+  },
+  get varna() {
+    return tn('geoGame.inVarna')
+  },
+  get anapa() {
+    return tn('geoGame.inAnapa')
+  },
+  get kyiv() {
+    return tn('geoGame.inKyiv')
+  },
+  get odesa() {
+    return tn('geoGame.inOdesa')
+  },
+  get yerevan() {
+    return tn('geoGame.inYerevan')
+  },
 }
 const KIND: Record<string, string> = KIND_LABEL
 

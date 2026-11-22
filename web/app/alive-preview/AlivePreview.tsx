@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { Catch, Territory } from '@/lib/data/types'
-import { territoryFromRow } from '@/lib/data/territoryMerge'
+import { territoryFromRow, withCorners, type SectorGeometryFileOnDisk } from '@/lib/data/territoryMerge'
 import { SECTOR_GEOMETRY_VERSION } from '@/lib/data/sectorGeometryVersion'
 import { DEFAULT_TERRITORY_COLOR, OTHER_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { AVATAR_FRAMES } from '@/lib/data/shopItems'
@@ -103,7 +103,9 @@ export function AlivePreview() {
   useEffect(() => {
     fetch(`/data/sectors-B.${SECTOR_GEOMETRY_VERSION}.json`)
       .then((r) => r.json())
-      .then((d: { sectors: Sector[] }) => {
+      // The file has no corners: withCorners draws them from the centre, as the app does.
+      .then((raw: SectorGeometryFileOnDisk) => {
+        const d: { sectors: Sector[] } = withCorners(raw)
         const list = IDS.map((id) => d.sectors.find((s) => s.id === id)).filter((s): s is Sector => !!s)
         setSectors(list.map((s, i) => held(territoryFromRow(undefined, s.id, s.kind, s.lat, s.lng, s.corners, undefined), i)))
       })

@@ -14,7 +14,7 @@ import { itemKindWord, itemName } from '@/lib/clan2/itemName'
 import { buildWidget } from '@/lib/telegram/widgets/build'
 
 // «in the city» as the notification texts name it (tg.in…).
-const IN_CITY = { batumi: 'tg.inBatumi', moscow: 'tg.inMoscow', spb: 'tg.inSpb', sochi: 'tg.inSochi', tbilisi: 'tg.inTbilisi' } as const satisfies Record<CityId, string>
+const IN_CITY = { batumi: 'tg.inBatumi', moscow: 'tg.inMoscow', spb: 'tg.inSpb', sochi: 'tg.inSochi', tbilisi: 'tg.inTbilisi', kazan: 'tg.inKazan', nnov: 'tg.inNnov', varna: 'tg.inVarna', anapa: 'tg.inAnapa', kyiv: 'tg.inKyiv', odesa: 'tg.inOdesa', yerevan: 'tg.inYerevan' } as const satisfies Record<CityId, string>
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
@@ -116,6 +116,9 @@ function renderMessage(notification: NotificationRef): Message | null {
         .map((p) => ({ text: `Написать: ${p.name ?? 'игрок'}`.slice(0, 60), url: `tg://user?id=${p.tg_id}` }))
       // An anti-abuse freeze (_freeze_user) names the player: open their profile.
       const publicId = notification.payload?.user_public_id as string | undefined
+      // A player asked for a city that is not in the game (request_city): a request, not an alarm.
+      if (notification.payload?.variant === 'city_request')
+        return { text: `🏙 RANGE — просят добавить город\n${text}`, buttonLabel: 'Открыть профиль', url: publicId ? `${SITE_URL}/?user=${encodeURIComponent(publicId)}` : SITE_URL }
       if (publicId) return { text: `⚠️ RANGE — тревога\n${text}`, buttonLabel: 'Открыть профиль', url: `${SITE_URL}/?user=${encodeURIComponent(publicId)}`, extraButtons }
       return { text: `⚠️ RANGE — тревога\n${text}`, buttonLabel: 'Открыть RANGE', url: SITE_URL, extraButtons }
     }

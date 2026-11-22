@@ -7,7 +7,10 @@
 //   node scripts/build-sector-geometry.mjs            # write the files
 //   node scripts/build-sector-geometry.mjs --check    # only report what would change
 //
-// A file is { builtAt, sectors: [{ id, kind, lat, lng, corners }] }, sectors in id order. What goes in:
+// A file is { builtAt, sectors: [{ id, kind, lat, lng }] }, sectors in id order. No corners since 22.11.2026:
+// every sector is its city grid's hexagon around the centre, and the app draws the corners itself
+// (withCorners in lib/data/territoryMerge.ts, the formula of lib/data/hexGrid.ts) — the files are about half
+// the size. The corners stay in the database (territories.corners) for everything else. What goes in:
 //  - every sector that is not deleted in the database and has a shape: from the files already
 //    there when it is in them,
 //    else from its database row (shape and centre never change; the water type does, so the
@@ -77,7 +80,7 @@ for (const old of existing.values()) {
   }
   const kind = row?.kind ?? old.kind
   if (kind !== old.kind) stats.kindFromDb++
-  sectors.set(old.id, { id: old.id, kind, lat: old.lat, lng: old.lng, corners: old.corners })
+  sectors.set(old.id, { id: old.id, kind, lat: old.lat, lng: old.lng })
   stats.fromExisting++
 }
 for (const row of rows) {
@@ -86,7 +89,7 @@ for (const row of rows) {
     stats.noShape++
     continue
   }
-  sectors.set(row.id, { id: row.id, kind: row.kind, lat: row.lat, lng: row.lng, corners: row.corners })
+  sectors.set(row.id, { id: row.id, kind: row.kind, lat: row.lat, lng: row.lng })
   stats.fromDb++
 }
 

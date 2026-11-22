@@ -135,6 +135,13 @@ export const FEED_ICONS = {
       <path d="M12 7.5C10.5 7.5 8 7 8 5.2 8 3.9 9.6 3.3 10.6 4.4 11.3 5.2 12 7.5 12 7.5Zm0 0c1.5 0 4-.5 4-2.3 0-1.3-1.6-1.9-2.6-.8-.7.8-1.4 3.1-1.4 3.1Z" />
     </Svg>
   ),
+  // A map pin with a plus: a player asks for a city that is not in the game (request_city).
+  pinPlus: (
+    <Svg>
+      <path d="M12 21c-4-4.5-7-8-7-11a7 7 0 0 1 14 0c0 3-3 6.5-7 11z" />
+      <path d="M12 7.5v5M9.5 10h5" />
+    </Svg>
+  ),
 }
 
 type Tone = 'accent' | 'blue' | 'red' | 'gold' | 'green'

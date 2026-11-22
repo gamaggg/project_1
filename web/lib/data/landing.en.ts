@@ -4,7 +4,7 @@ export const LANDING_EN: LandingDoc = {
   lang: 'en',
   metaTitle: 'RANGE — a fishing map game: catch fish, claim sectors',
   metaDescription:
-    'Catch fish, photograph your catch and claim sectors by the water. Clans, weekly battles, bite forecast and rewards. Batumi, Moscow, Saint Petersburg, Sochi, Tbilisi. Free, in Telegram and in the browser.',
+    'Catch fish, photograph your catch and claim sectors by the water. Clans, weekly battles, bite forecast and rewards. 12 cities: Moscow, Saint Petersburg, Kazan, Nizhny Novgorod, Sochi, Anapa, Batumi, Tbilisi, Varna/Burgas, Kyiv, Odesa, Yerevan. Free, in Telegram and in the browser.',
   eyebrow: 'A map game for anglers',
   h1: 'Every catch changes the map',
   lead: 'RANGE turns fishing into a competition. Catch fish by the water, photograph your catch in the app and claim the sectors of your city. Build a clan, climb the rankings and earn rewards.',
@@ -55,7 +55,7 @@ export const LANDING_EN: LandingDoc = {
   ],
   citiesTitle: 'Where you can play',
   citiesLead: 'RANGE now runs in five cities. More are coming.',
-  cities: ['Batumi', 'Moscow & MO', 'Saint Petersburg', 'Sochi', 'Tbilisi'],
+  cities: ['Batumi', 'Moscow & MO', 'Saint Petersburg', 'Sochi/Adler', 'Tbilisi', 'Kazan', 'Nizhny Novgorod', 'Anapa', 'Varna/Burgas', 'Kyiv', 'Odesa', 'Yerevan/Sevan'],
   faqTitle: 'Questions and answers',
   faq: [
     {
@@ -76,7 +76,7 @@ export const LANDING_EN: LandingDoc = {
     },
     {
       q: 'Which cities can I play in?',
-      a: 'Batumi, Moscow and the Moscow region, Saint Petersburg, Sochi and Tbilisi. You choose your city when you sign up and can change it later in your profile.',
+      a: 'Twelve cities: Moscow and the Moscow region, Saint Petersburg, Sochi/Adler, Kazan, Nizhny Novgorod, Anapa, Batumi, Tbilisi, Varna/Burgas, Kyiv, Odesa and Yerevan/Sevan. You choose your city when you sign up and can change it later in your profile.',
     },
     {
       q: 'What happens to my data?',

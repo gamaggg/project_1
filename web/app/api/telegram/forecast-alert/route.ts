@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { isCronRequest } from '@/lib/cronAuth'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { CITIES, asCityId, type CityId } from '@/lib/data/city'
+import { CITIES, asCityId, sectorIdRange, type CityId } from '@/lib/data/city'
 import { bestMorning, fetchRawForecast, nowInZone, scoreForecast } from '@/lib/forecast/bite'
 import { groupHeldSectors, sectorForecastItems, type HeldSector, type SectorForecastItem, type SectorShare } from '@/lib/forecast/sectorForecast'
 import { withErrorReport } from '@/lib/serverErrors'
@@ -23,9 +23,10 @@ const PARALLEL = 4
 
 async function queueSectorForecasts(city: CityId, admin: ReturnType<typeof createAdminClient>) {
   const info = CITIES[city]
+  const r = sectorIdRange(info.idPrefix)
   const [held, shares] = await Promise.all([
-    admin.from('territories').select('id, kind, lat, lng, owner_id').like('id', `${info.idPrefix}%`).eq('is_deleted', false).not('owner_id', 'is', null),
-    admin.from('territory_shares').select('territory_id, user_id').like('territory_id', `${info.idPrefix}%`),
+    admin.from('territories').select('id, kind, lat, lng, owner_id').gte('id', r.from).lt('id', r.to).eq('is_deleted', false).not('owner_id', 'is', null),
+    admin.from('territory_shares').select('territory_id, user_id').gte('territory_id', r.from).lt('territory_id', r.to),
   ])
   if (held.error) throw new Error(held.error.message)
   if (shares.error) throw new Error(shares.error.message)

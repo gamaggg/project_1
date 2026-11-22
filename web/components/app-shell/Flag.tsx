@@ -16,6 +16,23 @@ export function Flag({ country, height = 18 }: { country: CountryId; height?: nu
             <rect y="6.67" width="30" height="6.67" fill="#1C57A5" />
             <rect y="13.33" width="30" height="6.67" fill="#D52B1E" />
           </>
+        ) : country === 'ua' ? (
+          <>
+            <rect width="30" height="10" fill="#0057B7" />
+            <rect y="10" width="30" height="10" fill="#FFD700" />
+          </>
+        ) : country === 'am' ? (
+          <>
+            <rect width="30" height="7" fill="#D90012" />
+            <rect y="6.67" width="30" height="6.67" fill="#0033A0" />
+            <rect y="13.33" width="30" height="6.67" fill="#F2A800" />
+          </>
+        ) : country === 'bg' ? (
+          <>
+            <rect width="30" height="7" fill="#FFFFFF" />
+            <rect y="6.67" width="30" height="6.67" fill="#00966E" />
+            <rect y="13.33" width="30" height="6.67" fill="#D62612" />
+          </>
         ) : (
           <>
             <rect width="30" height="20" fill="#FFFFFF" />

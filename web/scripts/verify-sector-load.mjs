@@ -12,8 +12,9 @@
 
 import { readFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
-import { CITIES } from '@/lib/data/city.ts'
-import { TERRITORY_COLUMNS, geometryCitiesNeeded, mergeTerritories, touchedRowsFilter } from '@/lib/data/territoryMerge.ts'
+// Only the cities players can pick: a city waiting for its migrations has no file and no rows yet.
+import { CITY_LIST } from '@/lib/data/city.ts'
+import { TERRITORY_COLUMNS, geometryCitiesNeeded, mergeTerritories, touchedRowsFilter, withCorners } from '@/lib/data/territoryMerge.ts'
 import { fetchTerritoryRows } from '@/lib/data/territoryRows.ts'
 import { SECTOR_GEOMETRY_VERSION } from '@/lib/data/sectorGeometryVersion.ts'
 import { oldMerge } from '../tests/support/oldTerritoryMerge.mjs'
@@ -31,7 +32,8 @@ const noKindChanged = process.argv.includes('--no-kind-changed')
 const breakClauses = (arg('break') ?? '').split(',').filter(Boolean)
 
 const readJson = (name) => JSON.parse(readFileSync(new URL(`public/data/${name}`, root), 'utf8'))
-const files = Object.fromEntries(Object.values(CITIES).map((c) => [c.id, readJson(`sectors-${c.idPrefix}.${SECTOR_GEOMETRY_VERSION}.json`)]))
+// The files carry no corners (22.11.2026): the app draws them from the centre, so the check does the same.
+const files = Object.fromEntries(CITY_LIST.map((c) => [c.id, withCorners(readJson(`sectors-${c.idPrefix}.${SECTOR_GEOMETRY_VERSION}.json`))]))
 // The old load had one file for every city (public/data/sectors.json, removed 13.11.2026): the city files together.
 const legacy = Object.values(files).flatMap((f) => f.sectors)
 
@@ -67,7 +69,7 @@ let bad = 0
 let checked = 0
 let newRowsTotal = 0
 let oldRowsTotal = 0
-for (const city of Object.values(CITIES)) {
+for (const city of CITY_LIST) {
   for (const userId of scenarios) {
     const prefix = city.idPrefix
     const oldRows = allRows.filter((r) => r.id.startsWith(prefix) || (userId && r.owner_id === userId))

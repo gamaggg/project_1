@@ -10,7 +10,7 @@ import { uploadAnnouncementPhoto } from '@/lib/supabase/storage'
 import { downscaleToJpeg } from '@/lib/exif'
 import { getCurrentCoords } from '@/lib/geolocation'
 import { openExternal } from '@/lib/openExternal'
-import { CITIES, type CityId } from '@/lib/data/city'
+import { CITIES, CITY_LIST, type CityId } from '@/lib/data/city'
 import {
   MAX_PARTNER_PHOTOS,
   PARTNER_ICONS,
@@ -36,7 +36,8 @@ import { nameInitials } from '@/lib/initials'
 // or changes one. What the form saves is what players see on the map (PartnerPointSheet); «Предпросмотр» opens
 // that card right over the form. Russian only, like the other admin screens.
 
-const CITY_IDS = Object.keys(CITIES) as CityId[]
+// Only the cities players can pick: a point in a city the database does not know yet would not save.
+const CITY_IDS: CityId[] = CITY_LIST.map((c) => c.id)
 const MONTHS = ['янв.', 'февр.', 'марта', 'апр.', 'мая', 'июня', 'июля', 'авг.', 'сент.', 'окт.', 'нояб.', 'дек.']
 const MONTHS_FULL = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
 const dm = (day: string) => `${Number(day.slice(8, 10))} ${MONTHS_FULL[Number(day.slice(5, 7)) - 1]}`

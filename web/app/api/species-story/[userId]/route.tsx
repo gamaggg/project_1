@@ -19,7 +19,7 @@ import { cityForSectorId, type CityId } from '@/lib/data/city'
 
 const W = 1080
 const H = 1920
-const CITIES: CityId[] = ['batumi', 'moscow', 'spb', 'sochi', 'tbilisi']
+const CITIES: CityId[] = ['batumi', 'moscow', 'spb', 'sochi', 'tbilisi', 'kazan', 'nnov', 'varna', 'anapa', 'kyiv', 'odesa', 'yerevan']
 const CATEGORY_COLOR: Record<string, string> = { marine: '#3FB4DB', freshwater: '#3DBE8B', predator: '#FF7A45', peaceful: '#7CC453' }
 
 const T: Record<Lang, { kicker: string; of: (n: number) => string; favourite: string; catches: string; record: string; newest: string; dare: string; more: (n: number) => string }> = {

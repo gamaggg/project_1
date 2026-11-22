@@ -153,6 +153,7 @@ export function useActivity() {
                   }
                 : null,
             alertText: kind === 'system_alert' ? ((payload.text as string) ?? null) : null,
+            alertVariant: kind === 'system_alert' ? ((payload.variant as string) ?? null) : null,
             gameEvent: kind === 'game_event' ? { kind: row.kind, payload } : null,
           }
         })
@@ -206,6 +207,7 @@ export function useActivity() {
         clanRole: null,
         clanWeek: null,
         alertText: null,
+        alertVariant: null,
       }))
 
       return [...notificationEntries, ...announcementEntries].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
@@ -268,6 +270,7 @@ export function useCityFeed(city: CityId, enabled = true) {
           clanRole: null,
           clanWeek: null,
           alertText: null,
+          alertVariant: null,
         })
       )
     },

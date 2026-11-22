@@ -1,6 +1,7 @@
 import type { Territory, TerritoryCoHolder, TerritoryKind, TerritoryStatus } from '@/lib/data/types'
 import { CITIES, cityForSectorId, type CityId } from '@/lib/data/city'
 import { compareSectors } from '@/lib/data/sectorOrder'
+import { hexCorners } from '@/lib/data/hexGrid'
 import type { Database } from '@/lib/types'
 
 // How the map's sectors are put together from two sources: the static geometry of one city
@@ -24,6 +25,20 @@ export type SectorGeometry = {
 export type SectorGeometryFile = {
   builtAt: string
   sectors: SectorGeometry[]
+}
+
+// The file as it lies on the server (since 22.11.2026): no corners — every sector is the city grid's hexagon
+// around its centre, so the phone draws the corners itself (hexCorners, the same formula the sectors were
+// cut with) and the file is about half the size. A sector whose corners were stored anyway keeps them.
+export type SectorGeometryFileOnDisk = {
+  builtAt: string
+  sectors: (Omit<SectorGeometry, 'corners'> & { corners?: [number, number][] })[]
+}
+export function withCorners(file: SectorGeometryFileOnDisk): SectorGeometryFile {
+  return {
+    builtAt: file.builtAt,
+    sectors: file.sectors.map((s) => (s.corners ? (s as SectorGeometry) : { ...s, corners: hexCorners(s.lat, s.lng, cityForSectorId(s.id)) })),
+  }
 }
 
 export const TERRITORY_COLUMNS =

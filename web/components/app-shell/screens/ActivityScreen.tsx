@@ -628,6 +628,22 @@ export function ActivityScreen({
                 </div>
               )
             }
+            if (a.kind === 'system_alert' && a.alertVariant === 'city_request') {
+              // A player asked for a city that is not in the game (request_city). For the super admins: Russian only.
+              return (
+                <div className="activity-item" key={a.id}>
+                  <FeedIcon tone="accent" icon={FEED_ICONS.pinPlus} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 800, lineHeight: 1.35 }}>Просят добавить город</div>
+                    <div style={{ fontSize: 13, color: 'var(--ink)', marginTop: 4, lineHeight: 1.45, overflowWrap: 'anywhere', whiteSpace: 'pre-line' }}>{a.alertText}</div>
+                    <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {unreadIds.has(a.id) && <span className="unread-dot" />}
+                      {formatWhen(a.createdAt)}
+                    </div>
+                  </div>
+                </div>
+              )
+            }
             if (a.kind === 'system_alert') {
               return (
                 <div className="activity-item" key={a.id}>

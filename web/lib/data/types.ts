@@ -349,6 +349,9 @@ export type ActivityEntry = {
   // 'system_alert' only — super admins' «something is broken» text (see
   // system_health_tick).
   alertText: string | null
+  // 'system_alert' only: what kind of note it is. 'city_request' — a player asked for a city that is not in
+  // the game (request_city), shown as a request, not as an alarm. Null: an alarm.
+  alertVariant: string | null
   // 'award' only — copied straight from user_awards at grant time (see
   // fanout_award_notification), so the feed never needs to join it back.
   awardTitle: string | null

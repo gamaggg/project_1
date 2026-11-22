@@ -9,7 +9,7 @@ import { BottomNav } from '@/components/app-shell/BottomNav'
 import type { LeafletMapHandle, SectorMoment } from '@/components/app-shell/LeafletMap'
 import type { Territory } from '@/lib/data/types'
 import { CITIES } from '@/lib/data/city'
-import { territoryFromRow } from '@/lib/data/territoryMerge'
+import { territoryFromRow, withCorners, type SectorGeometryFileOnDisk } from '@/lib/data/territoryMerge'
 import { SECTOR_GEOMETRY_VERSION } from '@/lib/data/sectorGeometryVersion'
 import { DEFAULT_TERRITORY_COLOR, FREE_TERRITORY_COLOR, OTHER_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 
@@ -82,7 +82,9 @@ export function MomentPreview() {
   useEffect(() => {
     fetch(`/data/sectors-B.${SECTOR_GEOMETRY_VERSION}.json`)
       .then((r) => r.json())
-      .then((d: { sectors: Sector[] }) => {
+      // The file has no corners: withCorners draws them from the centre, as the app does.
+      .then((raw: SectorGeometryFileOnDisk) => {
+        const d: { sectors: Sector[] } = withCorners(raw)
         const target = d.sectors.find((s) => s.id === TARGET)!
         const list = d.sectors.map((s, i) => {
           const t = territoryFromRow(undefined, s.id, s.kind, s.lat, s.lng, s.corners, undefined)

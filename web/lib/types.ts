@@ -2013,6 +2013,7 @@ export type Database = {
       onboarding_due: { Args: { p_limit?: number }; Returns: { chat_id: number; user_id: string | null; step: string; city: string | null; name: string | null; data: Json }[] }
       get_first_steps: { Args: Record<string, never>; Returns: Json }
       create_support_ticket: { Args: { p_body: string; p_photo_path?: string }; Returns: number }
+      request_city: { Args: { p_city: string }; Returns: number }
       add_support_message: { Args: { p_ticket_id: number; p_body: string; p_photo_path?: string }; Returns: number }
       answer_support_ticket: { Args: { p_ticket_id: number; p_admin_telegram: number; p_body: string }; Returns: string }
       admin_send_support_message: { Args: { p_user_id: string; p_body: string; p_ticket_id?: number; p_photo_path?: string }; Returns: number }

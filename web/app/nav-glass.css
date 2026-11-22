@@ -1498,3 +1498,17 @@ html.ios-standalone #screen-clan .clan-hero { margin-top: 0; margin-left: 0; mar
   .map-controls { top: auto; bottom: calc(var(--nav-lift, 10px) + var(--nav-height, 70px) + var(--nav-bottom, 10px) - 8px + var(--map-sheet-h, 0px) - 6px); transform: none; flex-direction: row-reverse; align-items: flex-end; }
   .map-control-group { display: none; }
 }
+
+/* The catch photo reel (html.on-catch-photo, set by FishZoneApp): photos page under everything here, so no
+   backdrop-filter over them — each one was re-blurred on every frame of a swipe (the paging stuttered), and an
+   iPhone short of video memory dropped the blur, leaving the nav with no background at all. The same colours
+   as a plain fill; the photos themselves are untouched. */
+html.on-catch-photo .bottomnav {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: linear-gradient(180deg, rgba(246, 242, 236, 0.97), rgba(238, 232, 224, 0.95));
+}
+html.on-catch-photo .nav-edge { display: none; }
+html.on-catch-photo .icon-btn.catch-nav-btn { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(255, 255, 255, 0.6); }
+html.on-catch-photo .catch-reel-counter { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(23, 24, 27, 0.62); }
+html.on-catch-photo .catch-reel .catch-conditions-chip:not(.skeleton) { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(23, 24, 27, 0.6); }

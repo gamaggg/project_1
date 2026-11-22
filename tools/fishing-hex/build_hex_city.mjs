@@ -181,12 +181,14 @@ function* polysFilter() {
   for (const { ring, tags } of polygonsOf({ osm, nodes, ways }, (t) => t.natural === 'water')) {
     if (isHidden(tags) || isNotFishable(tags) || tags.amenity === 'fountain' || tags.leisure === 'swimming_pool') continue;
     if (BAD_WATER_TYPES.includes(tags.water)) continue;
+    if (CFG.dropWaterNames && CFG.dropWaterNames.test(tags.name || '')) continue; // пограничная река и т.п.
     let poly;
     let area;
     try { poly = turf.polygon([ring]); area = turf.area(poly); } catch { continue; }
     if (area < 50) continue;
     const w = tags.water || '';
-    const isRiverPoly = w === 'river' || w === 'oxbow' || w === 'canal';
+    // Водохранилище на большой реке (Куйбышевское у Казани) — река, а не озеро (решение владельца).
+    const isRiverPoly = w === 'river' || w === 'oxbow' || w === 'canal' || (CFG.riverWaterNames && CFG.riverWaterNames.test(tags.name || ''));
     let kind;
     if (isRiverPoly) {
       // Русло рекой считаем, если у него есть имя или оно большое; безымянная канавка — нет.
@@ -215,6 +217,7 @@ let droppedInside = 0;
 for (const el of osm.elements) {
   if (el.type !== 'way' || !el.tags || !el.tags.waterway) continue;
   if (!isRiverWay(el.tags)) continue; // ручьи и прочее — не берём
+  if (CFG.dropWaterNames && CFG.dropWaterNames.test(el.tags.name || '')) { droppedHidden++; continue; } // пограничная река
   if (isHidden(el.tags) || isNotFishable(el.tags)) { droppedHidden++; continue; }
   if (!el.tags.name || (riverNameLength.get(el.tags.name) || 0) < MIN_RIVER_LENGTH_M) { droppedShort++; continue; }
   for (const seg of clipToBox(coordsOf(el))) {
@@ -260,9 +263,16 @@ function nearCoast([lon, lat]) {
   }
   return false;
 }
+// Граница и полоса вдоль моря действуют вместе (Анапа: округ И 5 км от моря); у прежних городов
+// задано что-то одно, для них ничего не меняется. extraAreas — рамки, которые входят в город
+// целиком (озёра Варны и Бургаса дальше 5 км от моря).
+const extraPolys = (CFG.extraFiles || []).flatMap((f) => JSON.parse(fs.readFileSync(f, 'utf8')).features);
+const inExtra = ([lon, lat]) =>
+  (CFG.extraAreas || []).some((b) => lat >= b.s && lat <= b.n && lon >= b.w && lon <= b.e) || extraPolys.some((p) => turf.booleanPointInPolygon([lon, lat], p));
 const insideCity = (pt) => {
-  if (boundary) return boundary.some((p) => turf.booleanPointInPolygon(pt, p));
-  if (CFG.coastBufferKm) return nearCoast(pt);
+  if (inExtra(pt)) return true;
+  if (boundary && !boundary.some((p) => turf.booleanPointInPolygon(pt, p))) return false;
+  if (CFG.coastBufferKm && !nearCoast(pt)) return false;
   return true;
 };
 
@@ -272,11 +282,13 @@ const restricted = [];
 const restrictedFile = `osm_${IN}_restricted.json`;
 if (fs.existsSync(restrictedFile)) {
   const r = readOsm(restrictedFile);
-  const wanted = (t) => t.leisure === 'nature_reserve' || t.boundary === 'protected_area' || t.landuse === 'military' || t.military || t.industrial === 'port' || t.landuse === 'port' || t.aeroway === 'aerodrome';
-  const reasonOf = (t) => (t.landuse === 'military' || t.military ? 'военная территория' : t.aeroway ? 'аэродром' : t.industrial === 'port' || t.landuse === 'port' ? 'порт' : 'заповедник');
+  const wanted = (t) => t.leisure === 'nature_reserve' || t.boundary === 'protected_area' || t.landuse === 'military' || t.military || t.industrial === 'port' || t.landuse === 'port' || t.landuse === 'harbour' || t.aeroway === 'aerodrome';
+  const reasonOf = (t) => (t.landuse === 'military' || t.military ? 'военная территория' : t.aeroway ? 'аэродром' : t.industrial === 'port' || t.landuse === 'port' || t.landuse === 'harbour' ? 'порт' : 'заповедник');
   for (const { ring, tags } of polygonsOf(r, wanted)) {
     // Заповедником считаем только строгие охранные зоны, остальные охранные границы пропускаем.
     if (tags.boundary === 'protected_area' && !['1', '1a', '1b', '2'].includes(tags.protect_class)) continue;
+    // Исключения владельца: охранная зона, где рыбачить можно (национальный парк «Севан»).
+    if (CFG.allowZoneNames && CFG.allowZoneNames.test([tags.name, tags['name:en'], tags['name:ru']].filter(Boolean).join(' '))) continue;
     try {
       const poly = turf.polygon([ring]);
       restricted.push({ poly, bb: turf.bbox(poly), reason: reasonOf(tags), name: tags.name || '' });
@@ -371,6 +383,11 @@ const existing = CFG.existingFile && fs.existsSync(CFG.existingFile) ? JSON.pars
 let droppedExisting = 0;
 const overlapsExisting = ([x, y]) => existing.some((r) => Math.abs(r.lat - y) < 0.004 && Math.abs(r.lng - x) < 0.0065 && turf.distance([x, y], [r.lng, r.lat], { units: 'meters' }) < 400);
 const insideExcluded = (pt) => excludeRing && excludeRing.some((p) => turf.booleanPointInPolygon(pt, p));
+// Город без окрестностей (граница самого города): пруды берём только в нём, деревенские пруды в полосе
+// 30 км за городом не берём (решение владельца 22.11.2026: карта легче, реки и озёра окрестностей остаются).
+const core = CFG.coreFile ? JSON.parse(fs.readFileSync(CFG.coreFile, 'utf8')).features : null;
+const insideCore = (pt) => !core || core.some((p) => turf.booleanPointInPolygon(pt, p));
+let droppedRingPonds = 0;
 
 const indexed = Object.fromEntries(Object.entries(water).map(([k, v]) => [k, v.map((x) => ({ ...x, bb: turf.bbox(x.geom) }))]));
 const bboxHit = (a, b) => a[0] <= b[2] && a[2] >= b[0] && a[1] <= b[3] && a[3] >= b[1];
@@ -386,6 +403,7 @@ grid.features.forEach((f, i) => {
   for (const k of PRIORITY) touches[k] = indexed[k].some((x) => bboxHit(bb, x.bb) && turf.booleanIntersects(f, x.geom));
   const kind = PRIORITY.find((k) => touches[k]) || null;
   if (!kind) return;
+  if (kind === 'pond' && !insideCore(center)) { droppedRingPonds++; return; }
   const zone = restrictedAt(center);
   if (zone) { excluded.push({ f, kind, zone }); return; }
   // Дамба с автодорогой: только соты у моря/озера (вдоль берегов реки дорога — обычный мост).
@@ -413,4 +431,5 @@ const count = (k) => features.filter((f) => f.properties.kind === k).length;
 const byReason = {};
 for (const x of excluded) byReason[x.zone.reason] = (byReason[x.zone.reason] || 0) + 1;
 console.error('снято: совпало или наложилось на существующие сектора:', droppedExisting);
+if (core) console.error('снято: пруды за городом:', droppedRingPonds);
 console.log(JSON.stringify({ city: CITY, cells: features.length, sea: count('sea'), river: count('river'), lake: count('lake'), pond: count('pond'), excluded: excluded.length, excludedBy: byReason }));

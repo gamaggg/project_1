@@ -36,6 +36,13 @@ const BBOXES: Record<CityId, { s: number; w: number; n: number; e: number }> = {
   spb: { s: 59.62, w: 29.4, n: 60.25, e: 30.77 },
   sochi: { s: 43.385, w: 39.14, n: 44.04, e: 40.015 },
   tbilisi: { s: 41.62, w: 44.65, n: 41.84, e: 45.02 },
+  kazan: { s: 55.33, w: 48.34, n: 56.21, e: 49.87 },
+  nnov: { s: 55.57, w: 43.06, n: 56.7, e: 45.3 },
+  varna: { s: 41.985, w: 27.25, n: 43.735, e: 28.65 },
+  anapa: { s: 44.7, w: 36.88, n: 45.2, e: 37.66 },
+  kyiv: { s: 49.94, w: 29.81, n: 50.87, e: 31.25 },
+  odesa: { s: 46.07, w: 30.21, n: 46.9, e: 31.23 },
+  yerevan: { s: 39.8, w: 44.0, n: 40.66, e: 45.55 },
 }
 
 // Same haversine turf's own distance() uses, needed only to convert

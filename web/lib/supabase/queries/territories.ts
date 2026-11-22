@@ -13,7 +13,8 @@ import {
   mergeTerritories,
   territoryFromRow,
   touchedRowsFilter,
-  type SectorGeometryFile,
+  withCorners,
+  type SectorGeometryFileOnDisk,
 } from '@/lib/data/territoryMerge'
 import { useIsSuperAdmin } from '@/lib/supabase/queries/profile'
 
@@ -29,7 +30,7 @@ function sectorGeometryQuery(city: CityId) {
     queryFn: async () => {
       const res = await fetch(`/data/sectors-${prefix}.${SECTOR_GEOMETRY_VERSION}.json`)
       if (!res.ok) throw new Error(`sectors-${prefix}.${SECTOR_GEOMETRY_VERSION}.json: HTTP ${res.status}`)
-      return (await res.json()) as SectorGeometryFile
+      return withCorners((await res.json()) as SectorGeometryFileOnDisk)
     },
     staleTime: Infinity,
     gcTime: Infinity,

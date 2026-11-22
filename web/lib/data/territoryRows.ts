@@ -1,6 +1,7 @@
 import type { SupabaseClient, PostgrestError } from '@supabase/supabase-js'
 import type { Database } from '@/lib/types'
 import { TERRITORY_COLUMNS, type TerritoryViewRow } from '@/lib/data/territoryMerge'
+import { sectorIdRange } from '@/lib/data/city'
 
 // The database side of the map's sectors (see territoryMerge.ts): the rows that say something about a
 // sector of one city, plus the ids of its deleted sectors. A plain function of a Supabase client, so the
@@ -30,13 +31,14 @@ async function fetchAllPages<T>(fetchPage: (from: number) => PromiseLike<{ data:
 // deleted after the city's file was built is still in it, and the flag is what hides it.
 export async function fetchTerritoryRows(supabase: SupabaseClient<Database>, args: { prefix: string; userId: string | undefined; touched: string }): Promise<TerritoryViewRow[]> {
   const { prefix, userId, touched } = args
+  // The city's ids as a key range, not «like 'K%'»: see sectorIdRange.
+  const r = sectorIdRange(prefix)
   const fetchRows = (from: number) => {
     const query = supabase.from('territories_with_stats').select(TERRITORY_COLUMNS).order('id').range(from, from + PAGE_SIZE - 1)
-    // In a PostgREST or() the LIKE wildcard is *, not %.
-    return userId ? query.or(`and(id.like.${prefix}*,or(${touched})),owner_id.eq.${userId}`) : query.like('id', `${prefix}%`).or(touched)
+    return userId ? query.or(`and(id.gte.${r.from},id.lt.${r.to},or(${touched})),owner_id.eq.${userId}`) : query.gte('id', r.from).lt('id', r.to).or(touched)
   }
   const fetchDeleted = (from: number) =>
-    supabase.from('territories_with_stats').select('id').eq('is_deleted', true).like('id', `${prefix}%`).order('id').range(from, from + PAGE_SIZE - 1)
+    supabase.from('territories_with_stats').select('id').eq('is_deleted', true).gte('id', r.from).lt('id', r.to).order('id').range(from, from + PAGE_SIZE - 1)
   const [rows, deleted] = await Promise.all([fetchAllPages(fetchRows), fetchAllPages(fetchDeleted)])
   // The full row wins over the bare «deleted» marker for the same id.
   return [...deleted.map((d) => ({ id: d.id, is_deleted: true }) as TerritoryViewRow), ...rows]

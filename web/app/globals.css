@@ -2778,6 +2778,12 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .intro-screen--catch .intro-sub{color:#6E6252;}
 .intro-cta{display:block; width:100%; text-align:center; padding:15px 0; border-radius:16px; font-size:15.5px; font-weight:800; font-family:inherit; border:none; cursor:pointer;}
 .intro-screen--territory .intro-cta{background:#fff; color:#C7430B;}
+/* «Нет твоего города?» under «Далее» on the city step: a quiet text button that opens CityRequestModal. */
+.city-missing-btn{display:block; margin:8px auto 0; padding:4px 10px; background:none; border:none; font:inherit; font-size:14px; font-weight:700; color:var(--accent); cursor:pointer;}
+.city-req-icon{background:linear-gradient(160deg,#FF8A3D,#FC5200 65%);}
+.city-req-input{width:100%; box-sizing:border-box; margin:0 0 12px; padding:12px 14px; border:1px solid rgba(23,24,27,.12); border-radius:12px; background:#F4F5F7; color:var(--ink); font:inherit; font-size:16px; font-weight:600; outline:none;}
+.city-req-input:focus{border-color:var(--accent); background:#fff;}
+.city-req-error{margin:-4px 0 12px; font-size:13px; color:#B42318;}
 .intro-screen--catch .intro-cta{background:var(--ink); color:#FFF3E7;}
 
 .intro-hexfield{

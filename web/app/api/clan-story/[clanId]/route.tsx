@@ -21,12 +21,12 @@ import type { CityId } from '@/lib/data/city'
 
 const W = 1080
 const H = 1920
-const PREFIX: Record<CityId, string> = { batumi: 'B', moscow: 'M', spb: 'P', sochi: 'S', tbilisi: 'T' }
+const PREFIX: Record<CityId, string> = { batumi: 'B', moscow: 'M', spb: 'P', sochi: 'S', tbilisi: 'T', kazan: 'K', nnov: 'N', varna: 'V', anapa: 'A', kyiv: 'Y', odesa: 'O', yerevan: 'E' }
 
 const T: Record<Lang, { clan: string; city: Record<string, string>; level: (n: number) => string; league: (s: string) => string; hq: (id: string) => string; noHq: string; members: (n: number) => string; records: string; join: string; cm: string; kg: string }> = {
   ru: {
     clan: 'Клан',
-    city: { batumi: 'Батуми', moscow: 'Москва и МО', spb: 'Санкт-Петербург', sochi: 'Сочи', tbilisi: 'Тбилиси' },
+    city: { batumi: 'Батуми', moscow: 'Москва и МО', spb: 'Санкт-Петербург', sochi: 'Сочи/Адлер', tbilisi: 'Тбилиси', kazan: 'Казань', nnov: 'Нижний Новгород', varna: 'Варна/Бургас', anapa: 'Анапа', kyiv: 'Киев', odesa: 'Одесса', yerevan: 'Ереван/Севан' },
     level: (n) => `Уровень ${n}`,
     league: (s) => `Лига: ${s}`,
     hq: (id) => `Штаб: ${id}`,
@@ -39,7 +39,7 @@ const T: Record<Lang, { clan: string; city: Record<string, string>; level: (n: n
   },
   en: {
     clan: 'Clan',
-    city: { batumi: 'Batumi', moscow: 'Moscow & MO', spb: 'Saint Petersburg', sochi: 'Sochi', tbilisi: 'Tbilisi' },
+    city: { batumi: 'Batumi', moscow: 'Moscow & MO', spb: 'Saint Petersburg', sochi: 'Sochi/Adler', tbilisi: 'Tbilisi', kazan: 'Kazan', nnov: 'Nizhny Novgorod', varna: 'Varna/Burgas', anapa: 'Anapa', kyiv: 'Kyiv', odesa: 'Odesa', yerevan: 'Yerevan/Sevan' },
     level: (n) => `Level ${n}`,
     league: (s) => `League: ${s}`,
     hq: (id) => `HQ: ${id}`,
@@ -52,7 +52,7 @@ const T: Record<Lang, { clan: string; city: Record<string, string>; level: (n: n
   },
   ka: {
     clan: 'კლანი',
-    city: { batumi: 'ბათუმი', moscow: 'მოსკოვი და მოსკოვის ოლქი', spb: 'სანქტ-პეტერბურგი', sochi: 'სოჭი', tbilisi: 'თბილისი' },
+    city: { batumi: 'ბათუმი', moscow: 'მოსკოვი და მოსკოვის ოლქი', spb: 'სანქტ-პეტერბურგი', sochi: 'სოჭი/ადლერი', tbilisi: 'თბილისი', kazan: 'ყაზანი', nnov: 'ნიჟნი ნოვგოროდი', varna: 'ვარნა/ბურგასი', anapa: 'ანაპა', kyiv: 'კიევი', odesa: 'ოდესა', yerevan: 'ერევანი/სევანი' },
     level: (n) => `დონე ${n}`,
     league: (s) => `ლიგა: ${s}`,
     hq: (id) => `შტაბი: ${id}`,

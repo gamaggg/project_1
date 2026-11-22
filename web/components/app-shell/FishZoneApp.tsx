@@ -564,6 +564,13 @@ export function FishZoneApp() {
     if (currentScreen === 'screen-camera') track('camera_open', undefined, city)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once per screen change, not per city/user refresh
   }, [currentScreen, !!user])
+  // The catch photo reel pages big photos under the bottom nav: a blurred-glass nav (backdrop-filter) over
+  // them is re-blurred every frame of a swipe, which made paging stutter, and on an iPhone short of video
+  // memory the system dropped the blur and the nav's background went blank. html.on-catch-photo swaps the
+  // glass for a plain fill there (nav-glass.css).
+  useEffect(() => {
+    document.documentElement.classList.toggle('on-catch-photo', currentScreen === 'screen-catch-photo')
+  }, [currentScreen])
   const catchesTerritoryId = topEntry.screen === 'screen-catches' ? topEntry.territoryId : undefined
   const catchesUserId = topEntry.screen === 'screen-catches' && !catchesTerritoryId ? (topEntry.userId ?? user?.id) : undefined
   // The trophy-card celebration is full-bleed and edge-to-edge on purpose —

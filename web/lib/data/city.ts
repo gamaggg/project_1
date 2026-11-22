@@ -9,9 +9,9 @@ import { tn } from '@/lib/i18n/runtime'
 // truth. Adding a city means one more entry here, a row in public.city_config (prefix,
 // time zone, theme, jackpot frame: every SQL function reads the city from there) and its
 // sectors in public.territories (tools/fishing-hex/build_hex_city.mjs).
-export type CityId = 'batumi' | 'moscow' | 'spb' | 'sochi' | 'tbilisi'
+export type CityId = 'batumi' | 'moscow' | 'spb' | 'sochi' | 'tbilisi' | 'kazan' | 'nnov' | 'varna' | 'anapa' | 'kyiv' | 'odesa' | 'yerevan'
 // The country a city is in: the city pickers ask for the country first (flag, then its cities).
-export type CountryId = 'ge' | 'ru'
+export type CountryId = 'ge' | 'ru' | 'bg' | 'ua' | 'am'
 
 export type CityInfo = {
   id: CityId
@@ -158,22 +158,184 @@ export const CITIES: Record<CityId, CityInfo> = {
     waterKinds: ['river', 'lake', 'pond'],
     zoomShift: 0,
   },
+  // Kazan and 30 km around it: the Volga (Kuibyshev reservoir), the Kazanka, the Sviyaga, lakes.
+  kazan: {
+    id: 'kazan',
+    country: 'ru',
+    idPrefix: 'K',
+    get name() {
+      return tn('city.kazanName')
+    },
+    get boundaryLabel() {
+      return tn('city.kazanBoundary')
+    },
+    timezone: 'Europe/Moscow',
+    // The Kazanka under the Kremlin.
+    center: [55.8, 49.105],
+    // 14.3 - 0.41 at 55.8°N.
+    zoom: 13.9,
+    colorPreviewCenter: [55.8, 49.105],
+    seaPoint: null,
+    theme: 'fresh',
+    waterKinds: ['river', 'lake', 'pond'],
+    zoomShift: -0.41,
+  },
+  // Nizhny Novgorod and 30 km around it: the Volga, the Oka, Bor, Kstovo, lakes.
+  nnov: {
+    id: 'nnov',
+    country: 'ru',
+    idPrefix: 'N',
+    get name() {
+      return tn('city.nnovName')
+    },
+    get boundaryLabel() {
+      return tn('city.nnovBoundary')
+    },
+    timezone: 'Europe/Moscow',
+    // The Strelka, where the Oka meets the Volga.
+    center: [56.333, 43.975],
+    // 14.3 - 0.43 at 56.3°N.
+    zoom: 13.87,
+    colorPreviewCenter: [56.333, 43.975],
+    seaPoint: null,
+    theme: 'fresh',
+    waterKinds: ['river', 'lake', 'pond'],
+    zoomShift: -0.43,
+  },
+  // «Варна/Бургас»: the whole Bulgarian Black Sea coast, a 5 km strip, with the Varna and
+  // Beloslav lakes and the Burgas lakes.
+  varna: {
+    id: 'varna',
+    country: 'bg',
+    idPrefix: 'V',
+    get name() {
+      return tn('city.varnaName')
+    },
+    get boundaryLabel() {
+      return tn('city.varnaBoundary')
+    },
+    timezone: 'Europe/Sofia',
+    // Varna's beach by the Sea Garden.
+    center: [43.205, 27.925],
+    zoom: 14.26,
+    colorPreviewCenter: [43.205, 27.925],
+    seaPoint: [43.18, 28.0],
+    theme: 'sea',
+    waterKinds: ['sea', 'river', 'lake', 'pond'],
+    zoomShift: -0.04,
+  },
+  // Anapa: the okrug's coast as a 5 km strip, from Blagoveshchenskaya to Sukko, with the limans.
+  anapa: {
+    id: 'anapa',
+    country: 'ru',
+    idPrefix: 'A',
+    get name() {
+      return tn('city.anapaName')
+    },
+    get boundaryLabel() {
+      return tn('city.anapaBoundary')
+    },
+    timezone: 'Europe/Moscow',
+    // Anapa's central beach.
+    center: [44.895, 37.31],
+    zoom: 14.22,
+    colorPreviewCenter: [44.895, 37.31],
+    seaPoint: [44.88, 37.2],
+    theme: 'sea',
+    waterKinds: ['sea', 'river', 'lake', 'pond'],
+    zoomShift: -0.08,
+  },
+  // Kyiv and 30 km around it: the Dnieper, the Desna, the Kyiv reservoir, lakes.
+  kyiv: {
+    id: 'kyiv',
+    country: 'ua',
+    idPrefix: 'Y',
+    get name() {
+      return tn('city.kyivName')
+    },
+    get boundaryLabel() {
+      return tn('city.kyivBoundary')
+    },
+    // «Europe/Kiev», not «Europe/Kyiv»: the new name is missing from older phones' time zone data.
+    timezone: 'Europe/Kiev',
+    // The Dnieper by Trukhaniv Island.
+    center: [50.46, 30.535],
+    // 14.3 - 0.23 at 50.5°N.
+    zoom: 14.07,
+    colorPreviewCenter: [50.46, 30.535],
+    seaPoint: null,
+    theme: 'fresh',
+    waterKinds: ['river', 'lake', 'pond'],
+    zoomShift: -0.23,
+  },
+  // Odesa and 30 km around it: the sea, the Khadzhibey and Kuyalnik limans.
+  odesa: {
+    id: 'odesa',
+    country: 'ua',
+    idPrefix: 'O',
+    get name() {
+      return tn('city.odesaName')
+    },
+    get boundaryLabel() {
+      return tn('city.odesaBoundary')
+    },
+    timezone: 'Europe/Kiev',
+    // Lanzheron beach.
+    center: [46.48, 30.762],
+    zoom: 14.18,
+    colorPreviewCenter: [46.48, 30.762],
+    seaPoint: [46.45, 30.85],
+    theme: 'sea',
+    waterKinds: ['sea', 'river', 'lake', 'pond'],
+    zoomShift: -0.12,
+  },
+  // «Ереван/Севан»: Yerevan and 30 km around it (inside Armenia) and the shore of Lake Sevan.
+  yerevan: {
+    id: 'yerevan',
+    country: 'am',
+    idPrefix: 'E',
+    get name() {
+      return tn('city.yerevanName')
+    },
+    get boundaryLabel() {
+      return tn('city.yerevanBoundary')
+    },
+    timezone: 'Asia/Yerevan',
+    // The Hrazdan gorge under the Victory Bridge.
+    center: [40.178, 44.496],
+    zoom: 14.27,
+    colorPreviewCenter: [40.178, 44.496],
+    seaPoint: null,
+    theme: 'fresh',
+    waterKinds: ['river', 'lake', 'pond'],
+    zoomShift: 0.03,
+  },
 }
 
 // The cities a player can pick. A city is added here only once its rows are in the
 // database (city_config, territories, cron jobs): a profile in a city the functions do not
 // know would break the leaderboard, the clans and the weekly jobs.
-const LAUNCHED_CITIES: CityId[] = ['batumi', 'moscow', 'spb', 'sochi', 'tbilisi']
+// Kazan, Nizhny Novgorod, «Варна/Бургас», Anapa, Kyiv, Odesa and «Ереван/Севан» since 22.11.2026
+// (web/supabase-drafts/cities-22-11, applied).
+const LAUNCHED_CITIES: CityId[] = ['batumi', 'moscow', 'spb', 'sochi', 'tbilisi', 'kazan', 'nnov', 'varna', 'anapa', 'kyiv', 'odesa', 'yerevan']
 export const CITY_LIST: CityInfo[] = LAUNCHED_CITIES.map((id) => CITIES[id])
 
 // Countries that have a launched city, in the order the picker shows them; each with its
 // launched cities.
-export const COUNTRY_ORDER: CountryId[] = ['ge', 'ru']
+export const COUNTRY_ORDER: CountryId[] = ['ge', 'ru', 'bg', 'ua', 'am']
 export function launchedCountries(): { id: CountryId; cities: CityInfo[] }[] {
   return COUNTRY_ORDER.map((id) => ({ id, cities: CITY_LIST.filter((c) => c.country === id) })).filter((c) => c.cities.length > 0)
 }
 
 const CITY_BY_PREFIX: Record<string, CityId> = Object.fromEntries(Object.values(CITIES).map((c) => [c.idPrefix, c.id]))
+
+// A city's sector ids as a range of the primary key, [from, to): «id >= 'K' and id < 'L'» walks the key's
+// index over that city's rows only, where «id like 'K%'» reads every sector of every city (the database
+// sorts text by ICU rules, which a LIKE prefix cannot use; measured 3–7 times slower, and it grows with
+// each city added). Sector ids are one capital letter and digits, so the next letter closes the range.
+export function sectorIdRange(prefix: string): { from: string; to: string } {
+  return { from: prefix, to: String.fromCharCode(prefix.charCodeAt(0) + 1) }
+}
 
 export function cityForSectorId(id: string): CityId {
   return CITY_BY_PREFIX[id.charAt(0)] ?? 'batumi'

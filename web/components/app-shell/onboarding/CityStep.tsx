@@ -5,6 +5,7 @@ import { storeCity, type CityId } from '@/lib/data/city'
 import { CountryCityPicker } from '@/components/app-shell/CountryCityPicker'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { tn } from '@/lib/i18n/runtime'
+import { CityRequestModal } from '@/components/app-shell/onboarding/CityRequestModal'
 
 // Right after CatchIntroStep ("Поймал — значит занял") — by then the visitor
 // already understands the mechanic, so picking where to play it makes sense
@@ -16,6 +17,8 @@ import { tn } from '@/lib/i18n/runtime'
 // `preview` (the /onboarding-preview page only): don't keep the choice on this device.
 export function CityStep({ onBack, onDone, preview }: { onBack: () => void; onDone: (city: CityId) => void; preview?: boolean }) {
   const [selected, setSelected] = useState<CityId | null>(null)
+  // «Нет твоего города?» → the city the player is missing goes to the admins (CityRequestModal).
+  const [requesting, setRequesting] = useState(false)
 
   function handleSubmit() {
     if (!selected) return
@@ -42,7 +45,11 @@ export function CityStep({ onBack, onDone, preview }: { onBack: () => void; onDo
         <button className="intro-cta" onClick={handleSubmit} disabled={!selected} style={!selected ? { opacity: 0.4, pointerEvents: 'none' } : undefined}>
           {tn('common.next')}
         </button>
+        <button type="button" className="city-missing-btn" onClick={() => setRequesting(true)}>
+          {tn('onb.noCity')}
+        </button>
       </div>
+      {requesting && <CityRequestModal preview={preview} onClose={() => setRequesting(false)} />}
     </div>
   )
 }
