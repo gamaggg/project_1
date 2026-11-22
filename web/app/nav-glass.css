@@ -1349,6 +1349,8 @@ html.tg-band :is(#screen-catch-photo, #screen-profile, #screen-user-profile, #sc
 html.tg-band .profile-hero { margin-left: -20px; margin-right: -20px; --hero-r: 22px; padding: calc(10px + var(--band)) 20px 22px; }
 html.tg-band .sector-hero-map .territory-thumb-wrap { height: calc(230px + var(--band)); }
 html.tg-band .sector-hero-map-icons { top: calc(10px + var(--band)); }
+/* The «Штаб клана «…»» ribbon over the sector's map moves down with the buttons (it sat under Telegram's band). */
+html.tg-band .sector-hero-map .c2-hq-ribbon { top: calc(14px + var(--band)); }
 html.tg-band #screen-clan .clan-hero { margin-top: 0; margin-left: 0; margin-right: 0; border-radius: 0 0 22px 22px; padding-top: calc(12px + var(--band)); }
 /* The iPhone home-screen app: the clan banner runs up under the status bar too (the profile, the sector and the catch photo already do, globals.css). */
 html.ios-standalone #screen-clan { padding-top: 0; }

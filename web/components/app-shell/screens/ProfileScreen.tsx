@@ -438,6 +438,7 @@ export function ProfileScreen({
   onOpenChallenges,
   onOpenClans,
   onOpenClan,
+  onOpenClanInCity,
   onOpenGeo,
   onOpenAdminGeo,
   onOpenAdminPartners,
@@ -484,6 +485,9 @@ export function ProfileScreen({
   onOpenChallenges: () => void
   onOpenClans: () => void
   onOpenClan: (id: number) => void
+  // The player's own clan in another city: the city switches to it first, so the clan opens with its management
+  // (Общак, Штаб, Магазин are bound to the clan of the city on screen), as after a switch in the city picker.
+  onOpenClanInCity: (id: number, city: CityId) => void
   onOpenGeo: () => void
   onOpenAdminGeo: () => void
   // «Точки партнёров» (super admin only).
@@ -764,7 +768,7 @@ export function ProfileScreen({
           key={c.clanId}
           className={`profile-clan-card tap-scale${duoWide(1 + i) ? ' profile-duo-wide' : ''}`}
           style={{ background: clanCardBackground(c.crest) }}
-          onClick={() => onOpenClan(c.clanId)}
+          onClick={() => onOpenClanInCity(c.clanId, c.city)}
         >
           <ClanCrest crest={c.crest} size={52} />
           <span className="profile-clan-text">

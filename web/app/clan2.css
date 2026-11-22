@@ -16,6 +16,8 @@
 .c2-ok{color:var(--green); font-weight:700; font-size:13px;}
 .c2-row-btns{display:flex; gap:8px; margin-top:12px;}
 .c2-row-btns > *{flex:1; width:auto;}
+/* A turned-off action in the clan (e.g. «Перенести штаб» during a siege, on the cooldown or short of coins) reads as off, not as a button that does nothing. */
+.c2-row-btns .btn-secondary:disabled{background:#F1EFEA; color:#A8A49C; border-color:transparent; box-shadow:none; cursor:default; transform:none;}
 .c2-chip{display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:999px; background:#F0EEEA; color:var(--ink); font-size:12px; font-weight:800;}
 .c2-chip.good{background:var(--green-soft); color:#1B7A37;}
 .c2-chip.warn{background:#FFF1D6; color:#9A5B00;}

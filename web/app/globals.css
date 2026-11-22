@@ -1469,6 +1469,7 @@ html:not([lang="ru"]) .challenges-week-top{padding-top:22px;}
 .ios-standalone .profile-hero{padding-top:env(safe-area-inset-top); margin-left:-20px; margin-right:-20px; padding-left:20px; padding-right:20px; --hero-r:22px;}
 .ios-standalone .sector-hero-map .territory-thumb-wrap{height:calc(230px + var(--standalone-top));}
 .ios-standalone .sector-hero-map-icons{top:calc(10px + var(--standalone-top));}
+.ios-standalone .sector-hero-map .c2-hq-ribbon{top:calc(14px + var(--standalone-top));}
 .ios-standalone #screen-map{--map-top-inset:calc(env(safe-area-inset-top) + 14px);}
 /* A phone with the zoomed display («Вид: Увеличено» / page zoom) lays the page out under 360 CSS px, and every CSS px is then
    bigger on the glass — the 14px blur reserve grew into a visible gap above the panel. Under 360px it is dropped. */

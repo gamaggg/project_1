@@ -768,6 +768,16 @@ export function FishZoneApp() {
     setViewingClanId(id)
     push({ screen: 'screen-clan', clanId: id })
   }
+  // The player's own clan in another city (its card in the profile): the city switches to the clan's, staying off
+  // the map, so the clan opens with its management — the clan update is bound to the clan of the city on screen.
+  function openMyClanInCity(id: number, clanCity: CityId) {
+    if (clanCity !== city) {
+      setCity(clanCity)
+      storeCity(clanCity)
+      if (user) updateProfile.mutate({ city: clanCity })
+    }
+    openClan(id)
+  }
   function openClanRace() {
     push({ screen: 'screen-clan-race' })
   }
@@ -2065,6 +2075,7 @@ export function FishZoneApp() {
             onOpenChallenges={openChallenges}
             onOpenClans={openClans}
             onOpenClan={openClan}
+            onOpenClanInCity={openMyClanInCity}
             onOpenGeo={openGeo}
             onOpenAdminGeo={() => push({ screen: 'screen-admin-geo' })}
             active={currentScreen === 'screen-profile'}
