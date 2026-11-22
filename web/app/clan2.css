@@ -588,7 +588,8 @@
 .c2-rent-bar i{display:block; height:100%; border-radius:999px;}
 
 /* ───────── the real sector screen of the headquarters sector ───────── */
-.c2-hq-ribbon{position:absolute; top:14px; left:50%; transform:translateX(-50%); z-index:10; display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; color:#fff; font-size:12.5px; box-shadow:0 0 0 2px #fff, 0 4px 14px rgba(23,24,27,.25); pointer-events:none;}
+/* Bottom left of the sector's map, level with «На карте» on the right (its 12px from the edge, 38px from the bottom, its padding and type, so both are one height). */
+.c2-hq-ribbon{position:absolute; left:12px; bottom:38px; z-index:10; display:inline-flex; align-items:center; gap:6px; padding:7px 11px; border-radius:999px; color:#fff; font-size:12.5px; line-height:normal; box-shadow:0 0 0 2px #fff, 0 4px 14px rgba(23,24,27,.25); pointer-events:none;}
 .c2-hq-ribbon b{font-weight:800; letter-spacing:.2px;}
 .c2-hq-card{position:relative; margin-top:12px; padding:12px; border-radius:18px; background:color-mix(in srgb, var(--hq) 9%, #fff);}
 .c2-hq-card.siege{background:#FDECEA;}
@@ -608,9 +609,8 @@
 .c2-hq-card-base .c2-base-hex{border-radius:0; box-shadow:inset 0 1px 0 rgba(23,24,27,.06), inset 0 -1px 0 rgba(23,24,27,.06);}
 .c2-hq-card-join{margin:4px 0 0; font-size:12.5px; font-weight:700; color:var(--ink);}
 .c2-hq-card-note{margin:8px 0 0; font-size:11.5px; color:var(--ink-faint, #8A8F98); text-align:center;}
-.c2-hq-ribbon{max-width:calc(100% - 120px); white-space:nowrap;}
+.c2-hq-ribbon{max-width:calc(100% - 160px); white-space:nowrap;}
 .c2-hq-ribbon b{overflow:hidden; text-overflow:ellipsis;}
-.c2-hq-ribbon.clan{padding:8px 14px; font-size:13.5px;}
 
 /* ───────── the base: real map under it, round plots, the HQ banner, pills and badges ───────── */
 .c2-base-hex{container-type:inline-size; user-select:none; -webkit-user-select:none;}
