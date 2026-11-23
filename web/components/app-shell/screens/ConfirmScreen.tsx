@@ -262,7 +262,7 @@ export function ConfirmScreen({
         {/* The first catch of this fish: its drawing and its place in the collection. */}
         {newSpeciesNth !== null && pendingCatch && (
           <button type="button" className="catch-new-species tap-scale" onClick={onOpenSpecies} disabled={!onOpenSpecies}>
-            <FishDrawing speciesKey={pendingCatch.species} className="catch-new-species-art" hd />
+            <FishDrawing speciesKey={pendingCatch.species} className="catch-new-species-art" hd swim />
             <span className="catch-new-species-text">
               <b>{tn('catch.newSpecies')}</b>
               <span>{tn('catch.newSpeciesNth', { n: newSpeciesNth })}</span>

@@ -1,10 +1,13 @@
 import { speciesImageUrl } from '@/lib/data/speciesImages'
+import { SwimmingFish } from '@/components/app-shell/SwimmingFish'
 
 // A fish's drawing (public/fish, by its base key: okun and okun_msk are one picture), or a quiet
 // outline when the fish has no picture. Used by the species picker, the «new species» card after
-// a catch and «Где это?»; the size comes from `className`.
-export function FishDrawing({ speciesKey, className, hd = false }: { speciesKey: string; className: string; hd?: boolean }) {
+// a catch and «Где это?»; the size comes from `className`. `swim`: the fish swims in place (SwimmingFish) — only
+// where one fish is shown at a time (the «new species» card), never in lists.
+export function FishDrawing({ speciesKey, className, hd = false, swim = false }: { speciesKey: string; className: string; hd?: boolean; swim?: boolean }) {
   const src = speciesImageUrl(speciesKey, hd)
+  if (src && swim) return <SwimmingFish src={src} className={className} />
   if (src) {
     // eslint-disable-next-line @next/next/no-img-element -- small static webp from /public/fish
     return <img className={className} src={src} alt="" loading="lazy" decoding="async" draggable={false} />

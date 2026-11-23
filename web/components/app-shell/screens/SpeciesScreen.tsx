@@ -4,6 +4,7 @@ import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 
 import { cityForSectorId, type CityId } from '@/lib/data/city'
 import { CATEGORIES_BY_CITY, CATEGORY_LABEL, speciesBaseKey, speciesOfCity, type SpeciesCategory } from '@/lib/data/species'
 import { speciesImageUrl } from '@/lib/data/speciesImages'
+import { SwimmingFish } from '@/components/app-shell/SwimmingFish'
 import { formatWeightGrams, speciesBreakdown, type SpeciesEntry } from '@/lib/format'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
@@ -66,8 +67,10 @@ function CountUp({ value }: { value: number }) {
 }
 
 // The drawing, or a quiet outline for a fish without one yet.
-function FishArt({ speciesKey, className, hd = false }: { speciesKey: string; className: string; hd?: boolean }) {
+// `swim`: the big fish of the hero swims in place (SwimmingFish); the fish in the grid stay still.
+function FishArt({ speciesKey, className, hd = false, swim = false }: { speciesKey: string; className: string; hd?: boolean; swim?: boolean }) {
   const src = speciesImageUrl(speciesKey, hd)
+  if (src && swim) return <SwimmingFish src={src} className={className} />
   if (src) {
     // eslint-disable-next-line @next/next/no-img-element -- small static webp from /public/fish
     return <img className={className} src={src} alt="" loading="lazy" decoding="async" />
@@ -301,10 +304,11 @@ export function SpeciesScreen({
               {favourite && (
                 // The fish caught most, big, swimming out past the right edge (only ~70% of it shows).
                 // Not a button: tapping the hero opens nothing (owner's call, 20.11.2026). The fish glides in
-                // once as the screen opens and then stays still (owner's call); the light behind it breathes.
+                // once as the screen opens and then swims in place (owner's call 23.11.2026, was still before);
+                // the light behind it breathes.
                 <div className="spx-hero-fav" aria-hidden>
                   <span className="spx-hero-glow" />
-                  <FishArt speciesKey={favourite.key} className="spx-hero-fish" hd />
+                  <FishArt speciesKey={favourite.key} className="spx-hero-fish" hd swim />
                 </div>
               )}
               <div className="spx-hero-top">
