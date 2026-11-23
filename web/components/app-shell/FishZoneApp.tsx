@@ -32,6 +32,7 @@ import {
   useClanChatLive,
   useClanChatSummary,
   useClaimReferral,
+  useSetSignupSource,
   useSubmitGeoGuess,
   reportClientError,
 } from '@/lib/supabase/queries'
@@ -55,6 +56,7 @@ import { useShopRewardsCount } from '@/lib/shopRewards'
 import { hasVisibleTypedText, useAppUpdate } from '@/lib/appUpdate'
 import { insideTelegram } from '@/lib/openExternal'
 import { track } from '@/lib/analytics'
+import { forgetRememberedSource, launchSource, peekRememberedSource, rememberSource } from '@/lib/signupSource'
 import { useSheetSwipeToClose } from '@/lib/useSheetSwipeToClose'
 import { addOfflineCatch } from '@/lib/offlineCatches'
 import { useOfflineCatchQueue, useOnline } from '@/lib/useOfflineCatches'
@@ -1634,6 +1636,17 @@ export function FishZoneApp() {
   useEffect(() => {
     if (!user && launchRef) rememberRef(launchRef, guestShare?.kind ?? 'invite')
   }, [user, launchRef, guestShare])
+  // A link from RANGE's social accounts (?from=tiktok…): every opening is
+  // counted, and without an account the label waits for sign-up (lib/signupSource).
+  const launchFrom = useMemo(() => launchSource(launchSearch), [launchSearch])
+  const launchFromSeen = useRef(false)
+  useEffect(() => {
+    if (!launchFrom || authLoading || launchFromSeen.current) return
+    launchFromSeen.current = true
+    track('visit_source', { from: launchFrom, signed_in: !!user }, city)
+    if (!user) rememberSource(launchFrom)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [launchFrom, authLoading, user])
   // An invite link's code (?clan=<id>&invite=<code>) — or one remembered from
   // an earlier launch — for that clan's join button.
   const [clanInvite, setClanInvite] = useState<ClanInvite | null>(null)
@@ -1673,6 +1686,25 @@ export function FishZoneApp() {
         forgetRememberedRef()
         track('referral_claim', { ok: r.ok, reason: r.ok ? null : r.reason, source: remembered.source }, city)
         if (r.ok) showToast(r.referrerName ? tn('shell.referralBonusFrom', { coins: r.coins, name: r.referrerName }) : tn('shell.referralBonus', { coins: r.coins }))
+      },
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, myProfile?.onboardingCompleted])
+
+  // The remembered ?from= label goes to the server once the wizard is done
+  // (only a brand-new account keeps it — see set_signup_source).
+  const setSignupSource = useSetSignupSource()
+  const sourceChecked = useRef(false)
+  useEffect(() => {
+    if (!user || !myProfile?.onboardingCompleted || sourceChecked.current) return
+    sourceChecked.current = true
+    const from = peekRememberedSource()
+    if (!from) return
+    setSignupSource.mutate(from, {
+      // Only an answer from the server clears it; a failed request is tried on the next launch.
+      onSuccess: (r) => {
+        forgetRememberedSource()
+        track('signup_source', { from, ok: r.ok, reason: r.reason }, city)
       },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps

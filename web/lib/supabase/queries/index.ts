@@ -2,7 +2,7 @@
 
 // The data layer, one file per area. Every hook and type is re-exported here, so the app
 // still imports from '@/lib/supabase/queries' as before.
-export { useActivity, useAdminPostAnnouncement, useCityFeed, useClaimReferral, useMarkNotificationsRead, useSharePreview, useUnreadNotificationCount } from './activity'
+export { useActivity, useAdminPostAnnouncement, useCityFeed, useClaimReferral, useMarkNotificationsRead, useSetSignupSource, useSharePreview, useUnreadNotificationCount } from './activity'
 export type { ClaimReferralResult } from './activity'
 export { useAdminActions, useAdminDeleteUser, useAdminPermissions, useAdminSetPublicId, useCurrentAdmins, useFindUserByPublicId, useSetAdminPermissions, useSetBlocked, useAccountFreeze, useUnfreeze } from './admin'
 export { latestOwnCatchId, useAdminDeleteCatch, useAdminEditCatch, useAdminMoveCatch, useCatchById, useCatchConditions, useCatchesByIds, useCatchesByTerritory, useCatchesByUser, useConfirmCatch, useEditMyCatch, useLastCatchChoices, useMyCatches, useSpecies } from './catches'

@@ -1730,6 +1730,7 @@ export type Database = {
       admin_unmute_user: { Args: { p_user_id: string }; Returns: undefined }
       get_share_preview: { Args: { p_kind: string; p_key: string }; Returns: Json }
       claim_referral: { Args: { p_ref: string; p_source?: string | null }; Returns: Json }
+      set_signup_source: { Args: { p_source: string }; Returns: Json }
       get_city_feed: {
         Args: { p_city: string; p_limit?: number }
         Returns: {

@@ -316,6 +316,20 @@ export function useClaimReferral() {
   })
 }
 
+// Signed up from a link in RANGE's social accounts (?from=…, see lib/signupSource):
+// the label is kept once, for a brand-new account only — see set_signup_source.
+export function useSetSignupSource() {
+  return useMutation({
+    mutationFn: async (source: string): Promise<{ ok: boolean; reason: string | null }> => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('set_signup_source', { p_source: source })
+      if (error) throw error
+      const r = data as { ok: boolean; reason?: string }
+      return { ok: r.ok, reason: r.reason ?? null }
+    },
+  })
+}
+
 // Drives the badge on the "Активность" tab. Kept separate from useActivity so
 // the count is available without the feed itself being mounted.
 export function useUnreadNotificationCount() {
