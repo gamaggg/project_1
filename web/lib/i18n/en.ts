@@ -1521,6 +1521,7 @@ export const en: Dict = {
     zubar: 'Dentex',
     kalkan: 'Turbot',
     morskoy_nalim: 'Shore rockling',
+    merlang: 'Whiting',
     kamenny_okun: 'Rock perch',
     katran: 'Spiny dogfish',
     kefal: 'Mullet',

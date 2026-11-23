@@ -1527,6 +1527,7 @@ export const ru = {
     zubar: 'Зубарь',
     kalkan: 'Калкан',
     morskoy_nalim: 'Морской налим',
+    merlang: 'Мерланг',
     kamenny_okun: 'Каменный окунь',
     katran: 'Катран',
     kefal: 'Кефаль',

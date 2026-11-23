@@ -47,6 +47,7 @@ const SCIENTIFIC_NAME_TO_BASE_KEY: Record<string, string> = {
   'gymnocephalus cernua': 'yorsh_msk',
   'trachinus draco': 'morskoy_drakon',
   'gaidropsarus mediterraneus': 'morskoy_nalim',
+  'merlangius merlangus': 'merlang',
   'trachurus mediterraneus': 'stavrida',
   'trachurus trachurus': 'stavrida',
   'squalus acanthias': 'katran',

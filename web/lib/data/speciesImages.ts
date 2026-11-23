@@ -10,7 +10,7 @@ const DRAWN = new Set([
   'amur', 'barabulya', 'beloglazka', 'bersh', 'bychok', 'chekhon', 'chernomorskaya_forel', 'chernomorskaya_selyd',
   'elets', 'golavl', 'gorbyl', 'gustera', 'kalkan', 'kambala', 'kamenny_okun', 'karas', 'karp', 'katran', 'kefal',
   'kolyushka', 'koreyskiy_okun', 'korjushka', 'krasnoperka', 'kumzha', 'leshch', 'lin', 'losos', 'lufar', 'maramoyka',
-  'marmir', 'morskaya_sobachka', 'morskoy_bychok', 'morskoy_drakon', 'morskoy_karas', 'morskoy_nalim', 'morskoy_petukh',
+  'marmir', 'merlang', 'morskaya_sobachka', 'morskoy_bychok', 'morskoy_drakon', 'morskoy_karas', 'morskoy_nalim', 'morskoy_petukh',
   'nalim', 'okun', 'pelamida', 'peskar', 'plotva', 'raduzhnaya_forel', 'rechnaya_forel', 'rotan', 'ryapushka', 'salaka',
   'sargan', 'sazan', 'shchuka', 'sibas', 'sig', 'sinets', 'skat', 'skorpena', 'smarida', 'som', 'stavrida', 'sudak',
   'tolstolobik', 'ugor', 'uklejka', 'usach', 'yaz', 'yorsh', 'zelenushka', 'zherekh', 'zubar', 'zvezdochet',
