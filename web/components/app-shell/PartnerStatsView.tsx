@@ -5,7 +5,9 @@ import { useMemo, useState } from 'react'
 import { useAdminPartnerViewers, usePartnerStats, useSetPartnerViewer, type PartnerStatKind, type PartnerStats } from '@/lib/supabase/queries'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { CITIES, type CityId } from '@/lib/data/city'
-import { addDays } from '@/lib/data/partnerPoints'
+import { cityToday, partnerPdfFilename, partnerStatDays } from '@/lib/data/partnerPoints'
+import { createClient } from '@/lib/supabase/client'
+import { downloadImage } from '@/lib/story'
 import { nameInitials } from '@/lib/initials'
 
 // A partner point's statistics (03_partner_stats.sql, partner_point_stats): for the super admin («Точки партнёров» →
@@ -41,10 +43,6 @@ const people = (n: number) => `${n} ${plural(n, 'человек', 'челове�
 const pct = (a: number, b: number) => (b > 0 ? `${Math.round((a / b) * 100)}%` : '—')
 const MONTHS = ['янв.', 'февр.', 'марта', 'апр.', 'мая', 'июня', 'июля', 'авг.', 'сент.', 'окт.', 'нояб.', 'дек.']
 const dayLabel = (d: string) => `${Number(d.slice(8, 10))} ${MONTHS[Number(d.slice(5, 7)) - 1]}`
-
-function cityDay(city: CityId, at: number): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: CITIES[city].timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(at))
-}
 
 export function PartnerStatsView({
   pointId,
@@ -88,6 +86,7 @@ export function PartnerStatsView({
           {String((error as Error)?.message ?? '').includes('not_authorized') ? 'Нет доступа к статистике этой точки' : 'Не удалось загрузить статистику'}
         </div>
       )}
+      {data && <PdfButton pointId={pointId} city={city} name={name} period={period} from={range.from} to={range.to} />}
       {data && <StatsBody data={data} city={city} from={range.from} to={range.to} />}
       {admin && <Viewers pointId={pointId} />}
     </div>
@@ -100,16 +99,7 @@ export function StatsBody({ data, city, from, to }: { data: PartnerStats; city: 
   const empty = data.people === 0
 
   // Every day of the period (up to 60), the quiet ones too, so the chart reads as time.
-  const days = useMemo(() => {
-    const byDay = new Map(data.days.map((d) => [d.day, d]))
-    const last = cityDay(city, Date.parse(to) - 60_000)
-    let first = cityDay(city, Date.parse(from))
-    const span = Math.round((Date.parse(`${last}T00:00:00Z`) - Date.parse(`${first}T00:00:00Z`)) / 86_400_000)
-    if (span > 59) first = addDays(last, -59)
-    const out: { day: string; pin: number; open: number; copy_promo: number }[] = []
-    for (let d = first; d <= last; d = addDays(d, 1)) out.push(byDay.get(d) ?? { day: d, pin: 0, open: 0, copy_promo: 0 })
-    return out
-  }, [data.days, city, from, to])
+  const days = useMemo(() => partnerStatDays(data.days, CITIES[city].timezone, from, to), [data.days, city, from, to])
   const max = Math.max(1, ...days.map((d) => Math.max(d.open, d.pin, d.copy_promo)))
 
   return (
@@ -175,6 +165,45 @@ export function StatsBody({ data, city, from, to }: { data: PartnerStats; city: 
         пришли в магазин, видно только на кассе.
       </div>
     </>
+  )
+}
+
+// «Скачать PDF»: the same numbers for the chosen period as a report in RANGE's look (app/api/partner-stats-pdf).
+// The server first hands a short-lived link, then the file comes from it: in Telegram through its own save prompt,
+// in a browser as a plain download (downloadImage does both for any file).
+function PdfButton({ pointId, city, name, period, from, to }: { pointId: number; city: CityId; name: string; period: Period; from: string; to: string }) {
+  const [state, setState] = useState<'idle' | 'busy' | 'failed'>('idle')
+  async function download() {
+    setState('busy')
+    try {
+      const { data: s } = await createClient().auth.getSession()
+      const token = s.session?.access_token
+      if (!token) throw new Error('no session')
+      const res = await fetch('/api/partner-stats-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ pointId, from, to, period }),
+      })
+      if (!res.ok) throw new Error(String(res.status))
+      const { url } = (await res.json()) as { url: string }
+      const got = await downloadImage(`${window.location.origin}${url}`, partnerPdfFilename(name, cityToday(city)))
+      setState(got === 'failed' ? 'failed' : 'idle')
+    } catch {
+      setState('failed')
+    }
+  }
+  return (
+    <div className="pps-pdf">
+      <button type="button" className="btn-secondary pps-pdf-btn" disabled={state === 'busy'} onClick={() => void download()}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M12 4v11" />
+          <path d="m7 10 5 5 5-5" />
+          <path d="M5 20h14" />
+        </svg>
+        {state === 'busy' ? 'Готовим PDF…' : 'Скачать PDF за этот период'}
+      </button>
+      {state === 'failed' && <div className="stats-note">Не получилось скачать. Попробуйте ещё раз.</div>}
+    </div>
   )
 }
 

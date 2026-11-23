@@ -14,6 +14,7 @@
     "test": "node --no-warnings --import ./scripts/test-register.mjs --test \"tests/*.test.mjs\""
   },
   "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
     "@supabase/ssr": "^0.12.6",
     "@supabase/supabase-js": "^2.115.0",
     "@tanstack/react-query": "^5.102.8",
@@ -22,6 +23,7 @@
     "mapbox-gl": "^3.30.0",
     "mapbox-gl-leaflet": "^0.0.16",
     "next": "16.4.3",
+    "pdf-lib": "^1.17.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "simplex-noise": "^4.0.3"

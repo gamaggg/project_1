@@ -208,3 +208,29 @@ export function partnerErrorText(e: unknown): string {
   if (msg.includes('check constraint') || msg.includes('violates')) return 'Какое-то поле слишком длинное или заполнено неверно'
   return 'Не получилось сохранить, попробуй ещё раз'
 }
+
+// A day in the given time zone, 'YYYY-MM-DD'.
+export function dayInTz(timeZone: string, at: number): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(at))
+}
+
+export type PartnerStatDay = { day: string; pin: number; open: number; copy_promo: number }
+
+// Every day of the statistics period [from, to) in the city's time (the last 60 at most), the quiet ones too, so a
+// chart reads as time. The statistics screen and its PDF (app/api/partner-stats-pdf) count them the same way.
+export function partnerStatDays(days: PartnerStatDay[], timeZone: string, from: string, to: string): PartnerStatDay[] {
+  const byDay = new Map(days.map((d) => [d.day, d]))
+  const last = dayInTz(timeZone, Date.parse(to) - 60_000)
+  let first = dayInTz(timeZone, Date.parse(from))
+  if (daysBetween(first, last) > 59) first = addDays(last, -59)
+  const out: PartnerStatDay[] = []
+  for (let d = first; d <= last; d = addDays(d, 1)) out.push(byDay.get(d) ?? { day: d, pin: 0, open: 0, copy_promo: 0 })
+  return out
+}
+
+// The statistics PDF's file name, «RANGE — Wtfish — 2026-11-23.pdf»: letters and digits of the name only, so every
+// phone can save it.
+export function partnerPdfFilename(name: string, day: string): string {
+  const safe = name.replace(/[^\p{L}\p{N} _.-]+/gu, '').replace(/\s+/g, ' ').trim().slice(0, 40) || 'точка'
+  return `RANGE — ${safe} — ${day}.pdf`
+}

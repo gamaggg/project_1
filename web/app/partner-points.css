@@ -223,3 +223,7 @@
 
 /* The new-partner intro (PartnerIntroTour.tsx): a tap target over the pin inside the round window. */
 .ppi-hole{position:fixed; border:0; border-radius:50%; background:transparent; cursor:pointer; -webkit-tap-highlight-color:transparent;}
+/* «Скачать PDF» on the statistics (PartnerStatsView → app/api/partner-stats-pdf). */
+.pps-pdf{margin:0 0 14px;}
+.pps-pdf-btn{width:100%; gap:8px;}
+.pps-pdf-btn:disabled{opacity:.6;}
