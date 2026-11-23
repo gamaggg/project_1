@@ -8,10 +8,9 @@ import type { Territory } from '@/lib/data/types'
 // The headquarters of the OTHER clans of the city, for the map and the sector screen: a player looks at another clan's
 // base from its HQ and can join it from there (the way into a clan for a player without one).
 //
-// PREVIEW ONLY. The other clans' HQs and buildings live on the server (clan_hq, clan_treasury.projects), which the live
-// mode does not have yet: here each clan's HQ stands on its busiest sector (the one with most catches) and its
-// buildings are made up from the clan's id and level — the same for every viewer, never above what the clan's level
-// allows. The server version reads them with get_clan_bases (supabase-drafts/clan-update-06-11/07_clan_base_view.sql).
+// The HQs come from the server (get_clan_bases, read in components/clan2/live/overlay.ts); nothing is drawn for a clan
+// until they do. (Until 23.11 a preview stand-in put each clan's HQ on its busiest sector while the read was missing,
+// and players saw HQs that never existed.)
 
 // projects / siege: from the server (get_clan_bases); without them the card shows the preview's made-up buildings.
 export type OtherHq = { clanId: number; name: string; crest: unknown; sectorId: string; lat: number; lng: number; widthDeg: number; projects?: Record<ProjectId, ProjectLevel>; siege?: boolean }
@@ -44,30 +43,6 @@ export function serverOtherHqs(rows: ServerBase[], territories: Territory[], own
     }
   }
   return { hqs: hqs.sort((a, b) => a.sectorId.localeCompare(b.sectorId)), ruins }
-}
-
-export function computeOtherHqs(territories: Territory[], ownClanId: number | null): OtherHq[] {
-  const best = new Map<number, Territory>()
-  for (const t of territories) {
-    const c = t.ownerClanId
-    if (c == null || c === ownClanId) continue
-    const cur = best.get(c)
-    if (!cur || t.catchCount > cur.catchCount || (t.catchCount === cur.catchCount && t.id < cur.id)) best.set(c, t)
-  }
-  const out: OtherHq[] = []
-  for (const [clanId, t] of best) {
-    const c = t.corners
-    out.push({
-      clanId,
-      name: t.ownerClanName ?? '',
-      crest: t.ownerClanCrest,
-      sectorId: t.id,
-      lat: t.lat,
-      lng: t.lng,
-      widthDeg: c && c.length >= 4 ? Math.abs(c[0][1] - c[3][1]) : 0.008,
-    })
-  }
-  return out.sort((a, b) => a.sectorId.localeCompare(b.sectorId))
 }
 
 // The made-up buildings of another clan (preview): steady for a clan, bounded by its level (a level opens a building's

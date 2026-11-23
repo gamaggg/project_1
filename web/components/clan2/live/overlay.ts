@@ -7,7 +7,7 @@ import { cityForSectorId } from '@/lib/data/city'
 import { useDemoNow } from '@/components/clan2/C2Common'
 import { useClan2Enabled } from '@/lib/clan2/live/flag'
 import { RUINS_SIZE, hqBox, hqOutlineColor, hqMarkerHtml, ruinsMarkerHtml, type MarkerTier } from '@/lib/clan2/live/hqMarker'
-import { computeOtherHqs, serverOtherHqs, setOtherHqs, type ServerBase } from '@/lib/clan2/live/otherHqs'
+import { serverOtherHqs, setOtherHqs, type ServerBase } from '@/lib/clan2/live/otherHqs'
 import { setLiveUi, useLiveUi } from '@/lib/clan2/live/ui'
 import { useDemoState } from '@/lib/clan2/demoStore'
 import type { Territory } from '@/lib/data/types'
@@ -49,8 +49,10 @@ export function useClan2Map(territories: Territory[]): Clan2MapProps | null {
 
   // The player's own clan: the bound one, or (before it is bound) the clan of a sector the player holds.
   const ownClanId = live?.clanId ?? territories.find((t) => t.status === 'mine' && t.ownerClanId != null)?.ownerClanId ?? null
-  // The server's bases and the skins the clans wear (once the clan update is on the server); without them, in
-  // development only, the preview's stand-ins.
+  // The server's bases and the skins the clans wear. Until they come (or while the read fails) no other clan's HQ is
+  // drawn: the preview's stand-ins (each clan's busiest sector) used to fill the gap and showed players HQs that never
+  // existed, which then «vanished» (23.11: 292CREW on M2771, MFC on M2122). A failed read throws, so it is retried
+  // and the last good answer stays on the map meanwhile.
   const city = territories[0] ? cityForSectorId(territories[0].id) : null
   const { data: server } = useQuery({
     queryKey: ['clan2-bases', city],
@@ -59,20 +61,20 @@ export function useClan2Map(territories: Territory[]): Clan2MapProps | null {
     // own HQ comes with its own clan read.
     staleTime: 60_000,
     refetchInterval: 5 * 60_000,
-    queryFn: async (): Promise<{ bases: ServerBase[]; skins: Record<number, string> } | null> => {
+    queryFn: async (): Promise<{ bases: ServerBase[]; skins: Record<number, string> }> => {
       const supabase = createClient() as unknown as {
         rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: ServerBase[] | null; error: unknown }>
         from: (t: string) => { select: (c: string) => Promise<{ data: { clan_id: number; skin: string | null }[] | null; error: unknown }> }
       }
       const [b, e] = await Promise.all([supabase.rpc('get_clan_bases', { p_city: city }), supabase.from('clan_equipped').select('clan_id,skin')])
-      if (b.error) return null
+      if (b.error) throw b.error
       const skins: Record<number, string> = {}
       for (const r of e.data ?? []) if (r.skin) skins[Number(r.clan_id)] = r.skin
       return { bases: b.data ?? [], skins }
     },
   })
   const fromServer = useMemo(() => (server ? serverOtherHqs(server.bases, territories, ownClanId) : null), [server, territories, ownClanId])
-  const others = useMemo(() => (!enabled ? [] : fromServer ? fromServer.hqs : computeOtherHqs(territories, ownClanId)), [enabled, fromServer, territories, ownClanId])
+  const others = useMemo(() => (enabled && fromServer ? fromServer.hqs : []), [enabled, fromServer])
   const otherRuins = fromServer?.ruins ?? []
   useEffect(() => setOtherHqs(others), [others])
   const othersKey = others.map((o) => `${o.clanId}:${o.sectorId}:${o.siege ? 's' : ''}`).join(',') + '|' + otherRuins.map((r) => r.sectorId).join(',') + '|' + JSON.stringify(server?.skins ?? {})
