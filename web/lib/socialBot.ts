@@ -134,8 +134,13 @@ export function previewHtml(p: SocialPost, tail?: string): string {
       '',
       escapeHtml(cut(p.body || '(без текста)', bodyMax)),
     ]
-    const other = Object.entries(p.captions).filter(([, t]) => typeof t === 'string' && t.trim())
-    if (withCaptions) for (const [platform, text] of other) lines.push('', `<b>${escapeHtml(PLATFORM[platform] ?? platform)}:</b>`, escapeHtml(cut(text, 900)))
+    const other = publishedCaptions(p)
+    if (withCaptions)
+      for (const [platform, text] of other) {
+        lines.push('', `<b>${escapeHtml(PLATFORM[platform] ?? platform)}:</b>`, escapeHtml(cut(text, 900)))
+        const ru = p.captions[platform + TRANSLATION_SUFFIX]
+        if (typeof ru === 'string' && ru.trim()) lines.push(`<i>Перевод: ${escapeHtml(cut(ru, 900))}</i>`)
+      }
     else if (other.length) lines.push('', `(+ отдельный текст для: ${escapeHtml(other.map(([k]) => PLATFORM[k] ?? k).join(', '))})`)
     if (!p.media.length) lines.push('', '(без картинки и видео)')
     return lines.join('\n') + end
@@ -147,6 +152,14 @@ export function previewHtml(p: SocialPost, tail?: string): string {
     if (short.length <= 4000) return short
   }
   return build(0, false)
+}
+
+// captions may carry a Russian translation for the owner next to a text in
+// another language: {"facebook": "<Georgian>", "facebook_ru": "<Russian>"}.
+// The translation is shown in the preview only and never published.
+export const TRANSLATION_SUFFIX = '_ru'
+export function publishedCaptions(p: SocialPost): [string, string][] {
+  return Object.entries(p.captions).filter(([k, t]) => !k.endsWith(TRANSLATION_SUFFIX) && typeof t === 'string' && t.trim() !== '')
 }
 
 export const DECIDE_KEYBOARD = (id: number) => ({

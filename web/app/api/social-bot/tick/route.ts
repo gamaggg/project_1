@@ -11,6 +11,7 @@ import {
   ownerChatId,
   platformsText,
   previewHtml,
+  publishedCaptions,
   readPost,
   sendMedia,
   tg,
@@ -142,9 +143,7 @@ async function handleGET(req: Request) {
 async function remind(chatId: number, p: SocialPost) {
   const mediaNote = await sendMedia(chatId, p)
   const texts: [string, string][] = [['Текст', p.body || '(без текста)']]
-  for (const [platform, text] of Object.entries(p.captions)) {
-    if (typeof text === 'string' && text.trim()) texts.push([`Для ${platform}`, text])
-  }
+  for (const [platform, text] of publishedCaptions(p)) texts.push([`Для ${platform}`, text])
   // One message per text, each cut to Telegram's limit, so a long text never breaks the markup.
   for (const [label, text] of texts) {
     await tg('sendMessage', { chat_id: chatId, text: `<b>${escapeHtml(label)}:</b>\n<pre>${escapeHtml(text.slice(0, 3800))}</pre>`, parse_mode: 'HTML' })
