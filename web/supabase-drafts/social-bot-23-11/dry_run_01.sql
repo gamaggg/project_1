@@ -1,0 +1,9 @@
+-- Прогон 01_social_posts.sql и отката в транзакции, которая всегда откатывается (23.11.2026).
+-- Результат 23.11: задач 131 → 132; адрес /api/social-bot/tick и заголовок на месте; условие с постом через 30 мин
+-- даёт 1 строку; площадка vk и статус maybe отклонены; клиент не читает таблицу; после отката ничего нет.
+-- Текст прогона: тело 01_social_posts.sql внутри do $dry$ … $dry$ (cron.schedule через perform), затем проверки:
+--   select command from cron.job where jobname = 'social-bot-tick' — есть 'Bearer ' и адрес tick;
+--   вставка поста на now()+30 мин и выполнение условия из команды задачи;
+--   вставка с platforms = {vk} и со status = 'maybe' — ошибки проверок;
+--   select от роли authenticated — permission denied;
+--   затем 01_social_posts_ROLLBACK.sql и raise exception с итогами.

@@ -1161,6 +1161,61 @@ export type Database = {
         }
         Relationships: []
       }
+      social_posts: {
+        Row: {
+          id: number
+          platforms: string[]
+          kind: string
+          scheduled_at: string
+          status: string
+          body: string
+          captions: Json
+          media: Json
+          feedback: string | null
+          tg_message_id: number | null
+          preview_sent_at: string | null
+          decided_at: string | null
+          published_at: string | null
+          error: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          platforms: string[]
+          kind?: string
+          scheduled_at: string
+          status?: string
+          body?: string
+          captions?: Json
+          media?: Json
+          feedback?: string | null
+          tg_message_id?: number | null
+          preview_sent_at?: string | null
+          decided_at?: string | null
+          published_at?: string | null
+          error?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          platforms?: string[]
+          kind?: string
+          scheduled_at?: string
+          status?: string
+          body?: string
+          captions?: Json
+          media?: Json
+          feedback?: string | null
+          tg_message_id?: number | null
+          preview_sent_at?: string | null
+          decided_at?: string | null
+          published_at?: string | null
+          error?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fishing_sessions: {
         Row: {
           id: number
