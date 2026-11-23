@@ -184,6 +184,8 @@ export const SHOP_ITEMS: GoalItem[] = [
   { id: 'frame_silver', kind: 'frame', cost: 4_000, minLevel: 4 },
   { id: 'frame_gold', kind: 'frame', cost: 7_000, minLevel: 6 },
   { id: 'frame_legend', kind: 'frame', cost: 12_000, minLevel: 8 },
+  // Not sold: the clan gets it on reaching level 10 (the server lets it be put on: clan_shop_equip).
+  { id: 'frame_champion', kind: 'frame', cost: 0, minLevel: 10, reward: true },
 ]
 // The old name: the treasury's goal is any item of the shop.
 export const GOAL_CATALOG = SHOP_ITEMS

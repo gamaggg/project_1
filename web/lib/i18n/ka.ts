@@ -2024,7 +2024,7 @@ export const ka: Dict = {
     perkSymbols: 'სიმბოლოები: {list}',
     perkBackgrounds: 'ფონი: {list}',
     perkBasic: 'გერბის ძირითადი ფორმები, სიმბოლოები და ფონები',
-    perkGold: 'გერბის ოქროს ჩარჩო',
+    perkReward: 'ჩარჩო „{name}“ საჩუქრად',
     level: 'დონე {level}',
     xpMax: 'მაქსიმალური დონე · {xp} გამოცდილება',
     xpTo: '{xp} {to} გამოცდილებიდან {next} დონემდე',

@@ -695,6 +695,9 @@ export const clan2En = {
     wear: "Use",
     bought: "Bought",
     fromLevel: "From clan level {n}",
+    onlyLevel: "Only at clan level {n}",
+    reward: "Reward for level {n}",
+    rewardFree: "Not for sale: the clan gets it free on reaching level {n}.",
     isGoal: "Treasury goal",
     setGoal: "Set as goal",
     clearGoal: "Remove the goal",
@@ -718,6 +721,7 @@ export const clan2En = {
       frame_silver: "Silver",
       frame_gold: "Golden",
       frame_legend: "Legendary",
+      frame_champion: "Champion",
     },
   },
   cap: {

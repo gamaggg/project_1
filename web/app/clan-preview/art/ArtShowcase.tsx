@@ -67,7 +67,7 @@ function Replay({ all, children, className, caption }: { all: number; children: 
 
 // Drawn in the browser only: the crests' SVG ids are numbered as they are drawn, so a server render would not match.
 const noop = () => () => {}
-const FRAMES = [null, 'frame_bronze', 'frame_silver', 'frame_gold', 'frame_legend'] as const
+const FRAMES = [null, 'frame_bronze', 'frame_silver', 'frame_gold', 'frame_legend', 'frame_champion'] as const
 const fmt = (n: number) => n.toLocaleString('ru-RU')
 const priceOf = (id: string) => SHOP_ITEMS.find((x) => x.id === id)
 const SECTIONS = [

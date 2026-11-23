@@ -7,7 +7,7 @@ import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorP
 import { resolveCrest } from '@/lib/data/clanCrests'
 import { C2Coins, C2Count, C2Sheet, useC2 } from '@/components/clan2/C2Common'
 import { ItemPreview, itemName } from '@/components/clan2/ClanItems'
-import { buyItem, canManage, capOf, equipItem, goalOf, setGoal, siegeLocked, useDemoState } from '@/lib/clan2/demoStore'
+import { buyItem, canManage, capOf, equipItem, goalOf, hasItem, setGoal, siegeLocked, useDemoState } from '@/lib/clan2/demoStore'
 import { CLAN_SKIN_FACTOR, SHOP_ITEMS, SHOP_KINDS, fmt, type ShopKind } from '@/lib/clan2/rules'
 import type { DemoState, GoalItem } from '@/lib/clan2/types'
 import { tn } from '@/lib/i18n/runtime'
@@ -19,8 +19,9 @@ import { tn } from '@/lib/i18n/runtime'
 type TKey = Parameters<typeof tn>[0]
 
 // The player's shop colours a card by its price; a clan's item costs about five times a player's.
-function rarity(cost: number): string {
-  const p = cost / CLAN_SKIN_FACTOR
+function rarity(item: GoalItem): string {
+  if (item.reward) return 'shop-card-legendary c2-shop-reward'
+  const p = item.cost / CLAN_SKIN_FACTOR
   if (p >= 800) return 'shop-card-legendary'
   if (p > 500) return 'shop-card-epic'
   if (p > 200) return 'shop-card-rare'
@@ -94,12 +95,12 @@ export function ShopTab() {
 
       <div className="shop-grid c2-shop-grid" key={kind}>
         {items.map((item) => {
-          const owned = s.owned.includes(item.id)
+          const owned = hasItem(s, item.id)
           const worn = equippedOf(s, item)
           const locked = !owned && s.clan.level < item.minLevel
           const isGoal = s.treasury.goalId === item.id
           return (
-            <div key={item.id} className={`shop-card ${rarity(item.cost)}${locked ? ' c2-shop-locked' : ''}`}>
+            <div key={item.id} className={`shop-card ${rarity(item)}${locked ? ' c2-shop-locked' : ''}`}>
               <button type="button" className="c2-shop-preview" onClick={() => setOpen(item)} aria-label={`${itemName(item.id)}: ${tn('shop.tryOn')}`}>
                 <ItemPreview item={item} crest={s.clan.crest} size={item.kind === 'boat' ? 120 : 76} />
               </button>
@@ -114,7 +115,7 @@ export function ShopTab() {
                     {tn('clan2.shop.wear')}
                   </button>
                 ) : (
-                  <span className="c2-shop-state">{tn('clan2.shop.bought')}</span>
+                  <span className="c2-shop-state">{item.reward ? tn('clan2.shop.reward', { n: item.minLevel }) : tn('clan2.shop.bought')}</span>
                 )
               ) : locked ? (
                 <span className="c2-shop-lock">
@@ -122,8 +123,10 @@ export function ShopTab() {
                     <rect x="5" y="11" width="14" height="10" rx="2" />
                     <path d="M8 11V8a4 4 0 0 1 8 0v3" />
                   </svg>
-                  {tn('clan2.shop.fromLevel', { n: item.minLevel })}
+                  {item.reward ? tn('clan2.shop.onlyLevel', { n: item.minLevel }) : tn('clan2.shop.fromLevel', { n: item.minLevel })}
                 </span>
+              ) : item.reward ? (
+                <span className="c2-shop-state">{tn('clan2.shop.reward', { n: item.minLevel })}</span>
               ) : manage ? (
                 <button className="btn-secondary shop-price-btn" onClick={() => setOpen(item)}>
                   <CoinIcon size={16} />
@@ -137,7 +140,7 @@ export function ShopTab() {
               <button className="challenge-swap-btn" onClick={() => setOpen(item)}>
                 {tn('shop.tryOn')}
               </button>
-              {manage && !owned && (isGoal ? <span className="c2-shop-goal-tag">{tn('clan2.shop.isGoal')}</span> : <button className="challenge-swap-btn" onClick={() => act(setGoal(item.id), 'goalSet')}>{tn('clan2.shop.setGoal')}</button>)}
+              {manage && !owned && !item.reward && (isGoal ? <span className="c2-shop-goal-tag">{tn('clan2.shop.isGoal')}</span> : <button className="challenge-swap-btn" onClick={() => act(setGoal(item.id), 'goalSet')}>{tn('clan2.shop.setGoal')}</button>)}
             </div>
           )
         })}
@@ -155,7 +158,7 @@ function TryOn({ item, onDone }: { item: GoalItem; onDone: () => void }) {
   const s = useDemoState()
   const { act } = useC2()
   const manage = canManage(s)
-  const owned = s.owned.includes(item.id)
+  const owned = hasItem(s, item.id)
   const worn = equippedOf(s, item)
   const locked = !owned && s.clan.level < item.minLevel
   const isGoal = s.treasury.goalId === item.id
@@ -174,15 +177,18 @@ function TryOn({ item, onDone }: { item: GoalItem; onDone: () => void }) {
         )}
       </div>
       <p className="c2-tryon-what">{tn(`clan2.shop.what_${item.kind}` as TKey)}</p>
+      {item.reward && <p className="c2-hint">{tn('clan2.shop.rewardFree', { n: item.minLevel })}</p>}
       <div className="c2-tryon-facts">
-        <span className="challenge-fact">
-          {tn('clan2.shop.price')}
-          <b>
-            <C2Coins n={item.cost} />
-          </b>
-        </span>
-        <span className={`challenge-fact${locked ? '' : ' c2-fact-ok'}`}>{tn('clan2.shop.fromLevel', { n: item.minLevel })}</span>
-        {owned && <span className="challenge-fact c2-fact-ok">{worn ? tn('clan2.shop.worn') : tn('clan2.shop.bought')}</span>}
+        {!item.reward && (
+          <span className="challenge-fact">
+            {tn('clan2.shop.price')}
+            <b>
+              <C2Coins n={item.cost} />
+            </b>
+          </span>
+        )}
+        <span className={`challenge-fact${locked ? '' : ' c2-fact-ok'}`}>{item.reward ? tn('clan2.shop.onlyLevel', { n: item.minLevel }) : tn('clan2.shop.fromLevel', { n: item.minLevel })}</span>
+        {owned && <span className="challenge-fact c2-fact-ok">{worn ? tn('clan2.shop.worn') : item.reward ? tn('clan2.shop.reward', { n: item.minLevel }) : tn('clan2.shop.bought')}</span>}
       </div>
       {manage ? (
         <>
@@ -196,7 +202,7 @@ function TryOn({ item, onDone }: { item: GoalItem; onDone: () => void }) {
                 {tn('clan2.shop.wear')}
               </button>
             )
-          ) : (
+          ) : item.reward ? null : (
             <>
               <button className="btn-primary" disabled={siegeLocked(s) || locked || short > 0} onClick={() => act(buyItem(item.id), 'bought') && onDone()}>
                 {siegeLocked(s) ? tn('clan2.siegeLock.btn') : locked ? tn('clan2.base.levelLow', { n: item.minLevel }) : short > 0 ? tn('clan2.base.missing', { n: fmt(short) }) : tn('clan2.shop.buyFor', { n: fmt(item.cost) })}

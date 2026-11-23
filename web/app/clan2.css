@@ -1074,7 +1074,7 @@
 .art-stage-map.art-marker{height:150px; align-items:center;}
 .art-marker > *{position:relative !important; transform:none !important;}
 .art-matrix{display:flex; flex-direction:column; gap:6px; overflow-x:auto; padding-bottom:4px;}
-.art-matrix-row{display:grid; grid-template-columns:76px repeat(5, minmax(108px, 1fr)); gap:6px; align-items:center; min-width:640px;}
+.art-matrix-row{display:grid; grid-template-columns:76px repeat(6, minmax(108px, 1fr)); gap:6px; align-items:center; min-width:760px;}
 .art-matrix-row > span{font-size:13px; font-weight:700;}
 .art-matrix-head b{display:flex; flex-direction:column; align-items:center; font-size:12.5px; text-align:center;}
 .art-matrix-head small{font-weight:600; color:var(--ink-soft);}

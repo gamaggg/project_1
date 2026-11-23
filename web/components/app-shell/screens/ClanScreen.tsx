@@ -408,7 +408,7 @@ export function ClanScreen({
 
   return (
     <div ref={rootRef} className="clan-screen" onClick={() => menuFor && setMenuFor(null)}>
-      <ClanHero crest={clan.crest} name={clan.name} motto={clan.motto} background={clan.background} golden={clan.level >= 10} top={headerTop} frame={heroFrame}>
+      <ClanHero crest={clan.crest} name={clan.name} motto={clan.motto} background={clan.background} top={headerTop} frame={heroFrame}>
         <div className="clan-chips">
           <button type="button" className="clan-chip tap-scale" onClick={() => setInfo('level')} aria-label={tn('clan.levelAria')}>
             {tn('guest.level', { level: clan.level })}

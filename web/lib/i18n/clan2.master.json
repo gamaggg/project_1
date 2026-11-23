@@ -3217,6 +3217,21 @@
    "en": "From clan level {n}",
    "ka": "კლანის {n} დონიდან"
   },
+  "onlyLevel": {
+   "ru": "Только с {n} уровнем клана",
+   "en": "Only at clan level {n}",
+   "ka": "მხოლოდ კლანის {n} დონიდან"
+  },
+  "reward": {
+   "ru": "Награда за {n} уровень",
+   "en": "Reward for level {n}",
+   "ka": "ჯილდო {n} დონისთვის"
+  },
+  "rewardFree": {
+   "ru": "Не продаётся: клан получает её бесплатно, когда дойдёт до {n} уровня.",
+   "en": "Not for sale: the clan gets it free on reaching level {n}.",
+   "ka": "არ იყიდება: კლანი მას უფასოდ მიიღებს {n} დონეზე."
+  },
   "isGoal": {
    "ru": "Цель общака",
    "en": "Treasury goal",
@@ -3327,6 +3342,11 @@
     "ru": "Легендарная",
     "en": "Legendary",
     "ka": "ლეგენდარული"
+   },
+   "frame_champion": {
+    "ru": "Чемпионская",
+    "en": "Champion",
+    "ka": "ჩემპიონის"
    }
   }
  },

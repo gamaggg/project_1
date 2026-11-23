@@ -354,7 +354,7 @@ export const FAQ_EN: FaqSection[] = [
           [
             'Sector skins: the same 18 skins the players have, five times dearer: from 1 500 to 15 000 coins. The skin lies on every clan sector on the «Clans» layer, in the crest\'s colour.',
             'Boats for the clan battle: «Coral» 3 000 (from clan level 2), «Night» 4 500 (from 4), «Golden» 6 000 (from 5), «Dragon» 9 000 (from 7). Each boat has its own details: shells and a starfish, stars and lanterns, a crown and sparks; the «Dragon» hull is the dragon\'s body itself: the neck with the head at the bow, the tail at the stern.',
-            'Frames round the crest on the clan screen, in the crest\'s own shape: «Bronze» 2 000 (from level 2), «Silver» 4 000 (from 4), «Gold» 7 000 (from 6), «Legendary» 12 000 (from 8). The inner edge always follows the crest; the gold one has a laurel wreath and a crown, the legendary one wings and a star.',
+            'Frames round the crest on the clan screen, in the crest\'s own shape: «Bronze» 2 000 (from level 2), «Silver» 4 000 (from 4), «Gold» 7 000 (from 6), «Legendary» 12 000 (from 8). The inner edge always follows the crest; the gold one has a laurel wreath and a crown, the legendary one wings and a star. The «Champion» frame can\'t be bought: the clan gets it free at level 10, and the leader or a co-leader puts it on in the shop. It has turning gold rays, a golden glow, pearls along the edge and sparks.',
           ],
           'What is bought is put on at once; you can take it off or put on something else you bought at any time. «Try on» shows the skin on the map, the boat on the water, the frame on the clan banner. While the treasury is short, the buy button is off.',
         ],

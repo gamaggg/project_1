@@ -2028,7 +2028,7 @@ export const ru = {
     perkSymbols: 'Символы: {list}',
     perkBackgrounds: 'Фон: {list}',
     perkBasic: 'Базовые формы, символы и фоны герба',
-    perkGold: 'Золотая рамка герба',
+    perkReward: 'Рамка «{name}» в подарок',
     level: 'Уровень {level}',
     xpMax: 'Максимальный уровень · {xp} опыта',
     xpTo: '{xp} из {to} опыта до уровня {next}',

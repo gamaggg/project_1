@@ -2022,7 +2022,7 @@ export const en: Dict = {
     perkSymbols: 'Symbols: {list}',
     perkBackgrounds: 'Background: {list}',
     perkBasic: 'Basic crest shapes, symbols and backgrounds',
-    perkGold: 'Golden crest frame',
+    perkReward: 'The «{name}» frame as a gift',
     level: 'Level {level}',
     xpMax: 'Maximum level · {xp} XP',
     xpTo: '{xp} of {to} XP to level {next}',

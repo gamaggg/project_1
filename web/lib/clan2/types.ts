@@ -58,6 +58,8 @@ export type GoalItem = {
   cost: number
   // The clan level that opens it.
   minLevel: number
+  // Not sold: the clan gets it free on reaching `minLevel` (the champion's frame, level 10).
+  reward?: boolean
 }
 
 export type BuffPhase = 'idle' | 'planned' | 'active' | 'cooldown'

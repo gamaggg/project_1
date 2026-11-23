@@ -695,6 +695,9 @@ export const clan2Ru = {
     wear: "Надеть",
     bought: "Куплено",
     fromLevel: "С уровня клана {n}",
+    onlyLevel: "Только с {n} уровнем клана",
+    reward: "Награда за {n} уровень",
+    rewardFree: "Не продаётся: клан получает её бесплатно, когда дойдёт до {n} уровня.",
     isGoal: "Цель общака",
     setGoal: "Поставить как цель",
     clearGoal: "Убрать из цели",
@@ -718,6 +721,7 @@ export const clan2Ru = {
       frame_silver: "Серебряная",
       frame_gold: "Золотая",
       frame_legend: "Легендарная",
+      frame_champion: "Чемпионская",
     },
   },
   cap: {

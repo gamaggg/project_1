@@ -6,6 +6,7 @@ import { RaceBoat } from '@/components/app-shell/RaceBoat'
 import { SkinPreview } from '@/components/app-shell/SkinPreview'
 import type { GoalItem } from '@/lib/clan2/types'
 import { crestShape, resolveCrest } from '@/lib/data/clanCrests'
+import { frameGeometry } from '@/lib/data/crestGeometry'
 
 // The things the clan shop sells, drawn the way the game shows them: a sector skin as a sector in the clan's colour,
 // a boat as the clan battle's boat in the new colours, a frame round the clan's crest.
@@ -19,12 +20,14 @@ export { itemName } from '@/lib/clan2/itemName'
 // is a laurel wreath closing round the crest with a crown on top, the legendary a pair of wings and a star over the
 // crest. It is drawn round the crest, so the crest keeps its own size and place: `size` is the crest's
 // box.
-type FrameLook = { a: string; b: string; c: string; studs: string; double?: boolean; glow?: string; outline?: 'laurel' | 'wings' }
+type FrameLook = { a: string; b: string; c: string; studs: string; double?: boolean; glow?: string; outline?: 'laurel' | 'wings' | 'rays' }
 const FRAME_LOOK: Record<string, FrameLook> = {
   frame_bronze: { a: '#F6C995', b: '#B8743F', c: '#6E4020', studs: '#FFE3C2' },
   frame_silver: { a: '#FFFFFF', b: '#B7C0CC', c: '#5F6977', studs: '#FFFFFF', double: true },
   frame_gold: { a: '#FFF3B8', b: '#E0A63A', c: '#7F5205', studs: '#FFF7D6', outline: 'laurel' },
   frame_legend: { a: '#FFE7A0', b: '#E0447B', c: '#4E2475', studs: '#FFF3C0', glow: '#FFB547', outline: 'wings' },
+  // Not sold: the clan gets it at level 10 (lib/clan2/rules.ts, `reward`).
+  frame_champion: { a: '#FFF8D6', b: '#F4B63E', c: '#5A2E00', studs: '#FFF4CC', double: true, glow: '#FFC83D', outline: 'rays' },
 }
 // The band round a 100 x 100 crest: the crest's outline grown about its middle.
 const BAND = 'translate(50 50) scale(1.15) translate(-50 -50)'
@@ -33,7 +36,7 @@ const OUTER = 'translate(50 50) scale(1.24) translate(-50 -50)'
 // what is under it.
 export const frameRoom = (id: string | null | undefined) => (id && FRAME_LOOK[id]?.outline ? 0.3 : 0.2)
 // How wide the frame is next to the crest's box (the wings spread out).
-export const frameSpan = (id: string | null | undefined) => (id && FRAME_LOOK[id]?.outline === 'wings' ? 1.95 : id && FRAME_LOOK[id]?.outline ? 1.55 : 1.4)
+export const frameSpan = (id: string | null | undefined) => (id && FRAME_LOOK[id]?.outline === 'wings' ? 1.95 : id && FRAME_LOOK[id]?.outline === 'rays' ? 1.7 : id && FRAME_LOOK[id]?.outline ? 1.55 : 1.4)
 // Rivets: 24 round dots of a dashed line over the band's whole length (pathLength makes the length 96 for any shape),
 // so they stand evenly all the way round, the join included.
 const RIVETS = 24
@@ -123,12 +126,59 @@ function Star({ fill, edge }: { fill: string; edge: string }) {
   return <polygon points={p} fill={fill} stroke={edge} strokeWidth={1.4} strokeLinejoin="round" />
 }
 
+// The champion's frame (clan level 10): a sunburst of gold rays turning slowly behind the crest over a golden halo that
+// breathes, a double band with pearl studs and sparks twinkling round it. The motion
+// is CSS (.c2-frame_champion in globals.css) and stops for reduced motion.
+function Rays({ fill, edge }: { fill: string; edge: string }) {
+  const rays: ReactNode[] = []
+  const N = 16
+  for (let i = 0; i < N; i++) {
+    const deg = (i * 360) / N
+    const long = i % 2 === 0
+    // A ray starts deep behind the crest (r 18) and widens to its shoulder (r 54) before narrowing to the tip, so on
+    // any shape — a notch, a merlon, a wave — it comes out from under the frame, never from the air.
+    const r1 = long ? 84 : 72
+    const w = long ? 7 : 5
+    rays.push(<path key={i} d={`M ${50 - w * 0.35} 32 L ${50 - w} -4 L 50 ${50 - r1} L ${50 + w} -4 L ${50 + w * 0.35} 32 Z`} transform={`rotate(${deg} 50 50)`} fill={fill} stroke={edge} strokeWidth={0.8} strokeLinejoin="round" opacity={long ? 0.95 : 0.7} />)
+  }
+  return <g className="c2-frame-rays">{rays}</g>
+}
+
+// Studs for the champion's band: round pearls set by frameGeometry — one in every corner, the same gaps between.
+function Studs({ points, fill, edge }: { points: { x: number; y: number }[]; fill: string; edge: string }) {
+  return (
+    <g>
+      {points.map((p, i) => (
+        <g key={i}>
+          <circle cx={p.x} cy={p.y} r={2.5} fill={fill} stroke={edge} strokeWidth={0.9} />
+          <circle cx={p.x - 0.7} cy={p.y - 0.7} r={0.8} fill="#FFFFFF" opacity={0.9} />
+        </g>
+      ))}
+    </g>
+  )
+}
+
+// A four-pointed spark.
+function Spark({ x, y, r, delay }: { x: number; y: number; r: number; delay: number }) {
+  const k = r * 0.28
+  return (
+    <path
+      className="c2-frame-spark"
+      style={{ animationDelay: `${delay}s`, transformOrigin: `${x}px ${y}px` }}
+      d={`M ${x} ${y - r} Q ${x + k} ${y - k} ${x + r} ${y} Q ${x + k} ${y + k} ${x} ${y + r} Q ${x - k} ${y + k} ${x - r} ${y} Q ${x - k} ${y - k} ${x} ${y - r} Z`}
+      fill="#FFFFFF"
+    />
+  )
+}
+
 export function ClanFrame({ id, size, crest, children }: { id: string | null | undefined; size: number; crest: unknown; children: ReactNode }) {
   const look = id ? FRAME_LOOK[id] : null
   if (!look) return <>{children}</>
   const uid = `${id!.replace(/[^a-z]/g, '')}${size}`
   const d = crestShape(resolveCrest(crest).shape).d
   const metal = `url(#c2f-${uid})`
+  // The champion's frame sets its studs by the crest's own outline.
+  const geo = look.outline === 'rays' ? frameGeometry(d, 1.15, 12) : null
   return (
     // The same room above and below as the frame takes, so it never runs into the name under it.
     <span className={`c2-frame c2-${id}`} style={{ width: size, height: size, margin: `${Math.round(size * frameRoom(id))}px 0` }}>
@@ -139,8 +189,33 @@ export function ClanFrame({ id, size, crest, children }: { id: string | null | u
             <stop offset=".45" stopColor={look.b} />
             <stop offset="1" stopColor={look.c} />
           </linearGradient>
+          {look.outline === 'rays' && (
+            <>
+              <radialGradient id={`c2h-${uid}`} cx="50" cy="50" r="86" gradientUnits="userSpaceOnUse">
+                <stop offset=".35" stopColor={look.glow} stopOpacity={0.6} />
+                <stop offset=".6" stopColor={look.glow} stopOpacity={0.28} />
+                <stop offset=".82" stopColor={look.b} stopOpacity={0.08} />
+                <stop offset="1" stopColor={look.b} stopOpacity={0} />
+              </radialGradient>
+              {/* A wide region in the picture's own units, so the blur fades out instead of being cut off at an edge. */}
+              <filter id={`c2b-${uid}`} filterUnits="userSpaceOnUse" x="-60" y="-60" width="220" height="220">
+                <feGaussianBlur stdDeviation="6" />
+              </filter>
+            </>
+          )}
         </defs>
-        {look.glow && <path className="c2-frame-glow" d={d} transform={BAND} fill="none" stroke={look.glow} strokeWidth={16} strokeLinejoin="round" opacity={0.35} />}
+        {look.outline === 'rays' && (
+          <>
+            <circle className="c2-frame-halo" cx={50} cy={50} r={86} fill={`url(#c2h-${uid})`} />
+            {/* The rays' own light: a blurred golden copy under them, turning with them. */}
+            <g filter={`url(#c2b-${uid})`} opacity={0.6}>
+              <Rays fill={look.glow!} edge={look.glow!} />
+            </g>
+            <Rays fill={metal} edge={look.c} />
+            <path className="c2-frame-glow" d={d} transform={BAND} fill="none" stroke={look.glow} strokeWidth={14} strokeLinejoin="round" filter={`url(#c2b-${uid})`} />
+          </>
+        )}
+        {look.glow && look.outline !== 'rays' && <path className="c2-frame-glow" d={d} transform={BAND} fill="none" stroke={look.glow} strokeWidth={16} strokeLinejoin="round" opacity={0.35} />}
         {/* The outline of its own, behind the band: the wreath or the wings. */}
         {look.outline === 'laurel' && <Laurel fill={metal} edge={look.c} />}
         {look.outline === 'wings' && <Wings fill={metal} edge={look.c} light={look.a} />}
@@ -150,11 +225,26 @@ export function ClanFrame({ id, size, crest, children }: { id: string | null | u
         <path d={d} transform={BAND} fill="none" stroke={look.a} strokeOpacity={0.55} strokeWidth={1.3} strokeLinejoin="round" />
         {look.double && <path d={d} transform={OUTER} fill="none" stroke={metal} strokeWidth={2.2} strokeLinejoin="round" opacity={0.9} />}
         {/* Rivets, evenly along the band. */}
-        <path d={d} transform={BAND} pathLength={RIVETS * 4} fill="none" stroke={look.c} strokeWidth={5.2} strokeLinecap="round" strokeDasharray="0 4" />
-        <path d={d} transform={BAND} pathLength={RIVETS * 4} fill="none" stroke={look.studs} strokeWidth={3.4} strokeLinecap="round" strokeDasharray="0 4" />
+        {geo ? (
+          <Studs points={geo.studs} fill={look.studs} edge={look.c} />
+        ) : (
+          <>
+            <path d={d} transform={BAND} pathLength={RIVETS * 4} fill="none" stroke={look.c} strokeWidth={5.2} strokeLinecap="round" strokeDasharray="0 4" />
+            <path d={d} transform={BAND} pathLength={RIVETS * 4} fill="none" stroke={look.studs} strokeWidth={3.4} strokeLinecap="round" strokeDasharray="0 4" />
+          </>
+        )}
         {/* On top of the band: the gold crown, the legendary star. */}
         {look.outline === 'laurel' && <Crown fill={metal} edge={look.c} gem={look.studs} />}
         {look.outline === 'wings' && <Star fill={metal} edge={look.c} />}
+        {look.outline === 'rays' && (
+          <>
+            <Spark x={-6} y={14} r={6} delay={0} />
+            <Spark x={108} y={30} r={5} delay={0.7} />
+            <Spark x={100} y={104} r={6.5} delay={1.4} />
+            <Spark x={-2} y={92} r={4.5} delay={2.1} />
+            <Spark x={84} y={-10} r={4} delay={1.05} />
+          </>
+        )}
       </svg>
       <span className="c2-frame-in">{children}</span>
     </span>

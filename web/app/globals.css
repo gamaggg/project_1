@@ -3249,6 +3249,20 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .c2-frame_legend .c2-frame-glow{animation:c2-frame-glow 2.8s ease-in-out infinite;}
 @keyframes c2-frame-glow{0%,100%{opacity:.18}50%{opacity:.5}}
 @media (prefers-reduced-motion: reduce){.c2-frame_legend .c2-frame-glow{animation:none;}}
+/* The champion's frame (clan level 10): rays turning, the halo and the glow breathing, the sparks
+   twinkling. */
+.c2-frame_champion .c2-frame-rays{transform-box:view-box; transform-origin:50px 50px; animation:c2-frame-spin 26s linear infinite;}
+.c2-frame_champion .c2-frame-halo{transform-box:view-box; transform-origin:50px 50px; animation:c2-frame-halo 3.2s ease-in-out infinite;}
+.c2-frame_champion .c2-frame-glow{animation:c2-frame-champ-glow 2.4s ease-in-out infinite;}
+.c2-frame_champion .c2-frame-spark{transform-box:view-box; opacity:0; animation:c2-frame-spark 2.8s ease-in-out infinite;}
+@keyframes c2-frame-spin{to{transform:rotate(360deg)}}
+@keyframes c2-frame-halo{0%,100%{opacity:.55; transform:scale(.94)}50%{opacity:1; transform:scale(1.04)}}
+@keyframes c2-frame-champ-glow{0%,100%{opacity:.3}50%{opacity:.7}}
+@keyframes c2-frame-spark{0%,100%{opacity:0; transform:scale(.3)}45%{opacity:1; transform:scale(1)}70%{opacity:0; transform:scale(.5)}}
+@media (prefers-reduced-motion: reduce){
+  .c2-frame_champion .c2-frame-rays,.c2-frame_champion .c2-frame-halo,.c2-frame_champion .c2-frame-glow{animation:none;}
+  .c2-frame_champion .c2-frame-spark{animation:none; opacity:.8;}
+}
 
 /* ---------- Clan hero (see ClanHero.tsx) ---------- */
 .clan-hero{

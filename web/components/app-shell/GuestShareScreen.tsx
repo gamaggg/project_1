@@ -355,7 +355,7 @@ function CatchBody({ c, onLocked }: { c: CatchPreview; onLocked: (what: string) 
 function ClanBody({ c, onLocked }: { c: ClanPreview; onLocked: (what: string) => () => void }) {
   return (
     <>
-      <ClanHero crest={c.crest} name={c.name} motto={c.motto} background={c.background} golden={c.level >= 10}>
+      <ClanHero crest={c.crest} name={c.name} motto={c.motto} background={c.background}>
         <div className="clan-chips">
           <span className="clan-chip">{tn('guest.level', { level: c.level })}</span>
           <span className="clan-chip">{tn('guest.trophies', { count: c.trophies })}</span>

@@ -9,13 +9,14 @@ import { KIND_LABEL } from '@/lib/data/species'
 import { sectorCapturer } from '@/lib/data/sectorHolders'
 import { tn } from '@/lib/i18n/runtime'
 import { BUILD_CLAN_LEVEL, SHOP_ITEMS, fmt, treasuryCap } from '@/lib/clan2/rules'
+import { itemName } from '@/lib/clan2/itemName'
 import type { ClanDetail } from '@/lib/data/types'
 
 export type ClanInfoKind = 'level' | 'league' | 'sectors' | 'race'
 
 // What a clan level brings: more members, new crest shapes, symbols and
-// backgrounds (the same `level` fields the editor locks by), the golden
-// crest frame at the top. Numbers match public._clan_capacity/_clan_level.
+// backgrounds (the same `level` fields the editor locks by), the champion's
+// frame at the top (a reward item of the clan shop). Numbers match public._clan_capacity/_clan_level.
 // clan2: the clan update is on — a level also raises the treasury's cap, opens the next level of the base's
 // buildings and items of the clan shop (lib/clan2/rules.ts).
 function levelPerks(level: number, clan2 = false): string[] {
@@ -33,13 +34,14 @@ function levelPerks(level: number, clan2 = false): string[] {
   } else {
     perks.push(tn('clanInfo.perkBasic'))
   }
-  if (level === 10) perks.push(tn('clanInfo.perkGold'))
+  // Level 10: the champion's frame (not sold, given). Shown whether the clan update is on or not.
+  for (const x of SHOP_ITEMS) if (x.reward && x.minLevel === level) perks.push(tn('clanInfo.perkReward', { name: itemName(x.id) }))
   if (clan2) {
     const cap = treasuryCap(level, 0)
     if (level === 1 || cap > treasuryCap(level - 1, 0)) perks.push(tn('clan2.levels.cap', { n: fmt(cap) }))
     const build = BUILD_CLAN_LEVEL.indexOf(level as 2 | 4 | 6)
     if (build >= 0) perks.push(tn('clan2.levels.build', { n: build + 1 }))
-    const items = SHOP_ITEMS.filter((x) => x.minLevel === level).length
+    const items = SHOP_ITEMS.filter((x) => x.minLevel === level && !x.reward).length
     if (items > 0) perks.push(tn('clan2.levels.shop', { count: items }))
   }
   return perks

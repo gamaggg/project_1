@@ -695,6 +695,9 @@ export const clan2Ka = {
     wear: "გამოყენება",
     bought: "ნაყიდია",
     fromLevel: "კლანის {n} დონიდან",
+    onlyLevel: "მხოლოდ კლანის {n} დონიდან",
+    reward: "ჯილდო {n} დონისთვის",
+    rewardFree: "არ იყიდება: კლანი მას უფასოდ მიიღებს {n} დონეზე.",
     isGoal: "სალაროს მიზანი",
     setGoal: "მიზნად დაყენება",
     clearGoal: "მიზნის მოხსნა",
@@ -718,6 +721,7 @@ export const clan2Ka = {
       frame_silver: "ვერცხლის",
       frame_gold: "ოქროს",
       frame_legend: "ლეგენდარული",
+      frame_champion: "ჩემპიონის",
     },
   },
   cap: {

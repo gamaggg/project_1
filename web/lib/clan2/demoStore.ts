@@ -473,10 +473,17 @@ export function setGoal(id: string | null): Result {
       return
     }
     const wanted = shopItem(id)
-    if (!wanted) return no('noGoal')
+    if (!wanted || wanted.reward) return no('noGoal')
     if (d.owned.includes(wanted.id)) return no('owned')
     d.treasury.goalId = wanted.id
   })
+}
+
+// The clan has the item: bought, or a reward of a level the clan has reached (the champion's frame at 10).
+export function hasItem(s: DemoState, id: string): boolean {
+  if (s.owned.includes(id)) return true
+  const item = shopItem(id)
+  return !!item?.reward && s.clan.level >= item.minLevel
 }
 
 // Puts an owned item on (or takes the kind off with null).
@@ -495,7 +502,7 @@ export function buyItem(id: string): Result {
   return mutate((d) => {
     if (!canManage(d)) return no('notManager')
     const item = shopItem(id)
-    if (!item) return no('noGoal')
+    if (!item || item.reward) return no('noGoal')
     if (d.owned.includes(item.id)) return no('owned')
     if (d.clan.level < item.minLevel) return no('levelLow')
     if (d.treasury.balance < item.cost) return no('notEnough')
@@ -518,7 +525,7 @@ export function equipItem(kind: GoalItem['kind'], id: string | null): Result {
   if (server) return srv('clan_shop_equip', { p_kind: kind, p_item: id })
   return mutate((d) => {
     if (!canManage(d)) return no('notManager')
-    if (id && !d.owned.includes(id)) return no('notOwned')
+    if (id && !hasItem(d, id)) return no('notOwned')
     wear(d, kind, id)
   })
 }
