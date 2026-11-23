@@ -1,6 +1,6 @@
 import type { Lang } from '@/lib/i18n/core'
 
-// The sales pages for shops (/partners/batumi, /partners/moscow, each with /en and, for Batumi, /ka): what a local
+// The sales pages for shops (/partners/batumi in Georgian with /ru and /en, /partners/moscow in Russian with /en): what a local
 // fishing shop gets from RANGE and what it costs. Sent by link to shop owners,
 // so it is not in the sitemap and asks search engines to skip it.
 // The three texts (partners.{ru,en,ka}.ts) are the Batumi page; partners.moscow.ts only
@@ -9,10 +9,13 @@ import type { Lang } from '@/lib/i18n/core'
 export type PartnerCity = 'batumi' | 'moscow'
 
 // One page per city, the same page in the city's languages: Batumi in Russian, English and
-// Georgian, Moscow in Russian and English (/partners/<city>, /partners/<city>/en, /partners/<city>/ka).
+// Georgian, Moscow in Russian and English. The city's default language lives at /partners/<city>, the others
+// at /partners/<city>/<lang>. Batumi opens in Georgian (owner's decision 23.11.2026), Moscow in Russian.
 export const PARTNER_CITY_LANGS: Record<PartnerCity, Lang[]> = { batumi: ['ru', 'en', 'ka'], moscow: ['ru', 'en'] }
+export const PARTNER_DEFAULT_LANG: Record<PartnerCity, Lang> = { batumi: 'ka', moscow: 'ru' }
 
-export const partnersPath = (city: PartnerCity, lang: Lang) => `/partners/${city}${lang === 'ru' ? '' : `/${lang}`}`
+export const partnersPath = (city: PartnerCity, lang: Lang) =>
+  `/partners/${city}${lang === PARTNER_DEFAULT_LANG[city] ? '' : `/${lang}`}`
 
 // Where a shop owner's message goes. Filled in by the owner before the link is
 // sent out; an empty value hides that way of reaching us.
@@ -21,10 +24,15 @@ export const PARTNER_CONTACTS = {
   phone: '+995 595 509 668',
 }
 
-// Figures from the database on 31.10.2026 (380 registered, not blocked; 186 of them in Batumi and 194 in Moscow
-// and the region, so «180+» is true on both pages; 991 catches, 657 of them by players without admins; 5 cities).
-// Rounded down with a plus. Update before a new wave of outreach.
-export const PARTNER_STATS = { players: '380+', city: '180+', catches: '650+', cities: '5' }
+// Figures from the database on 23.11.2026 (404 registered, not blocked; 197 of them in Batumi and 204 in Moscow
+// and the region; Batumi shows «200+» by the owner's decision of 23.11.2026, three short of 200; 1 734 catches, admins' included (owner's decision 23.11.2026);
+// 12 cities in the game). Rounded down with a plus. Update before a new wave of outreach.
+export const PARTNER_STATS = {
+  players: '400+',
+  city: { batumi: '200+', moscow: '200+' } as Record<PartnerCity, string>,
+  catches: '1\u00A0700+',
+  cities: '12',
+}
 
 // Monthly prices in the city's currency; the first 10 days are free. Two plans (decided 02.11.2026): Старт is the
 // pin and the promo code, Партнёр is Старт plus one week a month as the sponsor of the weekly prize.

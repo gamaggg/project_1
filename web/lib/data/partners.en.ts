@@ -15,7 +15,7 @@ export const PARTNERS_EN: PartnersDoc = {
   pilot: 'Launching in Batumi. The first 10 days are free: we put you on the map and show how anglers find you.',
   stats: [
     { value: PARTNER_STATS.players, label: 'registered' },
-    { value: PARTNER_STATS.city, label: 'of them in Batumi' },
+    { value: PARTNER_STATS.city.batumi, label: 'of them in Batumi' },
     { value: PARTNER_STATS.catches, label: 'catches on the map' },
     { value: PARTNER_STATS.cities, label: 'cities' },
   ],

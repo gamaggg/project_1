@@ -1,7 +1,6 @@
-import { PartnersView, partnersMetadata } from '../../PartnersView'
+import { permanentRedirect } from 'next/navigation'
 
-export const metadata = partnersMetadata('ka', 'batumi')
-
+// Georgian is the Batumi page's default since 23.11.2026; old /ka links land on /partners/batumi.
 export default function PartnersBatumiKaPage() {
-  return <PartnersView lang="ka" city="batumi" />
+  permanentRedirect('/partners/batumi')
 }

@@ -15,7 +15,7 @@ export const PARTNERS_KA: PartnersDoc = {
   pilot: 'ვიწყებთ ბათუმში. პირველი 10 დღე უფასოა: რუკაზე დაგამატებთ და გაჩვენებთ, როგორ გპოულობენ მეთევზეები.',
   stats: [
     { value: PARTNER_STATS.players, label: 'რეგისტრირებული' },
-    { value: PARTNER_STATS.city, label: 'მათგან ბათუმში' },
+    { value: PARTNER_STATS.city.batumi, label: 'მათგან ბათუმში' },
     { value: PARTNER_STATS.catches, label: 'დაჭერა რუკაზე' },
     { value: PARTNER_STATS.cities, label: 'ქალაქი' },
   ],

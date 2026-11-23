@@ -1,5 +1,5 @@
 import type { Lang } from '@/lib/i18n/core'
-import type { PartnerCity, PartnersDoc } from '@/lib/data/partners.shared'
+import { PARTNER_STATS, type PartnerCity, type PartnersDoc } from '@/lib/data/partners.shared'
 import { PARTNERS_RU } from '@/lib/data/partners.ru'
 import { PARTNERS_EN } from '@/lib/data/partners.en'
 import { PARTNERS_KA } from '@/lib/data/partners.ka'
@@ -22,7 +22,7 @@ export function partnersDoc(lang: Lang, city: PartnerCity): PartnersDoc {
     pilot: o.pilot,
     sheet: { ...base.sheet, address: o.address },
     prizeCost: o.prizeCost,
-    stats: base.stats.map((s, i) => (i === 1 ? { ...s, label: o.cityStatLabel } : s)),
+    stats: base.stats.map((s, i) => (i === 1 ? { value: PARTNER_STATS.city.moscow, label: o.cityStatLabel } : s)),
     demo: {
       ...base.demo,
       shop: { ...base.demo.shop, dist: o.shopDist },

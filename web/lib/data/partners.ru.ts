@@ -15,7 +15,7 @@ export const PARTNERS_RU: PartnersDoc = {
   pilot: 'Запускаем в Батуми. Первые 10 дней бесплатно: добавим вас на карту и покажем, как рыбаки вас находят.',
   stats: [
     { value: PARTNER_STATS.players, label: 'зарегистрировано' },
-    { value: PARTNER_STATS.city, label: 'из них в Батуми' },
+    { value: PARTNER_STATS.city.batumi, label: 'из них в Батуми' },
     { value: PARTNER_STATS.catches, label: 'уловов на карте' },
     { value: PARTNER_STATS.cities, label: 'городов' },
   ],
