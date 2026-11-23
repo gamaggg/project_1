@@ -29,6 +29,7 @@ import {
   useClanChatSummary,
   useClanInviteCode,
   useAdminSetClanExtraSlots,
+  useClanFrames,
   type ClanModerationAction,
 } from '@/lib/supabase/queries'
 import { forgetClanInvite } from '@/lib/guestShare'
@@ -246,6 +247,10 @@ export function ClanScreen({
   const liveUi = useLiveUi()
   const c2 = clan2On && isMember && !!clan && demo.live?.clanId === clan.id
   const c2Admin = c2 && demo.persona === 'admin'
+  // The frame round the crest: every viewer sees the one the clan wears (the same table as the clan lists); the
+  // clan's own members with the clan update loaded see their own state, so a frame just put on shows at once.
+  const { data: clanFrames = {} } = useClanFrames()
+  const heroFrame = c2 && demo.equipped ? demo.equipped.frame : clan ? clanFrames[clan.id] ?? null : null
   // With the clan update on, the screen opens on its first section («Штаб» on the map asks for its own).
   const tab: Tab = tabPicked ?? (c2 ? ((liveUi.clanTab as Tab | null) ?? 'treasury') : 'members')
   function setTab(next: Tab) {
@@ -403,7 +408,7 @@ export function ClanScreen({
 
   return (
     <div ref={rootRef} className="clan-screen" onClick={() => menuFor && setMenuFor(null)}>
-      <ClanHero crest={clan.crest} name={clan.name} motto={clan.motto} background={clan.background} golden={clan.level >= 10} top={headerTop} frame={c2 ? demo.equipped?.frame : null}>
+      <ClanHero crest={clan.crest} name={clan.name} motto={clan.motto} background={clan.background} golden={clan.level >= 10} top={headerTop} frame={heroFrame}>
         <div className="clan-chips">
           <button type="button" className="clan-chip tap-scale" onClick={() => setInfo('level')} aria-label={tn('clan.levelAria')}>
             {tn('guest.level', { level: clan.level })}
