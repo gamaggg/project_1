@@ -29,10 +29,89 @@ function likersSummary(likers: ProfileSummary[]): string {
 }
 
 const PHOTO_ZOOM = 1.12
-// The two blurred copies are drawn this many times smaller and stretched back: a blur is a buffer the size of what is
-// blurred, and full-size copies on all three pages of the slider were enough for iOS to run out of graphics memory in
-// Telegram (01.11, 02.11). Under the blur the picture looks the same (measured: 21 MB of the page's 49 MB gone).
+// The two blurred copies (the fill around the photo and the soft band under the facts) are drawn once into small canvases
+// this many times smaller than the screen and stretched back. They used to be <img>s with a CSS blur and mask: iOS gives
+// each such element its own full-screen graphics layer at three pixels per point, and three pages of them (the current one
+// and both neighbours, made anew on every page turn) ran Telegram out of graphics memory — first the bottom menu lost its
+// background, the next swipe dropped the whole page to black (22.11). A canvas is a layer only as big as its own pixels
+// (~100 KB here); under a blur the picture looks the same.
 const BLUR_SHRINK = 4
+
+type Size = { w: number; h: number }
+type Rect = { left: number; top: number; w: number; h: number }
+
+// Where the sharp photo sits in its box: 12% bigger than «fits whole», a little above the middle.
+function photoRect(box: Size, nat: Size): Rect {
+  const k = Math.min(box.w / nat.w, box.h / nat.h) * PHOTO_ZOOM
+  const w = Math.round(nat.w * k)
+  const h = Math.round(nat.h * k)
+  return { left: Math.round((box.w - w) / 2), top: Math.round((box.h - h) * 0.36), w, h }
+}
+
+// Draws the picture blurred by r canvas pixels. Safari before 18 has no canvas filters: there it is drawn r times
+// smaller still and stretched back, which smooths about as much. False when the filter (and so the tint) is missing.
+function drawBlurred(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number, r: number, tint = ''): boolean {
+  ctx.imageSmoothingQuality = 'high'
+  if (typeof ctx.filter === 'string') {
+    ctx.filter = `blur(${r}px)${tint}`
+    ctx.drawImage(img, x, y, w, h)
+    ctx.filter = 'none'
+    return true
+  }
+  const cw = ctx.canvas.width
+  const ch = ctx.canvas.height
+  const t = document.createElement('canvas')
+  t.width = Math.max(1, Math.round(cw / r))
+  t.height = Math.max(1, Math.round(ch / r))
+  const tc = t.getContext('2d')
+  if (!tc) return false
+  tc.imageSmoothingQuality = 'high'
+  tc.drawImage(img, (x * t.width) / cw, (y * t.height) / ch, (w * t.width) / cw, (h * t.height) / ch)
+  ctx.drawImage(t, 0, 0, cw, ch)
+  t.width = t.height = 0
+  return false
+}
+
+function sizeCanvas(canvas: HTMLCanvasElement, box: Size): CanvasRenderingContext2D | null {
+  canvas.width = Math.max(1, Math.round(box.w / BLUR_SHRINK))
+  canvas.height = Math.max(1, Math.round(box.h / BLUR_SHRINK))
+  return canvas.getContext('2d')
+}
+
+// The fill: the photo covering 120% of the box, blurred, a little darker and richer.
+function drawAmbient(canvas: HTMLCanvasElement, img: HTMLImageElement, box: Size, nat: Size) {
+  const ctx = sizeCanvas(canvas, box)
+  if (!ctx) return
+  const cw = canvas.width
+  const ch = canvas.height
+  const aw = cw * 1.2
+  const ah = ch * 1.2
+  const s = Math.max(aw / nat.w, ah / nat.h)
+  const dw = nat.w * s
+  const dh = nat.h * s
+  const tinted = drawBlurred(ctx, img, -cw * 0.1 + (aw - dw) / 2, -ch * 0.1 + (ah - dh) / 2, dw, dh, 7, ' brightness(.78) saturate(1.2)')
+  if (!tinted) {
+    ctx.fillStyle = 'rgba(0,0,0,.22)'
+    ctx.fillRect(0, 0, cw, ch)
+  }
+}
+
+// The soft band under the facts: the photo blurred in its own place, showing through the lower half of the box
+// (solid in the lowest 21.8%, gone at 52%), so it slides with the photo.
+function drawSoft(canvas: HTMLCanvasElement, img: HTMLImageElement, box: Size, r: Rect) {
+  const ctx = sizeCanvas(canvas, box)
+  if (!ctx) return
+  const k = 1 / BLUR_SHRINK
+  drawBlurred(ctx, img, r.left * k, r.top * k, r.w * k, r.h * k, 14 * k)
+  const g = ctx.createLinearGradient(0, canvas.height, 0, 0)
+  g.addColorStop(0, '#000')
+  g.addColorStop(0.218, '#000')
+  g.addColorStop(0.52, 'rgba(0,0,0,0)')
+  ctx.globalCompositeOperation = 'destination-in'
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.globalCompositeOperation = 'source-over'
+}
 
 // The photo, almost whole (a touch enlarged, see PHOTO_ZOOM). Where its proportions leave empty space (above and below a wide frame, at the sides
 // of a narrow one) a blurred copy of the same picture fills it, and the sharp photo's edges fade into that copy,
@@ -40,8 +119,11 @@ const BLUR_SHRINK = 4
 function CatchPhotoLayer({ src, alt, current, tour, onZoom }: { src: string; alt: string; current: boolean; tour: boolean; onZoom: () => void }) {
   const boxRef = useRef<HTMLDivElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
-  const [box, setBox] = useState<{ w: number; h: number } | null>(null)
-  const [nat, setNat] = useState<{ w: number; h: number } | null>(null)
+  const ambientRef = useRef<HTMLCanvasElement>(null)
+  const softRef = useRef<HTMLCanvasElement>(null)
+  const [box, setBox] = useState<Size | null>(null)
+  const [nat, setNat] = useState<Size | null>(null)
+  const [drawn, setDrawn] = useState(false)
 
   useLayoutEffect(() => {
     const el = boxRef.current
@@ -57,17 +139,37 @@ function CatchPhotoLayer({ src, alt, current, tour, onZoom }: { src: string; alt
     if (img?.complete && img.naturalWidth) setNat({ w: img.naturalWidth, h: img.naturalHeight })
   }, [src])
 
+  const ready = !!box && !!nat && box.w > 0 && box.h > 0
+  const rect = ready ? photoRect(box, nat) : null
+
+  // The blurred copies are drawn once the photo and the box are known (again if the box changes size).
+  const bw = box?.w ?? 0
+  const bh = box?.h ?? 0
+  const nw = nat?.w ?? 0
+  const nh = nat?.h ?? 0
+  useEffect(() => {
+    const img = imgRef.current
+    const a = ambientRef.current
+    const s = softRef.current
+    if (!img || !a || !s || !bw || !bh || !nw || !nh) return
+    const b = { w: bw, h: bh }
+    const n = { w: nw, h: nh }
+    drawAmbient(a, img, b, n)
+    drawSoft(s, img, b, photoRect(b, n))
+    setDrawn(true)
+  }, [bw, bh, nw, nh, src])
+  // iOS keeps a canvas's pixels until it is collected, which can be late: a page that leaves lets them go at once.
+  useEffect(
+    () => () => {
+      for (const c of [ambientRef.current, softRef.current]) if (c) c.width = c.height = 0
+    },
+    [],
+  )
+
   // Until the picture's size is known it is not shown at all (it would be drawn unscaled, then jump to its real size).
   let style: React.CSSProperties = { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: '50% 36%' }
-  let softStyle: React.CSSProperties | null = null
-  if (box && nat && box.w > 0 && box.h > 0) {
-    // 12% bigger than «fits whole»: the blurred bands above and below shrink, and a portrait frame loses about 6% at each side.
-    const k = Math.min(box.w / nat.w, box.h / nat.h) * PHOTO_ZOOM
-    const w = Math.round(nat.w * k)
-    const h = Math.round(nat.h * k)
-    // A little above the middle, so the facts at the bottom cover less of the picture.
-    const left = Math.round((box.w - w) / 2)
-    const top = Math.round((box.h - h) * 0.36)
+  if (ready && rect) {
+    const { left, top, w, h } = rect
     const fadeV = h < box.h - 2 ? Math.round(Math.min(56, h * 0.12)) : 0
     const fadeH = w < box.w - 2 ? Math.round(Math.min(40, w * 0.1)) : 0
     const masks: string[] = []
@@ -78,19 +180,15 @@ function CatchPhotoLayer({ src, alt, current, tour, onZoom }: { src: string; alt
       const mask = masks.join(', ')
       Object.assign(style, { WebkitMaskImage: mask, maskImage: mask, WebkitMaskComposite: 'source-in', maskComposite: 'intersect' })
     }
-    // The same place and size, drawn BLUR_SHRINK times smaller and stretched from its top left corner.
-    softStyle = { position: 'absolute', left, top, width: w / BLUR_SHRINK, height: h / BLUR_SHRINK, transform: `scale(${BLUR_SHRINK})`, transformOrigin: '0 0', filter: `blur(${14 / BLUR_SHRINK}px)` }
   }
 
   return (
     <div ref={boxRef} className="catch-photo-layer" style={{ position: 'absolute', inset: 0, cursor: 'zoom-in' }} onClick={onZoom}>
-      <img className="catch-reel-ambient" src={src} alt="" aria-hidden decoding="async" />
+      <canvas ref={ambientRef} className={`catch-reel-ambient${drawn ? ' on' : ''}`} aria-hidden />
       <img ref={imgRef} data-catch-photo={current || undefined} data-tour={tour ? 'photo-zoom' : undefined} src={src} alt={alt} decoding="async" style={{ display: 'block', opacity: nat ? 1 : 0, transition: 'opacity .2s ease-out', ...style }} onLoad={(e) => setNat({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })} />
       {/* The soft blur under the facts at the bottom: a blurred copy of the photo that slides with it. A backdrop blur
           over sliding photos is redrawn every frame, which is what made paging stutter on phones. */}
-      <div className="catch-photo-soft" aria-hidden>
-        {softStyle && <img src={src} alt="" decoding="async" style={softStyle} />}
-      </div>
+      <canvas ref={softRef} className="catch-photo-soft" aria-hidden />
     </div>
   )
 }
