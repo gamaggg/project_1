@@ -2032,7 +2032,6 @@ export const en: Dict = {
     levelsTitle: 'Levels and perks',
     xpNow: 'from the start',
     xpNeed: '{xp} XP',
-    capacityNote: 'Slots now: {capacity} — {base} by level and +{extra} from a moderator.',
     trophies: { one: '{count} trophy', other: '{count} trophies' },
     toLeague: ' · {left} more to the «{label}» league',
     topLeague: ' · the top league',

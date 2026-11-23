@@ -49,7 +49,6 @@ function levelPerks(level: number, clan2 = false): string[] {
 
 function LevelInfo({ clan, clan2 }: { clan: ClanDetail; clan2?: boolean }) {
   const progress = clanLevelProgress(clan.xp)
-  const extra = clan.extraSlots ?? 0
   return (
     <>
       <div className="clan-info-head">
@@ -95,11 +94,6 @@ function LevelInfo({ clan, clan2 }: { clan: ClanDetail; clan2?: boolean }) {
           )
         })}
       </div>
-      {extra > 0 && (
-        <div className="clan-info-note">
-          {tn('clanInfo.capacityNote', { capacity: clan.capacity, base: clan.capacity - extra, extra })}
-        </div>
-      )}
     </>
   )
 }

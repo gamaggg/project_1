@@ -2038,7 +2038,6 @@ export const ru = {
     levelsTitle: 'Уровни и бонусы',
     xpNow: 'сразу',
     xpNeed: '{xp} опыта',
-    capacityNote: 'Сейчас мест: {capacity} — {base} по уровню и +{extra} от модератора.',
     trophies: { one: '{count} трофеев', few: '{count} трофеев', many: '{count} трофеев', other: '{count} трофеев' },
     toLeague: ' · до лиги «{label}» ещё {left}',
     topLeague: ' · высшая лига',

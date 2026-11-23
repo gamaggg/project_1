@@ -2034,7 +2034,6 @@ export const ka: Dict = {
     levelsTitle: 'დონეები და ბონუსები',
     xpNow: 'დაუყოვნებლივ',
     xpNeed: '{xp} გამოცდილება',
-    capacityNote: 'ახლა ადგილებია: {capacity} — {base} დონის მიხედვით და +{extra} მოდერატორისგან.',
     trophies: { one: '{count} ტროფეი', other: '{count} ტროფეი' },
     toLeague: ' · «{label}» ლიგამდე კიდევ {left}',
     topLeague: ' · უმაღლესი ლიგა',

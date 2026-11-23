@@ -119,11 +119,14 @@ export function ShopTab() {
                 )
               ) : locked ? (
                 <span className="c2-shop-lock">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <rect x="5" y="11" width="14" height="10" rx="2" />
-                    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-                  </svg>
-                  {item.reward ? tn('clan2.shop.onlyLevel', { n: item.minLevel }) : tn('clan2.shop.fromLevel', { n: item.minLevel })}
+                  {/* The lock stands in the line before the first word, so a label on two lines keeps it in place. */}
+                  <span className="c2-shop-lock-text">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <rect x="5" y="11" width="14" height="10" rx="2" />
+                      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                    </svg>
+                    {item.reward ? tn('clan2.shop.onlyLevel', { n: item.minLevel }) : tn('clan2.shop.fromLevel', { n: item.minLevel })}
+                  </span>
                 </span>
               ) : item.reward ? (
                 <span className="c2-shop-state">{tn('clan2.shop.reward', { n: item.minLevel })}</span>

@@ -4027,7 +4027,6 @@ button.race-lane{cursor:pointer;}
 .clan-info-level-title span{font-size:12.5px; font-weight:700; color:var(--ink-faint); font-variant-numeric:tabular-nums;}
 .clan-info-level.next .clan-info-level-title{color:var(--ink-soft);}
 .clan-info-level-perk{font-size:13px; color:var(--ink-soft); line-height:1.4;}
-.clan-info-note{margin-top:10px; padding:10px 12px; border-radius:12px; background:var(--accent-soft); color:var(--ink); font-size:13px; font-weight:600;}
 .clan-info-leagues{display:flex; flex-direction:column; gap:6px;}
 .clan-info-league{display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:12px; background:#F6F5F1;}
 .clan-info-league .clan-league-dot{box-shadow:none; width:11px; height:11px;}
