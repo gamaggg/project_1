@@ -4,7 +4,7 @@ export const PRIVACY_EN: PrivacyDoc = {
   lang: 'en',
   title: 'Privacy Policy',
   metaDescription: 'What data RANGE collects, why, who receives it and how to have it deleted.',
-  updated: 'In effect since 13 November 2026',
+  updated: 'In effect since 23 November 2026',
   intro:
     'RANGE (the catchrange.com website, the Telegram bot and the mini app) is a map game for anglers. Here, briefly and without legal fog: what data we collect, why, who receives it and how to delete it.',
   sections: [
@@ -83,6 +83,7 @@ export const PRIVACY_EN: PrivacyDoc = {
           'Only you see (and administrators, when they handle a report or your request): your date of birth, gender, your diary, email address, Telegram ID, support requests.',
         ],
         'Catch photos and avatars are kept in public storage: anyone who knows the exact link to a file can open it without signing in to the app. If you published something you should not have, delete the catch or write to us.',
+        'Catch photos may also appear on RANGE social media.',
       ],
     },
     {

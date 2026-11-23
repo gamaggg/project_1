@@ -2503,7 +2503,7 @@ export const en: Dict = {
   },
   terms: {
     title: 'Terms of use',
-    updated: 'In force from 18 September 2026',
+    updated: 'In force from 23 November 2026',
     s1t: '1. What RANGE is',
     s1p1: 'RANGE is an app for anglers: you log your catches, open your own territory on the city map and compete with other anglers for sectors. The app works as a Telegram Mini App and on the website.',
     s2t: '2. Age',
@@ -2520,7 +2520,7 @@ export const en: Dict = {
     s5p2: 'Coins are earned for activity (challenges, achievements) and spent on skins, frames, name styles and other upgrades in the shop.',
     s5p3: 'We may change prices, the range of items and the rules for earning coins.',
     s6t: '6. Content you publish',
-    s6p1: 'By publishing catch photos and profile data you allow them to be shown to other RANGE users — in the activity feed, on the map and in your profile.',
+    s6p1: 'By publishing catch photos and profile data you allow them to be shown to other RANGE users — in the activity feed, on the map and in your profile. Catch photos may also appear on RANGE social media.',
     s6p2: 'Do not publish other people’s photos without permission, offensive or illegal content, or content unrelated to fishing.',
     s6p3: 'Any photo can be reported through «Photo reports» in the profile — we review reports and may hide the photo or restrict the account until it is sorted out.',
     s7t: '7. Rules of conduct',
