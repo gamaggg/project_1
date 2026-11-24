@@ -158,8 +158,9 @@ export function previewHtml(p: SocialPost, tail?: string): string {
 // another language: {"facebook": "<Georgian>", "facebook_ru": "<Russian>"}.
 // The translation is shown in the preview only and never published.
 export const TRANSLATION_SUFFIX = '_ru'
+// Keys starting with «_» are the bot's own notes (e.g. _threads_id), never texts.
 export function publishedCaptions(p: SocialPost): [string, string][] {
-  return Object.entries(p.captions).filter(([k, t]) => !k.endsWith(TRANSLATION_SUFFIX) && typeof t === 'string' && t.trim() !== '')
+  return Object.entries(p.captions).filter(([k, t]) => !k.startsWith('_') && !k.endsWith(TRANSLATION_SUFFIX) && typeof t === 'string' && t.trim() !== '')
 }
 
 export const DECIDE_KEYBOARD = (id: number) => ({

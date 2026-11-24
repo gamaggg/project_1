@@ -17,6 +17,7 @@ import {
   tg,
   type SocialPost,
 } from '@/lib/socialBot'
+import { publishToThreads, threadsConfigured } from '@/lib/threadsPublish'
 
 // Called every 5 minutes by the social-bot-tick cron job (only when there is
 // work, and once an hour to check the webhook). In order:
@@ -34,7 +35,7 @@ async function handleGET(req: Request) {
   if (!botConfigured()) return NextResponse.json({ skipped: 'SOCIAL_BOT_TOKEN or SOCIAL_BOT_WEBHOOK_SECRET not set' })
 
   const admin = createAdminClient()
-  const report = { webhook: 'ok', expired: 0, reminded: 0, previews: 0, errors: [] as string[] }
+  const report = { webhook: 'ok', expired: 0, reminded: 0, published: 0, previews: 0, errors: [] as string[] }
 
   const info = await tg<{ url?: string }>('getWebhookInfo', {})
   if (info.url !== WEBHOOK_URL) {
@@ -91,7 +92,33 @@ async function handleGET(req: Request) {
   for (const row of due ?? []) {
     const p = readPost(row)
     try {
-      await remind(chatId, p)
+      // Threads goes out by itself; the other platforms are still posted by hand.
+      let manual = p
+      if (p.platforms.includes('threads') && threadsConfigured()) {
+        let link = typeof p.captions._threads_link === 'string' ? p.captions._threads_link : null
+        if (!p.captions._threads_id) {
+          try {
+            const done = await publishToThreads(p)
+            link = done.link
+            await admin
+              .from('social_posts')
+              .update({ captions: { ...p.captions, _threads_id: done.id, _threads_link: done.link ?? '' }, updated_at: new Date().toISOString() })
+              .eq('id', p.id)
+            report.published++
+            await tg('sendMessage', { chat_id: chatId, text: `✅ #${p.id} вышел в Threads.${link ? `\n${link}` : ''}`, link_preview_options: { is_disabled: true } })
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err)
+            report.errors.push(`threads #${p.id}: ${msg}`)
+            await tg('sendMessage', { chat_id: chatId, text: `⚠️ #${p.id} не вышел в Threads сам: ${msg.slice(0, 300)}\nВыложи его в Threads вручную.` }).catch(() => {})
+          }
+        }
+        if (p.captions._threads_id || link) manual = { ...p, platforms: p.platforms.filter((x) => x !== 'threads') }
+      }
+      if (manual.platforms.length === 0) {
+        await admin.from('social_posts').update({ status: 'published', published_at: new Date().toISOString(), error: null, updated_at: new Date().toISOString() }).eq('id', p.id)
+        continue
+      }
+      await remind(chatId, manual)
       await admin.from('social_posts').update({ status: 'reminded', error: null, updated_at: new Date().toISOString() }).eq('id', p.id)
       report.reminded++
     } catch (err) {
@@ -143,7 +170,7 @@ async function handleGET(req: Request) {
 async function remind(chatId: number, p: SocialPost) {
   const mediaNote = await sendMedia(chatId, p)
   const texts: [string, string][] = [['Текст', p.body || '(без текста)']]
-  for (const [platform, text] of publishedCaptions(p)) texts.push([`Для ${platform}`, text])
+  for (const [platform, text] of publishedCaptions(p)) if (p.platforms.includes(platform)) texts.push([`Для ${platform}`, text])
   // One message per text, each cut to Telegram's limit, so a long text never breaks the markup.
   for (const [label, text] of texts) {
     await tg('sendMessage', { chat_id: chatId, text: `<b>${escapeHtml(label)}:</b>\n<pre>${escapeHtml(text.slice(0, 3800))}</pre>`, parse_mode: 'HTML' })
