@@ -1,12 +1,14 @@
 // The sector skins of the paid live-background families (25.11.2026, owner: «new skins in our style, based on the new paid
 // backgrounds»; then «take the pattern the background itself gives, only the aurora, starfield, particles, beams and
-// matrix; more contrast, like the other skins, thicker lines if needed»): five skins, each the pattern of its background,
-// sold separately for Telegram Stars (not in the kit).
+// matrix; more contrast, like the other skins, thicker lines if needed»; then «why don't they look like the backgrounds»):
+// five skins, each the pattern of its background — drawn by the background's own shader (glSkinRenderer.ts), with the flat 2D
+// drawings below as the fallback without WebGL. Sold separately for Telegram Stars (not in the kit).
 // Drawn like the other animated skins (animatedSkins.ts): a function painting frame t into the sector's box, the hex
 // already clipped by the caller. Only the pattern goes on, no ground of its own: the sector keeps its colour and tint, and
 // the pattern is inked in a deeper shade of that colour (with white highlights) so it reads on any tint. The aurora keeps
 // its family's colours. `seed` makes neighbours differ.
 import type { AnimatedSkinDraw } from '@/lib/map/animatedSkins'
+import { drawGlSkin, type GlSkinFamily } from '@/lib/map/glSkinRenderer'
 
 const TAU = Math.PI * 2
 
@@ -211,10 +213,18 @@ const matrix: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
   reset(ctx)
 }
 
+// The real thing first: the background's own shader as the pattern (glSkinRenderer.ts); the flat drawings above only when
+// WebGL is not there.
+function withGl(family: GlSkinFamily, fallback: AnimatedSkinDraw): AnimatedSkinDraw {
+  return (ctx, w, h, t, color, seed = 0) => {
+    if (!drawGlSkin(family, ctx, w, h, t, seed)) fallback(ctx, w, h, t, color, seed)
+  }
+}
+
 export const GL_ANIMATED_SKINS: Record<string, AnimatedSkinDraw> = {
-  skin_gl_aurora: aurora,
-  skin_gl_starfield: starfield,
-  skin_gl_particles: particles,
-  skin_gl_beams: beams,
-  skin_gl_matrix: matrix,
+  skin_gl_aurora: withGl('aurora', aurora),
+  skin_gl_starfield: withGl('starfield', starfield),
+  skin_gl_particles: withGl('particles', particles),
+  skin_gl_beams: withGl('beams', beams),
+  skin_gl_matrix: withGl('matrix', matrix),
 }

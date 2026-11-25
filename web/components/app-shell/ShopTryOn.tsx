@@ -112,6 +112,7 @@ export function ShopTryOn({
           ) : state === 'locked' && stars ? (
             <button className="btn-primary shop-price-btn" onClick={onBuy}>
               {tn('shop.buyFor')} <StarIcon size={16} /> {stars}
+              {kit && <span className="kit-instead">{tn('shop.kitInstead', { price: GL_STARS.bg + GL_STARS.frame + GL_STARS.name })}</span>}
             </button>
           ) : state === 'locked' && !item.purchasable ? (
             <button className="btn-primary" onClick={onBuy}>

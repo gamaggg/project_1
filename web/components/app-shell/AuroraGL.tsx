@@ -12,12 +12,12 @@ import { observeScreenActiveReleasing } from '@/lib/observeScreenActive'
 // in OKLab, the final glow over a dark surface) are written here; they come from their engine, which was not copied.
 // Paused off screen, like the other live backgrounds; with no WebGL the panel keeps its CSS gradient underneath.
 
-const VERTEX = `
+export const AURORA_VERTEX = `
 attribute vec2 a_pos;
 void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
 `
 
-const FRAGMENT = `
+export const AURORA_FRAGMENT = `
 #ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
 #else
@@ -140,7 +140,7 @@ void main() {
 `
 
 // "#rrggbb" → OKLab (the ramp mixes there).
-function hexToOklab(hex: string): [number, number, number] {
+export function hexToOklab(hex: string): [number, number, number] {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex)
   const n = m ? parseInt(m[1], 16) : 0x22e584
   const lin = (c: number) => {
@@ -220,8 +220,8 @@ export function AuroraGL({ colors = AURORA_COLORS, amplitude = 1, height = 0.42,
     const gl = canvas?.getContext('webgl', { antialias: false, premultipliedAlpha: false })
     if (!canvas || !container || !gl) return
 
-    const vs = compile(gl, gl.VERTEX_SHADER, VERTEX)
-    const fs = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT)
+    const vs = compile(gl, gl.VERTEX_SHADER, AURORA_VERTEX)
+    const fs = compile(gl, gl.FRAGMENT_SHADER, AURORA_FRAGMENT)
     if (!vs || !fs) return
     const prog = gl.createProgram()!
     gl.attachShader(prog, vs)

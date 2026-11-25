@@ -15,12 +15,12 @@ import { observeScreenActiveReleasing } from '@/lib/observeScreenActive'
 // Paused off screen like the other live backgrounds; reduced motion holds one still frame; no WebGL2 → nothing is drawn
 // and the panel keeps its CSS gradient (HeroBackground.base).
 
-const VERTEX = `#version 300 es
+export const GL_VERTEX = `#version 300 es
 in vec2 a_pos;
 void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
 `
 
-const PRELUDE = `#version 300 es
+export const GL_PRELUDE = `#version 300 es
 precision highp float;
 precision highp int;
 uniform vec2 uResolution;
@@ -161,7 +161,7 @@ void main() {
 }
 `
 
-function hexToRgb01(color: string): [number, number, number] {
+export function hexToRgb01(color: string): [number, number, number] {
   const m = /^#?([0-9a-f]{6})$/i.exec(color)
   const n = m ? parseInt(m[1], 16) : 0
   return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]
@@ -223,8 +223,8 @@ export function BackgroundGL({ scene, numbers, vec2s, colors, palettes, surface 
     const gl = canvas?.getContext('webgl2', { antialias: false })
     if (!canvas || !container || !gl) return
 
-    const vs = compile(gl, gl.VERTEX_SHADER, VERTEX)
-    const fs = compile(gl, gl.FRAGMENT_SHADER, PRELUDE + scene + MAIN)
+    const vs = compile(gl, gl.VERTEX_SHADER, GL_VERTEX)
+    const fs = compile(gl, gl.FRAGMENT_SHADER, GL_PRELUDE + scene + MAIN)
     if (!vs || !fs) return
     const prog = gl.createProgram()!
     gl.attachShader(prog, vs)
