@@ -284,7 +284,8 @@ function renderMessage(notification: NotificationRef): Message | null {
       const title = notification.payload?.title as string | undefined
       const coins = notification.payload?.coins as number | undefined
       if (!title) return null
-      return { text: tn('tg.award', { title: localAwardTitle(title), coins: coinsDash(coins) }), buttonLabel: tn('tg.btnProfile'), url: SITE_URL }
+      const key = notification.payload?.key === true
+      return { text: tn('tg.award', { title: localAwardTitle(title), coins: coinsDash(coins) + (key ? tn('tg.keyDash') : '') }), buttonLabel: tn('tg.btnProfile'), url: SITE_URL }
     }
     case 'weekly_result': {
       const rank = notification.payload?.rank as number | undefined

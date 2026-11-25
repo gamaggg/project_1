@@ -1,6 +1,7 @@
 'use client'
 
 import { cloneElement, useMemo, type ReactElement } from 'react'
+import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { HexBadge } from '@/components/app-shell/HexBadge'
 import { ACH_ICONS } from '@/components/app-shell/icons'
 import type { WeeklyLeaderboardEntry } from '@/lib/data/types'
@@ -20,12 +21,15 @@ export function WeekTopModal({
   leader,
   city,
   onViewRecap,
+  onOpenBox,
   onClose,
 }: {
   entry: WeeklyLeaderboardEntry | null
   leader: WeeklyLeaderboardEntry
   city: CityId
   onViewRecap: () => void
+  // 1st place's key opens the secret box for free: the button that goes there.
+  onOpenBox?: () => void
   onClose: () => void
 }) {
   const confetti = useMemo(() => {
@@ -43,6 +47,9 @@ export function WeekTopModal({
     })
   }, [entry, leader])
   const shown = entry ?? leader
+  // The week's prize (grant_weekly_rank_awards, 25.11.2026): 300 coins and a key for 1st place, 200, 100 — only with at
+  // least one sector of the week. It was already given when the week closed; this just says so.
+  const prize = entry && entry.rank <= 3 && entry.sectorsThisWeek >= 1 ? { coins: [300, 200, 100][entry.rank - 1], key: entry.rank === 1 } : null
   const stats = tn('weekly.stats', { sectors: `${shown.sectorsThisWeek} ${pluralSectors(shown.sectorsThisWeek)}`, catches: `${shown.catchesThisWeek} ${pluralCatches(shown.catchesThisWeek)}` })
 
   return (
@@ -84,6 +91,29 @@ export function WeekTopModal({
             tn('weekly.cityLeader', { name: leader.displayName, stats })
           )}
         </div>
+        {prize && (
+          <div className="week-win-prize">
+            <div className="week-win-prize-label">{tn('weekWin.prize')}</div>
+            <div className="week-win-prize-row">
+              <CoinIcon size={28} />
+              <b>+{prize.coins}</b>
+              <span>{tn('weekWin.coins')}</span>
+            </div>
+            {prize.key && (
+              <div className="week-win-prize-row">
+                {/* eslint-disable-next-line @next/next/no-img-element -- the key picture of the shop */}
+                <img src="/shop/keys-1.webp" alt="" width={28} height={28} />
+                <b>+1</b>
+                <span>{tn('weekWin.key')}</span>
+              </div>
+            )}
+            {prize.key && onOpenBox && (
+              <button className="btn-secondary" style={{ marginTop: 8, width: '100%' }} onClick={onOpenBox}>
+                {tn('weekWin.openBox')}
+              </button>
+            )}
+          </div>
+        )}
         <button className="btn-primary" onClick={onViewRecap}>
           {tn('weekly.viewRecap')}
         </button>

@@ -5813,3 +5813,10 @@ button.geo-fact{cursor:pointer;}
 .kit-offer-title{font-size:13px; line-height:1.25;}
 .kit-offer-price{margin-top:2px; font-size:13.5px; gap:5px;}
 .kit-offer-btn{flex:0 0 auto; width:auto !important; padding:8px 14px !important; font-size:13px !important;}
+
+/* The week's prize in the «Итоги недели» window (WeekTopModal.tsx, 25.11.2026). */
+.week-win-prize{position:relative; z-index:2; margin:0 0 16px; padding:12px 14px; border-radius:16px; background:linear-gradient(135deg,#FFF6E2,#FFE9BC); text-align:left;}
+.week-win-prize-label{font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#A9760F; margin-bottom:8px;}
+.week-win-prize-row{display:flex; align-items:center; gap:10px; font-size:15px; color:#6B4608; padding:3px 0;}
+.week-win-prize-row b{font-family:var(--font-display),'Manrope',sans-serif; font-size:22px; font-weight:800; color:#8A5A0C; font-variant-numeric:tabular-nums;}
+.week-win-prize-row img{object-fit:contain;}

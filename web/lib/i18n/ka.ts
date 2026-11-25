@@ -727,6 +727,7 @@ export const ka: Dict = {
     openAccept: 'გახსენი და მიიღე',
     reviewRequest: 'განიხილე მოთხოვნა',
     newAward: 'ახალი ჯილდო: {title}',
+    coinsPlusKey: '+{count} მონეტა და გასაღები ყუთისთვის',
     coinsPlus: '+{count} მონეტა',
     challengeDone: 'გამოწვევა შესრულებულია: {title}',
     coinsWeek: '+{count} მონეტა კვირისთვის',
@@ -2226,6 +2227,12 @@ export const ka: Dict = {
     failed: 'გადახდა ვერ მოხერხდა. სცადე თავიდან.',
     owned: 'ეს უკვე გაქვს.',
   },
+  weekWin: {
+    prize: 'შენი პრიზი',
+    coins: 'მონეტა',
+    key: 'გასაღები: გახსენი საიდუმლო ყუთი',
+    openBox: 'ყუთის გახსნა',
+  },
   box: {
     title: 'საიდუმლო ყუთი',
     sub: 'შემთხვევითი ნივთი მაღაზიიდან',
@@ -2924,6 +2931,7 @@ export const ka: Dict = {
     referralReward: '{actor}-მა პირველი დაჭერა გააკეთა — შენ +100 მონეტა გერიცხება მოწვევისთვის',
     chatMention: '{actor}-მა მოგიხსენია კლანის «{clan}» ჩატში',
     chestOpened: 'კლანის «{clan}» სკივრი {roman} გაიხსნა{coins}',
+    keyDash: ' და გასაღები ყუთისთვის',
     coinsDash: ' — +{coins} მონეტა',
     coinsSpace: ' +{coins} მონეტა',
     raceResult: 'კლანური ბრძოლის შედეგები: «{clan}» — {place}{finished}{coins}',

@@ -726,6 +726,7 @@ export const ru = {
     openAccept: 'Открыть и принять',
     reviewRequest: 'Рассмотреть заявку',
     newAward: 'Новая награда: {title}',
+    coinsPlusKey: '+{count} монет и ключ для бокса',
     coinsPlus: '+{count} монет',
     challengeDone: 'Выполнен челлендж: {title}',
     coinsWeek: '+{count} монет за неделю',
@@ -2230,6 +2231,12 @@ export const ru = {
     failed: 'Не получилось оплатить. Попробуй ещё раз.',
     owned: 'Это у тебя уже есть.',
   },
+  weekWin: {
+    prize: 'Твой приз',
+    coins: 'монет',
+    key: 'ключ: открыть секретный бокс',
+    openBox: 'Открыть бокс',
+  },
   box: {
     title: 'Секретный бокс',
     sub: 'Случайная вещь из магазина',
@@ -2928,6 +2935,7 @@ export const ru = {
     referralReward: '{actor} сделал первый улов — тебе +100 монет за приглашение',
     chatMention: '{actor} упомянул тебя в чате клана «{clan}»',
     chestOpened: 'Сундук {roman} клана «{clan}» открыт{coins}',
+    keyDash: ' и ключ для бокса',
     coinsDash: ' — +{coins} монет',
     coinsSpace: ' +{coins} монет',
     raceResult: 'Итоги битвы кланов: «{clan}» — {place}{finished}{coins}',

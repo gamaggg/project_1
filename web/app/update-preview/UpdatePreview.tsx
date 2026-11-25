@@ -29,6 +29,7 @@ import { EmptyPrizePlace, PodiumItem, WEEK_PRIZES } from '@/components/app-shell
 import { StarsShop } from '@/components/app-shell/StarsShop'
 import { GL_FAMILIES, familyName, glPresetOf } from '@/components/app-shell/glFamilies'
 import { KitsSection } from '@/components/app-shell/GlShop'
+import { WeekTopModal } from '@/components/app-shell/screens/WeekTopModal'
 import { GL_KITS } from '@/lib/data/glKits'
 import { ShopClosed } from '@/components/app-shell/screens/ShopScreen'
 import { tn } from '@/lib/i18n/runtime'
@@ -157,6 +158,7 @@ export function UpdatePreview() {
   // Free box openings won on the slots (three chests) — the demo starts with three.
   const [free, setFree] = useState(3)
   const [glFamily, setGlFamily] = useState('aurora')
+  const [winRank, setWinRank] = useState<1 | 2 | 3 | null>(null)
   const [glPreset, setGlPreset] = useState('borealis')
   const [owned, setOwned] = useState<Set<string>>(new Set())
   const [worn, setWorn] = useState<Partial<Record<Cat, string>>>({ hero_bg: 'floats', avatar_frame: 'frame_storm', name_style: 'name_wave' })
@@ -438,6 +440,26 @@ export function UpdatePreview() {
               { id: 'keys_5', kind: 'keys', amount: 5, itemId: null, stars: 150, owned: false, ownedAny: false },
             ]}
           />
+        </Section>
+
+        <Section title="11. Победитель рейтинга недели" about="Окно «Итоги недели», которое игрок видит один раз: в топ-3 города в нём теперь ещё и приз (монеты, у 1 места ключ). Нажми, чтобы посмотреть каждое место.">
+          <div style={{ display: 'flex', gap: 8 }}>
+            {([1, 2, 3] as const).map((r) => (
+              <button key={r} className="btn-secondary" style={{ flex: 1, marginTop: 0 }} onClick={() => setWinRank(r)}>
+                {r} место
+              </button>
+            ))}
+          </div>
+          {winRank && (
+            <WeekTopModal
+              entry={{ userId: 'demo', displayName: 'Гоша Рыбак', avatarUrl: null, sectorsThisWeek: 7, catchesThisWeek: 23, rank: winRank }}
+              leader={{ userId: 'demo', displayName: 'Гоша Рыбак', avatarUrl: null, sectorsThisWeek: 7, catchesThisWeek: 23, rank: 1 }}
+              city="batumi"
+              onViewRecap={() => setWinRank(null)}
+              onOpenBox={() => setWinRank(null)}
+              onClose={() => setWinRank(null)}
+            />
+          )}
         </Section>
 
         <Section title="10. Заглушка магазина" about="Что видят игроки, пока в «Управление» включена «Заглушка магазина». Ты (суперадмин) видишь магазин как обычно, с красной полоской сверху.">

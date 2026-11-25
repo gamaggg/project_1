@@ -2479,6 +2479,10 @@ export function FishZoneApp() {
             dismissWeekTop()
             openLastWeek()
           }}
+          onOpenBox={() => {
+            dismissWeekTop()
+            openSecretBox()
+          }}
           onClose={dismissWeekTop}
         />
       )}

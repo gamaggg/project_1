@@ -839,7 +839,7 @@ export function ActivityScreen({
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35 }}>{tn('activity.newAward', { title: localAwardTitle(a.awardTitle ?? '') })}</div>
                     {a.awardSubtitle && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{localAwardSubtitle(a.awardTitle ?? '', a.awardSubtitle)}</div>}
-                    {!!a.awardCoins && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{tn('activity.coinsPlus', { count: a.awardCoins })}</div>}
+                    {!!a.awardCoins && <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{tn(a.awardKey ? 'activity.coinsPlusKey' : 'activity.coinsPlus', { count: a.awardCoins })}</div>}
                     <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                       {unreadIds.has(a.id) && <span className="unread-dot" />}
                       {formatWhen(a.createdAt)}

@@ -725,6 +725,7 @@ export const en: Dict = {
     openAccept: 'Open and accept',
     reviewRequest: 'Review the request',
     newAward: 'New award: {title}',
+    coinsPlusKey: '+{count} coins and a box key',
     coinsPlus: '+{count} coins',
     challengeDone: 'Challenge complete: {title}',
     coinsWeek: '+{count} coins for the week',
@@ -2224,6 +2225,12 @@ export const en: Dict = {
     failed: "The payment didn't go through. Try again.",
     owned: 'You already have this.',
   },
+  weekWin: {
+    prize: 'Your prize',
+    coins: 'coins',
+    key: 'key: open the secret box',
+    openBox: 'Open the box',
+  },
   box: {
     title: 'Secret box',
     sub: 'A random item from the shop',
@@ -2922,6 +2929,7 @@ export const en: Dict = {
     referralReward: '{actor} made a first catch — you get +100 coins for the invitation',
     chatMention: '{actor} mentioned you in the chat of the clan «{clan}»',
     chestOpened: 'Chest {roman} of the clan «{clan}» is open{coins}',
+    keyDash: ' and a box key',
     coinsDash: ' — +{coins} coins',
     coinsSpace: ' +{coins} coins',
     raceResult: 'Clan battle results: «{clan}» — {place}{finished}{coins}',

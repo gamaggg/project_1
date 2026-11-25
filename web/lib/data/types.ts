@@ -360,6 +360,8 @@ export type ActivityEntry = {
   // grant carried one (fanout_award_notification and
   // _sync_achievements_for_user both include it in the payload).
   awardCoins: number | null
+  // 'award' only — the weekly rating's first place also gives a free secret-box key (the payload says so).
+  awardKey: boolean | null
   // 'weekly_result' only — this person's own place in last week's
   // leaderboard, computed once by notify_weekly_results.
   weeklyRank: number | null
