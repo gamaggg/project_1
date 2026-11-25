@@ -2216,6 +2216,7 @@ export const ru = {
     title: 'За Звёзды Telegram',
     sub: 'Платишь Звёздами прямо в Telegram — покупка приходит сразу.',
     onlyTelegram: 'Купить за Звёзды можно в RANGE внутри Telegram.',
+    opening: 'Открываем оплату…',
     coins: 'Монеты',
     coinsN: '{n} монет',
     keys: 'Ключи — открывают секретный бокс',

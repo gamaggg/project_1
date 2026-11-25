@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { LiveCoinBalance } from '@/components/app-shell/CoinCountUp'
@@ -38,13 +39,17 @@ const COIN_PIC: Record<number, number> = { 500: 1, 1500: 2, 5000: 3 }
 export function useStarsBuy(demo = false) {
   const buy = useBuyForStars()
   const [note, setNote] = useState<string | null>(null)
+  // From the tap until Telegram's payment sheet is up (the invoice is made on the server first): a waiting screen.
+  const [opening, setOpening] = useState(false)
   function start(p: StarsProduct, preset?: string | null) {
     setNote(null)
     if (demo || !canPayWithStars()) {
       setNote(tn('stars.onlyTelegram'))
       return
     }
-    buy.mutate({ productId: p.id, preset }, {
+    setOpening(true)
+    buy.mutate({ productId: p.id, preset, onOpened: () => setOpening(false) }, {
+      onSettled: () => setOpening(false),
       onSuccess: (status) => {
         if (status === 'paid') setNote(tn(p.kind === 'coins' ? 'stars.paidCoins' : p.kind === 'keys' ? 'stars.paidKeys' : p.kind === 'kit' ? 'stars.paidKit' : p.itemId?.startsWith('skin_') ? 'stars.paidSkin' : 'stars.paidItem'))
         else if (status === 'failed') setNote(tn('stars.failed'))
@@ -52,7 +57,19 @@ export function useStarsBuy(demo = false) {
       onError: (e) => setNote(tn(/STARS:owned/.test(String((e as Error).message)) ? 'stars.owned' : 'stars.failed')),
     })
   }
-  return { start, note, busy: buy.isPending }
+  return { start, note, busy: buy.isPending, opening }
+}
+
+// The waiting screen while the payment sheet loads (owner, 25.11.2026: «a loading animation while Telegram's window loads»).
+export function StarsOpening({ show }: { show: boolean }) {
+  if (!show || typeof document === 'undefined') return null
+  return createPortal(
+    <div className="stars-opening" role="status" aria-live="polite">
+      <span className="spinner" aria-hidden />
+      <span>{tn('stars.opening')}</span>
+    </div>,
+    document.body,
+  )
 }
 
 // The «Звёзды» tab: coins and keys. The skins sold for Stars stand on the «Скины» tab with the rest (owner, 25.11.2026).
@@ -60,7 +77,7 @@ export function useStarsBuy(demo = false) {
 export function StarsShop({ demo }: { demo?: StarsProduct[] }) {
   const { data: loaded = [] } = useStarsProducts()
   const products = demo ?? loaded
-  const { start, note, busy } = useStarsBuy(!!demo)
+  const { start, note, busy, opening } = useStarsBuy(!!demo)
   const inTelegram = canPayWithStars()
 
   const coins = products.filter((p) => p.kind === 'coins')
@@ -75,6 +92,7 @@ export function StarsShop({ demo }: { demo?: StarsProduct[] }) {
 
   return (
     <div className="stars-shop">
+      <StarsOpening show={opening} />
       <div className="stars-hero">
         <StarIcon size={30} />
         <div>

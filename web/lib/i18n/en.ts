@@ -2210,6 +2210,7 @@ export const en: Dict = {
     title: 'For Telegram Stars',
     sub: 'Pay with Stars right in Telegram — the purchase arrives at once.',
     onlyTelegram: 'Stars purchases are available in RANGE inside Telegram.',
+    opening: 'Opening the payment…',
     coins: 'Coins',
     coinsN: '{n} coins',
     keys: 'Keys — each opens the secret box',

@@ -50,7 +50,7 @@ export function useBuyForStars() {
   return useMutation({
     // `preset`: the live background's preset the player picked before buying (stored with the order, so it is theirs
     // from the first moment).
-    mutationFn: async ({ productId, preset }: { productId: string; preset?: string | null }): Promise<StarsBuyResult> => {
+    mutationFn: async ({ productId, preset, onOpened }: { productId: string; preset?: string | null; onOpened?: () => void }): Promise<StarsBuyResult> => {
       const res = await fetch('/api/stars/invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -60,7 +60,11 @@ export function useBuyForStars() {
       if (!res.ok || !body.url) throw new Error(body.error ?? 'STARS:failed')
       const open = window.Telegram?.WebApp?.openInvoice
       if (!open) throw new Error('STARS:no_telegram')
-      return new Promise<StarsBuyResult>((resolve) => open(body.url!, (status) => resolve(status as StarsBuyResult)))
+      return new Promise<StarsBuyResult>((resolve) => {
+        open(body.url!, (status) => resolve(status as StarsBuyResult))
+        // Telegram gives no signal when its sheet has come up: a moment after asking, the waiting screen can go.
+        window.setTimeout(() => onOpened?.(), 700)
+      })
     },
     onSuccess: (status) => {
       if (status !== 'paid' && status !== 'pending') return

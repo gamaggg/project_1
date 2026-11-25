@@ -21,7 +21,7 @@ import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { SkinPreview } from '@/components/app-shell/SkinPreview'
 import { SlotsCard } from '@/components/app-shell/SlotsCard'
-import { StarIcon, useStarsBuy } from '@/components/app-shell/StarsShop'
+import { StarIcon, StarsOpening, useStarsBuy } from '@/components/app-shell/StarsShop'
 import { useStarsProducts } from '@/lib/supabase/queries/stars'
 import { useMyGlPresets, useSetHeroBgPreset } from '@/lib/supabase/queries/glPresets'
 import { KitsSection } from '@/components/app-shell/GlShop'
@@ -456,6 +456,7 @@ export function ShopScreen({
       </div>
 
       {purchaseModal}
+      <StarsOpening show={starsBuy.opening} />
       {refunding && (
         <RefundConfirmModal label={refunding.name} price={refunding.price} busy={refundBusy} onConfirm={confirmRefund} onClose={() => setRefunding(null)} />
       )}
