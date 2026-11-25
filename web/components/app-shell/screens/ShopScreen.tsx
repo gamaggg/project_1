@@ -1,7 +1,7 @@
 'use client'
 
 import { useClan2Enabled } from '@/lib/clan2/live/flag'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { LiveCoinBalance } from '@/components/app-shell/CoinCountUp'
@@ -115,6 +115,18 @@ export function ShopScreen({
   const { request, modal: purchaseModal } = usePurchaseFlow(coins)
   const [category, setCategory] = useState<Category>('avatar_frame')
   const [historyOpen, setHistoryOpen] = useState(false)
+  // Only the balance stays pinned (owner, 25.11.2026: the whole header covered the screen when scrolling): the games
+  // scroll away, and the tabs stick right under the pinned part, whose height is measured here.
+  const pinnedRef = useRef<HTMLDivElement>(null)
+  const [pinnedH, setPinnedH] = useState(0)
+  useEffect(() => {
+    const el = pinnedRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setPinnedH(el.offsetHeight))
+    ro.observe(el)
+    setPinnedH(el.offsetHeight)
+    return () => ro.disconnect()
+  }, [])
   const [tryOn, setTryOn] = useState<ShopItem | null>(null)
   // Новинки (24.11.2026): a dot on the tabs that hold something NEW the player hasn't looked at yet. Opening a tab
   // puts its new items out of the dot (kept on this device); the NEW badges on the items themselves stay their 3 days.
@@ -233,7 +245,7 @@ export function ShopScreen({
           of this same sticky block rather than staying in its usual
           standalone spot, since letting only the tabs stick would leave the
           balance scrolling away oddly between the two. */}
-      <div className="shop-sticky-top">
+      <div className="shop-sticky-top" ref={pinnedRef}>
         <div className="header-row">
           <BackButton onClick={onBack} registerNative={false} />
           <div style={{ fontWeight: 800, fontSize: 15 }}>{tn('shop.title')}</div>
@@ -276,12 +288,15 @@ export function ShopScreen({
             )}
           </div>
         </div>
-        {/* The games under the balance, each its own card (24.11.2026: three blocks glued into one read oddly). */}
+      </div>
+      {/* The games under the balance, each its own card (24.11.2026: three blocks glued into one read oddly); they scroll away. */}
+      <div className="shop-games-wrap">
         <div className="shop-games">
           <SlotsCard city={city} onOpen={onOpenSlots} />
           <SecretBoxCard onOpen={onOpenSecretBox} />
         </div>
-
+      </div>
+      <div className="shop-tabs-wrap" style={{ '--shop-pinned-h': `${pinnedH}px` } as CSSProperties}>
         <div className="shop-tabs">
           {CATEGORIES.map((c) => (
             <button key={c.id} className={`shop-tab${category === c.id ? ' active' : ''}`} onClick={() => setCategory(c.id)}>
