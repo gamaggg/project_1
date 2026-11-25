@@ -135,15 +135,14 @@ export function ShopTryOn({
             <div className="kit-offer">
               <div className="kit-offer-text">
                 <div className="kit-offer-title">{kitOffer.title}</div>
-                <div className="kit-offer-sub">{tn('shop.kitOfferSub')}</div>
+                <div className="kit-offer-price">
+                  <StarIcon size={13} />
+                  <b>{kitOffer.stars}</b>
+                  <span className="kit-instead">{tn('shop.kitInstead', { price: GL_STARS.bg + GL_STARS.frame + GL_STARS.name })}</span>
+                </div>
               </div>
-              <div className="kit-offer-price">
-                <StarIcon size={14} />
-                <b>{kitOffer.stars}</b>
-                <span className="kit-instead">{tn('shop.kitInstead', { price: GL_STARS.bg + GL_STARS.frame + GL_STARS.name })}</span>
-              </div>
-              <button className="btn-secondary" onClick={kitOffer.onView}>
-                {tn('shop.kitView')}
+              <button className="btn-secondary kit-offer-btn" onClick={kitOffer.onView}>
+                {tn('shop.kitViewShort')}
               </button>
             </div>
           )}

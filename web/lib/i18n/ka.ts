@@ -2265,6 +2265,7 @@ export const ka: Dict = {
     kitsTitle: 'სრული იერსახე',
     kitOfferSub: 'ფონი, ჩარჩო და სახელი ერთ სტილში: ერთად უფრო იაფია.',
     kitView: 'კომპლექტის ნახვა',
+    kitViewShort: 'ნახვა',
     presetNote: 'პრესეტის შეცვლა ნებისმიერ დროს შეიძლება, ყიდვის შემდეგაც.',
     kitContents: 'ფონი · ჩარჩო · სახელი',
     kitInstead: '{price}-ის ნაცვლად',

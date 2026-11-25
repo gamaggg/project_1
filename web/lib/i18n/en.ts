@@ -2263,6 +2263,7 @@ export const en: Dict = {
     kitsTitle: 'The whole look',
     kitOfferSub: 'Background, frame and name in one style: cheaper together.',
     kitView: 'View the kit',
+    kitViewShort: 'View',
     presetNote: 'You can change the preset any time, after buying too.',
     kitContents: 'Background · frame · name',
     kitInstead: 'instead of {price}',
