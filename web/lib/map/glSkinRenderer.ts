@@ -3,8 +3,9 @@
 // draws the background's own scene — the same GLSL the profile background runs (BackgroundGL / AuroraGL) — and every
 // sector copies a piece of it (a different piece per sector, by its seed). No dark ground: the scenes are run in their
 // light-surface mode (uDark = 0, a white surface), where light becomes ink, and the output keeps only the scene's own
-// coverage as alpha, so the sector shows through and keeps its colour. Returns false when WebGL is not there (the caller
-// draws its flat 2D version then).
+// coverage as alpha, so the sector shows through and keeps its colour. Only the pattern's density is kept (the washes of
+// light behind it are cut off, so the map under the sector stays readable) and it is inked in the sector's own colour,
+// like the other skins. Returns false when WebGL is not there (the caller draws its flat 2D version then).
 import { GL_PRELUDE, GL_VERTEX, hexToRgb01 } from '@/components/app-shell/BackgroundGL'
 import { AURORA_FRAGMENT, AURORA_VERTEX, hexToOklab } from '@/components/app-shell/AuroraGL'
 import { STARFIELD_PRESETS, STARFIELD_SCENE, starfieldUniforms } from '@/lib/data/glScenes/starfield'
@@ -15,10 +16,10 @@ import { MATRIX_PRESETS, MATRIX_SCENE, matrixUniforms } from '@/lib/data/glScene
 export type GlSkinFamily = 'aurora' | 'starfield' | 'particles' | 'beams' | 'matrix'
 
 // The hidden canvas, bigger than a sector's picture so each sector can take its own piece.
-const W = 360
-const H = 312
+const W = 540
+const H = 468
 // A sector's piece of it, in canvas pixels (smaller = the pattern bigger in the sector).
-const PIECE_W = 220
+const PIECE_W = 225
 
 type Uniforms = {
   numbers?: Record<string, number>
@@ -35,10 +36,9 @@ const MAIN_SKIN = `
 void main() {
   vec4 c = scene(gl_FragCoord.xy);
   float a0 = clamp(c.a, 0.0, 1.0);
-  vec3 col = a0 > 0.001 ? c.rgb / a0 : vec3(0.0);
-  // Lift the faint parts (the scenes tint a light surface lightly) and deepen the ink, so it reads on a tinted sector.
-  float a = clamp(pow(a0, 0.5) * 2.1, 0.0, 1.0);
-  fragColor = vec4(col * 0.78 * a, a);
+  // Only the pattern: the faint washes of light go, the marks stay (the colour is the sector's, put on afterwards).
+  float a = smoothstep(0.1, 0.48, pow(a0, 0.5));
+  fragColor = vec4(0.0, 0.0, 0.0, a);
 }
 `
 
@@ -52,6 +52,16 @@ type Renderer = {
 }
 
 const renderers = new Map<GlSkinFamily, Renderer | 'failed'>()
+// One scratch canvas for the tinting, shared by all sectors.
+let tint: HTMLCanvasElement | null = null
+
+// The sector's colour darkened by k (0 = as is, 1 = black).
+function shade(hex: string, k: number) {
+  const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex)
+  if (!m) return hex
+  const n = parseInt(m[1].length === 3 ? m[1].replace(/./g, '$&$&') : m[1], 16)
+  return '#' + [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(v * (1 - k)).toString(16).padStart(2, '0')).join('')
+}
 
 function compile(gl: WebGLRenderingContext | WebGL2RenderingContext, type: number, src: string) {
   const sh = gl.createShader(type)!
@@ -171,7 +181,7 @@ function makeAuroraRenderer(): Renderer | null {
   if (!gl) return null
   const fragment = AURORA_FRAGMENT.replace(
     'gl_FragColor = vec4(uSurface + color * amount * 1.2, 1.0);',
-    'float a = clamp(pow(amount, 0.55) * 2.0, 0.0, 1.0); gl_FragColor = vec4(color * a, a);',
+    'float a = smoothstep(0.06, 0.6, amount) * 0.9; gl_FragColor = vec4(0.0, 0.0, 0.0, a);',
   )
   const vs = compile(gl, gl.VERTEX_SHADER, AURORA_VERTEX)
   const fs = compile(gl, gl.FRAGMENT_SHADER, fragment)
@@ -229,16 +239,16 @@ function build(family: GlSkinFamily): Renderer | null {
     case 'starfield':
       return makeSceneRenderer(STARFIELD_SCENE, starfieldUniforms(STARFIELD_PRESETS[0].props))
     case 'particles':
-      return makeSceneRenderer(PARTICLES_SCENE, particlesUniforms(PARTICLES_PRESETS[0].props))
+      return makeSceneRenderer(PARTICLES_SCENE, particlesUniforms({ ...PARTICLES_PRESETS[0].props, count: 700, size: 6 }))
     case 'beams':
-      return makeSceneRenderer(BEAMS_SCENE, beamsUniforms(BEAMS_PRESETS[0].props))
+      return makeSceneRenderer(BEAMS_SCENE, beamsUniforms({ ...BEAMS_PRESETS[0].props, width: 3.4, count: 22 }))
     case 'matrix':
       return makeSceneRenderer(MATRIX_SCENE, matrixUniforms(MATRIX_PRESETS[0].props))
   }
 }
 
 // Draws the family's pattern into the sector's box (0,0)–(w,h) for time t; false = no WebGL, draw the flat version.
-export function drawGlSkin(family: GlSkinFamily, ctx: CanvasRenderingContext2D, w: number, h: number, t: number, seed: number): boolean {
+export function drawGlSkin(family: GlSkinFamily, ctx: CanvasRenderingContext2D, w: number, h: number, t: number, seed: number, color: string): boolean {
   if (typeof document === 'undefined') return false
   let r = renderers.get(family)
   if (r === 'failed') return false
@@ -263,8 +273,24 @@ export function drawGlSkin(family: GlSkinFamily, ctx: CanvasRenderingContext2D, 
   const sh = Math.min(H, Math.max(40, (PIECE_W * h) / w))
   const sx = (W - sw) * (seed % 1)
   const sy = (H - sh) * ((seed * 7.31) % 1)
+  // The piece, kept as a mask and filled with the sector's colour (a deeper shade of it, as the other skins are inked).
+  const cw = Math.ceil(w)
+  const ch = Math.ceil(h)
+  if (!tint) tint = document.createElement('canvas')
+  if (tint.width < cw || tint.height < ch) {
+    tint.width = Math.max(tint.width, cw)
+    tint.height = Math.max(tint.height, ch)
+  }
+  const tc = tint.getContext('2d')!
+  tc.globalCompositeOperation = 'source-over'
+  tc.clearRect(0, 0, cw, ch)
+  tc.drawImage(r.canvas, sx, sy, sw, sh, 0, 0, w, h)
+  tc.globalCompositeOperation = 'source-in'
+  tc.fillStyle = shade(color, 0.5)
+  tc.fillRect(0, 0, cw, ch)
   ctx.globalCompositeOperation = 'source-over'
+  ctx.globalAlpha = 0.95
+  ctx.drawImage(tint, 0, 0, cw, ch, 0, 0, w, h)
   ctx.globalAlpha = 1
-  ctx.drawImage(r.canvas, sx, sy, sw, sh, 0, 0, w, h)
   return true
 }

@@ -139,4 +139,53 @@ export async function fulfillStarsPayment(chatId: number, payerId: number | unde
           ? 'Покупка уже в инвентаре — надень её в магазине'
           : 'Скин уже в инвентаре — надень его в магазине'
   await tg('sendMessage', { chat_id: chatId, text: `⭐ Спасибо за покупку! ${what}.` })
+  // The owner is told about every sale (25.11.2026): who, when, what, how many Stars, and the running total.
+  await notifyOwnerOfSale(p.invoice_payload)
+}
+
+// The owner's message in the bot for a paid order: the buyer, the time, the thing, its Stars, and what all the sales add up to
+// (the Stars the buyers paid; what reaches the bot's balance after Telegram's own cut is shown in Telegram). Never throws:
+// the purchase is already given, a failed message must not turn the payment into an error.
+async function notifyOwnerOfSale(orderId: string) {
+  try {
+    // The tables are not in the generated types, so the client is used loosely.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = createAdminClient() as any
+    const { data: order } = await db.from('stars_orders').select('user_id, product_id, stars, paid_at').eq('id', orderId).single()
+    if (!order) return
+    const { data: product } = await db.from('stars_products').select('kind, amount, item_id, title').eq('id', order.product_id).single()
+    let label = order.product_id as string
+    if (product) {
+      if (product.kind === 'coins') label = `${Number(product.amount).toLocaleString('ru-RU')} монет`
+      else if (product.kind === 'keys') label = `${product.amount} ${product.amount === 1 ? 'ключ' : product.amount < 5 ? 'ключа' : 'ключей'}`
+      else if (product.title) label = product.title
+      else if (product.item_id) {
+        const { data: item } = await db.from('shop_items').select('name').eq('id', product.item_id).single()
+        label = item?.name ?? product.item_id
+      }
+    }
+    const { data: buyer } = await db.from('profiles').select('display_name, public_id').eq('id', order.user_id).single()
+    const { data: paid } = await db.from('stars_orders').select('stars, paid_at').eq('status', 'paid').limit(100000)
+    const rows = (paid ?? []) as { stars: number; paid_at: string | null }[]
+    const zone = 'Asia/Tbilisi'
+    const dayOf = (iso: string) => new Date(iso).toLocaleDateString('en-CA', { timeZone: zone })
+    const today = dayOf(new Date().toISOString())
+    const total = rows.reduce((n, r) => n + r.stars, 0)
+    const todaySum = rows.filter((r) => r.paid_at && dayOf(r.paid_at) === today).reduce((n, r) => n + r.stars, 0)
+    const when = new Date(order.paid_at ?? Date.now()).toLocaleString('ru-RU', { timeZone: zone, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    const text = [
+      '⭐ Покупка за Звёзды',
+      `Что: ${label}`,
+      `Сумма: ${order.stars} ⭐`,
+      `Кто: ${buyer?.display_name ?? 'игрок'}${buyer?.public_id ? ` (ID ${buyer.public_id})` : ''}`,
+      `Когда: ${when} (Тбилиси)`,
+      '',
+      `Всего заработано: ${total.toLocaleString('ru-RU')} ⭐ за ${rows.length} ${rows.length === 1 ? 'покупку' : rows.length < 5 ? 'покупки' : 'покупок'}`,
+      `Сегодня: ${todaySum.toLocaleString('ru-RU')} ⭐`,
+    ].join('\n')
+    const { data: admins } = await db.from('profiles').select('telegram_id').eq('is_super_admin', true).not('telegram_id', 'is', null)
+    for (const a of (admins ?? []) as { telegram_id: number }[]) await tg('sendMessage', { chat_id: a.telegram_id, text })
+  } catch (e) {
+    console.error('notifyOwnerOfSale failed', e)
+  }
 }

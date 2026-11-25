@@ -6,7 +6,7 @@
 // Drawn like the other animated skins (animatedSkins.ts): a function painting frame t into the sector's box, the hex
 // already clipped by the caller. Only the pattern goes on, no ground of its own: the sector keeps its colour and tint, and
 // the pattern is inked in a deeper shade of that colour (with white highlights) so it reads on any tint. The aurora keeps
-// its family's colours. `seed` makes neighbours differ.
+// the sector's colour. `seed` makes neighbours differ.
 import type { AnimatedSkinDraw } from '@/lib/map/animatedSkins'
 import { drawGlSkin, type GlSkinFamily } from '@/lib/map/glSkinRenderer'
 
@@ -56,10 +56,10 @@ function sparkle(ctx: CanvasRenderingContext2D, x: number, y: number, r: number)
   ctx.fill()
 }
 
-// «Северное сияние»: curtains of light swaying and breathing, emerald into violet.
-const AURORA = ['#12C46E', '#0FB8A8', '#3B6BFF', '#8B3DFF']
-const aurora: AnimatedSkinDraw = (ctx, w, h, t, _color, seed = 0) => {
+// «Северное сияние»: curtains of light swaying and breathing.
+const aurora: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
   reset(ctx)
+  const ink = shade(color, 0.35)
   const N = 9
   const bw = (w / N) * 1.45
   for (let i = 0; i < N; i++) {
@@ -67,7 +67,7 @@ const aurora: AnimatedSkinDraw = (ctx, w, h, t, _color, seed = 0) => {
     const breathe = 0.5 + 0.5 * Math.sin(t * 0.5 + i * 1.3 + seed * 9)
     const height = h * (0.5 + 0.3 * breathe)
     const bottom = h * 0.92 + Math.sin(t * 0.4 + i * 0.6) * h * 0.02
-    const c = AURORA[Math.min(AURORA.length - 1, Math.round((i / (N - 1)) * (AURORA.length - 1)))]
+    const c = ink
     const g = ctx.createLinearGradient(0, bottom - height, 0, bottom)
     g.addColorStop(0, rgba(c, 0))
     g.addColorStop(0.55, rgba(c, 0.55 + 0.15 * breathe))
@@ -217,7 +217,7 @@ const matrix: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
 // WebGL is not there.
 function withGl(family: GlSkinFamily, fallback: AnimatedSkinDraw): AnimatedSkinDraw {
   return (ctx, w, h, t, color, seed = 0) => {
-    if (!drawGlSkin(family, ctx, w, h, t, seed)) fallback(ctx, w, h, t, color, seed)
+    if (!drawGlSkin(family, ctx, w, h, t, seed, color)) fallback(ctx, w, h, t, color, seed)
   }
 }
 
