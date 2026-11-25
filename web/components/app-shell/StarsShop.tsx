@@ -38,15 +38,15 @@ const COIN_PIC: Record<number, number> = { 500: 1, 1500: 2, 5000: 3 }
 export function useStarsBuy(demo = false) {
   const buy = useBuyForStars()
   const [note, setNote] = useState<string | null>(null)
-  function start(p: StarsProduct) {
+  function start(p: StarsProduct, preset?: string | null) {
     setNote(null)
     if (demo || !canPayWithStars()) {
       setNote(tn('stars.onlyTelegram'))
       return
     }
-    buy.mutate(p.id, {
+    buy.mutate({ productId: p.id, preset }, {
       onSuccess: (status) => {
-        if (status === 'paid') setNote(tn(p.kind === 'coins' ? 'stars.paidCoins' : p.kind === 'keys' ? 'stars.paidKeys' : 'stars.paidSkin'))
+        if (status === 'paid') setNote(tn(p.kind === 'coins' ? 'stars.paidCoins' : p.kind === 'keys' ? 'stars.paidKeys' : p.kind === 'kit' ? 'stars.paidKit' : p.itemId?.startsWith('skin_') ? 'stars.paidSkin' : 'stars.paidItem'))
         else if (status === 'failed') setNote(tn('stars.failed'))
       },
       onError: (e) => setNote(tn(/STARS:owned/.test(String((e as Error).message)) ? 'stars.owned' : 'stars.failed')),

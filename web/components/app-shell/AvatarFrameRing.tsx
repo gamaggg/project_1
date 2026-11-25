@@ -15,13 +15,27 @@ export function AvatarFrameRing({ frame }: { frame: AvatarFrame | null | undefin
     return <div className={`avatar-frame-ring${frame?.glow ? ' avatar-frame-glow' : ''}`} style={{ background: frame?.ring }} />
   }
   const ring = (
-    <div className={`avatar-frame-ring avatar-frame-fx fx-${frame.fx}`} style={{ '--ring': frame.ring } as CSSProperties}>
+    <div
+      className={`avatar-frame-ring avatar-frame-fx fx-${frame.fx}`}
+      style={
+        {
+          '--ring': frame.ring,
+          // The paid live-background families' frames (glKits.ts): their own turn time and direction.
+          ...(frame.gl ? { '--spin': `${frame.gl.spin}s`, '--dir': frame.gl.reverse ? 'reverse' : 'normal' } : {}),
+        } as CSSProperties
+      }
+    >
+      {frame.gl?.sparkles &&
+        Array.from({ length: frame.gl.sparkles }, (_, i) => (
+          <i key={i} className="frame-sparkle" style={{ '--a': `${i * (360 / frame.gl!.sparkles!) + 40}deg`, '--d': `${i * -0.9}s` } as CSSProperties} />
+        ))}
       {frame.fx === 'royal' &&
         [0, 120, 240].map((a, i) => <i key={a} className="frame-sparkle" style={{ '--a': `${a}deg`, '--d': `${i * -0.9}s` } as CSSProperties} />)}
       {frame.fx === 'katran' &&
         [20, 95, 160, 230, 300].map((a, i) => <i key={a} className="frame-spot" style={{ '--a': `${a}deg`, '--d': `${i * -0.7}s` } as CSSProperties} />)}
       {frame.fx === 'storm' &&
         [40, 175, 290].map((a, i) => <i key={a} className="frame-bolt" style={{ '--a': `${a}deg`, '--d': `${i * -1.3}s` } as CSSProperties} />)}
+      {/* 25.11.2026, the Stars sets: flames and embers (Вулкан), neon bubbles (Бездна), planets and sparkles (Космос). */}
       {frame.fx === 'som' &&
         [35, 150, 265].map((a, i) => <i key={a} className="frame-bubble" style={{ '--a': `${a}deg`, '--d': `${i * -1.1}s` } as CSSProperties} />)}
     </div>

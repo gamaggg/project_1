@@ -27,6 +27,9 @@ import { statusBadge } from '@/components/app-shell/screens/TerritoryScreen'
 import { SlotsCard } from '@/components/app-shell/SlotsCard'
 import { EmptyPrizePlace, PodiumItem, WEEK_PRIZES } from '@/components/app-shell/screens/WeeklyLeaderboard'
 import { StarsShop } from '@/components/app-shell/StarsShop'
+import { GL_FAMILIES, familyName, glPresetOf } from '@/components/app-shell/glFamilies'
+import { KitsSection } from '@/components/app-shell/GlShop'
+import { GL_KITS } from '@/lib/data/glKits'
 import { ShopClosed } from '@/components/app-shell/screens/ShopScreen'
 import { tn } from '@/lib/i18n/runtime'
 import { formatWeekLeft, formatWeekOfMonth } from '@/lib/format'
@@ -151,6 +154,9 @@ export function UpdatePreview() {
   const [coins, setCoins] = useState(20000)
   // Free box openings won on the slots (three chests) — the demo starts with three.
   const [free, setFree] = useState(3)
+  const [glFamily, setGlFamily] = useState('aurora')
+  const [glPreset, setGlPreset] = useState('borealis')
+  const [kitPresets, setKitPresets] = useState<Record<string, string>>({})
   const [owned, setOwned] = useState<Set<string>>(new Set())
   const [worn, setWorn] = useState<Partial<Record<Cat, string>>>({ hero_bg: 'floats', avatar_frame: 'frame_storm', name_style: 'name_wave' })
   const [cat, setCat] = useState<Cat>('avatar_frame')
@@ -222,6 +228,48 @@ export function UpdatePreview() {
         <p style={{ fontSize: 12.5, color: 'var(--ink-soft)', lineHeight: 1.45, margin: '6px 0 22px' }}>
           Демо: те же компоненты и стили, что в приложении, на настоящем секторе Батуми, но с выдуманными игроками и монетами. Ничего не сохраняется — после перезагрузки всё как было.
         </p>
+
+        <Section title="0. Платные живые фоны: выбери фон и пресет" about="Каждый фон — семейство готовых пресетов (как на shadcn.io). Игрок покупает фон и выбирает пресет, тонкой настройки нет. Сейчас семь: северное сияние, градиент, звёзды, частицы, лучи, матрица, туман.">
+          <div className="aur-cz">
+            <div className="aur-presets">
+              {GL_FAMILIES.map((f) => (
+                <button key={f.id} type="button" className={`filter-chip${glFamily === f.id ? ' active' : ''}`} onClick={() => { setGlFamily(f.id); setGlPreset(f.presets[0].id) }}>
+                  {familyName(f)}
+                </button>
+              ))}
+            </div>
+            <div className="aur-preview">
+              {(GL_FAMILIES.find((f) => f.id === glFamily) ?? GL_FAMILIES[0]).render(glPreset)}
+              <div className="aur-preview-avatar">ГР</div>
+              <div className="aur-preview-name">Гоша Рыбак</div>
+            </div>
+            <div className="aur-presets">
+              {(GL_FAMILIES.find((f) => f.id === glFamily) ?? GL_FAMILIES[0]).presets.map((p) => (
+                <button key={p.id} type="button" className={`filter-chip${glPreset === p.id ? ' active' : ''}`} onClick={() => setGlPreset(p.id)}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </Section>
+
+        <Section title="0б. Комплекты: фон + рамка + имя" about="Вкладка «Комплекты» в магазине: у каждого фона своя рамка и свой стиль имени в одном стиле, всё вместе 300 ⭐ вместо 350. Пресет выбирается тут же, до покупки. Здесь кнопки ничего не покупают.">
+          <KitsSection
+            kits={GL_KITS}
+            products={new Map(GL_KITS.map((k) => [k.kit, { id: k.kit, kind: 'kit' as const, amount: 0, itemId: null, stars: 300, owned: false, ownedAny: false }]))}
+            owned={new Set<string>()}
+            wornKit={() => false}
+            presetFor={(f) => glPresetOf(f, kitPresets[f.id])}
+            onPreset={(f, p) => setKitPresets((x) => ({ ...x, [f.id]: p }))}
+            displayName="Гоша Рыбак"
+            avatarUrl={null}
+            onBuy={() => {}}
+            onEquip={() => {}}
+            onTryOn={() => {}}
+            busy={false}
+            kitTitle={(k) => `Комплект «${familyName(GL_FAMILIES.find((f) => f.id === k.family)!)}»`}
+          />
+        </Section>
 
         <Section title="1. Профиль: примерь новинки" about="Купи и надень вещь ниже — здесь сразу видно, как она смотрится в шапке профиля.">
           <div style={{ position: 'relative', isolation: 'isolate', borderRadius: 20, overflow: 'hidden', background: bg.base, padding: '26px 18px', display: 'flex', alignItems: 'center', gap: 16, minHeight: 130 }}>
@@ -382,11 +430,11 @@ export function UpdatePreview() {
         <Section title="9. Магазин: вкладка «Звёзды»" about="Монеты, ключи и три скина только за Звёзды Telegram. Покупка работает только в Telegram; здесь кнопки лишь показывают подсказку.">
           <StarsShop
             demo={[
-              { id: 'coins_500', kind: 'coins', amount: 500, itemId: null, stars: 50, owned: false },
-              { id: 'coins_1500', kind: 'coins', amount: 1500, itemId: null, stars: 125, owned: false },
-              { id: 'coins_5000', kind: 'coins', amount: 5000, itemId: null, stars: 350, owned: false },
-              { id: 'keys_1', kind: 'keys', amount: 1, itemId: null, stars: 40, owned: false },
-              { id: 'keys_3', kind: 'keys', amount: 3, itemId: null, stars: 100, owned: false },
+              { id: 'coins_500', kind: 'coins', amount: 500, itemId: null, stars: 50, owned: false, ownedAny: false },
+              { id: 'coins_1500', kind: 'coins', amount: 1500, itemId: null, stars: 125, owned: false, ownedAny: false },
+              { id: 'coins_5000', kind: 'coins', amount: 5000, itemId: null, stars: 350, owned: false, ownedAny: false },
+              { id: 'keys_1', kind: 'keys', amount: 1, itemId: null, stars: 40, owned: false, ownedAny: false },
+              { id: 'keys_3', kind: 'keys', amount: 3, itemId: null, stars: 100, owned: false, ownedAny: false },
             ]}
           />
         </Section>

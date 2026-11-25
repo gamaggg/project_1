@@ -1,6 +1,7 @@
 'use client'
 
 import { resolveNameStyle } from '@/lib/data/nameStyles'
+import { glFamilyOf } from '@/lib/data/glKits'
 
 // Wherever a display name renders prominently (profile header, leaderboard)
 // — small/decorative name spots (CatcherLabel, activity feed actor names)
@@ -29,6 +30,7 @@ export function StyledName({ name, styleId, className }: { name: string; styleId
       </span>
     )
   }
+  // 25.11.2026, the Stars sets' name styles: the letters themselves plus a few sparks around them (aria-hidden).
   if (style.effect === 'bubbles') {
     return (
       <span className={[className, 'name-fx-bubbles'].filter(Boolean).join(' ')}>
@@ -43,7 +45,7 @@ export function StyledName({ name, styleId, className }: { name: string; styleId
   }
   return (
     <span
-      className={[className, style.fx && `name-fx-${style.fx}`].filter(Boolean).join(' ') || undefined}
+      className={[className, style.fx && `name-fx-${style.fx}`, glFamilyOf(style.id) && 'name-gl'].filter(Boolean).join(' ') || undefined}
       style={{
         // backgroundImage, not the `background` shorthand: the shorthand
         // would also pin size/position inline, over the .name-fx-* classes

@@ -5,6 +5,9 @@ import { createPortal } from 'react-dom'
 import { AvatarFrameRing } from '@/components/app-shell/AvatarFrameRing'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { StarIcon } from '@/components/app-shell/StarsShop'
+import { GlPresetChips } from '@/components/app-shell/GlShop'
+import type { GlFamily } from '@/components/app-shell/glFamilies'
+import { joinHeroBg, type GlKit } from '@/lib/data/glKits'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorPreviewMap'
 import { StyledName } from '@/components/app-shell/StyledName'
@@ -40,6 +43,9 @@ export function ShopTryOn({
   onEquip,
   onClose,
   stars,
+  kit,
+  glPreset,
+  kitBlocked,
 }: {
   item: ShopItem
   look: TryOnLook
@@ -49,10 +55,16 @@ export function ShopTryOn({
   onClose: () => void
   // Sold only for Telegram Stars (25.11.2026): the price in Stars instead of coins.
   stars?: number
+  // A kit of the paid live backgrounds: the background, frame and name style of one family at once (glKits.ts).
+  kit?: GlKit
+  // A live background (or a kit's): its ready presets, changed right here before buying and after.
+  glPreset?: { family: GlFamily; value: string; onChange: (preset: string) => void }
+  // Part of the kit is already the player's: it can't be bought whole.
+  kitBlocked?: boolean
 }) {
-  const bg = resolveHeroBackground(item.category === 'hero_bg' ? item.id : look.heroBg)
-  const frame = resolveAvatarFrame(item.category === 'avatar_frame' ? item.id : look.frame)
-  const nameStyle = item.category === 'name_style' ? item.id : look.nameStyle
+  const bg = resolveHeroBackground(kit ? joinHeroBg(kit.bg, glPreset?.value) : item.category === 'hero_bg' ? joinHeroBg(item.id, glPreset?.value) : look.heroBg)
+  const frame = resolveAvatarFrame(kit ? kit.frame : item.category === 'avatar_frame' ? item.id : look.frame)
+  const nameStyle = kit ? kit.name : item.category === 'name_style' ? item.id : look.nameStyle
   const initials = nameInitials(look.displayName, 2)
 
   return createPortal(
@@ -89,7 +101,12 @@ export function ShopTryOn({
         <div className="tryon-body">
           <div className="tryon-label">{tn('shop.tryonLabel')}</div>
           <div className="modal-title">{item.name}</div>
-          {state === 'locked' && stars ? (
+          {glPreset && <GlPresetChips family={glPreset.family} value={glPreset.value} onChange={glPreset.onChange} />}
+          {kitBlocked ? (
+            <p className="kit-part-note" style={{ marginBottom: 10 }}>
+              {tn('shop.kitPartOwned')}
+            </p>
+          ) : state === 'locked' && stars ? (
             <button className="btn-primary shop-price-btn" onClick={onBuy}>
               {tn('shop.buyFor')} <StarIcon size={16} /> {stars}
             </button>
@@ -103,7 +120,7 @@ export function ShopTryOn({
             </button>
           ) : state === 'owned' ? (
             <button className="btn-primary" onClick={onEquip}>
-              {item.category === 'hero_bg' || item.category === 'territory_skin' ? tn('shop.apply') : tn('shop.equip')}
+              {kit ? tn('shop.kitEquip') : item.category === 'hero_bg' || item.category === 'territory_skin' ? tn('shop.apply') : tn('shop.equip')}
             </button>
           ) : (
             <button className="btn-secondary" disabled>

@@ -8,6 +8,7 @@ import { HalftoneBackground } from '@/components/app-shell/HalftoneBackground'
 import { BubblesBackground } from '@/components/app-shell/BubblesBackground'
 import { FirefliesBackground } from '@/components/app-shell/FirefliesBackground'
 import { PremiumBackground } from '@/components/app-shell/PremiumBackgrounds'
+import { glFamily, glPresetOf } from '@/components/app-shell/glFamilies'
 
 // Single dispatch point for every animated hero_bg preset's live component —
 // picks by `kind` (heroBackgrounds.ts), so the 4 call sites that show a
@@ -29,6 +30,11 @@ export function HeroBgLive({ bg, variant }: { bg: HeroBackground; variant: 'hero
       return <BubblesBackground color={bg.bubbleColor} />
     case 'fireflies':
       return <FirefliesBackground color={bg.fireflyColor} />
+    case 'gl': {
+      // The paid live families: still in the shop's small cards (`swatch`), alive everywhere else.
+      const family = glFamily(bg.glFamily)
+      return family ? <>{family.render(glPresetOf(family, bg.glPreset), variant === 'swatch')}</> : null
+    }
     case 'deep':
     case 'moonpath':
     case 'school':

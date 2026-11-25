@@ -200,8 +200,9 @@ export const FAQ_EN: FaqSection[] = [
       {
         q: 'Can I buy anything for Telegram Stars?',
         a: [
-          'Yes, in RANGE inside Telegram: the «Stars» tab in the Shop. You pay with Stars right in Telegram, and the purchase arrives at once.',
+          'Yes, in RANGE inside Telegram: coins and keys with the «Top up» button in the Shop, everything else on the Shop tabs with a price in Stars. You pay with Stars right in Telegram, and the purchase arrives at once.',
           'Coins: 500 — 50 ⭐, 1,500 — 125 ⭐, 5,000 — 350 ⭐. Keys: 1 — 40 ⭐, 3 — 100 ⭐; each key opens the secret box for free. The Jellyfish, Lava and Constellations skins — 150 ⭐ each; they can only be had for Stars.',
+          'Live profile backgrounds — seven of them (northern lights, gradient, starfield, particles, beams, matrix, fog), 150 ⭐ each. Each has its own ready presets, which you can change before and after buying. Every background has its own frame and name style, 100 ⭐ each. All three together are a kit on the «Kits» tab: 300 ⭐ instead of 350. They are for Stars only: not for coins and not in the box. If you already own part of a kit, buy the rest separately.',
         ],
       },
       {

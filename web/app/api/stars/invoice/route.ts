@@ -13,12 +13,15 @@ async function handlePOST(req: Request) {
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-  const body = (await req.json().catch(() => null)) as { product?: unknown } | null
+  const body = (await req.json().catch(() => null)) as { product?: unknown; preset?: unknown } | null
   const product = typeof body?.product === 'string' ? body.product : ''
   if (!/^[a-z0-9_]{1,40}$/.test(product)) return NextResponse.json({ error: 'STARS:unknown' }, { status: 400 })
 
+  // The live background's preset picked before buying (glKits.ts): a short word, or nothing (without one the call stays the one-argument form, so it also works before migration 13).
+  const preset = typeof body?.preset === 'string' && /^[a-z0-9_]{1,24}$/.test(body.preset) ? body.preset : null
+
   const rpc = supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>
-  const { data, error } = await rpc.call(supabase, 'stars_order_create', { p_product: product })
+  const { data, error } = await rpc.call(supabase, 'stars_order_create', preset ? { p_product: product, p_preset: preset } : { p_product: product })
   if (error) {
     const code = /STARS:\w+/.exec(error.message)?.[0] ?? 'STARS:failed'
     return NextResponse.json({ error: code }, { status: 400 })

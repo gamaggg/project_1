@@ -12,7 +12,7 @@ const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
 export type StarsOrder = {
   order_id: string
   product_id: string
-  kind: 'coins' | 'keys' | 'item'
+  kind: 'coins' | 'keys' | 'item' | 'kit'
   amount: number
   item_id: string | null
   item_name: string | null
@@ -30,6 +30,21 @@ function invoiceText(o: StarsOrder): { title: string; description: string } {
     return {
       title: `${o.amount} ${word}`,
       description: `${o.amount} ${word} RANGE: каждый открывает секретный бокс в магазине бесплатно.`,
+    }
+  }
+  // 25.11.2026: the paid live backgrounds, their frames and name styles, and the kits of the three (item_name is the
+  // shop's own name of the thing, e.g. «Рамка «Сияние»» or «Комплект «Северное сияние»»).
+  if (o.kind === 'kit') {
+    return {
+      title: (o.item_name ?? 'Комплект').slice(0, 32),
+      description: `${o.item_name ?? 'Комплект'} в RANGE: живой фон профиля, рамка и стиль имени в одном стиле. Только за Звёзды, вместе дешевле, чем по отдельности.`,
+    }
+  }
+  if (o.item_id && !o.item_id.startsWith('skin_')) {
+    const what = o.item_id.startsWith('bg_') ? 'Живой фон профиля' : o.item_id.startsWith('frame_') ? 'Рамка для аватара' : 'Стиль имени'
+    return {
+      title: (o.item_name ?? what).slice(0, 32),
+      description: `${what} «${o.item_name ?? ''}» в RANGE. Только за Звёзды: за монеты и в боксе его нет.`,
     }
   }
   return {
@@ -120,6 +135,8 @@ export async function fulfillStarsPayment(chatId: number, payerId: number | unde
       ? `${r.amount.toLocaleString('ru-RU')} монет уже на счёте`
       : r.kind === 'keys'
         ? `Ключей: ${r.amount}. Секретный бокс в магазине откроется бесплатно`
-        : 'Скин уже в инвентаре — надень его в магазине'
+        : r.kind === 'kit' || (r.item_id && !r.item_id.startsWith('skin_'))
+          ? 'Покупка уже в инвентаре — надень её в магазине'
+          : 'Скин уже в инвентаре — надень его в магазине'
   await tg('sendMessage', { chat_id: chatId, text: `⭐ Спасибо за покупку! ${what}.` })
 }

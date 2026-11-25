@@ -941,22 +941,27 @@ function mixHex(color: string, to: string, k: number) {
 
 // «Медузы»: three to four glowing jellyfish drifting up through the sector, each bell pulsing — it squeezes,
 // darts up a little, and opens again — with long tentacles swaying behind; tiny motes of light drift past.
+const JELLY_NEON = ['#3FF2FF', '#FF5FD2', '#B26BFF']
 const jellyfish: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
   const r = rand(Math.floor(seed * 997) + 211)
   const S = Math.min(w, h)
   const lw = Math.max(1, S * 0.011)
-  const light = mixHex(color, '#FFFFFF', 0.55)
-  const pale = mixHex(color, '#FFFFFF', 0.85)
+  // 25.11.2026 (owner: paid skins need their own look): its own palette, not the sector's colour — deep blue water and
+  // neon jellyfish, cyan, pink and violet.
+  void color
+  const motes = '#8FF8FF'
 
-  // Deep water: darker below, a soft light from above.
+  // Deep water: opaque, a little lighter at the top.
   const water = ctx.createLinearGradient(0, 0, 0, h)
-  water.addColorStop(0, 'rgba(255,255,255,.16)')
-  water.addColorStop(1, 'rgba(6,10,40,.34)')
+  water.addColorStop(0, '#0A3466')
+  water.addColorStop(0.5, '#05204A')
+  water.addColorStop(1, '#020B22')
+  ctx.globalAlpha = 1
   ctx.fillStyle = water
   ctx.fillRect(0, 0, w, h)
 
   // Motes drifting up.
-  ctx.fillStyle = pale
+  ctx.fillStyle = motes
   for (let n = 0; n < 14; n++) {
     const x = r() * w + Math.sin(t * 0.4 + n) * S * 0.02
     const y = h - (((r() * h + t * S * 0.05) % (h + 10)) - 5)
@@ -980,10 +985,13 @@ const jellyfish: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
     const y = h + size * 2 - travel
     const bw = size * (1 - 0.22 * squeeze)
     const bh = size * (0.72 + 0.18 * squeeze)
+    const neon = JELLY_NEON[(k + Math.floor(seed * 7)) % JELLY_NEON.length]
+    const light = mixHex(neon, '#FFFFFF', 0.45)
+    const pale = mixHex(neon, '#FFFFFF', 0.82)
 
     // Glow behind the bell.
-    ctx.globalAlpha = 0.55
-    const gl = glow(color)
+    ctx.globalAlpha = 0.85
+    const gl = glow(neon)
     ctx.drawImage(gl, x - size * 1.6, y - size * 1.3, size * 3.2, size * 3.2)
 
     // Tentacles: wavy lines trailing down, swaying more at their tips.
@@ -1007,8 +1015,8 @@ const jellyfish: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
     // The bell: a dome, brighter at its top, with a rim and a few ribs.
     const bell = ctx.createRadialGradient(x, y - bh * 0.6, 0, x, y - bh * 0.3, bw)
     bell.addColorStop(0, pale)
-    bell.addColorStop(0.55, withAlpha(color, 0.75))
-    bell.addColorStop(1, withAlpha(color, 0.25))
+    bell.addColorStop(0.55, withAlpha(neon, 0.85))
+    bell.addColorStop(1, withAlpha(neon, 0.3))
     ctx.globalAlpha = 0.95
     ctx.fillStyle = bell
     ctx.beginPath()
@@ -1071,70 +1079,71 @@ function lavaCracks(w: number, h: number, seed: number): Crack[] {
   lavaCache.set(key, c)
   return c
 }
+// «Обсидиан» (25.11.2026, owner: «stylish, not colourful»): polished black stone, a slow sheen gliding across it, a few
+// hairline cracks glowing molten gold, the heat creeping along them, now and then a single spark. One accent, much air.
 const lava: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
+  void color
   const S = Math.min(w, h)
-  const lw = Math.max(1, S * 0.012)
-  // Molten rock is hot whatever the sector's colour: mostly orange, only tinted by it.
-  const hot = mixHex(color, '#FF8A1E', 0.8)
-  const white = mixHex(color, '#FFF2C8', 0.9)
-  const crust = mixHex(color, '#1A0804', 0.82)
-
-  // The crust darkens the sector, more at the edges.
-  const g = ctx.createRadialGradient(w / 2, h / 2, S * 0.1, w / 2, h / 2, S * 0.75)
-  g.addColorStop(0, withAlpha(crust, 0.62))
-  g.addColorStop(1, withAlpha(crust, 0.86))
-  ctx.fillStyle = g
+  const lw = Math.max(1.1, S * 0.014)
+  const stone = ctx.createLinearGradient(0, 0, w, h)
+  stone.addColorStop(0, '#0B0B0E')
+  stone.addColorStop(0.55, '#141012')
+  stone.addColorStop(1, '#1B130F')
+  ctx.globalAlpha = 1
+  ctx.fillStyle = stone
   ctx.fillRect(0, 0, w, h)
 
-  // Hot blobs under the crust, slowly swelling.
-  const r = rand(Math.floor(seed * 997) + 77)
-  for (let n = 0; n < 4; n++) {
-    const x = w * (0.15 + r() * 0.7)
-    const y = h * (0.15 + r() * 0.7)
-    const swell = 0.5 + 0.5 * Math.sin(t * (0.5 + r() * 0.4) + n * 1.7)
-    const size = S * (0.16 + 0.12 * swell)
-    ctx.globalAlpha = 0.5 + 0.4 * swell
-    ctx.drawImage(glow(hot), x - size, y - size, size * 2, size * 2)
-  }
+  // The sheen: a soft diagonal band of light sliding over the polish.
+  const k = ((t * 0.07 + seed) % 1.6) - 0.3
+  const sheen = ctx.createLinearGradient(w * (k - 0.25), 0, w * (k + 0.25), h)
+  sheen.addColorStop(0, 'rgba(255,255,255,0)')
+  sheen.addColorStop(0.5, 'rgba(255,240,220,.12)')
+  sheen.addColorStop(1, 'rgba(255,255,255,0)')
+  ctx.fillStyle = sheen
+  ctx.fillRect(0, 0, w, h)
 
-  // The cracks: a dark-red bed, then a hot core whose brightness travels along them.
-  const cracks = lavaCracks(w, h, seed)
+  // Hairline cracks: a dark ember bed, a thin gold core whose heat creeps along.
+  // The three longest (the list starts with the short branches, which barely enter the sector).
+  const cracks = [...lavaCracks(w, h, seed)].sort((a, b) => b.len - a.len).slice(0, 3)
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
   for (const [i, cr] of cracks.entries()) {
-    ctx.globalAlpha = 0.75
-    ctx.strokeStyle = mixHex(color, '#7A1400', 0.8)
-    ctx.lineWidth = lw * 3.4
+    ctx.globalAlpha = 0.9
+    ctx.strokeStyle = '#3A1206'
+    ctx.lineWidth = lw * 2
     ctx.beginPath()
-    cr.pts.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y)))
+    cr.pts.forEach(([x, y], n) => (n ? ctx.lineTo(x, y) : ctx.moveTo(x, y)))
     ctx.stroke()
-    for (let k = 1; k < cr.pts.length; k++) {
-      const d = k / cr.pts.length
-      const heat = 0.5 + 0.5 * Math.sin(t * 2.4 - d * 7 + i * 1.3)
+    for (let n = 1; n < cr.pts.length; n++) {
+      const d = n / cr.pts.length
+      const heat = Math.max(0, Math.sin(t * 0.9 - d * 5 + i * 1.7))
       ctx.globalAlpha = 0.6 + 0.4 * heat
-      ctx.strokeStyle = heat > 0.78 ? white : hot
-      ctx.lineWidth = lw * (1.4 + 0.9 * heat)
+      ctx.strokeStyle = heat > 0.85 ? '#FFE7B0' : '#E8A23A'
+      ctx.lineWidth = lw * (0.8 + 0.6 * heat)
       ctx.beginPath()
-      ctx.moveTo(cr.pts[k - 1][0], cr.pts[k - 1][1])
-      ctx.lineTo(cr.pts[k][0], cr.pts[k][1])
+      ctx.moveTo(cr.pts[n - 1][0], cr.pts[n - 1][1])
+      ctx.lineTo(cr.pts[n][0], cr.pts[n][1])
       ctx.stroke()
+      if (heat > 0.92) {
+        ctx.globalAlpha = 0.35
+        ctx.drawImage(glow('#FF9A3C'), cr.pts[n][0] - lw * 6, cr.pts[n][1] - lw * 6, lw * 12, lw * 12)
+      }
     }
   }
 
-  // Sparks: each rises from a crack, drifts and fades; a new one every so often.
-  ctx.fillStyle = white
-  for (let n = 0; n < 7; n++) {
-    const period = 2.2 + (n % 3) * 0.6
-    const cyc = Math.floor((t + n * 0.37) / period)
-    const q = ((t + n * 0.37) % period) / period
-    const rr = rand(cyc * 31 + n * 7 + Math.floor(seed * 997))
+  // A single spark now and then, rising off a crack and fading.
+  const period = 3.6
+  const cyc = Math.floor((t + seed * period) / period)
+  const q = ((t + seed * period) % period) / period
+  if (q < 0.45 && cracks.length) {
+    const rr = rand(cyc * 29 + Math.floor(seed * 997))
     const cr = cracks[Math.floor(rr() * cracks.length)]
     const [sx, sy] = cr.pts[Math.floor(rr() * cr.pts.length)]
-    const x = sx + Math.sin(q * 6 + n) * S * 0.03 + (rr() - 0.5) * S * 0.08 * q
-    const y = sy - q * S * 0.35
-    ctx.globalAlpha = (1 - q) * 0.9
+    const e = q / 0.45
+    ctx.globalAlpha = (1 - e) * 0.9
+    ctx.fillStyle = '#FFE7B0'
     ctx.beginPath()
-    ctx.arc(x, y, lw * (0.9 - q * 0.5), 0, TAU)
+    ctx.arc(sx + Math.sin(e * 5) * S * 0.02, sy - e * S * 0.25, lw * (1 - e * 0.5), 0, TAU)
     ctx.fill()
   }
   ctx.globalAlpha = 1
@@ -1152,15 +1161,19 @@ const constellations: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
   const S = Math.min(w, h)
   const lw = Math.max(1, S * 0.009)
   const r = rand(Math.floor(seed * 997) + 503)
-  const star = mixHex(color, '#FFFFFF', 0.8)
+  // 25.11.2026: its own palette — deep violet space, white stars, a gold constellation.
+  void color
+  const star = '#FFFFFF'
+  const gold = '#FFD36B'
 
   // Night: the sector darkened, a faint band of the Milky Way across it.
-  ctx.fillStyle = 'rgba(4,8,30,.42)'
+  ctx.globalAlpha = 1
+  ctx.fillStyle = '#070A26'
   ctx.fillRect(0, 0, w, h)
   const band = ctx.createLinearGradient(0, h, w, 0)
-  band.addColorStop(0.3, withAlpha(color, 0))
-  band.addColorStop(0.5, withAlpha(color, 0.22))
-  band.addColorStop(0.7, withAlpha(color, 0))
+  band.addColorStop(0.3, 'rgba(123,77,255,0)')
+  band.addColorStop(0.5, 'rgba(123,77,255,.45)')
+  band.addColorStop(0.7, 'rgba(47,184,255,0)')
   ctx.fillStyle = band
   ctx.fillRect(0, 0, w, h)
 
@@ -1183,7 +1196,7 @@ const constellations: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
   const at = ([u, v]: [number, number]): [number, number] => [w * (0.5 + (u - 0.5) * 0.8 * flip), h * (0.5 + (v - 0.5) * 0.8)]
   const shown = p < 0.55 ? (p / 0.55) * FISH_LINES.length : FISH_LINES.length
   const fade = p < 0.8 ? 1 : 1 - (p - 0.8) / 0.2
-  ctx.strokeStyle = star
+  ctx.strokeStyle = gold
   ctx.lineCap = 'round'
   ctx.lineWidth = lw
   for (let n = 0; n < FISH_LINES.length; n++) {
@@ -1203,7 +1216,7 @@ const constellations: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
     const [x, y] = at(s)
     const tw = 0.6 + 0.4 * Math.sin(t * 2 + i)
     ctx.globalAlpha = 0.5 + 0.5 * tw
-    ctx.drawImage(glow(color), x - lw * 6, y - lw * 6, lw * 12, lw * 12)
+    ctx.drawImage(glow(gold), x - lw * 6, y - lw * 6, lw * 12, lw * 12)
     ctx.fillStyle = '#FFFFFF'
     ctx.beginPath()
     ctx.arc(x, y, lw * 1.3, 0, TAU)
@@ -1224,7 +1237,7 @@ const constellations: AnimatedSkinDraw = (ctx, w, h, t, color, seed = 0) => {
     const hx = x0 + dx * k
     const hy = y0 + dy * k
     const tail = ctx.createLinearGradient(hx - dx * 0.35, hy - dy * 0.35, hx, hy)
-    tail.addColorStop(0, withAlpha(color, 0))
+    tail.addColorStop(0, 'rgba(255,255,255,0)')
     tail.addColorStop(1, '#FFFFFF')
     ctx.globalAlpha = Math.sin(k * Math.PI)
     ctx.strokeStyle = tail

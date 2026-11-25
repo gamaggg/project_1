@@ -1,4 +1,5 @@
 import { tnd } from '@/lib/i18n/runtime'
+import { GL_FAMILY_IDS, GL_LOOKS, glNameId } from '@/lib/data/glKits'
 // Visual catalog for the "Стиль имени" shop items — the shop_items DB rows
 // only carry id/category/name/price, so the actual gradient lives here,
 // keyed by the same id the DB row uses (see shopItems.ts's identical
@@ -85,6 +86,17 @@ export const NAME_STYLES: NameStyle[] = [
       'linear-gradient(105deg,transparent 40%,#FFF6CF 48%,#FFFFFF 50%,#FFF6CF 52%,transparent 60%),linear-gradient(90deg,#9A6A08,#D9A21B,#F2C230,#C68F12,#9A6A08)',
     fx: 'shine',
   },
+  // The name styles of the paid live backgrounds (sold only for Telegram Stars): the family's colours drifting through the letters.
+  ...GL_FAMILY_IDS.map(
+    (f): NameStyle => ({
+      id: glNameId(f),
+      get label() {
+        return tnd(`nameStyle.${glNameId(f)}`)
+      },
+      gradient: GL_LOOKS[f].nameGradient,
+      fx: GL_LOOKS[f].nameFx,
+    }),
+  ),
 ]
 
 export function resolveNameStyle(id: string | null | undefined): NameStyle | null {

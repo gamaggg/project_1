@@ -1,5 +1,6 @@
 import { tnd } from '@/lib/i18n/runtime'
 import type { PremiumBackgroundKind } from '@/components/app-shell/PremiumBackgrounds'
+import { GL_FAMILY_IDS, GL_LOOKS, glBgId, splitHeroBg } from '@/lib/data/glKits'
 
 // Presets for the profile hero panel's background (see ChangeColorModal) —
 // same "swatch, not free-form picker" approach as territoryColors.ts, and for
@@ -35,7 +36,11 @@ export type HeroBackground = {
   css: string
   accentRgb: string
   animated?: boolean
-  kind?: 'waves' | 'aurora' | 'circles' | 'halftone' | 'bubbles' | 'fireflies' | PremiumBackgroundKind
+  // 'gl' — the paid WebGL families (glFamilies.tsx): glFamily picks the scene, glPreset the ready preset the player chose
+  // (resolveHeroBackground fills it in from the stored «id~preset»).
+  kind?: 'waves' | 'aurora' | 'circles' | 'halftone' | 'bubbles' | 'fireflies' | 'gl' | PremiumBackgroundKind
+  glFamily?: string
+  glPreset?: string
   waveColors?: string[]
   waveBackgroundFill?: string
   auroraGradient?: string
@@ -334,6 +339,21 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
   // Premium (800+) — whole little scenes, each painted on one canvas with
   // its own fixed palette (PremiumBackgrounds.tsx); base/css are the same
   // ground as the scene, for the first paint and the picker swatch.
+  // The paid live families (25.11.2026): seven backgrounds on a WebGL runner, each with its ready presets.
+  ...GL_FAMILY_IDS.map(
+    (f): HeroBackground => ({
+      id: glBgId(f),
+      get label() {
+        return tnd(`heroBg.${glBgId(f)}`)
+      },
+      base: 'linear-gradient(180deg,#050912,#03060D)',
+      css: `radial-gradient(70% 60% at 70% 70%, rgba(${GL_LOOKS[f].accent},.35), transparent 70%), linear-gradient(180deg,#050912,#03060D)`,
+      accentRgb: GL_LOOKS[f].accent,
+      animated: true,
+      kind: 'gl',
+      glFamily: f,
+    }),
+  ),
   {
     id: 'deepwater',
     get label() {
@@ -427,8 +447,11 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
 
 export const DEFAULT_HERO_BG = 'default'
 
-export function resolveHeroBackground(id: string | null | undefined): HeroBackground {
-  return HERO_BACKGROUNDS.find((b) => b.id === id) ?? HERO_BACKGROUNDS[0]
+export function resolveHeroBackground(value: string | null | undefined): HeroBackground {
+  // A live family is stored as «id~preset» (glKits.ts): the preset rides along on the returned background.
+  const { id, preset } = splitHeroBg(value)
+  const bg = HERO_BACKGROUNDS.find((b) => b.id === id) ?? HERO_BACKGROUNDS[0]
+  return preset && bg.kind === 'gl' ? { ...bg, glPreset: preset } : bg
 }
 
 // The animated presets are the ones sold in the Shop (see shop_items) — this

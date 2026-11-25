@@ -16,13 +16,17 @@ import { SecretBoxCard } from '@/components/app-shell/SecretBox'
 import { ShopTryOn } from '@/components/app-shell/ShopTryOn'
 import { AvatarFrameRing } from '@/components/app-shell/AvatarFrameRing'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
-import { HERO_BACKGROUNDS, PREMIUM_HERO_BG_IDS } from '@/lib/data/heroBackgrounds'
+import { PREMIUM_HERO_BG_IDS, resolveHeroBackground } from '@/lib/data/heroBackgrounds'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { SkinPreview } from '@/components/app-shell/SkinPreview'
 import { SlotsCard } from '@/components/app-shell/SlotsCard'
 import { StarIcon, useStarsBuy } from '@/components/app-shell/StarsShop'
 import { useStarsProducts } from '@/lib/supabase/queries/stars'
+import { useMyGlPresets, useSetHeroBgPreset } from '@/lib/supabase/queries/glPresets'
+import { GlPresetChips, KitsSection } from '@/components/app-shell/GlShop'
+import { GL_FAMILIES, glPresetOf, type GlFamily } from '@/components/app-shell/glFamilies'
+import { GL_KITS, glBgId, glFamilyOf, glKitOf, joinHeroBg, splitHeroBg, type GlKit } from '@/lib/data/glKits'
 import { useMaintenance } from '@/lib/supabase/queries/maintenance'
 import type { CityId } from '@/lib/data/city'
 import {
@@ -63,12 +67,13 @@ function rarityClass(price: number): string {
   return 'shop-card-common'
 }
 
-type Category = 'avatar_frame' | 'hero_bg' | 'name_style' | 'territory_skin' | 'buffs'
+type Category = 'avatar_frame' | 'hero_bg' | 'name_style' | 'kits' | 'territory_skin' | 'buffs'
 const SEEN_NEW_KEY = 'shop-new-tabs-seen'
 const CATEGORIES: { id: Category; label: string; icon: React.ReactNode }[] = [
   { id: 'avatar_frame', get label() { return tn('shop.tabFrames') }, icon: SHOP_TAB_ICONS.frame },
   { id: 'hero_bg', get label() { return tn('shop.tabBackgrounds') }, icon: SHOP_TAB_ICONS.background },
   { id: 'name_style', get label() { return tn('shop.tabName') }, icon: SHOP_TAB_ICONS.sparkle },
+  { id: 'kits', get label() { return tn('shop.tabKits') }, icon: SHOP_TAB_ICONS.kit },
   { id: 'territory_skin', get label() { return tn('shop.tabSkins') }, icon: SHOP_TAB_ICONS.skin },
   { id: 'buffs', get label() { return tn('shop.tabBuffs') }, icon: SHOP_TAB_ICONS.bolt },
 ]
@@ -127,6 +132,36 @@ export function ShopScreen({
   const starsByItem = new Map(starsProducts.filter((p) => p.itemId).map((p) => [p.itemId!, p]))
   const starsTab = starsProducts.some((p) => !p.itemId)
   const starsBuy = useStarsBuy()
+  // 25.11.2026, the paid live backgrounds: their kits (a Stars product of its own, id = the kit's id) and presets.
+  const kitProducts = new Map(starsProducts.filter((p) => p.kind === 'kit').map((p) => [p.id, p]))
+  const { data: savedPresets = new Map<string, string>() } = useMyGlPresets()
+  const setPreset = useSetHeroBgPreset()
+  const [pick, setPick] = useState<Record<string, string>>({})
+  const wornBg = splitHeroBg(profile?.heroBg)
+  // The preset shown for a family: what was just tapped, else the one on the profile, else the one kept for it, else the first.
+  function presetFor(fam: GlFamily): string {
+    const bgId = glBgId(fam.id)
+    return glPresetOf(fam, pick[fam.id] ?? (wornBg.id === bgId ? wornBg.preset : null) ?? savedPresets.get(bgId))
+  }
+  // Before buying a tap only changes the picture (it goes with the order); after, it is saved — and shown on the profile if that background is on it.
+  function choosePreset(fam: GlFamily, preset: string) {
+    setPick((p) => ({ ...p, [fam.id]: preset }))
+    const bgId = glBgId(fam.id)
+    if (owned.has(bgId)) setPreset.mutate({ itemId: bgId, preset, equip: wornBg.id === bgId })
+  }
+  function equipAny(item: ShopItem) {
+    const fam = item.category === 'hero_bg' ? GL_FAMILIES.find((f) => glBgId(f.id) === item.id) : undefined
+    if (fam) setPreset.mutate({ itemId: item.id, preset: presetFor(fam), equip: true })
+    else equipItem.mutate({ itemId: item.id })
+  }
+  function equipKit(kit: GlKit, fam: GlFamily) {
+    setPreset.mutate({ itemId: kit.bg, preset: presetFor(fam), equip: true })
+    equipItem.mutate({ itemId: kit.frame })
+    equipItem.mutate({ itemId: kit.name })
+  }
+  const kitOwned = (kit: GlKit) => owned.has(kit.bg) && owned.has(kit.frame) && owned.has(kit.name)
+  const kitWorn = (kit: GlKit) => wornBg.id === kit.bg && profile?.equippedFrame === kit.frame && profile?.equippedNameStyle === kit.name
+  const kitTitle = (kit: GlKit) => tn('shop.kitName', { name: items.find((i) => i.id === kit.bg)?.name ?? kit.family })
   const tabOf = (i: ShopItem): Category => i.category as Category
   const unseenHere = newIds ? items.filter((i) => tabOf(i) === category && newIds.has(i.id) && !seenNew.has(i.id)).map((i) => i.id) : []
   // Adjusted during render, the moment the tab is open with something unseen in it.
@@ -156,20 +191,24 @@ export function ShopScreen({
 
   // A jackpot frame isn't sold — it's shown only in its own city (as what the
   // slots there can give) or to whoever already won it.
+  // The paid live families' pieces stand in only while Stars are open to the player (or once they own them).
+  const glShown = (i: ShopItem) => !glFamilyOf(i.id) || owned.has(i.id) || starsByItem.has(i.id)
   const frames = items.filter(
-    (i) => i.category === 'avatar_frame' && (i.purchasable || owned.has(i.id) || i.id === JACKPOT_FRAME[city])
+    (i) => i.category === 'avatar_frame' && glShown(i) && (i.purchasable || owned.has(i.id) || i.id === JACKPOT_FRAME[city] || starsByItem.has(i.id))
   )
   // The plain colour presets (Огонь/Океан/Лес/…) aren't in PREMIUM_HERO_BG_IDS
   // — they've always been free, picked straight from ChangeColorModal with no
   // shop_items row needed at all. Listing them here too just gives everyone
   // one place to browse every background, animated or not; ownedBg below is
   // what actually keeps them free (never gated behind a purchase).
-  const backgrounds = items.filter((i) => i.category === 'hero_bg')
+  const backgrounds = items.filter((i) => i.category === 'hero_bg' && glShown(i))
   function ownedBg(id: string) {
     return owned.has(id) || !PREMIUM_HERO_BG_IDS.has(id)
   }
-  const nameStyles = items.filter((i) => i.category === 'name_style')
+  const nameStyles = items.filter((i) => i.category === 'name_style' && glShown(i))
   function tryOnState(item: ShopItem): 'equipped' | 'owned' | 'locked' {
+    const kit = glKitOf(item.id)
+    if (kit) return kitOwned(kit) ? (kitWorn(kit) ? 'equipped' : 'owned') : 'locked'
     const worn =
       item.category === 'avatar_frame'
         ? profile?.equippedFrame
@@ -177,7 +216,7 @@ export function ShopScreen({
           ? profile?.equippedNameStyle
           : item.category === 'territory_skin'
             ? profile?.equippedSkin
-            : profile?.heroBg
+            : wornBg.id
     if (worn === item.id) return 'equipped'
     const has = item.category === 'hero_bg' ? ownedBg(item.id) : owned.has(item.id)
     return has ? 'owned' : 'locked'
@@ -264,10 +303,15 @@ export function ShopScreen({
                 initials={nameInitials(profile?.displayName ?? tn('common.angler'), 2)}
                 owned={owned.has(item.id)}
                 equipped={profile?.equippedFrame === item.id}
-                onBuy={() => request(item.price, item.name, () => buyItem.mutate(item.id))}
+                stars={starsByItem.get(item.id)?.stars}
+                onBuy={() => {
+                  const sp = starsByItem.get(item.id)
+                  if (sp) starsBuy.start(sp)
+                  else request(item.price, item.name, () => buyItem.mutate(item.id))
+                }}
                 onEquip={() => equipItem.mutate({ itemId: item.id })}
                 onUnequip={() => equipItem.mutate({ itemId: null, category: 'avatar_frame' })}
-                busy={buyItem.isPending || equipItem.isPending}
+                busy={buyItem.isPending || equipItem.isPending || starsBuy.busy}
                 onTryOn={() => setTryOn(item)}
                 onGoSlots={onOpenSlots}
                 onRefund={
@@ -282,19 +326,33 @@ export function ShopScreen({
 
         {category === 'hero_bg' && (
           <div className="shop-grid">
-            {backgrounds.map((item) => (
-              <BgCard
-                key={item.id}
-                item={item}
-                owned={ownedBg(item.id)}
-                equipped={profile?.heroBg === item.id}
-                onBuy={() => request(item.price, item.name, () => buyItem.mutate(item.id))}
-                onEquip={() => equipItem.mutate({ itemId: item.id })}
-                busy={buyItem.isPending || equipItem.isPending}
-                onTryOn={() => setTryOn(item)}
-                onRefund={isSuperAdmin && owned.has(item.id) ? () => setRefunding({ kind: 'item', id: item.id, name: item.name, price: item.price }) : undefined}
-              />
-            ))}
+            {starsBuy.note && (
+              <p className="stars-note" style={{ gridColumn: '1 / -1' }}>
+                {starsBuy.note}
+              </p>
+            )}
+            {backgrounds.map((item) => {
+              const fam = GL_FAMILIES.find((f) => glBgId(f.id) === item.id)
+              return (
+                <BgCard
+                  key={item.id}
+                  item={item}
+                  owned={ownedBg(item.id)}
+                  equipped={wornBg.id === item.id}
+                  stars={starsByItem.get(item.id)?.stars}
+                  gl={fam ? { family: fam, preset: presetFor(fam), onPreset: (p) => choosePreset(fam, p) } : undefined}
+                  onBuy={() => {
+                    const sp = starsByItem.get(item.id)
+                    if (sp) starsBuy.start(sp, fam ? presetFor(fam) : null)
+                    else request(item.price, item.name, () => buyItem.mutate(item.id))
+                  }}
+                  onEquip={() => equipAny(item)}
+                  busy={buyItem.isPending || equipItem.isPending || setPreset.isPending || starsBuy.busy}
+                  onTryOn={() => setTryOn(item)}
+                  onRefund={isSuperAdmin && owned.has(item.id) && item.purchasable ? () => setRefunding({ kind: 'item', id: item.id, name: item.name, price: item.price }) : undefined}
+                />
+              )
+            })}
           </div>
         )}
 
@@ -307,15 +365,41 @@ export function ShopScreen({
                 owned={owned.has(item.id)}
                 equipped={profile?.equippedNameStyle === item.id}
                 displayName={profile?.displayName ?? tn('shop.nameFallback')}
-                onBuy={() => request(item.price, item.name, () => buyItem.mutate(item.id))}
+                stars={starsByItem.get(item.id)?.stars}
+                onBuy={() => {
+                  const sp = starsByItem.get(item.id)
+                  if (sp) starsBuy.start(sp)
+                  else request(item.price, item.name, () => buyItem.mutate(item.id))
+                }}
                 onEquip={() => equipItem.mutate({ itemId: item.id })}
                 onUnequip={() => equipItem.mutate({ itemId: null, category: 'name_style' })}
-                busy={buyItem.isPending || equipItem.isPending}
+                busy={buyItem.isPending || equipItem.isPending || starsBuy.busy}
                 onTryOn={() => setTryOn(item)}
                 onRefund={isSuperAdmin && owned.has(item.id) ? () => setRefunding({ kind: 'item', id: item.id, name: item.name, price: item.price }) : undefined}
               />
             ))}
           </div>
+        )}
+
+        {category === 'kits' && (
+          <>
+            {starsBuy.note && <p className="stars-note">{starsBuy.note}</p>}
+            <KitsSection
+              kits={GL_KITS.filter((k) => kitProducts.has(k.kit))}
+              products={kitProducts}
+              owned={owned}
+              wornKit={kitWorn}
+              presetFor={presetFor}
+              onPreset={choosePreset}
+              displayName={profile?.displayName ?? tn('shop.nameFallback')}
+              avatarUrl={profile?.avatarUrl ?? null}
+              onBuy={(product, fam) => starsBuy.start(product, presetFor(fam))}
+              onEquip={equipKit}
+              onTryOn={(kit) => setTryOn({ id: kit.kit, category: 'hero_bg', name: kitTitle(kit), price: 0, purchasable: false })}
+              busy={equipItem.isPending || setPreset.isPending || starsBuy.busy}
+              kitTitle={kitTitle}
+            />
+          </>
         )}
 
         {category === 'territory_skin' && (
@@ -362,39 +446,49 @@ export function ShopScreen({
         <RefundConfirmModal label={refunding.name} price={refunding.price} busy={refundBusy} onConfirm={confirmRefund} onClose={() => setRefunding(null)} />
       )}
       {historyOpen && <CoinHistoryModal onClose={() => setHistoryOpen(false)} />}
-      {tryOn && (
-        <ShopTryOn
-          item={tryOn}
-          look={{
-            displayName: profile?.displayName ?? tn('common.angler'),
-            avatarUrl: profile?.avatarUrl ?? null,
-            heroBg: profile?.heroBg ?? null,
-            frame: profile?.equippedFrame ?? null,
-            nameStyle: profile?.equippedNameStyle ?? null,
-            territoryColor: profile?.territoryColor ?? DEFAULT_TERRITORY_COLOR,
-            city,
-          }}
-          state={tryOnState(tryOn)}
-          stars={starsByItem.get(tryOn.id)?.stars}
-          onBuy={() => {
-            const it = tryOn
-            setTryOn(null)
-            const sp = starsByItem.get(it.id)
-            if (sp) {
-              starsBuy.start(sp)
-              return
-            }
-            // A jackpot frame can't be bought — «Выбить в слотах» goes there instead.
-            if (!it.purchasable) onOpenSlots()
-            else request(it.price, it.name, () => buyItem.mutate(it.id))
-          }}
-          onEquip={() => {
-            equipItem.mutate({ itemId: tryOn.id })
-            setTryOn(null)
-          }}
-          onClose={() => setTryOn(null)}
-        />
-      )}
+      {tryOn && (() => {
+        const kit = glKitOf(tryOn.id)
+        const famId = kit?.family ?? (tryOn.category === 'hero_bg' ? glFamilyOf(tryOn.id) : null)
+        const fam = famId ? GL_FAMILIES.find((f) => f.id === famId) : undefined
+        const product = starsByItem.get(tryOn.id) ?? kitProducts.get(tryOn.id)
+        return (
+          <ShopTryOn
+            item={tryOn}
+            look={{
+              displayName: profile?.displayName ?? tn('common.angler'),
+              avatarUrl: profile?.avatarUrl ?? null,
+              heroBg: profile?.heroBg ?? null,
+              frame: profile?.equippedFrame ?? null,
+              nameStyle: profile?.equippedNameStyle ?? null,
+              territoryColor: profile?.territoryColor ?? DEFAULT_TERRITORY_COLOR,
+              city,
+            }}
+            state={tryOnState(tryOn)}
+            stars={product?.stars}
+            kit={kit}
+            glPreset={fam ? { family: fam, value: presetFor(fam), onChange: (p) => choosePreset(fam, p) } : undefined}
+            // A kit with some of its pieces already owned can't be bought whole (the rest goes one by one).
+            kitBlocked={!!kit && !kitOwned(kit) && !!product?.ownedAny}
+            onBuy={() => {
+              const it = tryOn
+              setTryOn(null)
+              if (product) {
+                starsBuy.start(product, fam ? presetFor(fam) : null)
+                return
+              }
+              // A jackpot frame can't be bought — «Выбить в слотах» goes there instead.
+              if (!it.purchasable) onOpenSlots()
+              else request(it.price, it.name, () => buyItem.mutate(it.id))
+            }}
+            onEquip={() => {
+              if (kit && fam) equipKit(kit, fam)
+              else equipAny(tryOn)
+              setTryOn(null)
+            }}
+            onClose={() => setTryOn(null)}
+          />
+        )
+      })()}
     </>
   )
 }
@@ -527,6 +621,7 @@ function FrameCard({
   onTryOn,
   onGoSlots,
   onRefund,
+  stars,
 }: {
   item: ShopItem
   // The player's own avatar inside the frame — they're choosing how *they*
@@ -542,13 +637,15 @@ function FrameCard({
   onTryOn: () => void
   onGoSlots: () => void
   onRefund?: () => void
+  // Sold only for Telegram Stars (the paid live families' frames): the price in Stars, three sparks on the tag.
+  stars?: number
 }) {
   const frame = AVATAR_FRAMES.find((f) => f.id === item.id)
-  const prize = !item.purchasable
+  const prize = !item.purchasable && !stars && !glFamilyOf(item.id)
   const isNew = useIsShopNew(item.id)
 
   return (
-    <div className={`shop-card ${prize ? 'shop-card-jackpot' : rarityClass(item.price)}`} data-tag={prize ? tn('shop.jackpotTag') : undefined}>
+    <div className={`shop-card ${prize ? 'shop-card-jackpot' : rarityClass(item.price)}${stars ? ' shop-card-stars' : ''}`} data-tag={prize ? tn('shop.jackpotTag') : undefined}>
       {isNew && <span className="shop-new-tag">{tn('shop.new')}</span>}
       <div className="shop-card-preview">
         <div className="shop-card-avatar">
@@ -576,9 +673,9 @@ function FrameCard({
           </button>
         </>
       ) : (
-        <button className="btn-secondary shop-price-btn" onClick={onBuy} disabled={busy}>
-          <CoinIcon size={16} />
-          {item.price}
+        <button className={`btn-secondary shop-price-btn${stars ? ' stars-price-btn' : ''}`} onClick={onBuy} disabled={busy}>
+          {stars ? <StarIcon size={16} /> : <CoinIcon size={16} />}
+          {stars ?? item.price}
         </button>
       )}
       <button className="challenge-swap-btn" onClick={onTryOn}>
@@ -602,6 +699,8 @@ function BgCard({
   busy,
   onTryOn,
   onRefund,
+  stars,
+  gl,
 }: {
   item: ShopItem
   owned: boolean
@@ -611,17 +710,22 @@ function BgCard({
   busy: boolean
   onTryOn: () => void
   onRefund?: () => void
+  // Sold only for Telegram Stars: the price in Stars, three sparks on the tag.
+  stars?: number
+  // A live family: its ready presets (the picture follows the picked one), before and after buying.
+  gl?: { family: GlFamily; preset: string; onPreset: (preset: string) => void }
 }) {
   const isNew = useIsShopNew(item.id)
-  const bg = HERO_BACKGROUNDS.find((b) => b.id === item.id)
+  const bg = resolveHeroBackground(gl ? joinHeroBg(item.id, gl.preset) : item.id)
 
   return (
-    <div className={`shop-card ${rarityClass(item.price)}`}>
+    <div className={`shop-card ${rarityClass(item.price)}${stars ? ' shop-card-stars' : ''}`}>
       {isNew && <span className="shop-new-tag">{tn('shop.new')}</span>}
-      <div className="shop-card-bg-preview" style={{ background: bg?.animated ? bg.base : bg?.css }}>
-        {bg && <HeroBgLive bg={bg} variant="swatch" />}
+      <div className="shop-card-bg-preview" style={{ background: bg.animated ? bg.base : bg.css }}>
+        <HeroBgLive bg={bg} variant="swatch" />
       </div>
       <div className="shop-card-name">{item.name}</div>
+      {gl && <GlPresetChips family={gl.family} value={gl.preset} onChange={gl.onPreset} />}
       {equipped ? (
         <button className="btn-secondary shop-equipped" disabled>
           {tn('shop.active')}
@@ -631,9 +735,9 @@ function BgCard({
           {tn('shop.apply')}
         </button>
       ) : (
-        <button className="btn-secondary shop-price-btn" onClick={onBuy} disabled={busy}>
-          <CoinIcon size={16} />
-          {item.price}
+        <button className={`btn-secondary shop-price-btn${stars ? ' stars-price-btn' : ''}`} onClick={onBuy} disabled={busy}>
+          {stars ? <StarIcon size={16} /> : <CoinIcon size={16} />}
+          {stars ?? item.price}
         </button>
       )}
       <button className="challenge-swap-btn" onClick={onTryOn}>
@@ -659,6 +763,7 @@ function NameStyleCard({
   busy,
   onTryOn,
   onRefund,
+  stars,
 }: {
   item: ShopItem
   owned: boolean
@@ -670,12 +775,15 @@ function NameStyleCard({
   busy: boolean
   onTryOn: () => void
   onRefund?: () => void
+  // Sold only for Telegram Stars: the price in Stars, three sparks on the tag.
+  stars?: number
 }) {
   const isNew = useIsShopNew(item.id)
   return (
-    <div className={`shop-card ${rarityClass(item.price)}`}>
+    <div className={`shop-card ${rarityClass(item.price)}${stars ? ' shop-card-stars' : ''}`}>
       {isNew && <span className="shop-new-tag">{tn('shop.new')}</span>}
-      <div className="shop-card-name-preview">
+      {/* The live families' names are pale (made for the dark hero): a dark plate under them, as on the profile. */}
+      <div className={`shop-card-name-preview${glFamilyOf(item.id) ? ' is-dark' : ''}`}>
         <StyledName name={displayName} styleId={item.id} />
       </div>
       <div className="shop-card-name">{item.name}</div>
@@ -688,9 +796,9 @@ function NameStyleCard({
           {tn('shop.equip')}
         </button>
       ) : (
-        <button className="btn-secondary shop-price-btn" onClick={onBuy} disabled={busy}>
-          <CoinIcon size={16} />
-          {item.price}
+        <button className={`btn-secondary shop-price-btn${stars ? ' stars-price-btn' : ''}`} onClick={onBuy} disabled={busy}>
+          {stars ? <StarIcon size={16} /> : <CoinIcon size={16} />}
+          {stars ?? item.price}
         </button>
       )}
       <button className="challenge-swap-btn" onClick={onTryOn}>

@@ -2487,6 +2487,12 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
   opacity:0; animation:boltStrike 3.9s linear var(--d) infinite;
 }
 @keyframes boltStrike{0%,100%{opacity:0; transform:scale(.7);} 6%{opacity:1; transform:scale(1);} 9%{opacity:.2;} 12%{opacity:1;} 20%{opacity:0; transform:scale(.9);}}
+/* 25.11.2026 — the frames of the paid live backgrounds (glKits.ts): a dark ring with one bright arc, turning at the
+   family's own pace; the glow behind it is wider and softer, the sparkles silver instead of gold. */
+.avatar-frame-fx.fx-gl{animation-duration:var(--spin,12s); animation-direction:var(--dir,normal);}
+.avatar-frame-fx.fx-gl::before{inset:-4px; filter:blur(8px); opacity:.7; animation-duration:4s;}
+.fx-gl .frame-sparkle::before{background:radial-gradient(circle,#FFFFFF 0 28%,#D6E2FF 58%,#8FA4FF 86%);}
+/* 25.11.2026 — the Stars sets' frames (AvatarFrameRing.tsx). */
 @media (prefers-reduced-motion: reduce){
   .avatar-frame-fx,.avatar-frame-fx::before,.frame-sparkle::before,.frame-spot::before,.frame-bubble::before,.frame-bolt::before,.avatar-frame-ring ~ .frame-swim{animation:none;}
 }
@@ -5688,3 +5694,33 @@ button.geo-fact{cursor:pointer;}
 /* The demo page shows the screen over itself, phone-sized. */
 .sbx-demo-host{position:fixed; inset:0; z-index:1000; background:#0B0D14; overflow-y:auto;}
 .sbx-demo-host > .sbx{max-width:430px; margin:0 auto;}
+
+/* The northern lights' customizer (AuroraCustomizer.tsx, 25.11.2026). */
+.aur-cz{display:flex; flex-direction:column; gap:12px;}
+.aur-preview{position:relative; isolation:isolate; border-radius:20px; overflow:hidden; min-height:170px; display:flex; align-items:center; gap:14px; padding:22px 16px; background:#05070D;}
+.aur-preview-avatar{width:68px; height:68px; flex:none; border-radius:50%; display:grid; place-items:center; background:linear-gradient(160deg,#FF7A2E,#FC5200); color:#fff; font-weight:900; font-size:22px; box-shadow:0 0 0 3px rgba(255,255,255,.18);}
+.aur-preview-name{font-family:var(--font-display),'Manrope',sans-serif; font-weight:800; font-size:24px; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,.5);}
+.aur-label{font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint);}
+.aur-presets{display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; -webkit-overflow-scrolling:touch;}
+.aur-presets .filter-chip{flex:none;}
+
+
+/* 25.11.2026 — the paid live backgrounds in the Shop (GlShop.tsx): preset chips, the «Комплекты» tab. */
+.shop-presets{display:flex; gap:6px; width:100%; overflow-x:auto; padding:1px 0 3px; -webkit-overflow-scrolling:touch; scrollbar-width:none;}
+.shop-presets::-webkit-scrollbar{display:none;}
+.shop-presets .filter-chip{flex:none; padding:5px 10px; font-size:11.5px;}
+.shop-card-name-preview.is-dark{background:#0A0D14;}
+/* The live families' names sit over light fog and glare: a soft dark halo keeps the letters readable (drop-shadow, since text-shadow doesn't show through clipped text). */
+.name-gl{filter:drop-shadow(0 1px 5px rgba(5,8,16,.65));}
+.kit-list{display:flex; flex-direction:column; gap:14px; margin-top:14px;}
+.kit-card{padding:12px 12px 14px;}
+.kit-preview{position:relative; isolation:isolate; overflow:hidden; width:100%; height:150px; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;}
+.kit-preview::before{content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(120% 85% at 50% -15%, rgba(var(--hero-accent-rgb, 143,164,255),.45), rgba(var(--hero-accent-rgb, 143,164,255),0) 60%);}
+.kit-preview-avatar{position:relative; width:62px; height:62px; flex:none;}
+.kit-preview-avatar .avatar-frame-ring{inset:-5px;}
+.kit-preview-photo{width:100%; height:100%; border-radius:50%; overflow:hidden; background:linear-gradient(160deg,#FF7A38,var(--accent) 70%); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:20px; position:relative;}
+.kit-preview-photo img{width:100%; height:100%; object-fit:cover; display:block;}
+.kit-preview-name{font-family:var(--font-display),'Manrope',sans-serif; font-weight:800; font-size:16px; text-transform:uppercase; letter-spacing:.01em; max-width:90%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.kit-contents{font-size:11.5px; color:var(--ink-faint); font-weight:600; margin-top:-6px;}
+.kit-part-note{font-size:12px; color:var(--ink-soft); line-height:1.35; font-weight:600;}
+.kit-instead{margin-left:6px; font-size:11px; font-weight:600; opacity:.6; text-decoration:line-through;}

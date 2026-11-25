@@ -1,4 +1,5 @@
 import { currentLocale, tnd } from '@/lib/i18n/runtime'
+import { GL_FAMILY_IDS, GL_LOOKS, glFrameId } from '@/lib/data/glKits'
 // Visual catalog for avatar frames — the shop_items DB rows only carry
 // id/category/name/price, so the actual look (a conic-gradient ring drawn
 // behind the 108px .profile-avatar, see .avatar-frame-ring in globals.css)
@@ -14,7 +15,10 @@ export type AvatarFrame = {
   // Premium (800+) frames move: the ring turns, a soft copy of it glows
   // behind, and each has its own extra — see AvatarFrameRing.tsx and
   // .avatar-frame-fx in globals.css.
-  fx?: 'aurora' | 'flame' | 'comet' | 'holo' | 'royal' | 'katran' | 'som' | 'scales' | 'storm'
+  fx?: 'aurora' | 'flame' | 'comet' | 'holo' | 'royal' | 'katran' | 'som' | 'scales' | 'storm' | 'gl'
+  // 25.11.2026, the paid live-background families' frames (glKits.ts): which family, how fast the ring turns, which
+  // way, and how many sparkles ride its edge.
+  gl?: { family: string; spin: number; reverse?: boolean; sparkles?: number }
   // The jackpot frames (never for sale — only the slots' jackpot, each
   // city its own): the city's jackpot fish from the reels swims round the rim.
   swimmer?: string
@@ -161,6 +165,18 @@ export const AVATAR_FRAMES: AvatarFrame[] = [
     fx: 'som',
     swimmer: '/slots/som.webp',
   },
+  // The frames of the paid live backgrounds (sold only for Telegram Stars): a dark ring with a bright arc in the family's colours.
+  ...GL_FAMILY_IDS.map(
+    (f): AvatarFrame => ({
+      id: glFrameId(f),
+      get label() {
+        return tnd(`shopFrame.${glFrameId(f)}`)
+      },
+      ring: GL_LOOKS[f].ring,
+      fx: 'gl',
+      gl: { family: f, spin: GL_LOOKS[f].spin, reverse: GL_LOOKS[f].reverse, sparkles: GL_LOOKS[f].sparkles },
+    }),
+  ),
 ]
 
 // Which jackpot frame a city's slots give (spin_slots on the server agrees).
