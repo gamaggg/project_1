@@ -5785,3 +5785,12 @@ button.geo-fact{cursor:pointer;}
              linear-gradient(140deg,#F8E39A,#C9921F 42%,#F3D57A 72%,#B9831B) border-box;
   box-shadow:0 0 0 3px var(--bg), 0 0 0 4.5px #D9A93A;
 }
+
+/* Batch 4 (25.11.2026): «История» on the number's baseline, one gold outline on the Stars-only cards, same-size key pictures, the kits heading in one colour. */
+.shop-wallet-line{display:flex; align-items:baseline; gap:10px; flex:1; min-width:0;}
+.shop-wallet-line > .shop-wallet-num{flex:0 0 auto;}
+.shop-card-legendary.shop-card-stars{box-shadow:none;}
+.stars-key-pic{width:78px; height:78px; object-fit:contain;}
+.kits-head-title{background:none; -webkit-background-clip:border-box; background-clip:border-box; color:#FC5200; -webkit-text-fill-color:#FC5200; padding-right:0;}
+.shop-wallet-actions{flex:0 0 auto;}
+.shop-wallet-line > .shop-wallet-num{align-self:baseline;}

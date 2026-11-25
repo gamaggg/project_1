@@ -107,7 +107,7 @@ export function StarsShop({ demo }: { demo?: StarsProduct[] }) {
             {keys.map((p) => (
               <div key={p.id} className="shop-card stars-card">
                 {/* eslint-disable-next-line @next/next/no-img-element -- the key pictures: one, three, five */}
-                <img className="stars-card-pic" src={`/shop/keys-${[1, 3, 5].includes(p.amount) ? p.amount : 1}.webp?v=1`} alt="" />
+                <img className="stars-card-pic stars-key-pic" src={`/shop/keys-${[1, 3, 5].includes(p.amount) ? p.amount : 1}.webp?v=2`} alt="" />
                 <div className="shop-card-name">{tn(p.amount === 1 ? 'stars.key1' : p.amount < 5 ? 'stars.keysN' : 'stars.keysMany', { n: p.amount })}</div>
                 {price(p)}
               </div>

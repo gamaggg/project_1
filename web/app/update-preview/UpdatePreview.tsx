@@ -60,6 +60,8 @@ const PRICES: [string, Cat, number][] = [
   ['skin_net', 'territory_skin', 500], ['skin_grass', 'territory_skin', 550], ['skin_scales', 'territory_skin', 800], ['skin_depth', 'territory_skin', 1000],
   ['skin_compass', 'territory_skin', 1300], ['skin_school', 'territory_skin', 1600], ['skin_sonar', 'territory_skin', 2200], ['skin_aquarium', 'territory_skin', 2400],
   ['skin_lighthouse', 'territory_skin', 2600], ['skin_lightning', 'territory_skin', 3000],
+  ['skin_gl_aurora', 'territory_skin', 3000], ['skin_gl_starfield', 'territory_skin', 3000], ['skin_gl_particles', 'territory_skin', 3000],
+  ['skin_gl_beams', 'territory_skin', 3000], ['skin_gl_matrix', 'territory_skin', 3000],
 ]
 const labelOf = (id: string, cat: Cat) =>
   (cat === 'avatar_frame' ? AVATAR_FRAMES : cat === 'hero_bg' ? HERO_BACKGROUNDS : cat === 'name_style' ? NAME_STYLES : TERRITORY_SKINS).find((x) => x.id === id)?.label ?? id
