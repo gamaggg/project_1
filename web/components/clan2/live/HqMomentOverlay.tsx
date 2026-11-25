@@ -6,7 +6,7 @@ import { BuildMoment } from '@/components/clan2/BuildMoment'
 import { useDemoNow } from '@/components/clan2/C2Common'
 import { goLive } from '@/components/clan2/nav'
 import { HqMoment, type HqMomentKind } from '@/components/clan2/HqMoment'
-import { siegeMinutesOf, useDemoState } from '@/lib/clan2/demoStore'
+import { siegeMinutesOf, useDemoState, useLiveSynced } from '@/lib/clan2/demoStore'
 import { requestMap, setLiveUi } from '@/lib/clan2/live/ui'
 import { SIEGE_BREAK_REWARD } from '@/lib/clan2/rules'
 import { PROJECT_IDS } from '@/lib/clan2/rules'
@@ -52,7 +52,9 @@ export function HqMomentOverlay({ visible, onOpenClan }: { visible: boolean; onO
   // The game's clock (it ticks every second; the test bench may have moved it on).
   const clock = useDemoNow()
   const [closed, setClosed] = useState(0)
-  if (!s.live || !visible) return null
+  // Just bound to this clan: the alerts are still the browser's old copy until the server answers (25.11.2026).
+  const synced = useLiveSynced()
+  if (!s.live || !visible || !synced) return null
   const clanId = s.live.clanId
   const seen = Math.max(readSeen(clanId), closed)
   const now = clock

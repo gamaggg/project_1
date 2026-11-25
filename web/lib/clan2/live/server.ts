@@ -23,7 +23,9 @@ export async function readServerClan(clanId: number, userId: string): Promise<Se
   const rpc = supabase.rpc.bind(supabase) as unknown as (fn: string, args?: Json) => Promise<{ data: unknown; error: { code?: string; message: string } | null }>
   const [state, notes, me, freeRebuild] = await Promise.all([
     rpc('get_clan_state', { p_clan_id: clanId }),
-    supabase.from('notifications').select('id,kind,created_at,payload,territory_id').eq('user_id', userId).like('kind', 'clan_%').order('created_at', { ascending: false }).limit(60),
+    // Only this clan's: a player who switched clans still has the old clan's notifications, and its fallen HQ played
+    // as this clan's moment and stood in its journal (25.11.2026). Every clan_* notification carries payload.clan_id.
+    supabase.from('notifications').select('id,kind,created_at,payload,territory_id').eq('user_id', userId).like('kind', 'clan_%').eq('payload->>clan_id', String(clanId)).order('created_at', { ascending: false }).limit(60),
     // The view, not the table: the players' role may not read `profiles` itself (the app reads its own coins the same way).
     supabase.from('profiles_with_stats').select('coins').eq('id', userId).maybeSingle(),
     // After a fall the first new HQ is free, once (supabase-drafts/clan-hq-free-rebuild-13-11); before that migration

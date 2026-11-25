@@ -1,6 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { BackButton } from '@/components/app-shell/BackButton'
+import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { LiveCoinBalance } from '@/components/app-shell/CoinCountUp'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { useProfile } from '@/lib/supabase/queries'
 import { canPayWithStars, useBuyForStars, useStarsProducts, type StarsProduct } from '@/lib/supabase/queries/stars'
 import { tn } from '@/lib/i18n/runtime'
 
@@ -117,3 +122,38 @@ export function StarsShop({ demo }: { demo?: StarsProduct[] }) {
     </div>
   )
 }
+
+// The «Пополнить» screen (owner, 25.11.2026: «a screen of its own, not a tab in the Shop»): the Shop's header with
+// «Назад», the balance, and the coins and keys for Stars under it.
+export function TopUpScreen({ onBack }: { onBack: () => void }) {
+  const { user } = useAuth()
+  const { data: profile } = useProfile(user?.id ?? null)
+  return (
+    <>
+      <div className="shop-sticky-top">
+        <div className="header-row">
+          <BackButton onClick={onBack} registerNative={false} />
+          <div style={{ fontWeight: 800, fontSize: 15 }}>{tn('shop.topUp')}</div>
+          <div style={{ width: 36 }} />
+        </div>
+        <div className="shop-wallet">
+          <div className="shop-wallet-balance">
+            <span className="shop-wallet-coin">
+              <CoinIcon size={28} />
+            </span>
+            <span className="shop-wallet-main">
+              <span className="shop-wallet-num">
+                <LiveCoinBalance value={profile?.coins ?? 0} />
+              </span>
+              <span className="shop-wallet-sub">{tn('shop.walletLabel')}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div className="screen-inner">
+        <StarsShop />
+      </div>
+    </>
+  )
+}
+

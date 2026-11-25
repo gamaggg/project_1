@@ -118,6 +118,7 @@ import { TerritoriesListScreen, type Mode as RatingMode } from '@/components/app
 import { ShopScreen } from '@/components/app-shell/screens/ShopScreen'
 import { SlotsScreen } from '@/components/app-shell/screens/SlotsScreen'
 import { SecretBoxAppScreen } from '@/components/app-shell/SecretBoxScreen'
+import { TopUpScreen } from '@/components/app-shell/StarsShop'
 import { GeoScreen } from '@/components/app-shell/screens/GeoScreen'
 import { AdminGeoScreen } from '@/components/app-shell/screens/AdminGeoScreen'
 import { BackButton } from '@/components/app-shell/BackButton'
@@ -179,6 +180,7 @@ export type ScreenId =
   | 'screen-shop'
   | 'screen-slots'
   | 'screen-secret-box'
+  | 'screen-topup'
   | 'screen-geo'
   | 'screen-admin-geo'
   | 'screen-challenges'
@@ -224,6 +226,7 @@ type StackEntry =
   | { screen: 'screen-shop' }
   | { screen: 'screen-slots' }
   | { screen: 'screen-secret-box' }
+  | { screen: 'screen-topup' }
   | { screen: 'screen-geo' }
   | { screen: 'screen-admin-geo' }
   | { screen: 'screen-challenges' }
@@ -777,6 +780,10 @@ export function FishZoneApp() {
   }
   function openSlots() {
     push({ screen: 'screen-slots' })
+  }
+  // «Пополнить» from the Shop's balance card: coins and keys for Telegram Stars on their own screen (25.11.2026).
+  function openTopUp() {
+    push({ screen: 'screen-topup' })
   }
   function openSecretBox() {
     push({ screen: 'screen-secret-box' })
@@ -1876,7 +1883,7 @@ export function FishZoneApp() {
             'batumi' default first — creating a throwaway week in the wrong
             city for every Moscow account on every boot. */}
         <Screen id="screen-shop" current={currentScreen} onBack={pop}>
-          {myProfile && <ShopScreen onBack={pop} onOpenSlots={openSlots} onOpenSecretBox={openSecretBox} />}
+          {myProfile && <ShopScreen onBack={pop} onOpenSlots={openSlots} onOpenSecretBox={openSecretBox} onOpenTopUp={openTopUp} />}
         </Screen>
         {/* The slots on their own screen, from the card under the Shop's
             balance — no longer a tab at the far end of the Shop's row. */}
@@ -1899,6 +1906,10 @@ export function FishZoneApp() {
         {/* «Секретный бокс» on its own dark screen, from the card under the slots (24.11.2026). */}
         <Screen id="screen-secret-box" current={currentScreen} onBack={pop}>
           {myProfile && <SecretBoxAppScreen onBack={pop} />}
+        </Screen>
+        {/* «Пополнить»: coins and keys for Telegram Stars (25.11.2026). */}
+        <Screen id="screen-topup" current={currentScreen} onBack={pop}>
+          {myProfile && <TopUpScreen onBack={pop} />}
         </Screen>
         {/* «Где это?» — the panorama of the day; the profile's card opens it. */}
         <Screen id="screen-geo" current={currentScreen} onBack={pop}>

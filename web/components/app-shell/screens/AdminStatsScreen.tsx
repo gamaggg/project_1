@@ -41,6 +41,7 @@ const SCREEN_NAMES: Record<string, string> = {
   'screen-shop': 'Магазин',
   'screen-slots': 'Слоты',
   'screen-secret-box': 'Секретный бокс',
+  'screen-topup': 'Пополнить',
   'screen-challenges': 'Челленджи',
   'screen-clans': 'Кланы',
   'screen-clan': 'Клан',

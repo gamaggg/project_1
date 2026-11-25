@@ -21,7 +21,7 @@ import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { SkinPreview } from '@/components/app-shell/SkinPreview'
 import { SlotsCard } from '@/components/app-shell/SlotsCard'
-import { StarIcon, StarsShop, useStarsBuy } from '@/components/app-shell/StarsShop'
+import { StarIcon, useStarsBuy } from '@/components/app-shell/StarsShop'
 import { useStarsProducts } from '@/lib/supabase/queries/stars'
 import { useMaintenance } from '@/lib/supabase/queries/maintenance'
 import type { CityId } from '@/lib/data/city'
@@ -63,7 +63,7 @@ function rarityClass(price: number): string {
   return 'shop-card-common'
 }
 
-type Category = 'avatar_frame' | 'hero_bg' | 'name_style' | 'territory_skin' | 'buffs' | 'stars'
+type Category = 'avatar_frame' | 'hero_bg' | 'name_style' | 'territory_skin' | 'buffs'
 const SEEN_NEW_KEY = 'shop-new-tabs-seen'
 const CATEGORIES: { id: Category; label: string; icon: React.ReactNode }[] = [
   { id: 'avatar_frame', get label() { return tn('shop.tabFrames') }, icon: SHOP_TAB_ICONS.frame },
@@ -71,11 +71,19 @@ const CATEGORIES: { id: Category; label: string; icon: React.ReactNode }[] = [
   { id: 'name_style', get label() { return tn('shop.tabName') }, icon: SHOP_TAB_ICONS.sparkle },
   { id: 'territory_skin', get label() { return tn('shop.tabSkins') }, icon: SHOP_TAB_ICONS.skin },
   { id: 'buffs', get label() { return tn('shop.tabBuffs') }, icon: SHOP_TAB_ICONS.bolt },
-  // За Звёзды Telegram (25.11.2026): shown only when the player has something to buy there (StarsShop).
-  { id: 'stars', get label() { return tn('shop.tabStars') }, icon: <StarIcon size={16} /> },
 ]
 
-export function ShopScreen({ onBack, onOpenSlots, onOpenSecretBox }: { onBack: () => void; onOpenSlots: () => void; onOpenSecretBox: () => void }) {
+export function ShopScreen({
+  onBack,
+  onOpenSlots,
+  onOpenSecretBox,
+  onOpenTopUp,
+}: {
+  onBack: () => void
+  onOpenSlots: () => void
+  onOpenSecretBox: () => void
+  onOpenTopUp: () => void
+}) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   // The 4th-challenge slot bought here is the account's own real weekly
@@ -210,9 +218,8 @@ export function ShopScreen({ onBack, onOpenSlots, onOpenSecretBox }: { onBack: (
                   </span>
                 )}
               </span>
+              {/* Only «История» under the number: «монет на счету · История» was cut off next to «Пополнить». */}
               <span className="shop-wallet-sub">
-                <span className="shop-wallet-label">{tn('shop.walletLabel')}</span>
-                <span aria-hidden>·</span>
                 <button className="shop-wallet-history" onClick={() => setHistoryOpen(true)}>
                   {tn('shop.history')}
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -223,13 +230,7 @@ export function ShopScreen({ onBack, onOpenSlots, onOpenSecretBox }: { onBack: (
             </span>
             {starsTab && (
               // «Пополнить»: to the «Звёзды» tab — coins and keys for Telegram Stars.
-              <button
-                className="shop-wallet-topup"
-                onClick={() => {
-                  setCategory('stars')
-                  document.querySelector('.shop-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                }}
-              >
+              <button className="shop-wallet-topup" onClick={onOpenTopUp}>
                 <StarIcon size={15} />
                 {tn('shop.topUp')}
               </button>
@@ -243,7 +244,7 @@ export function ShopScreen({ onBack, onOpenSlots, onOpenSecretBox }: { onBack: (
         </div>
 
         <div className="shop-tabs">
-          {CATEGORIES.filter((c) => c.id !== 'stars' || starsTab).map((c) => (
+          {CATEGORIES.map((c) => (
             <button key={c.id} className={`shop-tab${category === c.id ? ' active' : ''}`} onClick={() => setCategory(c.id)}>
               <span>{c.icon}</span>
               {c.label}
@@ -344,10 +345,6 @@ export function ShopScreen({ onBack, onOpenSlots, onOpenSecretBox }: { onBack: (
               ))}
             </div>
           </>
-        )}
-
-        {category === 'stars' && (
-          <StarsShop />
         )}
 
         {category === 'buffs' && (
