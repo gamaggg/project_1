@@ -888,7 +888,9 @@ export function ProfileScreen({
       {economyOpen && <EconomyAdminLazy onClose={() => setEconomyOpen(false)} />}
       {shopStubOpen && <ShopClosedModal onClose={() => setShopStubOpen(false)} />}
       <AdminPanel
-        active={adminPanelActive}
+        // The shop stub's window is this screen's own (not FishZoneApp's), so the sheet must wait for it too — it came
+        // straight back over the window and the tile looked dead (25.11.2026).
+        active={adminPanelActive && !shopStubOpen}
           items={[
             ...(canModerateReports ? [{ id: 'reports', label: 'Жалобы на фото', icon: ADMIN_ICONS.reports, tone: 'mod' as const, badge: reports.length, onClick: onOpenReports }] : []),
             ...(canReviewPanoramas || isSuperAdmin ? [{ id: 'geo', label: 'Панорамы «Где это?»', icon: ADMIN_ICONS.panoramas, tone: 'mod' as const, onClick: onOpenAdminGeo }] : []),
