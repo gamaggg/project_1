@@ -130,6 +130,19 @@ function subscribe(l: () => void) {
   return () => listeners.delete(l)
 }
 
+// Has the server been read since the store was bound to this clan? Until then the state is only this browser's copy,
+// saved when the player was last in this clan (minutes or days ago): the clan's sections wait for the read instead of
+// showing an old balance, an old fallen HQ and then «+N» as it jumps to the real one (25.11.2026).
+let syncedKey: string | null = null
+function settle(key: string) {
+  if (storageKey !== key || syncedKey === key) return
+  syncedKey = key
+  listeners.forEach((l) => l())
+}
+export function useLiveSynced(): boolean {
+  return useSyncExternalStore(subscribe, () => syncedKey === storageKey, () => false)
+}
+
 export function useDemoState(): DemoState {
   return useSyncExternalStore(subscribe, () => (load(), state), () => state)
 }
@@ -152,13 +165,26 @@ export function onServerReply(fn: (r: Result) => void): () => void {
 }
 // Reads the clan from the server; true when it answered (the store now mirrors it).
 export async function refreshFromServer(clanId: number, userId: string): Promise<boolean> {
-  const r = await readServerClan(clanId, userId)
+  const key = storageKey
+  let r: Awaited<ReturnType<typeof readServerClan>>
+  try {
+    r = await readServerClan(clanId, userId)
+  } catch (e) {
+    settle(key)
+    throw e
+  }
+  // The player switched clans while this read was on its way: the answer is the other clan's and must not land in
+  // this one's state (it showed the old clan's treasury and fallen HQ under the new clan's name, 25.11.2026).
+  if (storageKey !== key || state.live?.clanId !== clanId) return false
   if (!r.ok) {
     if (r.missing) server = null
+    // No answer: the browser's copy is all there is, as before.
+    settle(key)
     return false
   }
   server = { clanId, userId }
   load()
+  syncedKey = key
   const draft = structuredClone(state) as DemoState
   applyServerClan(draft, r.data, r.alerts)
   // The wallet is the player's real coins, not the copy saved in the browser at the first visit.
