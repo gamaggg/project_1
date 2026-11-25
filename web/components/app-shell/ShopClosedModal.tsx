@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useMaintenance, useSetShopClosed } from '@/lib/supabase/queries/maintenance'
 
 // «Заглушка магазина» in the super admin's «Управление» (25.11.2026): closes the Shop for every player — they see
@@ -18,7 +19,9 @@ export function ShopClosedModal({ onClose }: { onClose: () => void }) {
       onError: () => setError('Не получилось: проверь сеть или права и попробуй ещё раз.'),
     })
   }
-  return (
+  // Into <body>: drawn inside the profile screen, whose wrapper is moved by the screen animation, the fixed overlay
+  // blurred the page but the card itself ended up off the screen (25.11.2026).
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-icon" style={{ background: on ? 'linear-gradient(160deg,#FF6B6B,#D33 65%)' : 'linear-gradient(160deg,#FFC93C,#F59B0B 65%)' }}>
@@ -47,6 +50,7 @@ export function ShopClosedModal({ onClose }: { onClose: () => void }) {
           Отмена
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
