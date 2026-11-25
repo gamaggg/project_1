@@ -114,7 +114,7 @@ export function KitsSection({
           const worn = all && wornKit(kit)
           const preset = glPresetOf(family, presetFor(family))
           return (
-            <div key={kit.kit} className="shop-card shop-card-legendary shop-card-stars kit-card">
+            <div key={kit.kit} data-kit={kit.kit} className="shop-card shop-card-legendary shop-card-stars kit-card">
               <KitPreview kit={kit} preset={preset} displayName={displayName} avatarUrl={avatarUrl} />
               <div className="shop-card-name">{kitTitle(kit)}</div>
               <div className="kit-contents">{tn('shop.kitContents')}</div>

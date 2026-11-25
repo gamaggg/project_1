@@ -63,7 +63,7 @@ export function ShopTryOn({
   // Part of the kit is already the player's: it can't be bought whole.
   kitBlocked?: boolean
   // The whole kit of this item's family, offered under the buy button of a background, frame or name style.
-  kitOffer?: { title: string; stars: number; onBuy: () => void }
+  kitOffer?: { title: string; stars: number; onView: () => void }
 }) {
   const bg = resolveHeroBackground(kit ? joinHeroBg(kit.bg, glPreset?.value) : item.category === 'hero_bg' ? joinHeroBg(item.id, glPreset?.value) : look.heroBg)
   const frame = resolveAvatarFrame(kit ? kit.frame : item.category === 'avatar_frame' ? item.id : look.frame)
@@ -136,10 +136,13 @@ export function ShopTryOn({
                 <div className="kit-offer-title">{kitOffer.title}</div>
                 <div className="kit-offer-sub">{tn('shop.kitOfferSub')}</div>
               </div>
-              <button className="btn-secondary shop-price-btn stars-price-btn" onClick={kitOffer.onBuy}>
-                <StarIcon size={15} />
-                {kitOffer.stars}
+              <div className="kit-offer-price">
+                <StarIcon size={14} />
+                <b>{kitOffer.stars}</b>
                 <span className="kit-instead">{tn('shop.kitInstead', { price: GL_STARS.bg + GL_STARS.frame + GL_STARS.name })}</span>
+              </div>
+              <button className="btn-secondary" onClick={kitOffer.onView}>
+                {tn('shop.kitView')}
               </button>
             </div>
           )}

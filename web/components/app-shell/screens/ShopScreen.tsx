@@ -128,6 +128,16 @@ export function ShopScreen({
     return () => ro.disconnect()
   }, [])
   const [tryOn, setTryOn] = useState<ShopItem | null>(null)
+  // «Посмотреть» in a kit offer: to the «Комплекты» tab, scrolled to that kit.
+  const [scrollKit, setScrollKit] = useState<string | null>(null)
+  useEffect(() => {
+    if (!scrollKit || category !== 'kits') return
+    const t = window.setTimeout(() => {
+      document.querySelector(`[data-kit="${scrollKit}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      setScrollKit(null)
+    }, 80)
+    return () => window.clearTimeout(t)
+  }, [scrollKit, category])
   // Новинки (24.11.2026): a dot on the tabs that hold something NEW the player hasn't looked at yet. Opening a tab
   // puts its new items out of the dot (kept on this device); the NEW badges on the items themselves stay their 3 days.
   const { data: newIds } = useShopNew()
@@ -254,7 +264,7 @@ export function ShopScreen({
         {shopClosed && <div className="shop-stub-strip">Заглушка включена: игроки видят «Магазин обновляется»</div>}
         {/* The balance (owner, 25.11.2026: the gold card blended with the gold «Пополнить», and two buttons side by side
             argued): a light card, the number with «монет на счету · История» under it, one gold «Пополнить» on the right. */}
-        {/* The balance (owner, 25.11.2026): the coin and the number on one line, «История» a small round button beside «Пополнить». */}
+        {/* The balance (owner, 25.11.2026): the coin, the number and «История» (a text button) on one line, «Пополнить» on the right. */}
         <div className="shop-wallet">
           <div className="shop-wallet-balance">
             <span key={coinDelta?.n ?? 0} className={`shop-wallet-coin${coinDelta ? ' flip' : ''}`}>
@@ -269,13 +279,13 @@ export function ShopScreen({
                 </span>
               )}
             </span>
+            <button className="shop-wallet-history" onClick={() => setHistoryOpen(true)}>
+              {tn('shop.history')}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
             <span className="shop-wallet-actions">
-              <button className="shop-wallet-hist" onClick={() => setHistoryOpen(true)} aria-label={tn('shop.history')}>
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M12 7v5l3 2" />
-                </svg>
-              </button>
               {starsTab && (
                 // «Пополнить»: to the screen with coins and keys for Telegram Stars.
                 <button className="shop-wallet-topup" onClick={onOpenTopUp}>
@@ -471,7 +481,7 @@ export function ShopScreen({
         const offerFam = offerKit ? GL_FAMILIES.find((f) => f.id === offerKit.family) : undefined
         const kitOffer =
           offerKit && offerProduct && offerFam && !offerProduct.ownedAny && tryOnState(tryOn) === 'locked'
-            ? { title: kitTitle(offerKit), stars: offerProduct.stars, onBuy: () => { setTryOn(null); starsBuy.start(offerProduct, presetFor(offerFam)) } }
+            ? { title: kitTitle(offerKit), stars: offerProduct.stars, onView: () => { setTryOn(null); setCategory('kits'); setScrollKit(offerKit.kit) } }
             : undefined
         return (
           <ShopTryOn

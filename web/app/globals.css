@@ -897,7 +897,7 @@ html.has-lightbox:root .bottomnav::after{
    in a fixed pill so the sparks stay centred (the text glyph sat off-centre and the lone epic one floated in the corner). */
 .shop-card-legendary.shop-card-stars::before{
   content:''; position:absolute; top:-9px; right:14px; z-index:1; box-sizing:border-box; width:58px; height:17px; padding:0;
-  border-radius:999px; background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 10' width='40' height='10' fill='%23FC5200'%3E%3Cpath transform='translate(0 0)' d='M5 0L6.3 3.7L10 5L6.3 6.3L5 10L3.7 6.3L0 5L3.7 3.7Z'/%3E%3Cpath transform='translate(15 0)' d='M5 0L6.3 3.7L10 5L6.3 6.3L5 10L3.7 6.3L0 5L3.7 3.7Z'/%3E%3Cpath transform='translate(30 0)' d='M5 0L6.3 3.7L10 5L6.3 6.3L5 10L3.7 6.3L0 5L3.7 3.7Z'/%3E%3C/svg%3E") center / auto 9px no-repeat; border:1.5px solid var(--accent);
+  border-radius:999px; background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 10' width='40' height='10' fill='%23B9831B'%3E%3Cpath transform='translate(0 0)' d='M5 0L6.3 3.7L10 5L6.3 6.3L5 10L3.7 6.3L0 5L3.7 3.7Z'/%3E%3Cpath transform='translate(15 0)' d='M5 0L6.3 3.7L10 5L6.3 6.3L5 10L3.7 6.3L0 5L3.7 3.7Z'/%3E%3Cpath transform='translate(30 0)' d='M5 0L6.3 3.7L10 5L6.3 6.3L5 10L3.7 6.3L0 5L3.7 3.7Z'/%3E%3C/svg%3E") center / auto 9px no-repeat; border:1.5px solid #D9A93A;
 }
 /* «Заглушка магазина» (25.11.2026): the players' card, and a strip over the Shop for the super admin. */
 .shop-stub{margin-top:28px; padding:28px 20px 20px; border-radius:22px; background:linear-gradient(150deg,#FFF6E2,#FFE9BC); text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px;}
@@ -5768,3 +5768,20 @@ button.geo-fact{cursor:pointer;}
 .kits-head{margin:6px 0 2px;}
 .kits-head-title{font-family:var(--font-display),'Manrope',sans-serif; font-weight:800; font-size:26px; line-height:1.1; letter-spacing:.01em; background:linear-gradient(120deg,#FC5200,#E0447B 55%,#7C5CFF); -webkit-background-clip:text; background-clip:text; color:transparent; text-transform:uppercase;}
 .kits-head-sub{margin-top:6px; font-size:14px; line-height:1.4; color:var(--ink-soft); font-weight:600;}
+
+/* Edits of 25.11.2026 (batch 3): the balance row, no glint on name styles, a special outline for the Stars-only cards,
+   the kits heading's last letter, the kit offer. */
+.shop-wallet-balance > .shop-wallet-num{flex:0 0 auto;}
+.shop-wallet-balance > .shop-wallet-history{align-self:center;}
+.shop-wallet-actions{flex:1; justify-content:flex-end;}
+.name-fx-shine{animation:none;}
+.kits-head-title{display:inline-block; padding-right:.16em;}
+.kit-offer-price{display:flex; align-items:center; gap:6px; font-size:15px;}
+.kit-offer-price .kit-instead{margin-left:2px;}
+.kit-card{scroll-margin-top:240px;}
+/* Stars-only cards: a gold double outline (a thin gold line, a gap, a second thin line) unlike the orange-to-violet one. */
+.shop-card-legendary.shop-card-stars{
+  background:linear-gradient(var(--surface),var(--surface)) padding-box,
+             linear-gradient(140deg,#F8E39A,#C9921F 42%,#F3D57A 72%,#B9831B) border-box;
+  box-shadow:0 0 0 3px var(--bg), 0 0 0 4.5px #D9A93A;
+}
