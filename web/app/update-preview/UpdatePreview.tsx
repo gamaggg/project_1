@@ -156,7 +156,6 @@ export function UpdatePreview() {
   const [free, setFree] = useState(3)
   const [glFamily, setGlFamily] = useState('aurora')
   const [glPreset, setGlPreset] = useState('borealis')
-  const [kitPresets, setKitPresets] = useState<Record<string, string>>({})
   const [owned, setOwned] = useState<Set<string>>(new Set())
   const [worn, setWorn] = useState<Partial<Record<Cat, string>>>({ hero_bg: 'floats', avatar_frame: 'frame_storm', name_style: 'name_wave' })
   const [cat, setCat] = useState<Cat>('avatar_frame')
@@ -259,8 +258,7 @@ export function UpdatePreview() {
             products={new Map(GL_KITS.map((k) => [k.kit, { id: k.kit, kind: 'kit' as const, amount: 0, itemId: null, stars: 300, owned: false, ownedAny: false }]))}
             owned={new Set<string>()}
             wornKit={() => false}
-            presetFor={(f) => glPresetOf(f, kitPresets[f.id])}
-            onPreset={(f, p) => setKitPresets((x) => ({ ...x, [f.id]: p }))}
+            presetFor={(f) => glPresetOf(f, undefined)}
             displayName="Гоша Рыбак"
             avatarUrl={null}
             onBuy={() => {}}
@@ -435,6 +433,7 @@ export function UpdatePreview() {
               { id: 'coins_5000', kind: 'coins', amount: 5000, itemId: null, stars: 350, owned: false, ownedAny: false },
               { id: 'keys_1', kind: 'keys', amount: 1, itemId: null, stars: 40, owned: false, ownedAny: false },
               { id: 'keys_3', kind: 'keys', amount: 3, itemId: null, stars: 100, owned: false, ownedAny: false },
+              { id: 'keys_5', kind: 'keys', amount: 5, itemId: null, stars: 150, owned: false, ownedAny: false },
             ]}
           />
         </Section>

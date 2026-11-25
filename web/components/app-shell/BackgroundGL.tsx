@@ -282,6 +282,8 @@ export function BackgroundGL({ scene, numbers, vec2s, colors, palettes, surface 
     let running = false
     let active = false
     let sized = false
+    // In the viewport: a long list of live cards runs only the ones on the screen.
+    let visible = true
 
     function draw() {
       const p = paramsRef.current
@@ -322,7 +324,7 @@ export function BackgroundGL({ scene, numbers, vec2s, colors, palettes, surface 
       frameId = requestAnimationFrame(frame)
     }
     function start() {
-      if (running || !sized || !active || reduceMotion) return
+      if (running || !sized || !active || !visible || reduceMotion) return
       running = true
       last = 0
       frameId = requestAnimationFrame(frame)
@@ -357,11 +359,18 @@ export function BackgroundGL({ scene, numbers, vec2s, colors, palettes, surface 
       },
       fit,
     )
+    const io = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting
+      if (visible) start()
+      else stop()
+    })
+    io.observe(canvas)
     return () => {
       redrawRef.current = null
       stop()
       ro.disconnect()
       stopWatching()
+      io.disconnect()
       gl.deleteProgram(prog)
       gl.deleteBuffer(buf)
       if (atlasTex) gl.deleteTexture(atlasTex)

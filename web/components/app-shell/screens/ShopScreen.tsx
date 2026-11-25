@@ -24,7 +24,7 @@ import { SlotsCard } from '@/components/app-shell/SlotsCard'
 import { StarIcon, useStarsBuy } from '@/components/app-shell/StarsShop'
 import { useStarsProducts } from '@/lib/supabase/queries/stars'
 import { useMyGlPresets, useSetHeroBgPreset } from '@/lib/supabase/queries/glPresets'
-import { GlPresetChips, KitsSection } from '@/components/app-shell/GlShop'
+import { KitsSection } from '@/components/app-shell/GlShop'
 import { GL_FAMILIES, glPresetOf, type GlFamily } from '@/components/app-shell/glFamilies'
 import { GL_KITS, glBgId, glFamilyOf, glKitOf, joinHeroBg, splitHeroBg, type GlKit } from '@/lib/data/glKits'
 import { useMaintenance } from '@/lib/supabase/queries/maintenance'
@@ -73,8 +73,8 @@ const CATEGORIES: { id: Category; label: string; icon: React.ReactNode }[] = [
   { id: 'avatar_frame', get label() { return tn('shop.tabFrames') }, icon: SHOP_TAB_ICONS.frame },
   { id: 'hero_bg', get label() { return tn('shop.tabBackgrounds') }, icon: SHOP_TAB_ICONS.background },
   { id: 'name_style', get label() { return tn('shop.tabName') }, icon: SHOP_TAB_ICONS.sparkle },
-  { id: 'kits', get label() { return tn('shop.tabKits') }, icon: SHOP_TAB_ICONS.kit },
   { id: 'territory_skin', get label() { return tn('shop.tabSkins') }, icon: SHOP_TAB_ICONS.skin },
+  { id: 'kits', get label() { return tn('shop.tabKits') }, icon: SHOP_TAB_ICONS.kit },
   { id: 'buffs', get label() { return tn('shop.tabBuffs') }, icon: SHOP_TAB_ICONS.bolt },
 ]
 
@@ -254,38 +254,36 @@ export function ShopScreen({
         {shopClosed && <div className="shop-stub-strip">Заглушка включена: игроки видят «Магазин обновляется»</div>}
         {/* The balance (owner, 25.11.2026: the gold card blended with the gold «Пополнить», and two buttons side by side
             argued): a light card, the number with «монет на счету · История» under it, one gold «Пополнить» on the right. */}
+        {/* The balance (owner, 25.11.2026): the coin and the number on one line, «История» a small round button beside «Пополнить». */}
         <div className="shop-wallet">
           <div className="shop-wallet-balance">
             <span key={coinDelta?.n ?? 0} className={`shop-wallet-coin${coinDelta ? ' flip' : ''}`}>
               <CoinIcon size={28} />
             </span>
-            <span className="shop-wallet-main">
-              <span className="shop-wallet-num">
-                <LiveCoinBalance value={coins} />
-                {coinDelta && (
-                  <span key={coinDelta.n} className={`shop-wallet-delta${coinDelta.amount < 0 ? ' minus' : ''}`} aria-hidden>
-                    {coinDelta.amount < 0 ? '−' : '+'}
-                    {Math.abs(coinDelta.amount)}
-                  </span>
-                )}
-              </span>
-              {/* Only «История» under the number: «монет на счету · История» was cut off next to «Пополнить». */}
-              <span className="shop-wallet-sub">
-                <button className="shop-wallet-history" onClick={() => setHistoryOpen(true)}>
-                  {tn('shop.history')}
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <path d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </span>
+            <span className="shop-wallet-num">
+              <LiveCoinBalance value={coins} />
+              {coinDelta && (
+                <span key={coinDelta.n} className={`shop-wallet-delta${coinDelta.amount < 0 ? ' minus' : ''}`} aria-hidden>
+                  {coinDelta.amount < 0 ? '−' : '+'}
+                  {Math.abs(coinDelta.amount)}
+                </span>
+              )}
             </span>
-            {starsTab && (
-              // «Пополнить»: to the «Звёзды» tab — coins and keys for Telegram Stars.
-              <button className="shop-wallet-topup" onClick={onOpenTopUp}>
-                <StarIcon size={15} />
-                {tn('shop.topUp')}
+            <span className="shop-wallet-actions">
+              <button className="shop-wallet-hist" onClick={() => setHistoryOpen(true)} aria-label={tn('shop.history')}>
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" />
+                </svg>
               </button>
-            )}
+              {starsTab && (
+                // «Пополнить»: to the screen with coins and keys for Telegram Stars.
+                <button className="shop-wallet-topup" onClick={onOpenTopUp}>
+                  <StarIcon size={15} />
+                  {tn('shop.topUp')}
+                </button>
+              )}
+            </span>
           </div>
         </div>
       </div>
@@ -355,7 +353,7 @@ export function ShopScreen({
                   owned={ownedBg(item.id)}
                   equipped={wornBg.id === item.id}
                   stars={starsByItem.get(item.id)?.stars}
-                  gl={fam ? { family: fam, preset: presetFor(fam), onPreset: (p) => choosePreset(fam, p) } : undefined}
+                  gl={fam ? { family: fam, preset: presetFor(fam) } : undefined}
                   onBuy={() => {
                     const sp = starsByItem.get(item.id)
                     if (sp) starsBuy.start(sp, fam ? presetFor(fam) : null)
@@ -405,7 +403,6 @@ export function ShopScreen({
               owned={owned}
               wornKit={kitWorn}
               presetFor={presetFor}
-              onPreset={choosePreset}
               displayName={profile?.displayName ?? tn('shop.nameFallback')}
               avatarUrl={profile?.avatarUrl ?? null}
               onBuy={(product, fam) => starsBuy.start(product, presetFor(fam))}
@@ -466,6 +463,16 @@ export function ShopScreen({
         const famId = kit?.family ?? (tryOn.category === 'hero_bg' ? glFamilyOf(tryOn.id) : null)
         const fam = famId ? GL_FAMILIES.find((f) => f.id === famId) : undefined
         const product = starsByItem.get(tryOn.id) ?? kitProducts.get(tryOn.id)
+        // The kit of this item's family offered in the window of its background, frame or name style (not owned yet, no
+        // piece of the kit bought, and not the kit's own window).
+        const itemFamId = glFamilyOf(tryOn.id)
+        const offerKit = !kit && itemFamId ? GL_KITS.find((k) => k.family === itemFamId) : undefined
+        const offerProduct = offerKit ? kitProducts.get(offerKit.kit) : undefined
+        const offerFam = offerKit ? GL_FAMILIES.find((f) => f.id === offerKit.family) : undefined
+        const kitOffer =
+          offerKit && offerProduct && offerFam && !offerProduct.ownedAny && tryOnState(tryOn) === 'locked'
+            ? { title: kitTitle(offerKit), stars: offerProduct.stars, onBuy: () => { setTryOn(null); starsBuy.start(offerProduct, presetFor(offerFam)) } }
+            : undefined
         return (
           <ShopTryOn
             item={tryOn}
@@ -481,6 +488,7 @@ export function ShopScreen({
             state={tryOnState(tryOn)}
             stars={product?.stars}
             kit={kit}
+            kitOffer={kitOffer}
             glPreset={fam ? { family: fam, value: presetFor(fam), onChange: (p) => choosePreset(fam, p) } : undefined}
             // A kit with some of its pieces already owned can't be bought whole (the rest goes one by one).
             kitBlocked={!!kit && !kitOwned(kit) && !!product?.ownedAny}
@@ -727,8 +735,8 @@ function BgCard({
   onRefund?: () => void
   // Sold only for Telegram Stars: the price in Stars, three sparks on the tag.
   stars?: number
-  // A live family: its ready presets (the picture follows the picked one), before and after buying.
-  gl?: { family: GlFamily; preset: string; onPreset: (preset: string) => void }
+  // A live family: the card's picture follows the preset picked (the presets themselves are in the try-on window).
+  gl?: { family: GlFamily; preset: string }
 }) {
   const isNew = useIsShopNew(item.id)
   const bg = resolveHeroBackground(gl ? joinHeroBg(item.id, gl.preset) : item.id)
@@ -740,7 +748,6 @@ function BgCard({
         <HeroBgLive bg={bg} variant="swatch" />
       </div>
       <div className="shop-card-name">{item.name}</div>
-      {gl && <GlPresetChips family={gl.family} value={gl.preset} onChange={gl.onPreset} />}
       {equipped ? (
         <button className="btn-secondary shop-equipped" disabled>
           {tn('shop.active')}

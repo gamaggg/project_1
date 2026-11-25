@@ -16,15 +16,27 @@ import { nameInitials } from '@/lib/initials'
 
 // The shop side of the paid live backgrounds (25.11.2026): the preset chips, the kit preview and the «Комплекты» tab.
 
-// One row of ready presets of a background family; the picked one is filled. Nothing finer than presets (owner).
-export function GlPresetChips({ family, value, onChange, disabled }: { family: GlFamily; value: string; onChange: (preset: string) => void; disabled?: boolean }) {
+// The ready presets of a background family as plain words in a flowing line (no buttons, nothing to scroll): the
+// picked one is bold with an accent underline. Nothing finer than presets (owner).
+export function GlPresetWords({ family, value, onChange }: { family: GlFamily; value: string; onChange: (preset: string) => void }) {
   return (
-    <div className="shop-presets" role="group" aria-label={tn('shop.preset')}>
+    <div className="preset-words" role="radiogroup" aria-label={tn('shop.preset')}>
       {family.presets.map((p) => (
-        <button key={p.id} type="button" className={`filter-chip${p.id === value ? ' active' : ''}`} onClick={() => onChange(p.id)} disabled={disabled} aria-pressed={p.id === value}>
+        <button key={p.id} type="button" role="radio" aria-checked={p.id === value} className={`preset-word${p.id === value ? ' on' : ''}`} onClick={() => onChange(p.id)}>
           {p.label}
         </button>
       ))}
+    </div>
+  )
+}
+
+// The picker with its explanation, shown in the try-on window (and only there).
+export function GlPresetPicker({ family, value, onChange }: { family: GlFamily; value: string; onChange: (preset: string) => void }) {
+  return (
+    <div className="preset-picker">
+      <div className="preset-picker-label">{tn('shop.preset')}</div>
+      <GlPresetWords family={family} value={value} onChange={onChange} />
+      <div className="preset-picker-note">{tn('shop.presetNote')}</div>
     </div>
   )
 }
@@ -35,19 +47,16 @@ export function KitPreview({
   preset,
   displayName,
   avatarUrl,
-  live,
 }: {
   kit: GlKit
   preset: string
   displayName: string
   avatarUrl: string | null
-  // Alive in the try-on; a still frame in the list (seven moving canvases on one tab would be a lot for a phone).
-  live?: boolean
 }) {
   const bg = resolveHeroBackground(joinHeroBg(kit.bg, preset))
   return (
     <div className="kit-preview" style={{ background: bg.base, '--hero-accent-rgb': bg.accentRgb } as CSSProperties}>
-      <HeroBgLive bg={bg} variant={live ? 'hero' : 'swatch'} />
+      <HeroBgLive bg={bg} variant="hero" />
       <div className="kit-preview-avatar">
         <AvatarFrameRing frame={resolveAvatarFrame(kit.frame)} />
         <div className="kit-preview-photo">
@@ -68,7 +77,6 @@ export function KitsSection({
   owned,
   wornKit,
   presetFor,
-  onPreset,
   displayName,
   avatarUrl,
   onBuy,
@@ -82,7 +90,6 @@ export function KitsSection({
   owned: Set<string>
   wornKit: (kit: GlKit) => boolean
   presetFor: (family: GlFamily) => string
-  onPreset: (family: GlFamily, preset: string) => void
   displayName: string
   avatarUrl: string | null
   onBuy: (product: StarsProduct, family: GlFamily) => void
@@ -93,7 +100,10 @@ export function KitsSection({
 }) {
   return (
     <>
-      <div className="shop-section-caption">{tn('shop.kitCaption')}</div>
+      <div className="kits-head">
+        <div className="kits-head-title">{tn('shop.kitsTitle')}</div>
+        <div className="kits-head-sub">{tn('shop.kitCaption')}</div>
+      </div>
       <div className="kit-list">
         {kits.map((kit) => {
           const family = GL_FAMILIES.find((f) => f.id === kit.family)
@@ -108,7 +118,6 @@ export function KitsSection({
               <KitPreview kit={kit} preset={preset} displayName={displayName} avatarUrl={avatarUrl} />
               <div className="shop-card-name">{kitTitle(kit)}</div>
               <div className="kit-contents">{tn('shop.kitContents')}</div>
-              <GlPresetChips family={family} value={preset} onChange={(p) => onPreset(family, p)} />
               {all ? (
                 worn ? (
                   <button className="btn-secondary shop-equipped" disabled>

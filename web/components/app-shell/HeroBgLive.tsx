@@ -31,9 +31,9 @@ export function HeroBgLive({ bg, variant }: { bg: HeroBackground; variant: 'hero
     case 'fireflies':
       return <FirefliesBackground color={bg.fireflyColor} />
     case 'gl': {
-      // The paid live families: still in the shop's small cards (`swatch`), alive everywhere else.
+      // The paid live families: alive everywhere (the canvas itself pauses while it is off screen).
       const family = glFamily(bg.glFamily)
-      return family ? <>{family.render(glPresetOf(family, bg.glPreset), variant === 'swatch')}</> : null
+      return family ? <>{family.render(glPresetOf(family, bg.glPreset))}</> : null
     }
     case 'deep':
     case 'moonpath':

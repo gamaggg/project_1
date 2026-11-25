@@ -103,16 +103,12 @@ export function StarsShop({ demo }: { demo?: StarsProduct[] }) {
       {keys.length > 0 && (
         <>
           <div className="shop-section-caption">{tn('stars.keys')}</div>
-          <div className="stars-grid stars-grid-2">
+          <div className="stars-grid">
             {keys.map((p) => (
               <div key={p.id} className="shop-card stars-card">
-                <div className="stars-keys" aria-hidden>
-                  {Array.from({ length: Math.min(p.amount, 3) }, (_, i) => (
-                    // eslint-disable-next-line @next/next/no-img-element -- the slots' own key
-                    <img key={i} src="/slots/key.webp" alt="" />
-                  ))}
-                </div>
-                <div className="shop-card-name">{tn(p.amount === 1 ? 'stars.key1' : 'stars.keysN', { n: p.amount })}</div>
+                {/* eslint-disable-next-line @next/next/no-img-element -- the key pictures: one, three, five */}
+                <img className="stars-card-pic" src={`/shop/keys-${[1, 3, 5].includes(p.amount) ? p.amount : 1}.webp?v=1`} alt="" />
+                <div className="shop-card-name">{tn(p.amount === 1 ? 'stars.key1' : p.amount < 5 ? 'stars.keysN' : 'stars.keysMany', { n: p.amount })}</div>
                 {price(p)}
               </div>
             ))}

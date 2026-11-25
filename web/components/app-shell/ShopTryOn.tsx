@@ -5,9 +5,9 @@ import { createPortal } from 'react-dom'
 import { AvatarFrameRing } from '@/components/app-shell/AvatarFrameRing'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { StarIcon } from '@/components/app-shell/StarsShop'
-import { GlPresetChips } from '@/components/app-shell/GlShop'
+import { GlPresetPicker } from '@/components/app-shell/GlShop'
 import type { GlFamily } from '@/components/app-shell/glFamilies'
-import { joinHeroBg, type GlKit } from '@/lib/data/glKits'
+import { GL_STARS, joinHeroBg, type GlKit } from '@/lib/data/glKits'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorPreviewMap'
 import { StyledName } from '@/components/app-shell/StyledName'
@@ -46,6 +46,7 @@ export function ShopTryOn({
   kit,
   glPreset,
   kitBlocked,
+  kitOffer,
 }: {
   item: ShopItem
   look: TryOnLook
@@ -61,6 +62,8 @@ export function ShopTryOn({
   glPreset?: { family: GlFamily; value: string; onChange: (preset: string) => void }
   // Part of the kit is already the player's: it can't be bought whole.
   kitBlocked?: boolean
+  // The whole kit of this item's family, offered under the buy button of a background, frame or name style.
+  kitOffer?: { title: string; stars: number; onBuy: () => void }
 }) {
   const bg = resolveHeroBackground(kit ? joinHeroBg(kit.bg, glPreset?.value) : item.category === 'hero_bg' ? joinHeroBg(item.id, glPreset?.value) : look.heroBg)
   const frame = resolveAvatarFrame(kit ? kit.frame : item.category === 'avatar_frame' ? item.id : look.frame)
@@ -101,7 +104,7 @@ export function ShopTryOn({
         <div className="tryon-body">
           <div className="tryon-label">{tn('shop.tryonLabel')}</div>
           <div className="modal-title">{item.name}</div>
-          {glPreset && <GlPresetChips family={glPreset.family} value={glPreset.value} onChange={glPreset.onChange} />}
+          {glPreset && <GlPresetPicker family={glPreset.family} value={glPreset.value} onChange={glPreset.onChange} />}
           {kitBlocked ? (
             <p className="kit-part-note" style={{ marginBottom: 10 }}>
               {tn('shop.kitPartOwned')}
@@ -126,6 +129,19 @@ export function ShopTryOn({
             <button className="btn-secondary" disabled>
               {tn('shop.alreadyOwn')}
             </button>
+          )}
+          {kitOffer && (
+            <div className="kit-offer">
+              <div className="kit-offer-text">
+                <div className="kit-offer-title">{kitOffer.title}</div>
+                <div className="kit-offer-sub">{tn('shop.kitOfferSub')}</div>
+              </div>
+              <button className="btn-secondary shop-price-btn stars-price-btn" onClick={kitOffer.onBuy}>
+                <StarIcon size={15} />
+                {kitOffer.stars}
+                <span className="kit-instead">{tn('shop.kitInstead', { price: GL_STARS.bg + GL_STARS.frame + GL_STARS.name })}</span>
+              </button>
+            </div>
           )}
           <button className="btn-secondary" style={{ marginTop: 8 }} onClick={onClose}>
             {tn('common.close')}
