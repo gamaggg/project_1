@@ -387,6 +387,10 @@ html.has-lightbox:root .bottomnav::after{
    iPhone) ends in «…» instead of running past the card. */
 .sector-head-badges{display:flex; flex-direction:column; align-items:flex-end; gap:6px; min-width:0;}
 .sector-head-badges .badge{max-width:100%; min-width:0; overflow:hidden;}
+/* A header badge is a button (24.11): a tap opens what it means (SectorBadgeInfo). */
+.sector-head-badges .badge-tap{all:unset; display:flex; justify-content:flex-end; max-width:100%; min-width:0; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .12s;}
+.sector-head-badges .badge-tap:active{transform:scale(.96);}
+.sector-head-badges .badge-tap:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:999px;}
 .sector-head-badges .badge > span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .btn-primary{
   background:linear-gradient(160deg,#FF6A1F,var(--accent) 65%);
@@ -687,19 +691,40 @@ html.has-lightbox:root .bottomnav::after{
 }
 
 /* ---- Balance + slots as one block in the Shop (ShopScreen) ---- */
-.shop-wallet{border-radius:20px; overflow:hidden; background:linear-gradient(135deg,#123A5C 0%,#0D5F78 100%); box-shadow:0 6px 16px rgba(13,60,92,.18);}
-.shop-wallet-balance{display:flex; align-items:center; gap:8px; padding:9px 10px 9px 12px; background:linear-gradient(135deg,#FFF6E2,#FFE9BC);}
-.shop-wallet-num{font-family:var(--font-display),'Manrope',sans-serif; font-weight:800; font-size:24px; line-height:1; color:#8A5A0C; font-variant-numeric:tabular-nums;}
-.shop-wallet-label{flex:1; min-width:0; margin-top:3px; font-size:12.5px; font-weight:700; color:#A9760F; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-.shop-wallet-history{flex:0 0 auto; padding:7px 12px; border:1px solid rgba(138,90,12,.22); border-radius:12px; background:rgba(255,255,255,.55); font:inherit; font-size:12px; font-weight:700; color:#8A5A0C; cursor:pointer;}
-.shop-wallet .slots-card{margin-top:0; border-radius:0; box-shadow:none;}
+/* The balance card: the warm gold card back (owner, 25.11.2026), «Пополнить» in the brand orange so it stands out on it. */
+.shop-wallet{border-radius:20px; overflow:hidden; background:linear-gradient(135deg,#FFF6E2,#FFE9BC); box-shadow:0 6px 16px rgba(169,118,15,.14);}
+/* Slots and the secret box under the balance: two tiles side by side, like the clan cards in the profile (.profile-duo) —
+   the picture on top, the name and the line under it, the arrow in the corner (24.11.2026). Alone (no box for this
+   player yet) the slots keep their wide row. */
+.shop-games{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;}
+.shop-games > :only-child{grid-column:1 / -1;}
+.shop-games .slots-card{margin-top:0;}
+/* No running light sweep on the two tiles (owner, 24.11.2026). */
+.shop-games .slots-card-shine{display:none;}
+.shop-games > .slots-card:not(:only-child),.shop-games > .secret-box-card{flex-direction:column; align-items:flex-start; gap:10px; min-width:0; min-height:0; padding:14px 40px 14px 14px;}
+.shop-games > .slots-card:not(:only-child) .slots-card-go,.shop-games > .secret-box-card .secret-box-card-go{position:absolute; top:10px; right:10px; width:30px; height:30px;}
+/* Both pictures in the same 52px row, so they and the names under them line up across the two tiles. */
+.shop-games > .slots-card:not(:only-child) .slots-card-reels{height:52px; margin:0 -18px 0 2px; transform:rotate(-3deg) scale(.84); transform-origin:left center;}
+.shop-games > .slots-card:not(:only-child):active .slots-card-reels{transform:rotate(-3deg) scale(.76);}
+.shop-games > .slots-card:not(:only-child) .slots-card-title,.shop-games > .secret-box-card .secret-box-card-title{white-space:normal; line-height:1.2;}
+.shop-games > .secret-box-card .secret-box-card-art{height:52px; margin:0 0 0 -4px; align-items:center;}
+.secret-box-card-art{position:relative;}
+.secret-box-card-new{position:absolute; top:-6px; right:-16px; padding:0 6px; height:18px; border-radius:9px; background:linear-gradient(160deg,#FF7A2F,#E84A00); border:2px solid #2E1F60;
+  color:#fff; font-size:9.5px; font-weight:900; line-height:14px; letter-spacing:.08em; animation:shield-badge-pop .5s var(--ease-out) .2s both;}
+.shop-games > .slots-card:not(:only-child) .slots-card-text,.shop-games > .secret-box-card .secret-box-card-text{flex:0 0 auto; width:100%; margin-right:-26px;}
+.shop-wallet-balance{display:flex; align-items:center; gap:10px; padding:10px 10px 10px 12px;}
+.shop-wallet-main{flex:1; min-width:0; display:flex; flex-direction:column; gap:3px;}
+.shop-wallet-sub{display:flex; align-items:center; gap:5px; min-width:0; font-size:12px; font-weight:700; color:#A9760F;}
+.shop-wallet-num{position:relative; align-self:flex-start; font-family:var(--font-display),'Manrope',sans-serif; font-weight:800; font-size:24px; line-height:1; color:#8A5A0C; font-variant-numeric:tabular-nums;}
+.shop-wallet-label{min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.shop-wallet-history{flex:0 0 auto; display:inline-flex; align-items:center; gap:2px; padding:0; border:0; background:none; box-shadow:none; font:inherit; font-size:12px; font-weight:800; color:#8A5A0C; text-decoration:underline; text-decoration-color:rgba(138,90,12,.35); text-underline-offset:3px; cursor:pointer;}
 /* Inside the block the slots half can't shrink on press like .tap-scale does —
    its square corners showed against the block's rounded ones. Like the
    «Битва кланов» pill on the map: it darkens, and the reels take the press. */
-.shop-wallet .slots-card.tap-scale{transition:filter .15s var(--ease);}
-.shop-wallet .slots-card.tap-scale:active{transform:none; filter:brightness(.9);}
+.shop-games .slots-card.tap-scale{transition:filter .15s var(--ease);}
+.shop-games .slots-card.tap-scale:active{transform:none; filter:brightness(.9);}
 .slots-card-reels{transition:transform .15s var(--ease);}
-.shop-wallet .slots-card:active .slots-card-reels{transform:rotate(-3deg) scale(.9);}
+.shop-games .slots-card:active .slots-card-reels{transform:rotate(-3deg) scale(.9);}
 
 /* ---- Slots sticker on the map (see SlotsSticker.tsx) ---- */
 .slots-sticker-wrap{position:relative; align-self:flex-end; margin-left:20px; transform:rotate(5deg); animation:recap-sticker-in .45s var(--ease-out) .15s both;}
@@ -723,7 +748,7 @@ html.has-lightbox:root .bottomnav::after{
 .profile-cta-badge{position:absolute; top:-6px; right:-11px; min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:var(--accent); color:#fff; font-size:11px; font-weight:800; line-height:18px; text-align:center; box-shadow:0 0 0 2px #F4F9FF;}
 
 /* ---- Slots card under the Shop's balance (see SlotsCard.tsx) ---- */
-.slots-card{position:relative; overflow:hidden; display:flex; align-items:center; gap:14px; width:100%; margin-top:10px; padding:18px 14px 18px 16px; border:none; border-radius:20px; background:linear-gradient(135deg,#123A5C 0%,#0D5F78 100%); box-shadow:0 6px 16px rgba(13,60,92,.22); color:#fff; font:inherit; text-align:left; cursor:pointer;}
+.slots-card{position:relative; overflow:hidden; display:flex; align-items:center; gap:14px; width:100%; margin-top:10px; padding:18px 14px 18px 16px; border:none; border-radius:20px; background:radial-gradient(120% 95% at 0% 0%, rgba(78,184,206,.42), rgba(78,184,206,0) 62%), linear-gradient(170deg,#15476A 0%,#123A5C 100%); box-shadow:0 6px 16px rgba(13,60,92,.22); color:#fff; font:inherit; text-align:left; cursor:pointer;}
 .slots-card > *:not(.slots-card-shine){position:relative; z-index:1;}
 .slots-card-shine{position:absolute; inset:0; z-index:0; pointer-events:none; background:linear-gradient(115deg, transparent 40%, rgba(255,255,255,.14) 50%, transparent 60%); background-repeat:no-repeat; background-size:250% 250%; animation:shopHeroShine 4.5s ease-in-out 1.2s infinite;}
 .slots-card-reels{position:relative; flex:0 0 auto; display:flex; gap:4px; margin:0 2px 0 0; padding:5px; border-radius:13px; background:linear-gradient(180deg,#FFD86B,#E39A12); box-shadow:0 6px 14px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.5); transform:rotate(-3deg);}
@@ -735,7 +760,6 @@ html.has-lightbox:root .bottomnav::after{
 .slots-card-sub{font-size:12.5px; font-weight:600; line-height:1.3; color:rgba(255,255,255,.78); text-wrap:balance;}
 .slots-card-go{flex:0 0 auto; width:34px; height:34px; border-radius:50%; background:linear-gradient(160deg,#FF7A2F,#E84A00); box-shadow:0 4px 12px rgba(252,82,0,.4); color:#fff; display:flex; align-items:center; justify-content:center;}
 .slots-card.empty .slots-card-go{background:rgba(255,255,255,.16); box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);}
-@media (prefers-reduced-motion: reduce){.slots-card-shine{animation:none; display:none;} .slots-card-count{animation:none;}}
 
 /* ---- Terms of use modal (see TermsOfUseModal.tsx) ---- */
 /* Inside Telegram its «Close» and «⋯» sit over the top of the page: the guide
@@ -853,6 +877,35 @@ html.has-lightbox:root .bottomnav::after{
 }
 .shop-card-jackpot-note{font-size:11.5px; font-weight:700; color:#8A6A2A; margin-top:-4px; white-space:nowrap;}
 .shop-price-btn{display:inline-flex; align-items:center; justify-content:center; gap:5px;}
+/* «Звёзды» tab (25.11.2026): coins, keys and skins for Telegram Stars — a warm header, small cards in threes/twos. */
+.stars-icon{flex:none;}
+.stars-hero{display:flex; align-items:center; gap:12px; margin-top:4px; padding:14px; border-radius:18px; background:linear-gradient(150deg,#FFF6DC,#FFE9C2);}
+.stars-hero-title{font-size:15px; font-weight:800; color:var(--ink);}
+.stars-hero-sub{margin-top:2px; font-size:12.5px; font-weight:600; color:#8A5A00; line-height:1.35;}
+.stars-note{margin:10px 0 0; padding:9px 12px; border-radius:12px; background:var(--accent-soft); color:var(--accent); font-size:13px; font-weight:700; text-align:center;}
+.stars-grid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:10px;}
+.stars-grid-2{grid-template-columns:repeat(2,minmax(0,1fr));}
+.stars-card{padding:12px 8px; gap:8px;}
+.stars-card .shop-card-name{font-size:13px;}
+.stars-card-pic{width:58px; height:58px; object-fit:contain;}
+.stars-keys{display:flex; align-items:center; justify-content:center; height:58px;}
+.stars-keys img{width:40px; height:40px; object-fit:contain; margin:0 -7px; filter:drop-shadow(0 2px 3px rgba(0,0,0,.18));}
+.stars-keys img:nth-child(2){transform:translateY(-6px) rotate(-8deg);}
+.stars-keys img:nth-child(3){transform:rotate(8deg);}
+.stars-price-btn{width:100%; font-weight:800; font-variant-numeric:tabular-nums;}
+/* A skin sold only for Stars: three sparks on the legendary tag instead of two (owner, 25.11.2026). */
+.shop-card-legendary.shop-card-stars::before{content:'✦✦✦';}
+/* «Заглушка магазина» (25.11.2026): the players' card, and a strip over the Shop for the super admin. */
+.shop-stub{margin-top:28px; padding:28px 20px 20px; border-radius:22px; background:linear-gradient(150deg,#FFF6E2,#FFE9BC); text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px;}
+.shop-stub-icon{width:64px; height:64px; border-radius:20px; display:grid; place-items:center; background:linear-gradient(160deg,#FFC93C,#F59B0B); box-shadow:0 8px 20px rgba(245,155,11,.3);}
+.shop-stub-title{margin-top:4px; font-size:18px; font-weight:800; color:var(--ink);}
+.shop-stub-text{font-size:13.5px; font-weight:600; color:#8A5A0C; line-height:1.45; max-width:280px;}
+.shop-stub .btn-primary{margin-top:8px; width:100%;}
+.shop-stub-strip{margin-bottom:8px; padding:8px 12px; border-radius:12px; background:#FDE8E6; color:#B3261E; font-size:12.5px; font-weight:800; text-align:center;}
+/* «Пополнить» on the balance card, next to «История»: to the «Звёзды» tab. */
+.shop-wallet-topup{flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border:0; border-radius:14px;
+  background:linear-gradient(160deg,#FF7A2E,#FC5200); box-shadow:0 4px 12px rgba(252,82,0,.3), 0 1px 0 rgba(255,255,255,.3) inset; font:inherit; font-size:13.5px; font-weight:800; color:#fff; cursor:pointer;}
+.shop-wallet-topup .stars-icon path{fill:#fff;}
 .shop-card-preview{width:76px; height:76px; position:relative; margin-top:4px;}
 .shop-card-avatar{position:relative; width:76px; height:76px;}
 .shop-card-avatar .avatar-frame-ring{inset:-5px;}
@@ -870,6 +923,8 @@ html.has-lightbox:root .bottomnav::after{
   width:100%; height:64px; border-radius:12px; background:var(--bg);
   display:flex; align-items:center; justify-content:center;
   font-family:var(--font-display),'Manrope',sans-serif; font-weight:800; font-size:15px;
+  /* Capitals, as the name is on the profile (.profile-hero-name) — 24.11.2026. */
+  text-transform:uppercase; letter-spacing:.01em;
 }
 .shop-card-skin-preview{
   max-width:100%; margin-top:4px;
@@ -1046,10 +1101,6 @@ html.has-lightbox:root .bottomnav::after{
   .slots-result{min-height:28px; margin-top:6px;}
   .slots-spin{padding-left:12px; padding-right:12px; font-size:14.5px; white-space:nowrap;}
 }
-@media (prefers-reduced-motion: reduce){
-  .slot-strip{animation:none !important;}
-  .slots-result-text,.slots-machine.won{animation:none;}
-}
 
 /* ---- Slots (SlotsScreen): the app's own light screen with a gold cabinet,
    marquee bulbs and 3D buttons. Layered over the base slots rules above. ---- */
@@ -1154,10 +1205,7 @@ html.has-lightbox:root .bottomnav::after{
 .jackpot-note{margin-top:10px; font-size:13px; font-weight:700; color:rgba(255,227,161,.85);}
 .jackpot-take{height:62px; margin-top:26px; border-radius:20px; background:linear-gradient(180deg,#FF9F55 0%,#FC5200 52%,#DE4300 100%); box-shadow:0 6px 0 #962C00, 0 16px 30px rgba(0,0,0,.45), inset 0 2px 0 rgba(255,255,255,.4); font-family:var(--font-display),var(--font-georgian),'Oswald',sans-serif; font-size:24px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; animation:jp-up .45s var(--ease-out) 1.25s both; transition:transform .08s ease-out, box-shadow .08s ease-out;}
 .jackpot-take:active{transform:translateY(5px); box-shadow:0 1px 0 #962C00, 0 6px 12px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.4);}
-@media (prefers-reduced-motion: reduce){
-  .slots-bulb,.slots-machine.won .slots-payline,.win-piece,.win-piece > i,.slots .slots-machine.jackpot,.jackpot-rays,.jackpot-rain,.jackpot-title,.jackpot-symbols > span,.jackpot-prize,.jackpot-take,.jackpot-share{animation:none !important;}
-  .win-burst,.jackpot-rain{display:none;}
-}
+/* No «Уменьшение движения» variant for the slots: the same spin, win and jackpot for everyone (owner, 25.11.2026). */
 
 /* ---- Species collection ---- */
 .species-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px;}
@@ -1350,7 +1398,12 @@ html:not([lang="ru"]) .challenges-week-top{padding-top:22px;}
    edge on each side: horizontal scroll, and the back/share icons (positioned
    relative to this box) clipped half off-screen. */
 .sector-hero-map{position:relative; isolation:isolate;}
-.sector-hero-map .territory-thumb-wrap{height:230px; border-radius:0; margin-top:0; box-shadow:none;}
+/* 320px (24.11.2026, was 230): the hex sits 60px under the top and 60px over the dock card (HERO_FIT in
+   TerritoryScreen), so the chips over the map's bottom stay clear of it. */
+.sector-hero-map .territory-thumb-wrap{height:320px; border-radius:0; margin-top:0; box-shadow:none;}
+/* The map's bottom fades into the white of the page under the dock card instead of a hard edge (24.11.2026);
+   under the chips (z-index 5), over the map. */
+.sector-hero-map::after{content:''; position:absolute; left:0; right:0; bottom:0; height:90px; z-index:3; pointer-events:none; background:linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.75) 60%, var(--bg) 100%);}
 /* Just 10px: .screen already pads its top by the notch + Telegram header
    (--tg-safe-area-top), and this hero sits inside that padding — adding the
    insets again pushed the share button halfway down the map in the Mini App. */
@@ -1359,9 +1412,11 @@ html:not([lang="ru"]) .challenges-week-top{padding-top:22px;}
    above the dock card's 26px overlap so it stays visible. */
 .sector-hero-map-open{position:absolute; inset:0; z-index:4; background:none; border:none; padding:0; font:inherit; cursor:pointer; display:flex; align-items:flex-end; justify-content:flex-end;}
 .sector-hero-map-chip{margin:0 12px 38px 0; display:inline-flex; align-items:center; gap:6px; padding:7px 11px; border-radius:999px; background:rgba(255,255,255,0.94); color:var(--ink); font-size:12.5px; font-weight:700; box-shadow:0 4px 14px rgba(0,0,0,0.18); transition:transform .15s var(--ease);}
-.sector-hero-map-open:active .sector-hero-map-chip{transform:scale(0.95);}
-.sector-hero-map-open:focus-visible{outline:none;}
-.sector-hero-map-open:focus-visible .sector-hero-map-chip{box-shadow:0 0 0 3px var(--accent);}
+/* «Маршрут» and «На карте» on the hero map (24.11); the whole map stays a tap target for «На карте». */
+.sector-hero-map-chips{position:absolute; right:12px; bottom:38px; z-index:5; display:flex; gap:8px;}
+.sector-hero-map-chips .sector-hero-map-chip{margin:0; border:none; font-family:inherit; cursor:pointer;}
+.sector-hero-map-chips .sector-hero-map-chip:active{transform:scale(0.95);}
+.sector-hero-map-chips .sector-hero-map-chip:focus-visible{outline:none; box-shadow:0 0 0 3px var(--accent);}
 .sector-dock-card{
   position:relative; z-index:5; margin:-26px 0 0; background:var(--surface);
   border-radius:var(--radius-l) var(--radius-l) 0 0; padding:12px 20px 4px;
@@ -1394,42 +1449,28 @@ html:not([lang="ru"]) .challenges-week-top{padding-top:22px;}
 .sector-stat-strip .label{font-size:10.5px; color:var(--ink-soft); font-weight:700; margin-top:3px; text-transform:uppercase; letter-spacing:0.3px;}
 .sector-row-plain{display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line);}
 .sector-row-plain:last-child{border-bottom:none;}
-.sector-owner-highlight{margin-top:16px;}
-.sector-owner-highlight-label{font-size:11px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:8px;}
-.sector-owner-highlight-row{
-  display:flex; align-items:center; gap:12px; width:100%; text-align:left;
-  background:var(--bg); border:none; border-radius:14px; padding:10px 12px;
-  cursor:pointer; font-family:inherit; color:inherit;
-}
-.sector-owner-highlight-row:disabled{cursor:default;}
-.sector-owner-highlight-avatar{
-  width:46px; height:46px; border-radius:50%; flex:0 0 auto; overflow:hidden;
-  background:linear-gradient(160deg,#FF7A38,var(--accent) 70%); color:#fff;
-  display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px;
-  box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
-}
-.sector-owner-highlight-avatar img{width:100%; height:100%; object-fit:cover;}
-/* Clan-mates holding a part of the sector, under its owner. */
-.sector-coholders-label{margin-top:14px;}
-.sector-coholders{display:flex; flex-wrap:wrap; gap:8px;}
-.sector-coholder{
-  display:flex; align-items:center; gap:8px; max-width:100%; min-width:0;
-  background:var(--bg); border:none; border-radius:999px; padding:4px 12px 4px 4px;
-  cursor:pointer; font-family:inherit; color:var(--ink);
-}
-.sector-coholder:disabled{cursor:default;}
-.sector-coholder-avatar{
-  width:30px; height:30px; border-radius:50%; flex:0 0 auto; overflow:hidden;
-  background:linear-gradient(160deg,#FF7A38,var(--accent) 70%); color:#fff;
-  display:flex; align-items:center; justify-content:center; font-weight:800; font-size:11px;
-}
-.sector-coholder-avatar img{width:100%; height:100%; object-fit:cover;}
-.sector-coholder-name{font-size:13.5px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-/* Explicit color: this sits inside a <button>, which WebKit doesn't
-   inherit page color into by default — without this it fell back to the
-   browser's own control-tint blue instead of the page's own ink. */
-.sector-owner-highlight-name{font-size:15.5px; font-weight:800; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-.sector-owner-highlight-sub{font-size:12px; color:var(--ink-soft); margin-top:1px;}
+/* «Держат сектор» (SectorHoldersCard, 24.11.2026): capturer, co-holders and clan in one card. */
+.sector-holders{margin-top:16px;}
+.sector-holders-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; min-width:0;}
+.sector-holders-label{font-size:11px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.4px; flex:0 0 auto;}
+.sector-holders-clan{display:inline-flex; align-items:center; gap:6px; min-width:0; max-width:60%; border:none; background:none; padding:0; font:inherit; font-size:12.5px; font-weight:800; color:var(--ink); cursor:pointer;}
+.sector-holders-clan > span:last-child{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.sector-holders-row{display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:var(--bg); border:none; border-radius:14px; padding:10px 12px; cursor:pointer; font-family:inherit; color:inherit;}
+.sector-holders-row:disabled{cursor:default;}
+.sector-holders-stack{display:flex; align-items:center; flex:0 0 auto;}
+.sector-holders-avatar{width:32px; height:32px; border-radius:50%; flex:0 0 auto; overflow:hidden; position:relative; margin-left:-6px; background:linear-gradient(160deg,#FF7A38,var(--accent) 70%); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:11px; box-shadow:0 0 0 2px var(--surface);}
+.sector-holders-avatar:first-child{margin-left:0;}
+.sector-holders-avatar.main{width:44px; height:44px; font-size:14px; box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--accent);}
+.sector-holders-avatar img{width:100%; height:100%; object-fit:cover;}
+.sector-holders-text{flex:1; min-width:0; display:flex; flex-direction:column;}
+/* Explicit color: inside a <button> WebKit doesn't inherit the page's ink. */
+.sector-holders-name{font-size:15.5px; font-weight:800; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.sector-holders-sub{font-size:12px; line-height:1.35; color:var(--ink-soft); margin-top:1px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere;}
+.sector-holders-item{display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:none; border:none; border-bottom:1px solid var(--line); padding:10px 2px; cursor:pointer; font-family:inherit; color:inherit;}
+.sector-holders-item:disabled{cursor:default;}
+.sector-holders-item .sector-holders-avatar{margin-left:0;}
+.sector-holders-item .sector-holders-avatar:not(.main){width:44px; height:44px; font-size:14px;}
+.sector-holders-note{margin:12px 0 0; font-size:12.5px; line-height:1.45; color:var(--ink-soft);}
 .activity-who-btn{
   background:none; border:none; padding:0; font:inherit; color:inherit;
   cursor:pointer; font-weight:700; text-decoration:underline; text-underline-offset:2px;
@@ -1467,7 +1508,7 @@ html:not([lang="ru"]) .challenges-week-top{padding-top:22px;}
 .ios-standalone .shop-sticky-top, .ios-standalone .clan-editor-top{--sticky-reach:var(--standalone-top);}
 .ios-standalone #screen-catch-photo, .ios-standalone #screen-profile, .ios-standalone #screen-user-profile, .ios-standalone #screen-territory{padding-top:0;}
 .ios-standalone .profile-hero{padding-top:env(safe-area-inset-top); margin-left:-20px; margin-right:-20px; padding-left:20px; padding-right:20px; --hero-r:22px;}
-.ios-standalone .sector-hero-map .territory-thumb-wrap{height:calc(230px + var(--standalone-top));}
+.ios-standalone .sector-hero-map .territory-thumb-wrap{height:calc(320px + var(--standalone-top));}
 .ios-standalone .sector-hero-map-icons{top:calc(10px + var(--standalone-top));}
 .ios-standalone #screen-map{--map-top-inset:calc(env(safe-area-inset-top) + 14px);}
 /* A phone with the zoomed display («Вид: Увеличено» / page zoom) lays the page out under 360 CSS px, and every CSS px is then
@@ -2429,8 +2470,25 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .frame-swim.swim-som{animation-duration:15s;}
 .frame-swim.swim-som img{width:42%;}
 @keyframes frameSwim{to{transform:rotate(-360deg);}}
+/* Новинки 24.11.2026. «Чешуя»: segments turn slowly, a cold glow breathes behind. «Шторм»: the ring turns
+   against the clock; three lightning bolts strike the rim in turn and the glow flashes white-blue with them. */
+.avatar-frame-fx.fx-scales{animation-duration:18s;}
+.avatar-frame-fx.fx-scales::before{background:conic-gradient(#5FB7C2,#CFF7F1,#2A8696,#5FB7C2); animation-duration:4s;}
+.avatar-frame-fx.fx-storm{animation-duration:22s; animation-direction:reverse;}
+.avatar-frame-fx.fx-storm::before{background:conic-gradient(#3D5BB8,#9CC0FF,#3D5BB8); inset:-4px; filter:blur(8px); animation:stormGlow 3.9s linear infinite;}
+@keyframes stormGlow{0%,100%{opacity:.35;} 8%{opacity:.95;} 11%{opacity:.4;} 14%{opacity:.85;} 22%{opacity:.4;} 55%{opacity:.45;} 58%{opacity:.9;} 64%{opacity:.4;}}
+.frame-bolt{
+  position:absolute; left:50%; top:50%; width:11%; aspect-ratio:.55; margin:-10% 0 0 -5.5%;
+  transform:rotate(var(--a)) translateY(-440%); z-index:1;
+}
+.frame-bolt::before{
+  content:''; position:absolute; inset:0; background:#EAF2FF; filter:drop-shadow(0 0 3px #9CC0FF);
+  clip-path:polygon(55% 0,15% 55%,45% 55%,30% 100%,85% 38%,55% 38%,75% 0);
+  opacity:0; animation:boltStrike 3.9s linear var(--d) infinite;
+}
+@keyframes boltStrike{0%,100%{opacity:0; transform:scale(.7);} 6%{opacity:1; transform:scale(1);} 9%{opacity:.2;} 12%{opacity:1;} 20%{opacity:0; transform:scale(.9);}}
 @media (prefers-reduced-motion: reduce){
-  .avatar-frame-fx,.avatar-frame-fx::before,.frame-sparkle::before,.frame-spot::before,.frame-bubble::before,.avatar-frame-ring ~ .frame-swim{animation:none;}
+  .avatar-frame-fx,.avatar-frame-fx::before,.frame-sparkle::before,.frame-spot::before,.frame-bubble::before,.frame-bolt::before,.avatar-frame-ring ~ .frame-swim{animation:none;}
 }
 /* Premium name styles (nameStyles.ts): the colours drift through the
    letters (flow — the gradient repeats once across a double-width image,
@@ -2441,6 +2499,18 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .name-fx-shine{background-size:250% 100%, 100% 100%; background-repeat:no-repeat; animation:nameShine 4.2s var(--ease-in-out) infinite;}
 @keyframes nameShine{0%{background-position:130% 0, 0 0;} 55%,100%{background-position:-30% 0, 0 0;}}
 @media (prefers-reduced-motion: reduce){.name-fx-flow,.name-fx-shine{animation:none;}}
+/* Новинки 24.11.2026 — name effects that are not a gradient fill (StyledName.tsx). */
+.name-fx-sticker{color:#fff; -webkit-text-fill-color:#fff; text-shadow:1px 1px 0 #17181B, -1px 1px 0 #17181B, 1px -1px 0 #17181B, -1px -1px 0 #17181B, 0 1.5px 0 #17181B, 2px 3px 0 #FC5200;}
+.name-fx-neon{color:#FF2FA8; -webkit-text-fill-color:#FF2FA8; text-shadow:0 0 1px #FFE3F4, 0 0 6px rgba(255,47,168,.75), 0 0 14px rgba(255,47,168,.45); animation:neonFlicker 6s linear infinite;}
+@keyframes neonFlicker{0%,100%{opacity:1;} 61%{opacity:1;} 62%{opacity:.45;} 63.5%{opacity:1;} 65%{opacity:.6;} 66.5%{opacity:1;}}
+.name-fx-wave{display:inline-block; white-space:nowrap;}
+.name-fx-wave > span{display:inline-block; animation:nameBob 1.8s var(--ease-in-out) infinite;}
+@keyframes nameBob{0%,100%{transform:translateY(0);} 50%{transform:translateY(-0.12em);}}
+.name-fx-bubbles{position:relative; display:inline-block; max-width:100%;}
+.name-fx-bubbles-text{background-size:100% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent; isolation:isolate; transform:translateZ(0);}
+.name-fx-bubbles > i{position:absolute; bottom:.2em; width:.36em; height:.36em; border-radius:50%; border:2px solid rgba(30,143,214,.85); box-shadow:0 0 3px rgba(127,231,255,.8); background:radial-gradient(circle at 35% 35%, rgba(255,255,255,.8) 0 20%, transparent 32%); pointer-events:none; animation:nameBubble 2.7s var(--ease-out) infinite;}
+@keyframes nameBubble{0%{transform:translateY(0) scale(.4); opacity:0;} 20%{opacity:1;} 100%{transform:translateY(-1.3em) scale(1); opacity:0;}}
+@media (prefers-reduced-motion: reduce){.name-fx-neon,.name-fx-wave > span,.name-fx-bubbles > i{animation:none;}}
 .hero-stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
 .hero-stat{
   background:var(--surface); border:1px solid var(--line); border-radius:16px;
@@ -2463,9 +2533,28 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .players-filter-btn{position:relative; width:48px; height:100%; min-height:48px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer;}
 .players-filter-btn.on{border-color:var(--accent); color:var(--accent);}
 .players-filter-dot{position:absolute; top:8px; right:8px; width:8px; height:8px; border-radius:50%; background:var(--accent);}
-.players-filter-list{min-width:190px; max-height:min(80vh, 660px); overflow-y:auto; overscroll-behavior:contain;}
-.players-filter-list .sort-menu-opt{padding-top:8px; padding-bottom:8px;}
-.players-filter-title{font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); padding:8px 12px 4px;}
+/* The filter's bottom sheet (24.11.2026): groups of chips, the actions pinned under them. */
+.players-filter-title{font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); padding:14px 2px 8px;}
+.players-filter-title:first-child{padding-top:4px;}
+.players-filter-chips{display:flex; flex-wrap:wrap; gap:8px;}
+/* A steady height: picking a country unfolds its cities inside, the sheet itself does not grow or jump. */
+.players-filter-sheet{height:min(86dvh, 700px);}
+.pf-countries{display:flex; flex-direction:column; border:1px solid var(--line); border-radius:14px; overflow:hidden;}
+.pf-countries > * + *{border-top:1px solid var(--line);}
+.pf-country-btn{display:flex; align-items:center; gap:10px; width:100%; padding:11px 14px; border:none; background:var(--surface); font:inherit; text-align:left; color:var(--ink); cursor:pointer;}
+.pf-country-btn .flag{flex:0 0 auto; border-radius:2px; box-shadow:0 0 0 1px rgba(23,24,27,.1);}
+.pf-country-name{flex:1; min-width:0; font-size:14.5px; font-weight:700;}
+.pf-country-count{flex:0 0 auto; font-size:12px; font-weight:600; color:var(--ink-faint);}
+.pf-country-btn.on .pf-country-name{color:var(--accent); font-weight:800;}
+.pf-country-cities{display:grid; grid-template-rows:0fr; transition:grid-template-rows .26s var(--ease-out);}
+.pf-country.open .pf-country-cities{grid-template-rows:1fr;}
+.pf-country-cities-clip{min-height:0; overflow:hidden;}
+.pf-country-cities-in{padding:2px 14px 14px;}
+@media (prefers-reduced-motion: reduce){.pf-country-cities{transition:none;}}
+.players-filter-sheet .move-body{padding-bottom:16px;}
+/* Pinned under the chips with a line between, and clear of the home bar / Telegram's bottom inset. */
+.players-filter-actions{display:grid; grid-template-columns:1fr 1.6fr; gap:10px; padding:14px 18px calc(16px + var(--tg-safe-area-bottom, 0px)); flex:0 0 auto; border-top:1px solid var(--line);}
+.players-filter-actions .btn-secondary, .players-filter-actions .btn-primary{margin:0;}
 .language-picker{display:flex; flex-direction:column; gap:8px; margin-top:12px;}
 .language-picker-label{font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint);}
 .language-picker-opts{display:flex; gap:6px; padding:3px; background:rgba(23,24,27,.06); border-radius:12px;}
@@ -2526,6 +2615,28 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
   transform:rotate(22deg); transform-origin:bottom left;
   filter:drop-shadow(0 2px 3px rgba(23,24,27,0.25));
 }
+/* The week's prizes on the podium (25.11.2026): a prize tag under each place (no stage background — owner),
+   the first's in gold; a place nobody holds yet shows an empty ring, «Свободно» and its prize. */
+.rating-podium-prize{cursor:pointer; -webkit-tap-highlight-color:transparent; display:inline-flex; align-items:center; gap:3px; margin-top:2px; padding:5px 10px; border-radius:999px; background:#fff;
+  box-shadow:0 2px 8px rgba(199,122,10,.16); font-size:13px; font-weight:900; font-variant-numeric:tabular-nums; color:var(--ink); white-space:nowrap;}
+.rating-podium-prize img{width:18px; height:18px; object-fit:contain;}
+.rating-podium-item.rank-1 .rating-podium-prize{background:linear-gradient(160deg,#FFD978,#F0A93E); color:#4A2A00; box-shadow:0 4px 12px rgba(240,169,62,.35);}
+.rating-podium-empty{cursor:default;}
+/* What a podium prize is (tap on it): the medal over the title, the prize large, the key's meaning, three short rules. */
+.prize-info{text-align:center;}
+.prize-info-medal{width:44px; height:44px; margin:0 auto 10px; border-radius:50%; display:grid; place-items:center; color:#fff; font-size:20px; font-weight:900;
+  box-shadow:0 0 0 4px var(--surface), 0 6px 16px rgba(0,0,0,.12);}
+.prize-info-prize{display:flex; align-items:center; justify-content:center; gap:8px; margin:6px 0 2px;}
+.prize-info-coins{display:inline-flex; align-items:center; gap:6px; font-size:34px; font-weight:900; font-variant-numeric:tabular-nums; color:var(--ink); line-height:1;}
+.prize-info-key{display:inline-flex; align-items:center; gap:4px; font-size:24px; font-weight:900; color:var(--ink-faint);}
+.prize-info-key img{width:34px; height:34px; object-fit:contain;}
+.prize-info-keynote{display:inline-block; margin-top:6px; padding:5px 11px; border-radius:999px; background:#FFF3D6; color:#9A5A00; font-size:12.5px; font-weight:800;}
+.prize-info-rules{list-style:none; margin:16px 0 18px; padding:0; display:flex; flex-direction:column; gap:9px; text-align:left;}
+.prize-info-rules li{display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600; color:var(--ink-soft);}
+.prize-info-rules svg{flex:none; color:#E39A1E;}
+
+.rating-podium-empty-ring{position:relative; border-radius:50%; border:2px dashed rgba(199,122,10,.35); background:rgba(255,255,255,.55);}
+.rating-podium-free{color:var(--ink-faint); font-weight:700;}
 .rating-podium-name{font-weight:800; font-size:13.5px; text-align:center; max-width:98px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .rating-podium-stat-main{font-weight:800; font-size:13.5px; color:var(--accent);}
 .rating-podium-stat-sub{font-size:11px; color:var(--ink-faint); margin-top:-4px;}
@@ -3507,9 +3618,6 @@ html:not([lang="ru"]) .map-layer-opt{flex:1 1 auto; min-width:0; overflow:hidden
   html:not([lang="ru"]) .map-layer-opt{font-size:10px; padding:7px 0;}
   html:not([lang="ru"]) .map-layer-switch{gap:1px; padding:2px 1px;}
 }
-.sector-clan-line{display:flex; align-items:center; gap:10px; width:100%; margin-top:10px; border:1px solid #EFEDE8; background:#FAF9F7; border-radius:14px; padding:9px 12px; font:inherit; font-size:13.5px; color:var(--ink); cursor:pointer; text-align:left;}
-/* Only the text stretches — ClanCrest's root is a <span> too. */
-.sector-clan-line-text{flex:1; min-width:0;}
 .catch-trophy-support{margin:-10px auto 16px; max-width:280px; text-align:center; font-size:13px; font-weight:700; color:rgba(255,255,255,.8); animation:comment-in .5s var(--ease-out) 1.35s both;}
 @media (prefers-reduced-motion: reduce){.catch-trophy-support{animation:none;}}
 /* «Новый вид в коллекции!» after the first catch of a fish (ConfirmScreen): its drawing on a glass card. */
@@ -3922,14 +4030,19 @@ button.race-lane{cursor:pointer;}
   .battle-cer-card, .battle-cer-crest, .battle-cer-name, .battle-cer-column, .battle-cer-slot.mine .battle-cer-column, .battle-cer-mine-row, .battle-cer-headline, .battle-cer-sub{animation:none;}
   .battle-cer-confetti{display:none;}
 }
-/* Sector screen: the centre's coordinates, copy or route in a maps app. */
-.sector-coords{display:flex; flex-direction:column; gap:8px; margin-top:12px; padding:10px; border-radius:14px; background:var(--bg); border:1px solid var(--line); color:var(--ink-soft);}
-.sector-coords-line{display:flex; align-items:center; gap:8px; min-width:0; padding:0 2px; border:none; background:none; font:inherit; color:inherit; text-align:left; cursor:pointer;}
-.sector-coords-value{flex:1; min-width:0; font-size:14px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; -webkit-user-select:all; user-select:all;}
-.sector-coords-actions{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
-.sector-coords-btn{border:none; border-radius:10px; padding:9px 11px; font:inherit; font-size:13px; font-weight:800; background:#F0EEEA; color:var(--ink); cursor:pointer;}
-.sector-coords-btn.primary{background:var(--accent); color:#fff;}
-.sector-maps-option{display:block; width:100%; border:none; border-top:1px solid var(--line); background:none; font:inherit; font-size:15px; font-weight:700; color:var(--ink); padding:13px; cursor:pointer;}
+/* «Маршрут до сектора» (RouteModal, 24.11.2026): an icon, the coordinates as a copy chip, one row per maps app. */
+.route-card{max-width:340px; padding:22px 18px 14px;}
+.route-icon{width:52px; height:52px; margin:0 auto 10px; border-radius:16px; display:flex; align-items:center; justify-content:center; background:var(--accent-soft); color:var(--accent);}
+.route-coords{display:inline-flex; align-items:center; gap:7px; max-width:100%; margin:10px auto 16px; padding:7px 8px 7px 11px; border:none; border-radius:999px; background:#F2F3F5; font:inherit; color:var(--ink-soft); cursor:pointer;}
+.route-coords-value{font-size:13.5px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.route-coords-action{flex:0 0 auto; padding:3px 9px; border-radius:999px; background:#fff; font-size:12px; font-weight:800; color:var(--accent); box-shadow:0 1px 3px rgba(23,24,27,.08); transition:background .2s, color .2s;}
+.route-coords.done .route-coords-action{background:#E3F6EF; color:#0E8074;}
+.route-opts{display:flex; flex-direction:column; gap:8px;}
+.route-opt{display:flex; align-items:center; gap:12px; width:100%; padding:10px 12px 10px 10px; border:1px solid var(--line); border-radius:16px; background:var(--surface); font:inherit; text-align:left; color:var(--ink); cursor:pointer; box-shadow:0 2px 8px rgba(23,24,27,.05);}
+.route-opt-icon{flex:0 0 auto; width:36px; height:36px; border-radius:9px; object-fit:cover; box-shadow:0 0 0 1px rgba(23,24,27,.08);}
+.route-opt-label{flex:1; min-width:0; font-size:15px; font-weight:800;}
+.route-opt-go{flex:0 0 auto; color:var(--ink-faint);}
+.route-cancel{display:block; margin:10px auto 0; padding:8px 14px; border:none; background:none; font:inherit; font-size:14px; font-weight:700; color:var(--ink-soft); cursor:pointer;}
 
 /* ---------- Guest view of a shared screen (GuestShareScreen): the screen
    itself, read-only, with the sign-up panel pinned underneath. ---------- */
@@ -4512,7 +4625,8 @@ button.diary-stats-line:disabled{cursor:default;}
 .double-coins-chip{display:flex; align-items:baseline; gap:4px; flex:0 0 auto; height:30px; padding:0 9px; border:none; border-radius:999px; background:linear-gradient(160deg,#FFE08A,#F2B53A); box-shadow:inset 0 0 0 1.5px rgba(196,138,0,.45); color:#4A3000; font:inherit; font-size:12px; font-weight:800; font-variant-numeric:tabular-nums; cursor:pointer; line-height:30px;}
 .double-coins-chip b{font-size:14px; font-weight:900;}
 .double-coins-chip span{font-weight:700; color:#6B4800;}
-@media (max-width:359px){.double-coins-chip{padding:0 7px;} .double-coins-chip span{display:none;} .map-hud-bar{gap:8px;}}
+.double-coins-sep{align-self:center; width:1px; height:13px; margin:0 2px; border-radius:1px; background:rgba(107,72,0,.35);}
+@media (max-width:359px){.double-coins-chip{padding:0 7px;} .double-coins-chip span, .double-coins-sep{display:none;} .map-hud-bar{gap:8px;}}
 .double-modal{position:relative; overflow:hidden; padding-top:22px;}
 .double-modal::before{content:''; position:absolute; left:0; right:0; top:0; height:170px; background:radial-gradient(120% 90% at 50% 0%, #FFF0C2 0%, rgba(255,240,194,0) 72%); pointer-events:none;}
 .double-modal > *{position:relative;}
@@ -4664,7 +4778,7 @@ button.diary-stats-line:disabled{cursor:default;}
    sector's defense — the «Под щитом» badge's teal, outline when empty. */
 .defense-shields{display:inline-flex; gap:3px; align-items:center;}
 .defense-shields svg{display:block; fill:none; stroke:#9BBDB8; stroke-width:2; stroke-linejoin:round;}
-.defense-shields svg.on{fill:#12A190; stroke:#0E8074;}
+.defense-shields svg.on{fill:#12A190; stroke:#12A190;} /* filled bolt: no dark outline (24.11), the stroke only rounds the corners */
 /* Sector screen: legend and defense in one card — two equal columns built
    the same way (label, a mark with its number, a short line), one white
    ground, only the label colour telling them apart (gold / teal). */
@@ -4699,7 +4813,7 @@ button.standing-col{cursor:pointer;}
 /* After an attack (ConfirmScreen): the sector's shields left, on the dark trophy card. */
 .catch-trophy-attack{display:flex; align-items:center; justify-content:center; gap:8px; margin:-10px auto 16px; max-width:300px; text-align:left; font-size:13.5px; font-weight:700; line-height:1.35; color:rgba(255,255,255,.88); animation:comment-in .5s var(--ease-out) 1.35s both;}
 .catch-trophy-attack .defense-shields svg{stroke:rgba(255,255,255,.45);}
-.catch-trophy-attack .defense-shields svg.on{fill:#2BC4B0; stroke:#8BE6DA;}
+.catch-trophy-attack .defense-shields svg.on{fill:#2BC4B0; stroke:#2BC4B0;}
 @media (prefers-reduced-motion: reduce){.catch-trophy-attack{animation:none;}}
 /* Defense rules sheet (SectorDefense.tsx): this sector now, then the rules. */
 .defense-sheet-now{display:flex; align-items:center; gap:14px; padding:14px; margin-top:4px; border-radius:16px; background:#EAF7F4; border:1px solid #CFE7E0;}
@@ -5354,3 +5468,223 @@ button.geo-fact{cursor:pointer;}
 .scroll-top-btn{position:fixed; right:16px; bottom:calc(var(--nav-h, 82px) + 14px); z-index:6; width:46px; height:46px; border-radius:50%; border:1px solid var(--line); background:rgba(255,255,255,.94); color:var(--ink); display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(23,24,27,.18); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); cursor:pointer; opacity:0; visibility:hidden; pointer-events:none; transform:translateY(10px) scale(.9); transition:opacity .2s var(--ease), transform .2s var(--ease), visibility 0s linear .2s;}
 .scroll-top-btn.show{opacity:1; visibility:visible; pointer-events:auto; transform:none; transition:opacity .2s var(--ease), transform .2s var(--ease), visibility 0s;}
 @media (prefers-reduced-motion: reduce){.scroll-top-btn{transition:none;}}
+
+/* ---- Новинки магазина и секретный бокс (24.11.2026) ---- */
+/* NEW on a shop card: top-left, like the jackpot tag on the right. Burns 7 days from the player's first visit after
+   the update (shop_new_items on the server). */
+.shop-new-tag{
+  position:absolute; top:-9px; left:14px; z-index:2; pointer-events:none;
+  padding:0 8px; border-radius:999px; background:linear-gradient(160deg,#FF7A2F,#E84A00); color:#fff;
+  font-size:10px; font-weight:900; line-height:17px; letter-spacing:.08em; box-shadow:0 2px 6px rgba(232,74,0,.35);
+}
+.shop-new-pill{display:inline-block; margin-left:6px; padding:0 6px; border-radius:999px; background:linear-gradient(160deg,#FF7A2F,#E84A00); color:#fff; font-size:9.5px; font-weight:900; line-height:15px; letter-spacing:.08em; vertical-align:2px;}
+.shop-tab{position:relative;}
+.shop-tab-new{position:absolute; top:5px; right:6px; width:7px; height:7px; border-radius:50%; background:#FC5200; box-shadow:0 0 0 2px var(--surface);}
+/* The box card: its own card under the slots', the same shape and height, deep violet so it reads apart from them. */
+.secret-box-card{position:relative; overflow:hidden; display:flex; align-items:center; gap:14px; width:100%; min-height:82px; padding:12px 14px 12px 16px; border:none; border-radius:20px;
+  background:radial-gradient(120% 95% at 0% 0%, rgba(160,120,255,.42), rgba(160,120,255,0) 62%), linear-gradient(170deg,#3A2878 0%,#2C1E5C 100%); box-shadow:0 6px 16px rgba(60,35,120,.26); color:#fff; font:inherit; text-align:left; cursor:pointer;}
+.secret-box-card > *:not(.slots-card-shine){position:relative; z-index:1;}
+.shop-games .secret-box-card.tap-scale{transition:filter .15s var(--ease);}
+.shop-games .secret-box-card.tap-scale:active{transform:none; filter:brightness(.92);}
+/* The arrow as on the slots' card (.slots-card.empty .slots-card-go): white on a see-through white circle. */
+.secret-box-card-go{flex:0 0 auto; width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.16); box-shadow:inset 0 0 0 1px rgba(255,255,255,.22); color:#fff; display:flex; align-items:center; justify-content:center;}
+.secret-box-card-art{flex:0 0 auto; display:flex; margin:-4px 0; filter:drop-shadow(0 4px 8px rgba(0,0,0,.35));}
+/* Only the chest wiggles; the NEW sticker on it stays put. */
+.secret-box-card .secret-box-card-art .secret-box-art{animation:boxWiggle 4s var(--ease-in-out) 1s infinite;}
+@keyframes boxWiggle{0%,86%,100%{transform:rotate(0);} 89%{transform:rotate(-7deg);} 92%{transform:rotate(6deg);} 95%{transform:rotate(-4deg);} 98%{transform:rotate(2deg);}}
+.secret-box-card-text{flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;}
+.secret-box-card-title{font-size:15px; font-weight:800; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.secret-box-card-sub{font-size:12.5px; font-weight:600; line-height:1.3; color:rgba(255,255,255,.78);}
+/* The sheet. */
+.secret-box-art{display:block; object-fit:contain; user-select:none; -webkit-user-drag:none;}
+.secret-box-art.open{animation:boxPop .45s cubic-bezier(.2,.9,.3,1.35) both;}
+@keyframes boxPop{from{transform:scale(.85);} to{transform:none;}}
+
+/* ── Секретный бокс: its own screen (24.11.2026, SecretBoxScreen.tsx) ─────────────────────────────────────────────
+   Dark like a game's case room: the chest glowing and bobbing over turning rays; then the strip of items flying past
+   the gold marker; then the prize card in its rarity's colour. Rarity colours: grey, blue, purple, gold. */
+#screen-secret-box{background:#0B0D14;}
+.sbx{--t1:#9AA3B2; --t2:#4C8DFF; --t3:#A86BFF; --t4:#FFC83D; --tc:var(--t4);
+  position:relative; flex:0 0 auto; min-height:100%; display:flex; flex-direction:column; color:#F3F4F8; background:#0B0D14; overflow-x:clip; padding-bottom:calc(env(safe-area-inset-bottom) + 24px);}
+/* flex:0 0 auto — .screen is a flex column: without it the box's page was squeezed to the screen's height and its lower
+   part (the showcase) cut off, so the screen didn't scroll (25.11.2026). Only the sides are clipped (the rays). */
+.sbx.tier-1{--tc:var(--t1);} .sbx.tier-2{--tc:var(--t2);} .sbx.tier-3{--tc:var(--t3);} .sbx.tier-4{--tc:var(--t4);}
+.sbx-bgglow{position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(90% 46% at 50% 26%, rgba(124,77,219,.42), rgba(124,77,219,0) 70%), radial-gradient(60% 30% at 50% 30%, rgba(255,200,61,.10), rgba(255,200,61,0) 70%);
+  transition:background .6s var(--ease);}
+.sbx.phase-won .sbx-bgglow{background:radial-gradient(90% 46% at 50% 30%, color-mix(in srgb, var(--tc) 38%, transparent), transparent 72%);}
+/* Same spacing as the slots: .header-row (6px 20px 4px), then .screen-inner's 6px top and .slots-title's own margins. */
+.sbx-head{position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:6px 20px 4px;}
+.sbx-title-wrap{position:relative; z-index:2; padding:6px 20px 0;}
+.sbx-head .icon-btn{background:rgba(255,255,255,.92);}
+.sbx-title{background:linear-gradient(180deg,#FFFFFF 30%,#CDB8FF); -webkit-background-clip:text; background-clip:text; color:transparent;}
+.sbx-coins{display:inline-flex; align-items:center; gap:5px; padding:7px 11px; border-radius:999px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);
+  font-size:14px; font-weight:900; font-variant-numeric:tabular-nums;}
+
+.sbx-stage{position:relative; z-index:1; height:300px; display:flex; align-items:center; justify-content:center;}
+/* Rolling: the stage (chest, then strip) glides to the middle of the screen, the glow goes with it, the odds step aside;
+   «Открываем…» rides under the stage. --sbx-focus is measured in SecretBoxScreen (25.11.2026). */
+.sbx-stage{transition:transform .55s cubic-bezier(.3,.7,.25,1);}
+.sbx.focus .sbx-stage{transform:translate3d(0,var(--sbx-focus,0px),0);}
+/* The page's glow stays put and fades; the stage brings its own round glow along (no edge left behind it). */
+.sbx-bgglow{transition:background .6s var(--ease), opacity .45s var(--ease-out);}
+.sbx.focus .sbx-bgglow{opacity:0;}
+.sbx-stage::before{content:''; position:absolute; z-index:-1; left:50%; top:50%; width:150%; height:200%; transform:translate(-50%,-50%); pointer-events:none; opacity:0;
+  background:radial-gradient(closest-side, rgba(124,77,219,.42), rgba(124,77,219,.12) 55%, rgba(124,77,219,0)); transition:opacity .45s var(--ease-out), background .6s var(--ease);}
+.sbx.focus .sbx-stage::before{opacity:1;}
+.sbx.phase-won .sbx-stage::before{background:radial-gradient(closest-side, color-mix(in srgb, var(--tc) 38%, transparent), color-mix(in srgb, var(--tc) 10%, transparent) 55%, transparent);}
+.sbx-odds{transition:opacity .3s var(--ease-out), transform .3s var(--ease-out);}
+.sbx.focus .sbx-odds{opacity:0; transform:translateY(10px); pointer-events:none;}
+.sbx-stage-note{position:absolute; left:0; right:0; bottom:6px;}
+.sbx-chest{position:relative; width:260px; height:260px; display:flex; align-items:center; justify-content:center;}
+.sbx-rays{position:absolute; inset:-60px; border-radius:50%; opacity:.55;
+  background:repeating-conic-gradient(from 0deg, rgba(255,214,120,.22) 0deg 7deg, rgba(255,214,120,0) 7deg 22.5deg); /* 22.5° = 16 rays exactly: 22° left the last one glued to the first */
+  -webkit-mask:radial-gradient(circle, #000 18%, transparent 66%); mask:radial-gradient(circle, #000 18%, transparent 66%);
+  animation:sbxSpin 26s linear infinite; will-change:transform;}
+.sbx-halo{position:absolute; width:190px; height:190px; border-radius:50%; background:radial-gradient(circle, rgba(190,150,255,.65), rgba(124,77,219,.25) 45%, transparent 70%);
+  animation:sbxPulse 2.6s var(--ease) infinite;}
+.sbx-chest-art{position:relative; animation:sbxBob 3.2s ease-in-out infinite; filter:drop-shadow(0 18px 26px rgba(0,0,0,.55));}
+.sbx-chest-art .secret-box-art{width:210px; height:210px;}
+.sbx-shadow{position:absolute; bottom:18px; width:130px; height:16px; border-radius:50%; background:rgba(0,0,0,.55); filter:blur(6px); animation:sbxShadow 3.2s ease-in-out infinite;}
+.sbx.phase-charge .sbx-chest-art{animation:sbxCharge 1.15s cubic-bezier(.5,0,1,1) both, sbxShakeFast .09s linear 1.15s infinite;}
+.sbx.phase-charge .sbx-halo{animation:sbxCharge2 1.15s ease-in both;}
+.sbx.phase-charge .sbx-rays{animation-duration:4s; opacity:.85;}
+.sbx.phase-burst .sbx-chest-art{animation:sbxBurst .56s cubic-bezier(.2,.9,.3,1.2) both;}
+.sbx.phase-burst .sbx-halo{transform:scale(1.8); opacity:1; transition:transform .5s var(--ease-out);}
+.sbx-flash{position:absolute; width:120px; height:120px; border-radius:50%; background:radial-gradient(circle,#fff 0%, rgba(255,236,180,.9) 30%, rgba(255,200,61,0) 70%);
+  animation:sbxFlash .56s ease-out both; pointer-events:none; z-index:3;}
+
+.sbx-roll{position:relative; width:100%; animation:sbxRollIn .35s var(--ease-out) both;}
+.sbx-viewport{position:relative; height:176px; overflow:hidden; background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.07) 50%, rgba(255,255,255,.03));
+  border-top:1px solid rgba(255,255,255,.08); border-bottom:1px solid rgba(255,255,255,.08);
+  -webkit-mask:linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent); mask:linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);}
+.sbx-strip{position:absolute; top:14px; left:0; display:flex; gap:8px; will-change:transform;}
+.sbx-marker{position:absolute; top:0; bottom:0; left:50%; width:3px; transform:translateX(-50%); z-index:2; border-radius:2px;
+  background:linear-gradient(180deg, #FFE08A, #FFC83D 50%, #FFE08A); box-shadow:0 0 12px rgba(255,200,61,.85), 0 0 2px #fff;}
+.sbx-marker::before,.sbx-marker::after{content:''; position:absolute; left:50%; transform:translateX(-50%); border:9px solid transparent;}
+.sbx-marker::before{top:-1px; border-top-color:#FFC83D;}
+.sbx-marker::after{bottom:-1px; border-bottom-color:#FFC83D;}
+.sbx.phase-won .sbx-marker{opacity:0; transition:opacity .4s;}
+
+/* A card: the item on a dark plate with a glow and a bar of its rarity's colour. */
+.sbx-tile{--c:var(--t1); position:relative; flex:0 0 auto; width:104px; height:148px; border-radius:14px; overflow:hidden; display:flex; flex-direction:column; align-items:center;
+  background:linear-gradient(180deg, #1B2030 0%, #151927 55%, color-mix(in srgb, var(--c) 26%, #151927) 100%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.07); transition:opacity .45s var(--ease), transform .45s var(--ease-out), box-shadow .45s;}
+.sbx-tile.tier-2{--c:var(--t2);} .sbx-tile.tier-3{--c:var(--t3);} .sbx-tile.tier-4{--c:var(--t4);}
+.sbx-tile::before{content:''; position:absolute; inset:auto 10% 18% 10%; height:60%; border-radius:50%; background:radial-gradient(closest-side, color-mix(in srgb, var(--c) 40%, transparent), transparent); pointer-events:none;}
+.sbx-tile-pic{position:relative; flex:1; width:100%; display:flex; align-items:center; justify-content:center; padding:6px 8px 0;}
+.sbx-tile-pic:has(> .sbx-coins-pic){padding:2px 2px 0;}
+/* Up to 3 lines (long names like «Рамка «Северное сияние»» fit whole); the gap under it is a margin, not padding, so a
+   clamped line can never peek out below (25.11.2026). */
+.sbx-tile-name{position:relative; width:100%; margin-bottom:9px; padding:0 6px; font-size:10.5px; font-weight:800; line-height:1.2; text-align:center; color:rgba(255,255,255,.9);
+  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; min-height:2.4em; max-height:3.6em;}
+/* The card's own chance, top left (the «есть» chip is top right). */
+.sbx-tile-chance{position:absolute; top:6px; left:6px; z-index:1; padding:2px 6px; border-radius:999px; background:color-mix(in srgb, var(--c) 26%, rgba(0,0,0,.35));
+  color:#fff; font-size:9.5px; font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:.02em;}
+.sbx-tile-owned{position:absolute; top:6px; right:6px; z-index:1; padding:2px 7px; border-radius:999px; background:rgba(255,255,255,.16); color:rgba(255,255,255,.85);
+  font-size:9.5px; font-weight:900; letter-spacing:.06em; text-transform:uppercase;}
+.sbx-tile-bar{position:absolute; left:0; right:0; bottom:0; height:4px; background:var(--c); box-shadow:0 0 10px var(--c);}
+.sbx-tile.dim{opacity:.28; transform:scale(.94);}
+.sbx-tile.win{transform:scale(1.06); box-shadow:inset 0 0 0 2px var(--c), 0 0 26px color-mix(in srgb, var(--c) 70%, transparent); z-index:1;}
+.sbx-av .avatar-frame-ring{inset:-4px;}
+/* Coin prizes: a heap that grows with the group (public/shop/coins-1…4.webp); the amount is the card's name. */
+.sbx-coins-pic{display:block; max-width:100%; height:auto; object-fit:contain; user-select:none; -webkit-user-drag:none; filter:drop-shadow(0 6px 12px rgba(0,0,0,.45));}
+.sbx-bg{width:84px; height:58px; border-radius:10px; overflow:hidden; position:relative; isolation:isolate; box-shadow:0 0 0 1px rgba(255,255,255,.12);}
+.sbx-bg.big{width:220px; height:124px; border-radius:16px;}
+.sbx-name{max-width:100%; padding:8px 6px; border-radius:10px; background:#F3F4F6; font-family:var(--font-display),'Manrope',sans-serif; font-weight:800; font-size:12px;
+  text-transform:uppercase; letter-spacing:.01em; overflow:hidden; white-space:nowrap; color:#17181B;}
+.sbx-name.big{padding:16px 22px; font-size:24px; border-radius:16px;}
+
+.sbx-body{position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:12px; padding:4px 16px 0;}
+.sbx-odds{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; width:100%;}
+.sbx-odd{--c:var(--t1); display:flex; flex-direction:column; align-items:center; gap:1px; padding:8px 4px 9px; border-radius:12px; background:rgba(255,255,255,.16);
+  box-shadow:inset 0 -3px 0 var(--c); border:1px solid rgba(255,255,255,.16);}
+.sbx-odd.tier-2{--c:var(--t2);} .sbx-odd.tier-3{--c:var(--t3);} .sbx-odd.tier-4{--c:var(--t4);}
+.sbx-odd b{font-size:16px; font-weight:900; color:var(--c); font-variant-numeric:tabular-nums;}
+.sbx-odd span{font-size:11px; font-weight:800;}
+.sbx-odd small{font-size:10px; color:rgba(255,255,255,.5); font-variant-numeric:tabular-nums;}
+.sbx-go{display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; height:58px; border:none; border-radius:18px; cursor:pointer;
+  font-family:var(--font-display),'Manrope',sans-serif; font-size:22px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#3D2500;
+  background:linear-gradient(180deg,#FFE48F 0%,#FFC83D 48%,#E89A10 100%); box-shadow:0 6px 0 #A8650A, 0 12px 28px rgba(255,170,30,.35), inset 0 1px 0 rgba(255,255,255,.7);
+  transition:transform .12s var(--ease), box-shadow .12s var(--ease);}
+.sbx-go:not(:disabled){animation:sbxGoGlow 2.4s ease-in-out infinite;}
+.sbx-go:active:not(:disabled){transform:translateY(4px); box-shadow:0 2px 0 #A8650A, 0 6px 16px rgba(255,170,30,.3), inset 0 1px 0 rgba(255,255,255,.7);}
+.sbx-go:disabled{filter:grayscale(.85) brightness(.6); box-shadow:0 4px 0 #3a3a3a; cursor:default;}
+.sbx-go.small{height:50px; font-size:19px; box-shadow:0 5px 0 #A8650A, inset 0 1px 0 rgba(255,255,255,.7);}
+.sbx-ghost{height:50px; border-radius:16px; border:1.5px solid rgba(255,255,255,.22); background:rgba(255,255,255,.06); color:#fff; font:inherit; font-size:15px; font-weight:800; cursor:pointer;}
+.sbx-again{border:none; background:none; color:#CDB8FF; font:inherit; font-size:13px; font-weight:800; text-decoration:underline; cursor:pointer;}
+.sbx-note{margin:0; font-size:13.5px; font-weight:700; color:rgba(255,255,255,.72); text-align:center;}
+.sbx-note b{color:#fff;}
+.sbx-note.error{color:#FF8A7A;}
+.sbx-note.opening{font-family:var(--font-display),'Manrope',sans-serif; font-size:18px; letter-spacing:.08em; text-transform:uppercase; color:#FFE08A; animation:sbxPulseText 1s ease-in-out infinite;}
+.sbx-rules{list-style:none; margin:2px 0 0; padding:4px 14px; width:100%; border-radius:16px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1);}
+.sbx-rules li{display:flex; align-items:center; gap:10px; padding:9px 0; font-size:13.5px; font-weight:600; line-height:1.3; color:rgba(255,255,255,.86);}
+.sbx-rules li + li{border-top:1px solid rgba(255,255,255,.08);}
+.sbx-rules svg{flex:0 0 auto; color:#CDB8FF;}
+.sbx-rules li > :first-child{flex:0 0 auto;}
+.sbx-section{align-self:flex-start; margin-top:8px; font-size:12px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.6);}
+/* «Что может выпасть»: three to a row, the page scrolls down through them (owner, 25.11.2026). */
+.sbx-showcase{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; width:100%;}
+.sbx-showcase .sbx-tile{width:auto;}
+/* «Наверх»: shows once the page is scrolled down into the showcase. */
+.sbx-top{position:fixed; right:16px; bottom:calc(env(safe-area-inset-bottom) + 18px); z-index:6; width:44px; height:44px; border:none; border-radius:50%;
+  background:rgba(255,255,255,.92); color:#17181B; box-shadow:0 8px 22px rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; cursor:pointer;
+  opacity:0; transform:translateY(12px) scale(.9); pointer-events:none; transition:opacity .2s var(--ease), transform .2s var(--ease-out);}
+.sbx-top.show{opacity:1; transform:none; pointer-events:auto;}
+
+/* The prize. */
+.sbx-reveal{--c:var(--t1); position:fixed; inset:0; z-index:5; display:flex; align-items:center; justify-content:center; padding:20px;
+  background:rgba(6,8,14,.62); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); animation:sbxFade .35s .75s both;}
+.sbx-reveal.tier-2{--c:var(--t2);} .sbx-reveal.tier-3{--c:var(--t3);} .sbx-reveal.tier-4{--c:var(--t4);}
+.sbx-reveal-card{position:relative; width:100%; max-width:330px; color:#F3F4F8; display:flex; flex-direction:column; align-items:center; gap:10px; padding:26px 20px 20px; border-radius:26px; overflow:hidden;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--c) 30%, #141826) 0%, #141826 60%); box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--c) 75%, transparent), 0 0 60px color-mix(in srgb, var(--c) 45%, transparent), 0 24px 50px rgba(0,0,0,.5);
+  animation:sbxCardIn .6s .8s cubic-bezier(.2,.9,.3,1.25) both;}
+.sbx-reveal-rays{position:absolute; left:50%; top:118px; width:520px; height:520px; margin:-260px 0 0 -260px; border-radius:50%; pointer-events:none;
+  background:repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--c) 45%, transparent) 0deg 8deg, transparent 8deg 24deg);
+  -webkit-mask:radial-gradient(circle, #000 10%, transparent 60%); mask:radial-gradient(circle, #000 10%, transparent 60%); animation:sbxSpin 14s linear infinite; will-change:transform;}
+.sbx-reveal-tier{position:relative; padding:4px 14px; border-radius:999px; background:var(--c); color:#0B0D14; font-size:12px; font-weight:900; letter-spacing:.1em; text-transform:uppercase;
+  box-shadow:0 0 18px color-mix(in srgb, var(--c) 70%, transparent);}
+/* «Готово» (25.11.2026): the prize card shrinks a little and fades with its backdrop, the strip fades; then the chest,
+   the button and the showcase come back in softly — they mount anew, so their entry plays. */
+.sbx.closing .sbx-reveal{animation:sbxOut .32s var(--ease) both;}
+.sbx.closing .sbx-reveal-card{animation:sbxCardOut .32s var(--ease) both;}
+.sbx.closing .sbx-roll{animation:sbxOut .32s var(--ease) both;}
+.sbx-chest{animation:sbxChestIn .5s var(--ease-out) both;}
+.sbx.phase-idle .sbx-rules,.sbx.phase-idle .sbx-section,.sbx.phase-idle .sbx-showcase,.sbx.phase-idle .sbx-note{animation:sbxFade .4s var(--ease-out) both;}
+.sbx.phase-idle .sbx-go{animation:sbxFade .4s var(--ease-out) both;}
+.sbx.phase-idle .sbx-go:not(:disabled){animation:sbxFade .4s var(--ease-out) both, sbxGoGlow 2.4s ease-in-out .4s infinite;}
+@keyframes sbxOut{from{opacity:1;} to{opacity:0;}}
+@keyframes sbxCardOut{from{opacity:1; transform:none;} to{opacity:0; transform:scale(.92) translateY(10px);}}
+@keyframes sbxChestIn{from{opacity:0; transform:scale(.86);} to{opacity:1; transform:none;}}
+/* The prize stands still (owner, 25.11.2026: no bobbing up and down). */
+.sbx-reveal-pic{position:relative; min-height:150px; display:flex; align-items:center; justify-content:center;}
+.sbx-reveal-name{position:relative; font-family:var(--font-display),'Manrope',sans-serif; font-size:26px; font-weight:700; line-height:1.1; text-align:center; text-transform:uppercase; letter-spacing:.02em;}
+.sbx-reveal-sub{position:relative; margin:0; font-size:13px; color:rgba(255,255,255,.7); text-align:center;}
+.sbx-reveal-refund{position:relative; margin:0; display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:999px; background:rgba(255,200,61,.14);
+  border:1px solid rgba(255,200,61,.4); color:#FFE08A; font-size:15px; font-weight:900; font-variant-numeric:tabular-nums;}
+.sbx-reveal-actions{position:relative; display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; margin-top:8px;}
+.sbx-reveal-actions > :only-child{grid-column:1 / -1;}
+.sbx-spark{position:absolute; left:50%; top:50%; width:8px; height:8px; margin:-4px; border-radius:50%; background:var(--c); box-shadow:0 0 10px var(--c); pointer-events:none; opacity:0;
+  animation:sbxSpark 1.1s calc(.85s + var(--d)) cubic-bezier(.15,.7,.3,1) both;}
+
+@keyframes sbxSpin{to{transform:rotate(360deg);}}
+@keyframes sbxPulse{0%,100%{transform:scale(1); opacity:.85;} 50%{transform:scale(1.12); opacity:1;}}
+@keyframes sbxBob{0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);}}
+@keyframes sbxShadow{0%,100%{transform:scaleX(1); opacity:.55;} 50%{transform:scaleX(.82); opacity:.35;}}
+@keyframes sbxCharge{0%{transform:translate(0,0) rotate(0) scale(1);} 20%{transform:translate(-2px,0) rotate(-3deg);} 30%{transform:translate(2px,0) rotate(3deg);} 45%{transform:translate(-3px,-1px) rotate(-5deg) scale(1.03);}
+  55%{transform:translate(3px,-1px) rotate(5deg) scale(1.04);} 65%{transform:translate(-4px,-2px) rotate(-7deg) scale(1.06);} 72%{transform:translate(4px,-2px) rotate(7deg) scale(1.07);}
+  79%{transform:translate(-5px,-3px) rotate(-8deg) scale(1.08);} 86%{transform:translate(5px,-3px) rotate(8deg) scale(1.09);} 93%{transform:translate(-5px,-3px) rotate(-8deg) scale(1.1);} 100%{transform:translate(0,-3px) rotate(0) scale(1.1);}}
+@keyframes sbxShakeFast{0%,100%{transform:translate(0,-3px) rotate(0) scale(1.1);} 25%{transform:translate(-4px,-3px) rotate(-6deg) scale(1.1);} 75%{transform:translate(4px,-3px) rotate(6deg) scale(1.1);}}
+@keyframes sbxCharge2{from{transform:scale(1); opacity:.8;} to{transform:scale(1.5); opacity:1;}}
+@keyframes sbxBurst{0%{transform:scale(1.1);} 35%{transform:scale(1.28);} 100%{transform:scale(.6) translateY(30px); opacity:0;}}
+@keyframes sbxFlash{0%{transform:scale(.3); opacity:0;} 30%{opacity:1;} 100%{transform:scale(6); opacity:0;}}
+@keyframes sbxRollIn{from{opacity:0; transform:scaleY(.6);} to{opacity:1; transform:none;}}
+@keyframes sbxGoGlow{0%,100%{filter:brightness(1);} 50%{filter:brightness(1.08);}}
+@keyframes sbxPulseText{0%,100%{opacity:.55;} 50%{opacity:1;}}
+@keyframes sbxFade{from{opacity:0;} to{opacity:1;}}
+@keyframes sbxCardIn{from{opacity:0; transform:scale(.6) translateY(30px);} to{opacity:1; transform:none;}}
+@keyframes sbxSpark{0%{opacity:1; transform:rotate(var(--a)) translateY(0) scale(1);} 100%{opacity:0; transform:rotate(var(--a)) translateY(-170px) scale(.3);}}
+/* No «Уменьшение движения» variant: the box plays the same for everyone (owner, 25.11.2026). */
+/* The demo page shows the screen over itself, phone-sized. */
+.sbx-demo-host{position:fixed; inset:0; z-index:1000; background:#0B0D14; overflow-y:auto;}
+.sbx-demo-host > .sbx{max-width:430px; margin:0 auto;}

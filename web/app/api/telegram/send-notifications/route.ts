@@ -365,8 +365,11 @@ function renderMessage(notification: NotificationRef): Message | null {
     case 'sector_attacked': {
       if (!notification.territory_id) return null
       const defense = Number(notification.payload?.defense ?? 0)
+      // Under a shield (24.11) the armor can reach 0, but the sector is taken only after the shield ends.
+      const shieldUntil = Date.parse(String(notification.payload?.shield_until ?? ''))
+      const down = Number.isFinite(shieldUntil) && shieldUntil > Date.now() ? 'tg.attackedDownShield' : 'tg.attackedDown'
       return {
-        text: tn(defense > 0 ? 'tg.attacked' : 'tg.attackedDown', { actor: actorName, id: notification.territory_id, defense }),
+        text: tn(defense > 0 ? 'tg.attacked' : down, { actor: actorName, id: notification.territory_id, defense }),
         ...sector(notification.territory_id),
       }
     }

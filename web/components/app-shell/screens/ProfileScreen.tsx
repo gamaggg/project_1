@@ -51,6 +51,8 @@ import { StyledName } from '@/components/app-shell/StyledName'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { CountUp, LiveCoinBalance } from '@/components/app-shell/CoinCountUp'
 import { AdminPanel, ADMIN_ICONS } from '@/components/app-shell/AdminPanel'
+import { ShopClosedModal } from '@/components/app-shell/ShopClosedModal'
+import { useMaintenance } from '@/lib/supabase/queries/maintenance'
 import { insideTelegram } from '@/lib/openExternal'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { CITIES, type CityId } from '@/lib/data/city'
@@ -503,6 +505,10 @@ export function ProfileScreen({
   const { data: profile } = useProfile(user?.id ?? null)
   // «Клановая экономика» (super admin): the clan update's switch and its pilot clans.
   const [economyOpen, setEconomyOpen] = useState(false)
+  // «Заглушка магазина» (25.11.2026): its own switch, next to «Технические работы».
+  const [shopStubOpen, setShopStubOpen] = useState(false)
+  const { data: maintenanceState } = useMaintenance()
+  const shopClosed = !!maintenanceState?.shopClosed
   const { data: geo, isPending: geoPending } = useGeoToday()
   const { data: clanChat } = useClanChatSummary(profile?.clanId ?? null)
   const shopRewards = useShopRewardsCount()
@@ -880,6 +886,7 @@ export function ProfileScreen({
         </button>
       )}
       {economyOpen && <EconomyAdminLazy onClose={() => setEconomyOpen(false)} />}
+      {shopStubOpen && <ShopClosedModal onClose={() => setShopStubOpen(false)} />}
       <AdminPanel
         active={adminPanelActive}
           items={[
@@ -895,6 +902,7 @@ export function ProfileScreen({
                   { id: 'partners', label: 'Точки партнёров', icon: ADMIN_ICONS.partners, tone: 'manage' as const, onClick: onOpenAdminPartners },
                   { id: 'economy', label: 'Клановая экономика', icon: ADMIN_ICONS.coins, tone: 'manage' as const, onClick: () => setEconomyOpen(true) },
                   { id: 'maintenance', label: maintenanceOn ? 'Техработы: включены' : 'Технические работы', icon: ADMIN_ICONS.maintenance, tone: 'manage' as const, badge: maintenanceOn ? 1 : 0, onClick: onOpenMaintenance },
+                  { id: 'shopStub', label: shopClosed ? 'Магазин: заглушка включена' : 'Заглушка магазина', icon: ADMIN_ICONS.maintenance, tone: 'manage' as const, badge: shopClosed ? 1 : 0, onClick: () => setShopStubOpen(true) },
                 ]
               : []),
             ...(isSuperAdmin && user

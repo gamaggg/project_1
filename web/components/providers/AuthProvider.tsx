@@ -76,6 +76,9 @@ declare global {
         // Opens an outside link (a maps app, a website) in the system
         // browser — a plain window.open is swallowed inside the Mini App.
         openLink?: (url: string) => void
+        // Bot API 6.1+: opens a payment (an invoice link from createInvoiceLink) over the app; the callback gets
+        // 'paid' | 'cancelled' | 'failed' | 'pending'. Used for purchases for Telegram Stars (25.11.2026).
+        openInvoice?: (url: string, cb?: (status: string) => void) => void
         BackButton?: {
           show: () => void
           hide: () => void

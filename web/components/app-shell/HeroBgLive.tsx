@@ -36,6 +36,10 @@ export function HeroBgLive({ bg, variant }: { bg: HeroBackground; variant: 'hero
     case 'reeds':
     case 'rain':
     case 'scales':
+    case 'snow':
+    case 'fog':
+    case 'floats':
+    case 'sunset':
       return <PremiumBackground kind={bg.kind} />
     default:
       if (variant === 'swatch') return <WavyBackground waveWidth={13} blur={3} colors={bg.waveColors} backgroundFill={bg.waveBackgroundFill} />

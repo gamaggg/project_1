@@ -3,7 +3,6 @@
 import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useState } from 'react'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
-import { formatCoords } from '@/lib/openExternal'
 import { useCatchesByTerritory, useProfile, useCanAddCatchManually, useIsSuperAdmin, useAdminSetTerritoryKind, useSlotState, useUseFreeShield } from '@/lib/supabase/queries'
 import { useI18n, useT } from '@/lib/i18n'
 import { formatWeekdayTime } from '@/lib/i18n/format'
@@ -16,10 +15,8 @@ import { HOT_FLAME_SVG } from '@/lib/map/hotFlame'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { KIND_LABEL, WATER_KINDS_BY_CITY } from '@/lib/data/species'
 import { CITIES, cityForSectorId } from '@/lib/data/city'
-import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { formatCatchMeta, formatWhen } from '@/lib/format'
-import type { Territory, TerritoryCoHolder } from '@/lib/data/types'
-import { sectorCapturer, sectorOtherHolders } from '@/lib/data/sectorHolders'
+import type { Territory } from '@/lib/data/types'
 import { withAlpha, darkenForBadgeText } from '@/lib/data/territoryColors'
 import { TerritoryThumbnailMapView } from '@/components/app-shell/TerritoryThumbnailMapView'
 import { BackButton } from '@/components/app-shell/BackButton'
@@ -30,6 +27,11 @@ import { tn, currentLocale } from '@/lib/i18n'
 import { Clan2SectorHqCardLazy, Clan2SectorHqRibbonLazy } from '@/components/clan2/live/lazy'
 import { useClan2Enabled } from '@/lib/clan2/live/flag'
 import { nameInitials } from '@/lib/initials'
+import { SectorBadgeInfo, type SectorBadgeKind } from '@/components/app-shell/SectorBadgeInfo'
+import { SectorHoldersCard } from '@/components/app-shell/SectorHoldersCard'
+
+// The hero map's height (globals.css, .sector-hero-map) and what covers it: the dock card overlaps its bottom 26px.
+const HERO_FIT = { baseHeight: 320, gap: 60, bottomCover: 26 }
 
 export function statusBadge(status: Territory['status'], myTerritoryColor: string, myShare = false) {
   // myShare: a clan-mate's sector the viewer holds a part of.
@@ -66,105 +68,6 @@ function ShieldBadge({ shieldUntil }: { shieldUntil: string | null }) {
   )
 }
 
-// The one person this whole screen is really about — given its own small
-// "profile card" moment (ring the avatar in the brand's own orange, a
-// caption above naming what they did) rather than folding them into a
-// plain nav row like every other "open a profile" link in the app.
-// On a sector clan-mates share that's whoever captured it last.
-function SectorOwnerCard({
-  capturer,
-  coHolders,
-  onOpenUser,
-}: {
-  capturer: TerritoryCoHolder
-  coHolders: TerritoryCoHolder[]
-  onOpenUser: (id: string) => void
-}) {
-  const { data: fresh } = useProfile(capturer.id)
-  const profile = fresh ?? capturer
-  const isMine = capturer.isMe
-  const initials = nameInitials(profile.displayName ?? tn('common.angler'), 2)
-  return (
-    <div className="sector-owner-highlight">
-      <div className="sector-owner-highlight-label">{tn('sector.capturedBy')}</div>
-      <button
-        className="sector-owner-highlight-row tap-scale"
-        onClick={() => onOpenUser(capturer.id)}
-        disabled={isMine}
-      >
-        <div className="sector-owner-highlight-avatar">
-          {profile.avatarUrl ? <img src={thumbUrl(profile.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : initials}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="sector-owner-highlight-name">{isMine ? tn('sector.you') : profile.displayName ?? '…'}</div>
-          {!isMine && <div className="sector-owner-highlight-sub">{tn('sector.viewProfile')}</div>}
-        </div>
-        {!isMine && (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A9AE" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 6l6 6-6 6" />
-          </svg>
-        )}
-      </button>
-      {coHolders.length > 0 && (
-        <>
-          <div className="sector-owner-highlight-label sector-coholders-label">
-            {tn('sector.coHolders', { count: coHolders.length })}
-          </div>
-          <div className="sector-coholders">
-            {coHolders.map((h) => (
-              <button key={h.id} className="sector-coholder tap-scale" onClick={() => onOpenUser(h.id)} disabled={h.isMe}>
-                <span className="sector-coholder-avatar">
-                  {h.avatarUrl ? <img src={thumbUrl(h.avatarUrl, 96)} alt="" loading="lazy" decoding="async" /> : nameInitials(h.displayName ?? tn('common.angler'), 2)}
-                </span>
-                <span className="sector-coholder-name">{h.isMe ? tn('sector.you') : h.displayName ?? tn('common.angler')}</span>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
-
-// The sector's centre as plain coordinates — copy them into any maps app, or
-// jump straight to a route there — so you can actually get to the water.
-// Two lines: the coordinates in full on top (a tap copies them too), the two
-// buttons under them — on one line the buttons left room for a single digit.
-function SectorCoords({ lat, lng, onToast }: { lat: number; lng: number; onToast: (message: string) => void }) {
-  const [mapsOpen, setMapsOpen] = useState(false)
-  const coords = formatCoords(lat, lng)
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(coords)
-      onToast(tn('sector.coordsCopied'))
-    } catch {
-      onToast(tn('common.copyFailed'))
-    }
-  }
-
-  return (
-    <div className="sector-coords">
-      <button type="button" className="sector-coords-line" onClick={() => void copy()}>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z" />
-          <circle cx="12" cy="9.5" r="2.5" />
-        </svg>
-        <span className="sector-coords-value">{coords}</span>
-      </button>
-      <div className="sector-coords-actions">
-        <button className="sector-coords-btn tap-scale" onClick={() => void copy()}>
-          {tn('sector.copy')}
-        </button>
-        <button className="sector-coords-btn primary tap-scale" onClick={() => setMapsOpen(true)}>
-          {tn('sector.route')}
-        </button>
-      </div>
-      {mapsOpen && <RouteModal lat={lat} lng={lng} onClose={() => setMapsOpen(false)} />}
-    </div>
-  )
-}
-
 // Shields aren't sold: they only drop in the Shop's slots, wait in a reserve,
 // and are put on a sector here — the one screen with a sector to put them on.
 // A hot sector is open to everyone until the week ends: use_free_shield
@@ -175,12 +78,15 @@ function ShieldButton({ territory, hot }: { territory: Territory; hot: boolean }
   const useFreeShield = useUseFreeShield()
   const freeShields = slotState?.freeShields ?? 0
   const t = useT()
+  const now = useNow(30_000)
 
   if (freeShields === 0) return null
   // A clan HQ under siege (HQ_SIEGE, 20.11.2026): a shield would not lift the siege and would pass to whoever takes
   // the sector, so the server refuses it before taking it from the reserve.
   const siege = /HQ_SIEGE/.test(useFreeShield.error?.message ?? '')
-  const locked = hot || siege || /HOT_SECTOR/.test(useFreeShield.error?.message ?? '')
+  // 24.11.2026: no shield over a shield (SHIELD_ACTIVE) — the next one goes on once this one ends.
+  const shieldUp = (!!territory.shieldUntil && new Date(territory.shieldUntil).getTime() > now) || /SHIELD_ACTIVE/.test(useFreeShield.error?.message ?? '')
+  const locked = hot || siege || shieldUp || /HOT_SECTOR/.test(useFreeShield.error?.message ?? '')
   return (
     <>
       <button
@@ -191,7 +97,7 @@ function ShieldButton({ territory, hot }: { territory: Territory; hot: boolean }
       >
         {t('territory.freeShield')} · {t('territory.freeShieldLeft', { count: freeShields })}
       </button>
-      {locked && <div className="shield-hot-note">{t(siege ? 'territory.freeShieldSiege' : 'territory.freeShieldHot')}</div>}
+      {locked && <div className="shield-hot-note">{t(siege ? 'territory.freeShieldSiege' : shieldUp && !hot ? 'territory.freeShieldActive' : 'territory.freeShieldHot')}</div>}
     </>
   )
 }
@@ -267,7 +173,6 @@ export function TerritoryScreen({
   onOpenAllCatches,
   myTerritoryColor,
   onOpenClan,
-  onToast,
   onShowOnMap,
 }: {
   territory: Territory
@@ -281,7 +186,6 @@ export function TerritoryScreen({
   onOpenAllCatches: () => void
   myTerritoryColor: string
   onOpenClan: (id: number) => void
-  onToast: (message: string) => void
   // Absent for a sector outside the city the map is showing.
   onShowOnMap?: (id: string) => void
 }) {
@@ -290,6 +194,10 @@ export function TerritoryScreen({
   const { t: tr, lang } = useI18n()
   const now = useNow()
   const hot = !!territory.hotUntil && new Date(territory.hotUntil).getTime() > now
+  const shieldOn = !!territory.shieldUntil && new Date(territory.shieldUntil).getTime() > now
+  const myShare = territory.coHolders.some((h) => h.isMe)
+  const [badgeInfo, setBadgeInfo] = useState<SectorBadgeKind | null>(null)
+  const [routeOpen, setRouteOpen] = useState(false)
   // With «Двойные монеты» on, a catch here pays ×3 instead of ×2 (confirm_catch).
   const doubled = useDoubleCoinsUntil() !== null
   // Казна: every sector held earns its holders 8 coins a day (×3 while hot).
@@ -310,19 +218,33 @@ export function TerritoryScreen({
           ownerAvatarUrl={ownerProfile?.avatarUrl ?? null}
           ownerInitials={nameInitials(ownerProfile?.displayName ?? tn('common.angler'), 2)}
           claimFx
+          fit={HERO_FIT}
         />
         {onShowOnMap && (
-          // The whole hero map is the tap target; the chip just says so.
-          <button type="button" className="sector-hero-map-open" aria-label={tn('sector.showOnMap')} onClick={() => onShowOnMap(territory.id)}>
-            <span className="sector-hero-map-chip">
+          // The whole hero map is the tap target for «На карте».
+          <button type="button" className="sector-hero-map-open" aria-label={tn('sector.showOnMap')} onClick={() => onShowOnMap(territory.id)} />
+        )}
+        {/* «Маршрут» rides on the map (24.11): the coordinates block under the title is gone, the map is enough. */}
+        <div className="sector-hero-map-chips">
+          <button type="button" className="sector-hero-map-chip" onClick={() => setRouteOpen(true)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <circle cx="6" cy="19" r="2" />
+              <circle cx="18" cy="5" r="2" />
+              <path d="M12 19h4.5a3.5 3.5 0 0 0 0-7h-8a3.5 3.5 0 0 1 0-7H12" />
+            </svg>
+            {tn('sector.route')}
+          </button>
+          {onShowOnMap && (
+            <button type="button" className="sector-hero-map-chip" onClick={() => onShowOnMap(territory.id)}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4z" />
                 <path d="M9 4v13M15 6.5v13" />
               </svg>
               {tn('sector.onMap')}
-            </span>
-          </button>
-        )}
+            </button>
+          )}
+        </div>
+        {routeOpen && <RouteModal lat={territory.lat} lng={territory.lng} onClose={() => setRouteOpen(false)} />}
         {clan2On && <Clan2SectorHqRibbonLazy id={territory.id} />}
         <div className="sector-hero-map-icons">
           <BackButton onClick={onBack} registerNative={false} />
@@ -348,19 +270,28 @@ export function TerritoryScreen({
             {/* sector-head-badges: the column takes what the title leaves; a
                 badge too long for it ends in «…» inside the card. */}
             <div className="sector-head-badges">
-              {statusBadge(territory.status, myTerritoryColor, territory.coHolders.some((h) => h.isMe))}
-              <ShieldBadge shieldUntil={territory.shieldUntil} />
+              {/* Each badge opens a small card saying what it means (24.11). */}
+              <button type="button" className="badge-tap" onClick={() => setBadgeInfo('status')}>
+                {statusBadge(territory.status, myTerritoryColor, myShare)}
+              </button>
+              {shieldOn && (
+                <button type="button" className="badge-tap" onClick={() => setBadgeInfo('shield')}>
+                  <ShieldBadge shieldUntil={territory.shieldUntil} />
+                </button>
+              )}
               {isMostPopular && (
-                <span className="badge badge-accent">
-                  <span>{tn('sector.mostPopular')}</span>
-                </span>
+                <button type="button" className="badge-tap" onClick={() => setBadgeInfo('popular')}>
+                  <span className="badge badge-accent">
+                    <span>{tn('sector.mostPopular')}</span>
+                  </span>
+                </button>
               )}
             </div>
+            {badgeInfo && <SectorBadgeInfo kind={badgeInfo} territory={territory} myShare={myShare} onClose={() => setBadgeInfo(null)} />}
           </div>
           <div className="page-sub" style={{ marginBottom: 0 }}>
             {KIND_LABEL[territory.kind]}
           </div>
-          <SectorCoords lat={territory.lat} lng={territory.lng} onToast={onToast} />
           {clan2On && <Clan2SectorHqCardLazy id={territory.id} onOpenClan={onOpenClan} />}
           {hot && (
             <div className="sector-hot">
@@ -397,9 +328,7 @@ export function TerritoryScreen({
               </div>
             </div>
           )}
-          {sectorCapturer(territory) && (
-            <SectorOwnerCard capturer={sectorCapturer(territory)!} coHolders={sectorOtherHolders(territory)} onOpenUser={onOpenUser} />
-          )}
+          <SectorHoldersCard territory={territory} onOpenUser={onOpenUser} onOpenClan={onOpenClan} />
           <SectorLegendRow
             territory={territory}
             onOpenUser={onOpenUser}
@@ -411,17 +340,6 @@ export function TerritoryScreen({
               <CoinIcon size={16} />
               {tr('treasury.perDay', { count: hot ? 24 : 8 })}
             </div>
-          )}
-          {territory.ownerId && territory.ownerClanId && (
-            <button className="sector-clan-line tap-scale" onClick={() => onOpenClan(territory.ownerClanId!)}>
-              <ClanCrest crest={territory.ownerClanCrest} size={26} />
-              <span className="sector-clan-line-text">
-                {tn('sector.clanPre')}<b>{tn('sector.qOpen')}{territory.ownerClanName}{tn('sector.qClose')}</b>
-              </span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d="M9 6l6 6-6 6" />
-              </svg>
-            </button>
           )}
           {canAddCatchManually && (
             <button className="btn-secondary" style={{ marginTop: 12 }} onClick={() => onAdminCatch(territory.id)}>

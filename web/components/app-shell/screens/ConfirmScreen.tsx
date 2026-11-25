@@ -43,6 +43,7 @@ export function ConfirmScreen({
   clanSupport,
   clanShare,
   attackDefense = null,
+  attackShielded = false,
   captureNoCoins = false,
   step,
   pending,
@@ -72,6 +73,7 @@ export function ConfirmScreen({
   // «Защита сектора»: the sector's defense after this catch wore it down
   // (an attack, not a capture), or null.
   attackDefense?: number | null
+  attackShielded?: boolean
   // Took the sector, but its +25 was already paid today (once a day).
   captureNoCoins?: boolean
   step: 'form' | 'success'
@@ -255,7 +257,7 @@ export function ConfirmScreen({
         {attackDefense !== null && (
           <div className="catch-trophy-attack">
             <DefenseShields value={attackDefense} size={18} />
-            <span>{attackDefense > 0 ? t('defense.attackAfter', { value: attackDefense, count: attackDefense + 1 }) : t('defense.attackOpened')}</span>
+            <span>{attackDefense > 0 ? t('defense.attackAfter', { value: attackDefense, count: attackDefense + 1 }) : t(attackShielded ? 'defense.attackOpenedShield' : 'defense.attackOpened')}</span>
           </div>
         )}
         {captureNoCoins && <div className="catch-trophy-support">{t('defense.captureOncePerDay')}</div>}

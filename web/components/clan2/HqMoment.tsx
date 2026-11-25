@@ -3,6 +3,7 @@
 import { hqBannerSvg, ruinsMarkerHtml } from '@/lib/clan2/live/hqMarker'
 import { resolveCrest } from '@/lib/data/clanCrests'
 import { tn } from '@/lib/i18n/runtime'
+import { DEFENSE_PATH } from '@/components/app-shell/SectorDefense'
 
 // The moments of a headquarters, played over its sector in the manner of the sector capture of solo play (the white
 // label with a coloured dot, the ring that bursts on impact, the colour flooding the hexagon, the coins): a shield
@@ -12,7 +13,6 @@ import { tn } from '@/lib/i18n/runtime'
 export type HqMomentKind = 'hit' | 'siege' | 'saved' | 'fell' | 'captured'
 export type HqMomentSide = 'defender' | 'attacker'
 
-const SHIELD = 'M12 2.5l7.5 2.8v5.6c0 4.7-3.2 8.3-7.5 10.6-4.3-2.3-7.5-5.9-7.5-10.6V5.3z'
 
 export function HqMoment({
   kind,
@@ -108,8 +108,8 @@ export function HqMoment({
             const cls = lost ? 'lost' : kind === 'saved' && i === 0 ? 'gained' : on ? 'on' : ''
             return (
               <svg key={i} className={cls} width="18" height="22" viewBox="3.5 1.5 17 21" aria-hidden>
-                <path d={SHIELD} />
-                {lost && <path className="hqx-crack" d="M12 4 L10.4 9 L13.2 11.4 L11 17" fill="none" />}
+                <path d={DEFENSE_PATH} />
+                {lost && <path className="hqx-crack" d="M13.6 5.4 L10.6 11.4 L13.2 12 L10.4 18" fill="none" />}
               </svg>
             )
           })}

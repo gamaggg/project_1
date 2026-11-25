@@ -193,8 +193,38 @@ export function localTxLabel(reason: string, label: string): string {
       break
     case 'slots_prize':
       out = byMatch(/^Слоты: (.+)$/, (m) => {
-        const prize = m[1] === 'два одинаковых' ? T('dbText.txSlotsPair') : m[1] === 'три в ряд' ? T('dbText.txSlotsTriple') : /^(\d+) монет$/.test(m[1]) ? T('dbText.txSlotsCoins', { n: m[1].split(' ')[0] }) : m[1]
+        const prize = m[1] === 'два одинаковых' ? T('dbText.txSlotsPair') : m[1] === 'три в ряд' ? T('dbText.txSlotsTriple') : m[1] === 'ассорти' ? T('dbText.txSlotsAssorti') : /^(\d+) монет$/.test(m[1]) ? T('dbText.txSlotsCoins', { n: m[1].split(' ')[0] }) : m[1]
         return T('dbText.txSlots', { prize })
+      })
+      break
+    case 'stars_purchase':
+      // Coins bought for Telegram Stars (25.11.2026): «Покупка за Звёзды: N монет».
+      out = byMatch(/^Покупка за Звёзды: (\d+) монет$/, (m) => T('dbText.txStars', { n: m[1] }))
+      break
+    case 'weekly_rank_prize':
+      // Top 3 of the city's weekly rating (25.11.2026): «Рейтинг недели: N место».
+      out = byMatch(/^Рейтинг недели: (\d) место$/, (m) => T('dbText.txWeekPrize', { n: m[1] }))
+      break
+    case 'secret_box_coins':
+      // The box's coin prize (25.11.2026): «Секретный бокс: монеты», as is the −500 of that box below.
+      out = T('dbText.txBoxCoins')
+      break
+    case 'secret_box':
+      // «Секретный бокс: <вещь>» (24.11.2026); «Секретный бокс: монеты» when the prize was coins (25.11).
+      if (label === 'Секретный бокс: монеты') {
+        out = T('dbText.txBoxCoins')
+        break
+      }
+      out = byMatch(/^Секретный бокс: (.+)$/, (m) => {
+        const k = SHOP_NAME.get(m[1])
+        return T('dbText.txBox', { item: k ? T(k) : m[1] })
+      })
+      break
+    case 'secret_box_refund':
+      // «Секретный бокс: повтор <вещь>» — half the price of an item the player already had (24.11.2026).
+      out = byMatch(/^Секретный бокс: повтор (.+)$/, (m) => {
+        const k = SHOP_NAME.get(m[1])
+        return T('dbText.txBoxDup', { item: k ? T(k) : m[1] })
       })
       break
     case 'catch_reward':

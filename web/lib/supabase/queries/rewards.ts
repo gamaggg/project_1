@@ -48,8 +48,9 @@ export function useClaimFirstSteps() {
   })
 }
 
-export type SlotSymbol = 'stavrida' | 'skorpena' | 'lufar' | 'katran' | 'hook' | 'hex'
-export type SlotPrize = 'jackpot' | 'jackpot_coins' | 'shield' | 'double' | 'lufar' | 'triple' | 'free_spin' | 'pair' | 'none'
+export type SlotSymbol = 'stavrida' | 'skorpena' | 'lufar' | 'katran' | 'hook' | 'hex' | 'chest'
+// chest — three chests, a free secret box; assorti — three different fish, 15 coins (25.11.2026, where the box is open).
+export type SlotPrize = 'jackpot' | 'jackpot_coins' | 'chest' | 'shield' | 'double' | 'lufar' | 'triple' | 'free_spin' | 'assorti' | 'pair' | 'none'
 // left counts the gift spins too (`bonus` of them) — a super admin's present
 // that doesn't burn at midnight and is spent after the day's own spins.
 export type SlotState = { total: number; used: number; left: number; bonus: number; nextReset: string; freeShields: number }

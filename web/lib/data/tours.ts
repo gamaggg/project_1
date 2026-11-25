@@ -69,6 +69,7 @@ export type TourKey =
   | 'warCard'
   | 'warHow'
   | 'speciesAlbum'
+  | 'secretBox'
 export type TourStep = { target: string; key: TourKey }
 // `always`: shown even to a player who pressed «Пропустить» on the tours.
 // `unlessSeen`: not shown once the tour with that id has been seen.
@@ -251,6 +252,17 @@ const SPECIES_ALBUM_TOUR: Tour = {
   always: true,
 }
 
+// 25.11: the secret box — a new card beside the slots under the Shop's balance. One step on it, for everyone
+// (old players and new), once per account even after «Пропустить»; it waits until the card is there (the box is
+// released — 05_release.sql). Listed before the slots' tour, so on the same screen it comes first.
+const SECRET_BOX_TOUR: Tour = {
+  id: 'u2511-secret-box',
+  screen: 'screen-shop',
+  requires: 'secret-box-card',
+  steps: [{ target: 'secret-box-card', key: 'secretBox' }],
+  always: true,
+}
+
 export const TOURS: Record<TourAudience, Tour[]> = {
   whatsNew: [
     SPECIES_ALBUM_TOUR,
@@ -285,6 +297,7 @@ export const TOURS: Record<TourAudience, Tour[]> = {
         { target: 'faq', key: 'faq' },
       ],
     },
+    SECRET_BOX_TOUR,
     // 09.10: the slots left the end of the Shop's tab row for a card under
     // the balance — everyone who knew them as a tab is told where they went.
     { id: 'shop-slots', screen: 'screen-shop', requires: 'slots-card', steps: [{ target: 'slots-card', key: 'slotsMoved' }], always: true },
@@ -334,6 +347,7 @@ export const TOURS: Record<TourAudience, Tour[]> = {
         { target: 'faq', key: 'faq' },
       ],
     },
+    SECRET_BOX_TOUR,
     { id: 'shop-slots', screen: 'screen-shop', requires: 'slots-card', steps: [{ target: 'slots-card', key: 'slots' }], always: true },
     MAP_REWARDS_TOUR,
     DIARY_STATS_TOUR,

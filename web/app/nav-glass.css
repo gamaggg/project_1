@@ -396,7 +396,7 @@ html.has-lightbox:root .bottomnav::after {
 .map-control-group .map-control-btn + .map-control-btn { border-top-color: rgba(23, 24, 27, 0.07); }
 
 /* White blocks and buttons on a plain background: the profile's glass. */
-:is(.shop-card, .buff-row, .slots-paytable, .species-cell, .challenge-card, .clan-field, .clan-card, .clan-search, .move-search, .guest-card, .guest-catch, .stats-kpi, .stats-block, .diary-fish, .faq-list, .geo-story, .geo-catch, .admin-plan-list, .clan-chat-mention-pick, .support-card, .clan-chat-card, .clan-join-card, .diary-action, .forecast-card, .shop-tab, .clan-mini-btn, .clan-opt, .first-steps-pill, .city-chip, .sector-clan-line, .clan-chat-bubble) {
+:is(.shop-card, .buff-row, .slots-paytable, .species-cell, .challenge-card, .clan-field, .clan-card, .clan-search, .move-search, .guest-card, .guest-catch, .stats-kpi, .stats-block, .diary-fish, .faq-list, .geo-story, .geo-catch, .admin-plan-list, .clan-chat-mention-pick, .support-card, .clan-chat-card, .clan-join-card, .diary-action, .forecast-card, .shop-tab, .clan-mini-btn, .clan-opt, .first-steps-pill, .city-chip, .clan-chat-bubble) {
   background: var(--glass-fill);
   box-shadow: var(--glass-rim), 0 6px 16px rgba(23, 24, 27, 0.07);
 }
@@ -407,11 +407,10 @@ html.has-lightbox:root .bottomnav::after {
 .clan-swatch { box-shadow: 0 0 0 1.5px rgba(23, 24, 27, 0.1), 0 3px 8px rgba(23, 24, 27, 0.12); }
 
 /* Grey inset wells and small grey buttons: a recessed or raised light-grey glass. */
-:is(.geo-fact, .forecast-day, .sector-coords-btn, .support-compose-attach) {
+:is(.geo-fact, .forecast-day, .support-compose-attach) {
   background: linear-gradient(180deg, #F7F8FA 0%, #EDEFF3 100%);
   box-shadow: 0 1px 0 #fff inset, 0 0 0 1px rgba(23, 24, 27, 0.05);
 }
-.sector-coords-btn { box-shadow: var(--glass-rim), 0 3px 8px rgba(23, 24, 27, 0.07); }
 
 /* Tinted blocks keep their tint and only gain the lit edge. */
 :is(.slots-gift, .clan-announcement, .gift-pick-bar, .race-today, .race-join, .double-modal-what) {
@@ -433,10 +432,7 @@ html.has-lightbox:root .bottomnav::after {
 :is(.nearest-free-btn, .race-card-open, .clan-chip, .coin-pill, .recap-cta) {
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
 }
-.shop-wallet-history {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.5));
-  box-shadow: 0 1px 0 #fff inset, 0 2px 6px rgba(138, 90, 12, 0.12);
-}
+/* «История» on the balance card is a plain link since 25.11.2026 (no white well behind it). */
 
 /* Small solid orange / gold buttons: the same gloss as the big ones. */
 :is(.diary-save, .map-geo-banner-btn, .comments-send, .shop-equipped, .map-selection-bar-btn) { box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset; }
@@ -448,14 +444,9 @@ html.has-lightbox:root .bottomnav::after {
   background: var(--glass-fill);
   box-shadow: var(--glass-rim), 0 6px 16px rgba(23, 24, 27, 0.07);
 }
-:is(.sector-owner-highlight-row, .sector-coholder) {
+.sector-holders-row {
   background: var(--glass-fill);
   box-shadow: var(--glass-rim), 0 3px 8px rgba(23, 24, 27, 0.06);
-}
-.sector-coords {
-  background: linear-gradient(180deg, #F7F8FA 0%, #EEF0F4 100%);
-  border-color: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 1px 3px rgba(23, 24, 27, 0.07) inset, 0 0 0 1px rgba(23, 24, 27, 0.05);
 }
 /* The sheet runs on into the page below it, so it stays plain white (a gradient
    to grey made its bottom end look cut) and only its top edge has depth. */
@@ -1332,7 +1323,7 @@ html[lang="ka"] .challenges-week-top { padding-top: 40px; }
 .map-sheet-card { background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.62)); }
 .map-hud { background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.66)); }
 .map-sheet-card .defense-shields svg { stroke: #5E918A; fill: rgba(18, 161, 144, 0.1); }
-.map-sheet-card .defense-shields svg.on { fill: #12A190; stroke: #0E8074; }
+.map-sheet-card .defense-shields svg.on { fill: #12A190; stroke: #12A190; }
 .map-hud .legend-dot { filter: drop-shadow(0 0 0.7px rgba(23, 24, 27, 0.6)); }
 .map-hud .map-legend-row { --hud-ink: #34363E; }
 .map-sheet-card .badge:not(.badge-shield) { box-shadow: 0 0 0 1px rgba(23, 24, 27, 0.1) inset; }
@@ -1347,7 +1338,7 @@ html.tg-band {
 }
 html.tg-band :is(#screen-catch-photo, #screen-profile, #screen-user-profile, #screen-territory, #screen-clan) { padding-top: 0; }
 html.tg-band .profile-hero { margin-left: -20px; margin-right: -20px; --hero-r: 22px; padding: calc(10px + var(--band)) 20px 22px; }
-html.tg-band .sector-hero-map .territory-thumb-wrap { height: calc(230px + var(--band)); }
+html.tg-band .sector-hero-map .territory-thumb-wrap { height: calc(320px + var(--band)); }
 html.tg-band .sector-hero-map-icons { top: calc(10px + var(--band)); }
 html.tg-band #screen-clan .clan-hero { margin-top: 0; margin-left: 0; margin-right: 0; border-radius: 0 0 22px 22px; padding-top: calc(12px + var(--band)); }
 /* The iPhone home-screen app: the clan banner runs up under the status bar too (the profile, the sector and the catch photo already do, globals.css). */

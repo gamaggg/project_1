@@ -8,8 +8,9 @@ import { createClient } from '@/lib/supabase/client'
 // player online) and whenever the app comes back to the screen (staleTime 15 s, so a return always asks);
 // while it is on, everybody but the super admin sees the maintenance screen (FishZoneApp). Any failure to ask (no
 // network, the function not there yet) counts as «off»: the switch must never lock players out by accident.
-export type Maintenance = { enabled: boolean; message: string | null; since: string | null }
-const OFF: Maintenance = { enabled: false, message: null, since: null }
+// shopClosed — «Заглушка магазина» (25.11.2026, supabase-drafts/economy-24-11/12): players see «Магазин обновляется».
+export type Maintenance = { enabled: boolean; message: string | null; since: string | null; shopClosed: boolean }
+const OFF: Maintenance = { enabled: false, message: null, since: null, shopClosed: false }
 
 export function useMaintenance() {
   return useQuery({
@@ -22,7 +23,12 @@ export function useMaintenance() {
       const { data, error } = await supabase.rpc('get_maintenance')
       if (error || !data) return OFF
       const r = data as Record<string, unknown>
-      return { enabled: r.enabled === true, message: typeof r.message === 'string' ? r.message : null, since: typeof r.since === 'string' ? r.since : null }
+      return {
+        enabled: r.enabled === true,
+        message: typeof r.message === 'string' ? r.message : null,
+        since: typeof r.since === 'string' ? r.since : null,
+        shopClosed: r.shop_closed === true,
+      }
     },
   })
 }
@@ -38,3 +44,21 @@ export function useSetMaintenance() {
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['maintenance'] }),
   })
 }
+
+// «Заглушка магазина»: the super admin closes the Shop for players (and opens it again) from «Управление».
+export function useSetShopClosed() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (closed: boolean) => {
+      const supabase = createClient()
+      const { error } = await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ error: { message: string } | null }>).call(
+        supabase,
+        'admin_set_shop_closed',
+        { p_closed: closed }
+      )
+      if (error) throw error
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['maintenance'] }),
+  })
+}
+

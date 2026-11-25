@@ -2,14 +2,16 @@
 
 import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useClanBadges, useWeeklyLeaderboard } from '@/lib/supabase/queries'
+import { useClanBadges, useSecretBox, useWeeklyLeaderboard } from '@/lib/supabase/queries'
+import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
 import { PartnerPrizeCard } from '@/components/app-shell/PartnerPrizeCard'
 import type { WeeklyLeaderboardEntry } from '@/lib/data/types'
 import { CITIES, type CityId } from '@/lib/data/city'
-import { formatWeekOfMonth, pluralCatches, pluralSectors } from '@/lib/format'
+import { formatWeekLeft, formatWeekOfMonth, pluralCatches, pluralSectors } from '@/lib/format'
 import { tn } from '@/lib/i18n'
 import { nameInitials } from '@/lib/initials'
 
@@ -73,6 +75,7 @@ export function PodiumItem({
   enterDelayMs,
   clanCrest,
   isMe = false,
+  prize,
 }: {
   entry: WeeklyLeaderboardEntry
   rank: 1 | 2 | 3
@@ -81,6 +84,8 @@ export function PodiumItem({
   clanCrest?: unknown
   // The viewer's own place gets a mark.
   isMe?: boolean
+  // The week's prize for this place (live week, where the box is open).
+  prize?: { coins: number; key?: true; rank: 1 | 2 | 3 }
 }) {
   return (
     <button
@@ -96,7 +101,127 @@ export function PodiumItem({
       </div>
       <div className="rating-podium-stat-main">{entry.sectorsThisWeek} {pluralSectors(entry.sectorsThisWeek)}</div>
       <div className="rating-podium-stat-sub">{entry.catchesThisWeek} {pluralCatches(entry.catchesThisWeek)}</div>
+      {prize && <PodiumPrize rank={prize.rank} />}
     </button>
+  )
+}
+
+// The week's own prizes for the top 3 (grant_weekly_rank_awards, 25.11.2026): 300 coins and a key (a free secret box),
+// 200, 100 — for a player with at least one sector of the week. Shown on the podium where the box is open.
+export const WEEK_PRIZES: { rank: 1 | 2 | 3; coins: number; key?: true }[] = [
+  { rank: 1, coins: 300, key: true },
+  { rank: 2, coins: 200 },
+  { rank: 3, coins: 100 },
+]
+// A prize under a podium place (or an empty one): the coins, and the key for the first. A tap explains it (owner,
+// 25.11.2026) — without opening the player's profile, which the podium place does.
+function PodiumPrize({ rank }: { rank: 1 | 2 | 3 }) {
+  const [open, setOpen] = useState(false)
+  const prize = WEEK_PRIZES[rank - 1]
+  return (
+    <>
+      <span
+        role="button"
+        tabIndex={0}
+        className="rating-podium-prize"
+        onClick={(e) => {
+          e.stopPropagation()
+          setOpen(true)
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            e.stopPropagation()
+            setOpen(true)
+          }
+        }}
+      >
+        {prize.coins}
+        <CoinIcon size={16} />
+        {prize.key && (
+          <>
+            +{/* eslint-disable-next-line @next/next/no-img-element -- a small icon, the slots' own key */}
+            <img src="/slots/key.webp" width={18} height={18} alt={tn('terr.weekPrizeKey')} />
+          </>
+        )}
+      </span>
+      {open && <PrizeInfo rank={rank} onClose={() => setOpen(false)} />}
+    </>
+  )
+}
+
+// What a podium prize is (owner: «explain it nicer»): the medal, the prize large, the key's meaning, three short rules
+// with icons. The card sits in a portal, but React still bubbles its clicks to the podium button, so every
+// click here stops.
+function PrizeInfo({ rank, onClose }: { rank: 1 | 2 | 3; onClose: () => void }) {
+  const prize = WEEK_PRIZES[rank - 1]
+  const close = (e: { stopPropagation: () => void }) => {
+    e.stopPropagation()
+    onClose()
+  }
+  return createPortal(
+    <div className="modal-overlay" onClick={close}>
+      <div className="modal-card prize-info" role="dialog" aria-label={tn('terr.prizeTitle', { n: rank })} onClick={(e) => e.stopPropagation()}>
+        <div className="prize-info-medal" style={{ background: `linear-gradient(160deg, ${MEDAL_COLOR[rank]}, ${MEDAL_COLOR[rank]}CC)` }}>
+          {rank}
+        </div>
+        <div className="modal-title">{tn('terr.prizeTitle', { n: rank })}</div>
+        <div className="prize-info-prize">
+          <span className="prize-info-coins">
+            {prize.coins}
+            <CoinIcon size={28} />
+          </span>
+          {prize.key && (
+            <span className="prize-info-key">
+              +{/* eslint-disable-next-line @next/next/no-img-element -- the slots' own key */}
+              <img src="/slots/key.webp" width={34} height={34} alt="" />
+            </span>
+          )}
+        </div>
+        {prize.key && <div className="prize-info-keynote">{tn('terr.prizeKeyNote')}</div>}
+        <ul className="prize-info-rules">
+          <li>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M7 4h10v5a5 5 0 0 1-10 0V4z" />
+              <path d="M7 6H4.5v1.5A3.5 3.5 0 0 0 8 11M17 6h2.5v1.5A3.5 3.5 0 0 1 16 11" />
+              <path d="M12 14v3.5M8.5 20.5h7" />
+            </svg>
+            {tn('terr.prizeRuleTop')}
+          </li>
+          <li>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinejoin="round" aria-hidden>
+              <path d="M12 2.8l7.8 4.6v9.2L12 21.2l-7.8-4.6V7.4z" />
+            </svg>
+            {tn('terr.prizeRuleSector')}
+          </li>
+          <li>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" />
+            </svg>
+            {tn('terr.prizeRuleWhen')}
+          </li>
+        </ul>
+        <button className="btn-primary" onClick={close}>
+          {tn('sector.badgeInfo.ok')}
+        </button>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+// A podium place nobody holds yet (one or two players this week): its prize waits, «Свободно».
+export function EmptyPrizePlace({ rank }: { rank: 1 | 2 | 3 }) {
+  return (
+    <div className={`rating-podium-item rating-podium-empty${rank === 1 ? ' rank-1' : ''}`}>
+      <div className="rating-podium-empty-ring" style={{ width: rank === 1 ? 88 : 72, height: rank === 1 ? 88 : 72 }}>
+        <div className="rating-podium-medal" style={{ background: `linear-gradient(160deg, ${MEDAL_COLOR[rank]}, ${MEDAL_COLOR[rank]}CC)` }}>
+          {rank}
+        </div>
+      </div>
+      <div className="rating-podium-name rating-podium-free">{tn('terr.placeFree')}</div>
+      <PodiumPrize rank={rank} />
+    </div>
   )
 }
 
@@ -111,6 +236,19 @@ export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUs
   const podium = entries.slice(0, 3)
   const rest = entries.slice(3)
   const slots = podiumSlots(podium)
+  // The week's prizes stand on the podium (25.11.2026) — for the whole city's rating only (among friends the places
+  // aren't the prize places), where the box is open; all three places shown, a free one with its prize waiting.
+  const { data: box } = useSecretBox()
+  const prized = !!box && scope === 'all'
+  const prizeSlots = prized ? [podium[1] ?? null, podium[0] ?? null, podium[2] ?? null] : slots
+  // Among friends the places are the friends' own, not the prize places: a friend gets the prize of their place in the
+  // whole city, and only if they are in its top 3 (the city's list is the same query as «Все», usually cached).
+  const { data: cityEntries = [] } = useWeeklyLeaderboard(false, 0, cityInfo.idPrefix, cityInfo.timezone, 500)
+  const prizeOf = (userId: string) => {
+    if (!box) return undefined
+    const cityRank = cityEntries.findIndex((e) => e.userId === userId) + 1
+    return cityRank >= 1 && cityRank <= 3 ? { ...WEEK_PRIZES[cityRank - 1], rank: cityRank as 1 | 2 | 3 } : undefined
+  }
 
   return (
     <>
@@ -121,7 +259,9 @@ export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUs
         <div className={`filter-chip${scope === 'friends' ? ' active' : ''}`} onClick={() => setScope('friends')}>
           {tn('terr.friends')}
         </div>
-        <span className="rating-week-badge rating-week-badge-inline">{formatWeekOfMonth(0, cityInfo.timezone)}</span>
+        <span className="rating-week-badge rating-week-badge-inline">
+          {formatWeekOfMonth(0, cityInfo.timezone)} · {formatWeekLeft(cityInfo.timezone)}
+        </span>
       </div>
 
       <PartnerPrizeCard city={city} week={0} />
@@ -134,10 +274,20 @@ export function WeeklyLeaderboard({ city, onOpenUser }: { city: CityId; onOpenUs
         </div>
       ) : (
         <>
-          <div className="rating-podium">
-            {slots.map((entry, i) =>
+          <div className={`rating-podium${prized ? ' prized' : ''}`}>
+            {prizeSlots.map((entry, i) =>
               entry ? (
-                <PodiumItem key={entry.userId} entry={entry} rank={entry.rank as 1 | 2 | 3} onOpenUser={onOpenUser} clanCrest={badges?.get(entry.userId)?.crest} isMe={entry.userId === user?.id} />
+                <PodiumItem
+                  key={entry.userId}
+                  entry={entry}
+                  rank={entry.rank as 1 | 2 | 3}
+                  onOpenUser={onOpenUser}
+                  clanCrest={badges?.get(entry.userId)?.crest}
+                  isMe={entry.userId === user?.id}
+                  prize={prizeOf(entry.userId)}
+                />
+              ) : prized ? (
+                <EmptyPrizePlace key={`free-${i}`} rank={([2, 1, 3] as const)[i]} />
               ) : (
                 <div key={`empty-${i}`} className="rating-podium-item" aria-hidden />
               )

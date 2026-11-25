@@ -62,6 +62,73 @@ export function useBuyShopItem() {
   })
 }
 
+// ─── Новинки и секретный бокс (24.11.2026, supabase-drafts/economy-24-11/03, 04) ───
+// The functions are typed loosely: the generated types do not know them until the migrations are applied, and before
+// that every call here answers «nothing new / no box» instead of failing.
+type LooseRpc = (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>
+const looseRpc = () => {
+  const supabase = createClient()
+  return supabase.rpc.bind(supabase) as unknown as LooseRpc
+}
+
+// What is NEW in the Shop for this player: shop_new_items() also marks «first seen» for anything new, so the badge
+// burns for 3 days (08, 25.11.2026; was 7) from this player's first visit after the update. Called once when the app opens (FishZoneApp), the
+// Shop reads the same cached answer.
+export function useShopNew() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['shop-new', user?.id ?? null],
+    enabled: !!user,
+    staleTime: 30 * 60_000,
+    queryFn: async (): Promise<Set<string>> => {
+      const { data, error } = await looseRpc()('shop_new_items')
+      if (error || !Array.isArray(data)) return new Set()
+      return new Set(data as string[])
+    },
+  })
+}
+export function useIsShopNew(id: string): boolean {
+  const { data } = useShopNew()
+  return !!data?.has(id)
+}
+
+// Секретный бокс (24.11.2026): opens any number of times for the price; null — no box for this player (not released yet,
+// or not in the database). free — free openings won on the slots (three chests, 25.11.2026); they go first.
+export type SecretBoxState = { price: number; free: number }
+export type SecretBoxResult = { itemId: string | null; tier: number; duplicate: boolean; refund: number; coins: number; free: boolean }
+export function useSecretBox() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['secret-box', user?.id ?? null],
+    enabled: !!user,
+    queryFn: async (): Promise<SecretBoxState | null> => {
+      const { data, error } = await looseRpc()('get_secret_box_state')
+      if (error || !data) return null
+      const d = data as { price: number; free?: number }
+      return { price: d.price, free: d.free ?? 0 }
+    },
+  })
+}
+export function useOpenSecretBox() {
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+  return useMutation({
+    mutationFn: async (): Promise<SecretBoxResult> => {
+      const { data, error } = await looseRpc()('open_secret_box')
+      if (error) throw error
+      const d = data as { item_id: string | null; tier: number; duplicate: boolean; refund: number; coins?: number; free?: boolean }
+      return { itemId: d.item_id, tier: d.tier, duplicate: !!d.duplicate, refund: d.refund ?? 0, coins: d.coins ?? 0, free: !!d.free }
+    },
+    // The balance and the inventory refresh at once (the coins chip on the screen counts down while the strip runs).
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-inventory', user?.id ?? null] })
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['my-coin-transactions', user?.id ?? null] })
+      queryClient.invalidateQueries({ queryKey: ['secret-box', user?.id ?? null] })
+    },
+  })
+}
+
 // itemId null unequips the current avatar frame — see equip_shop_item.
 export function useEquipShopItem() {
   const queryClient = useQueryClient()

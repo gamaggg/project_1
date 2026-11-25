@@ -5,20 +5,21 @@ import { createPortal } from 'react-dom'
 import { useI18n } from '@/lib/i18n'
 import type { Territory } from '@/lib/data/types'
 
-const SHIELD = 'M12 2.5l7.5 2.8v5.6c0 4.7-3.2 8.3-7.5 10.6-4.3-2.3-7.5-5.9-7.5-10.6V5.3z'
+// «Защита сектора» (icon changed 24.11.2026): three lightning bolts — deliberately not
+// shields, so it isn't mixed up with the slots shield (the «Под щитом» badge), which only keeps a sector from
+// being taken; defense is what catches build up and knock off.
+export const DEFENSE_PATH = 'M15.2 2.6 5.4 13.4h5.7L8.8 21.4l9.8-10.8h-5.7z'
 
-// «Защита сектора»: three shields, as many filled as the sector's defense
-// right now (0–3). Same teal as the «Под щитом» badge — both mean "this
-// sector is protected", just two different ways.
+// Three bolts, as many filled as the sector's defense right now (0–3).
 export function DefenseShields({ value, size = 14 }: { value: number; size?: number }) {
   const { t } = useI18n()
   return (
     <span className="defense-shields" role="img" aria-label={t('defense.label', { value })}>
       {[0, 1, 2].map((i) => (
-        // Cropped to the shield itself (no empty margin in the box), so a row
-        // of shields lines up flush with the badges beside or above it.
+        // Cropped to the bolt itself (no empty margin in the box), so a row
+        // of bolts lines up flush with the badges beside or above it.
         <svg key={i} width={Math.round(size * 0.8)} height={size} viewBox="3.5 1.5 17 21" className={i < value ? 'on' : ''} aria-hidden>
-          <path d={SHIELD} />
+          <path d={DEFENSE_PATH} />
         </svg>
       ))}
     </span>

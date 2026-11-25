@@ -14,13 +14,49 @@ export type AvatarFrame = {
   // Premium (800+) frames move: the ring turns, a soft copy of it glows
   // behind, and each has its own extra — see AvatarFrameRing.tsx and
   // .avatar-frame-fx in globals.css.
-  fx?: 'aurora' | 'flame' | 'comet' | 'holo' | 'royal' | 'katran' | 'som'
+  fx?: 'aurora' | 'flame' | 'comet' | 'holo' | 'royal' | 'katran' | 'som' | 'scales' | 'storm'
   // The jackpot frames (never for sale — only the slots' jackpot, each
   // city its own): the city's jackpot fish from the reels swims round the rim.
   swimmer?: string
 }
 
 export const AVATAR_FRAMES: AvatarFrame[] = [
+  // Новинки 24.11.2026 (shop_items sort_order −4…−1): one cheap, two middle, one dear.
+  {
+    // «Леска» (300): a ring wound with orange-and-cream fishing line.
+    id: 'frame_line',
+    get label() {
+      return tnd('shopFrame.frame_line')
+    },
+    ring: 'repeating-conic-gradient(from 8deg, #E8541A 0deg 7deg, #FFF1E4 7deg 11deg, #F7A26B 11deg 15deg, #FFF1E4 15deg 19deg)',
+  },
+  {
+    // «Коралл» (700): pink-to-orange coral, softly glowing.
+    id: 'frame_coral',
+    get label() {
+      return tnd('shopFrame.frame_coral')
+    },
+    ring: 'conic-gradient(from 200deg, #FF6F91, #FF9671, #FFC75F, #FF9671, #F45B8C, #FFB3A1, #FF6F91)',
+    glow: true,
+  },
+  {
+    // «Чешуя» (1 100): silver-teal scale segments turning slowly, the glow breathing behind.
+    id: 'frame_scales',
+    get label() {
+      return tnd('shopFrame.frame_scales')
+    },
+    ring: 'repeating-conic-gradient(from 0deg, #1F6E7E 0deg 9deg, #5FB7C2 9deg 13deg, #CFF7F1 13deg 15deg, #2A8696 15deg 24deg)',
+    fx: 'scales',
+  },
+  {
+    // «Шторм» (1 900): a dark storm ring; lightning flashes strike it in turn.
+    id: 'frame_storm',
+    get label() {
+      return tnd('shopFrame.frame_storm')
+    },
+    ring: 'conic-gradient(from 0deg, #0A1430, #1C2F66, #3D5BB8, #1C2F66, #0A1430, #23377A, #7EA2FF, #23377A, #0A1430)',
+    fx: 'storm',
+  },
   {
     id: 'frame_bronze',
     get label() {

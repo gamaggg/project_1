@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { AvatarFrameRing } from '@/components/app-shell/AvatarFrameRing'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
+import { StarIcon } from '@/components/app-shell/StarsShop'
 import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { TerritoryColorPreviewMap } from '@/components/app-shell/TerritoryColorPreviewMap'
 import { StyledName } from '@/components/app-shell/StyledName'
@@ -38,6 +39,7 @@ export function ShopTryOn({
   onBuy,
   onEquip,
   onClose,
+  stars,
 }: {
   item: ShopItem
   look: TryOnLook
@@ -45,6 +47,8 @@ export function ShopTryOn({
   onBuy: () => void
   onEquip: () => void
   onClose: () => void
+  // Sold only for Telegram Stars (25.11.2026): the price in Stars instead of coins.
+  stars?: number
 }) {
   const bg = resolveHeroBackground(item.category === 'hero_bg' ? item.id : look.heroBg)
   const frame = resolveAvatarFrame(item.category === 'avatar_frame' ? item.id : look.frame)
@@ -85,7 +89,11 @@ export function ShopTryOn({
         <div className="tryon-body">
           <div className="tryon-label">{tn('shop.tryonLabel')}</div>
           <div className="modal-title">{item.name}</div>
-          {state === 'locked' && !item.purchasable ? (
+          {state === 'locked' && stars ? (
+            <button className="btn-primary shop-price-btn" onClick={onBuy}>
+              {tn('shop.buyFor')} <StarIcon size={16} /> {stars}
+            </button>
+          ) : state === 'locked' && !item.purchasable ? (
             <button className="btn-primary" onClick={onBuy}>
               {tn('shop.knockChance', { chance: jackpotChanceLabel() })}
             </button>

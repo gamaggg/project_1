@@ -1,7 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { C2Bar, C2Card, C2Coins, C2Count, C2Sheet, fmtAgo, speciesName, useC2, useDemoNow } from '@/components/clan2/C2Common'
 import { ItemPreview, itemName } from '@/components/clan2/ClanItems'
@@ -14,6 +14,8 @@ import { DAY, PROJECT_EFFECTS, TAX_RATES, fmt, treasuryCap } from '@/lib/clan2/r
 import type { AlertKind, QuestKind, TreasuryEntry, TreasuryKind } from '@/lib/clan2/types'
 import { questLabel } from '@/components/clan2/WeekTab'
 import { currentLocale, tn, tnd } from '@/lib/i18n/runtime'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { useProfile } from '@/lib/supabase/queries'
 
 // «Общак»: what is in the clan's treasury and what it is saving for, where the coins of the week came from, the catch
 // tax (the leaders' setting), and the clan's one journal — the coins, the clan's events and its alarms in one list.
@@ -40,9 +42,18 @@ export function TreasuryTab({ onGo, events, onTour }: { onGo?: (to: Go) => void;
   const [amountText, setAmountText] = useState('100')
   const amount = Number(amountText) || 0
   const [rentOpen, setRentOpen] = useState(false)
-  // Gift coins (the welcome and invite bonuses) may not go into the treasury: the server says how many may,
-  // read when the sheet opens; a deposit over it opens the window that explains why instead.
-  const [giftOpen, setGiftOpen] = useState(false)
+  // Gift coins (the welcome and invite bonuses) may not go into the treasury: the server says how many may, read
+  // when the sheet opens. The sheet shows the split as a bar; «?» by the bonus opens a small tip right there.
+  const [whyOpen, setWhyOpen] = useState(false)
+  const whyRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!whyOpen) return
+    const close = (e: PointerEvent) => {
+      if (!whyRef.current?.contains(e.target as Node)) setWhyOpen(false)
+    }
+    document.addEventListener('pointerdown', close)
+    return () => document.removeEventListener('pointerdown', close)
+  }, [whyOpen])
   const [capOpen, setCapOpen] = useState(false)
   // The source opened to its lines: one of the week's groups, or what was spent.
   const [info, setInfo] = useState<'srcTax' | 'srcDeposit' | 'srcShares' | 'srcOther' | 'spent' | null>(null)
@@ -93,7 +104,12 @@ export function TreasuryTab({ onGo, events, onTour }: { onGo?: (to: Go) => void;
     [todayStart],
   )
   const maxFlow = Math.max(1, ...flow)
-  const wallet = s.wallet
+  // The coins on the account are the app's own (the same number as the header, fresh after slots or a catch); the
+  // clan's copy is read again only every 30 s and showed an old balance (24.11.2026). The preview has no account.
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+  const { data: myProfile } = useProfile(s.live ? user?.id ?? null : null)
+  const wallet = s.live && typeof myProfile?.coins === 'number' ? myProfile.coins : s.wallet
   const { data: donatable = null } = useQuery({
     queryKey: ['clan2-donatable', clanId, wallet],
     enabled: depositOpen && !!clanId && s.settings.enabled,
@@ -104,16 +120,19 @@ export function TreasuryTab({ onGo, events, onTour }: { onGo?: (to: Go) => void;
   const isMember = s.members.some((m) => m.id === s.myId)
   // Why the deposit cannot go in as typed (the button stays off and says nothing else).
   const room = Math.max(0, cap - s.treasury.balance)
+  const allMax = Math.min(donatable ?? wallet, wallet, room)
   const depositProblem =
     room === 0
       ? tn('clan2.treasury.depositFull')
       : amount > wallet
         ? tn('clan2.treasury.depositWalletShort', { n: fmt(wallet) })
-        : amount > 0 && amount < 10
-          ? tn('clan2.treasury.depositMin')
-          : amount > room
-            ? tn('clan2.treasury.depositRoom', { n: fmt(room) })
-            : null
+        : donatable !== null && amount > donatable
+          ? tn('clan2.treasury.depositOverDonatable', { n: fmt(donatable) })
+          : amount > 0 && amount < 10
+            ? tn('clan2.treasury.depositMin')
+            : amount > room
+              ? tn('clan2.treasury.depositRoom', { n: fmt(room) })
+              : null
 
   return (
     <div className="c2-stack">
@@ -248,12 +267,52 @@ export function TreasuryTab({ onGo, events, onTour }: { onGo?: (to: Go) => void;
 
       <C2Sheet open={depositOpen} onClose={() => setDepositOpen(false)} title={tn('clan2.treasury.depositTitle')}>
         <p className="c2-muted">{tn('clan2.treasury.depositWallet', { n: fmt(wallet) })}</p>
+        {/* Gift coins (welcome / invite bonus) stay out of the treasury: the account split as a bar, at a glance (24.11). */}
+        {donatable !== null && donatable < wallet && (
+          <div className="c2-dep-split">
+            <div className="c2-dep-bar" aria-hidden>
+              <span className="can" style={{ width: `${(donatable / Math.max(1, wallet)) * 100}%` }} />
+              <span className="gift" />
+            </div>
+            {/* «Можно внести N · Почему?» — the why only in the tip, not spelled out here. */}
+            <div className="c2-dep-legend" ref={whyRef}>
+              <span className="c2-dep-item">
+                <i className="can" />
+                {tn('clan2.treasury.depositCanLabel')} <b>{fmt(donatable)}</b>
+              </span>
+              <button
+                type="button"
+                className="c2-dep-why"
+                aria-expanded={whyOpen}
+                onClick={(e) => {
+                  // The tip's arrow points at the middle of «Почему?».
+                  const b = e.currentTarget
+                  whyRef.current?.style.setProperty('--why-x', `${Math.round(b.offsetLeft + b.offsetWidth / 2 - 6)}px`)
+                  setWhyOpen((o) => !o)
+                }}
+              >
+                {tn('clan2.treasury.depositWhy')}
+              </button>
+              {whyOpen && (
+                <span className="c2-dep-tip" role="tooltip">
+                  {tn('clan2.treasury.depositGiftTip', { n: fmt(wallet - donatable) })}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
         <div className="c2-presets">
           {PRESETS.map((p) => (
             <button key={p} className={`filter-chip${amount === p ? ' active' : ''}`} onClick={() => setAmountText(String(p))}>
               {fmt(p)}
             </button>
           ))}
+          {/* «Все» (24.11.2026): every coin that may go in now — not the gift ones, not over the treasury's room. */}
+          {allMax > 0 && (
+            <button className={`filter-chip${amount === allMax ? ' active' : ''}`} onClick={() => setAmountText(String(allMax))}>
+              {tn('clan2.treasury.presetAll')}
+            </button>
+          )}
         </div>
         <input
           className="c2-input"
@@ -272,26 +331,15 @@ export function TreasuryTab({ onGo, events, onTour }: { onGo?: (to: Go) => void;
           className="btn-primary"
           disabled={!!depositProblem || amount === 0}
           onClick={() => {
-            if (donatable !== null && amount > donatable) {
-              setDepositOpen(false)
-              setGiftOpen(true)
-              return
-            }
             if (act(deposit(amount))) {
               say(tn('clan2.ok.deposited', { n: fmt(amount) }))
               setDepositOpen(false)
+              // The server takes the coins a moment later: then the header and this sheet read the new balance.
+              if (user) window.setTimeout(() => void queryClient.invalidateQueries({ queryKey: ['profile', user.id] }), 1500)
             }
           }}
         >
           {tn('clan2.treasury.depositGo', { n: fmt(amount) })}
-        </button>
-      </C2Sheet>
-
-      <C2Sheet open={giftOpen} onClose={() => setGiftOpen(false)} title={tn('clan2.treasury.giftTitle')}>
-        <p className="c2-muted">{tn('clan2.treasury.giftText')}</p>
-        <p className="c2-hint">{donatable ? tn('clan2.treasury.giftCan', { n: fmt(donatable) }) : tn('clan2.treasury.giftNone')}</p>
-        <button className="btn-primary" onClick={() => setGiftOpen(false)}>
-          {tn('clan2.treasury.giftOk')}
         </button>
       </C2Sheet>
 

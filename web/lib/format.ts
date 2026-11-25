@@ -187,6 +187,15 @@ export function formatWeekOfMonth(offsetWeeks: number, timezone: string = 'Asia/
   return tn('fmt.weekOfMonth', { month: tn('fmt.months').split('|')[monday.getUTCMonth()], week: weekOfMonth })
 }
 
+// What's left of the city's week (it ends on Sunday at midnight, local): «ещё 4 дня», on Sunday «последний день».
+export function formatWeekLeft(timezone: string = 'Asia/Tbilisi'): string {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date())
+  const at = (t: string) => Number(parts.find((p) => p.type === t)!.value)
+  const daysSinceMonday = (new Date(Date.UTC(at('year'), at('month') - 1, at('day'))).getUTCDay() + 6) % 7
+  const left = 7 - daysSinceMonday
+  return left <= 1 ? tn('terr.weekLastDay') : tn('terr.weekLeft', { n: left, days: tn('plural.day', { count: left }) })
+}
+
 // Compact relative time for dense rows like comments: «сейчас», «5 мин»,
 // «3 ч», «2 д», then a short date — formatWhen's «Сегодня · 14:05» is too
 // wide to sit next to a name on one line.

@@ -18,6 +18,29 @@ export type TerritorySkin = {
 }
 
 export const TERRITORY_SKINS: TerritorySkin[] = [
+  // За Звёзды Telegram (25.11.2026, supabase-drafts/economy-24-11/11): только за Звёзды, не за монеты и не из бокса.
+  { id: 'skin_jellyfish', animated: true, get label() {
+      return tnd('skin.skin_jellyfish')
+    } },
+  { id: 'skin_lava', animated: true, get label() {
+      return tnd('skin.skin_lava')
+    } },
+  { id: 'skin_constellations', animated: true, get label() {
+      return tnd('skin.skin_constellations')
+    } },
+  // Новинки 24.11.2026 (shop_items sort_order −4…−1): ice 300, lilies 600, bubbles 900, whirlpool 2 000 (animated).
+  { id: 'skin_ice', get label() {
+      return tnd('skin.skin_ice')
+    } },
+  { id: 'skin_lilies', get label() {
+      return tnd('skin.skin_lilies')
+    } },
+  { id: 'skin_bubbles', get label() {
+      return tnd('skin.skin_bubbles')
+    } },
+  { id: 'skin_whirlpool', animated: true, get label() {
+      return tnd('skin.skin_whirlpool')
+    } },
   { id: 'skin_stripes', get label() {
       return tnd('skin.skin_stripes')
     } },

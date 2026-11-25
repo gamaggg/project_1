@@ -378,6 +378,51 @@ export const HERO_BACKGROUNDS: HeroBackground[] = [
     animated: true,
     kind: 'golddust',
   },
+  // Новинки 24.11.2026 (shop_items sort_order −4…−1): snow 300, fog 700, floats 1 100, sunset 1 900.
+  {
+    id: 'snow',
+    get label() {
+      return tnd('heroBg.snow')
+    },
+    base: 'linear-gradient(180deg,#24344F,#141E33 70%,#0C1222)',
+    css: 'linear-gradient(180deg,#24344F,#141E33 70%,#0C1222)',
+    accentRgb: '190,215,255',
+    animated: true,
+    kind: 'snow',
+  },
+  {
+    id: 'fog',
+    get label() {
+      return tnd('heroBg.fog')
+    },
+    base: 'linear-gradient(180deg,#4E6372,#34495A 58%,#22323F)',
+    css: 'linear-gradient(180deg,#4E6372,#34495A 58%,#22323F)',
+    accentRgb: '205,222,232',
+    animated: true,
+    kind: 'fog',
+  },
+  {
+    id: 'floats',
+    get label() {
+      return tnd('heroBg.floats')
+    },
+    base: 'linear-gradient(180deg,#0B1226,#0E1B3A 50%,#07101F)',
+    css: 'linear-gradient(180deg,#0B1226,#0E1B3A 50%,#07101F)',
+    accentRgb: '255,150,60',
+    animated: true,
+    kind: 'floats',
+  },
+  {
+    id: 'sunset',
+    get label() {
+      return tnd('heroBg.sunset')
+    },
+    base: 'linear-gradient(180deg,#5B2A6E,#B0466A 38%,#E8794F 60%,#3A1F4A 61%,#22122F)',
+    css: 'linear-gradient(180deg,#5B2A6E,#B0466A 38%,#E8794F 60%,#3A1F4A 61%,#22122F)',
+    accentRgb: '255,190,120',
+    animated: true,
+    kind: 'sunset',
+  },
 ]
 
 export const DEFAULT_HERO_BG = 'default'

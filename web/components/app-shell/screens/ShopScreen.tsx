@@ -1,7 +1,7 @@
 'use client'
 
 import { useClan2Enabled } from '@/lib/clan2/live/flag'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { LiveCoinBalance } from '@/components/app-shell/CoinCountUp'
@@ -12,6 +12,7 @@ import { SHOP_TAB_ICONS } from '@/components/app-shell/icons'
 import { usePurchaseFlow } from '@/components/app-shell/usePurchaseFlow'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { AVATAR_FRAMES, jackpotChanceLabel, JACKPOT_FRAME } from '@/lib/data/shopItems'
+import { SecretBoxCard } from '@/components/app-shell/SecretBox'
 import { ShopTryOn } from '@/components/app-shell/ShopTryOn'
 import { AvatarFrameRing } from '@/components/app-shell/AvatarFrameRing'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
@@ -20,11 +21,16 @@ import { HeroBgLive } from '@/components/app-shell/HeroBgLive'
 import { DEFAULT_TERRITORY_COLOR } from '@/lib/data/territoryColors'
 import { SkinPreview } from '@/components/app-shell/SkinPreview'
 import { SlotsCard } from '@/components/app-shell/SlotsCard'
+import { StarIcon, StarsShop, useStarsBuy } from '@/components/app-shell/StarsShop'
+import { useStarsProducts } from '@/lib/supabase/queries/stars'
+import { useMaintenance } from '@/lib/supabase/queries/maintenance'
 import type { CityId } from '@/lib/data/city'
 import {
   useProfile,
   useShopItems,
   useMyInventory,
+  useShopNew,
+  useIsShopNew,
   useBuyShopItem,
   useEquipShopItem,
   useBuffs,
@@ -57,16 +63,19 @@ function rarityClass(price: number): string {
   return 'shop-card-common'
 }
 
-type Category = 'avatar_frame' | 'hero_bg' | 'name_style' | 'territory_skin' | 'buffs'
+type Category = 'avatar_frame' | 'hero_bg' | 'name_style' | 'territory_skin' | 'buffs' | 'stars'
+const SEEN_NEW_KEY = 'shop-new-tabs-seen'
 const CATEGORIES: { id: Category; label: string; icon: React.ReactNode }[] = [
   { id: 'avatar_frame', get label() { return tn('shop.tabFrames') }, icon: SHOP_TAB_ICONS.frame },
   { id: 'hero_bg', get label() { return tn('shop.tabBackgrounds') }, icon: SHOP_TAB_ICONS.background },
   { id: 'name_style', get label() { return tn('shop.tabName') }, icon: SHOP_TAB_ICONS.sparkle },
   { id: 'territory_skin', get label() { return tn('shop.tabSkins') }, icon: SHOP_TAB_ICONS.skin },
   { id: 'buffs', get label() { return tn('shop.tabBuffs') }, icon: SHOP_TAB_ICONS.bolt },
+  // За Звёзды Telegram (25.11.2026): shown only when the player has something to buy there (StarsShop).
+  { id: 'stars', get label() { return tn('shop.tabStars') }, icon: <StarIcon size={16} /> },
 ]
 
-export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpenSlots: () => void }) {
+export function ShopScreen({ onBack, onOpenSlots, onOpenSecretBox }: { onBack: () => void; onOpenSlots: () => void; onOpenSecretBox: () => void }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
   // The 4th-challenge slot bought here is the account's own real weekly
@@ -94,8 +103,37 @@ export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpen
   const [category, setCategory] = useState<Category>('avatar_frame')
   const [historyOpen, setHistoryOpen] = useState(false)
   const [tryOn, setTryOn] = useState<ShopItem | null>(null)
+  // Новинки (24.11.2026): a dot on the tabs that hold something NEW the player hasn't looked at yet. Opening a tab
+  // puts its new items out of the dot (kept on this device); the NEW badges on the items themselves stay their 3 days.
+  const { data: newIds } = useShopNew()
+  const [seenNew, setSeenNew] = useState<Set<string>>(() => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem(SEEN_NEW_KEY) ?? '[]') as string[])
+    } catch {
+      return new Set()
+    }
+  })
+  // For Telegram Stars (25.11.2026): coins and keys on the «Звёзды» tab; the skins sold only for Stars stand on the
+  // «Скины» tab with the rest, priced in Stars (owner: «put the skins in the skins»).
+  const { data: starsProducts = [] } = useStarsProducts()
+  const starsByItem = new Map(starsProducts.filter((p) => p.itemId).map((p) => [p.itemId!, p]))
+  const starsTab = starsProducts.some((p) => !p.itemId)
+  const starsBuy = useStarsBuy()
+  const tabOf = (i: ShopItem): Category => i.category as Category
+  const unseenHere = newIds ? items.filter((i) => tabOf(i) === category && newIds.has(i.id) && !seenNew.has(i.id)).map((i) => i.id) : []
+  // Adjusted during render, the moment the tab is open with something unseen in it.
+  if (unseenHere.length > 0) setSeenNew(new Set([...seenNew, ...unseenHere]))
+  useEffect(() => {
+    try {
+      localStorage.setItem(SEEN_NEW_KEY, JSON.stringify([...seenNew]))
+    } catch {}
+  }, [seenNew])
+  const tabHasNew = (c: Category) => !!newIds && c !== category && items.some((i) => tabOf(i) === c && newIds.has(i.id) && !seenNew.has(i.id))
 
   const isSuperAdmin = useIsSuperAdmin()
+  // «Заглушка магазина» (25.11.2026): closed for players while the super admin checks a release live.
+  const { data: maintenanceState } = useMaintenance()
+  const shopClosed = !!maintenanceState?.shopClosed
   const refundItem = useAdminRefundItem()
   const refundBuff = useAdminRefundBuff()
   const [refunding, setRefunding] = useState<PendingRefund | null>(null)
@@ -136,7 +174,10 @@ export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpen
     const has = item.category === 'hero_bg' ? ownedBg(item.id) : owned.has(item.id)
     return has ? 'owned' : 'locked'
   }
-  const skins = items.filter((i) => i.category === 'territory_skin')
+  // A Stars skin shows only while Stars are open to the player (or once it is theirs).
+  const skins = items.filter((i) => i.category === 'territory_skin' && (i.purchasable || owned.has(i.id) || starsByItem.has(i.id)))
+
+  if (shopClosed && !isSuperAdmin) return <ShopClosed onBack={onBack} />
 
   return (
     <>
@@ -151,35 +192,62 @@ export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpen
           <div style={{ fontWeight: 800, fontSize: 15 }}>{tn('shop.title')}</div>
           <div style={{ width: 36 }} />
         </div>
-        {/* Balance and slots as one block: the balance is a number and a
-            button — it doesn't need a whole card of its own. */}
+        {shopClosed && <div className="shop-stub-strip">Заглушка включена: игроки видят «Магазин обновляется»</div>}
+        {/* The balance (owner, 25.11.2026: the gold card blended with the gold «Пополнить», and two buttons side by side
+            argued): a light card, the number with «монет на счету · История» under it, one gold «Пополнить» on the right. */}
         <div className="shop-wallet">
           <div className="shop-wallet-balance">
             <span key={coinDelta?.n ?? 0} className={`shop-wallet-coin${coinDelta ? ' flip' : ''}`}>
               <CoinIcon size={28} />
             </span>
-            <span className="shop-wallet-num">
-              <LiveCoinBalance value={coins} />
-              {coinDelta && (
-                <span key={coinDelta.n} className={`shop-wallet-delta${coinDelta.amount < 0 ? ' minus' : ''}`} aria-hidden>
-                  {coinDelta.amount < 0 ? '−' : '+'}
-                  {Math.abs(coinDelta.amount)}
-                </span>
-              )}
+            <span className="shop-wallet-main">
+              <span className="shop-wallet-num">
+                <LiveCoinBalance value={coins} />
+                {coinDelta && (
+                  <span key={coinDelta.n} className={`shop-wallet-delta${coinDelta.amount < 0 ? ' minus' : ''}`} aria-hidden>
+                    {coinDelta.amount < 0 ? '−' : '+'}
+                    {Math.abs(coinDelta.amount)}
+                  </span>
+                )}
+              </span>
+              <span className="shop-wallet-sub">
+                <span className="shop-wallet-label">{tn('shop.walletLabel')}</span>
+                <span aria-hidden>·</span>
+                <button className="shop-wallet-history" onClick={() => setHistoryOpen(true)}>
+                  {tn('shop.history')}
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </span>
             </span>
-            <span className="shop-wallet-label">{tn('shop.walletLabel')}</span>
-            <button className="shop-wallet-history" onClick={() => setHistoryOpen(true)}>
-              {tn('shop.history')}
-            </button>
+            {starsTab && (
+              // «Пополнить»: to the «Звёзды» tab — coins and keys for Telegram Stars.
+              <button
+                className="shop-wallet-topup"
+                onClick={() => {
+                  setCategory('stars')
+                  document.querySelector('.shop-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }}
+              >
+                <StarIcon size={15} />
+                {tn('shop.topUp')}
+              </button>
+            )}
           </div>
+        </div>
+        {/* The games under the balance, each its own card (24.11.2026: three blocks glued into one read oddly). */}
+        <div className="shop-games">
           <SlotsCard city={city} onOpen={onOpenSlots} />
+          <SecretBoxCard onOpen={onOpenSecretBox} />
         </div>
 
         <div className="shop-tabs">
-          {CATEGORIES.map((c) => (
+          {CATEGORIES.filter((c) => c.id !== 'stars' || starsTab).map((c) => (
             <button key={c.id} className={`shop-tab${category === c.id ? ' active' : ''}`} onClick={() => setCategory(c.id)}>
               <span>{c.icon}</span>
               {c.label}
+              {tabHasNew(c.id) && <span className="shop-tab-new" aria-label={tn('shop.new')} />}
             </button>
           ))}
         </div>
@@ -252,6 +320,7 @@ export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpen
         {category === 'territory_skin' && (
           <>
             <div className="shop-section-caption">{tn('shop.skinCaption')}</div>
+            {starsBuy.note && <p className="stars-note">{starsBuy.note}</p>}
             <div className="shop-grid">
               {skins.map((item) => (
                 <SkinCard
@@ -260,16 +329,25 @@ export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpen
                   owned={owned.has(item.id)}
                   equipped={profile?.equippedSkin === item.id}
                   previewColor={profile?.territoryColor ?? DEFAULT_TERRITORY_COLOR}
-                  onBuy={() => request(item.price, item.name, () => buyItem.mutate(item.id))}
+                  stars={starsByItem.get(item.id)?.stars}
+                  onBuy={() => {
+                    const sp = starsByItem.get(item.id)
+                    if (sp) starsBuy.start(sp)
+                    else request(item.price, item.name, () => buyItem.mutate(item.id))
+                  }}
                   onEquip={() => equipItem.mutate({ itemId: item.id })}
                   onUnequip={() => equipItem.mutate({ itemId: null, category: 'territory_skin' })}
-                  busy={buyItem.isPending || equipItem.isPending}
+                  busy={buyItem.isPending || equipItem.isPending || starsBuy.busy}
                   onTryOn={() => setTryOn(item)}
                   onRefund={isSuperAdmin && owned.has(item.id) ? () => setRefunding({ kind: 'item', id: item.id, name: item.name, price: item.price }) : undefined}
                 />
               ))}
             </div>
           </>
+        )}
+
+        {category === 'stars' && (
+          <StarsShop />
         )}
 
         {category === 'buffs' && (
@@ -300,9 +378,15 @@ export function ShopScreen({ onBack, onOpenSlots }: { onBack: () => void; onOpen
             city,
           }}
           state={tryOnState(tryOn)}
+          stars={starsByItem.get(tryOn.id)?.stars}
           onBuy={() => {
             const it = tryOn
             setTryOn(null)
+            const sp = starsByItem.get(it.id)
+            if (sp) {
+              starsBuy.start(sp)
+              return
+            }
             // A jackpot frame can't be bought — «Выбить в слотах» goes there instead.
             if (!it.purchasable) onOpenSlots()
             else request(it.price, it.name, () => buyItem.mutate(it.id))
@@ -464,9 +548,11 @@ function FrameCard({
 }) {
   const frame = AVATAR_FRAMES.find((f) => f.id === item.id)
   const prize = !item.purchasable
+  const isNew = useIsShopNew(item.id)
 
   return (
     <div className={`shop-card ${prize ? 'shop-card-jackpot' : rarityClass(item.price)}`} data-tag={prize ? tn('shop.jackpotTag') : undefined}>
+      {isNew && <span className="shop-new-tag">{tn('shop.new')}</span>}
       <div className="shop-card-preview">
         <div className="shop-card-avatar">
           <AvatarFrameRing frame={frame} />
@@ -529,10 +615,12 @@ function BgCard({
   onTryOn: () => void
   onRefund?: () => void
 }) {
+  const isNew = useIsShopNew(item.id)
   const bg = HERO_BACKGROUNDS.find((b) => b.id === item.id)
 
   return (
     <div className={`shop-card ${rarityClass(item.price)}`}>
+      {isNew && <span className="shop-new-tag">{tn('shop.new')}</span>}
       <div className="shop-card-bg-preview" style={{ background: bg?.animated ? bg.base : bg?.css }}>
         {bg && <HeroBgLive bg={bg} variant="swatch" />}
       </div>
@@ -586,8 +674,10 @@ function NameStyleCard({
   onTryOn: () => void
   onRefund?: () => void
 }) {
+  const isNew = useIsShopNew(item.id)
   return (
     <div className={`shop-card ${rarityClass(item.price)}`}>
+      {isNew && <span className="shop-new-tag">{tn('shop.new')}</span>}
       <div className="shop-card-name-preview">
         <StyledName name={displayName} styleId={item.id} />
       </div>
@@ -629,6 +719,7 @@ function SkinCard({
   busy,
   onTryOn,
   onRefund,
+  stars,
 }: {
   item: ShopItem
   owned: boolean
@@ -640,9 +731,13 @@ function SkinCard({
   busy: boolean
   onTryOn: () => void
   onRefund?: () => void
+  // Sold only for Telegram Stars: the price in Stars, and three sparks on the card's tag.
+  stars?: number
 }) {
+  const isNew = useIsShopNew(item.id)
   return (
-    <div className={`shop-card ${rarityClass(item.price)}`}>
+    <div className={`shop-card ${rarityClass(item.price)}${stars ? ' shop-card-stars' : ''}`}>
+      {isNew && <span className="shop-new-tag">{tn('shop.new')}</span>}
       <SkinPreview skinId={item.id} color={previewColor} />
       <div className="shop-card-name">{item.name}</div>
       {equipped ? (
@@ -654,9 +749,9 @@ function SkinCard({
           {tn('shop.apply')}
         </button>
       ) : (
-        <button className="btn-secondary shop-price-btn" onClick={onBuy} disabled={busy}>
-          <CoinIcon size={16} />
-          {item.price}
+        <button className={`btn-secondary shop-price-btn${stars ? ' stars-price-btn' : ''}`} onClick={onBuy} disabled={busy}>
+          {stars ? <StarIcon size={16} /> : <CoinIcon size={16} />}
+          {stars ?? item.price}
         </button>
       )}
       <button className="challenge-swap-btn" onClick={onTryOn}>
@@ -670,3 +765,35 @@ function SkinCard({
     </div>
   )
 }
+
+// What players see while the Shop is closed by «Заглушка магазина»: the usual header and a short card.
+export function ShopClosed({ onBack }: { onBack: () => void }) {
+  return (
+    <>
+      <div className="shop-sticky-top">
+        <div className="header-row">
+          <BackButton onClick={onBack} registerNative={false} />
+          <div style={{ fontWeight: 800, fontSize: 15 }}>{tn('shop.title')}</div>
+          <div style={{ width: 36 }} />
+        </div>
+      </div>
+      <div className="screen-inner">
+        <div className="shop-stub">
+          <div className="shop-stub-icon" aria-hidden>
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 9h16l-1.2 10.2a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8z" />
+              <path d="M8.5 9V7a3.5 3.5 0 0 1 7 0v2" />
+              <path d="M12 12.5v3M12 18h.01" />
+            </svg>
+          </div>
+          <div className="shop-stub-title">{tn('shop.closedTitle')}</div>
+          <div className="shop-stub-text">{tn('shop.closedText')}</div>
+          <button className="btn-primary" onClick={onBack}>
+            {tn('shop.closedBack')}
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+

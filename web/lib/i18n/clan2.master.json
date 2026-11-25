@@ -1022,30 +1022,30 @@
    "en": "Everything that left the treasury: buildings and speed-ups, the HQ, the outing, the clan shop and the loot carried off when our HQ fell.",
    "ka": "ყველაფერი, რაც სალაროდან წავიდა: ნაგებობები და დაჩქარებები, შტაბი, გასვლა, კლანის მაღაზია და ნადავლი, რომელიც ჩვენი შტაბის აღებისას წაიღეს."
   },
-  "giftTitle": {
-   "ru": "Эти монеты нельзя внести",
-   "en": "These coins can't be deposited",
-   "ka": "ამ მონეტების შეტანა არ შეიძლება"
+  "depositOverDonatable": {
+   "ru": "Внести можно не больше {n}",
+   "en": "You can put in at most {n}",
+   "ka": "შეგიძლია შეიტანო მაქსიმუმ {n}"
   },
-  "giftText": {
-   "ru": "Приветственный бонус и бонус за приглашение — подарок на старт. Их можно тратить в магазине, но не вносить в общак: в общак идут только монеты, заработанные в игре — за улов, задания, сундук и другое.",
-   "en": "The welcome bonus and the invite bonus are a gift to get you started. You can spend them in the shop, but not put them into the treasury: only coins earned in the game go there — for catches, challenges, the chest and more.",
-   "ka": "მისასალმებელი ბონუსი და მოწვევის ბონუსი სასტარტო საჩუქარია. მათი დახარჯვა მაღაზიაში შეიძლება, მაგრამ სალაროში შეტანა — არა: სალაროში მხოლოდ თამაშში გამომუშავებული მონეტები შედის — დაჭერისთვის, დავალებებისთვის, სკივრისთვის და სხვა."
+  "depositCanLabel": {
+   "ru": "Можно внести",
+   "en": "You can put in",
+   "ka": "შეგიძლია შეიტანო"
   },
-  "giftCan": {
-   "ru": "Сейчас можно внести: {n}",
-   "en": "You can deposit now: {n}",
-   "ka": "ახლა შეგიძლია შეიტანო: {n}"
+  "depositGiftTip": {
+   "ru": "Ещё {n} — бонус на старт: приветственный и за приглашение. Его тратят в магазине, но в общак не вносят. В общак идут монеты, заработанные в игре: за улов, задания, сундук.",
+   "en": "The other {n} are the starting bonus: the welcome and invite ones. It can be spent in the shop but cannot go into the treasury. The treasury takes coins earned in the game: for catches, tasks, the chest.",
+   "ka": "დანარჩენი {n} საწყისი ბონუსია: მისასალმებელი და მოწვევის. მას მაღაზიაში ხარჯავენ, მაგრამ ფონდში არ შეაქვთ. ფონდში მიდის თამაშში ნაშოვნი მონეტები: დაჭერისთვის, დავალებებისთვის, სკივრისთვის."
   },
-  "giftNone": {
-   "ru": "Сейчас внести нечего. Поймай рыбу или выполни задание — заработанные монеты внести можно.",
-   "en": "Nothing to deposit yet. Catch a fish or finish a challenge — earned coins can go in.",
-   "ka": "ჯერ შესატანი არაფერია. დაიჭირე თევზი ან შეასრულე დავალება — გამომუშავებული მონეტების შეტანა შეიძლება."
+  "depositWhy": {
+   "ru": "Почему?",
+   "en": "Why?",
+   "ka": "რატომ?"
   },
-  "giftOk": {
-   "ru": "Понятно",
-   "en": "Got it",
-   "ka": "გასაგებია"
+  "presetAll": {
+   "ru": "Все",
+   "en": "All",
+   "ka": "ყველა"
   }
  },
  "goal": {
@@ -1782,14 +1782,14 @@
    "ka": "როგორ დავიცვათ შტაბი"
   },
   "rule1": {
-   "ru": "Каждый улов клана на секторе штаба добавляет 1 к защите, до 3 щитов.",
-   "en": "Every clan catch on the HQ sector adds 1 defence, up to 3 shields.",
-   "ka": "კლანის ყოველი დაჭერა შტაბის სექტორზე +1 დაცვას ამატებს, მაქსიმუმ 3 ფარი."
+   "ru": "Каждый улов клана на секторе штаба добавляет 1 к защите, максимум 3.",
+   "en": "Every clan catch on the HQ sector adds 1 defence, up to 3.",
+   "ka": "კლანის ყოველი დაჭერა შტაბის სექტორზე +1 დაცვას ამატებს, მაქსიმუმ 3."
   },
   "rule2": {
-   "ru": "Каждый чужой улов на секторе штаба снимает 1 щит. Когда щитов не осталось, следующий чужой улов не забирает сектор, а начинает осаду. Свои уловы щиты возвращают.",
-   "en": "Every outsider's catch on the HQ sector takes 1 shield. With no shields left, the next outsider's catch does not take the sector, it starts a siege. The clan's own catches bring shields back.",
-   "ka": "უცხოს ყოველი დაჭერა შტაბის სექტორზე 1 ფარს ხსნის. როცა ფარი აღარ დარჩა, უცხოს შემდეგი დაჭერა სექტორს არ იღებს, არამედ ალყას იწყებს. კლანის დაჭერები ფარებს აბრუნებს."
+   "ru": "Каждый чужой улов на секторе штаба снимает 1 защиту. Когда защиты не осталось, следующий чужой улов не забирает сектор, а начинает осаду. Свои уловы защиту возвращают.",
+   "en": "Every outsider's catch on the HQ sector takes 1 defence. With no defence left, the next outsider's catch does not take the sector, it starts a siege. The clan's own catches bring the defence back.",
+   "ka": "უცხოს ყოველი დაჭერა შტაბის სექტორზე 1 დაცვას ხსნის. როცა დაცვა აღარ დარჩა, უცხოს შემდეგი დაჭერა სექტორს არ იღებს, არამედ ალყას იწყებს. კლანის დაჭერები დაცვას აბრუნებს."
   },
   "rule3": {
    "ru": "У клана {m} минут: любой участник ловит рыбу на секторе штаба, и осада снята, ему +{r} монет. Не успели, и штаб падает.",
@@ -1972,9 +1972,9 @@
    "ka": "{m} წთ"
   },
   "siegeWhen": {
-   "ru": "Осада начинается, когда у штаба не осталось щитов: следующий чужой улов не забирает сектор, а запускает часы.",
-   "en": "A siege starts once the HQ has no shields left: the next outsider's catch does not take the sector, it starts the clock.",
-   "ka": "ალყა იწყება, როცა შტაბს ფარი აღარ დარჩა: უცხოს შემდეგი დაჭერა სექტორს არ იღებს, არამედ საათს რთავს."
+   "ru": "Осада начинается, когда у штаба не осталось защиты: следующий чужой улов не забирает сектор, а запускает часы.",
+   "en": "A siege starts once the HQ has no defence left: the next outsider's catch does not take the sector, it starts the clock.",
+   "ka": "ალყა იწყება, როცა შტაბს დაცვა აღარ დარჩა: უცხოს შემდეგი დაჭერა სექტორს არ იღებს, არამედ საათს რთავს."
   },
   "fallT1": {
    "ru": "Уносят {p} % общака",
@@ -3161,14 +3161,24 @@
    "ka": "ერთდროულად ერთი ნაგებობა: 12 საათიდან 5 დღემდე"
   },
   "whileHq": {
-   "ru": "Постройки работают, пока стоит штаб. Щиты — его защита.",
-   "en": "The buildings work while the HQ stands. The shields are its defence.",
-   "ka": "ნაგებობები მუშაობს, სანამ შტაბი დგას. ფარები მისი დაცვაა."
+   "ru": "Постройки работают, пока стоит штаб. Его держит защита сектора.",
+   "en": "The buildings work while the HQ stands. The sector defence holds it.",
+   "ka": "ნაგებობები მუშაობს, სანამ შტაბი დგას. მას სექტორის დაცვა იცავს."
   },
   "tourAgain": {
    "ru": "Пройти тур",
    "en": "Take the tour",
    "ka": "ტურის გავლა"
+  },
+  "nextHide": {
+   "ru": "Скрыть подсказку",
+   "en": "Hide the tip",
+   "ka": "მინიშნების დამალვა"
+  },
+  "nextShow": {
+   "ru": "Вернуть «Что делать дальше»",
+   "en": "Bring back «What to do next»",
+   "ka": "დააბრუნე „რა გავაკეთო შემდეგ“"
   }
  },
  "shop": {
@@ -3444,14 +3454,14 @@
  },
  "moment": {
   "hitDefender": {
-   "ru": "Щит штаба снят · осталось {n}",
-   "en": "HQ shield knocked off · {n} left",
-   "ka": "შტაბის ფარი მოიხსნა · დარჩა {n}"
+   "ru": "Защита штаба −1 · осталось {n}",
+   "en": "HQ defence −1 · {n} left",
+   "ka": "შტაბის დაცვა −1 · დარჩა {n}"
   },
   "hitAttacker": {
-   "ru": "Щит снят · осталось {n}",
-   "en": "Shield off · {n} left",
-   "ka": "ფარი მოიხსნა · დარჩა {n}"
+   "ru": "Защита −1 · осталось {n}",
+   "en": "Defence −1 · {n} left",
+   "ka": "დაცვა −1 · დარჩა {n}"
   },
   "siegeDefender": {
    "ru": "Штаб в осаде! {m} мин",
@@ -3484,19 +3494,19 @@
    "ka": "{m} წთ"
   },
   "textHit": {
-   "ru": "Чужой улов на секторе штаба. Поймайте рыбу там, чтобы вернуть щит.",
-   "en": "An outsider caught on the HQ sector. Catch a fish there to get the shield back.",
-   "ka": "უცხომ შტაბის სექტორზე დაიჭირა. დაიჭირეთ თევზი იქ, რომ ფარი დააბრუნოთ."
+   "ru": "Чужой улов на секторе штаба. Поймайте рыбу там, чтобы вернуть защиту.",
+   "en": "An outsider caught on the HQ sector. Catch a fish there to get the defence back.",
+   "ka": "უცხომ შტაბის სექტორზე დაიჭირა. დაიჭირეთ თევზი იქ, რომ დაცვა დააბრუნოთ."
   },
   "textSiege": {
-   "ru": "Щитов нет, и началась осада. Любой участник, поймавший рыбу на секторе штаба, её снимет.",
-   "en": "No shields left, and a siege has started. Any member who catches a fish on the HQ sector breaks it.",
-   "ka": "ფარები აღარ არის და ალყა დაიწყო. ნებისმიერი წევრი, ვინც შტაბის სექტორზე თევზს დაიჭერს, მოხსნის მას."
+   "ru": "Защиты нет, и началась осада. Любой участник, поймавший рыбу на секторе штаба, её снимет.",
+   "en": "No defence left, and a siege has started. Any member who catches a fish on the HQ sector breaks it.",
+   "ka": "დაცვა აღარ არის და ალყა დაიწყო. ნებისმიერი წევრი, ვინც შტაბის სექტორზე თევზს დაიჭერს, მოხსნის მას."
   },
   "textSaved": {
-   "ru": "Штаб устоял. Снявший осаду получил награду, у штаба снова есть щит.",
-   "en": "The HQ held. Whoever broke the siege got the reward, and the HQ has a shield again.",
-   "ka": "შტაბი გადარჩა. ალყის მომხსნელმა ჯილდო მიიღო, შტაბს ისევ აქვს ფარი."
+   "ru": "Штаб устоял. Снявший осаду получил награду, у штаба снова есть защита.",
+   "en": "The HQ held. Whoever broke the siege got the reward, and the HQ has defence again.",
+   "ka": "შტაბი გადარჩა. ალყის მომხსნელმა ჯილდო მიიღო, შტაბს ისევ აქვს დაცვა."
   },
   "textFell": {
    "ru": "Осаду не сняли вовремя. Постройки спят, новый штаб можно поставить через сутки.",
@@ -3561,9 +3571,9 @@
    "ka": "კლანის ბაზა: ექვსი ნაგებობა შტაბის გარშემო. თითოეული კლანს აძლიერებს, დონეები კი კლანის დონესთან ერთად იხსნება."
   },
   "defend": {
-   "ru": "Как защищать штаб: щиты, атака, осада и падение. Ловите рыбу на секторе штаба, и щиты держатся.",
-   "en": "How to defend the HQ: shields, attack, siege and fall. Keep catching on the HQ sector and the shields hold.",
-   "ka": "როგორ დავიცვათ შტაბი: ფარები, შეტევა, ალყა და დაცემა. იჭირეთ თევზი შტაბის სექტორზე და ფარები გაძლებს."
+   "ru": "Как защищать штаб: защита, атака, осада и падение. Ловите рыбу на секторе штаба, и защита держится.",
+   "en": "How to defend the HQ: defence, attack, siege and fall. Keep catching on the HQ sector and the defence holds.",
+   "ka": "როგორ დავიცვათ შტაბი: დაცვა, შეტევა, ალყა და დაცემა. იჭირეთ თევზი შტაბის სექტორზე და დაცვა გაძლებს."
   },
   "exit": {
    "ru": "Выход клана: два часа ×2 монеты за улов для всех, кто нажал «иду». Назначают глава и заместители.",
@@ -3586,9 +3596,9 @@
    "ka": "კვირის ზარდახშა: ჯილდოები ყველას, ვინც თევზაობდა. ამის გარდა მეოთხედი კლანის სალაროში მიდის."
   },
   "map": {
-   "ru": "И последнее: на карте включи слой «Кланы». Там видно штаб клана, его щиты и осаду.",
-   "en": "And last: on the map, switch on the «Clans» layer. There you see the clan's HQ, its shields and any siege.",
-   "ka": "და ბოლოს: რუკაზე ჩართე ფენა «კლანები». იქ ჩანს კლანის შტაბი, მისი ფარები და ალყა."
+   "ru": "И последнее: на карте включи слой «Кланы». Там видно штаб клана, его защиту и осаду.",
+   "en": "And last: on the map, switch on the «Clans» layer. There you see the clan's HQ, its defence and any siege.",
+   "ka": "და ბოლოს: რუკაზე ჩართე ფენა «კლანები». იქ ჩანს კლანის შტაბი, მისი დაცვა და ალყა."
   }
  },
  "other": {

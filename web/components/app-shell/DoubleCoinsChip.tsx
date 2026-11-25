@@ -59,6 +59,8 @@ export function DoubleCoinsChip() {
         }}
       >
         <b>×2</b>
+        {/* A thin divider between «×2» and the time left (24.11): together they read as one word. */}
+        <i className="double-coins-sep" aria-hidden />
         <span>{rest}</span>
       </button>
       {open && <DoubleCoinsModal from={buff.from} until={buff.until} onClose={() => setOpen(false)} />}

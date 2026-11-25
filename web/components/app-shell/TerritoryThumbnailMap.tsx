@@ -24,6 +24,7 @@ export function TerritoryThumbnailMap({
   ownerAvatarUrl,
   ownerInitials,
   claimFx = false,
+  fit,
 }: {
   territory: Territory
   myTerritoryColor: string
@@ -33,6 +34,11 @@ export function TerritoryThumbnailMap({
   // while the hex's outline is drawn round in its colour and its fill
   // flashes once — the same "claimed" beat the map plays on a capture.
   claimFx?: boolean
+  // The sector screen's hero (24.11.2026): the hex sits in the part of the map that is left visible — `gap` px
+  // from the top of the screen and the same from the card that covers the map's bottom `bottomCover` px, so the
+  // chips over the map (Маршрут, На карте) stay under it. Anything the box has above `baseHeight` (the notch /
+  // Telegram band added in CSS) counts as extra room on top.
+  fit?: { baseHeight: number; gap: number; bottomCover: number }
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<import('leaflet').Map | null>(null)
@@ -57,6 +63,8 @@ export function TerritoryThumbnailMap({
   const [partOffsets, setPartOffsets] = useState<{ key: string; offsets: { x: number; y: number }[] } | null>(null)
   // The hex's corners in the container's pixels, for the claimFx outline.
   const [claim, setClaim] = useState<{ id: string; points: string; color: string } | null>(null)
+  // How far the hex's center sits below the box's center (fit only), in px; null until the map is placed.
+  const [shiftY, setShiftY] = useState<number | null>(fit ? null : 0)
 
   // A skin's fill for one polygon: a pattern laid on the whole hex's box (so each part of a shared sector shows its
   // own slice of its holder's skin), or null — no skin, an animated one (painted over the tint by the overlay), or
@@ -97,12 +105,21 @@ export function TerritoryThumbnailMap({
         keyboard: false,
         zoomControl: false,
         attributionControl: false,
+        // The hero (fit): any zoom, not whole steps — a whole step that did not fit the room left the hex half its size.
+        zoomSnap: fit ? 0 : 1,
         preferCanvas: true,
       })
       mapRef.current = map
       const tiles = L.tileLayer(previewTileUrl(), { tileSize: 256 }).addTo(map)
       // The view first: a skin pattern is placed in the map's layer pixels, which only exist once it is set.
-      map.fitBounds(L.latLngBounds(territory.corners), { padding: [10, 10] })
+      if (fit) {
+        const top = Math.max(0, containerRef.current.clientHeight - fit.baseHeight) + fit.gap
+        const bottom = fit.bottomCover + fit.gap
+        map.fitBounds(L.latLngBounds(territory.corners), { paddingTopLeft: [10, top], paddingBottomRight: [10, bottom] })
+        setShiftY(Math.round((top - bottom) / 2))
+      } else {
+        map.fitBounds(L.latLngBounds(territory.corners), { padding: [10, 10] })
+      }
       animatedSkinsRef.current = createAnimatedSkinLayer(L, map)
       const color = resolveTerritoryColor(territory.status, myTerritoryColor, territory.ownerColor)
       const fillOpacity = territory.status === 'free' ? 0.22 : 0.32
@@ -187,7 +204,7 @@ export function TerritoryThumbnailMap({
           <polygon points={claimNow.points} pathLength={1} />
         </svg>
       )}
-      <div className="territory-thumb-overlay">
+      <div className="territory-thumb-overlay" style={fit ? { top: `calc(50% + ${shiftY ?? 0}px)`, visibility: shiftY === null ? 'hidden' : undefined } : undefined}>
         {territory.ownerId && !shared && (
           <div className="territory-thumb-avatar">
             {ownerAvatarUrl ? <img src={thumbUrl(ownerAvatarUrl, 96)} alt="" decoding="async" /> : ownerInitials}
@@ -200,7 +217,7 @@ export function TerritoryThumbnailMap({
           <div
             key={h.id}
             className="territory-thumb-avatar territory-thumb-part"
-            style={{ left: `calc(50% + ${offsets[i].x}px)`, top: `calc(50% + ${offsets[i].y}px)` }}
+            style={{ left: `calc(50% + ${offsets[i].x}px)`, top: `calc(50% + ${offsets[i].y + (shiftY ?? 0)}px)` }}
           >
             {h.avatarUrl ? <img src={thumbUrl(h.avatarUrl, 96)} alt="" decoding="async" /> : h.initials}
           </div>

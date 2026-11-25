@@ -6,14 +6,16 @@ import type { SlotSymbol as SymbolId } from '@/lib/supabase/queries'
 // the same six symbols in both cities; Moscow just shows its own river fish
 // on the four fish symbols, tier for tier: the two common fish, the 100-coin
 // predator and the jackpot giant.
-type Fish = Exclude<SymbolId, 'hook' | 'hex'>
+// The «chest» symbol is drawn as a key (25.11.2026: three keys — a free secret box), the same in every city; the id
+// stays «chest», as spin_slots rolls it.
+type Fish = Exclude<SymbolId, 'hook' | 'hex' | 'chest'>
 const FISH: Record<'sea' | 'fresh', Record<Fish, string>> = {
   sea: { stavrida: 'stavrida', skorpena: 'skorpena', lufar: 'lufar', katran: 'katran' },
   fresh: { stavrida: 'okun', skorpena: 'leshch', lufar: 'shchuka', katran: 'som' },
 }
 
 export function slotSymbolSrc(symbol: SymbolId, city: CityId) {
-  return `/slots/${symbol === 'hook' || symbol === 'hex' ? symbol : FISH[CITIES[city].theme][symbol]}.webp`
+  return `/slots/${symbol === 'chest' ? 'key' : symbol === 'hook' || symbol === 'hex' ? symbol : FISH[CITIES[city].theme][symbol]}.webp`
 }
 
 // Every symbol is fitted into the same 3:2 box (`size` is its height): the

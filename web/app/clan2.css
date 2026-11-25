@@ -527,7 +527,7 @@
 .c2-step-ico{display:flex; color:var(--ink-soft);}
 .c2-steps-row button.on .c2-step-ico{color:var(--accent);}
 .c2-step-text{margin:0; font-size:13.5px; line-height:1.5; color:var(--ink); animation:c2-card-in .3s var(--ease-out);}
-.c2-next{display:flex; flex-direction:column; gap:4px; padding:16px; border-radius:20px; background:linear-gradient(135deg,#FFF1E8,#FFE3CF); box-shadow:0 0 0 1.5px rgba(252,82,0,.25);}
+.c2-next{position:relative; display:flex; flex-direction:column; gap:4px; padding:16px; border-radius:20px; background:linear-gradient(135deg,#FFF1E8,#FFE3CF); box-shadow:0 0 0 1.5px rgba(252,82,0,.25);}
 .c2-next small{font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#B33A00;}
 .c2-next b{font-size:17px; letter-spacing:-.01em;}
 .c2-next p{margin:0 0 8px; font-size:13.5px; line-height:1.45; color:#6B3A1A;}
@@ -729,10 +729,11 @@
 @keyframes c2-focus-flash{0%{box-shadow:0 0 0 0 rgba(252,82,0,0)}20%{box-shadow:0 0 0 3px rgba(252,82,0,.55)}100%{box-shadow:0 0 0 3px rgba(252,82,0,0)}}
 
 /* The treasury's goal, at the foot of the treasury's card. */
-.c2-goal-strip{display:flex; align-items:center; gap:12px; margin:0 18px 18px; padding:12px; border-radius:16px; background:#F7F5F1; border:none; font:inherit; color:var(--ink); text-align:left;}
+.c2-goal-strip{display:flex; align-items:center; gap:14px; margin:0 18px 18px; padding:12px; border-radius:16px; background:var(--surface); border:1px solid var(--line); box-shadow:0 2px 8px rgba(23,24,27,.04); font:inherit; color:var(--ink); text-align:left;}
 .c2-goal-strip.ready{background:linear-gradient(135deg,#FFF1E8,#FFE3CF); box-shadow:0 0 0 1.5px rgba(252,82,0,.25);}
 .c2-goal-strip.empty{justify-content:space-between; width:calc(100% - 36px); cursor:pointer; font-size:13.5px; font-weight:800; color:#C23F00; background:var(--accent-soft);}
-.c2-goal-pic{flex:none; display:flex; align-items:center; justify-content:center; min-width:72px; min-height:62px;}
+/* The item on a light tile of its own, apart from the text (24.11.2026: the boat stuck to it). */
+.c2-goal-pic{flex:none; display:flex; align-items:center; justify-content:center; min-width:72px; min-height:62px; padding:8px; border-radius:12px; background:#F3F5F8; overflow:hidden;}
 .c2-goal-main{flex:1; min-width:0; display:flex; flex-direction:column; gap:5px;}
 .c2-goal-main small{font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint);}
 .c2-goal-main b{font-size:14.5px; line-height:1.2;}
@@ -1115,3 +1116,27 @@
 .c2-econ-row span{flex:1; min-width:0;}
 .c2-econ-row small{color:var(--ink-faint, #8A8F98); font-size:12px;}
 .c2-econ-error{width:100%; margin-bottom:10px; color:#B3261E; font-size:13px; font-weight:700;}
+
+/* Взнос в общак (24.11.2026): the account as a bar — what can go in (orange) and the starting bonus (grey stripes) —
+   with a small «?» tip by the bonus instead of a whole window. */
+.c2-dep-split{margin:6px 0 14px;}
+.c2-dep-bar{display:flex; height:10px; border-radius:999px; overflow:hidden; background:#ECEDF0;}
+.c2-dep-bar .can{background:linear-gradient(90deg,#FF7A38,var(--accent)); border-radius:999px 0 0 999px;}
+.c2-dep-bar .gift{flex:1; background:repeating-linear-gradient(135deg,#DADCE1 0 5px,#ECEDF0 5px 10px);}
+.c2-dep-legend{position:relative; display:flex; align-items:center; gap:10px; margin-top:8px; font-size:13.5px; color:var(--ink-soft);}
+.c2-dep-item{display:inline-flex; align-items:center; gap:6px;}
+.c2-dep-item b{color:var(--ink); font-weight:800; font-variant-numeric:tabular-nums;}
+.c2-dep-item i{width:10px; height:10px; border-radius:3px; flex:0 0 auto;}
+.c2-dep-item i.can{background:var(--accent);}
+.c2-dep-item i.gift{background:repeating-linear-gradient(135deg,#C9CCD3 0 3px,#ECEDF0 3px 6px);}
+.c2-dep-why{border:none; background:none; padding:2px 0; font:inherit; font-size:13.5px; font-weight:800; color:var(--accent); cursor:pointer;}
+.c2-dep-tip{position:absolute; left:0; right:0; top:calc(100% + 10px); z-index:20; padding:10px 12px; border-radius:12px; background:var(--ink); color:#fff; font-size:12.5px; font-weight:600; line-height:1.4; box-shadow:0 8px 24px rgba(0,0,0,.2); animation:c2-tip-in .16s var(--ease-out) both;}
+/* Under the line (above it the sheet's top cut it off), its arrow pointing up at «Почему?». */
+.c2-dep-tip::after{content:''; position:absolute; left:var(--why-x, 170px); bottom:100%; border:6px solid transparent; border-bottom-color:var(--ink);}
+@keyframes c2-tip-in{from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:none;}}
+@media (prefers-reduced-motion: reduce){.c2-dep-tip{animation:none;}}
+/* «Внести монеты» without the glow under it (24.11.2026): on the grey card it looked smeared. */
+.c2-balance-actions .btn-primary, .c2-balance-actions .btn-primary:active{box-shadow:none;}
+.c2-next-close{position:absolute; top:10px; right:10px; width:28px; height:28px; border-radius:50%; border:none; background:rgba(255,255,255,.7); color:#B33A00; display:flex; align-items:center; justify-content:center; cursor:pointer;}
+.c2-next-close:active{transform:scale(.92);}
+.c2-next small{padding-right:34px;}

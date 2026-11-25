@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import { C2Card, C2Sheet } from '@/components/clan2/C2Common'
 import { buildingsOn, canManage, capOf, useDemoState } from '@/lib/clan2/demoStore'
 import { hqBannerSvg } from '@/lib/clan2/live/hqMarker'
 import { BUILD_CLAN_LEVEL, fmt } from '@/lib/clan2/rules'
 import { tn } from '@/lib/i18n/runtime'
+import { DEFENSE_PATH } from '@/components/app-shell/SectorDefense'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 
 // What makes the clan update readable for somebody who has never seen it: four steps of how the whole thing works
@@ -22,6 +23,7 @@ export function HowItWorks({ onTour }: { onTour?: () => void } = {}) {
   const [open, setOpen] = useState<(typeof STEPS)[number]>('rent')
   const s = useDemoState()
   const per = s.settings.rentPerSectorDay
+  const nextOff = useNextHidden()
   return (
     <C2Card
       title={tn('clan2.guide.howTitle')}
@@ -107,7 +109,7 @@ export function HowItWorks({ onTour }: { onTour?: () => void } = {}) {
             <span className="c2-how-shields">
               {[0, 1, 2].map((i) => (
                 <svg key={i} width="18" height="22" viewBox="3.5 1.5 17 21" style={{ animationDelay: `${i * 0.25}s` }}>
-                  <path d="M12 2.5l7.5 2.8v5.6c0 4.7-3.2 8.3-7.5 10.6-4.3-2.3-7.5-5.9-7.5-10.6V5.3z" />
+                  <path d={DEFENSE_PATH} />
                 </svg>
               ))}
             </span>
@@ -116,6 +118,11 @@ export function HowItWorks({ onTour }: { onTour?: () => void } = {}) {
         )}
         <p className="c2-step-text">{tn(`clan2.guide.t_${open}`)}</p>
       </div>
+      {nextOff && (
+        <button type="button" className="c2-link" onClick={() => setNextHidden(false)}>
+          {tn('clan2.guide.nextShow')}
+        </button>
+      )}
     </C2Card>
   )
 }
@@ -154,8 +161,40 @@ function StepIcon({ id }: { id: (typeof STEPS)[number] }) {
 }
 
 // One card: the single thing that is worth doing now, with a button that takes the player there.
+// «Что делать дальше» can be hidden with its cross (24.11.2026) — kept in this browser — and brought back from
+// «Как это работает».
+const NEXT_HIDDEN = 'clan2-next-hidden'
+const nextListeners = new Set<() => void>()
+function nextHidden(): boolean {
+  try {
+    return localStorage.getItem(NEXT_HIDDEN) === '1'
+  } catch {
+    return false
+  }
+}
+function setNextHidden(hidden: boolean) {
+  try {
+    if (hidden) localStorage.setItem(NEXT_HIDDEN, '1')
+    else localStorage.removeItem(NEXT_HIDDEN)
+  } catch {}
+  nextListeners.forEach((l) => l())
+}
+function useNextHidden(): boolean {
+  return useSyncExternalStore(
+    (l) => {
+      nextListeners.add(l)
+      return () => {
+        nextListeners.delete(l)
+      }
+    },
+    nextHidden,
+    () => false
+  )
+}
+
 export function NextStep({ onGo }: { onGo?: (to: Go) => void }) {
   const s = useDemoState()
+  const hidden = useNextHidden()
   const manage = canManage(s)
   const hq = buildingsOn(s)
   const built = Object.values(s.projects).some((l) => l > 0) || !!s.build
@@ -178,8 +217,14 @@ export function NextStep({ onGo }: { onGo?: (to: Go) => void }) {
     to = 'exit'
   }
   if (!manage && key !== 'keep' && key !== 'quest') key = 'keep'
+  if (hidden) return null
   return (
     <div className="c2-next" data-tour="next-step">
+      <button type="button" className="c2-next-close" aria-label={tn('clan2.guide.nextHide')} onClick={() => setNextHidden(true)}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden>
+          <path d="M6 6l12 12M18 6 6 18" />
+        </svg>
+      </button>
       <small>{tn('clan2.guide.nextKicker')}</small>
       <b>{tn(`clan2.guide.next_${key}`)}</b>
       <p>{tn(`clan2.guide.nextText_${key}`)}</p>

@@ -8,7 +8,7 @@ import { JackpotCelebration, WinBurst } from '@/components/app-shell/SlotsWin'
 import { SlotSymbol, slotSymbolSrc } from '@/components/app-shell/SlotSymbol'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { observeScreenActive } from '@/lib/observeScreenActive'
-import { useSlotState, useSpinSlots, type SlotPrize, type SlotSpinResult, type SlotSymbol as SymbolId } from '@/lib/supabase/queries'
+import { useSecretBox, useSlotState, useSpinSlots, type SlotPrize, type SlotSpinResult, type SlotSymbol as SymbolId } from '@/lib/supabase/queries'
 import { CITIES, type CityId } from '@/lib/data/city'
 import { JACKPOT_CHANCE } from '@/lib/data/shopItems'
 import { useI18n, useT, type TKey } from '@/lib/i18n'
@@ -35,18 +35,17 @@ const SPIN_MS = [1500, 1950, 2400]
 // Reels set off left to right, a beat apart (and still stop left to right).
 const SPIN_DELAY = [0, 110, 220]
 const STRIP_FILL = 16
-// With «Уменьшение движения» on the phone the reels still turn — a short,
-// calm roll with no blur — instead of the result just appearing: players on
-// iPhones with that setting thought the slots were broken (09.10).
-const CALM_MS = [450, 600, 750]
-const CALM_FILL = 4
+// One spin for everyone, «Уменьшение движения» on the phone too (owner, 25.11.2026; until then those phones had a short
+// calm roll with no blur).
 // Idle drift: every DRIFT_EVERY ms all three reels roll on to new symbols
 // together, stopping left to right like a short spin; a result stays put
 // for DRIFT_HOLD ms first so it can be read.
 const DRIFT_EVERY = 2500
 const DRIFT_MS = [900, 1150, 1400]
 const DRIFT_HOLD = 6000
-const SYMBOLS: SymbolId[] = ['stavrida', 'skorpena', 'lufar', 'katran', 'hook', 'hex']
+// The key (id «chest», 25.11.2026) rolls with the rest; three of them — a free secret box.
+const SYMBOLS: SymbolId[] = ['stavrida', 'skorpena', 'lufar', 'katran', 'hook', 'hex', 'chest']
+const FISH: SymbolId[] = ['stavrida', 'skorpena', 'lufar', 'katran']
 // At rest a reel is a short band of seven cells with its symbol in the middle
 // and other symbols around it (the peeks above and below the payline) — like
 // a real reel band rather than seven copies of one symbol. Each reel has its
@@ -92,17 +91,24 @@ function filler(count: number): SymbolId[] {
   return out
 }
 
-const PAY_ROWS: { prize: SlotPrize; symbols: SymbolId[]; chance: number; label: TKey; reward: { coins: number } | { text: TKey } }[] = [
-  // Same odds as spin_slots on the server (supabase-drafts/slots_odds_free_spin.sql),
-  // rarest first.
+type PayRow = { prize: SlotPrize; symbols: SymbolId[]; chance: number; label: TKey; reward: { coins: number } | { text: TKey }; box?: true }
+const PAY_ROWS: PayRow[] = [
+  // Same odds as spin_slots on the server (supabase-drafts/slots_odds_free_spin.sql;
+  // the chest and «Ассорти» — economy-24-11/09, only where the secret box is open), rarest first.
   { prize: 'jackpot', symbols: ['katran', 'katran', 'katran'], chance: JACKPOT_CHANCE, label: 'slots.rows.jackpot', reward: { text: 'slots.rewards.jackpot' } },
+  { prize: 'chest', symbols: ['chest', 'chest', 'chest'], chance: 0.015, label: 'slots.rows.chest', reward: { text: 'slots.rewards.chest' }, box: true },
   { prize: 'lufar', symbols: ['lufar', 'lufar', 'lufar'], chance: 0.04, label: 'slots.rows.lufar', reward: { coins: 100 } },
   { prize: 'shield', symbols: ['hex', 'hex', 'hex'], chance: 0.05, label: 'slots.rows.shield', reward: { text: 'slots.rewards.shield' } },
   { prize: 'double', symbols: ['hook', 'hook', 'hook'], chance: 0.06, label: 'slots.rows.double', reward: { text: 'slots.rewards.double' } },
   { prize: 'free_spin', symbols: ['skorpena', 'skorpena', 'skorpena'], chance: 0.08, label: 'slots.rows.freeSpin', reward: { text: 'slots.rewards.freeSpin' } },
+  { prize: 'assorti', symbols: ['stavrida', 'lufar', 'skorpena'], chance: 0.08, label: 'slots.rows.assorti', reward: { coins: 15 }, box: true },
   { prize: 'triple', symbols: ['stavrida', 'stavrida', 'stavrida'], chance: 0.14, label: 'slots.rows.triple', reward: { coins: 25 } },
-  { prize: 'pair', symbols: ['skorpena', 'skorpena', 'hook'], chance: 0.38, label: 'slots.rows.pair', reward: { coins: 10 } },
+  { prize: 'pair', symbols: ['skorpena', 'skorpena', 'hook'], chance: 0.285, label: 'slots.rows.pair', reward: { coins: 10 } },
 ]
+// Without the box (not released for this player yet): no chest, no «Ассорти», and the pair is 38 % as before.
+function payRows(withBox: boolean): PayRow[] {
+  return withBox ? PAY_ROWS : PAY_ROWS.filter((row) => !row.box).map((row) => (row.prize === 'pair' ? { ...row, chance: 0.38 } : row))
+}
 
 // Moscow's reels carry river fish on the same symbols (see SlotSymbol), so
 // the lines that name a fish have their own Moscow wording.
@@ -130,6 +136,8 @@ const RESULT_TEXT: Record<SlotPrize, TKey> = {
   lufar: 'slots.result.lufar',
   triple: 'slots.result.triple',
   free_spin: 'slots.result.freeSpin',
+  chest: 'slots.result.chest',
+  assorti: 'slots.result.assorti',
   pair: 'slots.result.pair',
   none: 'slots.result.none',
 }
@@ -151,6 +159,7 @@ export function SlotsScreen({ city }: { city: CityId }) {
   const queryClient = useQueryClient()
   const { data: state, dataUpdatedAt, refetch } = useSlotState()
   const spin = useSpinSlots()
+  const { data: box } = useSecretBox()
 
   const [reels, setReels] = useState<Reel[]>(() => [idleReel('lufar', 0), idleReel('katran', 1), idleReel('hex', 2)])
   const [spinning, setSpinning] = useState(false)
@@ -187,8 +196,7 @@ export function SlotsScreen({ city }: { city: CityId }) {
 
   // Idle reels don't sit still: now and then all three roll a few cells on
   // to new symbols, so the machine looks alive and shows something new.
-  // Not while spinning, not right after a result, not on a hidden screen,
-  // not with reduced motion.
+  // Not while spinning, not right after a result, not on a hidden screen.
   const rootRef = useRef<HTMLDivElement>(null)
   const reelsRef = useRef(reels)
   const settledAtRef = useRef(0)
@@ -197,17 +205,17 @@ export function SlotsScreen({ city }: { city: CityId }) {
   }, [reels])
   const busy = spinning || spin.isPending
   useEffect(() => {
-    if (busy || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (busy) return
     const id = window.setInterval(() => {
       if (document.hidden || Date.now() - settledAtRef.current < DRIFT_HOLD) return
       if (!rootRef.current?.closest('.screen.active')) return
       const now = reelsRef.current
       if (now.some((reel) => reel.duration)) return
-      // Each reel to something new — but never three alike at rest, it
-      // would look like a win nobody got.
+      // Each reel to something new — but never three alike or three different
+      // fish («Ассорти») at rest, it would look like a win nobody got.
       let next: SymbolId[]
       do next = now.map((reel) => SYMBOLS.filter((s) => s !== reel.symbol)[Math.floor(Math.random() * (SYMBOLS.length - 1))])
-      while (next[0] === next[1] && next[1] === next[2])
+      while ((next[0] === next[1] && next[1] === next[2]) || (next.every((s) => FISH.includes(s)) && new Set(next).size === 3))
       const plans = now.map((reel, i) => rollPlan(i, reel.symbol, next[i], 2 + Math.floor(Math.random() * 3)))
       const laid = plans.map((plan, i): Reel => ({ strip: plan.strip, y: plan.startY, duration: 0, symbol: next[i], drift: true }))
       setReels(laid)
@@ -238,7 +246,7 @@ export function SlotsScreen({ city }: { city: CityId }) {
     return () => window.clearTimeout(id)
   }, [state?.nextReset, refetch])
 
-  // All six pictures ready before the first spin, so no cell flies past empty.
+  // All seven pictures ready before the first spin, so no cell flies past empty.
   useEffect(() => {
     for (const symbol of SYMBOLS) new Image().src = slotSymbolSrc(symbol, city)
   }, [city])
@@ -261,6 +269,8 @@ export function SlotsScreen({ city }: { city: CityId }) {
     // The jackpot frame is in the inventory now — without this the Shop kept
     // showing it as «выбейте в прокрутках», with no «Надеть», until a restart.
     if (res.prize === 'jackpot') queryClient.invalidateQueries({ queryKey: ['my-inventory', user?.id ?? null] })
+    // Three chests: one more free opening on the box's card and screen.
+    if (res.prize === 'chest') queryClient.invalidateQueries({ queryKey: ['secret-box', user?.id ?? null] })
   }
 
   function onReelStop() {
@@ -275,18 +285,17 @@ export function SlotsScreen({ city }: { city: CityId }) {
     spin.mutate(undefined, {
       onSuccess: (res) => {
         activeRef.current = res
-        const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        const durations = calm ? CALM_MS : SPIN_MS
+        const durations = SPIN_MS
         stoppedRef.current = 0
         setSpinning(true)
         // Lay each strip out at its start position first, then move it on
         // the next frame so the browser has a "from" to transition out of.
-        const plans = reelsRef.current.map((reel, i) => rollPlan(i, reel.symbol, res.reels[i], calm ? CALM_FILL : STRIP_FILL))
+        const plans = reelsRef.current.map((reel, i) => rollPlan(i, reel.symbol, res.reels[i], STRIP_FILL))
         const laid = plans.map((plan, i): Reel => ({ strip: plan.strip, y: plan.startY, duration: 0, symbol: res.reels[i] }))
         setReels(laid)
-        fallbackRef.current = window.setTimeout(() => reveal(res), durations[2] + (calm ? 0 : SPIN_DELAY[2]) + 600)
+        fallbackRef.current = window.setTimeout(() => reveal(res), durations[2] + SPIN_DELAY[2] + 600)
         requestAnimationFrame(() =>
-          requestAnimationFrame(() => setReels(laid.map((reel, i) => ({ ...reel, y: plans[i].endY, duration: durations[i], delay: calm ? 0 : SPIN_DELAY[i] }))))
+          requestAnimationFrame(() => setReels(laid.map((reel, i) => ({ ...reel, y: plans[i].endY, duration: durations[i], delay: SPIN_DELAY[i] }))))
         )
       },
     })
@@ -429,7 +438,7 @@ export function SlotsScreen({ city }: { city: CityId }) {
           <span>{t('slots.payTable')}</span>
           <span>{t('slots.chance')}</span>
         </div>
-        {PAY_ROWS.map((row) => (
+        {payRows(!!box).map((row) => (
           <div key={row.prize} className={`slots-pay-row${row.prize === 'jackpot' ? ' jackpot' : ''}`}>
             <div className="slots-pay-symbols">
               {row.symbols.map((symbol, i) => (

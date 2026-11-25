@@ -946,7 +946,234 @@ function scalesScene(ctx: CanvasRenderingContext2D, w: number, h: number) {
   }
 }
 
-const SCENES = { deep: deepScene, moonpath: moonScene, school: schoolScene, golddust: goldScene, reeds: reedsScene, rain: rainScene, scales: scalesScene }
+// ─── Новинки 24.11.2026 ───
+
+// «Первый снег» (300): flakes drifting down over a cold dusk, each swaying on its own.
+function snowScene(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const r = rand(311)
+  const flakes = Array.from({ length: Math.round((w * h) / 1300) }, () => ({
+    x: r() * w,
+    y: r() * h,
+    size: 0.8 + r() * 2.2,
+    speed: 8 + r() * 16,
+    sway: 6 + r() * 14,
+    phase: r() * TAU,
+  }))
+  return (t: number) => {
+    ctx.clearRect(0, 0, w, h)
+    for (const f of flakes) {
+      const y = (f.y + t * f.speed) % (h + 10)
+      const x = (f.x + Math.sin(t * 0.6 + f.phase) * f.sway + w) % w
+      ctx.fillStyle = `rgba(255,255,255,${0.35 + f.size * 0.18})`
+      ctx.beginPath()
+      ctx.arc(x, y - 5, f.size, 0, TAU)
+      ctx.fill()
+    }
+  }
+}
+
+// «Туман над рекой» (700): a far shore of trees, the river below, and three bands of fog sliding past at their own pace.
+function fogScene(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const r = rand(523)
+  const shoreY = h * 0.58
+  const trees: { x: number; hgt: number; wid: number }[] = []
+  for (let x = -10; x < w + 20; x += 6 + r() * 10) trees.push({ x, hgt: 10 + r() * 26, wid: 8 + r() * 10 })
+  const bands = [
+    { y: shoreY - 18, hgt: 46, speed: 6, a: 0.22 },
+    { y: shoreY + 6, hgt: 36, speed: -9, a: 0.28 },
+    { y: shoreY + 40, hgt: 60, speed: 4, a: 0.2 },
+  ]
+  return (t: number) => {
+    ctx.clearRect(0, 0, w, h)
+    // The far bank.
+    ctx.fillStyle = 'rgba(28,44,56,0.55)'
+    ctx.beginPath()
+    ctx.moveTo(0, shoreY)
+    for (const tr of trees) {
+      ctx.lineTo(tr.x - tr.wid / 2, shoreY)
+      ctx.lineTo(tr.x, shoreY - tr.hgt)
+      ctx.lineTo(tr.x + tr.wid / 2, shoreY)
+    }
+    ctx.lineTo(w, shoreY)
+    ctx.lineTo(w, shoreY + 4)
+    ctx.lineTo(0, shoreY + 4)
+    ctx.fill()
+    // Ripples on the river.
+    ctx.strokeStyle = 'rgba(220,232,240,0.12)'
+    ctx.lineWidth = 1
+    for (let i = 0; i < 9; i++) {
+      const y = shoreY + 12 + i * ((h - shoreY) / 9)
+      const off = Math.sin(t * 0.5 + i) * 12
+      ctx.beginPath()
+      ctx.moveTo(w * 0.1 + off, y)
+      ctx.lineTo(w * 0.4 + off, y)
+      ctx.moveTo(w * 0.55 - off, y + 3)
+      ctx.lineTo(w * 0.85 - off, y + 3)
+      ctx.stroke()
+    }
+    // The fog: soft horizontal bands, each a wide gradient sliding sideways and wrapping.
+    for (const b of bands) {
+      const shift = ((t * b.speed) % w + w) % w
+      for (const base of [-w, 0, w]) {
+        const x = base + shift
+        const g = ctx.createRadialGradient(x + w / 2, b.y, 0, x + w / 2, b.y, w * 0.6)
+        g.addColorStop(0, `rgba(236,242,246,${b.a})`)
+        g.addColorStop(1, 'rgba(236,242,246,0)')
+        ctx.save()
+        ctx.translate(0, b.y)
+        ctx.scale(1, b.hgt / (w * 0.6))
+        ctx.translate(0, -b.y)
+        ctx.fillStyle = g
+        ctx.fillRect(x, b.y - w * 0.6, w, w * 1.2)
+        ctx.restore()
+      }
+    }
+  }
+}
+
+// «Ночной клёв» (1 100): night water, a few glowing floats bobbing; now and then one dips — a bite — and rings spread.
+function floatsScene(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const r = rand(877)
+  const glow = glowSprite('255,150,60', [
+    [0, 0.55],
+    [0.4, 0.18],
+    [1, 0],
+  ])
+  const stars = Array.from({ length: 40 }, () => ({ x: r() * w, y: r() * h * 0.35, s: 0.4 + r(), p: r() * TAU }))
+  const floats = Array.from({ length: 4 }, (_, i) => ({
+    x: w * (0.15 + i * 0.23 + r() * 0.06),
+    y: h * (0.55 + r() * 0.3),
+    phase: r() * TAU,
+    bite: 5 + r() * 7,
+    seed: i,
+  }))
+  return (t: number) => {
+    ctx.clearRect(0, 0, w, h)
+    for (const st of stars) {
+      ctx.fillStyle = `rgba(230,236,255,${0.25 + 0.35 * (0.5 + 0.5 * Math.sin(t * 1.3 + st.p))})`
+      ctx.fillRect(st.x, st.y, st.s, st.s)
+    }
+    for (const f of floats) {
+      const cycle = (t + f.phase) % f.bite
+      const dip = cycle < 0.6 ? Math.sin((cycle / 0.6) * Math.PI) * 7 : 0
+      const y = f.y + Math.sin(t * 1.4 + f.phase) * 2 + dip
+      // Rings spreading after a bite.
+      if (cycle < 2.4) {
+        for (const lag of [0, 0.5]) {
+          const q = (cycle - lag) / 1.9
+          if (q <= 0 || q >= 1) continue
+          ctx.strokeStyle = `rgba(255,190,130,${0.45 * (1 - q)})`
+          ctx.lineWidth = 1
+          ctx.beginPath()
+          ctx.ellipse(f.x, f.y + 6, 6 + q * 34, (6 + q * 34) * 0.28, 0, 0, TAU)
+          ctx.stroke()
+        }
+      }
+      // The float's light on the water.
+      ctx.globalAlpha = 0.5
+      ctx.drawImage(glow, f.x - 26, f.y + 2, 52, 14)
+      ctx.globalAlpha = 1
+      ctx.drawImage(glow, f.x - 22, y - 24, 44, 44)
+      // The float: orange top, white band, dark keel.
+      ctx.fillStyle = '#FF7A2E'
+      ctx.beginPath()
+      ctx.ellipse(f.x, y - 5, 3.2, 5.5, 0, 0, TAU)
+      ctx.fill()
+      ctx.fillStyle = '#FFF5EA'
+      ctx.fillRect(f.x - 3, y - 1, 6, 2.4)
+      ctx.fillStyle = 'rgba(20,24,40,0.9)'
+      ctx.fillRect(f.x - 0.8, y + 1.4, 1.6, 4)
+    }
+  }
+}
+
+// «Закат на пирсе» (1 900): the sun going down into the sea, its path shimmering, an empty pier on the right and gulls
+// drifting by (the angler was taken off at the owner's word, 24.11.2026).
+function sunsetScene(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const r = rand(991)
+  const horizon = h * 0.6
+  const sunX = w * 0.38
+  const birds = Array.from({ length: 3 }, (_, i) => ({ y: h * (0.12 + i * 0.08), speed: 10 + r() * 8, off: r() * w, size: 4 + r() * 3 }))
+  return (t: number) => {
+    ctx.clearRect(0, 0, w, h)
+    // The sun, low over the water.
+    const sunR = Math.min(w, h) * 0.12
+    const halo = ctx.createRadialGradient(sunX, horizon, 0, sunX, horizon, sunR * 4)
+    halo.addColorStop(0, 'rgba(255,214,140,0.55)')
+    halo.addColorStop(1, 'rgba(255,214,140,0)')
+    ctx.fillStyle = halo
+    // The whole canvas: the glow fades out by itself, no hard edge below the horizon.
+    ctx.fillRect(0, 0, w, h)
+    ctx.save()
+    ctx.beginPath()
+    ctx.rect(0, 0, w, horizon)
+    ctx.clip()
+    ctx.fillStyle = '#FFD58A'
+    ctx.beginPath()
+    ctx.arc(sunX, horizon + sunR * 0.25, sunR, 0, TAU)
+    ctx.fill()
+    ctx.restore()
+    // The water below the horizon, then the sun's path: short strokes that shimmer.
+    ctx.fillStyle = 'rgba(40,20,60,0.35)'
+    ctx.fillRect(0, horizon, w, h - horizon)
+    for (let i = 0; i < 26; i++) {
+      const y = horizon + 3 + i * ((h - horizon) / 26)
+      const spread = sunR * (0.6 + (i / 26) * 2.2)
+      const k = 0.5 + 0.5 * Math.sin(t * 2.2 + i * 1.7)
+      ctx.strokeStyle = `rgba(255,200,120,${0.18 + 0.4 * k * (1 - i / 30)})`
+      ctx.lineWidth = 1.4
+      ctx.beginPath()
+      ctx.moveTo(sunX - spread * (0.4 + 0.6 * k), y)
+      ctx.lineTo(sunX + spread * (0.4 + 0.6 * k), y)
+      ctx.stroke()
+    }
+    // The pier from the right edge: a thick deck lit along its top by the sunset, a railing, piles going down into the
+    // water and their wavering reflections — readable against the dark water.
+    // Well below the horizon line: the pier is close to us, not out at the horizon.
+    const deckY = horizon + (h - horizon) * 0.42
+    const deckX = w * 0.6
+    const deckH = Math.max(8, h * 0.045)
+    // Reflections first, so the piles paint over them.
+    for (let x = deckX + 8; x < w; x += 22) {
+      for (let k = 0; k < 6; k++) {
+        const y = deckY + deckH + 6 + k * 7
+        const off = Math.sin(t * 1.6 + x * 0.05 + k) * 2
+        ctx.fillStyle = `rgba(255,170,110,${0.18 - k * 0.025})`
+        ctx.fillRect(x - 1 + off, y, 5, 4)
+      }
+    }
+    // Piles.
+    ctx.fillStyle = '#3A1E38'
+    for (let x = deckX + 8; x < w; x += 22) ctx.fillRect(x, deckY + deckH, 4, h - deckY)
+    // Railing: posts and a top rail.
+    ctx.fillStyle = '#4A2644'
+    for (let x = deckX + 4; x < w; x += 26) ctx.fillRect(x, deckY - 16, 3, 16)
+    ctx.fillRect(deckX + 2, deckY - 17, w - deckX, 3)
+    ctx.fillStyle = 'rgba(255,190,130,0.75)'
+    ctx.fillRect(deckX + 2, deckY - 17, w - deckX, 1)
+    // The deck: planks with the sunset catching the top edge.
+    ctx.fillStyle = '#4A2644'
+    ctx.fillRect(deckX, deckY, w - deckX, deckH)
+    ctx.fillStyle = 'rgba(255,180,120,0.85)'
+    ctx.fillRect(deckX, deckY, w - deckX, 1.5)
+    ctx.fillStyle = 'rgba(30,12,30,0.35)'
+    for (let x = deckX + 14; x < w; x += 14) ctx.fillRect(x, deckY + 2, 1, deckH - 2)
+    // Gulls.
+    ctx.strokeStyle = 'rgba(40,18,40,0.75)'
+    ctx.lineWidth = 1.3
+    for (const b of birds) {
+      const x = ((b.off + t * b.speed) % (w + 40)) - 20
+      const flap = Math.sin(t * 5 + b.off) * b.size * 0.35
+      ctx.beginPath()
+      ctx.moveTo(x - b.size, b.y - flap)
+      ctx.quadraticCurveTo(x - b.size / 2, b.y - b.size * 0.6, x, b.y)
+      ctx.quadraticCurveTo(x + b.size / 2, b.y - b.size * 0.6, x + b.size, b.y - flap)
+      ctx.stroke()
+    }
+  }
+}
+
+const SCENES = { deep: deepScene, moonpath: moonScene, school: schoolScene, golddust: goldScene, reeds: reedsScene, rain: rainScene, scales: scalesScene, snow: snowScene, fog: fogScene, floats: floatsScene, sunset: sunsetScene }
 export type PremiumBackgroundKind = keyof typeof SCENES
 
 export function PremiumBackground({ kind }: { kind: PremiumBackgroundKind }) {

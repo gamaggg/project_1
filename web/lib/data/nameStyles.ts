@@ -12,9 +12,27 @@ export type NameStyle = {
   // colour = last) so the drift loops without a seam; a shine gradient is
   // two layers: the glint first, then the base.
   fx?: 'flow' | 'shine'
+  // 24.11.2026: effects that are not a gradient fill at all (StyledName.tsx draws them; `gradient` is then only the
+  // shop swatch / fallback): «Стикер» — white letters, dark outline, orange drop; «Неоновая вывеска» — glowing tube
+  // letters that flicker now and then; «Волна» — each letter bobs in turn like a float; «Пузырьки» — an ocean fill
+  // with bubbles rising off the name.
+  effect?: 'sticker' | 'neon' | 'wave' | 'bubbles'
 }
 
 export const NAME_STYLES: NameStyle[] = [
+  // Новинки 24.11.2026 (shop_items sort_order −4…−1): sticker 300, neon sign 700, wave 1 100, bubbles 1 800.
+  { id: 'name_sticker', get label() {
+      return tnd('nameStyle.name_sticker')
+    }, gradient: 'linear-gradient(90deg,#FFFFFF,#FFFFFF)', effect: 'sticker' },
+  { id: 'name_neon_sign', get label() {
+      return tnd('nameStyle.name_neon_sign')
+    }, gradient: 'linear-gradient(90deg,#FF5FC8,#FF9BE0)', effect: 'neon' },
+  { id: 'name_wave', get label() {
+      return tnd('nameStyle.name_wave')
+    }, gradient: 'linear-gradient(90deg,#12B5C9,#2F7BEF)', effect: 'wave' },
+  { id: 'name_bubbles', get label() {
+      return tnd('nameStyle.name_bubbles')
+    }, gradient: 'linear-gradient(180deg,#7FE7FF,#1E8FD6 55%,#0B5FA8)', effect: 'bubbles' },
   { id: 'name_fire', get label() {
       return tnd('nameStyle.name_fire')
     }, gradient: 'linear-gradient(90deg,#FC5200,#FFC24B)' },

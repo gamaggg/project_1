@@ -23,6 +23,8 @@ const BURST: Partial<Record<SlotPrize, { count: number; piece: Piece }>> = {
   free_spin: { count: 12, piece: 'skorpena' },
   double: { count: 12, piece: 'hook' },
   shield: { count: 12, piece: 'hex' },
+  chest: { count: 10, piece: 'chest' },
+  assorti: { count: 12, piece: 'coin' },
 }
 
 // Deterministic spread per piece (a seeded jitter, not Math.random in

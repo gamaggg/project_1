@@ -35,6 +35,7 @@ import {
   useSetSignupSource,
   useSubmitGeoGuess,
   reportClientError,
+  useShopNew,
 } from '@/lib/supabase/queries'
 import { geoRefused, getCurrentCoords, nearestTerritory, queryGeolocationPermission } from '@/lib/geolocation'
 import { showGeoHelp } from '@/lib/geoHelp'
@@ -116,6 +117,7 @@ import { TerritoryScreen } from '@/components/app-shell/screens/TerritoryScreen'
 import { TerritoriesListScreen, type Mode as RatingMode } from '@/components/app-shell/screens/TerritoriesListScreen'
 import { ShopScreen } from '@/components/app-shell/screens/ShopScreen'
 import { SlotsScreen } from '@/components/app-shell/screens/SlotsScreen'
+import { SecretBoxAppScreen } from '@/components/app-shell/SecretBoxScreen'
 import { GeoScreen } from '@/components/app-shell/screens/GeoScreen'
 import { AdminGeoScreen } from '@/components/app-shell/screens/AdminGeoScreen'
 import { BackButton } from '@/components/app-shell/BackButton'
@@ -176,6 +178,7 @@ export type ScreenId =
   | 'screen-last-week'
   | 'screen-shop'
   | 'screen-slots'
+  | 'screen-secret-box'
   | 'screen-geo'
   | 'screen-admin-geo'
   | 'screen-challenges'
@@ -220,6 +223,7 @@ type StackEntry =
   | { screen: 'screen-last-week' }
   | { screen: 'screen-shop' }
   | { screen: 'screen-slots' }
+  | { screen: 'screen-secret-box' }
   | { screen: 'screen-geo' }
   | { screen: 'screen-admin-geo' }
   | { screen: 'screen-challenges' }
@@ -231,6 +235,8 @@ type StackEntry =
 
 export function FishZoneApp() {
   const { user, loading: authLoading, signOut } = useAuth()
+  // Новинки магазина (24.11.2026): the first app visit after an update starts each item's 7 days of «NEW».
+  useShopNew()
   const tr = useT()
   const queryClient = useQueryClient()
   const { data: speciesList = [] } = useSpecies()
@@ -522,6 +528,8 @@ export function FishZoneApp() {
   // «Защита сектора»: the catch only wore the sector's defense down (its
   // defense after the catch), or null when it wasn't an attack.
   const [catchAttackDefense, setCatchAttackDefense] = useState<number | null>(null)
+  // The attacked sector is under a shield (24.11): its armor can go to 0, but the sector is taken only after the shield.
+  const [catchAttackShielded, setCatchAttackShielded] = useState(false)
   // Took the sector but the +25 was already paid for it today.
   const [catchCaptureNoCoins, setCatchCaptureNoCoins] = useState(false)
   // What the map plays over the sector once the success screen is closed (playSectorMoment).
@@ -581,7 +589,7 @@ export function FishZoneApp() {
   // Telegram on iPhone paints its own strip under the page (by the home
   // indicator), white by default — a white band under the dark camera and
   // the dark trophy scene. Match it to whatever dark screen is up.
-  const darkScreen = currentScreen === 'screen-camera' || showingTrophyScene
+  const darkScreen = currentScreen === 'screen-camera' || currentScreen === 'screen-secret-box' || showingTrophyScene
   useEffect(() => {
     const webApp = window.Telegram?.WebApp
     if (!webApp?.setBottomBarColor || !webApp.isVersionAtLeast?.('7.10')) return
@@ -769,6 +777,9 @@ export function FishZoneApp() {
   }
   function openSlots() {
     push({ screen: 'screen-slots' })
+  }
+  function openSecretBox() {
+    push({ screen: 'screen-secret-box' })
   }
   function openClans() {
     push({ screen: 'screen-clans' })
@@ -1187,6 +1198,7 @@ export function FishZoneApp() {
       const captured = t?.status !== 'mine' && !result.clanSupport && !result.attacked
       setWasFree(captured)
       setCatchAttackDefense(result.attacked ? (result.defense ?? 0) : null)
+      setCatchAttackShielded(!!t?.shieldUntil && Date.parse(t.shieldUntil) > Date.now())
       setCatchCaptureNoCoins(captured && result.defense !== null && result.captureCoins === 0)
       setCatchSpeciesCoins(result.speciesCoins)
       setCatchCaptureCoins(result.captureCoins)
@@ -1835,7 +1847,6 @@ export function FishZoneApp() {
               onShare={() => shareTerritory(viewingTerritory.id)}
               onOpenAllCatches={() => push({ screen: 'screen-catches', territoryId: viewingTerritory.id })}
               onOpenClan={openClan}
-              onToast={showToast}
               onShowOnMap={cityForSectorId(viewingTerritory.id) === city ? showTerritoryOnMap : undefined}
             />
           )}
@@ -1865,7 +1876,7 @@ export function FishZoneApp() {
             'batumi' default first — creating a throwaway week in the wrong
             city for every Moscow account on every boot. */}
         <Screen id="screen-shop" current={currentScreen} onBack={pop}>
-          {myProfile && <ShopScreen onBack={pop} onOpenSlots={openSlots} />}
+          {myProfile && <ShopScreen onBack={pop} onOpenSlots={openSlots} onOpenSecretBox={openSecretBox} />}
         </Screen>
         {/* The slots on their own screen, from the card under the Shop's
             balance — no longer a tab at the far end of the Shop's row. */}
@@ -1884,6 +1895,10 @@ export function FishZoneApp() {
               </div>
             </>
           )}
+        </Screen>
+        {/* «Секретный бокс» on its own dark screen, from the card under the slots (24.11.2026). */}
+        <Screen id="screen-secret-box" current={currentScreen} onBack={pop}>
+          {myProfile && <SecretBoxAppScreen onBack={pop} />}
         </Screen>
         {/* «Где это?» — the panorama of the day; the profile's card opens it. */}
         <Screen id="screen-geo" current={currentScreen} onBack={pop}>
@@ -2028,6 +2043,7 @@ export function FishZoneApp() {
               clanSupport={catchClanSupport}
               clanShare={catchClanShare}
               attackDefense={catchAttackDefense}
+              attackShielded={catchAttackShielded}
               captureNoCoins={catchCaptureNoCoins}
               step={confirmStep}
               pending={confirmCatchMutation.isPending}
@@ -2566,7 +2582,8 @@ export function FishZoneApp() {
         audience={!myProfile?.onboardingCompleted || firstSteps === undefined ? null : firstSteps?.eligible ? 'newcomer' : 'whatsNew'}
         memberSince={myProfile?.createdAt ?? null}
       />
-      {currentScreen !== 'screen-camera' && currentScreen !== 'screen-clan-editor' && currentScreen !== 'screen-clan-chat' && !showingTrophyScene && !(geoPlay && currentScreen === 'screen-map') && (
+      {/* No bottom menu on the secret box's own screen either (owner, 25.11.2026): it is a game screen, «Назад» leads out. */}
+      {currentScreen !== 'screen-camera' && currentScreen !== 'screen-clan-editor' && currentScreen !== 'screen-clan-chat' && currentScreen !== 'screen-secret-box' && !showingTrophyScene && !(geoPlay && currentScreen === 'screen-map') && (
         <BottomNav
           active={NAV_SCREENS.includes(currentScreen) ? (currentScreen as TabScreenId) : navScreen}
           onNavigate={navClick}

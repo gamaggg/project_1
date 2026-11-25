@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { SkeletonRows } from '@/components/app-shell/Skeleton'
 import { SortMenu } from '@/components/app-shell/SortMenu'
 import { ClanCrest } from '@/components/app-shell/ClanCrest'
@@ -8,19 +9,22 @@ import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { useAllPlayers } from '@/lib/supabase/queries'
 import { pluralCatches, pluralSectors } from '@/lib/format'
 import type { CityPlayer } from '@/lib/data/types'
-import { CITIES, CITY_LIST, type CityId } from '@/lib/data/city'
+import { CITIES, launchedCountries, type CityId, type CountryId } from '@/lib/data/city'
+import { Flag } from '@/components/app-shell/Flag'
+import type { TKey } from '@/lib/i18n/core'
 import { currentLocale, labels, tn } from '@/lib/i18n/runtime'
 import { nameInitials } from '@/lib/initials'
 
-type Order = 'rating' | 'name'
+type Order = 'rating' | 'catches' | 'name'
 type CityFilter = 'all' | CityId
+type CountryFilter = 'all' | CountryId
 // Who to show: everyone, only those outside a clan (to invite them), only
 // clan members, only players who hold sectors, only the newly joined.
 type Who = 'all' | 'solo' | 'clan' | 'holders' | 'new'
 // By catches (all time): any, none yet, at least one, at least 10, at least 50.
 type Fished = 'all' | 'none' | 'some' | 'ten' | 'fifty'
 
-const ORDER_LABEL = labels('playersOrder', ['rating', 'name'] as const)
+const ORDER_LABEL = labels('playersOrder', ['rating', 'catches', 'name'] as const)
 const WHO_LABEL = labels('playersWho', ['all', 'solo', 'clan', 'holders', 'new'] as const)
 const FISHED_LABEL = labels('playersCatches', ['all', 'none', 'some', 'ten', 'fifty'] as const)
 const FISHED_MIN: Record<Fished, (n: number) => boolean> = {
@@ -34,6 +38,9 @@ const NEW_DAYS = 14
 
 const BY_RATING = (a: CityPlayer, b: CityPlayer) =>
   b.territoriesCount - a.territoriesCount || b.catchesCount - a.catchesCount || a.displayName.localeCompare(b.displayName, currentLocale())
+// «По уловам» (24.11.2026): all-time catches, then sectors, then name.
+const BY_CATCHES = (a: CityPlayer, b: CityPlayer) =>
+  b.catchesCount - a.catchesCount || b.territoriesCount - a.territoriesCount || a.displayName.localeCompare(b.displayName, currentLocale())
 const BY_NAME = (a: CityPlayer, b: CityPlayer) => a.displayName.localeCompare(b.displayName, currentLocale())
 
 // How many rows are shown until «Показать ещё» — a few hundred players would
@@ -46,6 +53,8 @@ const PAGE = 40
 export function PlayersDirectory({ onOpenUser }: { onOpenUser: (id: string) => void }) {
   const { data: players = [], isLoading } = useAllPlayers(true)
   const [cityFilter, setCityFilter] = useState<CityFilter>('all')
+  // Country first, then one of its cities (24.11.2026).
+  const [country, setCountry] = useState<CountryFilter>('all')
   const [who, setWho] = useState<Who>('all')
   const [fished, setFished] = useState<Fished>('all')
   // «New» is counted from when the list was opened.
@@ -63,11 +72,11 @@ export function PlayersDirectory({ onOpenUser }: { onOpenUser: (id: string) => v
       (who === 'clan' && p.clanCrest != null) ||
       (who === 'holders' && p.territoriesCount > 0) ||
       (who === 'new' && new Date(p.createdAt).getTime() >= since)
-    const sorted = players.filter((p) => (cityFilter === 'all' || p.city === cityFilter) && matchesWho(p) && FISHED_MIN[fished](p.catchesCount)).sort(order === 'rating' ? BY_RATING : BY_NAME)
+    const sorted = players.filter((p) => (country === 'all' || CITIES[p.city].country === country) && (cityFilter === 'all' || p.city === cityFilter) && matchesWho(p) && FISHED_MIN[fished](p.catchesCount)).sort(order === 'rating' ? BY_RATING : order === 'catches' ? BY_CATCHES : BY_NAME)
     return query ? sorted.filter((p) => p.displayName.toLowerCase().replace(/ё/g, 'е').includes(query)) : sorted
-  }, [players, cityFilter, who, fished, order, query, openedAt])
-  // Place numbers only mean something in the rating order, over the whole list.
-  const numbered = order === 'rating' && !query
+  }, [players, country, cityFilter, who, fished, order, query, openedAt])
+  // Place numbers only mean something in a ranked order (rating, catches), over the whole list.
+  const numbered = order !== 'name' && !query
 
   return (
     <>
@@ -86,7 +95,9 @@ export function PlayersDirectory({ onOpenUser }: { onOpenUser: (id: string) => v
         <PlayersFilter
           who={who}
           city={cityFilter}
+          country={country}
           fished={fished}
+          count={list.length}
           onFished={(x) => {
             setFished(x)
             setShown(PAGE)
@@ -97,6 +108,11 @@ export function PlayersDirectory({ onOpenUser }: { onOpenUser: (id: string) => v
           }}
           onCity={(c) => {
             setCityFilter(c)
+            setShown(PAGE)
+          }}
+          onCountry={(c) => {
+            setCountry(c)
+            setCityFilter('all')
             setShown(PAGE)
           }}
         />
@@ -161,101 +177,123 @@ export function PlayersDirectory({ onOpenUser }: { onOpenUser: (id: string) => v
   )
 }
 
-// The funnel button at the end of the search box: who to show and from which
-// city, in one small card. A dot on the button while anything is narrowed.
+// The funnel button at the end of the search box opens a bottom sheet (24.11.2026; was a long drop-down that ran
+// under the bottom menu): who, catches and city as rows of chips, any of them at once, the list updating behind;
+// «Сбросить» and «Показать N игроков» below. A dot on the button while anything is narrowed.
 function PlayersFilter({
   who,
   city,
+  country,
   fished,
+  count,
   onWho,
   onCity,
+  onCountry,
   onFished,
 }: {
   who: Who
   city: CityFilter
+  country: CountryFilter
   fished: Fished
+  count: number
   onWho: (w: Who) => void
   onCity: (c: CityFilter) => void
+  onCountry: (c: CountryFilter) => void
   onFished: (x: Fished) => void
 }) {
   const [open, setOpen] = useState(false)
-  const rootRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!open) return
-    const onDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
-    }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
-    document.addEventListener('pointerdown', onDown)
     document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('pointerdown', onDown)
-      document.removeEventListener('keydown', onKey)
-    }
+    return () => document.removeEventListener('keydown', onKey)
   }, [open])
-  const active = who !== 'all' || city !== 'all' || fished !== 'all'
+  const active = who !== 'all' || city !== 'all' || country !== 'all' || fished !== 'all'
+  const countries = launchedCountries()
+  const chip = (on: boolean, label: string, pick: () => void, key: string) => (
+    <button key={key} type="button" role="radio" aria-checked={on} className={`filter-chip${on ? ' active' : ''}`} onClick={pick}>
+      {label}
+    </button>
+  )
   return (
-    <div className="sort-menu players-filter" ref={rootRef}>
-      <button type="button" className={`players-filter-btn tap-scale${active ? ' on' : ''}`} aria-haspopup="listbox" aria-expanded={open} aria-label={tn('players.filterLabel')} onClick={() => setOpen((o) => !o)}>
+    <div className="players-filter">
+      <button type="button" className={`players-filter-btn tap-scale${active ? ' on' : ''}`} aria-haspopup="dialog" aria-expanded={open} aria-label={tn('players.filterLabel')} onClick={() => setOpen(true)}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <path d="M4 6h16M7 12h10M10 18h4" />
         </svg>
         {active && <span className="players-filter-dot" />}
       </button>
-      {open && (
-        <div className="sort-menu-list players-filter-list" role="listbox" aria-label={tn('players.filterLabel')}>
-          <div className="players-filter-title">{tn('players.who')}</div>
-          {(Object.keys(WHO_LABEL) as Who[]).map((key) => (
-            <button
-              key={key}
-              type="button"
-              role="option"
-              aria-selected={key === who}
-              className={`sort-menu-opt${key === who ? ' on' : ''}`}
-              onClick={() => {
-                onWho(key)
-                setOpen(false)
-              }}
-            >
-              {WHO_LABEL[key]}
-            </button>
-          ))}
-          <div className="players-filter-title">{tn('players.catches')}</div>
-          {(Object.keys(FISHED_LABEL) as Fished[]).map((key) => (
-            <button
-              key={key}
-              type="button"
-              role="option"
-              aria-selected={key === fished}
-              className={`sort-menu-opt${key === fished ? ' on' : ''}`}
-              onClick={() => {
-                onFished(key)
-                setOpen(false)
-              }}
-            >
-              {FISHED_LABEL[key]}
-            </button>
-          ))}
-          <div className="players-filter-title">{tn('players.city')}</div>
-          {(['all', ...CITY_LIST.map((c) => c.id)] as const).map((key) => (
-            <button
-              key={key}
-              type="button"
-              role="option"
-              aria-selected={key === city}
-              className={`sort-menu-opt${key === city ? ' on' : ''}`}
-              onClick={() => {
-                onCity(key)
-                setOpen(false)
-              }}
-            >
-              {key === 'all' ? tn('players.allCities') : CITIES[key].name}
-            </button>
-          ))}
-        </div>
-      )}
+      {open &&
+        createPortal(
+          <div className="move-sheet-overlay" onClick={() => setOpen(false)}>
+            <div className="move-sheet players-filter-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={tn('players.filterLabel')}>
+              <div className="move-sheet-handle" />
+              <div className="move-head">
+                <div className="move-title">{tn('players.filterTitle')}</div>
+              </div>
+              <div className="move-body">
+                <div className="players-filter-title">{tn('players.who')}</div>
+                <div className="players-filter-chips" role="radiogroup" aria-label={tn('players.who')}>
+                  {(Object.keys(WHO_LABEL) as Who[]).map((key) => chip(key === who, WHO_LABEL[key], () => onWho(key), key))}
+                </div>
+                <div className="players-filter-title">{tn('players.catches')}</div>
+                <div className="players-filter-chips" role="radiogroup" aria-label={tn('players.catches')}>
+                  {(Object.keys(FISHED_LABEL) as Fished[]).map((key) => chip(key === fished, FISHED_LABEL[key], () => onFished(key), key))}
+                </div>
+                <div className="players-filter-title">{tn('players.country')}</div>
+                {/* Countries as a list; the picked one opens its cities right under it (a smooth unfold, the sheet's
+                    height stays — it no longer jumps when a country is picked). A one-city country opens nothing. */}
+                <div className="pf-countries" role="radiogroup" aria-label={tn('players.country')}>
+                  <button type="button" role="radio" aria-checked={country === 'all'} className={`pf-country-btn${country === 'all' ? ' on' : ''}`} onClick={() => onCountry('all')}>
+                    <span className="pf-country-name">{tn('players.allCountries')}</span>
+                  </button>
+                  {countries.map((c) => {
+                    const on = country === c.id
+                    return (
+                      <div key={c.id} className={`pf-country${on ? ' open' : ''}`}>
+                        <button type="button" role="radio" aria-checked={on} className={`pf-country-btn${on ? ' on' : ''}`} onClick={() => onCountry(on ? 'all' : c.id)}>
+                          <Flag country={c.id} height={14} />
+                          <span className="pf-country-name">{tn(`country.${c.id}` as TKey)}</span>
+                          <span className="pf-country-count">{tn('country.cities', { count: c.cities.length })}</span>
+                        </button>
+                        {c.cities.length > 1 && (
+                          <div className="pf-country-cities" aria-hidden={!on}>
+                            <div className="pf-country-cities-clip">
+                              <div className="players-filter-chips pf-country-cities-in" role="radiogroup" aria-label={tn('players.city')}>
+                                {chip(on && city === 'all', tn('players.allCities'), () => onCity('all'), 'all')}
+                                {c.cities.map((x) => chip(on && city === x.id, x.name, () => onCity(x.id), x.id))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+              <div className="players-filter-actions">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  disabled={!active}
+                  onClick={() => {
+                    onWho('all')
+                    onFished('all')
+                    onCountry('all')
+                  }}
+                >
+                  {tn('players.reset')}
+                </button>
+                <button type="button" className="btn-primary" onClick={() => setOpen(false)}>
+                  {tn('players.showCount', { count })} {tn('plural.player', { count })}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   )
 }

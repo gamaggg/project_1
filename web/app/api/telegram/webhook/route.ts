@@ -5,6 +5,7 @@ import { isEmptyTelegramAccount } from '@/lib/telegram/accounts'
 import { miniAppUrlForPayload } from '@/lib/telegram/startParamCodec'
 import { stopFishingDay } from '@/lib/telegram/fishing'
 import { answerWidgetQuery } from '@/lib/telegram/widgetQuery'
+import { answerStarsPreCheckout, fulfillStarsPayment } from '@/lib/telegram/stars'
 import { withErrorReport } from '@/lib/serverErrors'
 import { TRANSLATION_READY, langFromLocale, translate, type Lang, type TKey, type TVars } from '@/lib/i18n/core'
 
@@ -144,6 +145,17 @@ async function handlePOST(req: Request) {
   // A chat widget asking for the live state (lib/telegram/widgetQuery.ts).
   if (update.widget_query) {
     await answerWidgetQuery(update.widget_query)
+    return NextResponse.json({ ok: true })
+  }
+
+  // Purchases for Telegram Stars (lib/telegram/stars.ts): Telegram asks before taking the Stars, then reports the
+  // payment as a service message. Both come before everything else — a payment message has no text.
+  if (update.pre_checkout_query) {
+    await answerStarsPreCheckout(update.pre_checkout_query)
+    return NextResponse.json({ ok: true })
+  }
+  if (update.message?.successful_payment) {
+    await fulfillStarsPayment(update.message.chat.id, update.message.from?.id, update.message.successful_payment)
     return NextResponse.json({ ok: true })
   }
 

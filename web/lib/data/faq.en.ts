@@ -43,7 +43,7 @@ export const FAQ_EN: FaqSection[] = [
         q: 'How do I log a catch?',
         a: [
           'Stand in a sector, tap the orange camera button at the bottom of the screen, photograph the fish and pick the species. Length, weight, method and bait are optional.',
-          'The catch counts for the sector you are standing in now. Its card is the first one at the bottom of the map and the sector itself is outlined; the blue dot on the map follows you. If you are not in a sector, the bottom shows the sector with the freshest catch.',
+          'The catch counts for the sector you are standing in now.',
           'Did not weigh it on the spot? Open your catch card and tap the pencil at the top (or the «Edit» button at the bottom): you can add the length, weight, method and bait later, at home. The species can be changed once, and the size and weight can be changed once too (entering them for the first time counts as that one time, so enter both together); the method and the bait as often as you like. The photo and sector do not change, and neither do the coins for the catch.',
         ],
       },
@@ -59,20 +59,12 @@ export const FAQ_EN: FaqSection[] = [
         ],
       },
       {
-        q: 'Can I download the photo of my catch?',
-        a: ['Yes. Open your catch: in the row under your name, next to «To story», there is a button with a down arrow. In Telegram it opens its save prompt, in a browser the photo downloads. You get the photo as the app stores it: up to 1600 pixels on the long side, without the date and place it was taken.'],
-      },
-      {
         q: 'How do I see and show off my fish collection?',
-        a: ['In your profile tap «species» — the «Fish species» screen opens: how many fish of the city’s list you have, the one you catch most, your record and newest species, every fish you caught with its drawing (tap a card for records, dates and the photo) and the ones still to catch as silhouettes. A fish counts once, whatever city it was caught in. The «Marine», «Predator» and other tiles show how many of each category you have; tap one to see only its fish. Catch a fish in another city and that city’s whole category joins your collection (for example, all of Moscow’s predators). The first time you catch a fish, «New species in your collection!» shows after the catch — tap it to open your collection. «Share my collection to a story» makes a picture of your collection: in Telegram the story opens right away, in a browser the picture goes to Share or downloads.'],
+        a: ['In your profile tap «species» — the «Fish species» screen opens: how many fish of the city’s list you have, the one you catch most, your record and newest species, every fish you caught with its drawing (tap a card for records, dates and the photo) and the ones still to catch as silhouettes. A fish counts once, whatever city it was caught in. Catch a fish in another city and that city’s whole category joins your collection (for example, all of Moscow’s predators).'],
       },
       {
         q: 'What are «Trophies» in the profile?',
-        a: ['Up to three of your biggest catches: the longest first; if fewer than three have a length, the heaviest of those with only a weight fill the rest. The first is shown big on its own photo with a gold medal, the second and third beside each other with silver and bronze. Catches without a length or weight are not shown. Other players see this block in your profile too; a tap opens the photo of the catch.'],
-      },
-      {
-        q: 'Are there limits on catches and photos?',
-        a: ['Yes, but a regular angler never gets near them: up to 60 catches a day (and no more often than once every 2.5 minutes), up to 40 photos an hour and 120 a day, up to 10 reports an hour. If the activity looks like a program rather than a person, the account goes under review for a day: you can still look at everything, but not catch, upload photos, comment or report. If it\'s a mistake, write to support.'],
+        a: ['Up to three of your biggest catches: the longest first; if fewer than three have a length, the heaviest of those with only a weight fill the rest. Catches without a length or weight are not shown.'],
       },
       {
         q: 'Why is my catch not saved?',
@@ -81,7 +73,7 @@ export const FAQ_EN: FaqSection[] = [
             'You have to wait 2.5 minutes between catches.',
             'Allow the app to use your location and camera.',
             'Check that you are in one of the sectors on the map: a catch counts for the sector you stand in, and far from them it counts nowhere.',
-            'The sector is under someone else’s shield: while the shield stands, the sector cannot be taken — the app shows how long it has left and offers to add the catch to the diary: it counts like any other (stats, challenges, awards, coins for the species), only the sector stays with its holder.',
+            'The sector is under someone else’s shield and has no defense left: while the shield stands, the sector cannot be taken — the app shows how long it has left and offers to add the catch to the diary: it counts like any other (stats, challenges, awards, coins for the species), only the sector stays with its holder.',
           ],
         ],
       },
@@ -90,7 +82,6 @@ export const FAQ_EN: FaqSection[] = [
         a: [
           'Photograph the fish as usual and tap «Save offline». The catch waits on your phone and goes out by itself when you are back online — within a day.',
           'It counts by the time of the photo. The sector becomes yours only if nobody else has caught there since the photo.',
-          'The app also opens with no internet: it keeps the last data — the map, your profile, the diary, the challenges. For that, open it once with a connection and add RANGE to your phone’s home screen. What the server decides (rating, chats, the shop, claiming against rivals) does not work offline; in Telegram on an iPhone a fully closed app will not start without a connection.',
         ],
       },
     ],
@@ -110,16 +101,14 @@ export const FAQ_EN: FaqSection[] = [
         q: 'What is a sector’s defence?',
         a: [
           ['Defence goes from 0 to 3.', 'Each catch by the owner or their clan in the sector adds +1 to the defence, up to 3.', 'A catch by someone else takes 1 off, and the sector does not change hands.', 'When there is no defence, the next catch by someone else takes the sector — the new owner has defence 1.', 'If the owner and their clan do not fish here, the defence melts by 1 a day.'],
-          'Tap the defence on the sector screen — the same rules are there.',
         ],
       },
       {
         q: 'What is a shield?',
         a: [
-          'A shield covers a sector for 24 hours: while it stands, someone else’s catch neither takes the sector nor wears its defense down (the catch itself counts if it is added to the diary from the shield window), and your clanmates fish as usual.',
+          'A shield covers a sector for 24 hours: while it stands, the sector cannot be taken. A shield cannot go on top of another one — the next one goes on once this one ends. Someone else’s catch still wears its defense down (−1, as usual), but even at zero the sector does not change hands until the shield ends; such a catch can be added to the diary from the shield window and counts. Your clanmates fish as usual.',
           'Shields are not sold — you can only win them in the slots (5% chance per spin). A won shield goes into your reserve, which holds up to 3 shields; if the reserve is full, a shield that drops turns into 70 coins.',
           'Put a shield on with the «Put a shield on» button on your sector’s screen; if you are a co-holder of a clanmate’s sector you can too, with a shield from your reserve. How long the shield has left is shown right there, next to «Taken». A hot sector cannot be shielded until the end of the week.',
-          'How many shields you have in reserve is shown at the top of the map — a teal shield badge (if «Double coins» are on, there is one shared «×2 · shield» button). Tap it — a window with the reserve and a hint on where to place one.',
         ],
       },
       {
@@ -132,12 +121,11 @@ export const FAQ_EN: FaqSection[] = [
           'Every Friday at 12:00, two hot sectors of the week are picked in each city: a random one among those with 5 or more catches in 30 days, and its neighbour — the one that touches it. They burn on the map until the end of Sunday. The same sector is never hot two weeks in a row.',
           'A catch there brings ×2 coins (×3 with a clan «Outing» or «Double coins»), and such a sector pays triple rent into the clan treasury. Whoever holds a hot sector at the end of Sunday gets 100 coins and a medal — if anyone caught at least one fish on that sector during the week. An untouched hot sector gives no reward.',
           'A hot sector cannot be shielded, and the Tide does not trigger when it is claimed — the sector is open to everyone until the end of the week.',
-          'When the hot sectors are picked, the app shows them by itself the first time you open the map: the camera flies to each in turn, with a dimmed background and a hint with the rules. Once a week.',
         ],
       },
       {
         q: 'Who is a sector legend?',
-        a: ['The angler who caught the most in the sector over the last 90 days — at least 10 catches. Their avatar is in a laurel wreath on the sector screen. The bar under it shows your catches here against theirs (and while there is no legend yet — against 10). If you are the legend, the sector carries a gold «Legend» tag in your sector list (the «Rating» tab → «Territories» → Mine, and your profile).'],
+        a: ['The angler who caught the most in the sector over the last 90 days — at least 10 catches. Their avatar is in a laurel wreath on the sector screen.'],
       },
       {
         q: 'What is a sector trophy?',
@@ -147,7 +135,6 @@ export const FAQ_EN: FaqSection[] = [
         q: 'Where do I see the bite forecast?',
         a: [
           'On the map — the «Bite» badge with today’s score. Tap it and the forecast opens: pick a day at the top (today and 3 more), the big number is the score for that whole day, with the best time beside it.',
-          'Slide your finger along the «By the hour» scale — under it you see that hour’s score («3/5») and the weather: air, wind, pressure, wave. The scale has the numbers 1–5 on its left: each bar stands at the level of its score, and the current number lights up. Below — what helps the bite (green dot) and what hurts it (red); the sea water temperature is there too, for reference — it does not affect the score.',
           'On the sector screen — the forecast for that place and «What’s biting here»: which fish, when and on what they are caught here. The switch at the top of the block: «All time» (the default) or «30 days» — what has been biting this past month.',
           'If you hold a sector, in the evening the bot may write «Good bite tomorrow morning at your sector» — when the morning there (4 am to noon) scores 4–5 of 5. One message, for the best of your sectors; together with the city forecast, no more than twice a week and never two days running.',
         ],
@@ -163,7 +150,7 @@ export const FAQ_EN: FaqSection[] = [
           [
             'A catch — from 5 to 250 coins: the rarer the fish, the more.',
             'Claiming a sector — +25, once a day for the same sector.',
-            'Sector rent — it goes into the clan treasury: 1 coin every 3 hours from each sector (there is no personal Treasury any more).',
+            'Sector rent — it goes into the clan treasury: 1 coin every 3 hours from each sector.',
             'The daily reward — for opening the app.',
             'Weekly challenges — from 10 to 150 coins per task.',
             'The slots, the clan chest and the Clan battle.',
@@ -182,26 +169,19 @@ export const FAQ_EN: FaqSection[] = [
         ],
       },
       {
-        q: 'What is the Treasury?',
-        a: [
-          'There is no personal Treasury any more: it was closed on 9 November 2026. Whatever had built up in it was paid to the players.',
-          'Sectors now bring rent into the clan treasury — 1 coin every 3 hours from each sector, triple from a hot one (more in «What is the clan\'s treasury and where do its coins come from?»). If you are not in a clan, your sectors bring no rent: join a clan or create your own.',
-        ],
-      },
-      {
         q: 'How does the daily reward work?',
         a: ['Come in every day and collect the reward — the coin badge at the top of the map, by the logo: 10, 15, 20, 25, 30, 35, 40, 50, 60 and 100 coins for 10 days in a row, then it starts over. Miss a day — the streak starts again.'],
       },
       {
         q: 'What do I spend coins on?',
-        a: ['In the shop — avatar frames, profile backgrounds, name styles and sector skins (everyone sees them on the map and on the sector screen). You can try anything on before buying. Boosts are there too.'],
+        a: ['In the shop — avatar frames, profile backgrounds, name styles and sector skins (everyone sees them on the map and on the sector screen). You can try anything on before buying. Boosts are there too, and the secret box (a random item for 500 coins, open as many as you like).'],
       },
       {
         q: 'What do boosts do?',
         a: [
           [
-            'Double coins are no longer sold (since 9 November 2026 the clan «Outing» takes their place), but they still drop in the slots («3 hooks»): for 24 hours ×2 coins for catches, claims, challenges, achievements and clan rewards (the daily reward and the slots are not doubled). While the doubling lasts there is a golden «×2» badge at the top of the map with the time left: tap it — a window with a timer and a list of what is doubled. On a hot sector a catch with them is ×3, not ×4. Coins for a catch have a «×2» mark.',
-            'Tide — 220: the next sector you claim is protected for 48 hours (except a hot one — the Tide does not work there and waits for the next claim).',
+            'Double coins are no longer sold (since 9 November 2026 the clan «Outing» takes their place), but they still drop in the slots («3 hooks»): for 24 hours ×2 coins for catches, claims, challenges, achievements and clan rewards (the daily reward and the slots are not doubled). On a hot sector a catch with them is ×3, not ×4.',
+            'Tide — 220: the next sector you claim gets a 48-hour shield (except a hot one — the Tide does not work there and waits for the next claim).',
             'Echo — 90: your next catch counts as two in challenges. It does not affect sector defence or claiming: someone else’s catch always takes 1 off the defence.',
             'Fourth challenge — 70: one more task for this week.',
             'Challenge swap — 20: change a task for another of the same level.',
@@ -209,25 +189,28 @@ export const FAQ_EN: FaqSection[] = [
         ],
       },
       {
-        q: 'How do the slots work?',
+        q: 'What is the secret box?',
         a: [
-          'Every day — 1 free spin and one more for each catch, no more than 4 a day. Under the button you can see how many spins are left and how many more you can get for catches today.',
-          'The reels show your city’s fish: in the sea cities (Batumi, Sochi/Adler, Anapa, Varna/Burgas, Odesa) horse mackerel, scorpionfish, bluefish and dogfish, in the others — perch, bream, pike and catfish. Plus a hook and a hex.',
-          'Prizes: the jackpot (0.3% chance) — the «Katran» frame in the sea cities or «Catfish» in the others; these frames are not sold, you can only win them, and if you already have it — 300 coins. Also: a shield into the reserve (5%, shields exist only here; if the reserve already has 3 — 70 coins), double coins for a day (6%), 100 coins (4%), 3 horse mackerel or 3 perch — 25 coins (14%), 3 scorpionfish or 3 bream — a free spin (8%), a pair — 10 coins (38%). It is all in the pay table in the slots.',
-          'The slots are in the Shop, the «Angler’s slots» block together with your balance: it shows how many spins are left; tap it and the slots open. While a spin is waiting, a «Slots» sticker hangs on the map and the number of spins is on the profile badge and on the «Shop». You can hide the sticker with the cross: for this time (until a new spin) or for good.',
-          'The free spin from the slots and the spins RANGE sometimes gives are bonus ones: they do not burn at the end of the day and are used when the regular ones run out.',
+          'The secret box is in the Shop, under the fishing slots. Opening it costs 500 coins, and you can open as many as you like. Inside is one random shop item: a frame, a background, a name style or a sector skin.',
+          'Chances: a common item (price up to 400) — 70%, rare (401–900) — 22%, epic (901–1,700) — 6%, legendary (1,701 and up) — 2%. If you get an item you already own, you get half its price back in coins (a repeat of a 700-coin item gives 350). Free backgrounds and slot prizes (the Katran and Catfish frames) are not in the box.',
+          'One prize in four in each group is coins instead of an item: 150 or 250 in common, 500 in rare, 1,000 in epic, 2,500 in legendary.',
+          'A free box opening can be won on the slots (3 keys) or for 1st place in the weekly rating. It does not burn and is used first, instead of 500 coins.',
         ],
       },
       {
-        q: 'What is «Where is this?»?',
+        q: 'Can I buy anything for Telegram Stars?',
         a: [
-          'The game is on pause right now: we’re looking for better panoramas. There’s no sticker on the map, and the card in your profile opens a pause screen — tap «Okay, got it» and the card goes away. Once we’ve sorted it out, we’ll be back with an update. Below is how the game worked before the pause.',
-          'The game of the day: a 360° panorama by the water in your city — an embankment, a beach, a pier, a riverbank. Turn it with your finger, zoom with two fingers, look for clues: buildings, piers, mountains, bridges.',
-          'Tap «Pick a sector on the map» — the usual RANGE map opens. Tap the cell by the water where you think the panorama was taken and «It is here!». Right — +30 coins. Wrong — no coins, but the map shows both your cell and the right one, and the spot where the panorama was taken.',
-          'Then comes the story of the place: who holds the sector (or that it is free and you can take it first), how much was caught here and by whom, which fish, the record (a fish of 300 g or 20 cm and up), the best time to bite and the three latest catches. If the sector is under a shield, it cannot be taken now, but you can fish there.',
-          'The quest of the day: catch a fish in the panorama’s sector before midnight — +50 more coins, however you answered. The coins come by themselves, and a notification arrives in «Activity» and in Telegram.',
-          'There is one panorama a day, the same for everyone in the city, and one try. A new one at midnight in your city’s time. Places rotate: the same sector usually comes up no more than once in two weeks, and neighbouring ones do not follow each other. After answering, the table of the day is visible. The entrance is the «Where is this?» card in the profile.',
-          'The panoramas come from the open Mapillary database (CC BY-SA). All were shot from the shore, no further than ~80 m from the water, and exactly inside their sector — look for cells by the water. The author is credited at the bottom after you answer.',
+          'Yes, in RANGE inside Telegram: the «Stars» tab in the Shop. You pay with Stars right in Telegram, and the purchase arrives at once.',
+          'Coins: 500 — 50 ⭐, 1,500 — 125 ⭐, 5,000 — 350 ⭐. Keys: 1 — 40 ⭐, 3 — 100 ⭐; each key opens the secret box for free. The Jellyfish, Lava and Constellations skins — 150 ⭐ each; they can only be had for Stars.',
+        ],
+      },
+      {
+        q: 'How do the slots work?',
+        a: [
+          'Every day — 1 free spin and one more for each catch, no more than 4 a day. Under the button you can see how many spins are left and how many more you can get for catches today.',
+          'The reels show your city’s fish: in the sea cities (Batumi, Sochi/Adler, Anapa, Varna/Burgas, Odesa) horse mackerel, scorpionfish, bluefish and dogfish, in the others — perch, bream, pike and catfish. Plus a hook, a hex and a key.',
+          'Prizes: the jackpot (0.3% chance) — the «Katran» frame in the sea cities or «Catfish» in the others; these frames are not sold, you can only win them, and if you already have it — 300 coins. Also: a shield into the reserve (5%, shields exist only here; if the reserve already has 3 — 70 coins), double coins for a day (6%), 100 coins (4%), 3 horse mackerel or 3 perch — 25 coins (14%), 3 scorpionfish or 3 bream — a free spin (8%), three different fish — 15 coins (8%), 3 keys — a free secret box opening (1.5%), a pair — 10 coins (28.5%). It is all in the pay table in the slots.',
+          'The free spin from the slots and the spins RANGE sometimes gives are bonus ones: they do not burn at the end of the day and are used when the regular ones run out.',
         ],
       },
     ],
@@ -271,8 +254,8 @@ export const FAQ_EN: FaqSection[] = [
         a: [
           'A weekly race of rowing boats. Only clans whose leader or a co-leader has opened the battle take part: on the clan screen, the «Clan battle» tab → «Join the clan battle». They pick the roster — from 3 players up to the whole clan («Select all» and «Clear selection» are there, and each player’s result from last week is shown) — and confirm. It can be opened any time in the week until Sunday, but metres count from the start, and after it players can only be added («Add players»; their metres count from when they join and the finish grows by 200 m each), never removed. If it is not opened, the clan does not take part that week.',
           'The clan’s boat moves forward for catches (+10 m), challenges (+20 m), claims (+30 m) and sectors taken from another clan (+50 m) — only by the players in the roster. One player brings in no more than 150 m a day.',
-          'The finish is 200 m per rostered player (at least as for three). Reach it — 80 coins to every roster player who rowed. If at least two clans are in the battle, 1st, 2nd and 3rd place get another 120, 60 or 30. There is no penalty for taking part without a result.',
-          'On the clan screen «Clan battle» is the first tab and «Chest» the last. The chest and the battle count metres each on their own: the chest collects everything the whole clan brought in during the week, with no daily limit and no sign-up — it works for every clan.',
+          'The finish is 200 m per rostered player (at least as for three). Reach it — 80 coins to every roster player who rowed. If at least two clans are in the battle, 1st, 2nd and 3rd place get another 120, 60 or 30. There is no penalty for taking part without a result. Battle and chest coins go only to those who caught at least one fish that week.',
+          'The chest and the battle count metres each on their own: the chest collects everything the whole clan brought in during the week, with no daily limit and no sign-up — it works for every clan.',
         ],
       },
       {
@@ -287,7 +270,7 @@ export const FAQ_EN: FaqSection[] = [
         q: 'How does the clan chest work?',
         a: [
           'During the week the clan collects metres: a catch +10 m, claiming a sector +30 m, a completed challenge +20 m. There are 5 chests, and their thresholds grow with the number of members.',
-          'On Sunday night everyone who brought in at least 10 m gets coins for the biggest open chest: 20, 45, 80, 120 or 170. The chests do not add up.',
+          'On Sunday night everyone who brought in at least 10 m and caught at least one fish that week gets coins for the biggest open chest: 20, 45, 80, 120 or 170. The chests do not add up.',
         ],
       },
     ],
@@ -298,15 +281,14 @@ export const FAQ_EN: FaqSection[] = [
       {
         q: "What is the clan's treasury and where do its coins come from?",
         a: [
-          'The treasury is the clan\'s shared pot. It replaces the personal Treasury: the coins for sectors now build up for the whole clan, not for one player.',
+          'The treasury is the clan\'s shared pot: the coins for sectors build up for the whole clan, not for one player.',
           [
             'Rent: every captured clan sector brings 1 coin every 3 hours (8 a day). A shared sector that clan-mates hold together brings one and a half times more, the HQ sector double (2 coins per 3 hours).',
             'The catch tax: 0, 5 or 10 % of the coins for a fish, but at least 1 coin per reward (nothing is taken from a 1-coin reward). The leader or the co-leader picks the rate; it is part of your reward, not taken on top.',
-            'Deposits: any member can put in coins of their own. The welcome bonus and the invite bonus cannot go in: only coins earned in the game go into the treasury (the gift can still be spent in the shop). The members list shows how much each one gave this month (deposits and the catch tax); the count starts again on the 1st. Whoever gave the most wears the «Patron of the month» crown. Everyone sees this column, clan-mates and players of other clans.',
+            'Deposits: any member can put in coins of their own; «All» puts in everything that can go in. The welcome bonus and the invite bonus cannot go in: only coins earned in the game go into the treasury (the gift can still be spent in the shop). The members list shows how much each one gave this month (deposits and the catch tax); the count starts again on the 1st. Whoever gave the most wears the «Patron of the month» crown. Everyone sees this column, clan-mates and players of other clans.',
             'A quarter of the coins from the week\'s chest and the clan battle, the weekly task reward and 100 coins for every newcomer who makes a first catch.',
           ],
-          'It saves up to a cap: 3 000 coins for a clan of level 1–2, 5 000 for 3–4, 8 000 for 5–6, 12 000 for 7–8, 20 000 for 9–10; the Storehouse adds more. Tap «of …» under the treasury sum to see what the clan level gives, what the Storehouse gives and what the next level brings. What does not fit is lost. The leader and the co-leader spend it: on buildings, the HQ, the «Outing» and the clan shop.',
-          'Everything about the clan is in one journal on the «Treasury» tab: coins (rent, deposits, purchases), HQ alarms, outings, who joined and left. The filter on top splits coins and events.',
+          'It saves up to a cap: 3 000 coins for a clan of level 1–2, 5 000 for 3–4, 8 000 for 5–6, 12 000 for 7–8, 20 000 for 9–10; the Storehouse adds more. What does not fit is lost.',
         ],
       },
       {
@@ -314,8 +296,8 @@ export const FAQ_EN: FaqSection[] = [
         a: [
           'The HQ is the clan sector with its crest on it. The leader or the co-leader sets it only on a captured clan sector (1 000 coins from the treasury; moving it costs 2 000 and is allowed once in 3 days). A sector never has two HQs. While the HQ stands, the buildings work and the HQ sector pays double.',
           [
-            'The HQ sector\'s defence is the same three shields. Every clan catch there adds one, an outsider\'s catch takes one off.',
-            'With no shields left, the next outsider\'s catch does not take the sector but starts a siege: the clan has 90 minutes (the Beacon adds up to 30). A catch by any member on the HQ sector lifts the siege and brings them 150 coins. A shield from your reserve cannot go on an HQ sector under siege: it would not help, and it stays in your reserve. When the HQ falls, the shield on its sector is removed and does not pass to the new owner.',
+            'The HQ sector\'s defence is the same defence from 0 to 3. Every clan catch there adds 1, an outsider\'s catch takes 1 off.',
+            'With no defence left, the next outsider\'s catch does not take the sector but starts a siege: the clan has 90 minutes (the Beacon adds up to 30). A catch by any member on the HQ sector lifts the siege and brings them 150 coins. A shield from your reserve cannot go on an HQ sector under siege: it would not help, and it stays in your reserve. When the HQ falls, the shield on its sector is removed and does not pass to the new owner.',
             'While the siege lasts the treasury is shut for spending: nothing can be bought in the clan shop, built or sped up, no «Outing» planned and the HQ cannot be moved. Deposits still go in, and the rent and the catch tax come as usual.',
             'If it is not lifted in time the HQ falls: the attackers carry off 20 % of the treasury (at most 1 500 coins), the HQ sector goes to them, the buildings fall asleep and a new HQ can only be set after 24 hours.',
             'Three quarters of the loot go to the attacker\'s clan treasury, or to the attacker personally if they have no clan. The remaining quarter is lost.',
@@ -353,27 +335,10 @@ export const FAQ_EN: FaqSection[] = [
           'The clan shop is the third tab of the «Treasury» (Treasury · HQ · Shop). The leader and the co-leaders buy from the treasury; the others see the same and can try anything on. Every item opens with a clan level; any of them can be «Set as the goal»: then every member sees at the bottom of the treasury card what the clan is saving for and how much is left.',
           [
             'Sector skins: the same 18 skins the players have, five times dearer: from 1 500 to 15 000 coins. The skin lies on every clan sector on the «Clans» layer, in the crest\'s colour.',
-            'Boats for the clan battle: «Coral» 3 000 (from clan level 2), «Night» 4 500 (from 4), «Golden» 6 000 (from 5), «Dragon» 9 000 (from 7). Each boat has its own details: shells and a starfish, stars and lanterns, a crown and sparks; the «Dragon» hull is the dragon\'s body itself: the neck with the head at the bow, the tail at the stern.',
-            'Frames round the crest on the clan screen, in the crest\'s own shape: «Bronze» 2 000 (from level 2), «Silver» 4 000 (from 4), «Gold» 7 000 (from 6), «Legendary» 12 000 (from 8). The inner edge always follows the crest; the gold one has a laurel wreath and a crown, the legendary one wings and a star. The «Champion» frame can\'t be bought: the clan gets it free at level 10, and the leader or a co-leader puts it on in the shop. It has turning gold rays, a golden glow, pearls along the edge and sparks.',
+            'Boats for the clan battle: «Coral» 3 000 (from clan level 2), «Night» 4 500 (from 4), «Golden» 6 000 (from 5), «Dragon» 9 000 (from 7).',
+            'Frames round the crest on the clan screen, in the crest\'s own shape: «Bronze» 2 000 (from level 2), «Silver» 4 000 (from 4), «Gold» 7 000 (from 6), «Legendary» 12 000 (from 8). The «Champion» frame can\'t be bought: the clan gets it free at level 10, and the leader or a co-leader puts it on in the shop.',
           ],
-          'What is bought is put on at once; you can take it off or put on something else you bought at any time. «Try on» shows the skin on the map, the boat on the water, the frame on the clan banner. While the treasury is short, the buy button is off.',
-        ],
-      },
-      {
-        q: 'How do I invite people to my clan with a story?',
-        a: ['In the clan open «Hall of fame» → «Clan card» → «Share to a story». A picture is made: the clan’s background and crest, level and league, HQ, how many anglers, the clan’s three record fish (the longest caught by members in the clan’s city) and «Join our clan!». In Telegram the story opens right away with the picture and a caption; with Telegram Premium a link to the clan is attached, through which people can join. In a browser the picture goes to Share or downloads.'],
-      },
-      {
-        q: 'What notifications does the clan send?',
-        a: [
-          [
-            'To the whole clan: the HQ is attacked, the HQ is under siege, who lifted the siege, the HQ fell, an «Outing» is planned (come in and tap «I\'m in»), a building is ready (everyone in the app sees its moment).',
-            'To those who fished for the weekly task: the task is done, the reward is in the treasury.',
-            'To the leader and the co-leaders: a shop item bought, a newcomer joined and made a first catch; on Sunday evening (18:00 to 23:00 in the clan\'s city) a reminder if the weekly task is done but its reward is not collected yet: on Monday at 00:00 it is gone.',
-            'Every Monday at 10:00 Moscow time, the clan\'s week: what came into the treasury and was spent, who gave the most, what was built, sectors and catches of the week. A clan with no coins and no catches that week gets nothing.',
-            'A leader, a co-leader or an elder can call a member out to fish («Call to the water»), at most once a day per member.',
-          ],
-          'Notifications come to «Activity» and Telegram; at night Telegram holds them till morning, except a siege. A cancelled «Outing» and attacks on ordinary sectors are only in the clan journal.',
+          'What is bought is put on at once; you can take it off or put on something else you bought at any time.',
         ],
       },
       {
@@ -400,26 +365,25 @@ export const FAQ_EN: FaqSection[] = [
     title: 'More',
     items: [
       {
-        q: 'Why did the letters in my name become plain?',
-        a: ['«Fancy» letters from nickname generators (like 𝙏𝙤𝙧𝙚𝙤𝙙𝙤𝙧 or 𝔸lexander) are separate symbols, not a font: some phones show them as boxes. So when you sign up or change your name they are replaced with plain letters (Toreodor, Alexander). Russian and Georgian letters, digits and emoji stay as they are.'],
-      },
-      {
         q: 'Where can I see all the players?',
         a: [
-          'The «Rating» tab → «All players»: everyone who plays, from all cities (you can keep only Batumi or Moscow & MO). The order is «By rating» (first those with more sectors, then catches — all time) or «By name»; search by name is at the top, and to its right a filter: players without a clan (whom you can invite), in a clan, with sectors, new in two weeks, by catches (none, any, 10 or more, 50 or more), by city. Tap a player and their profile opens.',
+          'The «Rating» tab → «All players»: everyone who plays, from every city. You can search by name, sort and filter — for example, find players without a clan to invite. Tap a player and their profile opens.',
         ],
       },
       {
         q: 'How do I quickly get a route to a sector?',
-        a: ['On the «Rating» tab → «Territories», swipe a sector row to the left — «Route» (pick a maps app: Google, Yandex, Apple) and «On the map» (for sectors of the city on the map now) appear. On the sector screen — the same «Route» button under the coordinates. And the «Activity» feed refreshes when you pull it down from the very top.'],
+        a: ['On the «Rating» tab → «Territories», swipe a sector row to the left — «Route» (pick a maps app: Google, Yandex, Apple) and «On the map» (for sectors of the city on the map now) appear. On the sector screen «Route» is on the map at the top, next to «On the map»; the route window also lets you copy the coordinates.'],
       },
       {
         q: 'What is «Week in the city»?',
-        a: ['A sticker on the map with last week’s results: how much was caught, the main fish and anglers, your own numbers. The angler of the week is whoever caught the most in the city that week; on a tie, whoever has more sectors of the week (as in the weekly rating). You can share each slide. The cross hides the sticker until next week’s results — only in this city, the other cities keep theirs.'],
+        a: ['A sticker on the map with last week’s results: how much was caught, the main fish and anglers, your own numbers. The angler of the week is whoever caught the most in the city that week; on a tie, whoever has more sectors of the week (as in the weekly rating). You can share each slide.'],
       },
       {
         q: 'How is the weekly rating counted?',
-        a: ['Sectors of the week first, then catches in the city that week. A sector of the week is one you captured this week and still hold, or a share in a clanmate’s sector you joined this week. A catch on your own sector is not a capture: an old sector does not become a sector of the week. The week’s results use the same numbers.'],
+        a: [
+          'Sectors of the week first, then catches in the city that week. A sector of the week is one you captured this week and still hold, or a share in a clanmate’s sector you joined this week. A catch on your own sector is not a capture: an old sector does not become a sector of the week. The week’s results use the same numbers.',
+          'The top three of the week in each city get coins: 1st place — 300 and a key (a free secret box opening), 2nd — 200, 3rd — 100. You need at least 1 sector of the week.',
+        ],
       },
       {
         q: 'What are the orange shop pins on the map?',
@@ -439,9 +403,7 @@ export const FAQ_EN: FaqSection[] = [
         q: 'Where is my diary?',
         a: [
           'In «My catches» — the «Diary» tab: fishing days with the weather, notes, trips without a catch and catches from the gallery.',
-          'At the top — your statistics for all time, the last 7 or 30 days: how many trips, catches, species and places, the record (the heaviest fish, or the longest if the weight is not given) and the best time — the three hours when you bite most often. Tap a number and what is behind it opens: fishing days, all photos, species with the best size, places. Under every photo — the time it was caught.',
-          'Tap «Best time» and the «Catches by hour» chart opens, the best three hours in orange: slide a finger along it or tap a bar, and the hour and how many catches it has appear above it. Below — «Fishing days, last 12 weeks»: a square per day, brighter the more you caught. Tap a day and the diary scrolls to it.',
-          'Each day has a «⋯» at the top right: add or edit a note and «Delete entry» — after confirmation the note and the gallery photos for that day disappear. Catches counted in the game stay: they are part of the game.',
+          'At the top — your statistics for all time, the last 7 or 30 days: how many trips, catches, species and places, the record (the heaviest fish, or the longest if the weight is not given) and the best time — the three hours when you bite most often.',
         ],
       },
       {
@@ -472,7 +434,6 @@ export const FAQ_EN: FaqSection[] = [
         a: [
           'At the bottom of the profile — «How to play», under the search — «No answer here? Write to support». Describe what happened and attach a screenshot if needed.',
           'Each request is a chat: open it in «My requests» under the button and keep writing there, with a screenshot if needed. When support replies, «New message in your support chat» with an «Open» button appears in «Activity» and in Telegram.',
-          'A new request — no more than once a minute and 5 a day; in a chat — up to 30 messages a day.',
         ],
       },
       {
