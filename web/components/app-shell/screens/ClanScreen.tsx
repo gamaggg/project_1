@@ -70,7 +70,7 @@ const CLAN2_PART_LABEL: Partial<Record<Tab, string>> = {
   shop: 'clan2.sub.shop',
   exit: 'clan2.sub.exit',
   week: 'clan2.sub.week',
-  members: 'guest.members',
+  members: 'clan2.sub.members',
   glory: 'clan2.sub.glory',
   race: 'clan.tabRace',
   chest: 'clan.tabChest',
@@ -656,7 +656,7 @@ export function ClanScreen({
             )}
 
             <div className={`clan-card${c2 ? ' c2-roster' : ''}`} data-tour={c2 ? 'members-list' : undefined}>
-              <div className="clan-card-title">{tn('clan.membersTitle', { count: clan.members.length })}</div>
+              <div className="clan-card-title">{c2 ? `${tn('clan2.members.title')} · ${clan.members.length}` : tn('clan.membersTitle', { count: clan.members.length })}</div>
               {c2 && <div className="c2-month-head">{tn('clan2.members.monthHead')}</div>}
               {(() => {
                 // The «…» place is kept only when someone in the list has a menu; otherwise it was an empty gap on the right.

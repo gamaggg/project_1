@@ -5715,7 +5715,8 @@ button.geo-fact{cursor:pointer;}
 .shop-presets .filter-chip{flex:none; padding:5px 10px; font-size:11.5px;}
 .shop-card-name-preview.is-dark{background:#0A0D14;}
 /* The live families' names sit over light fog and glare: a soft dark halo keeps the letters readable (drop-shadow, since text-shadow doesn't show through clipped text). */
-.name-gl{filter:drop-shadow(0 1px 5px rgba(5,8,16,.65));}
+/* Only where the name sits on a dark plate: on a light row (clan members, comments, chat) the halo read as a grey smudge (26.11.2026). */
+.profile-hero-name .name-gl, .kit-preview-name .name-gl, .shop-card-name-preview.is-dark .name-gl{filter:drop-shadow(0 1px 5px rgba(5,8,16,.65));}
 .kit-list{display:flex; flex-direction:column; gap:14px; margin-top:14px;}
 .kit-card{padding:12px 12px 14px;}
 .kit-preview{position:relative; isolation:isolate; overflow:hidden; width:100%; height:150px; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;}

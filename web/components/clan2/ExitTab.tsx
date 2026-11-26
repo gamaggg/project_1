@@ -99,7 +99,7 @@ export function ExitTab() {
             <Going list={going} />
             {isMember && !imIn && (
               <>
-                <p className="c2-muted">{tn('clan2.exit.notIn')}</p>
+                <p className="c2-hint">{tn('clan2.exit.notIn')}</p>
                 <button className="btn-primary" onClick={() => act(rsvpBuff(true), 'rsvpOn')}>
                   {tn('clan2.exit.imIn')}
                 </button>

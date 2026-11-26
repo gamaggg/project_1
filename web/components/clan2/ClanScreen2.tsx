@@ -35,7 +35,7 @@ const PART_LABEL: Record<SubTab, string> = {
   shop: 'clan2.sub.shop',
   exit: 'clan2.sub.exit',
   week: 'clan2.sub.week',
-  members: 'guest.members',
+  members: 'clan2.sub.members',
   glory: 'clan2.sub.glory',
 }
 type TKey = Parameters<typeof tn>[0]

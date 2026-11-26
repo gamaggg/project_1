@@ -13,7 +13,7 @@ export const clan2En = {
     hq: "HQ",
     glory: "Hall of fame",
     members: "Members",
-    people: "People",
+    people: "Members",
     race: "Battle",
     shop: "Shop",
   },
