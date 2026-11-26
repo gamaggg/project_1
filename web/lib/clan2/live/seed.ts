@@ -1,4 +1,4 @@
-import { fallHq } from '@/lib/clan2/demoStore'
+import { fallHq, serverOn } from '@/lib/clan2/demoStore'
 import { DEFAULT_SETTINGS, HOURS, makeQuest, monthKeyOf, pickQuestKind, weekEndOf, weekKeyOf } from '@/lib/clan2/rules'
 import type { ClanRole, DemoMember, DemoState, MapSector } from '@/lib/clan2/types'
 import { resolveCrest } from '@/lib/data/clanCrests'
@@ -116,7 +116,10 @@ export function syncLiveState(d: DemoState, input: LiveInput, now: number = Date
     return { ...f, skin: o.skin, hq: o.hq, defense: o.hq ? o.defense : f.defense }
   })
   // A sector the clan held and the real game took away: with the HQ on it, the headquarters has fallen.
-  if (d.hq.sectorId && !d.sectors.some((x) => x.id === d.hq.sectorId)) {
+  // Only while no server keeps the clan (the browser-only preview): the server decides sieges and falls itself, and
+  // while the player switches clans the sectors here are for a moment another city's, so the HQ's sector «went
+  // missing» and a fallen HQ flashed over the screen until the next read (26.11.2026).
+  if (!serverOn() && d.hq.sectorId && !d.sectors.some((x) => x.id === d.hq.sectorId)) {
     const t = territories.find((x) => x.id === d.hq.sectorId)
     fallHq(d, t?.ownerClanName ?? t?.ownerDisplayName ?? '?', now + (d.clockOffsetMs ?? 0))
   }
