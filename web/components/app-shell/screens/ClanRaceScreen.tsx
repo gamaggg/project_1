@@ -2,10 +2,10 @@
 
 import { HexLoader } from '@/components/app-shell/HexLoader'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
-import { useClanRace } from '@/lib/supabase/queries'
+import { useClanFrames, useClanRace } from '@/lib/supabase/queries'
 import { PullIndicator, pullShift, usePullToRefresh } from '@/components/app-shell/PullToRefresh'
 import { BackButton } from '@/components/app-shell/BackButton'
-import { ClanCrest } from '@/components/app-shell/ClanCrest'
+import { FramedCrest } from '@/components/clan2/ClanItems'
 import { ChallengeCountdown } from '@/components/app-shell/ChallengeCountdown'
 import { ClanWarCard, RaceRiver, RaceRulesCard, formatMeters, raceHeadline, raceProgress } from '@/components/app-shell/ClanRace'
 import { currentLocale, tn } from '@/lib/i18n/runtime'
@@ -33,6 +33,8 @@ export function ClanRaceScreen({
   onOpenClans: () => void
 }) {
   const { data: race, isLoading, refetch } = useClanRace(city, true)
+  // The frame each clan wears (its clan shop), as in the clan lists and the rating.
+  const { data: frames = {} } = useClanFrames()
   const { ref: ptrRef, pull, dragging, refreshing } = usePullToRefresh(() => refetch())
   const mine = race?.clans.find((c) => c.id === race.myClanId) ?? null
   const todayPct = race ? Math.min(1, race.myToday / Math.max(1, race.dailyCap)) : 0
@@ -107,7 +109,7 @@ export function ClanRaceScreen({
                 {race.clans.map((c, i) => (
                   <button key={c.id} className={`race-standing${c.id === race.myClanId ? ' mine' : ''}`} style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }} onClick={() => onOpenClan(c.id)}>
                     <span className="clan-list-rank">{c.rank}</span>
-                    <ClanCrest crest={c.crest} size={34} />
+                    <FramedCrest crest={c.crest} frame={frames[c.id]} size={34} />
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span className="clan-list-name">{c.name}</span>
                       <span className="race-standing-bar">
@@ -169,7 +171,7 @@ export function ClanRaceScreen({
                   {[race.lastWeek.find((c) => c.place === 2), race.lastWeek.find((c) => c.place === 1), race.lastWeek.find((c) => c.place === 3)].map((c, i) =>
                     c ? (
                       <button key={c.id} className={`clan-podium-item${i === 1 ? ' first' : ''}`} onClick={() => onOpenClan(c.id)}>
-                        <ClanCrest crest={c.crest} size={i === 1 ? 64 : 48} shine={i === 1} />
+                        <FramedCrest crest={c.crest} frame={frames[c.id]} size={i === 1 ? 64 : 48} shine={i === 1} />
                         <span className="clan-podium-place">{c.place}</span>
                         <span className="clan-podium-name">{c.name}</span>
                         <span className="clan-podium-trophies">{c.finished ? tn('race.arrived') : tn('race.pctShort', { pct: Math.floor((c.meters / Math.max(1, c.finish)) * 100) })}</span>
