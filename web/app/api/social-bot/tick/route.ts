@@ -17,6 +17,8 @@ import {
   tg,
   type SocialPost,
 } from '@/lib/socialBot'
+import { facebookConfigured, publishToFacebook } from '@/lib/facebookPublish'
+import { instagramConfigured, publishToInstagram } from '@/lib/instagramPublish'
 import { publishToThreads, threadsConfigured } from '@/lib/threadsPublish'
 
 // Called every 5 minutes by the social-bot-tick cron job (only when there is
@@ -113,6 +115,34 @@ async function handleGET(req: Request) {
           }
         }
         if (p.captions._threads_id || link) manual = { ...p, platforms: p.platforms.filter((x) => x !== 'threads') }
+      }
+      // Instagram (feed/Reels and Stories) and the Facebook Page go out by themselves too, once each.
+      const auto: [string, string, () => Promise<{ id: string; link: string | null }>][] = []
+      if (instagramConfigured()) {
+        auto.push(['instagram', 'Instagram', () => publishToInstagram(p, false)])
+        auto.push(['instagram_story', 'истории Instagram', () => publishToInstagram(p, true)])
+      }
+      if (facebookConfigured()) auto.push(['facebook', 'Facebook', () => publishToFacebook(p)])
+      for (const [platform, label, publish] of auto) {
+        if (!p.platforms.includes(platform)) continue
+        const key = `_${platform}_id`
+        let done = typeof p.captions[key] === 'string' && p.captions[key] !== ''
+        if (!done) {
+          try {
+            const res = await publish()
+            const { data: fresh } = await admin.from('social_posts').select('captions').eq('id', p.id).single()
+            const captions = { ...(fresh?.captions as Record<string, string> | null), [key]: res.id, [`_${platform}_link`]: res.link ?? '' }
+            await admin.from('social_posts').update({ captions, updated_at: new Date().toISOString() }).eq('id', p.id)
+            report.published++
+            done = true
+            await tg('sendMessage', { chat_id: chatId, text: `✅ #${p.id} вышел в ${label}.${res.link ? `\n${res.link}` : ''}`, link_preview_options: { is_disabled: true } })
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err)
+            report.errors.push(`${platform} #${p.id}: ${msg}`)
+            await tg('sendMessage', { chat_id: chatId, text: `⚠️ #${p.id} не вышел в ${label} сам: ${msg.slice(0, 300)}\nВыложи его туда вручную.` }).catch(() => {})
+          }
+        }
+        if (done) manual = { ...manual, platforms: manual.platforms.filter((x) => x !== platform) }
       }
       if (manual.platforms.length === 0) {
         await admin.from('social_posts').update({ status: 'published', published_at: new Date().toISOString(), error: null, updated_at: new Date().toISOString() }).eq('id', p.id)
