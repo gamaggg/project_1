@@ -107,7 +107,7 @@ export const FAQ_EN: FaqSection[] = [
         q: 'What is a shield?',
         a: [
           'A shield covers a sector for 24 hours: while it stands, the sector cannot be taken. A shield cannot go on top of another one — the next one goes on once this one ends. Someone else’s catch still wears its defense down (−1, as usual), but even at zero the sector does not change hands until the shield ends; such a catch can be added to the diary from the shield window and counts. Your clanmates fish as usual.',
-          'Shields are not sold — you can only win them in the slots (5% chance per spin). A won shield goes into your reserve, which holds up to 3 shields; if the reserve is full, a shield that drops turns into 70 coins.',
+          'Shields are not sold — you can only win them in the slots (3% chance per spin). A won shield goes into your reserve, which holds up to 3 shields; if the reserve is full, a shield that drops turns into 70 coins.',
           'Put a shield on with the «Put a shield on» button on your sector’s screen; if you are a co-holder of a clanmate’s sector you can too, with a shield from your reserve. How long the shield has left is shown right there, next to «Taken». A hot sector cannot be shielded until the end of the week.',
         ],
       },
@@ -210,7 +210,7 @@ export const FAQ_EN: FaqSection[] = [
         a: [
           'Every day — 1 free spin and one more for each catch, no more than 4 a day. Under the button you can see how many spins are left and how many more you can get for catches today.',
           'The reels show your city’s fish: in the sea cities (Batumi, Sochi/Adler, Anapa, Varna/Burgas, Odesa) horse mackerel, scorpionfish, bluefish and dogfish, in the others — perch, bream, pike and catfish. Plus a hook, a hex and a key.',
-          'Prizes: the jackpot (0.3% chance) — the «Katran» frame in the sea cities or «Catfish» in the others; these frames are not sold, you can only win them, and if you already have it — 300 coins. Also: a shield into the reserve (5%, shields exist only here; if the reserve already has 3 — 70 coins), double coins for a day (6%), 100 coins (4%), 3 horse mackerel or 3 perch — 25 coins (14%), 3 scorpionfish or 3 bream — a free spin (8%), three different fish — 15 coins (8%), 3 keys — a free secret box opening (1.5%), a pair — 10 coins (28.5%). It is all in the pay table in the slots.',
+          'Prizes: the jackpot (0.3% chance) — the «Katran» frame in the sea cities or «Catfish» in the others; these frames are not sold, you can only win them, and if you already have it — 300 coins. Also: a shield into the reserve (3%, shields exist only here; if the reserve already has 3 — 70 coins), double coins for a day (6%), 100 coins (4%), 3 horse mackerel or 3 perch — 25 coins (14%), 3 scorpionfish or 3 bream — a free spin (8%), three different fish — 15 coins (8%), 3 keys — a free secret box opening (1.5%), a pair — 10 coins (30.5%). It is all in the pay table in the slots.',
           'The free spin from the slots and the spins RANGE sometimes gives are bonus ones: they do not burn at the end of the day and are used when the regular ones run out.',
         ],
       },

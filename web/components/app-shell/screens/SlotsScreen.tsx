@@ -94,20 +94,21 @@ function filler(count: number): SymbolId[] {
 type PayRow = { prize: SlotPrize; symbols: SymbolId[]; chance: number; label: TKey; reward: { coins: number } | { text: TKey }; box?: true }
 const PAY_ROWS: PayRow[] = [
   // Same odds as spin_slots on the server (supabase-drafts/slots_odds_free_spin.sql;
-  // the chest and «Ассорти» — economy-24-11/09, only where the secret box is open), rarest first.
+  // the chest and «Ассорти» — economy-24-11/09, only where the secret box is open; the shield 3 % —
+  // slots-shield-3-26-11), rarest first.
   { prize: 'jackpot', symbols: ['katran', 'katran', 'katran'], chance: JACKPOT_CHANCE, label: 'slots.rows.jackpot', reward: { text: 'slots.rewards.jackpot' } },
   { prize: 'chest', symbols: ['chest', 'chest', 'chest'], chance: 0.015, label: 'slots.rows.chest', reward: { text: 'slots.rewards.chest' }, box: true },
+  { prize: 'shield', symbols: ['hex', 'hex', 'hex'], chance: 0.03, label: 'slots.rows.shield', reward: { text: 'slots.rewards.shield' } },
   { prize: 'lufar', symbols: ['lufar', 'lufar', 'lufar'], chance: 0.04, label: 'slots.rows.lufar', reward: { coins: 100 } },
-  { prize: 'shield', symbols: ['hex', 'hex', 'hex'], chance: 0.05, label: 'slots.rows.shield', reward: { text: 'slots.rewards.shield' } },
   { prize: 'double', symbols: ['hook', 'hook', 'hook'], chance: 0.06, label: 'slots.rows.double', reward: { text: 'slots.rewards.double' } },
   { prize: 'free_spin', symbols: ['skorpena', 'skorpena', 'skorpena'], chance: 0.08, label: 'slots.rows.freeSpin', reward: { text: 'slots.rewards.freeSpin' } },
   { prize: 'assorti', symbols: ['stavrida', 'lufar', 'skorpena'], chance: 0.08, label: 'slots.rows.assorti', reward: { coins: 15 }, box: true },
   { prize: 'triple', symbols: ['stavrida', 'stavrida', 'stavrida'], chance: 0.14, label: 'slots.rows.triple', reward: { coins: 25 } },
-  { prize: 'pair', symbols: ['skorpena', 'skorpena', 'hook'], chance: 0.285, label: 'slots.rows.pair', reward: { coins: 10 } },
+  { prize: 'pair', symbols: ['skorpena', 'skorpena', 'hook'], chance: 0.305, label: 'slots.rows.pair', reward: { coins: 10 } },
 ]
-// Without the box (not released for this player yet): no chest, no «Ассорти», and the pair is 38 % as before.
+// Without the box (not released for this player yet): no chest, no «Ассорти», and the pair is 40 %.
 function payRows(withBox: boolean): PayRow[] {
-  return withBox ? PAY_ROWS : PAY_ROWS.filter((row) => !row.box).map((row) => (row.prize === 'pair' ? { ...row, chance: 0.38 } : row))
+  return withBox ? PAY_ROWS : PAY_ROWS.filter((row) => !row.box).map((row) => (row.prize === 'pair' ? { ...row, chance: 0.4 } : row))
 }
 
 // Moscow's reels carry river fish on the same symbols (see SlotSymbol), so
