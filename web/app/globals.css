@@ -3745,6 +3745,8 @@ button.race-lane{cursor:pointer;}
 @keyframes race-bob{0%,100%{transform:translateY(0) rotate(-1deg);}50%{transform:translateY(-1.5px) rotate(1deg);}}
 .race-boat{position:relative; display:block;}
 .race-boat svg{display:block; overflow:visible;}
+.race-boat-glow{position:absolute; left:-10%; right:-12%; top:22%; bottom:-14%; border-radius:50%; background:radial-gradient(closest-side, color-mix(in srgb, var(--glow) 55%, transparent), color-mix(in srgb, var(--glow) 18%, transparent) 60%, transparent); pointer-events:none;}
+.race-boat-glow + svg{position:relative;}
 /* One stroke = 1.3 s: the paddles sweep, the torsos lean, the leader's arms swing and he hops, all on one phase. */
 .rb-pad, .rb-lean, .rb-dn, .rb-sw{transform-box:view-box;}
 .rb-pad{animation:rb-pad 1.3s var(--ease-in-out) infinite alternate;}

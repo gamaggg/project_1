@@ -332,6 +332,8 @@ export const RaceBoat = memo(function RaceBoat({ crest, crew, unit, skin = null 
   const L = boatUnits(crew)
   return (
     <span className="race-boat" style={{ width: L * unit, height: BOAT_HEIGHT * unit }}>
+      {/* A bought boat glows softly in its colour: a still gradient behind the hull, no filter on the animated crew. */}
+      {look && <span className="race-boat-glow" style={{ ['--glow' as string]: look.glow }} aria-hidden />}
       <svg viewBox={`0 0 ${L} ${BOAT_HEIGHT}`} width={L * unit} height={BOAT_HEIGHT * unit} aria-hidden>
         {parts}
       </svg>

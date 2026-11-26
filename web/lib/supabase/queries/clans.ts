@@ -128,6 +128,25 @@ export function useClanFrames() {
   })
 }
 
+// The boat every clan rows in the battle (bought in its clan shop): clan id -> boat item id. The same small public
+// table as the frames; the river reads it so every viewer sees every clan's boat, not only their own.
+export function useClanBoats() {
+  return useQuery({
+    queryKey: ['clan-boats'],
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<Record<number, string>> => {
+      const supabase = createClient() as unknown as {
+        from: (t: string) => { select: (c: string) => { not: (col: string, op: string, v: null) => Promise<{ data: { clan_id: number; boat: string | null }[] | null; error: unknown }> } }
+      }
+      const { data, error } = await supabase.from('clan_equipped').select('clan_id,boat').not('boat', 'is', null)
+      if (error) return {}
+      const out: Record<number, string> = {}
+      for (const r of data ?? []) if (r.boat) out[Number(r.clan_id)] = r.boat
+      return out
+    },
+  })
+}
+
 // The clans of several cities at once (the «Кланы» tab shows the other cities under the player's own). The same query
 // keys as useClanList, so a city read here is the one the clan list screen already has.
 export function useClanListsOfCities(cities: CityId[]) {

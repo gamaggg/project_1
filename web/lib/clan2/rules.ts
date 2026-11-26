@@ -195,11 +195,13 @@ export const shopItem = (id: string | null | undefined) => SHOP_ITEMS.find((g) =
 export const skinIdOf = (itemId: string) => itemId
 
 // What each look is made of.
-export const BOAT_LOOKS: Record<string, { primary: string; secondary: string }> = {
-  boat_coral: { primary: '#FF6B4A', secondary: '#FFF1E0' },
-  boat_night: { primary: '#2A3247', secondary: '#FFC93C' },
-  boat_gold: { primary: '#D99A22', secondary: '#FFF3C0' },
-  boat_dragon: { primary: '#1F7A5C', secondary: '#F0B53E' },
+// `glow`: the soft halo round a bought boat on the river (26.11.2026) — the hull's colour, lifted where the hull
+// itself would vanish on dark water (the night boat glows in its lanterns' gold, the dragon in a brighter green).
+export const BOAT_LOOKS: Record<string, { primary: string; secondary: string; glow: string }> = {
+  boat_coral: { primary: '#FF6B4A', secondary: '#FFF1E0', glow: '#FF7A5C' },
+  boat_night: { primary: '#2A3247', secondary: '#FFC93C', glow: '#FFC93C' },
+  boat_gold: { primary: '#D99A22', secondary: '#FFF3C0', glow: '#FFC84A' },
+  boat_dragon: { primary: '#1F7A5C', secondary: '#F0B53E', glow: '#3FD39A' },
 }
 
 // The month the treasury's «взнос за месяц» counts (it starts again on the 1st, local time).

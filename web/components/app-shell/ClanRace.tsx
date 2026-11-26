@@ -2,7 +2,7 @@
 
 import { HexLoader } from '@/components/app-shell/HexLoader'
 import { useEffect, useRef, useState } from 'react'
-import { useClanRace } from '@/lib/supabase/queries'
+import { useClanBoats, useClanRace } from '@/lib/supabase/queries'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { resolveCrest } from '@/lib/data/clanCrests'
 import { BOAT_HEIGHT, RaceBoat, boatUnits, crewOf } from '@/components/app-shell/RaceBoat'
@@ -41,9 +41,13 @@ export function RaceRiver({
   highlightId?: number | null
   onOpenClan?: (id: number) => void
   boatSize?: number
-  // The clan update: the boat a clan bought in its shop, by clan id.
+  // The clan update: the boat a clan bought in its shop, by clan id — over what the server has (the viewer's own
+  // clan, so a boat just put on shows at once).
   boatSkins?: Record<number, string | null | undefined>
 }) {
+  // Every clan's boat from the server (clan_equipped), so the full battle screen and every viewer see the same
+  // boats as the clan's own tab.
+  const { data: serverBoats } = useClanBoats()
   const ref = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(340)
   useEffect(() => {
@@ -90,7 +94,7 @@ export function RaceRiver({
                 <span className="race-boat-pos">
                   <span className="race-trail" />
                   <span className="race-boat-bob">
-                    <RaceBoat crest={c.crest} crew={crews[i]} unit={unit} skin={boatSkins?.[c.id] ?? null} />
+                    <RaceBoat crest={c.crest} crew={crews[i]} unit={unit} skin={boatSkins?.[c.id] ?? serverBoats?.[c.id] ?? null} />
                   </span>
                   {/* Crossed the line: sparks around the boat, which rests and glows. */}
                   {c.finishedAt && (
