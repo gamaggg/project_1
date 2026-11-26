@@ -1,7 +1,7 @@
 'use client'
 
 import { useClan2Enabled } from '@/lib/clan2/live/flag'
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { CoinIcon } from '@/components/app-shell/CoinIcon'
 import { LiveCoinBalance } from '@/components/app-shell/CoinCountUp'
@@ -24,7 +24,7 @@ import { SlotsCard } from '@/components/app-shell/SlotsCard'
 import { StarIcon, StarsOpening, useStarsBuy } from '@/components/app-shell/StarsShop'
 import { useStarsProducts } from '@/lib/supabase/queries/stars'
 import { useMyGlPresets, useSetHeroBgPreset } from '@/lib/supabase/queries/glPresets'
-import { KitsSection } from '@/components/app-shell/GlShop'
+import { KitsSection, PresetLine } from '@/components/app-shell/GlShop'
 import { GL_FAMILIES, glPresetOf, type GlFamily } from '@/components/app-shell/glFamilies'
 import { GL_KITS, glBgId, glFamilyOf, glKitOf, joinHeroBg, splitHeroBg, type GlKit } from '@/lib/data/glKits'
 import { useMaintenance } from '@/lib/supabase/queries/maintenance'
@@ -128,6 +128,16 @@ export function ShopScreen({
     return () => ro.disconnect()
   }, [])
   const [tryOn, setTryOn] = useState<ShopItem | null>(null)
+  // The window of an owned live background or kit (26.11.2026, owner: «непонятно, что сохранилось»): a tapped preset is
+  // only a draft until «Сохранить» / «Применить», and «Сохранено» shows once it went through.
+  const [draftPreset, setDraftPreset] = useState<string | null>(null)
+  const [justSaved, setJustSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  function openTryOn(item: ShopItem) {
+    setTryOn(item)
+    setDraftPreset(null)
+    setJustSaved(false)
+  }
   // Новинки (24.11.2026): a dot on the tabs that hold something NEW the player hasn't looked at yet. Opening a tab
   // puts its new items out of the dot (kept on this device); the NEW badges on the items themselves stay their 3 days.
   const { data: newIds } = useShopNew()
@@ -150,16 +160,35 @@ export function ShopScreen({
   const setPreset = useSetHeroBgPreset()
   const [pick, setPick] = useState<Record<string, string>>({})
   const wornBg = splitHeroBg(profile?.heroBg)
-  // The preset shown for a family: what was just tapped, else the one on the profile, else the one kept for it, else the first.
+  // The preset shown for a family: before buying, what was just tapped (it goes with the order); then the one on the
+  // profile, else the one kept for it, else the first. An owned family's taps live only in the window's draft.
   function presetFor(fam: GlFamily): string {
     const bgId = glBgId(fam.id)
-    return glPresetOf(fam, pick[fam.id] ?? (wornBg.id === bgId ? wornBg.preset : null) ?? savedPresets.get(bgId))
+    const tapped = owned.has(bgId) ? null : pick[fam.id]
+    return glPresetOf(fam, tapped ?? (wornBg.id === bgId ? wornBg.preset : null) ?? savedPresets.get(bgId))
   }
-  // Before buying a tap only changes the picture (it goes with the order); after, it is saved — and shown on the profile if that background is on it.
   function choosePreset(fam: GlFamily, preset: string) {
-    setPick((p) => ({ ...p, [fam.id]: preset }))
-    const bgId = glBgId(fam.id)
-    if (owned.has(bgId)) setPreset.mutate({ itemId: bgId, preset, equip: wornBg.id === bgId })
+    if (owned.has(glBgId(fam.id))) {
+      setDraftPreset(preset)
+      setJustSaved(false)
+    } else setPick((p) => ({ ...p, [fam.id]: preset }))
+  }
+  // «Сохранить» / «Применить» / «Надеть комплект» in the window of an owned live background or kit: the drafted preset
+  // is saved and the background (with the kit's frame and name) put on the profile.
+  async function saveGl(fam: GlFamily, kit: GlKit | undefined, preset: string) {
+    setSaving(true)
+    try {
+      await Promise.all([
+        setPreset.mutateAsync({ itemId: glBgId(fam.id), preset, equip: true }),
+        ...(kit && profile?.equippedFrame !== kit.frame ? [equipItem.mutateAsync({ itemId: kit.frame })] : []),
+        ...(kit && profile?.equippedNameStyle !== kit.name ? [equipItem.mutateAsync({ itemId: kit.name })] : []),
+      ])
+      setJustSaved(true)
+    } catch {
+      // The error is left to the mutations' own handling; the button stays as it was.
+    } finally {
+      setSaving(false)
+    }
   }
   function equipAny(item: ShopItem) {
     const fam = item.category === 'hero_bg' ? GL_FAMILIES.find((f) => glBgId(f.id) === item.id) : undefined
@@ -327,7 +356,7 @@ export function ShopScreen({
                 onEquip={() => equipItem.mutate({ itemId: item.id })}
                 onUnequip={() => equipItem.mutate({ itemId: null, category: 'avatar_frame' })}
                 busy={buyItem.isPending || equipItem.isPending || starsBuy.busy}
-                onTryOn={() => setTryOn(item)}
+                onTryOn={() => openTryOn(item)}
                 onGoSlots={onOpenSlots}
                 onRefund={
                   isSuperAdmin && owned.has(item.id) && item.purchasable
@@ -363,7 +392,7 @@ export function ShopScreen({
                   }}
                   onEquip={() => equipAny(item)}
                   busy={buyItem.isPending || equipItem.isPending || setPreset.isPending || starsBuy.busy}
-                  onTryOn={() => setTryOn(item)}
+                  onTryOn={() => openTryOn(item)}
                   onRefund={isSuperAdmin && owned.has(item.id) && item.purchasable ? () => setRefunding({ kind: 'item', id: item.id, name: item.name, price: item.price }) : undefined}
                 />
               )
@@ -389,7 +418,7 @@ export function ShopScreen({
                 onEquip={() => equipItem.mutate({ itemId: item.id })}
                 onUnequip={() => equipItem.mutate({ itemId: null, category: 'name_style' })}
                 busy={buyItem.isPending || equipItem.isPending || starsBuy.busy}
-                onTryOn={() => setTryOn(item)}
+                onTryOn={() => openTryOn(item)}
                 onRefund={isSuperAdmin && owned.has(item.id) ? () => setRefunding({ kind: 'item', id: item.id, name: item.name, price: item.price }) : undefined}
               />
             ))}
@@ -409,7 +438,7 @@ export function ShopScreen({
               avatarUrl={profile?.avatarUrl ?? null}
               onBuy={(product, fam) => starsBuy.start(product, presetFor(fam))}
               onEquip={equipKit}
-              onTryOn={(kit) => setTryOn({ id: kit.kit, category: 'hero_bg', name: kitTitle(kit), price: 0, purchasable: false })}
+              onTryOn={(kit) => openTryOn({ id: kit.kit, category: 'hero_bg', name: kitTitle(kit), price: 0, purchasable: false })}
               busy={equipItem.isPending || setPreset.isPending || starsBuy.busy}
               kitTitle={kitTitle}
             />
@@ -437,7 +466,7 @@ export function ShopScreen({
                   onEquip={() => equipItem.mutate({ itemId: item.id })}
                   onUnequip={() => equipItem.mutate({ itemId: null, category: 'territory_skin' })}
                   busy={buyItem.isPending || equipItem.isPending || starsBuy.busy}
-                  onTryOn={() => setTryOn(item)}
+                  onTryOn={() => openTryOn(item)}
                   onRefund={isSuperAdmin && owned.has(item.id) ? () => setRefunding({ kind: 'item', id: item.id, name: item.name, price: item.price }) : undefined}
                 />
               ))}
@@ -474,8 +503,12 @@ export function ShopScreen({
         const offerFam = offerKit ? GL_FAMILIES.find((f) => f.id === offerKit.family) : undefined
         const kitOffer =
           offerKit && offerProduct && offerFam && !offerProduct.ownedAny && tryOnState(tryOn) === 'locked'
-            ? { title: kitTitle(offerKit), stars: offerProduct.stars, onView: () => setTryOn({ id: offerKit.kit, category: 'hero_bg', name: kitTitle(offerKit), price: 0, purchasable: false }) }
+            ? { title: kitTitle(offerKit), stars: offerProduct.stars, onView: () => openTryOn({ id: offerKit.kit, category: 'hero_bg', name: kitTitle(offerKit), price: 0, purchasable: false }) }
             : undefined
+        const state = tryOnState(tryOn)
+        // An owned live background or kit: the preset is drafted here and saved with the button.
+        const glOwned = !!fam && state !== 'locked'
+        const shownPreset = fam ? (glOwned ? glPresetOf(fam, draftPreset ?? presetFor(fam)) : presetFor(fam)) : ''
         return (
           <ShopTryOn
             item={tryOn}
@@ -488,11 +521,21 @@ export function ShopScreen({
               territoryColor: profile?.territoryColor ?? DEFAULT_TERRITORY_COLOR,
               city,
             }}
-            state={tryOnState(tryOn)}
+            state={state}
             stars={product?.stars}
             kit={kit}
             kitOffer={kitOffer}
-            glPreset={fam ? { family: fam, value: presetFor(fam), onChange: (p) => choosePreset(fam, p) } : undefined}
+            glPreset={fam ? { family: fam, value: shownPreset, onChange: (p) => choosePreset(fam, p) } : undefined}
+            glSave={
+              glOwned && fam
+                ? {
+                    dirty: shownPreset !== presetFor(fam),
+                    saved: justSaved,
+                    busy: saving,
+                    onSave: () => saveGl(fam, kit, shownPreset),
+                  }
+                : undefined
+            }
             // A kit with some of its pieces already owned can't be bought whole (the rest goes one by one).
             kitBlocked={!!kit && !kitOwned(kit) && !!product?.ownedAny}
             onBuy={() => {
@@ -634,6 +677,14 @@ function BuffRow({
   )
 }
 
+// A bought item's card opens its window when tapped anywhere but on its own buttons (26.11.2026: «Примерить» is
+// gone from bought items, the card itself is the way in).
+function openOnCard(open: () => void) {
+  return (e: MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('button')) return
+    open()
+  }
+}
 function FrameCard({
   item,
   avatarUrl,
@@ -671,7 +722,11 @@ function FrameCard({
   const isNew = useIsShopNew(item.id)
 
   return (
-    <div className={`shop-card ${prize ? 'shop-card-jackpot' : rarityClass(item.price)}${stars ? ' shop-card-stars' : ''}`} data-tag={prize ? tn('shop.jackpotTag') : undefined}>
+    <div
+      className={`shop-card ${prize ? 'shop-card-jackpot' : rarityClass(item.price)}${stars ? ' shop-card-stars' : ''}${owned ? ' shop-card-open' : ''}`}
+      data-tag={prize ? tn('shop.jackpotTag') : undefined}
+      onClick={owned ? openOnCard(onTryOn) : undefined}
+    >
       {isNew && <span className="shop-new-tag">{tn('shop.new')}</span>}
       <div className="shop-card-preview">
         <div className="shop-card-avatar">
@@ -704,9 +759,11 @@ function FrameCard({
           {stars ?? item.price}
         </button>
       )}
-      <button className="challenge-swap-btn" onClick={onTryOn}>
-        {tn('shop.tryOn')}
-      </button>
+      {!owned && (
+        <button className="challenge-swap-btn" onClick={onTryOn}>
+          {tn('shop.tryOn')}
+        </button>
+      )}
       {onRefund && (
         <button className="challenge-swap-btn" onClick={onRefund}>
           {tn('shop.refund')}
@@ -745,12 +802,13 @@ function BgCard({
   const bg = resolveHeroBackground(gl ? joinHeroBg(item.id, gl.preset) : item.id)
 
   return (
-    <div className={`shop-card ${rarityClass(item.price)}${stars ? ' shop-card-stars' : ''}`}>
+    <div className={`shop-card ${rarityClass(item.price)}${stars ? ' shop-card-stars' : ''}${owned ? ' shop-card-open' : ''}`} onClick={owned ? openOnCard(onTryOn) : undefined}>
       {isNew && <span className="shop-new-tag">{tn('shop.new')}</span>}
       <div className="shop-card-bg-preview" style={{ background: bg.animated ? bg.base : bg.css }}>
         <HeroBgLive bg={bg} variant="swatch" />
       </div>
       <div className="shop-card-name">{item.name}</div>
+      {gl && owned && <PresetLine family={gl.family} preset={gl.preset} />}
       {equipped ? (
         <button className="btn-secondary shop-equipped" disabled>
           {tn('shop.active')}
@@ -765,9 +823,11 @@ function BgCard({
           {stars ?? item.price}
         </button>
       )}
-      <button className="challenge-swap-btn" onClick={onTryOn}>
-        {tn('shop.tryOn')}
-      </button>
+      {!owned && (
+        <button className="challenge-swap-btn" onClick={onTryOn}>
+          {tn('shop.tryOn')}
+        </button>
+      )}
       {onRefund && (
         <button className="challenge-swap-btn" onClick={onRefund}>
           {tn('shop.refund')}
@@ -805,7 +865,7 @@ function NameStyleCard({
 }) {
   const isNew = useIsShopNew(item.id)
   return (
-    <div className={`shop-card ${rarityClass(item.price)}${stars ? ' shop-card-stars' : ''}`}>
+    <div className={`shop-card ${rarityClass(item.price)}${stars ? ' shop-card-stars' : ''}${owned ? ' shop-card-open' : ''}`} onClick={owned ? openOnCard(onTryOn) : undefined}>
       {isNew && <span className="shop-new-tag">{tn('shop.new')}</span>}
       {/* The live families' names are pale (made for the dark hero): a dark plate under them, as on the profile. */}
       <div className={`shop-card-name-preview${glFamilyOf(item.id) ? ' is-dark' : ''}`}>
@@ -826,9 +886,11 @@ function NameStyleCard({
           {stars ?? item.price}
         </button>
       )}
-      <button className="challenge-swap-btn" onClick={onTryOn}>
-        {tn('shop.tryOn')}
-      </button>
+      {!owned && (
+        <button className="challenge-swap-btn" onClick={onTryOn}>
+          {tn('shop.tryOn')}
+        </button>
+      )}
       {onRefund && (
         <button className="challenge-swap-btn" onClick={onRefund}>
           {tn('shop.refund')}
@@ -866,7 +928,7 @@ function SkinCard({
 }) {
   const isNew = useIsShopNew(item.id)
   return (
-    <div className={`shop-card ${rarityClass(item.price)}${stars ? ' shop-card-stars' : ''}`}>
+    <div className={`shop-card ${rarityClass(item.price)}${stars ? ' shop-card-stars' : ''}${owned ? ' shop-card-open' : ''}`} onClick={owned ? openOnCard(onTryOn) : undefined}>
       {isNew && <span className="shop-new-tag">{tn('shop.new')}</span>}
       <SkinPreview skinId={item.id} color={previewColor} />
       <div className="shop-card-name">{item.name}</div>
@@ -884,9 +946,11 @@ function SkinCard({
           {stars ?? item.price}
         </button>
       )}
-      <button className="challenge-swap-btn" onClick={onTryOn}>
-        {tn('shop.tryOn')}
-      </button>
+      {!owned && (
+        <button className="challenge-swap-btn" onClick={onTryOn}>
+          {tn('shop.tryOn')}
+        </button>
+      )}
       {onRefund && (
         <button className="challenge-swap-btn" onClick={onRefund}>
           {tn('shop.refund')}

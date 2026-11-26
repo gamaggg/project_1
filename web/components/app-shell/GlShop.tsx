@@ -30,13 +30,27 @@ export function GlPresetWords({ family, value, onChange }: { family: GlFamily; v
   )
 }
 
-// The picker with its explanation, shown in the try-on window (and only there).
-export function GlPresetPicker({ family, value, onChange }: { family: GlFamily; value: string; onChange: (preset: string) => void }) {
+// The picker with its explanation, shown in the try-on window (and only there). `owned`: the family is the player's,
+// so the note tells them a tapped preset is kept with «Сохранить».
+export function GlPresetPicker({ family, value, onChange, owned }: { family: GlFamily; value: string; onChange: (preset: string) => void; owned?: boolean }) {
   return (
     <div className="preset-picker">
       <div className="preset-picker-label">{tn('shop.preset')}</div>
       <GlPresetWords family={family} value={value} onChange={onChange} />
-      <div className="preset-picker-note">{tn('shop.presetNote')}</div>
+      <div className="preset-picker-note">{tn(owned ? 'shop.presetNoteOwned' : 'shop.presetNote')}</div>
+    </div>
+  )
+}
+
+// On a bought live background's or kit's card: which preset is on it now, with a chevron — the card opens its window.
+export function PresetLine({ family, preset }: { family: GlFamily; preset: string }) {
+  const label = family.presets.find((p) => p.id === preset)?.label ?? family.presets[0].label
+  return (
+    <div className="shop-card-preset">
+      {tn('shop.presetIs', { name: label })}
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M9 5l7 7-7 7" />
+      </svg>
     </div>
   )
 }
@@ -114,10 +128,16 @@ export function KitsSection({
           const worn = all && wornKit(kit)
           const preset = glPresetOf(family, presetFor(family))
           return (
-            <div key={kit.kit} data-kit={kit.kit} className="shop-card shop-card-legendary shop-card-stars kit-card">
+            <div
+              key={kit.kit}
+              data-kit={kit.kit}
+              className={`shop-card shop-card-legendary shop-card-stars kit-card${all ? ' shop-card-open' : ''}`}
+              // A bought kit opens its window from the card itself (26.11.2026): the preset is chosen and saved there.
+              onClick={all ? (e) => !(e.target as HTMLElement).closest('button') && onTryOn(kit) : undefined}
+            >
               <KitPreview kit={kit} preset={preset} displayName={displayName} avatarUrl={avatarUrl} />
               <div className="shop-card-name">{kitTitle(kit)}</div>
-              <div className="kit-contents">{tn('shop.kitContents')}</div>
+              {all ? <PresetLine family={family} preset={preset} /> : <div className="kit-contents">{tn('shop.kitContents')}</div>}
               {all ? (
                 worn ? (
                   <button className="btn-secondary shop-equipped" disabled>
@@ -137,9 +157,11 @@ export function KitsSection({
                   <span className="kit-instead">{tn('shop.kitInstead', { price: GL_STARS.bg + GL_STARS.frame + GL_STARS.name })}</span>
                 </button>
               ) : null}
-              <button className="challenge-swap-btn" onClick={() => onTryOn(kit)}>
-                {tn('shop.tryOn')}
-              </button>
+              {!all && (
+                <button className="challenge-swap-btn" onClick={() => onTryOn(kit)}>
+                  {tn('shop.tryOn')}
+                </button>
+              )}
             </div>
           )
         })}

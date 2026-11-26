@@ -47,6 +47,7 @@ export function ShopTryOn({
   glPreset,
   kitBlocked,
   kitOffer,
+  glSave,
 }: {
   item: ShopItem
   look: TryOnLook
@@ -64,6 +65,9 @@ export function ShopTryOn({
   kitBlocked?: boolean
   // The whole kit of this item's family, offered under the buy button of a background, frame or name style.
   kitOffer?: { title: string; stars: number; onView: () => void }
+  // An owned live background or kit (26.11.2026): a tapped preset is a draft until this button saves it. `dirty` — the
+  // draft differs from what is kept; `saved` — the last save went through.
+  glSave?: { dirty: boolean; saved: boolean; busy: boolean; onSave: () => void }
 }) {
   const bg = resolveHeroBackground(kit ? joinHeroBg(kit.bg, glPreset?.value) : item.category === 'hero_bg' ? joinHeroBg(item.id, glPreset?.value) : look.heroBg)
   const frame = resolveAvatarFrame(kit ? kit.frame : item.category === 'avatar_frame' ? item.id : look.frame)
@@ -102,10 +106,31 @@ export function ShopTryOn({
           </div>
         )}
         <div className="tryon-body">
-          <div className="tryon-label">{tn('shop.tryonLabel')}</div>
+          <div className="tryon-label">{tn(state === 'locked' ? 'shop.tryonLabel' : 'shop.alreadyOwn')}</div>
           <div className="modal-title">{item.name}</div>
-          {glPreset && <GlPresetPicker family={glPreset.family} value={glPreset.value} onChange={glPreset.onChange} />}
-          {kitBlocked ? (
+          {glPreset && <GlPresetPicker family={glPreset.family} value={glPreset.value} onChange={glPreset.onChange} owned={!!glSave} />}
+          {glSave ? (
+            glSave.saved && !glSave.dirty ? (
+              <button className="btn-secondary tryon-saved" disabled>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M5 12.5l4.5 4.5L19 7.5" />
+                </svg>
+                {tn('shop.savedOk')}
+              </button>
+            ) : state === 'owned' ? (
+              <button className="btn-primary" onClick={glSave.onSave} disabled={glSave.busy}>
+                {kit ? tn('shop.kitEquip') : tn('shop.apply')}
+              </button>
+            ) : glSave.dirty ? (
+              <button className="btn-primary" onClick={glSave.onSave} disabled={glSave.busy}>
+                {tn('shop.save')}
+              </button>
+            ) : (
+              <button className="btn-secondary" disabled>
+                {kit ? tn('shop.kitWorn') : tn('shop.activeNow')}
+              </button>
+            )
+          ) : kitBlocked ? (
             <p className="kit-part-note" style={{ marginBottom: 10 }}>
               {tn('shop.kitPartOwned')}
             </p>
