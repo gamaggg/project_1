@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef } from 'react'
 import { observeScreenActiveReleasing } from '@/lib/observeScreenActive'
+import { disposeGlCanvas, makeGlCanvas, useGlLive } from '@/lib/glLive'
 
 // «Северное сияние» (25.11.2026): curtains of light hung across the box, on one WebGL fragment shader.
 //
@@ -194,7 +195,8 @@ export type AuroraGLProps = {
 }
 
 export function AuroraGL({ colors = AURORA_COLORS, amplitude = 1, height = 0.42, intensity = 1, layers = 2, placement = 'top', rays = 0.7, reach = 0.5, scale = 1, speed = 1, surface = '#05070D', frozen = false }: AuroraGLProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const hostRef = useRef<HTMLDivElement>(null)
+  const { live, gen, onLost } = useGlLive(hostRef)
   // The settings live in a ref the draw loop reads every frame: a slider moved by the player changes the light at once,
   // without rebuilding the program (which replayed the intro and made the picture blink).
   const key = colors.join(',')
@@ -215,19 +217,22 @@ export function AuroraGL({ colors = AURORA_COLORS, amplitude = 1, height = 0.42,
   })
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    const container = canvas?.parentElement
-    const gl = canvas?.getContext('webgl', { antialias: false, premultipliedAlpha: false })
-    if (!canvas || !container || !gl) return
+    const container = hostRef.current
+    if (!live || !container) return
+    const canvas = makeGlCanvas(container)
+    const gl = canvas.getContext('webgl', { antialias: false, premultipliedAlpha: false })
+    const dispose = () => disposeGlCanvas(canvas, gl, onLost)
+    if (!gl) return dispose
+    canvas.addEventListener('webglcontextlost', onLost)
 
     const vs = compile(gl, gl.VERTEX_SHADER, AURORA_VERTEX)
     const fs = compile(gl, gl.FRAGMENT_SHADER, AURORA_FRAGMENT)
-    if (!vs || !fs) return
+    if (!vs || !fs) return dispose
     const prog = gl.createProgram()!
     gl.attachShader(prog, vs)
     gl.attachShader(prog, fs)
     gl.linkProgram(prog)
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return dispose
     gl.useProgram(prog)
 
     // One triangle covering the whole canvas.
@@ -346,8 +351,10 @@ export function AuroraGL({ colors = AURORA_COLORS, amplitude = 1, height = 0.42,
       io.disconnect()
       gl.deleteProgram(prog)
       gl.deleteBuffer(buf)
+      dispose()
     }
-  }, [frozen])
+  }, [frozen, live, gen, onLost])
 
-  return <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', zIndex: -1 }} />
+  // The canvas itself is made inside this box only while the background may hold a WebGL context (lib/glLive.ts).
+  return <div ref={hostRef} style={{ position: 'absolute', inset: 0, zIndex: -1 }} />
 }

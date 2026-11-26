@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef } from 'react'
 import { observeScreenActiveReleasing } from '@/lib/observeScreenActive'
+import { disposeGlCanvas, makeGlCanvas, useGlLive } from '@/lib/glLive'
 
 // A small WebGL2 runner for the paid profile backgrounds (25.11.2026): one fragment shader per background, drawn over a
 // dark surface, with a shared set of helpers (noise, colours mixed in OKLab, light that adds to the surface, film grain).
@@ -203,7 +204,8 @@ export type BackgroundGLProps = {
 }
 
 export function BackgroundGL({ scene, numbers, vec2s, colors, palettes, surface = '#05070D', grain = 0, speed = 1, still = 8, atlas, frozen = false }: BackgroundGLProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const hostRef = useRef<HTMLDivElement>(null)
+  const { live, gen, onLost } = useGlLive(hostRef)
   const key = JSON.stringify([numbers, vec2s, colors, palettes, surface, grain, speed])
   const params = useMemo(
     () => ({ numbers, vec2s, colors, palettes, surface, grain, speed }),
@@ -218,19 +220,22 @@ export function BackgroundGL({ scene, numbers, vec2s, colors, palettes, surface 
   }, [params])
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    const container = canvas?.parentElement
-    const gl = canvas?.getContext('webgl2', { antialias: false })
-    if (!canvas || !container || !gl) return
+    const container = hostRef.current
+    if (!live || !container) return
+    const canvas = makeGlCanvas(container)
+    const gl = canvas.getContext('webgl2', { antialias: false })
+    const dispose = () => disposeGlCanvas(canvas, gl, onLost)
+    if (!gl) return dispose
+    canvas.addEventListener('webglcontextlost', onLost)
 
     const vs = compile(gl, gl.VERTEX_SHADER, GL_VERTEX)
     const fs = compile(gl, gl.FRAGMENT_SHADER, GL_PRELUDE + scene + MAIN)
-    if (!vs || !fs) return
+    if (!vs || !fs) return dispose
     const prog = gl.createProgram()!
     gl.attachShader(prog, vs)
     gl.attachShader(prog, fs)
     gl.linkProgram(prog)
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return dispose
     gl.useProgram(prog)
 
     const buf = gl.createBuffer()
@@ -374,8 +379,10 @@ export function BackgroundGL({ scene, numbers, vec2s, colors, palettes, surface 
       gl.deleteProgram(prog)
       gl.deleteBuffer(buf)
       if (atlasTex) gl.deleteTexture(atlasTex)
+      dispose()
     }
-  }, [scene, still, atlas, frozen])
+  }, [scene, still, atlas, frozen, live, gen, onLost])
 
-  return <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', zIndex: -1 }} />
+  // The canvas itself is made inside this box only while the background may hold a WebGL context (lib/glLive.ts).
+  return <div ref={hostRef} style={{ position: 'absolute', inset: 0, zIndex: -1 }} />
 }
