@@ -13,6 +13,22 @@ const nextConfig: NextConfig = {
   },
   // The «Powered by Next.js» header tells a scanner which framework to try exploits for.
   poweredByHeader: false,
+  // The production build answers on catchrange.com and on Vercel's own addresses
+  // (web-flame-mu-44.vercel.app and one per deploy). Those were a copy of the site
+  // for search engines; they now move people to catchrange.com for good (308).
+  // Preview builds keep their addresses, and /api/ is left alone so a webhook or a
+  // scheduled call still pointing at an old address keeps working.
+  async redirects() {
+    if (process.env.VERCEL_ENV !== "production") return [];
+    return [
+      {
+        source: "/:path((?!api/).*)",
+        has: [{ type: "host", value: "(?<host>.+)\\.vercel\\.app" }],
+        destination: "https://catchrange.com/:path",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

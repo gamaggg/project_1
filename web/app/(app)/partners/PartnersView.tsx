@@ -4,10 +4,10 @@ import { LANGS, type Lang } from '@/lib/i18n/core'
 import { partnersDoc } from '@/lib/data/partners'
 import { PARTNER_CITY_LANGS, PARTNER_PRICES, partnersPath, type PartnerCity } from '@/lib/data/partners.shared'
 import { LANDING_PATHS, TELEGRAM_BOT_URL } from '@/lib/data/landing.shared'
-import { SITE_URL } from '@/lib/site'
+import { OG_IMAGE, SITE_URL } from '@/lib/site'
 import { PartnersDemo } from './PartnersDemo'
 import { PartnersForm } from './PartnersForm'
-import '../about/landing.css'
+import '@/app/about/landing.css'
 import './partners.css'
 
 const price = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0')
@@ -27,7 +27,7 @@ export function partnersMetadata(lang: Lang, city: PartnerCity): Metadata {
       url,
       siteName: 'RANGE',
       type: 'website',
-      images: [{ url: `${SITE_URL}/opengraph-image.png` }],
+      images: [OG_IMAGE],
     },
   }
 }

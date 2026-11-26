@@ -4,7 +4,7 @@ import { LANGS, type Lang } from '@/lib/i18n/core'
 import { LANDING_DOCS } from '@/lib/data/landing'
 import { LANDING_PATHS, TELEGRAM_BOT_URL } from '@/lib/data/landing.shared'
 import { PRIVACY_PATHS } from '@/lib/data/privacy'
-import { SITE_URL } from '@/lib/site'
+import { OG_IMAGE, SITE_URL } from '@/lib/site'
 import './landing.css'
 
 const OG_LOCALE: Record<Lang, string> = { ru: 'ru_RU', en: 'en_US', ka: 'ka_GE' }
@@ -26,9 +26,9 @@ export function landingMetadata(lang: Lang): Metadata {
       siteName: 'RANGE',
       locale: OG_LOCALE[lang],
       type: 'website',
-      images: [{ url: `${SITE_URL}/opengraph-image.png` }],
+      images: [OG_IMAGE],
     },
-    twitter: { card: 'summary_large_image', title: doc.metaTitle, description: doc.metaDescription, images: [`${SITE_URL}/opengraph-image.png`] },
+    twitter: { card: 'summary_large_image', title: doc.metaTitle, description: doc.metaDescription, images: [OG_IMAGE] },
   }
 }
 

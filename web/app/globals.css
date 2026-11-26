@@ -2,42 +2,6 @@
    "Убрать рамку/статусбар" — the fake phone frame/status bar is gone, replaced by
    a real responsive shell; everything else (colors/radii/shadows/components) is
    carried over near verbatim). */
-:root{
-  --bg:#FFFFFF;
-  --surface:#FFFFFF;
-  --ink:#17181B;
-  --ink-soft:#6B6D76;
-  --ink-faint:#A8A9AE;
-  --accent:#FC5200;
-  --accent-soft:#FFE4D6;
-  --green:#2FA84F;
-  --green-soft:#E3F4E8;
-  --blue:#3E7BFA;
-  --blue-soft:#E7EEFF;
-  --line:#E7E5E0;
-  --radius-s:10px;
-  --radius-m:16px;
-  --radius-l:22px;
-  --shadow-sm: 0 1px 2px rgba(23,24,27,0.04), 0 6px 14px rgba(23,24,27,0.05);
-  --shadow: 0 1px 2px rgba(23,24,27,0.04), 0 8px 24px rgba(23,24,27,0.06);
-  --shadow-lg: 0 6px 16px rgba(23,24,27,0.08), 0 24px 48px rgba(23,24,27,0.14);
-  --ease: cubic-bezier(.4,0,.2,1);
-  --ease-out: cubic-bezier(.23,1,.32,1);
-  --ease-in-out: cubic-bezier(.77,0,.175,1);
-}
-*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-/* overscroll-behavion:none — without it, rubber-banding past the top of any
-   scrolled content (the map included) is still visible to Telegram's native
-   shell as a drag on the page itself, which it can read as "pull to
-   minimize" even with the WebApp SDK's disableVerticalSwipes() active (that
-   call only turns off Telegram's own in-content gesture recognizer, not the
-   browser-level bounce this rule stops at the source) — this is what was
-   still collapsing the Mini App out of fullscreen some of the time. */
-html,body{margin:0;padding:0; overscroll-behavior:none;}
-/* Form controls don't inherit the page font on their own — browsers give
-   them the system face (Safari/WebView: sometimes a serif). Only the family
-   here, so sizes and weights still come from each component's own class. */
-button, input, textarea, select{font-family:inherit;}
 /* leaflet.css sets its own "Helvetica Neue" on the whole map container —
    sector ids, avatar initials and attribution should read in the app's
    face. Two classes so this outranks leaflet.css whatever the load order. */
@@ -48,17 +12,6 @@ button, input, textarea, select{font-family:inherit;}
    shown), but it no longer takes taps — they fall through to the map. */
 #leafletMap .leaflet-control-attribution,
 #leafletMap .leaflet-control-attribution a{pointer-events:none;}
-body{
-  /* Was a neutral letterbox gray for the desktop-width side margins (see
-     .app-shell's max-width:480px) — but on iOS standalone PWA, .app-shell's
-     100dvh sometimes falls a sliver short of the true safe-area-inclusive
-     screen height, leaving this color visible as a stripe above the home
-     indicator. Matching --bg makes any such gap blend in instead of showing;
-     the desktop letterbox itself is unaffected in spirit, just white now. */
-  background:var(--bg);
-  color:var(--ink);
-  min-height:100dvh;
-}
 .tap-scale{transition:transform .15s var(--ease);}
 .tap-scale:active{transform:scale(0.96);}
 
@@ -5849,3 +5802,4 @@ button.geo-fact{cursor:pointer;}
 .buy-tg-note{margin-top:10px; font-size:12px; color:var(--ink-faint); font-weight:600;}
 .buy-tg-err{color:#B3261E; margin-top:8px;}
 .tg-claim-wait,.tg-claim{z-index:10000;}
+

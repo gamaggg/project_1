@@ -2,19 +2,12 @@ import type { Metadata, Viewport } from 'next'
 import { Manrope, Noto_Sans_Georgian, Oswald, Unbounded } from 'next/font/google'
 import Script from 'next/script'
 import { Analytics } from '@vercel/analytics/next'
-import { QueryProvider } from '@/components/providers/QueryProvider'
-import { AuthProvider } from '@/components/providers/AuthProvider'
-import { ServiceWorkerRegister } from '@/components/providers/ServiceWorkerRegister'
-import { I18nProvider } from '@/lib/i18n'
+import { CITIES_RU_SUMMARY } from '@/lib/data/landing.ru'
 import { SITE_URL } from '@/lib/site'
-import './globals.css'
-import './nav-glass.css'
-import './intro-demo.css'
-import './journey.css'
-import './hex-loader.css'
-import './profile-blocks.css'
-import './alive.css'
-import './species-screen.css'
+// Only what every page needs. The app's own styles and providers (sign-in,
+// data, languages) are in app/(app)/layout.tsx, so the landing and the privacy
+// policy load as plain pages.
+import './base.css'
 
 const manrope = Manrope({
   subsets: ['latin', 'cyrillic'],
@@ -50,7 +43,7 @@ const notoGeorgian = Noto_Sans_Georgian({
 
 const TITLE = 'RANGE — рыболовная игра-карта: лови рыбу и захватывай сектора'
 const DESCRIPTION =
-  'Каждый улов меняет карту. Фотографируй улов, захватывай сектора у воды, собирай кланы и награды. 12 городов: Москва, Петербург, Казань, Нижний, Сочи, Анапа, Батуми, Тбилиси, Варна/Бургас, Киев, Одесса, Ереван. Бесплатно, в Telegram и в браузере.'
+  `Каждый улов меняет карту. Фотографируй улов, захватывай сектора у воды, собирай кланы и награды. ${CITIES_RU_SUMMARY}. Бесплатно, в Telegram и в браузере.`
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -161,12 +154,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* beforeInteractive so window.Telegram.WebApp exists by the time
             AuthProvider's effect checks for it — harmless no-op outside Telegram. */}
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
-        <QueryProvider>
-          <AuthProvider>
-            <I18nProvider>{children}</I18nProvider>
-            <ServiceWorkerRegister />
-          </AuthProvider>
-        </QueryProvider>
+        {children}
         <Analytics />
       </body>
     </html>

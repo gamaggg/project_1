@@ -356,8 +356,8 @@ export function IntroJourney({
           {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
           <img src="/brand/logo_2.svg" alt="RANGE" className="welcome-logo jp-in" style={delay(0)} />
           <h1 className="welcome-title">
-            <span className="jp-in" style={delay(1)}>{tn('onb.welcomeCatch')}</span>
-            <span className="welcome-title-accent jp-in" style={delay(2)}>{tn('onb.welcomeClaim')}</span>
+            <span className="jp-in" style={delay(1)}>{tn('onb.welcomeCatch')}</span>{' '}
+            <span className="welcome-title-accent jp-in" style={delay(2)}>{tn('onb.welcomeClaim')}</span>{' '}
             <span className="jp-in" style={delay(3)}>{tn('onb.welcomeOwn')}</span>
           </h1>
           <p className="welcome-sub jp-in" style={delay(4)}>

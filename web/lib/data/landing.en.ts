@@ -1,10 +1,32 @@
+import type { CityId } from '@/lib/data/city'
 import type { LandingDoc } from '@/lib/data/landing.shared'
+
+// Every game city, in the order the page lists them. Keyed by CityId: a city
+// added to lib/data/city.ts doesn't build until it has a name here, and the
+// count and the lists on the page follow by themselves.
+const CITY_NAMES: Record<CityId, string> = {
+  batumi: 'Batumi',
+  moscow: 'Moscow & MO',
+  spb: 'Saint Petersburg',
+  sochi: 'Sochi/Adler',
+  tbilisi: 'Tbilisi',
+  kazan: 'Kazan',
+  nnov: 'Nizhny Novgorod',
+  anapa: 'Anapa',
+  varna: 'Varna/Burgas',
+  kyiv: 'Kyiv',
+  odesa: 'Odesa',
+  yerevan: 'Yerevan/Sevan',
+}
+const CITY_LIST = Object.values(CITY_NAMES)
+const N = CITY_LIST.length
+const CITY_LIST_AND = `${CITY_LIST.slice(0, -1).join(', ')} and ${CITY_LIST[N - 1]}`
 
 export const LANDING_EN: LandingDoc = {
   lang: 'en',
   metaTitle: 'RANGE — a fishing map game: catch fish, claim sectors',
   metaDescription:
-    'Catch fish, photograph your catch and claim sectors by the water. Clans, weekly battles, bite forecast and rewards. 12 cities: Moscow, Saint Petersburg, Kazan, Nizhny Novgorod, Sochi, Anapa, Batumi, Tbilisi, Varna/Burgas, Kyiv, Odesa, Yerevan. Free, in Telegram and in the browser.',
+    `Catch fish, photograph your catch and claim sectors by the water. Clans, weekly battles, bite forecast and rewards. ${N} cities: ${CITY_LIST.join(', ')}. Free, in Telegram and in the browser.`,
   eyebrow: 'A map game for anglers',
   h1: 'Every catch changes the map',
   lead: 'RANGE turns fishing into a competition. Catch fish by the water, photograph your catch in the app and claim the sectors of your city. Build a clan, climb the rankings and earn rewards.',
@@ -54,8 +76,8 @@ export const LANDING_EN: LandingDoc = {
     },
   ],
   citiesTitle: 'Where you can play',
-  citiesLead: 'RANGE now runs in five cities. More are coming.',
-  cities: ['Batumi', 'Moscow & MO', 'Saint Petersburg', 'Sochi/Adler', 'Tbilisi', 'Kazan', 'Nizhny Novgorod', 'Anapa', 'Varna/Burgas', 'Kyiv', 'Odesa', 'Yerevan/Sevan'],
+  citiesLead: `Cities in the game: ${N}. More are coming.`,
+  cities: CITY_LIST,
   faqTitle: 'Questions and answers',
   faq: [
     {
@@ -76,7 +98,7 @@ export const LANDING_EN: LandingDoc = {
     },
     {
       q: 'Which cities can I play in?',
-      a: 'Twelve cities: Moscow and the Moscow region, Saint Petersburg, Sochi/Adler, Kazan, Nizhny Novgorod, Anapa, Batumi, Tbilisi, Varna/Burgas, Kyiv, Odesa and Yerevan/Sevan. You choose your city when you sign up and can change it later in your profile.',
+      a: `${N} cities: ${CITY_LIST_AND}. You choose your city when you sign up and can change it later in your profile.`,
     },
     {
       q: 'What happens to my data?',

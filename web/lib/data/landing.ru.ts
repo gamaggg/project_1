@@ -1,10 +1,35 @@
+import type { CityId } from '@/lib/data/city'
 import type { LandingDoc } from '@/lib/data/landing.shared'
+import { pluralRu } from '@/lib/format'
+
+// Every game city, in the order the page lists them. Keyed by CityId: a city
+// added to lib/data/city.ts doesn't build until it has a name here, and the
+// count and the lists on the page follow by themselves.
+const CITY_NAMES: Record<CityId, string> = {
+  batumi: 'Батуми',
+  moscow: 'Москва и МО',
+  spb: 'Санкт-Петербург',
+  sochi: 'Сочи/Адлер',
+  tbilisi: 'Тбилиси',
+  kazan: 'Казань',
+  nnov: 'Нижний Новгород',
+  anapa: 'Анапа',
+  varna: 'Варна/Бургас',
+  kyiv: 'Киев',
+  odesa: 'Одесса',
+  yerevan: 'Ереван/Севан',
+}
+const CITY_LIST = Object.values(CITY_NAMES)
+const N = CITY_LIST.length
+const CITY_LIST_AND = `${CITY_LIST.slice(0, -1).join(', ')} и ${CITY_LIST[N - 1]}`
+// «12 городов: Батуми, Москва и МО, …» — also the home page's description (app/layout.tsx).
+export const CITIES_RU_SUMMARY = `${N} ${pluralRu(N, ['город', 'города', 'городов'])}: ${CITY_LIST.join(', ')}`
 
 export const LANDING_RU: LandingDoc = {
   lang: 'ru',
   metaTitle: 'RANGE — рыболовная игра-карта: лови рыбу и захватывай сектора',
   metaDescription:
-    'Лови рыбу, фотографируй улов и захватывай сектора у воды. Кланы, недельные битвы, прогноз клёва и награды. 12 городов: Москва, Петербург, Казань, Нижний, Сочи, Анапа, Батуми, Тбилиси, Варна/Бургас, Киев, Одесса, Ереван. Бесплатно, в Telegram и в браузере.',
+    `Лови рыбу, фотографируй улов и захватывай сектора у воды. Кланы, недельные битвы, прогноз клёва и награды. ${CITIES_RU_SUMMARY}. Бесплатно, в Telegram и в браузере.`,
   eyebrow: 'Игра-карта для рыбаков',
   h1: 'Каждый улов меняет карту',
   lead: 'RANGE превращает рыбалку в соревнование. Лови рыбу у воды, фотографируй улов в приложении и захватывай сектора своего города. Собирай клан, поднимайся в рейтинге и получай награды.',
@@ -54,8 +79,8 @@ export const LANDING_RU: LandingDoc = {
     },
   ],
   citiesTitle: 'Где можно играть',
-  citiesLead: 'Сейчас RANGE работает в пяти городах. Новые добавляются.',
-  cities: ['Батуми', 'Москва и МО', 'Санкт-Петербург', 'Сочи/Адлер', 'Тбилиси', 'Казань', 'Нижний Новгород', 'Анапа', 'Варна/Бургас', 'Киев', 'Одесса', 'Ереван/Севан'],
+  citiesLead: `Городов в игре: ${N}. Новые добавляются.`,
+  cities: CITY_LIST,
   faqTitle: 'Вопросы и ответы',
   faq: [
     {
@@ -76,7 +101,7 @@ export const LANDING_RU: LandingDoc = {
     },
     {
       q: 'В каких городах можно играть?',
-      a: 'В двенадцати городах: Москва и Московская область, Санкт-Петербург, Сочи/Адлер, Казань, Нижний Новгород, Анапа, Батуми, Тбилиси, Варна/Бургас, Киев, Одесса и Ереван/Севан. Город выбираешь при регистрации, потом его можно сменить в профиле.',
+      a: `В ${N} ${pluralRu(N, ['городе', 'городах', 'городах'])}: ${CITY_LIST_AND}. Город выбираешь при регистрации, потом его можно сменить в профиле.`,
     },
     {
       q: 'Что с моими данными?',

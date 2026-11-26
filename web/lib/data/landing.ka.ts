@@ -1,11 +1,33 @@
+import type { CityId } from '@/lib/data/city'
 import type { LandingDoc } from '@/lib/data/landing.shared'
+
+// Every game city, in the order the page lists them. Keyed by CityId: a city
+// added to lib/data/city.ts doesn't build until it has a name here, and the
+// count and the lists on the page follow by themselves.
+const CITY_NAMES: Record<CityId, string> = {
+  batumi: 'ბათუმი',
+  moscow: 'მოსკოვი და მოსკოვის ოლქი',
+  spb: 'სანკტ-პეტერბურგი',
+  sochi: 'სოჭი/ადლერი',
+  tbilisi: 'თბილისი',
+  kazan: 'ყაზანი',
+  nnov: 'ნიჟნი ნოვგოროდი',
+  anapa: 'ანაპა',
+  varna: 'ვარნა/ბურგასი',
+  kyiv: 'კიევი',
+  odesa: 'ოდესა',
+  yerevan: 'ერევანი/სევანი',
+}
+const CITY_LIST = Object.values(CITY_NAMES)
+const N = CITY_LIST.length
+const CITY_LIST_AND = `${CITY_LIST.slice(0, -1).join(', ')} და ${CITY_LIST[N - 1]}`
 
 // Georgian: to be read by a native speaker before it is relied on.
 export const LANDING_KA: LandingDoc = {
   lang: 'ka',
   metaTitle: 'RANGE — სათევზაო რუკა-თამაში: დაიჭირე თევზი და დაიკავე სექტორები',
   metaDescription:
-    'დაიჭირე თევზი, გადაიღე დაჭერა და დაიკავე სექტორები წყლის პირას. კლანები, ყოველკვირეული ბრძოლები, თევზის კბენის პროგნოზი და ჯილდოები. 12 ქალაქი: მოსკოვი, პეტერბურგი, ყაზანი, ნიჟნი ნოვგოროდი, სოჭი, ანაპა, ბათუმი, თბილისი, ვარნა/ბურგასი, კიევი, ოდესა, ერევანი. უფასოა, Telegram-სა და ბრაუზერში.',
+    `დაიჭირე თევზი, გადაიღე დაჭერა და დაიკავე სექტორები წყლის პირას. კლანები, ყოველკვირეული ბრძოლები, თევზის კბენის პროგნოზი და ჯილდოები. ${N} ქალაქი: ${CITY_LIST.join(', ')}. უფასოა, Telegram-სა და ბრაუზერში.`,
   eyebrow: 'რუკა-თამაში მეთევზეებისთვის',
   h1: 'ყოველი დაჭერა რუკას ცვლის',
   lead: 'RANGE თევზაობას შეჯიბრად აქცევს. დაიჭირე თევზი წყლის პირას, გადაიღე დაჭერა აპლიკაციაში და დაიკავე შენი ქალაქის სექტორები. შეკრიბე კლანი, აიწიე რეიტინგში და მიიღე ჯილდოები.',
@@ -55,8 +77,8 @@ export const LANDING_KA: LandingDoc = {
     },
   ],
   citiesTitle: 'სად შეიძლება თამაში',
-  citiesLead: 'ახლა RANGE ხუთ ქალაქში მუშაობს. ახალი ქალაქები ემატება.',
-  cities: ['ბათუმი', 'მოსკოვი და მოსკოვის ოლქი', 'სანკტ-პეტერბურგი', 'სოჭი/ადლერი', 'თბილისი', 'ყაზანი', 'ნიჟნი ნოვგოროდი', 'ანაპა', 'ვარნა/ბურგასი', 'კიევი', 'ოდესა', 'ერევანი/სევანი'],
+  citiesLead: `ქალაქები თამაშში: ${N}. ახალი ქალაქები ემატება.`,
+  cities: CITY_LIST,
   faqTitle: 'კითხვები და პასუხები',
   faq: [
     {
@@ -77,7 +99,7 @@ export const LANDING_KA: LandingDoc = {
     },
     {
       q: 'რომელ ქალაქებში შეიძლება თამაში?',
-      a: 'თორმეტ ქალაქში: მოსკოვი და მოსკოვის ოლქი, სანკტ-პეტერბურგი, სოჭი/ადლერი, ყაზანი, ნიჟნი ნოვგოროდი, ანაპა, ბათუმი, თბილისი, ვარნა/ბურგასი, კიევი, ოდესა და ერევანი/სევანი. ქალაქს რეგისტრაციისას ირჩევ, მოგვიანებით პროფილში შეგიძლია შეცვალო.',
+      a: `${N} ქალაქში: ${CITY_LIST_AND}. ქალაქს რეგისტრაციისას ირჩევ, მოგვიანებით პროფილში შეგიძლია შეცვალო.`,
     },
     {
       q: 'რა ემართება ჩემს მონაცემებს?',

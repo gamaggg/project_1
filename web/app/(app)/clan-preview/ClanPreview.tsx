@@ -1,6 +1,6 @@
 'use client'
 
-import '../clan2.css'
+import '@/app/clan2.css'
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { C2Toast, C2ToastProvider, useDemoNow } from '@/components/clan2/C2Common'
 import { ClanScreen2 } from '@/components/clan2/ClanScreen2'
