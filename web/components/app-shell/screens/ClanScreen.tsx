@@ -13,6 +13,7 @@ import { createPortal } from 'react-dom'
 import { thumbUrl } from '@/lib/supabase/imageUrl'
 import { observeScreenActive } from '@/lib/observeScreenActive'
 import { useAuth } from '@/components/providers/AuthProvider'
+import { useUiState } from '@/lib/uiState'
 import {
   useClan,
   useProfile,
@@ -52,6 +53,7 @@ type Tab = 'members' | 'chest' | 'race' | Clan2Section
 // The clan update's sections (Общак, Выход, …) — only when it is switched on for this browser (lib/clan2/live/flag.ts).
 const Clan2Panel = dynamic(() => import('@/components/clan2/live/Clan2Panel').then((m) => m.Clan2Panel), { ssr: false })
 // The clan tour (the clan update): the first time by itself, again from «Как это работает».
+const CLAN_TOUR_SEEN = 'clan2_tour_seen'
 const C2Tour = dynamic(() => import('@/components/clan2/C2Tour').then((m) => m.C2Tour), { ssr: false })
 const CLAN2_TABS = ['treasury', 'shop', 'exit', 'week', 'hq', 'glory'] as const
 // With the clan update on, the sections group under four tabs, each with a switch inside:
@@ -247,6 +249,18 @@ export function ClanScreen({
   const liveUi = useLiveUi()
   const c2 = clan2On && isMember && !!clan && demo.live?.clanId === clan.id
   const c2Admin = c2 && demo.persona === 'admin'
+  // The clan update's tour once per account (26.11.2026): seen or skipped in Telegram, it does not come back in the
+  // browser or in another clan. The clan state lives in this browser per player and clan, so its own flag alone
+  // showed the tour again on every new device; the account flag (user_ui_state) covers that.
+  const uiState = useUiState()
+  const tourSeenOnAccount = uiState.state?.[CLAN_TOUR_SEEN] === true
+  const uiStateLoaded = !!uiState.state
+  const setUiFlag = uiState.set
+  const showTour = c2 && (liveUi.tour || (uiState.ready && !tourSeenOnAccount && !demo.toursSeen.player))
+  // A device that saw the tour before this flag existed hands it over to the account.
+  useEffect(() => {
+    if (c2 && uiStateLoaded && demo.toursSeen.player && !tourSeenOnAccount) setUiFlag(CLAN_TOUR_SEEN, true)
+  }, [c2, uiStateLoaded, setUiFlag, demo.toursSeen.player, tourSeenOnAccount])
   // The frame round the crest: every viewer sees the one the clan wears (the same table as the clan lists); the
   // clan's own members with the clan update loaded see their own state, so a frame just put on shows at once.
   const { data: clanFrames = {} } = useClanFrames()
@@ -751,13 +765,14 @@ export function ClanScreen({
         )}
 
         {c2 && ((CLAN2_TABS as readonly string[]).includes(tab) || (tab === 'admin' && c2Admin)) && <Clan2Panel key={tab} section={tab as Clan2Section} events={clanEvents} onOpenCatch={onOpenCatch} />}
-        {c2 && (liveUi.tour || !demo.toursSeen.player) && (
+        {showTour && (
           <C2Tour
             live
             steps={LIVE_TOUR}
             onStep={(st) => st.sub && setLiveUi({ clanTab: st.sub })}
             onClose={() => {
               markTourSeen('player')
+              uiState.set(CLAN_TOUR_SEEN, true)
               setLiveUi({ tour: false, clanTab: 'treasury' })
             }}
           />
