@@ -19,7 +19,7 @@ import {
 } from '@/lib/socialBot'
 import { facebookConfigured, publishToFacebook } from '@/lib/facebookPublish'
 import { instagramConfigured, publishToInstagram } from '@/lib/instagramPublish'
-import { publishToThreads, threadsConfigured } from '@/lib/threadsPublish'
+import { ensureThreadsToken, publishToThreads, threadsConfigured } from '@/lib/threadsPublish'
 
 // Called every 5 minutes by the social-bot-tick cron job (only when there is
 // work, and once an hour to check the webhook). In order:
@@ -52,6 +52,17 @@ async function handleGET(req: Request) {
   const chatId = await ownerChatId(admin)
   if (!chatId) return NextResponse.json({ ...report, skipped: 'no owner telegram' })
   const now = new Date()
+
+  // The Threads token is renewed by itself (60-day token); a failure is reported to
+  // the owner at most once an hour (the tick runs every 5 minutes when there is work).
+  try {
+    const renewed = await ensureThreadsToken(admin)
+    if (renewed) await tg('sendMessage', { chat_id: chatId, text: `🔑 ${renewed}` })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    report.errors.push(`threads token: ${msg}`)
+    if (now.getUTCMinutes() < 5) await tg('sendMessage', { chat_id: chatId, text: `⚠️ Токен Threads не обновился: ${msg.slice(0, 300)}\nЕсли так будет и дальше, создай новый в «Генераторе маркеров» и вставь в Vercel (THREADS_ACCESS_TOKEN).` }).catch(() => {})
+  }
 
   // 2. Time is up without a decision.
   const { data: late } = await admin

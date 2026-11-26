@@ -1,21 +1,27 @@
 import type { SocialPost } from '@/lib/socialBot'
+import type { createAdminClient } from '@/lib/supabase/admin'
 
 // Publishing to Threads (the owner's personal account) through the official
 // Threads API. The token is a long-lived user token made in the Meta app's
-// «Генератор маркеров» and entered by the owner in Vercel as THREADS_ACCESS_TOKEN
-// (it lives 60 days; /api/social-bot/refresh-token renews it, see there).
+// «Генератор маркеров» and entered by the owner in Vercel as THREADS_ACCESS_TOKEN.
+// It lives 60 days: once an hour the bot's tick (see ensureThreadsToken) renews it
+// and keeps the fresh one in the table social_tokens, which wins over the Vercel one.
 // Plan: docs/10 Продукт/Продвижение в соцсетях.md
 
 const API = 'https://graph.threads.net/v1.0'
 const TEXT_LIMIT = 500
 
+// The token in use: the one from the database (loaded by loadThreadsToken), else Vercel's.
+let dbToken: string | null = null
+const token = () => dbToken ?? process.env.THREADS_ACCESS_TOKEN ?? ''
+
 export function threadsConfigured(): boolean {
-  return !!process.env.THREADS_ACCESS_TOKEN
+  return !!token()
 }
 
 async function call<T>(path: string, params: Record<string, string>, method: 'GET' | 'POST' = 'POST'): Promise<T> {
   const url = new URL(`${API}${path}`)
-  const body = new URLSearchParams({ ...params, access_token: process.env.THREADS_ACCESS_TOKEN ?? '' })
+  const body = new URLSearchParams({ ...params, access_token: token() })
   if (method === 'GET') body.forEach((v, k) => url.searchParams.set(k, v))
   const res = await fetch(url, {
     method,
@@ -63,12 +69,34 @@ export async function publishToThreads(p: SocialPost): Promise<{ id: string; lin
 }
 
 // A fresh 60-day token from the current one (allowed after the token is 24 h old).
-export async function refreshThreadsToken(): Promise<{ expiresInDays: number; token: string }> {
+async function refreshThreadsToken(current: string): Promise<{ expiresInDays: number; token: string }> {
   const url = new URL('https://graph.threads.net/refresh_access_token')
   url.searchParams.set('grant_type', 'th_refresh_token')
-  url.searchParams.set('access_token', process.env.THREADS_ACCESS_TOKEN ?? '')
+  url.searchParams.set('access_token', current)
   const res = await fetch(url, { signal: AbortSignal.timeout(30_000) })
   const json = (await res.json().catch(() => ({}))) as { access_token?: string; expires_in?: number; error?: { message?: string } }
   if (!res.ok || !json.access_token) throw new Error(`threads refresh: ${json.error?.message ?? `HTTP ${res.status}`}`)
   return { token: json.access_token, expiresInDays: Math.round((json.expires_in ?? 0) / 86400) }
+}
+
+type Admin = ReturnType<typeof createAdminClient>
+const RENEW_WHEN_DAYS_LEFT = 30
+
+// Called at the start of every tick: puts the saved token in use, and when it is
+// missing (first run, the Vercel one) or has less than 30 days left, renews it and
+// saves the new one. Returns a line about what happened, or null when nothing was due.
+export async function ensureThreadsToken(admin: Admin): Promise<string | null> {
+  const { data: row } = await admin.from('social_tokens').select('token, expires_at, refreshed_at').eq('name', 'threads').maybeSingle()
+  if (row?.token) dbToken = row.token
+  if (!token()) return null
+  const daysLeft = row ? (new Date(row.expires_at).getTime() - Date.now()) / 86_400_000 : null
+  const fresh = row ? Date.now() - new Date(row.refreshed_at).getTime() < 86_400_000 : false
+  if (fresh || (daysLeft !== null && daysLeft > RENEW_WHEN_DAYS_LEFT)) return null
+  const next = await refreshThreadsToken(token())
+  const { error } = await admin
+    .from('social_tokens')
+    .upsert({ name: 'threads', token: next.token, expires_at: new Date(Date.now() + next.expiresInDays * 86_400_000).toISOString(), refreshed_at: new Date().toISOString() })
+  if (error) throw new Error(`threads token save: ${error.message}`)
+  dbToken = next.token
+  return `Токен Threads обновлён, действует ещё ${next.expiresInDays} дн.`
 }

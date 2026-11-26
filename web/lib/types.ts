@@ -1216,6 +1216,27 @@ export type Database = {
         }
         Relationships: []
       }
+      social_tokens: {
+        Row: {
+          name: string
+          token: string
+          expires_at: string
+          refreshed_at: string
+        }
+        Insert: {
+          name: string
+          token: string
+          expires_at: string
+          refreshed_at?: string
+        }
+        Update: {
+          name?: string
+          token?: string
+          expires_at?: string
+          refreshed_at?: string
+        }
+        Relationships: []
+      }
       fishing_sessions: {
         Row: {
           id: number
