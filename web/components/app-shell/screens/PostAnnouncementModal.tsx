@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAdminPostAnnouncement } from '@/lib/supabase/queries'
 import { uploadAnnouncementPhoto } from '@/lib/supabase/storage'
+import { CITIES, type CityId } from '@/lib/data/city'
 
 const MAX_LENGTH = 2000
 const MAX_PHOTO_BYTES = 8 * 1024 * 1024
@@ -12,12 +13,27 @@ const MAX_PHOTO_BYTES = 8 * 1024 * 1024
 // re-checks server-side too. Posts straight into every user's activity feed
 // (see useActivity/ActivityScreen), with plain http(s) links auto-linkified
 // there, so no special syntax is needed here beyond pasting a real URL.
-export function PostAnnouncementModal({ onClose }: { onClose: () => void }) {
-  const [body, setBody] = useState('')
+//
+// With `city` (opened from a partner point in «Точки партнёров»): the post is only for players whose profile city
+// is that one — in «Активность» and, if switched on, in the bot (admin_post_announcement's p_city). Opens with a
+// ready draft and the partner's main photo; after posting it says how many bot messages went into the queue.
+export function PostAnnouncementModal({
+  onClose,
+  city,
+  initialBody = '',
+  initialPhotoUrl = null,
+}: {
+  onClose: () => void
+  city?: CityId
+  initialBody?: string
+  initialPhotoUrl?: string | null
+}) {
+  const [body, setBody] = useState(initialBody)
   const [buttonLabel, setButtonLabel] = useState('')
   const [buttonUrl, setButtonUrl] = useState('')
-  const [broadcastTelegram, setBroadcastTelegram] = useState(false)
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [broadcastTelegram, setBroadcastTelegram] = useState(!!city)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(initialPhotoUrl)
+  const [queued, setQueued] = useState<number | null>(null)
   const [photoStatus, setPhotoStatus] = useState<'idle' | 'uploading' | 'error'>('idle')
   const postAnnouncement = useAdminPostAnnouncement()
   const trimmed = body.trim()
@@ -49,14 +65,39 @@ export function PostAnnouncementModal({ onClose }: { onClose: () => void }) {
 
   async function handlePost() {
     if (!valid) return
-    await postAnnouncement.mutateAsync({
+    const n = await postAnnouncement.mutateAsync({
       body: trimmed,
       buttonLabel: trimmedLabel || undefined,
       buttonUrl: trimmedUrl || undefined,
       broadcastTelegram,
       photoUrl: photoUrl || undefined,
+      city,
     })
-    onClose()
+    if (city) setQueued(n)
+    else onClose()
+  }
+
+  const cityName = city ? CITIES[city].name : null
+
+  if (queued !== null) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-title" style={{ textAlign: 'center' }}>
+            Готово
+          </div>
+          <div className="modal-body" style={{ textAlign: 'center', margin: '4px 0 16px' }}>
+            Пост в «Активности» у игроков, у кого выбран город {cityName}.
+            {broadcastTelegram
+              ? ` В бот: ${queued} ${queued % 10 === 1 && queued % 100 !== 11 ? 'сообщение' : queued % 10 >= 2 && queued % 10 <= 4 && (queued % 100 < 10 || queued % 100 >= 20) ? 'сообщения' : 'сообщений'}, уходят по 30 в минуту.`
+              : ' В бот не отправлялось.'}
+          </div>
+          <button className="btn-primary" onClick={onClose}>
+            Закрыть
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -68,10 +109,12 @@ export function PostAnnouncementModal({ onClose }: { onClose: () => void }) {
           </svg>
         </div>
         <div className="modal-title" style={{ textAlign: 'center' }}>
-          Новый пост
+          {city ? `Рассылка: ${cityName}` : 'Новый пост'}
         </div>
         <div className="modal-body" style={{ textAlign: 'center', margin: '4px 0 16px' }}>
-          Увидят все пользователи в ленте «Активность». Ссылки (http/https) станут кликабельными автоматически.
+          {city
+            ? `Увидят в «Активности» только игроки, у кого выбран город ${cityName}. Ссылки (http/https) станут кликабельными автоматически.`
+            : 'Увидят все пользователи в ленте «Активность». Ссылки (http/https) станут кликабельными автоматически.'}
         </div>
         <div className="auth-field">
           <textarea
@@ -118,7 +161,10 @@ export function PostAnnouncementModal({ onClose }: { onClose: () => void }) {
         {broadcastTelegram && (
           <div style={{ marginTop: 4, marginBottom: 8 }}>
             <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginBottom: 8 }}>
-              Уйдёт сообщением каждому, кто хоть раз запускал бота. Фото — необязательно, но в Telegram оно смотрится
+              {city
+                ? `Уйдёт в бот игрокам с городом ${cityName}, кто запускал бота и не остановил его.`
+                : 'Уйдёт сообщением каждому, кто хоть раз запускал бота.'}{' '}
+              Фото — необязательно, но в Telegram оно смотрится
               заметно живее, чем просто текст.
             </div>
             {photoUrl ? (

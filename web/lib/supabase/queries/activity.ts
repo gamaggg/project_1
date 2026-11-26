@@ -376,22 +376,28 @@ export function useAdminPostAnnouncement() {
       buttonUrl,
       broadcastTelegram,
       photoUrl,
+      city,
     }: {
       body: string
       buttonLabel?: string
       buttonUrl?: string
       broadcastTelegram?: boolean
       photoUrl?: string
-    }) => {
+      // Only players whose profile city is this one see the post and get it in the bot (partner broadcasts).
+      city?: CityId
+    }): Promise<number> => {
       const supabase = createClient()
-      const { error } = await supabase.rpc('admin_post_announcement', {
+      const { data, error } = await supabase.rpc('admin_post_announcement', {
         p_body: body,
         p_button_label: buttonLabel,
         p_button_url: buttonUrl,
         p_broadcast_telegram: broadcastTelegram,
         p_photo_url: photoUrl,
+        ...(city ? { p_city: city } : {}),
       })
       if (error) throw error
+      // How many bot messages were queued (0 without «в Telegram»).
+      return typeof data === 'number' ? data : 0
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activity'] })

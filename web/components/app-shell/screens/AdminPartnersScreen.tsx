@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { BackButton } from '@/components/app-shell/BackButton'
 import { PartnerPreview } from '@/components/app-shell/PartnerPreview'
 import { PartnerStatsView } from '@/components/app-shell/PartnerStatsView'
+import { PostAnnouncementModal } from '@/components/app-shell/screens/PostAnnouncementModal'
 import { useAdminPartnerPoints, useDeletePartnerPoint, useSavePartnerPoint } from '@/lib/supabase/queries'
 import { uploadAnnouncementPhoto } from '@/lib/supabase/storage'
 import { downscaleToJpeg } from '@/lib/exif'
@@ -201,6 +202,17 @@ function statusOf(p: PartnerPointAdmin): Status {
   return { key: 'live', text: `На карте · осталось ${daysWord(left)}, до ${dm(lastDay)}` }
 }
 
+// The draft «Рассылка по городу» opens with — the owner edits it before sending.
+function broadcastDraft(p: PartnerPointAdmin): string {
+  const lastDay = cityDay(p.city, new Date(Date.parse(p.endsAt) - 60_000).toISOString())
+  const lines = [`📍 Партнёр RANGE на карте: «${p.name}».`]
+  if (Date.parse(p.endsAt) > Date.now()) lines.push(`Метка видна до ${dm(lastDay)} включительно.`)
+  if (p.promoCode && p.promoDiscount) lines.push(`Для игроков RANGE скидка ${p.promoDiscount} по промокоду ${p.promoCode}.`)
+  else if (p.promoCode) lines.push(`Промокод для игроков RANGE: ${p.promoCode}.`)
+  lines.push(`Открой карту и нажми на метку: там адрес, маршрут${p.promoCode ? ' и промокод' : ''}.`)
+  return lines.join('\n')
+}
+
 export function AdminPartnersScreen({
   onBack,
   active,
@@ -216,10 +228,12 @@ export function AdminPartnersScreen({
   const [editing, setEditing] = useState<{ id: number | null; form: Form } | null>(null)
   const save = useSavePartnerPoint()
   const [statsFor, setStatsFor] = useState<PartnerPointAdmin | null>(null)
+  const [broadcastFor, setBroadcastFor] = useState<PartnerPointAdmin | null>(null)
   useEffect(() => {
     if (!backRef) return
     backRef.current = () => {
-      if (statsFor) setStatsFor(null)
+      if (broadcastFor) setBroadcastFor(null)
+      else if (statsFor) setStatsFor(null)
       else if (editing) setEditing(null)
       else return false
       return true
@@ -227,7 +241,7 @@ export function AdminPartnersScreen({
     return () => {
       backRef.current = null
     }
-  }, [backRef, statsFor, editing])
+  }, [backRef, broadcastFor, statsFor, editing])
   const [busy, setBusy] = useState<number | null>(null)
   const [note, setNote] = useState<{ id: number; text: string; bad?: boolean } | null>(null)
 
@@ -325,6 +339,9 @@ export function AdminPartnersScreen({
                   <button type="button" className="ppa-renew-btn ppa-stats-btn" onClick={() => setStatsFor(p)}>
                     Статистика
                   </button>
+                  <button type="button" className="ppa-renew-btn ppa-stats-btn" onClick={() => setBroadcastFor(p)}>
+                    Рассылка: {CITIES[p.city].name}
+                  </button>
                 </div>
                 {note?.id === p.id && <div className={note.bad ? 'ppa-warn ppa-note' : 'ppa-ok ppa-note'}>{note.text}</div>}
               </div>
@@ -332,6 +349,14 @@ export function AdminPartnersScreen({
           })}
         </div>
       </div>
+      {broadcastFor && (
+        <PostAnnouncementModal
+          city={broadcastFor.city}
+          initialBody={broadcastDraft(broadcastFor)}
+          initialPhotoUrl={broadcastFor.photos[0] ?? null}
+          onClose={() => setBroadcastFor(null)}
+        />
+      )}
     </>
   )
 }
