@@ -9,6 +9,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { useProfile } from '@/lib/supabase/queries'
 import { canPayWithStars, useBuyForStars, useStarsProducts, type StarsProduct } from '@/lib/supabase/queries/stars'
 import { tn } from '@/lib/i18n/runtime'
+import { BuyInTelegram } from '@/components/app-shell/BuyInTelegram'
 
 // The Shop's «За Звёзды» tab (25.11.2026, supabase-drafts/economy-24-11/11): coins, keys (a free secret box opening
 // each) and three sector skins sold only for Telegram Stars. Paid on Telegram's own sheet, so outside Telegram the
@@ -41,10 +42,16 @@ export function useStarsBuy(demo = false) {
   const [note, setNote] = useState<string | null>(null)
   // From the tap until Telegram's payment sheet is up (the invoice is made on the server first): a waiting screen.
   const [opening, setOpening] = useState(false)
-  function start(p: StarsProduct, preset?: string | null) {
+  // Outside Telegram (the website, the installed app): the window that opens this purchase in Telegram (26.11.2026).
+  const [offer, setOffer] = useState<{ product: StarsProduct; title?: string } | null>(null)
+  function start(p: StarsProduct, preset?: string | null, title?: string) {
     setNote(null)
-    if (demo || !canPayWithStars()) {
+    if (demo) {
       setNote(tn('stars.onlyTelegram'))
+      return
+    }
+    if (!canPayWithStars()) {
+      setOffer({ product: p, title })
       return
     }
     setOpening(true)
@@ -57,7 +64,8 @@ export function useStarsBuy(demo = false) {
       onError: (e) => setNote(tn(/STARS:owned/.test(String((e as Error).message)) ? 'stars.owned' : 'stars.failed')),
     })
   }
-  return { start, note, busy: buy.isPending, opening }
+  const telegramOffer = offer ? <BuyInTelegram productId={offer.product.id} title={offer.title} stars={offer.product.stars} onClose={() => setOffer(null)} /> : null
+  return { start, note, busy: buy.isPending, opening, telegramOffer }
 }
 
 // The waiting screen while the payment sheet loads (owner, 25.11.2026: «a loading animation while Telegram's window loads»).
@@ -77,14 +85,16 @@ export function StarsOpening({ show }: { show: boolean }) {
 export function StarsShop({ demo }: { demo?: StarsProduct[] }) {
   const { data: loaded = [] } = useStarsProducts()
   const products = demo ?? loaded
-  const { start, note, busy, opening } = useStarsBuy(!!demo)
+  const { start, note, busy, opening, telegramOffer } = useStarsBuy(!!demo)
   const inTelegram = canPayWithStars()
 
   const coins = products.filter((p) => p.kind === 'coins')
   const keys = products.filter((p) => p.kind === 'keys')
 
+  const title = (p: StarsProduct) =>
+    p.kind === 'coins' ? tn('stars.coinsN', { n: p.amount.toLocaleString('ru-RU') }) : tn(p.amount === 1 ? 'stars.key1' : p.amount < 5 ? 'stars.keysN' : 'stars.keysMany', { n: p.amount })
   const price = (p: StarsProduct) => (
-    <button className="btn-secondary shop-price-btn stars-price-btn" onClick={() => start(p)} disabled={busy}>
+    <button className="btn-secondary shop-price-btn stars-price-btn" onClick={() => start(p, null, title(p))} disabled={busy}>
       <StarIcon size={16} />
       {p.stars}
     </button>
@@ -93,6 +103,7 @@ export function StarsShop({ demo }: { demo?: StarsProduct[] }) {
   return (
     <div className="stars-shop">
       <StarsOpening show={opening} />
+      {telegramOffer}
       <div className="stars-hero">
         <StarIcon size={30} />
         <div>

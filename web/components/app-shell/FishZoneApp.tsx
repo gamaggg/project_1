@@ -1626,6 +1626,28 @@ export function FishZoneApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
+  // Opens a ?buy=<Stars product> link (26.11.2026, «Купить в Telegram» from the website or the installed app): coins and
+  // keys on «Пополнить», anything else in the Shop with that product's window open. While ?tglink= is still being
+  // redeemed inside Telegram (TelegramClaim), it waits: that signs in to the right account and reloads with ?buy= alone.
+  const [shopBuy, setShopBuy] = useState<string | null>(null)
+  const buyDeepLinkOpened = useRef(false)
+  useEffect(() => {
+    if (buyDeepLinkOpened.current || !user || myProfileLoading) return
+    const params = new URLSearchParams(window.location.search)
+    const product = params.get('buy')
+    if (!product || !/^[a-z0-9_]{1,24}$/.test(product) || (params.has('tglink') && insideTelegram())) return
+    buyDeepLinkOpened.current = true
+    /* eslint-disable react-hooks/set-state-in-effect -- opens a screen once from the launch URL (external input) */
+    if (product.startsWith('coins_') || product.startsWith('keys_')) openTopUp()
+    else {
+      setShopBuy(product)
+      openShop()
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
+    window.history.replaceState(null, '', window.location.pathname)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, myProfileLoading])
+
   // Opens a ?race=1 link (from a clan_race_* Telegram notification) straight
   // into the regatta — it's per city, so it waits for the real profile.
   const raceDeepLinkOpened = useRef(false)
@@ -1883,7 +1905,9 @@ export function FishZoneApp() {
             'batumi' default first — creating a throwaway week in the wrong
             city for every Moscow account on every boot. */}
         <Screen id="screen-shop" current={currentScreen} onBack={pop}>
-          {myProfile && <ShopScreen onBack={pop} onOpenSlots={openSlots} onOpenSecretBox={openSecretBox} onOpenTopUp={openTopUp} />}
+          {myProfile && (
+            <ShopScreen onBack={pop} onOpenSlots={openSlots} onOpenSecretBox={openSecretBox} onOpenTopUp={openTopUp} buyRequest={shopBuy} onBuyRequestDone={() => setShopBuy(null)} />
+          )}
         </Screen>
         {/* The slots on their own screen, from the card under the Shop's
             balance — no longer a tab at the far end of the Shop's row. */}

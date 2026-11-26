@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { SITE_URL } from '@/lib/site'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isEmptyTelegramAccount } from '@/lib/telegram/accounts'
-import { miniAppUrlForPayload } from '@/lib/telegram/startParamCodec'
+import { buyQuery, miniAppUrlForPayload, parseBuyPayload } from '@/lib/telegram/startParamCodec'
 import { stopFishingDay } from '@/lib/telegram/fishing'
 import { answerWidgetQuery } from '@/lib/telegram/widgetQuery'
 import { answerStarsPreCheckout, fulfillStarsPayment } from '@/lib/telegram/stars'
@@ -214,6 +214,24 @@ async function handlePOST(req: Request) {
     const payload = message.text.slice('/start'.length).trim()
     if (payload.startsWith('link_')) {
       await linkAccount(payload.slice('link_'.length), message)
+      return NextResponse.json({ ok: true })
+    }
+
+    // "/start b_<key>_<product>": «Купить в Telegram» on the website or in the installed app (app/api/telegram/buy-link).
+    // One button into the Mini App at that product; the key is checked there (app/api/auth/telegram/claim).
+    const buy = parseBuyPayload(payload)
+    if (buy) {
+      const lang = langOf(message.from)
+      await createAdminClient().from('telegram_bot_starts').upsert({ chat_id: message.chat.id }, { onConflict: 'chat_id', ignoreDuplicates: true })
+      await fetch(`${TELEGRAM_API}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: message.chat.id,
+          text: say(lang, 'bot.buyText'),
+          reply_markup: { inline_keyboard: [[{ text: say(lang, 'bot.buyBtn'), web_app: { url: `${SITE_URL}/?${buyQuery(buy.token, buy.productId)}` } }]] },
+        }),
+      })
       return NextResponse.json({ ok: true })
     }
 

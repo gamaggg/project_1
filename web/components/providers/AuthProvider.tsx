@@ -8,6 +8,7 @@ import { reportsEnabled, setGuestRefusalHandler } from '@/lib/errorReporting'
 import { trySignInWithTelegram, type TelegramSignInResult } from '@/lib/telegram/signIn'
 import { forgetOfflineData, lastKnownUser, rememberUser } from '@/lib/offlineCache'
 import { installCrashBeacon } from '@/lib/crashBeacon'
+import { TelegramClaim } from '@/components/app-shell/TelegramClaim'
 
 type AuthState = {
   user: User | null
@@ -327,7 +328,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return result
   }
 
-  return <AuthContext.Provider value={{ user, loading, sessionReady, signOut, signInWithTelegram, signInWithExistingTelegram }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ user, loading, sessionReady, signOut, signInWithTelegram, signInWithExistingTelegram }}>
+      {children}
+      {/* «Купить в Telegram» from the website: the launch key signs in to that account (26.11.2026). */}
+      <TelegramClaim />
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth() {

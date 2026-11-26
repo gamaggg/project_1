@@ -83,11 +83,17 @@ export function ShopScreen({
   onOpenSlots,
   onOpenSecretBox,
   onOpenTopUp,
+  buyRequest,
+  onBuyRequestDone,
 }: {
   onBack: () => void
   onOpenSlots: () => void
   onOpenSecretBox: () => void
   onOpenTopUp: () => void
+  // «Купить в Telegram» (26.11.2026): a Stars product to open as soon as the Shop has its lists — its tab and its
+  // window with the buy button (the link from the website arrives in Telegram as ?buy=<product>).
+  buyRequest?: string | null
+  onBuyRequestDone?: () => void
 }) {
   const { user } = useAuth()
   const { data: profile } = useProfile(user?.id ?? null)
@@ -150,7 +156,7 @@ export function ShopScreen({
   })
   // For Telegram Stars (25.11.2026): coins and keys on the «Звёзды» tab; the skins sold only for Stars stand on the
   // «Скины» tab with the rest, priced in Stars (owner: «put the skins in the skins»).
-  const { data: starsProducts = [] } = useStarsProducts()
+  const { data: starsProducts = [], isFetched: starsFetched } = useStarsProducts()
   const starsByItem = new Map(starsProducts.filter((p) => p.itemId).map((p) => [p.itemId!, p]))
   const starsTab = starsProducts.some((p) => !p.itemId)
   const starsBuy = useStarsBuy()
@@ -204,6 +210,23 @@ export function ShopScreen({
   const kitWorn = (kit: GlKit) => wornBg.id === kit.bg && profile?.equippedFrame === kit.frame && profile?.equippedNameStyle === kit.name
   const kitTitle = (kit: GlKit) => tn('shop.kitName', { name: items.find((i) => i.id === kit.bg)?.name ?? kit.family })
   const tabOf = (i: ShopItem): Category => i.category as Category
+  useEffect(() => {
+    if (!buyRequest || !starsFetched || items.length === 0) return
+    const kit = GL_KITS.find((k) => k.kit === buyRequest)
+    const itemId = starsProducts.find((p) => p.id === buyRequest)?.itemId
+    const item = itemId ? items.find((i) => i.id === itemId) : undefined
+    /* eslint-disable react-hooks/set-state-in-effect -- opens a tab and a window once, from the launch link (external input) */
+    if (kit && kitProducts.has(kit.kit)) {
+      setCategory('kits')
+      openTryOn({ id: kit.kit, category: 'hero_bg', name: kitTitle(kit), price: 0, purchasable: false })
+    } else if (item) {
+      setCategory(tabOf(item))
+      openTryOn(item)
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
+    onBuyRequestDone?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buyRequest, starsFetched, items.length])
   const unseenHere = newIds ? items.filter((i) => tabOf(i) === category && newIds.has(i.id) && !seenNew.has(i.id)).map((i) => i.id) : []
   // Adjusted during render, the moment the tab is open with something unseen in it.
   if (unseenHere.length > 0) setSeenNew(new Set([...seenNew, ...unseenHere]))
@@ -350,7 +373,7 @@ export function ShopScreen({
                 stars={starsByItem.get(item.id)?.stars}
                 onBuy={() => {
                   const sp = starsByItem.get(item.id)
-                  if (sp) starsBuy.start(sp)
+                  if (sp) starsBuy.start(sp, null, item.name)
                   else request(item.price, item.name, () => buyItem.mutate(item.id))
                 }}
                 onEquip={() => equipItem.mutate({ itemId: item.id })}
@@ -387,7 +410,7 @@ export function ShopScreen({
                   gl={fam ? { family: fam, preset: presetFor(fam) } : undefined}
                   onBuy={() => {
                     const sp = starsByItem.get(item.id)
-                    if (sp) starsBuy.start(sp, fam ? presetFor(fam) : null)
+                    if (sp) starsBuy.start(sp, fam ? presetFor(fam) : null, item.name)
                     else request(item.price, item.name, () => buyItem.mutate(item.id))
                   }}
                   onEquip={() => equipAny(item)}
@@ -412,7 +435,7 @@ export function ShopScreen({
                 stars={starsByItem.get(item.id)?.stars}
                 onBuy={() => {
                   const sp = starsByItem.get(item.id)
-                  if (sp) starsBuy.start(sp)
+                  if (sp) starsBuy.start(sp, null, item.name)
                   else request(item.price, item.name, () => buyItem.mutate(item.id))
                 }}
                 onEquip={() => equipItem.mutate({ itemId: item.id })}
@@ -436,7 +459,10 @@ export function ShopScreen({
               presetFor={presetFor}
               displayName={profile?.displayName ?? tn('shop.nameFallback')}
               avatarUrl={profile?.avatarUrl ?? null}
-              onBuy={(product, fam) => starsBuy.start(product, presetFor(fam))}
+              onBuy={(product, fam) => {
+                const k = GL_KITS.find((x) => x.kit === product.id)
+                starsBuy.start(product, presetFor(fam), k ? kitTitle(k) : undefined)
+              }}
               onEquip={equipKit}
               onTryOn={(kit) => openTryOn({ id: kit.kit, category: 'hero_bg', name: kitTitle(kit), price: 0, purchasable: false })}
               busy={equipItem.isPending || setPreset.isPending || starsBuy.busy}
@@ -460,7 +486,7 @@ export function ShopScreen({
                   stars={starsByItem.get(item.id)?.stars}
                   onBuy={() => {
                     const sp = starsByItem.get(item.id)
-                    if (sp) starsBuy.start(sp)
+                    if (sp) starsBuy.start(sp, null, item.name)
                     else request(item.price, item.name, () => buyItem.mutate(item.id))
                   }}
                   onEquip={() => equipItem.mutate({ itemId: item.id })}
@@ -486,6 +512,7 @@ export function ShopScreen({
 
       {purchaseModal}
       <StarsOpening show={starsBuy.opening} />
+      {starsBuy.telegramOffer}
       {refunding && (
         <RefundConfirmModal label={refunding.name} price={refunding.price} busy={refundBusy} onConfirm={confirmRefund} onClose={() => setRefunding(null)} />
       )}
@@ -542,7 +569,7 @@ export function ShopScreen({
               const it = tryOn
               setTryOn(null)
               if (product) {
-                starsBuy.start(product, fam ? presetFor(fam) : null)
+                starsBuy.start(product, fam ? presetFor(fam) : null, it.name)
                 return
               }
               // A jackpot frame can't be bought — «Выбить в слотах» goes there instead.

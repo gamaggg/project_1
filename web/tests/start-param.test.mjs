@@ -30,3 +30,19 @@ test('the bot turns «/start r_…» back into the address of the shared screen'
   assert.equal(miniAppUrlForPayload('r_!!!', site), site)
   assert.equal(botStartPayload('achievement=' + 'x'.repeat(80)), null, 'too long for a bot link: the website link is used')
 })
+
+// «Купить в Telegram» (26.11.2026): /start b_<key>_<product> must fit the bot's 64 characters and come back intact.
+test('buy payload round-trips the key and the product and fits the bot', async () => {
+  const { buyStartPayload, parseBuyPayload, buyQuery, decodeStartParam, encodeStartParam } = await import('../lib/telegram/startParamCodec.ts')
+  const token = '0f8b2c4e-1a2b-4c3d-9e8f-0123456789ab'
+  for (const product of ['frame_gl_particles', 'kit_gl_aurora', 'coins_500', 'keys_1']) {
+    const payload = buyStartPayload(token, product)
+    assert.ok(payload && payload.length <= 64, `${product}: ${payload}`)
+    assert.deepEqual(parseBuyPayload(payload), { token, productId: product })
+    assert.equal(decodeStartParam(encodeStartParam(buyQuery(token, product))), buyQuery(token, product))
+  }
+  assert.equal(buyStartPayload('not-a-uuid', 'coins_500'), null)
+  assert.equal(buyStartPayload(token, 'Coins-500'), null)
+  assert.equal(parseBuyPayload('r_abc'), null)
+  assert.equal(parseBuyPayload(`b_${'a'.repeat(32)}_x;drop`), null)
+})
