@@ -2512,7 +2512,9 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 /* Новинки 24.11.2026 — name effects that are not a gradient fill (StyledName.tsx). */
 /* The outline is a stroke of the letters themselves (paint-order keeps it outside the white): the four 1px shadows it
    was made of left ragged edges at list size, and the orange shadow 3px down read as a second, slipped copy (26.11.2026). */
-.name-fx-sticker{color:#fff; -webkit-text-fill-color:#fff; -webkit-text-stroke:3px #17181B; paint-order:stroke fill; text-shadow:1px 2px 0 #FC5200;}
+/* The padding holds the outline (1.5px) and the shadow inside the name's own box: list rows clip a long name for its
+   «…» (overflow:hidden), and they cut the outline off the top of the letters (26.11.2026). */
+.name-fx-sticker{color:#fff; -webkit-text-fill-color:#fff; -webkit-text-stroke:3px #17181B; paint-order:stroke fill; text-shadow:1px 2px 0 #FC5200; padding:2px 3px 3px 2px;}
 .name-fx-neon{color:#FF2FA8; -webkit-text-fill-color:#FF2FA8; text-shadow:0 0 1px #FFE3F4, 0 0 6px rgba(255,47,168,.75), 0 0 14px rgba(255,47,168,.45); animation:neonFlicker 6s linear infinite;}
 @keyframes neonFlicker{0%,100%{opacity:1;} 61%{opacity:1;} 62%{opacity:.45;} 63.5%{opacity:1;} 65%{opacity:.6;} 66.5%{opacity:1;}}
 .name-fx-wave{display:inline-block; white-space:nowrap;}
