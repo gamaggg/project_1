@@ -2,17 +2,22 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { LANGS, type Lang } from '@/lib/i18n/core'
 import { PRIVACY_DOCS, PRIVACY_PATHS } from '@/lib/data/privacy'
+import type { PrivacyDoc } from '@/lib/data/privacy.shared'
 import { SITE_URL } from '@/lib/site'
 import './privacy.css'
 
-export function privacyMetadata(lang: Lang): Metadata {
-  const doc = PRIVACY_DOCS[lang]
+export function privacyMetadata(
+  lang: Lang,
+  docs: Record<Lang, PrivacyDoc> = PRIVACY_DOCS,
+  paths: Record<Lang, string> = PRIVACY_PATHS
+): Metadata {
+  const doc = docs[lang]
   return {
     title: `${doc.title} — RANGE`,
     description: doc.metaDescription,
     alternates: {
-      canonical: `${SITE_URL}${PRIVACY_PATHS[lang]}`,
-      languages: Object.fromEntries(LANGS.map((l) => [l.id, `${SITE_URL}${PRIVACY_PATHS[l.id]}`])),
+      canonical: `${SITE_URL}${paths[lang]}`,
+      languages: Object.fromEntries(LANGS.map((l) => [l.id, `${SITE_URL}${paths[l.id]}`])),
     },
   }
 }
@@ -20,8 +25,17 @@ export function privacyMetadata(lang: Lang): Metadata {
 // A plain server-rendered page, not a screen of the app shell: the link in
 // BotFather, in the sign-up checkbox and on search results must open without
 // loading the game. The text lives in lib/data/privacy.{ru,en,ka}.ts.
-export function PrivacyView({ lang }: { lang: Lang }) {
-  const doc = PRIVACY_DOCS[lang]
+// The terms of use page (app/terms) reuses it with its own text and paths.
+export function PrivacyView({
+  lang,
+  docs = PRIVACY_DOCS,
+  paths = PRIVACY_PATHS,
+}: {
+  lang: Lang
+  docs?: Record<Lang, PrivacyDoc>
+  paths?: Record<Lang, string>
+}) {
+  const doc = docs[lang]
   return (
     <main className="privacy-page" lang={lang}>
       <div className="privacy-top">
@@ -35,7 +49,7 @@ export function PrivacyView({ lang }: { lang: Lang }) {
                 {l.name}
               </span>
             ) : (
-              <a key={l.id} href={PRIVACY_PATHS[l.id]} hrefLang={l.id}>
+              <a key={l.id} href={paths[l.id]} hrefLang={l.id}>
                 {l.name}
               </a>
             )
@@ -44,7 +58,7 @@ export function PrivacyView({ lang }: { lang: Lang }) {
       </div>
       <h1>{doc.title}</h1>
       <p className="privacy-updated">{doc.updated}</p>
-      <p>{doc.intro}</p>
+      {doc.intro ? <p>{doc.intro}</p> : null}
       {doc.sections.map((s, n) => (
         <section key={s.title}>
           <h2>
