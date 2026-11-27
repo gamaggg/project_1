@@ -19,8 +19,19 @@ const nextConfig: NextConfig = {
   // Preview builds keep their addresses, and /api/ is left alone so a webhook or a
   // scheduled call still pointing at an old address keeps working.
   async redirects() {
-    if (process.env.VERCEL_ENV !== "production") return [];
+    // Short links for the bios of our social accounts: catchrange.com/ig reads clean in
+    // Instagram's profile and still carries the source label (lib/signupSource.ts).
+    // Temporary (307) so a label can be changed later. Plan: docs/10 Продукт/Продвижение в соцсетях.md
+    const shortLinks = [
+      ["/ig", "instagram_bio"],
+      ["/fb", "facebook_page"],
+      ["/tt", "tiktok_bio"],
+      ["/yt", "youtube_bio"],
+      ["/th", "threads_bio"],
+    ].map(([source, from]) => ({ source, destination: `/?from=${from}`, permanent: false }));
+    if (process.env.VERCEL_ENV !== "production") return shortLinks;
     return [
+      ...shortLinks,
       {
         source: "/:path((?!api/).*)",
         has: [{ type: "host", value: "(?<host>.+)\\.vercel\\.app" }],
