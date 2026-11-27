@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { withErrorReport } from '@/lib/serverErrors'
+import { connectLink, tiktokConfigured } from '@/lib/tiktokPublish'
 import { escapeHtml, isTelegramUpdate, ownerChatId, previewHtml, readPost, tg, whenText } from '@/lib/socialBot'
 
 // Updates of the social-media approval bot (lib/socialBot.ts). Only the owner
@@ -103,6 +104,14 @@ async function onOwnerText(admin: ReturnType<typeof createAdminClient>, chatId: 
     await tg('sendMessage', {
       chat_id: chatId,
       text: 'Привет! Сюда за час до выхода будут приходить посты для соцсетей RANGE.\n\n✅ Принять: пост выйдет.\n✏️ Изменить: напиши, что поменять, пришлю новый вариант.\n❌ Отменить: пост не выйдет.\n\nБез «Принять» ничего не публикуется.',
+    })
+    return
+  }
+  if (text.startsWith('/tiktok')) {
+    await tg('sendMessage', {
+      chat_id: chatId,
+      text: tiktokConfigured() ? `Ссылка, чтобы подключить TikTok (действует 15 минут):\n${connectLink()}` : 'TikTok ещё не настроен: в Vercel нет TIKTOK_CLIENT_KEY и TIKTOK_CLIENT_SECRET.',
+      link_preview_options: { is_disabled: true },
     })
     return
   }

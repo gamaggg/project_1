@@ -19,6 +19,7 @@ import {
 } from '@/lib/socialBot'
 import { facebookConfigured, publishToFacebook } from '@/lib/facebookPublish'
 import { instagramConfigured, publishToInstagram } from '@/lib/instagramPublish'
+import { publishToTikTok, tiktokConfigured } from '@/lib/tiktokPublish'
 import { ensureThreadsToken, publishToThreads, threadsConfigured } from '@/lib/threadsPublish'
 
 // Called every 5 minutes by the social-bot-tick cron job (only when there is
@@ -127,13 +128,14 @@ async function handleGET(req: Request) {
         }
         if (p.captions._threads_id || link) manual = { ...p, platforms: p.platforms.filter((x) => x !== 'threads') }
       }
-      // Instagram (feed/Reels and Stories) and the Facebook Page go out by themselves too, once each.
+      // Instagram (feed/Reels and Stories), the Facebook Page and TikTok go out by themselves too, once each.
       const auto: [string, string, () => Promise<{ id: string; link: string | null }>][] = []
       if (instagramConfigured()) {
         auto.push(['instagram', 'Instagram', () => publishToInstagram(p, false)])
         auto.push(['instagram_story', 'истории Instagram', () => publishToInstagram(p, true)])
       }
       if (facebookConfigured()) auto.push(['facebook', 'Facebook', () => publishToFacebook(p)])
+      if (tiktokConfigured()) auto.push(['tiktok', 'TikTok', () => publishToTikTok(admin, p)])
       for (const [platform, label, publish] of auto) {
         if (!p.platforms.includes(platform)) continue
         const key = `_${platform}_id`
