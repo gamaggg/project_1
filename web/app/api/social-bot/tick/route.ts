@@ -19,6 +19,7 @@ import {
 } from '@/lib/socialBot'
 import { facebookConfigured, publishToFacebook } from '@/lib/facebookPublish'
 import { instagramConfigured, publishToInstagram } from '@/lib/instagramPublish'
+import { sendReadyJobs } from '@/lib/videoJobs'
 import { publishToTelegram, telegramChannelConfigured } from '@/lib/telegramChannel'
 import { publishToYouTube, youtubeConfigured } from '@/lib/youtubePublish'
 import { publishToTikTok, tiktokConfigured } from '@/lib/tiktokPublish'
@@ -142,6 +143,9 @@ async function handleGET(req: Request) {
       if (telegramChannelConfigured()) auto.push(['telegram', 'Telegram-канал', () => publishToTelegram(p)])
       for (const [platform, label, publish] of auto) {
         if (!p.platforms.includes(platform)) continue
+        // captions._manual = '1': the owner posts this one by hand (e.g. a Reel with a trending sound picked in the app),
+        // so the bot only sends the file and the text at the time (the «Пора выкладывать» reminder).
+        if (p.captions._manual === '1') continue
         const key = `_${platform}_id`
         let done = typeof p.captions[key] === 'string' && p.captions[key] !== ''
         if (!done) {
@@ -207,6 +211,13 @@ async function handleGET(req: Request) {
       report.errors.push(`preview #${p.id}: ${msg}`)
       await admin.from('social_posts').update({ error: msg.slice(0, 500) }).eq('id', p.id)
     }
+  }
+
+  // 5. Finished videos from the owner's own footage (video_jobs) go back to him with the caption and the buttons.
+  try {
+    await sendReadyJobs(admin, chatId)
+  } catch (err) {
+    report.errors.push(`video jobs: ${err instanceof Error ? err.message : err}`)
   }
 
   return NextResponse.json(report)

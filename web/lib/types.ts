@@ -1237,6 +1237,57 @@ export type Database = {
         }
         Relationships: []
       }
+      video_jobs: {
+        Row: {
+          id: number
+          chat_id: number
+          src_path: string
+          caption_in: string
+          status: string
+          result_path: string | null
+          caption_out: string | null
+          feedback: string | null
+          token: string
+          sent_at: string | null
+          bot_message_id: number | null
+          error: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          chat_id: number
+          src_path: string
+          caption_in?: string
+          status?: string
+          result_path?: string | null
+          caption_out?: string | null
+          feedback?: string | null
+          token: string
+          sent_at?: string | null
+          bot_message_id?: number | null
+          error?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          chat_id?: number
+          src_path?: string
+          caption_in?: string
+          status?: string
+          result_path?: string | null
+          caption_out?: string | null
+          feedback?: string | null
+          token?: string
+          sent_at?: string | null
+          bot_message_id?: number | null
+          error?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fishing_sessions: {
         Row: {
           id: number

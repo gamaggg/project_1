@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { withErrorReport } from '@/lib/serverErrors'
 import { connectLink, tiktokConfigured } from '@/lib/tiktokPublish'
+import { acceptVideo, incomingVideo, onJobButton, saveJobFeedback, videoFeedbackFor } from '@/lib/videoJobs'
 import { escapeHtml, isTelegramUpdate, ownerChatId, previewHtml, readPost, tg, whenText } from '@/lib/socialBot'
 
 // Updates of the social-media approval bot (lib/socialBot.ts). Only the owner
@@ -12,7 +13,11 @@ import { escapeHtml, isTelegramUpdate, ownerChatId, previewHtml, readPost, tg, w
 //   · «Выложил» under «Пора выкладывать» — the post is marked published.
 // Anyone else gets one line saying the bot is not for players.
 
-type Msg = { message_id: number; chat: { id: number }; from?: { id: number }; text?: string; reply_to_message?: { message_id: number; text?: string } }
+type FileInfo = { file_id: string; file_size?: number; mime_type?: string }
+type Msg = { message_id: number; chat: { id: number }; from?: { id: number }; text?: string; caption?: string; video?: FileInfo; animation?: FileInfo; document?: FileInfo; reply_to_message?: { message_id: number; text?: string } }
+
+// A video takes a while to download and store: answer Telegram at once, finish afterwards.
+export const maxDuration = 60
 type Callback = { id: string; from: { id: number }; data?: string; message?: { message_id: number; chat: { id: number } } }
 
 const nowIso = () => new Date().toISOString()
@@ -34,6 +39,15 @@ async function handlePOST(req: Request) {
   }
 
   const msg = update.message
+  const vid = msg ? incomingVideo(msg) : null
+  if (msg && vid && msg.from) {
+    if (msg.from.id !== owner) {
+      await tg('sendMessage', { chat_id: msg.chat.id, text: 'Это служебный бот RANGE. Сама игра: @catchrangebot' }).catch(() => {})
+      return NextResponse.json({ ok: true })
+    }
+    after(() => acceptVideo(admin, owner, vid, msg.caption ?? ''))
+    return NextResponse.json({ ok: true })
+  }
   if (msg?.text && msg.from) {
     if (msg.from.id !== owner) {
       await tg('sendMessage', { chat_id: msg.chat.id, text: 'Это служебный бот RANGE. Сама игра: @catchrangebot' }).catch(() => {})
@@ -45,7 +59,13 @@ async function handlePOST(req: Request) {
 }
 
 async function onButton(admin: ReturnType<typeof createAdminClient>, chatId: number, cb: Callback) {
-  const [, action, idText] = (cb.data ?? '').split(':')
+  const parts = (cb.data ?? '').split(':')
+  if (parts[0] === 'vj') {
+    const text = await onJobButton(admin, chatId, parts[1] ?? '', Number(parts[2]), cb.message?.message_id)
+    await tg('answerCallbackQuery', { callback_query_id: cb.id, text }).catch(() => {})
+    return
+  }
+  const [, action, idText] = parts
   const id = Number(idText)
   const answer = (text: string) => tg('answerCallbackQuery', { callback_query_id: cb.id, text }).catch(() => {})
   const { data: row } = await admin.from('social_posts').select('*').eq('id', id).maybeSingle()
@@ -103,7 +123,7 @@ async function onOwnerText(admin: ReturnType<typeof createAdminClient>, chatId: 
   if (text.startsWith('/start')) {
     await tg('sendMessage', {
       chat_id: chatId,
-      text: 'Привет! Сюда за час до выхода будут приходить посты для соцсетей RANGE.\n\n✅ Принять: пост выйдет.\n✏️ Изменить: напиши, что поменять, пришлю новый вариант.\n❌ Отменить: пост не выйдет.\n\nБез «Принять» ничего не публикуется.',
+      text: 'Привет! Сюда за час до выхода будут приходить посты для соцсетей RANGE.\n\n✅ Принять: пост выйдет.\n✏️ Изменить: напиши, что поменять, пришлю новый вариант.\n❌ Отменить: пост не выйдет.\n\nБез «Принять» ничего не публикуется.\n\n🎬 Ролики: пришли сюда видео (как «видео», до 20 МБ), в подписи можно написать рыбу, вес и место. Я смонтирую без звука, с оболочкой RANGE, и верну с описанием и кнопками «Всё ок / Изменить». Выкладываешь сам.',
     })
     return
   }
@@ -116,6 +136,13 @@ async function onOwnerText(admin: ReturnType<typeof createAdminClient>, chatId: 
     return
   }
   const reply = msg.reply_to_message
+  if (reply) {
+    const jobId = await videoFeedbackFor(admin, reply)
+    if (jobId) {
+      await saveJobFeedback(admin, chatId, jobId, text)
+      return
+    }
+  }
   let id: number | null = null
   if (reply) {
     const byMessage = await admin.from('social_posts').select('id').eq('tg_message_id', reply.message_id).maybeSingle()

@@ -163,6 +163,7 @@ export function previewHtml(p: SocialPost, tail?: string): string {
         if (typeof ru === 'string' && ru.trim()) lines.push(`<i>Перевод: ${escapeHtml(cut(ru, 900))}</i>`)
       }
     else if (other.length) lines.push('', `(+ отдельный текст для: ${escapeHtml(other.map(([k]) => PLATFORM[k] ?? k).join(', '))})`)
+    if (p.captions._manual === '1') lines.push('', '✋ <i>Выкладываешь сам: в назначенное время пришлю файл и подпись.</i>')
     if (!p.media.length) lines.push('', '(без картинки и видео)')
     return lines.join('\n') + end
   }
