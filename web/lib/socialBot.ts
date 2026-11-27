@@ -37,6 +37,7 @@ const PLATFORM: Record<string, string> = {
   threads: 'Threads',
   youtube: 'YouTube Shorts',
   facebook: 'Facebook',
+  telegram: 'Telegram-канал',
 }
 const KIND: Record<string, string> = { reel: 'Рилс', post: 'Пост', story: 'История', carousel: 'Карусель', quiz: 'Викторина' }
 
@@ -99,6 +100,20 @@ export function readPost(row: Record<string, unknown>): SocialPost {
   }
 }
 
+// A poll or quiz for the Telegram channel, kept in captions._poll as JSON.
+export type PostPoll = { type: 'quiz' | 'regular'; question: string; options: string[]; correct?: number; explanation?: string }
+export function readPoll(p: SocialPost): PostPoll | null {
+  const raw = p.captions._poll
+  if (typeof raw !== 'string') return null
+  try {
+    const v = JSON.parse(raw) as Partial<PostPoll>
+    if (!v.question || !Array.isArray(v.options) || v.options.length < 2) return null
+    return { type: v.type === 'quiz' ? 'quiz' : 'regular', question: v.question, options: v.options.map(String), correct: v.correct, explanation: v.explanation }
+  } catch {
+    return null
+  }
+}
+
 export function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
@@ -134,6 +149,12 @@ export function previewHtml(p: SocialPost, tail?: string): string {
       '',
       escapeHtml(cut(p.body || '(без текста)', bodyMax)),
     ]
+    const poll = readPoll(p)
+    if (poll) {
+      lines.push('', `<b>${poll.type === 'quiz' ? 'Викторина' : 'Опрос'}:</b> ${escapeHtml(poll.question)}`)
+      poll.options.forEach((o, i) => lines.push(`${poll.type === 'quiz' && i === (poll.correct ?? 0) ? '✅' : '▫️'} ${escapeHtml(o)}`))
+      if (poll.explanation) lines.push(`<i>Разбор: ${escapeHtml(poll.explanation)}</i>`)
+    }
     const other = publishedCaptions(p)
     if (withCaptions)
       for (const [platform, text] of other) {
