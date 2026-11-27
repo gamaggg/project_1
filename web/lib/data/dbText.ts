@@ -197,6 +197,13 @@ export function localTxLabel(reason: string, label: string): string {
         return T('dbText.txSlots', { prize })
       })
       break
+    case 'slots_jackpot':
+      // «Слоты: джекпот, рамка «Катран»» — the jackpot frame, no coins (27.11.2026).
+      out = byMatch(/^Слоты: джекпот, (.+)$/, (m) => {
+        const k = SHOP_NAME.get(m[1].charAt(0).toUpperCase() + m[1].slice(1))
+        return T('dbText.txSlots', { prize: T('dbText.txSlotsJackpot', { item: k ? T(k) : m[1] }) })
+      })
+      break
     case 'stars_purchase':
       // Coins bought for Telegram Stars (25.11.2026): «Покупка за Звёзды: N монет».
       out = byMatch(/^Покупка за Звёзды: (\d+) монет$/, (m) => T('dbText.txStars', { n: m[1] }))

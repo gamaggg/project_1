@@ -2879,6 +2879,7 @@ export const en: Dict = {
     txSlotsPair: 'a pair',
     txSlotsTriple: 'three in a row',
     txSlotsAssorti: 'assorted',
+    txSlotsJackpot: 'jackpot, {item}',
     txWeekPrize: 'Weekly rating: place {n}',
     txStars: 'Bought for Stars: {n} coins',
     txSlotsCoins: '{n} coins',

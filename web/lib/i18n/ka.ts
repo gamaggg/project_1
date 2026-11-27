@@ -2881,6 +2881,7 @@ export const ka: Dict = {
     txSlotsPair: 'ორი ერთნაირი',
     txSlotsTriple: 'სამი რიგში',
     txSlotsAssorti: 'ასორტი',
+    txSlotsJackpot: 'ჯეკპოტი, {item}',
     txWeekPrize: 'კვირის რეიტინგი: {n} ადგილი',
     txStars: 'ნაყიდი ვარსკვლავებით: {n} მონეტა',
     txSlotsCoins: '{n} მონეტა',

@@ -43,11 +43,14 @@ export function CoinHistoryModal({ userId, displayName, onClose }: { userId?: st
                 <div className="coin-history-label">{t.label}</div>
                 <div className="coin-history-when">{formatWhen(t.createdAt)}</div>
               </div>
-              <div className={`coin-history-amount${t.amount > 0 ? ' positive' : ''}`}>
-                {t.amount > 0 ? '+' : ''}
-                {t.amount}
-                <CoinIcon size={16} />
-              </div>
+              {/* A prize without coins (the slots jackpot frame, 27.11.2026) is a row with no amount. */}
+              {t.amount !== 0 && (
+                <div className={`coin-history-amount${t.amount > 0 ? ' positive' : ''}`}>
+                  {t.amount > 0 ? '+' : ''}
+                  {t.amount}
+                  <CoinIcon size={16} />
+                </div>
+              )}
             </div>
           ))}
           {more && (

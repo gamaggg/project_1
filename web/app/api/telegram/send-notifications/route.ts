@@ -119,6 +119,9 @@ function renderMessage(notification: NotificationRef): Message | null {
       // A player asked for a city that is not in the game (request_city): a request, not an alarm.
       if (notification.payload?.variant === 'city_request')
         return { text: `🏙 RANGE — просят добавить город\n${text}`, buttonLabel: 'Открыть профиль', url: publicId ? `${SITE_URL}/?user=${encodeURIComponent(publicId)}` : SITE_URL }
+      // A rare win (slots jackpot, 3 keys, a legendary box prize — _rare_win_alert, 27.11.2026): news, not an alarm.
+      if (notification.payload?.variant === 'rare_win')
+        return { text: `🎉 RANGE — крупный выигрыш\n${text}`, buttonLabel: 'Открыть профиль', url: publicId ? `${SITE_URL}/?user=${encodeURIComponent(publicId)}` : SITE_URL }
       if (publicId) return { text: `⚠️ RANGE — тревога\n${text}`, buttonLabel: 'Открыть профиль', url: `${SITE_URL}/?user=${encodeURIComponent(publicId)}`, extraButtons }
       return { text: `⚠️ RANGE — тревога\n${text}`, buttonLabel: 'Открыть RANGE', url: SITE_URL, extraButtons }
     }

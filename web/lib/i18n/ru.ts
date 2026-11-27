@@ -2885,6 +2885,7 @@ export const ru = {
     txSlotsPair: 'два одинаковых',
     txSlotsTriple: 'три в ряд',
     txSlotsAssorti: 'ассорти',
+    txSlotsJackpot: 'джекпот, {item}',
     txWeekPrize: 'Рейтинг недели: {n} место',
     txStars: 'Покупка за Звёзды: {n} монет',
     txSlotsCoins: '{n} монет',
