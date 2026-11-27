@@ -35,8 +35,8 @@ export function TerritoryThumbnailMap({
   // flashes once — the same "claimed" beat the map plays on a capture.
   claimFx?: boolean
   // The sector screen's hero (24.11.2026): the hex sits in the part of the map that is left visible — `gap` px
-  // from the top of the screen and the same from the card that covers the map's bottom `bottomCover` px, so the
-  // chips over the map (Маршрут, На карте) stay under it. Anything the box has above `baseHeight` (the notch /
+  // from the top of the screen and the same from whatever closes the map's bottom `bottomCover` px (the chips
+  // «Маршрут / На карте» over the card's edge), so the chips stay under it. Anything the box has above `baseHeight` (the notch /
   // Telegram band added in CSS) counts as extra room on top.
   fit?: { baseHeight: number; gap: number; bottomCover: number }
 }) {

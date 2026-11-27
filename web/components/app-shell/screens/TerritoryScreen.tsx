@@ -30,8 +30,11 @@ import { nameInitials } from '@/lib/initials'
 import { SectorBadgeInfo, type SectorBadgeKind } from '@/components/app-shell/SectorBadgeInfo'
 import { SectorHoldersCard } from '@/components/app-shell/SectorHoldersCard'
 
-// The hero map's height (globals.css, .sector-hero-map) and what covers it: the dock card overlaps its bottom 26px.
-const HERO_FIT = { baseHeight: 320, gap: 60, bottomCover: 26 }
+// The hero map's height (globals.css, .sector-hero-map) and what closes it from below: the chips «Маршрут / На карте»
+// (bottom 38px + ~32px tall, over the card's 26px overlap). The gap is measured to the chips' top, so the empty map
+// above the hex and below it, down to the chips, is the same (27.11.2026; before it was 60px to the card and the
+// chips ate the bottom one).
+const HERO_FIT = { baseHeight: 320, gap: 38, bottomCover: 70 }
 
 export function statusBadge(status: Territory['status'], myTerritoryColor: string, myShare = false) {
   // myShare: a clan-mate's sector the viewer holds a part of.
