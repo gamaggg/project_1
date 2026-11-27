@@ -47,6 +47,7 @@ import { useAchievementUnlock } from '@/lib/achievementUnlock'
 import { APP_LINK_EVENT } from '@/components/app-shell/AppLinkText'
 import { useWeekTopModal } from '@/lib/weekTopModal'
 import { InstallOffer } from '@/components/app-shell/InstallOffer'
+import { SocialOffer } from '@/components/app-shell/SocialOffer'
 import { useClanBattleCeremony } from '@/lib/clanBattleCeremony'
 import { HotSectorsTour, useHotSectorsTour } from '@/components/app-shell/HotSectorsTour'
 import { PartnerIntroTour, usePartnerIntroTour } from '@/components/app-shell/PartnerIntroTour'
@@ -2542,6 +2543,22 @@ export function FishZoneApp() {
           away !== null
         }
         onToast={showToast}
+      />
+      {/* Once, from the player's second day: our Telegram channel, chat and
+          social networks (and where to find them in the profile). */}
+      <SocialOffer
+        blocked={
+          !myProfile?.onboardingCompleted ||
+          currentScreen !== 'screen-map' ||
+          !!geoPlay ||
+          showWeekTop ||
+          clanCeremony.show ||
+          !!unlockedAchievement ||
+          showingTrophyScene ||
+          hotTour.show ||
+          away !== null
+        }
+        memberSince={myProfile?.createdAt ?? null}
       />
       {/* The week's hot sectors, once per week — a tour over the map after
           onboarding, behind every celebration above. Seen from the moment it

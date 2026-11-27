@@ -2527,6 +2527,19 @@ html.ios-standalone .guest-cta{bottom:calc(-1 * var(--vp-gap));}
 .language-picker-opts{display:flex; gap:6px; padding:3px; background:rgba(23,24,27,.06); border-radius:12px;}
 .language-picker-opt{flex:1; border:none; background:none; font:inherit; font-size:13.5px; font-weight:700; color:var(--ink-soft); padding:9px 6px; border-radius:9px; cursor:pointer; white-space:nowrap;}
 .language-picker-opt.on{background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(23,24,27,.1);}
+.social-links{display:flex; flex-direction:column; gap:8px; margin-top:16px;}
+.social-links-tg{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.social-links-row{display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px;}
+.social-link-wide,.social-link-tile{border:1px solid var(--line); background:var(--surface); box-shadow:var(--shadow-sm); font:inherit; color:var(--ink); cursor:pointer;}
+.social-link-wide{display:flex; align-items:center; gap:10px; min-width:0; padding:10px 12px; border-radius:18px; text-align:left;}
+.social-link-mark{flex:0 0 auto; width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:#E3F3FC; color:#229ED9;}
+.social-link-text{display:flex; flex-direction:column; gap:1px; min-width:0;}
+.social-link-text b{font-size:14.5px; font-weight:800; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.social-link-text small{font-size:12px; font-weight:700; color:#229ED9;}
+.social-link-tile{display:flex; align-items:center; justify-content:center; height:52px; border-radius:16px; min-width:0; color:var(--ink);}
+.social-links-compact{margin-top:0; text-align:left;}
+.social-links-compact .social-links-tg{grid-template-columns:1fr;}
+.social-offer-where{margin:14px 0 18px; font-size:12.5px; font-weight:600; color:var(--ink-soft); line-height:1.45;}
 /* «Неделя» / «Все игроки» inside the Рейтинг tab */
 .rating-views{display:flex; gap:4px; padding:3px; margin:0 0 14px; background:var(--bg-soft, rgba(23,24,27,.06)); border-radius:12px;}
 .rating-view{flex:1; border:none; background:none; font:inherit; font-size:13.5px; font-weight:700; color:var(--ink-soft); padding:8px 10px; border-radius:9px; cursor:pointer; transition:background .15s var(--ease), color .15s var(--ease);}

@@ -61,6 +61,7 @@ import { useCanInstall } from '@/lib/installApp'
 import { InstallAppModal } from '@/components/app-shell/InstallAppModal'
 import { useT, TRANSLATION_READY } from '@/lib/i18n'
 import { LanguagePicker } from '@/components/app-shell/LanguagePicker'
+import { SocialLinks } from '@/components/app-shell/SocialLinks'
 import { tn } from '@/lib/i18n'
 import { Flag } from '@/components/app-shell/Flag'
 import { EconomyAdminLazy } from '@/components/clan2/live/lazy'
@@ -945,6 +946,8 @@ export function ProfileScreen({
           <path d="M9 5l7 7-7 7" />
         </svg>
       </button>
+
+      <SocialLinks />
 
       <div style={{ marginTop: 12 }}>
         <TelegramNotificationsRow />
