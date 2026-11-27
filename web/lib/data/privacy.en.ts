@@ -4,7 +4,7 @@ export const PRIVACY_EN: PrivacyDoc = {
   lang: 'en',
   title: 'Privacy Policy',
   metaDescription: 'What data RANGE collects, why, who receives it and how to have it deleted.',
-  updated: 'In effect since 23 November 2026',
+  updated: 'In effect since 23 November 2026, updated 27 November 2026',
   intro:
     'RANGE (the catchrange.com website, the Telegram bot and the mini app) is a map game for anglers. Here, briefly and without legal fog: what data we collect, why, who receives it and how to delete it.',
   sections: [
@@ -59,7 +59,7 @@ export const PRIVACY_EN: PrivacyDoc = {
         ],
         'We store the date and the version of the terms you accepted in your profile when you finish signing up. Only we can see this.',
         'By pressing «Start» in our Telegram bot, you agree to receive notifications and messages from RANGE: about your sectors and catches, rewards, weekly results and project news. You can turn them off at any time: in «Profile» or by stopping the bot.',
-        'You can withdraw your consent by deleting your account (section 8).',
+        'You can withdraw your consent by deleting your account (section 9).',
       ],
     },
     {
@@ -101,6 +101,14 @@ export const PRIVACY_EN: PrivacyDoc = {
           'GitHub: storage of our encrypted nightly database backups (without photos).',
         ],
         'The servers of these services are outside Russia and Georgia. Apart from these services and cases where the law requires it, we do not pass your data to anyone.',
+      ],
+    },
+    {
+      title: 'YouTube API Services',
+      blocks: [
+        'RANGE uploads its own videos to its own YouTube channel through YouTube API Services. Only the project owner does this, and only after the owner approves each post. We do not receive, read or store the data of any other YouTube users, and no player is asked to sign in with Google.',
+        'By using these services we are bound by the YouTube Terms of Service (https://www.youtube.com/t/terms). Google processes data under the Google Privacy Policy (https://policies.google.com/privacy).',
+        'The access given to RANGE can be revoked at any time in the Google Account security settings (https://myaccount.google.com/permissions).',
       ],
     },
     {
