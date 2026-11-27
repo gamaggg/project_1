@@ -1,6 +1,7 @@
 import { NextResponse, after } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { withErrorReport } from '@/lib/serverErrors'
+import { sendWeeklyReport } from '@/lib/weeklyReport'
 import { connectLink, tiktokConfigured } from '@/lib/tiktokPublish'
 import { acceptVideo, incomingVideo, onJobButton, saveJobFeedback, videoFeedbackFor } from '@/lib/videoJobs'
 import { escapeHtml, isTelegramUpdate, ownerChatId, previewHtml, readPost, tg, whenText } from '@/lib/socialBot'
@@ -125,6 +126,10 @@ async function onOwnerText(admin: ReturnType<typeof createAdminClient>, chatId: 
       chat_id: chatId,
       text: 'Привет! Сюда за час до выхода будут приходить посты для соцсетей RANGE.\n\n✅ Принять: пост выйдет.\n✏️ Изменить: напиши, что поменять, пришлю новый вариант.\n❌ Отменить: пост не выйдет.\n\nБез «Принять» ничего не публикуется.\n\n🎬 Ролики: пришли сюда видео (как «видео», до 20 МБ), в подписи можно написать рыбу, вес и место. Я смонтирую без звука, с оболочкой RANGE, и верну с описанием и кнопками «Всё ок / Изменить». Выкладываешь сам.',
     })
+    return
+  }
+  if (text.startsWith('/report')) {
+    await sendWeeklyReport(admin, chatId)
     return
   }
   if (text.startsWith('/tiktok')) {

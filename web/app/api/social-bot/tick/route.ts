@@ -20,6 +20,8 @@ import {
 import { facebookConfigured, publishToFacebook } from '@/lib/facebookPublish'
 import { instagramConfigured, publishToInstagram } from '@/lib/instagramPublish'
 import { sendReadyJobs } from '@/lib/videoJobs'
+import { sendWeeklyReport } from '@/lib/weeklyReport'
+import { fillLive } from '@/lib/livePlaceholders'
 import { publishToTelegram, telegramChannelConfigured } from '@/lib/telegramChannel'
 import { publishToYouTube, youtubeConfigured } from '@/lib/youtubePublish'
 import { publishToTikTok, tiktokConfigured } from '@/lib/tiktokPublish'
@@ -189,8 +191,9 @@ async function handleGET(req: Request) {
     .order('scheduled_at')
     .limit(BATCH)
   for (const row of soon ?? []) {
-    const p = readPost(row)
+    let p = readPost(row)
     try {
+      p = await fillLive(admin, p) // {catches_total}, {to_2000} … become the real numbers now
       const mediaNote = await sendMedia(chatId, p)
       const text = previewHtml(p) + (mediaNote ? `\n\n${escapeHtml(mediaNote)}` : '')
       const msg = await tg<{ message_id: number }>('sendMessage', {
@@ -210,6 +213,15 @@ async function handleGET(req: Request) {
       const msg = err instanceof Error ? err.message : String(err)
       report.errors.push(`preview #${p.id}: ${msg}`)
       await admin.from('social_posts').update({ error: msg.slice(0, 500) }).eq('id', p.id)
+    }
+  }
+
+  // Monday 10:00 Batumi (06:00 UTC): the report for the past week, once (the tick runs at least every hour).
+  if (now.getUTCDay() === 1 && now.getUTCHours() === 6 && now.getUTCMinutes() < 30) {
+    const { data: sent } = await admin.from('social_tokens').select('name').eq('name', `report-${now.toISOString().slice(0, 10)}`).maybeSingle()
+    if (!sent) {
+      await sendWeeklyReport(admin, chatId).catch((e) => report.errors.push(`report: ${String(e).slice(0, 200)}`))
+      await admin.from('social_tokens').insert({ name: `report-${now.toISOString().slice(0, 10)}`, token: 'sent', expires_at: new Date(now.getTime() + 86_400_000).toISOString() })
     }
   }
 
